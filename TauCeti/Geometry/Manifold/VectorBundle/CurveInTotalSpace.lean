@@ -60,8 +60,8 @@ theorem hasMFDerivWithinAt_totalSpace_curve_iff_of_continuousWithinAt
     HasMFDerivWithinAt 𝓘(𝕜, 𝕜) (IB.prod 𝓘(𝕜, F)) z s t ((1 : 𝕜 →L[𝕜] 𝕜).smulRight (a, b)) ↔
       HasDerivWithinAt (fun r ↦ extChartAt IB (z t).proj (z r).proj) a s t ∧
         HasDerivWithinAt (fun r ↦ (trivializationAt F V (z t).proj (z r)).2) b s t := by
-  set x₀ := (z t).proj with hx₀
-  set e := trivializationAt F V x₀ with he
+  set x₀ := (z t).proj
+  set e := trivializationAt F V x₀
   have hmem : ∀ᶠ r in 𝓝[s] t, (z r).proj ∈ e.baseSet :=
     hz.preimage_mem_nhdsWithin
       ((e.open_baseSet.preimage (FiberBundle.continuous_proj F V)).mem_nhds

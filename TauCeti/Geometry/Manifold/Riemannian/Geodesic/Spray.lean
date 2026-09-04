@@ -20,8 +20,8 @@ it becomes a first-order equation on the tangent bundle, for the vector field
 `S (x, v) = (v, -Γ_x (v, v))`
 
 on `TM` called the **geodesic spray**.  This file constructs `S` for the Levi-Civita connection of
-the ambient Riemannian bundle instance and identifies its integral curves with the velocity lifts
-of geodesics.
+the ambient Riemannian bundle instance, identifies velocity lifts of `C²` geodesics with integral
+curves of `S`, and shows that every integral curve is a velocity lift.
 
 A vector field on a manifold assigns to a point a vector of the model space, read in the chart at
 that point; the tangent-bundle chart at `z = (x, v)` reads the base direction in the extended
@@ -37,15 +37,16 @@ derivative term in the tangent lift cancels the inhomogeneous term in
 the content of
 `TauCeti.Manifold.isMIntegralCurveOn_curveVelocityLiftWithin_iff` and
 `TauCeti.Manifold.eq_curveVelocityLiftWithin_of_isMIntegralCurveOn`: on a parameter set with
-unique derivatives, the integral curves of `S` are exactly the velocity lifts
+unique derivatives, velocity lifts of `C²` geodesics are integral curves of `S`, while arbitrary
+integral curves of `S` are velocity lifts of their projected curves:
 
 `t ↦ (γ t, γ' t) : ℝ → TM`
 
-of the geodesics of `M`.  The two statements are read in one direction each: the velocity lift of
-a `C²` curve is an integral curve of `S` exactly when the curve is a geodesic, and conversely
-every integral curve of `S` is the velocity lift of the curve it lies over, whose base curve is a
-geodesic as soon as it is `C²`. The `C²` hypothesis on the base curve is not yet removable: it
-would follow from smoothness of `S`, which is not proved here.
+The two statements are read in one direction each: the velocity lift of a `C²` curve is an integral
+curve of `S` exactly when the curve is a geodesic, and conversely every integral curve of `S` is the
+velocity lift of the curve it lies over, whose base curve is a geodesic as soon as it is `C²`. The
+`C²` hypothesis on the base curve is not yet removable: it would follow from smoothness of `S`,
+which is not proved here.
 
 The unpacking of a curve into `TM` into its base curve and its fibre coordinate is
 `TauCeti.Manifold.hasMFDerivWithinAt_totalSpace_curve_iff`, proved for an arbitrary fibre bundle.
@@ -154,26 +155,22 @@ theorem tangentCoordChange_geodesicSpray {x x₀ : M}
       (v, -christoffelMap (finBasis ℝ E)
         ((leviCivita I M).isCovariantDerivativeOn
           (s := (trivializationAt E (TangentSpace I) x₀).baseSet)) x v v) := by
-  -- `TangentSpace I x` is an irreducible type synonym for the model `E`. The generic tangent
-  -- coordinate-change formula is stated in model coordinates, so expose that representation.
-  change E at u
-  -- Expand the locally defined spray and express its base point through the inverse of the
-  -- canonical model-space equivalence, as required by `tangentCoordChange_tangent_apply`.
-  change tangentCoordChange I.tangent
-      (TotalSpace.mk' E x ((tangentSpaceCastModel I x).symm u))
-      (TotalSpace.mk' E x₀ 0)
-      (TotalSpace.mk' E x ((tangentSpaceCastModel I x).symm u))
+  rw [geodesicSpray_apply]
+  have hT := tangentCoordChange_tangent_apply (I := I) (M := M) hx₀ u
+    (-christoffelMap (finBasis ℝ E)
+      ((leviCivita I M).isCovariantDerivativeOn
+        (s := (trivializationAt E (TangentSpace I) x).baseSet)) x u u)
+  simp only [continuousLinearMapAt_trivializationAt_self] at hT
+  -- Reduce the projections of the displayed total-space point so that the general tangent-chart
+  -- formula applies; these projections have no separate rewriting lemma.
+  change tangentCoordChange I.tangent (TotalSpace.mk' E x u) (TotalSpace.mk' E x₀ 0)
+      (TotalSpace.mk' E x u)
         (u, -christoffelMap (finBasis ℝ E)
           ((leviCivita I M).isCovariantDerivativeOn
             (s := (trivializationAt E (TangentSpace I) x).baseSet)) x u u) = _
-  rw [tangentCoordChange_tangent_apply hx₀]
-  have hchange := geodesicSpray_coordChange (I := I) (M := M) hx₀
-    ((tangentSpaceCastModel I x).symm u)
-  -- `tangentSpaceCastModel` is definitionally the identity equivalence, but the irreducible
-  -- tangent-space synonym prevents `rw` from seeing this round trip without recording it here.
-  have hu : (tangentSpaceCastModel I x).symm u = (show TangentSpace I x from u) := rfl
-  rw [hu] at hchange ⊢
-  simpa only [map_neg, ← sub_eq_add_neg] using hchange
+  rw [hT]
+  simpa only [map_neg, ← sub_eq_add_neg] using
+    geodesicSpray_coordChange (I := I) (M := M) hx₀ u
 
 /-- **The geodesic equation as an integral-curve equation.**  The velocity lift of a `C²` curve
 solves the equation of the geodesic spray at a parameter of its set exactly when the derivative of
