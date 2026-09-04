@@ -44,6 +44,8 @@ nondegenerate Gram matrix and transports it to the discriminant quotient.
   nondegenerate Gram matrix.
 * `TauCeti.IntegralLattice.gramSmithInvariantFactors_dvd`: successive invariant factors divide one
   another.
+* `TauCeti.IntegralLattice.exists_gramSmithInvariantFactors_smith_normal_form`: the normalized
+  invariant factors are a Smith normal form of the Gram matrix.
 * `TauCeti.IntegralLattice.discriminantGroupInvariantFactorsEquiv`: the discriminant group as a
   product of cyclic groups of the normalized invariant-factor orders.
 
@@ -52,7 +54,6 @@ nondegenerate Gram matrix and transports it to the discriminant quotient.
 * W. Ebeling, *Lattices and Codes*, Chapter 1.
 * `Mathlib.LinearAlgebra.FreeModule.Finite.Quotient`, especially
   `Submodule.quotientEquivPiZMod`.
-* `TauCetiRoadmap/IntegralLattices/README.md`, Layer 2.
 -/
 
 public section
@@ -249,6 +250,18 @@ theorem gramSmithInvariantFactors_dvd (L : IntegralLattice V) [L.IsNondegenerate
     L.gramSmithInvariantFactors b i ∣ L.gramSmithInvariantFactors b j :=
   (L.gramSmithWitness b).choose_spec.choose_spec.choose_spec.2.1 hij
 
+open Classical in
+/-- The normalized invariant factors are a Smith normal form of the Gram matrix: general-linear
+row and column operations bring it to their diagonal. -/
+theorem exists_gramSmithInvariantFactors_smith_normal_form (L : IntegralLattice V)
+    [L.IsNondegenerate] {ι : Type v} [Fintype ι] (b : Basis ι ℤ L) :
+    ∃ P Q : Matrix.GeneralLinearGroup (Fin (Fintype.card ι)) ℤ,
+      (P : Matrix _ _ ℤ) * L.gramMatrix (b.reindex (Fintype.equivFin ι)) *
+          (Q : Matrix _ _ ℤ) =
+        Matrix.diagonal (L.gramSmithInvariantFactors b) :=
+  ⟨L.gramSmithLeftMatrix b, L.gramSmithRightMatrix b,
+    (L.gramSmithWitness b).choose_spec.choose_spec.choose_spec.2.2⟩
+
 /-- The order of every cyclic factor in the normalized decomposition is nonzero. -/
 theorem gramSmithInvariantFactors_natAbs_ne_zero
     (L : IntegralLattice V) [L.IsNondegenerate]
@@ -312,7 +325,10 @@ theorem gramSmithDualBasis_toMatrix_gramSmithCarrierBasis
       d₀.toMatrix ((↑) ∘ L.gramSmithCarrierBasis b) =
           LinearMap.toMatrix c₀ d₀ (inclusion.comp gQ.toLinearMap) := by
         rw [LinearMap.toMatrix_eq_basisToMatrix]
-        rfl
+        -- both families list the same vectors: `gramSmithCarrierBasis` is `c₀` mapped through
+        -- `gQ`, and the coercion out of `L.carrierInDual` is `inclusion`
+        refine congrArg d₀.toMatrix (funext fun i ↦ ?_)
+        simp [gramSmithCarrierBasis, c₀, b', Q, gQ, inclusion, Basis.map_apply]
       _ = LinearMap.toMatrix c₀ d₀ inclusion *
           LinearMap.toMatrix c₀ c₀ gQ.toLinearMap :=
         LinearMap.toMatrix_comp c₀ c₀ d₀ inclusion gQ.toLinearMap
