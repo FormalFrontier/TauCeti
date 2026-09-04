@@ -73,6 +73,7 @@ noncomputable def balance (H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ) (K : V →ₛ
     ring
 
 /-- The defining formula of the balanced form. -/
+@[simp]
 theorem balance_apply (H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ) (K : V →ₛₗ[starRingEnd ℂ] V) (x y : V) :
     balance H K x y = H x y + (starRingEnd ℂ) (H (K x) (K y)) := (rfl)
 
