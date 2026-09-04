@@ -88,11 +88,5 @@ theorem ContDiffOn.exists_lipschitzWith_contDiff_eventuallyEq_of_finiteDimension
     (hf : ContDiffOn ℝ (n + 1) f s) (hs : s ∈ nhds x) :
     ∃ (g : E → F) (K : NNReal), ContDiff ℝ (n + 1) g ∧ LipschitzWith K g ∧ g =ᶠ[nhds x] f := by
   obtain ⟨g, hg, hgsupp, hgf⟩ := hf.exists_contDiff_eventuallyEq_of_finiteDimensional hs
-  have hone : ((n : WithTop ℕ∞) + 1) ≠ 0 := by simp
-  obtain ⟨C, hC⟩ := (hg.continuous_fderiv hone).bounded_above_of_compact_support
-    (hgsupp.fderiv (𝕜 := ℝ))
-  have hC0 : 0 ≤ C := (norm_nonneg _).trans (hC x)
-  refine ⟨g, C.toNNReal, hg, lipschitzWith_of_nnnorm_fderiv_le (hg.differentiable hone) ?_, hgf⟩
-  intro y
-  rw [← NNReal.coe_le_coe, coe_nnnorm, Real.coe_toNNReal C hC0]
-  exact hC y
+  obtain ⟨C, hC⟩ := hg.lipschitzWith_of_hasCompactSupport hgsupp (by simp)
+  exact ⟨g, C, hg, hC, hgf⟩
