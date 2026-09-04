@@ -24,8 +24,9 @@ the two resulting **character projections**, for `π` finite-dimensional irreduc
 * `conj χ_π` acts as zero on a finite-dimensional irreducible `ρ` admitting no nonzero continuous
   intertwiner `ρ → π`.
 
-These are the two blockwise identities from which the isotypic projectors are built; the projector
-on a reducible representation, and the isotypic decomposition it cuts out, are not constructed here.
+These are the two blockwise identities from which the isotypic projectors are built. Their assembly
+on a reducible representation is carried out in
+`TauCeti/RepresentationTheory/Compact/Character/IsotypicProjection.lean`.
 
 ## Main results
 
@@ -148,7 +149,8 @@ kernel `dim V_π · conj χ_π` acts as the identity on `V_π`; together with
 `TauCeti.ContRepresentation.integratedOperator_star_character_eq_zero`, which makes it act as zero
 on an irreducible representation with no nonzero intertwiner into `π`, these are the two blockwise
 identities that characterize the isotypic projector attached to `π`. Assembling them into a
-projector on a reducible representation is not done here. -/
+projector on a reducible representation is done in
+`TauCeti/RepresentationTheory/Compact/Character/IsotypicProjection.lean`. -/
 theorem finrank_smul_integratedOperator_star_character_self (hunitary : IsUnitary π)
     (hirr : Representation.IsIrreducible π.toRepresentation) :
     (Module.finrank 𝕜 V : 𝕜) • integratedOperator π hπ (star (character π hπ))
