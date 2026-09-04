@@ -30,6 +30,8 @@ the letterwise tuple operation that applies it on a half-open index interval.
 ## Main definitions
 
 * `InternalGrading`: an internal `ℤ`-grading of a module.
+* `InternalGrading.ofDecomposition`: the internal grading carried by a family of submodules with a
+  `DirectSum.Decomposition`, as graded algebras store it.
 * `InternalGrading.koszulTwist`: the operator scaling degree-`e` elements by `(-1)^(q * e)`.
 * `InternalGrading.twistedTuple`: a tuple with a consecutive block of letters Koszul-twisted.
 
@@ -82,6 +84,21 @@ theorem ext : ∀ {G H : InternalGrading R M}, (∀ p, G.piece p = H.piece p) �
 /-- The decomposition attached to an internal grading. -/
 noncomputable instance (G : InternalGrading R M) : DirectSum.Decomposition G.piece :=
   G.isInternal.chooseDecomposition
+
+/-- The internal grading carried by a family of submodules with a `DirectSum.Decomposition`.  This
+is the bridge from Mathlib's decomposition typeclass, under which graded algebras are stated, to
+the bundled internal grading of this file. -/
+noncomputable def ofDecomposition (ℳ : ℤ → Submodule R M) [DirectSum.Decomposition ℳ] :
+    InternalGrading R M :=
+  ⟨ℳ, DirectSum.Decomposition.isInternal ℳ⟩
+
+@[simp]
+theorem ofDecomposition_piece (ℳ : ℤ → Submodule R M) [DirectSum.Decomposition ℳ] :
+    (ofDecomposition ℳ).piece = ℳ := (rfl)
+
+theorem mem_ofDecomposition_piece {ℳ : ℤ → Submodule R M} [DirectSum.Decomposition ℳ] {p : ℤ}
+    {x : M} : x ∈ (ofDecomposition ℳ).piece p ↔ x ∈ ℳ p := by
+  rw [ofDecomposition_piece]
 
 /-- An additive map that vanishes on every homogeneous piece except degree `i` sees only the
 degree-`i` component of each argument. -/

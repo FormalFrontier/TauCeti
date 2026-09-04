@@ -1,0 +1,217 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
+-/
+module
+
+public import Mathlib.LinearAlgebra.TensorProduct.Graded.Internal
+public import Mathlib.RingTheory.GradedAlgebra.AlgHom
+public import TauCeti.Algebra.Module.GradedModule.Opposite
+public import TauCeti.Algebra.Module.GradedModule.TensorProduct
+
+/-!
+# The graded tensor product of two internally `ℤ`-graded algebras is graded
+
+Mathlib's `GradedTensorProduct R 𝒜 ℬ`, written `𝒜 ᵍ⊗[R] ℬ`, is the tensor product `A ⊗[R] B`
+with the Koszul-signed multiplication
+
+`(a ᵍ⊗ₜ b) * (a' ᵍ⊗ₜ b') = (-1) ^ (|b| * |a'|) • (a * a') ᵍ⊗ₜ (b * b')`.
+
+Mathlib stops at the ring and algebra structures.  This file supplies the grading they are
+compatible with: the total-degree grading of the underlying tensor product of graded modules turns
+`𝒜 ᵍ⊗[R] ℬ` into an internally `ℤ`-graded algebra.
+
+## Main definitions
+
+* `TauCeti.gradedTensorGrading`: the total-degree grading of `𝒜 ᵍ⊗[R] ℬ`, whose degree-`n` piece
+  is the sum of the images of `𝒜 p ⊗ ℬ (n - p)`.
+* `TauCeti.gradedTensorIncludeLeft` and `TauCeti.gradedTensorIncludeRight`: the inclusions
+  `a ↦ a ᵍ⊗ₜ 1` and `b ↦ 1 ᵍ⊗ₜ b` of the two factors, as homomorphisms of graded algebras.
+
+## Main results
+
+* `TauCeti.tmul_mem_gradedTensorGrading`: degrees add on pure tensors.
+* `TauCeti.instGradedAlgebraGradedTensorGrading`: the graded tensor product of two internally
+  `ℤ`-graded algebras is an internally `ℤ`-graded algebra.
+* `TauCeti.gradedTensorGrading_le`: a submodule containing every homogeneous pure tensor of total
+  degree `n` contains the whole degree-`n` piece; `TauCeti.eq_top_of_tmul_mem` and
+  `TauCeti.linearMap_ext_of_tmul` are the corresponding statements for the whole graded tensor
+  product and for maps out of it.  These three are the tools with which a statement about the
+  graded tensor product is reduced to pure tensors of homogeneous elements, which is where the
+  Koszul sign is available.
+
+The grading of the underlying module is `TauCeti.InternalGrading.tensorProduct` and the Koszul
+multiplication is Mathlib's `GradedTensorProduct`; only their compatibility is proved here.
+
+## References
+
+* N. Bourbaki, *Algebra I*, Chapter III, §4.7, example (2).
+* B. Keller, *Introduction to A-infinity algebras and modules*, Section 3.1.
+-/
+
+public section
+
+open scoped DirectSum TensorProduct
+
+namespace TauCeti
+
+universe uR uA uB
+
+variable {R : Type uR} {A : Type uA} {B : Type uB}
+  [CommRing R] [Ring A] [Ring B] [Algebra R A] [Algebra R B]
+
+variable (𝒜 : ℤ → Submodule R A) (ℬ : ℤ → Submodule R B) [GradedAlgebra 𝒜] [GradedAlgebra ℬ]
+
+/-- The total-degree grading of the graded tensor product `𝒜 ᵍ⊗[R] ℬ`: the degree-`n` piece is the
+sum of the images of `𝒜 p ⊗ ℬ (n - p)`. -/
+noncomputable def gradedTensorGrading (n : ℤ) : Submodule R (𝒜 ᵍ⊗[R] ℬ) :=
+  Submodule.map (GradedTensorProduct.of R 𝒜 ℬ).toLinearMap
+    (⨆ p : ℤ, Submodule.map₂ (TensorProduct.mk R A B) (𝒜 p) (ℬ (n - p)))
+
+/-- The total-degree grading of `𝒜 ᵍ⊗[R] ℬ` is the tensor-product grading of the underlying graded
+modules, moved across the type synonym. -/
+theorem gradedTensorGrading_eq :
+    gradedTensorGrading 𝒜 ℬ =
+      (((InternalGrading.ofDecomposition 𝒜).tensorProduct
+        (InternalGrading.ofDecomposition ℬ)).map (GradedTensorProduct.of R 𝒜 ℬ)).piece := by
+  funext n
+  rw [InternalGrading.map_piece, gradedTensorGrading,
+    InternalGrading.tensorProduct_piece_eq_iSup, InternalGrading.ofDecomposition_piece,
+    InternalGrading.ofDecomposition_piece]
+
+/-- The homogeneous pieces of the graded tensor product form an internal direct sum. -/
+theorem isInternal_gradedTensorGrading :
+    DirectSum.IsInternal (gradedTensorGrading 𝒜 ℬ) := by
+  rw [gradedTensorGrading_eq]
+  exact InternalGrading.isInternal _
+
+/-- A pure tensor of homogeneous elements is homogeneous, of the sum of their degrees. -/
+theorem tmul_mem_gradedTensorGrading {p q : ℤ} {a : A} {b : B} (ha : a ∈ 𝒜 p) (hb : b ∈ ℬ q) :
+    a ᵍ⊗ₜ[R] b ∈ gradedTensorGrading 𝒜 ℬ (p + q) := by
+  refine Submodule.mem_map_of_mem (Submodule.mem_iSup_of_mem p ?_)
+  simpa only [add_sub_cancel_left, TensorProduct.mk_apply] using
+    Submodule.apply_mem_map₂ (TensorProduct.mk R A B) ha hb
+
+/-- A submodule containing every homogeneous pure tensor of total degree `n` contains the whole
+degree-`n` piece of the graded tensor product. -/
+theorem gradedTensorGrading_le {n : ℤ} {C : Submodule R (𝒜 ᵍ⊗[R] ℬ)}
+    (h : ∀ p : ℤ, ∀ a ∈ 𝒜 p, ∀ b ∈ ℬ (n - p), a ᵍ⊗ₜ[R] b ∈ C) :
+    gradedTensorGrading 𝒜 ℬ n ≤ C := by
+  rw [gradedTensorGrading, Submodule.map_le_iff_le_comap]
+  exact iSup_le fun p ↦ Submodule.map₂_le.2 fun a ha b hb ↦ h p a ha b hb
+
+/-- A submodule containing every homogeneous pure tensor is the whole graded tensor product. -/
+theorem eq_top_of_tmul_mem {C : Submodule R (𝒜 ᵍ⊗[R] ℬ)}
+    (h : ∀ p q : ℤ, ∀ a ∈ 𝒜 p, ∀ b ∈ ℬ q, a ᵍ⊗ₜ[R] b ∈ C) :
+    C = ⊤ := by
+  refine top_le_iff.1 ?_
+  rw [← (isInternal_gradedTensorGrading 𝒜 ℬ).submodule_iSup_eq_top]
+  exact iSup_le fun n ↦ gradedTensorGrading_le 𝒜 ℬ fun p a ha b hb ↦ h p (n - p) a ha b hb
+
+/-- Multiplying a homogeneous pure tensor into a homogeneous element adds degrees. -/
+private theorem tmul_mul_mem_gradedTensorGrading {p q n : ℤ} {a : A} {b : B} {y : 𝒜 ᵍ⊗[R] ℬ}
+    (ha : a ∈ 𝒜 p) (hb : b ∈ ℬ q) (hy : y ∈ gradedTensorGrading 𝒜 ℬ n) :
+    (a ᵍ⊗ₜ[R] b) * y ∈ gradedTensorGrading 𝒜 ℬ (p + q + n) := by
+  refine gradedTensorGrading_le 𝒜 ℬ (C := Submodule.comap
+    (GradedTensorProduct.mulHom 𝒜 ℬ (a ᵍ⊗ₜ[R] b)) (gradedTensorGrading 𝒜 ℬ (p + q + n)))
+    (fun r a' ha' b' hb' ↦ ?_) hy
+  rw [Submodule.mem_comap, ← GradedTensorProduct.mul_def,
+    GradedTensorProduct.tmul_coe_mul_coe_tmul 𝒜 ℬ a ⟨b, hb⟩ ⟨a', ha'⟩ b']
+  rw [Units.smul_def]
+  refine zsmul_mem ?_ _
+  rw [show p + q + n = p + r + (q + (n - r)) by ring]
+  exact tmul_mem_gradedTensorGrading 𝒜 ℬ (SetLike.mul_mem_graded ha ha')
+    (SetLike.mul_mem_graded hb hb')
+
+/-- The Koszul multiplication of the graded tensor product adds degrees. -/
+instance instGradedMonoidGradedTensorGrading :
+    SetLike.GradedMonoid (gradedTensorGrading 𝒜 ℬ) where
+  one_mem := by
+    have h : (1 : 𝒜 ᵍ⊗[R] ℬ) = (1 : A) ᵍ⊗ₜ[R] (1 : B) := rfl
+    rw [h, show (0 : ℤ) = 0 + 0 by ring]
+    exact tmul_mem_gradedTensorGrading 𝒜 ℬ (SetLike.one_mem_graded 𝒜) (SetLike.one_mem_graded ℬ)
+  mul_mem := by
+    intro m n x y hx hy
+    refine gradedTensorGrading_le 𝒜 ℬ (C := Submodule.comap
+      ((GradedTensorProduct.mulHom 𝒜 ℬ).flip y) (gradedTensorGrading 𝒜 ℬ (m + n)))
+      (fun p a ha b hb ↦ ?_) hx
+    rw [Submodule.mem_comap, LinearMap.flip_apply, ← GradedTensorProduct.mul_def,
+      show m + n = p + (m - p) + n by ring]
+    exact tmul_mul_mem_gradedTensorGrading 𝒜 ℬ ha hb hy
+
+/-- The graded tensor product of two internally `ℤ`-graded algebras is an internally `ℤ`-graded
+algebra for the total-degree grading. -/
+noncomputable instance instGradedAlgebraGradedTensorGrading :
+    GradedAlgebra (gradedTensorGrading 𝒜 ℬ) :=
+  (isInternal_gradedTensorGrading 𝒜 ℬ).gradedAlgebra
+
+/-- A pure tensor of the graded tensor product is additive in its left factor. -/
+theorem gradedTensor_add_tmul (a₁ a₂ : A) (b : B) :
+    (a₁ + a₂) ᵍ⊗ₜ[R] b = (a₁ ᵍ⊗ₜ[R] b : 𝒜 ᵍ⊗[R] ℬ) + a₂ ᵍ⊗ₜ[R] b := by
+  simp [GradedTensorProduct.tmul, TensorProduct.add_tmul]
+
+/-- A pure tensor of the graded tensor product is additive in its right factor. -/
+theorem gradedTensor_tmul_add (a : A) (b₁ b₂ : B) :
+    a ᵍ⊗ₜ[R] (b₁ + b₂) = (a ᵍ⊗ₜ[R] b₁ : 𝒜 ᵍ⊗[R] ℬ) + a ᵍ⊗ₜ[R] b₂ := by
+  simp [GradedTensorProduct.tmul, TensorProduct.tmul_add]
+
+/-- Scalars pass from the left factor of a pure tensor to the tensor. -/
+theorem gradedTensor_smul_tmul (r : R) (a : A) (b : B) :
+    (r • a) ᵍ⊗ₜ[R] b = r • (a ᵍ⊗ₜ[R] b : 𝒜 ᵍ⊗[R] ℬ) := by
+  simp only [GradedTensorProduct.tmul, ← map_smul, TensorProduct.smul_tmul']
+
+/-- Scalars pass from the right factor of a pure tensor to the tensor. -/
+theorem gradedTensor_tmul_smul (r : R) (a : A) (b : B) :
+    a ᵍ⊗ₜ[R] (r • b) = r • (a ᵍ⊗ₜ[R] b : 𝒜 ᵍ⊗[R] ℬ) := by
+  simp only [GradedTensorProduct.tmul, ← map_smul, TensorProduct.tmul_smul]
+
+/-- A pure tensor of the graded tensor product vanishes when its left factor does. -/
+@[simp]
+theorem gradedTensor_zero_tmul (b : B) : (0 : A) ᵍ⊗ₜ[R] b = (0 : 𝒜 ᵍ⊗[R] ℬ) := by
+  simp [GradedTensorProduct.tmul]
+
+/-- A pure tensor of the graded tensor product vanishes when its right factor does. -/
+@[simp]
+theorem gradedTensor_tmul_zero (a : A) : a ᵍ⊗ₜ[R] (0 : B) = (0 : 𝒜 ᵍ⊗[R] ℬ) := by
+  simp [GradedTensorProduct.tmul]
+
+/-- Two linear maps out of the graded tensor product agree as soon as they agree on the pure
+tensors of homogeneous elements. -/
+theorem linearMap_ext_of_tmul {M : Type*} [AddCommGroup M] [Module R M]
+    {f g : (𝒜 ᵍ⊗[R] ℬ) →ₗ[R] M}
+    (h : ∀ p q : ℤ, ∀ a ∈ 𝒜 p, ∀ b ∈ ℬ q, f (a ᵍ⊗ₜ[R] b) = g (a ᵍ⊗ₜ[R] b)) :
+    f = g := by
+  refine LinearMap.ext fun x ↦ sub_eq_zero.1 ?_
+  have hx : x ∈ (⊤ : Submodule R (𝒜 ᵍ⊗[R] ℬ)) := trivial
+  rw [← eq_top_of_tmul_mem 𝒜 ℬ (C := LinearMap.ker (f - g))
+    fun p q a ha b hb ↦ by simp [h p q a ha b hb]] at hx
+  simpa using hx
+
+/-- The inclusion `a ↦ a ᵍ⊗ₜ 1` of the left factor, as a homomorphism of graded algebras. -/
+noncomputable def gradedTensorIncludeLeft : 𝒜 →ₐᵍ[R] gradedTensorGrading 𝒜 ℬ :=
+  { GradedTensorProduct.includeLeft 𝒜 ℬ with
+    map_mem := fun {i x} hx ↦ by
+      have h : x ᵍ⊗ₜ[R] (1 : B) ∈ gradedTensorGrading 𝒜 ℬ i := by
+        rw [show i = i + 0 by ring]
+        exact tmul_mem_gradedTensorGrading 𝒜 ℬ hx (SetLike.one_mem_graded ℬ)
+      exact h }
+
+@[simp]
+theorem gradedTensorIncludeLeft_apply (a : A) :
+    gradedTensorIncludeLeft 𝒜 ℬ a = a ᵍ⊗ₜ[R] (1 : B) := (rfl)
+
+/-- The inclusion `b ↦ 1 ᵍ⊗ₜ b` of the right factor, as a homomorphism of graded algebras. -/
+noncomputable def gradedTensorIncludeRight : ℬ →ₐᵍ[R] gradedTensorGrading 𝒜 ℬ :=
+  { GradedTensorProduct.includeRight 𝒜 ℬ with
+    map_mem := fun {i x} hx ↦ by
+      have h : (1 : A) ᵍ⊗ₜ[R] x ∈ gradedTensorGrading 𝒜 ℬ i := by
+        rw [show i = 0 + i by ring]
+        exact tmul_mem_gradedTensorGrading 𝒜 ℬ (SetLike.one_mem_graded 𝒜) hx
+      exact h }
+
+@[simp]
+theorem gradedTensorIncludeRight_apply (b : B) :
+    gradedTensorIncludeRight 𝒜 ℬ b = (1 : A) ᵍ⊗ₜ[R] b := (rfl)
+
+end TauCeti
