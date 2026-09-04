@@ -5,17 +5,18 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Homology.DerivedCategory.Ext.Map
+public import Mathlib.Algebra.Homology.DerivedCategory.Ext.MapAdjunction
 public import TauCeti.Algebra.Homology.Ext.Basic
 
 /-!
 # `Ext` groups are invariant under an additive equivalence
 
-Mathlib's `CategoryTheory.Abelian.Ext.mapExactFunctor` sends `Extⁿ(X, Y)` to
-`Extⁿ(F X, F Y)` for an exact additive functor `F`, and proves it bijective only under a
-projective- or injective-object hypothesis.  For an equivalence no such hypothesis is needed: the
-inverse equivalence supplies the inverse map, up to the transport along the unit isomorphism from
-`TauCeti.extAddEquivOfIso`.
+Mathlib's `CategoryTheory.Adjunction.extEquiv` promotes an adjunction `F ⊣ G` between exact
+functors to an additive equivalence `Extⁿ(F X, Y) ≃+ Extⁿ(X, G Y)`.  For an equivalence `e` this
+specialises, along `CategoryTheory.Equivalence.toAdjunction` and the transport of the target along
+the unit isomorphism from `TauCeti.extAddEquivOfIso`, to the invariance of `Ext` under `e`, which
+Mathlib does not state in this form.  (`CategoryTheory.Abelian.Ext.mapExactFunctor` is shown
+bijective only under a projective- or injective-object hypothesis.)
 
 ## Main definitions
 
@@ -37,65 +38,22 @@ universe w v v' u u' t
 variable {C : Type u} [Category.{v} C] [Abelian C] {D : Type u'} [Category.{v'} D] [Abelian D]
   [HasExt.{w} C] [HasExt.{w} D]
 
-/-- Pushing an `Ext` class forward along an equivalence and pulling it back along the inverse
-equivalence is transport along the unit isomorphism. -/
-private theorem mapExactFunctor_inverse_mapExactFunctor (e : C ≌ D) [e.functor.Additive]
-    {X Y : C} {n : ℕ} (α : Ext.{w} X Y n) :
-    (α.mapExactFunctor e.functor).mapExactFunctor e.inverse =
-      extAddEquivOfIso (e.unitIso.app X) (e.unitIso.app Y) n α := by
-  have key := Ext.mapExactFunctor_comp_mk₀_natTransApp α (F := 𝟭 C)
-    (G := e.functor ⋙ e.inverse) e.unitIso.hom
-  rw [Ext.id_mapExactFunctor] at key
-  rw [extAddEquivOfIso_apply, ← Ext.comp_mapExactFunctor]
-  simp only [Iso.app_hom, Iso.app_inv]
-  rw [key, Ext.mk₀_comp_mk₀_assoc]
-  simp
-
-/-- Transporting back along the unit isomorphism inverts the pushforward of an `Ext` class along
-an equivalence. -/
-private theorem symm_extAddEquivOfIso_mapExactFunctor (e : C ≌ D) [e.functor.Additive]
-    (X Y : C) (n : ℕ) (α : Ext.{w} X Y n) :
-    (extAddEquivOfIso (e.unitIso.app X) (e.unitIso.app Y) n).symm
-        ((α.mapExactFunctor e.functor).mapExactFunctor e.inverse) = α := by
-  rw [mapExactFunctor_inverse_mapExactFunctor]
-  exact (extAddEquivOfIso _ _ n).symm_apply_apply α
-
-/-- Pushing forward along the inverse of an equivalence is injective on `Ext` groups. -/
-private theorem mapExactFunctor_inverse_injective (e : C ≌ D) [e.functor.Additive]
-    (A B : D) (n : ℕ) :
-    Function.Injective fun β : Ext.{w} A B n => β.mapExactFunctor e.inverse := by
-  have : e.symm.functor.Additive := inferInstanceAs e.inverse.Additive
-  intro β₁ β₂ h
-  have h₁ := symm_extAddEquivOfIso_mapExactFunctor e.symm A B n β₁
-  have h₂ := symm_extAddEquivOfIso_mapExactFunctor e.symm A B n β₂
-  rw [← h₁, ← h₂]
-  exact congrArg _ (congrArg (fun γ => Ext.mapExactFunctor e.symm.inverse γ) h)
-
 /-- **`Ext` groups are invariant under an additive equivalence.**  The equivalence `e` carries
-`Extⁿ(X, Y)` isomorphically onto `Extⁿ(e X, e Y)`, with the inverse supplied by the inverse
-equivalence and the unit isomorphism. -/
+`Extⁿ(X, Y)` isomorphically onto `Extⁿ(e X, e Y)`.  This is `CategoryTheory.Adjunction.extEquiv`
+for the adjunction `e.functor ⊣ e.inverse`, with the target transported along the unit
+isomorphism. -/
 noncomputable def _root_.CategoryTheory.Equivalence.extAddEquiv
     (e : C ≌ D) [e.functor.Additive] (X Y : C) (n : ℕ) :
-    Ext.{w} X Y n ≃+ Ext.{w} (e.functor.obj X) (e.functor.obj Y) n where
-  toFun α := α.mapExactFunctor e.functor
-  invFun β := (extAddEquivOfIso (e.unitIso.app X) (e.unitIso.app Y) n).symm
-    (β.mapExactFunctor e.inverse)
-  map_add' α β := by simp
-  left_inv α := symm_extAddEquivOfIso_mapExactFunctor e X Y n α
-  right_inv β := by
-    have hinj : Function.Injective fun γ : Ext.{w} (e.functor.obj X) (e.functor.obj Y) n =>
-        (extAddEquivOfIso (e.unitIso.app X) (e.unitIso.app Y) n).symm
-          (γ.mapExactFunctor e.inverse) :=
-      (extAddEquivOfIso (e.unitIso.app X) (e.unitIso.app Y) n).symm.injective.comp
-        (mapExactFunctor_inverse_injective e _ _ n)
-    exact hinj (symm_extAddEquivOfIso_mapExactFunctor e X Y n _)
+    Ext.{w} X Y n ≃+ Ext.{w} (e.functor.obj X) (e.functor.obj Y) n :=
+  (extAddEquivOfIso (Iso.refl X) (e.unitIso.app Y) n).trans e.toAdjunction.extEquiv.symm
 
 @[simp]
 theorem _root_.CategoryTheory.Equivalence.extAddEquiv_apply
     (e : C ≌ D) [e.functor.Additive] {X Y : C} {n : ℕ}
     (α : Ext.{w} X Y n) :
-    e.extAddEquiv X Y n α = α.mapExactFunctor e.functor :=
-  (rfl)
+    e.extAddEquiv X Y n α = α.mapExactFunctor e.functor := by
+  simp [Equivalence.extAddEquiv, Adjunction.extEquiv_symm_apply, Ext.mapExactFunctor_comp,
+    Ext.mapExactFunctor_mk₀]
 
 /-- **The `R`-linear refinement of `CategoryTheory.Equivalence.extAddEquiv`.**  For an `R`-linear
 equivalence of `R`-linear abelian categories, `Extⁿ(X, Y)` and `Extⁿ(e X, e Y)` are isomorphic as
@@ -111,6 +69,6 @@ theorem extLinearEquivOfEquivalence_apply (R : Type t) [Ring R] [Linear R C] [Li
     (e : C ≌ D) [e.functor.Additive] [e.functor.Linear R] {X Y : C} {n : ℕ}
     (α : Ext.{w} X Y n) :
     extLinearEquivOfEquivalence R e X Y n α = α.mapExactFunctor e.functor :=
-  (rfl)
+  e.extAddEquiv_apply α
 
 end TauCeti
