@@ -40,8 +40,8 @@ product of the Dedekind zeta function.
   `Re s > 1`.
 
 No nonvanishing statement is made here. An unconditionally convergent product of nonzero factors
-may still vanish, so nonvanishing needs the convergence of the reciprocal product and is left to
-the layer that proves it.
+may still vanish, so nonvanishing requires additional hypotheses such as convergence of the
+reciprocal product.
 
 ## References
 
@@ -122,18 +122,15 @@ theorem norm_idealTerm_supportedPart_le (f : IdealArithmeticFunction K)
     (S : Set (HeightOneSpectrum (𝓞 K))) (s : ℂ) (I : (Ideal (𝓞 K))⁰) :
     ‖idealTerm K (supportedPart f S) s I‖ ≤ ‖idealTerm K f s I‖ := by
   rw [idealTerm_supportedPart]
-  by_cases hI : I ∈ {I : (Ideal (𝓞 K))⁰ | Ideal.IsPrimeTo (I : Ideal (𝓞 K)) Sᶜ}
-  · rw [Set.indicator_of_mem hI]
-  · rw [Set.indicator_of_notMem hI, norm_zero]
-    exact norm_nonneg _
+  exact norm_indicator_le_norm_self _ _
 
 /-- Absolute convergence of the ideal-indexed Dirichlet series is inherited by every restriction
 to a set of primes. -/
 theorem summable_idealTerm_supportedPart (hs : Summable (idealTerm K f s))
     (S : Set (HeightOneSpectrum (𝓞 K))) :
     Summable (idealTerm K (supportedPart f S) s) := by
-  rw [← summable_norm_iff] at hs ⊢
-  exact hs.of_nonneg_of_le (fun _ ↦ norm_nonneg _) (norm_idealTerm_supportedPart_le f S s)
+  rw [idealTerm_supportedPart]
+  exact hs.indicator _
 
 /-- Absolute convergence of the ideal-indexed Dirichlet series makes every local Euler factor an
 absolutely convergent `LSeries`. -/
@@ -284,15 +281,6 @@ theorem hasProd_eulerFactor (hs : Summable (idealTerm K χ.toIdealArithmeticFunc
 end MultiplicativeIdealWeight
 
 /-! ### The Dedekind zeta function -/
-
-/-- The ideal-indexed Dirichlet series of the trivial ideal weight converges absolutely exactly on
-`Re s > 1`. -/
-theorem summable_idealTerm_one_iff {s : ℂ} :
-    Summable (idealTerm K (1 : IdealArithmeticFunction K) s) ↔ 1 < s.re := by
-  refine ⟨fun h ↦ (LSeriesSummable_normCoeff_one_iff K).mp (LSeriesSummable_normCoeff K h),
-    fun h ↦ ?_⟩
-  exact summable_idealTerm_of_nonneg K 1 (fun _ ↦ zero_le_one)
-    ((LSeriesSummable_normCoeff_one_iff K).mpr h)
 
 /-- **The Euler product of the Dedekind zeta function.** For `Re s > 1` the Dedekind zeta function
 of `K` is the unrestricted product over the height-one primes of `𝓞 K` of the local factors
