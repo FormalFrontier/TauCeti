@@ -38,11 +38,12 @@ open CategoryTheory Limits
 
 namespace TauCeti
 
-universe u
+universe u v₁ u₁
 
 noncomputable section
 
-variable {C : Type u} [Category.{u} C] {J : GrothendieckTopology C}
+variable {C : Type u₁} [Category.{v₁} C] {J : GrothendieckTopology C}
+variable [J.HasSheafCompose (forget₂ CommRingCat RingCat.{u})]
 variable [HasWeakSheafify J AddCommGrpCat.{u}] [J.WEqualsLocallyBijective AddCommGrpCat.{u}]
 variable [∀ Y : C, HasWeakSheafify (J.over Y) AddCommGrpCat.{u}]
 variable [∀ Y : C, (J.over Y).WEqualsLocallyBijective AddCommGrpCat.{u}]

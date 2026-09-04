@@ -26,8 +26,8 @@ for the trivial line bundle.
 * `InvertibleSheaf.tensorTrivialLeftIso` and `InvertibleSheaf.tensorTrivialRightIso` are the
   unit isomorphisms in the full category of invertible sheaves.
 
-The proofs specialize the site-level closure theorem and tensor-unit isomorphisms to the structure
-sheaf of `X`.
+The underlying sheaf is exposed by `tensorProduct_obj`, while the congruence, symmetry, and unit
+isomorphisms provide the categorical API for manipulating tensor products of line bundles.
 -/
 
 public section
