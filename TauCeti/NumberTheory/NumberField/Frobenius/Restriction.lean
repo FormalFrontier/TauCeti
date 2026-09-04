@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.NumberTheory.NumberField.Frobenius.Basic
+public import TauCeti.NumberTheory.NumberField.Frobenius
 
 /-!
 # Restriction of arithmetic Frobenius

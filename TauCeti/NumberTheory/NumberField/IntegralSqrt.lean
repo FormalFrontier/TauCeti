@@ -19,7 +19,7 @@ defining identities: its image in `K` is `x`, and it squares to `d` in `𝓞 K`.
 This is the shared square-root packaging used by the multiquadratic Layer 1 files: the
 splitting law (`TauCeti.NumberTheory.Multiquadratic.MultiquadraticSplitting`) moves the
 generators `√dᵢ` into `𝓞 K` to compare residues, and the Frobenius computation
-(`TauCeti.NumberTheory.NumberField.Frobenius.Basic`) applies the arithmetic-Frobenius congruence,
+(`TauCeti.NumberTheory.NumberField.Frobenius`) applies the arithmetic-Frobenius congruence,
 which lives on `𝓞 K`, to a square root.
 
 When `d` is not a rational square, `X² - d` is irreducible over `ℚ`, so it is the minimal
