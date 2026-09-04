@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Analysis.InnerProductSpace.ProdL2
-public import Mathlib.Analysis.SpecialFunctions.ExpDeriv
 public import TauCeti.Analysis.Calculus.Morse.Basic
 public import TauCeti.Analysis.Calculus.Morse.FlowExistence
 public import TauCeti.Analysis.Calculus.Morse.Stable
