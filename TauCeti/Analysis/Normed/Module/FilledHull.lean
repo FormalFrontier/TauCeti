@@ -34,12 +34,11 @@ unhypothesised, because `filledHull ∅` is empty in a nontrivial space
 (`TauCeti.filledHull_empty`) and the single point of the zero space otherwise, of diameter `0`
 either way.
 
-Because the width of a filled hull is controlled, so is that of anything inside it. The form used
-below is `IsPreconnected.subset_filledHull`: a preconnected set disjoint from `K` is trapped inside
-the filled hull as soon as it meets it. Their composite,
+Because the width of a filled hull is controlled, so is that of anything inside it, and the shape
+in which this is spent is `IsPreconnected.subset_filledHull`: a preconnected set disjoint from `K`
+is trapped inside the filled hull as soon as it meets it. Their composite,
 `IsPreconnected.diam_le_diam_of_disjoint`, says that *a connected set that a small `K` cuts off
-from infinity is itself small*, with no regularity asked of `K`. The latter extends Mathlib's
-root-level `IsPreconnected` API so it can be invoked directly on the preconnectedness hypothesis.
+from infinity is itself small*, with no regularity asked of `K`.
 
 ## Roadmap role
 

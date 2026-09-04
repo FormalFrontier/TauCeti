@@ -78,9 +78,6 @@ side of such a crosscut cuts off, whose description as a union of cluster sets i
 statement about a closure. Nothing here is specific to those uses; no lemma mentions a metric, let
 alone a holomorphic map.
 
-`IsPreconnected.inter_frontier_nonempty` extends Mathlib's root-level `IsPreconnected` API, so it
-is declared there and can be invoked directly on a preconnectedness hypothesis.
-
 ## Main results
 
 * `IsPreconnected.inter_frontier_nonempty` — a preconnected set meeting both a set and its

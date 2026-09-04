@@ -25,11 +25,9 @@ does not make a set wider needs a real normed space and lives in
 
 The shape in which the structural side is spent is `IsPreconnected.subset_filledHull`: a
 preconnected set disjoint from `K` is trapped inside the filled hull as soon as it meets it, since
-it then lies in a single bounded component. This theorem extends Mathlib's root-level
-`IsPreconnected` API so that it can be invoked directly on the preconnectedness hypothesis.
-Together with the width bound of the normed file it says that *a connected set that a small `K`
-cuts off from infinity is itself small*, with no regularity asked of `K`; that composite is
-`IsPreconnected.diam_le_diam_of_disjoint` there.
+it then lies in a single bounded component. Together with the width bound of the normed file it
+says that *a connected set that a small `K` cuts off from infinity is itself small*, with no
+regularity asked of `K`; that composite is `IsPreconnected.diam_le_diam_of_disjoint` there.
 
 The negation of membership — that the component of a point in the complement of `K` is *unbounded*
 — already occurs, unfolded, in the winding-number layer: it is the hypothesis of
