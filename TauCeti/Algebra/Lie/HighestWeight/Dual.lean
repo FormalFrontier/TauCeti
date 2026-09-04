@@ -8,9 +8,9 @@ module
 public import TauCeti.Algebra.Lie.Dual
 public import TauCeti.Algebra.Lie.HighestWeight.FiniteDimensional
 public import TauCeti.Algebra.Lie.HighestWeight.Irreducible
+public import TauCeti.Algebra.Lie.HighestWeight.LowestWeight
 public import TauCeti.Algebra.Lie.HighestWeight.Verma
 public import TauCeti.Algebra.Lie.Weights.Diagonalizable
-public import TauCeti.LinearAlgebra.RootSystem.Opposition
 
 public section
 
@@ -27,14 +27,11 @@ self-duality criterion:
 
 with `w₀` the longest element of the Weyl group.
 
-## The lowest weight
+## The highest weight of the dual
 
-The weights of `M` are stable under the Weyl group and lie below `lam`
-(`TauCeti.sub_weylGroup_smul_mem_posRootCone_of_genWeightSpace_ne_bot_of_isHighestWeightVector`),
-so applying `w₀` — which carries the positive root cone to its negative
-(`TauCeti.neg_longestElement_smul_mem_posRootCone`) — shows that every weight of `M` lies *above*
-`w₀ • lam` (`TauCeti.sub_longestElement_smul_mem_posRootCone_of_genWeightSpace_ne_bot`). So
-`w₀ • lam` is the lowest weight: subtracting a positive root from it leaves the weight support.
+`TauCeti/Algebra/Lie/HighestWeight/LowestWeight.lean` identifies `w₀ • lam` as the lowest weight of
+`M`: nothing lies below it, so subtracting a positive root from it leaves the weight support
+(`TauCeti.genWeightSpace_longestElement_smul_sub_root_eq_bot`).
 
 A functional that vanishes on every weight space except the lowest one is then a highest weight
 vector of `M*` of weight `-(w₀ • lam)`. Its weight is read off the honest weight-space
@@ -50,11 +47,6 @@ morphism `M → M*`, which by Schur's lemma is an equivalence.
 
 ## Main results
 
-* `TauCeti.IsDominantIntegral.neg_longestElement_smul`: `-(w₀ • lam)` is dominant integral when
-  `lam` is, by the opposition involution of the base.
-* `TauCeti.sub_longestElement_smul_mem_posRootCone_of_genWeightSpace_ne_bot`: **`w₀ • lam` is the
-  lowest weight**, and `TauCeti.genWeightSpace_longestElement_smul_sub_root_eq_bot` is the form the
-  construction of the dual highest weight vector consumes.
 * `TauCeti.exists_isHighestWeightVector_dual`: **the dual module has a highest weight vector of
   weight `-(w₀ • lam)`.**
 * `TauCeti.nonempty_lieModuleEquiv_dual_iff` and
@@ -69,14 +61,14 @@ morphism `M → M*`, which by Schur's lemma is an equivalence.
 This file supplies the carrier-independent self-duality theorem required by the "self-duality of
 `L(λ)`" coverage target `exists_invariantForm_iff_neg_longest_smul_eq` of
 `TauCetiRoadmap/RepresentationTheory/LieHighestWeight/Suggested.lean`. The roadmap's Layer 6
-records that target as the interface the Frobenius-Schur indicator of
-`TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md` consumes. The pinned statement
+records that target as the interface the Frobenius-Schur indicator of Layer 6b of
+`TauCetiRoadmap/RepresentationTheory/CompactGroups/Suggested.lean` consumes. The pinned statement
 phrases `w₀` as "a Weyl element carrying the dominant cone to its negative" so as not to import a
 length function; `TauCeti.longestElement` is that element, so it is used directly here.
 
 This does not close the pinned target, which asks for the criterion at `L(lam)` from dominance
-alone. That form entails `M(lam) ≠ 0` for every dominant integral `lam`, since for `lam` with
-`-(w₀ • lam) = lam` it produces a nonzero bilinear form on `L(lam)`, and the zero module carries
+alone. That form entails `M(lam) ≠ 0` for every dominant integral `lam` with `-(w₀ • lam) = lam`,
+since for such a `lam` it produces a nonzero bilinear form on `L(lam)`, and the zero module carries
 none. The nonvanishing is the freeness half of Poincaré--Birkhoff--Witt, isolated as a hypothesis in
 `TauCeti/Algebra/Lie/HighestWeight/Verma.lean` and assigned to the roadmap's separate Layer 3 PBW
 work. The conditional named-carrier specialization below makes that missing input explicit.
@@ -96,67 +88,9 @@ variable {K : Type u} {L : Type v} [Field K] [CharZero K]
   {H : LieSubalgebra K L} [H.IsCartanSubalgebra] [IsTriangularizable K H L]
   {b : (IsKilling.rootSystem H).Base} {lam : Dual K H}
 
-/-! ### Dominance of the opposite weight -/
-
-/-- **The opposite of a dominant integral weight is dominant integral.** The opposition involution
-`i ↦ -w₀ i` permutes the simple roots (`TauCeti.opposition_mem_support`), and the value of
-`-(w₀ • lam)` on the coroot of `αᵢ` is the value of `lam` on the coroot of the opposite simple
-root. -/
-theorem IsDominantIntegral.neg_longestElement_smul (hlam : IsDominantIntegral b lam) :
-    IsDominantIntegral b (-(longestElement (IsKilling.rootSystem H) b • lam)) := by
-  -- The root system of `H` pairs a weight with a coroot by evaluation, so its `coroot'` is
-  -- evaluation at the coroot; this is the boundary between the two coroot interfaces.
-  have hcoroot' : ∀ (j : H.root) (x : Dual K H),
-      (IsKilling.rootSystem H).coroot' j x = x ((IsKilling.rootSystem H).coroot j) :=
-    fun _ _ => by rw [LinearMap.flip_apply, IsKilling.rootSystem_toLinearMap_apply]
-  refine isDominantIntegral_iff.mpr fun i hi => ?_
-  obtain ⟨n, hn⟩ :=
-    isDominantIntegral_iff.mp hlam _ (opposition_mem_support (IsKilling.rootSystem H) b hi)
-  refine ⟨n, ?_⟩
-  have h := coroot'_opposition (IsKilling.rootSystem H) b i lam
-  rw [hcoroot', hcoroot', hn] at h
-  rw [LinearMap.neg_apply, h]
-
-/-! ### The lowest weight -/
-
 variable [IsAlgClosed K]
   {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M] {v : M}
   [_root_.LieModule.IsIrreducible K L M]
-
-/-- **`w₀ • lam` is the lowest weight of an irreducible highest weight module.** Every weight lies
-above it, in the sense that their difference is a nonnegative combination of the simple roots.
-
-The weights of `M` are stable under the Weyl group and lie below `lam`; applying `w₀`, which
-negates the positive root cone, reverses the inequality. -/
-theorem sub_longestElement_smul_mem_posRootCone_of_genWeightSpace_ne_bot
-    (hv : IsHighestWeightVector b lam v) (hlam : IsDominantIntegral b lam) {chi : Dual K H}
-    (hchi : genWeightSpace M ⇑chi ≠ ⊥) :
-    chi - longestElement (IsKilling.rootSystem H) b • lam
-      ∈ posRootCone (IsKilling.rootSystem H) b := by
-  have h := sub_weylGroup_smul_mem_posRootCone_of_genWeightSpace_ne_bot_of_isHighestWeightVector
-    hv hlam (longestElement (IsKilling.rootSystem H) b) hchi
-  have h2 := neg_longestElement_smul_mem_posRootCone h
-  rwa [smul_sub, smul_smul_longestElement, neg_sub] at h2
-
-omit [IsAlgClosed K] [_root_.LieModule.IsIrreducible K L M] in
-/-- The weight underlying the difference of a weight and a root is the pointwise difference. -/
-private theorem coe_sub_root_rootSystem (x : Dual K H) (i : H.root) :
-    ⇑(x - (IsKilling.rootSystem H).root i) = ⇑x - (i : H → K) :=
-  rfl
-
-/-- **Nothing lies below the lowest weight.** Subtracting a positive root from `w₀ • lam` leaves
-the weight support of `M`: the positive root cone is pointed, so a weight below the lowest one
-would give a positive root whose negative is again in the cone. -/
-theorem genWeightSpace_longestElement_smul_sub_root_eq_bot
-    (hv : IsHighestWeightVector b lam v) (hlam : IsDominantIntegral b lam) {i : H.root}
-    (hi : i ∈ posRoots (IsKilling.rootSystem H) b) :
-    genWeightSpace M (⇑(longestElement (IsKilling.rootSystem H) b • lam) - (i : H → K)) = ⊥ := by
-  by_contra hne
-  rw [← coe_sub_root_rootSystem] at hne
-  have h := sub_longestElement_smul_mem_posRootCone_of_genWeightSpace_ne_bot hv hlam hne
-  rw [sub_sub_cancel_left] at h
-  exact root_add_ne_zero_of_mem_posRoots_of_mem_posRootCone (IsKilling.rootSystem H) b hi h
-    (add_neg_cancel _)
 
 /-! ### The highest weight vector of the dual -/
 

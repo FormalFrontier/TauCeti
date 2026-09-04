@@ -23,20 +23,14 @@ under the action then so is the set of vectors every functional in `N` kills, be
 again lies in `N`. A nonzero `N` has a proper annihilator, hence a zero one, and in finite
 dimensions that forces `N = ⊤`.
 
-The second is that an invariant bilinear form on `M` is the same datum as a morphism `M → M*`. A
-bilinear form on `M` *is* a linear map `M → M*`, and Mathlib's
-`LinearMap.BilinForm.lieInvariant_iff` says that invariance is exactly membership of the maximal
-trivial submodule, which `LieModule.maxTrivLinearMapEquivLieModuleHom` identifies with the morphism
-space. Both directions of that dictionary are named here, so that a caller holding a particular form
-or morphism can transport it. For an irreducible `M` Schur's lemma then upgrades a nonzero morphism
-to an equivalence, so carrying a nonzero invariant form and being self-dual are the same condition.
-
-## Main definitions
-
-* `TauCeti.LieModule.lieModuleHomOfLieInvariant` and
-  `TauCeti.LieModule.bilinFormOfLieModuleHom`: the two directions of the correspondence between
-  invariant bilinear forms on `M` and morphisms `M → M*`, mutually inverse and each preserving and
-  reflecting vanishing.
+The second is that an invariant bilinear form on `M` is the same datum as a morphism `M → M*`. That
+dictionary is already Mathlib's: a bilinear form on `M` *is* a linear map `M → M*`, both
+`LinearMap.BilinForm` and `Module.Dual` being abbreviations; `LinearMap.BilinForm.lieInvariant_iff`
+says that invariance is exactly membership of the maximal trivial submodule; and
+`LieModule.maxTrivLinearMapEquivLieModuleHom` is the `R`-linear equivalence between that submodule
+and the morphism space. Only the consequence for nonvanishing is recorded here. For an irreducible
+`M` Schur's lemma then upgrades a nonzero morphism to an equivalence, so carrying a nonzero
+invariant form and being self-dual are the same condition.
 
 ## Main results
 
@@ -50,10 +44,10 @@ to an equivalence, so carrying a nonzero invariant form and being self-dual are 
 
 ## References
 
-Duality of highest weight modules is the setting in which the highest-weight roadmap
-(`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`) states self-duality of `L(λ)`,
-the `exists_invariantForm_iff_neg_longest_smul_eq` target of its `Suggested.lean`; nothing in this
-file mentions weights, so it is stated for an arbitrary Lie algebra.
+Duality of highest weight modules is the setting in which the highest-weight roadmap states
+self-duality of `L(λ)`, as the Layer 6 target `exists_invariantForm_iff_neg_longest_smul_eq` of
+`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/Suggested.lean`; nothing in this file
+mentions weights, so it is stated for an arbitrary Lie algebra.
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §6.1.
 * N. Bourbaki, *Groupes et algèbres de Lie*, Chapitre I, §3.3.
@@ -105,80 +99,27 @@ private theorem eq_bot_of_dualCoannihilator_eq_top {N : LieSubmodule R L (Dual R
   have hf0 : f = 0 := LinearMap.ext fun m => mem_dualCoannihilator.mp (hall m) f hf
   simp [hf0]
 
-/-! ### Invariant bilinear forms as morphisms to the dual
-
-The two conversions below are not `@[expose]`: their bodies are implementation, and the `_apply`
-lemmas are the whole characterization a caller needs. That is also why those lemmas unfold the
-definition through `simp` instead of closing by `rfl`, which the module system rejects for an
-exported theorem about an unexposed definition. -/
-
-/-- **The morphism `M → M*` attached to an invariant bilinear form.** A bilinear form on `M` *is* a
-linear map `M → M*`; invariance says it lies in the maximal trivial submodule
-(`LinearMap.BilinForm.lieInvariant_iff`), which `LieModule.maxTrivLinearMapEquivLieModuleHom`
-identifies with the space of morphisms. -/
-def lieModuleHomOfLieInvariant {Φ : LinearMap.BilinForm R M} (hΦ : Φ.lieInvariant L) :
-    M →ₗ⁅R,L⁆ Dual R M :=
-  _root_.LieModule.maxTrivLinearMapEquivLieModuleHom
-    ⟨Φ, (LinearMap.BilinForm.lieInvariant_iff Φ).mp hΦ⟩
-
-@[simp]
-theorem lieModuleHomOfLieInvariant_apply {Φ : LinearMap.BilinForm R M} (hΦ : Φ.lieInvariant L)
-    (m : M) : lieModuleHomOfLieInvariant hΦ m = Φ m := by
-  simp [lieModuleHomOfLieInvariant]
-
-@[simp]
-theorem lieModuleHomOfLieInvariant_eq_zero_iff {Φ : LinearMap.BilinForm R M}
-    (hΦ : Φ.lieInvariant L) : lieModuleHomOfLieInvariant hΦ = 0 ↔ Φ = 0 := by
-  refine ⟨fun h => LinearMap.ext fun m => ?_, fun h => LieModuleHom.ext fun m => ?_⟩
-  · simpa using congrArg (fun f => f m) h
-  · simp [h]
-
-/-- **The invariant bilinear form attached to a morphism `M → M*`**, inverse to
-`TauCeti.LieModule.lieModuleHomOfLieInvariant`. -/
-def bilinFormOfLieModuleHom (f : M →ₗ⁅R,L⁆ Dual R M) : LinearMap.BilinForm R M :=
-  (_root_.LieModule.maxTrivLinearMapEquivLieModuleHom.symm f : LinearMap.BilinForm R M)
-
-@[simp]
-theorem bilinFormOfLieModuleHom_apply (f : M →ₗ⁅R,L⁆ Dual R M) (m : M) :
-    bilinFormOfLieModuleHom f m = f m := by
-  simp [bilinFormOfLieModuleHom]
-
-theorem lieInvariant_bilinFormOfLieModuleHom (f : M →ₗ⁅R,L⁆ Dual R M) :
-    (bilinFormOfLieModuleHom f).lieInvariant L :=
-  (LinearMap.BilinForm.lieInvariant_iff _).mpr
-    (_root_.LieModule.maxTrivLinearMapEquivLieModuleHom.symm f).2
-
-@[simp]
-theorem bilinFormOfLieModuleHom_eq_zero_iff {f : M →ₗ⁅R,L⁆ Dual R M} :
-    bilinFormOfLieModuleHom f = 0 ↔ f = 0 := by
-  refine ⟨fun h => LieModuleHom.ext fun m => ?_, fun h => LinearMap.ext fun m => ?_⟩
-  · simpa using congrArg (fun Φ => Φ m) h
-  · simp [h]
-
-/-- The correspondence sends the morphism attached to an invariant form back to that form. -/
-@[simp]
-theorem bilinFormOfLieModuleHom_lieModuleHomOfLieInvariant {Φ : LinearMap.BilinForm R M}
-    (hΦ : Φ.lieInvariant L) :
-    bilinFormOfLieModuleHom (lieModuleHomOfLieInvariant hΦ) = Φ := by
-  ext m
-  simp
-
-/-- The correspondence sends the form attached to a morphism back to that morphism. -/
-@[simp]
-theorem lieModuleHomOfLieInvariant_bilinFormOfLieModuleHom {f : M →ₗ⁅R,L⁆ Dual R M}
-    (hf : (bilinFormOfLieModuleHom f).lieInvariant L) :
-    lieModuleHomOfLieInvariant hf = f := by
-  ext m
-  simp
+/-! ### Invariant bilinear forms as morphisms to the dual -/
 
 /-- **A nonzero invariant bilinear form is a nonzero morphism to the dual.** A bilinear form on `M`
-is a linear map `M → M*`, and invariance of the form is exactly equivariance of that map. -/
+is a linear map `M → M*`, invariance of the form is membership of the maximal trivial submodule
+(`LinearMap.BilinForm.lieInvariant_iff`), and `LieModule.maxTrivLinearMapEquivLieModuleHom` is the
+linear equivalence of that submodule with the morphism space, so it matches the nonzero forms with
+the nonzero morphisms. -/
 theorem exists_ne_zero_lieInvariant_iff_exists_ne_zero_lieModuleHom :
     (∃ Φ : LinearMap.BilinForm R M, Φ ≠ 0 ∧ Φ.lieInvariant L) ↔
-      ∃ f : M →ₗ⁅R,L⁆ Dual R M, f ≠ 0 :=
-  ⟨fun ⟨_, hΦ0, hΦ⟩ => ⟨lieModuleHomOfLieInvariant hΦ, by simpa using hΦ0⟩,
-    fun ⟨f, hf0⟩ => ⟨bilinFormOfLieModuleHom f, by simpa using hf0,
-      lieInvariant_bilinFormOfLieModuleHom f⟩⟩
+      ∃ f : M →ₗ⁅R,L⁆ Dual R M, f ≠ 0 := by
+  constructor
+  · rintro ⟨Φ, hΦ0, hΦ⟩
+    refine ⟨_root_.LieModule.maxTrivLinearMapEquivLieModuleHom
+      ⟨Φ, (LinearMap.BilinForm.lieInvariant_iff Φ).mp hΦ⟩, ?_⟩
+    simpa [Submodule.mk_eq_zero] using hΦ0
+  · rintro ⟨f, hf0⟩
+    refine ⟨(_root_.LieModule.maxTrivLinearMapEquivLieModuleHom.symm f :
+      LinearMap.BilinForm R M), fun h => hf0 (LieModuleHom.ext fun m => ?_),
+      (LinearMap.BilinForm.lieInvariant_iff _).mpr
+        (_root_.LieModule.maxTrivLinearMapEquivLieModuleHom.symm f).2⟩
+    simpa using congrArg (fun Φ : LinearMap.BilinForm R M => Φ m) h
 
 end CommRing
 
