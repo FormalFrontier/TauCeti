@@ -57,7 +57,7 @@ pinned group; and its order is the superscript in the printed family name, recor
   `TauCeti.GraphTwistedIndex.twistOrder_pos`: the twist order annihilates the permutation, is
   exactly its order, and is positive.
 * `TauCeti.TypeB2LieIndex.diagramPerm_toGraphTwistedIndex`: the untwisted family on the `B₂`
-  diagram takes the identity, which places it in the untwisted row of the table.
+  diagram takes the identity, the `B₂` diagram having no symmetry to twist by.
 * `TauCeti.TypeE6LieIndex.diagramPerm_toGraphTwistedIndex` and
   `TauCeti.TypeTwistedE6LieIndex.diagramPerm_toGraphTwistedIndex`: the two families on the `E₆`
   diagram take the identity and `TauCeti.graphPermE6` respectively, which is the distinction
@@ -368,10 +368,9 @@ family, is excluded by that same condition. -/
 abbrev toGraphTwistedIndex (d : TypeB2LieIndex) : GraphTwistedIndex :=
   ⟨d.1.1, d.2⟩
 
-/-- **The diagram permutation of the untwisted family `B₂(q)` is the identity**, which is what
-places it in the untwisted row of milestone L1's table, where the Steinberg map is `Frob_q`
-outright. The `B₂` diagram has no symmetry to twist by in any case: its two nodes have different
-root lengths. -/
+/-- **The diagram permutation of the untwisted family `B₂(q)` is the identity**, so its Steinberg
+map composes with no twist and is the `q`-power Frobenius outright. The `B₂` diagram has no
+symmetry to twist by in any case: its two nodes have different root lengths. -/
 @[simp]
 theorem diagramPerm_toGraphTwistedIndex (d : TypeB2LieIndex) :
     d.toGraphTwistedIndex.diagramPerm = 1 := by
