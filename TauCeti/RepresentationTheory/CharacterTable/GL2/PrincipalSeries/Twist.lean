@@ -53,9 +53,9 @@ variable (F : Type u) [Field F] [Fintype F]
 
 /-- **Twisting both principal-series parameters multiplies the character by a determinant
 character.** For `γ α β : Fˣ → ℂˣ`, the equality
-`χ(Ind_B^GL₂(γα ⊗ γβ)) = (γ ∘ det) · χ(Ind_B^GL₂(α ⊗ β))`
-is the class-function projection formula, because `γα ⊗ γβ` is the pointwise product of `α ⊗ β`
-with the restriction of `γ ∘ det` to the Borel subgroup. -/
+`χ(Ind_B^GL₂(γα ⊗ γβ)) = (γ ∘ det) · χ(Ind_B^GL₂(α ⊗ β))`. At `α = β = 1`,
+this identifies the repeated-parameter principal-series character as a determinant twist of the
+untwisted boundary character. -/
 @[simp]
 theorem character_GL2PrincipalSeries_mul_eq_mul (γ α β : Fˣ →* ℂˣ) :
     (GL2PrincipalSeries F (γ * α) (γ * β)).character =

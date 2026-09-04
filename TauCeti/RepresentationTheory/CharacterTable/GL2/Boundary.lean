@@ -95,9 +95,8 @@ section SmallUniverse
 
 variable (F : Type) [Field F] [Fintype F]
 
-/-- **The Steinberg representation of `GL₂(F)` is irreducible.** Its character has norm one by
-the Bruhat double-coset computation, and Mathlib's character-norm criterion converts that equality
-to simplicity. -/
+/-- **The Steinberg representation of `GL₂(F)` is irreducible** for a universe-small finite
+field `F`. -/
 theorem simple_GL2Steinberg : Simple (GL2Steinberg F) := by
   classical
   apply (FDRep.simple_iff_char_is_norm_one (GL2Steinberg F)).mpr
@@ -108,9 +107,8 @@ theorem simple_GL2Steinberg : Simple (GL2Steinberg F) := by
   field_simp [hcard] at h
   simpa only [ClassFunction.ofFDRep_apply] using h
 
-/-- **Every determinant twist of the Steinberg representation is irreducible.** Twisting its
-character by `α ∘ det` preserves the character norm, since the values at `g` and `g⁻¹` are
-mutual inverses. -/
+/-- **Every determinant twist of the Steinberg representation is irreducible** for a
+universe-small finite field `F`. -/
 theorem simple_GL2SteinbergTwist (α : Fˣ →* ℂˣ) : Simple (GL2SteinbergTwist F α) := by
   classical
   apply (FDRep.simple_iff_char_is_norm_one (GL2SteinbergTwist F α)).mpr
