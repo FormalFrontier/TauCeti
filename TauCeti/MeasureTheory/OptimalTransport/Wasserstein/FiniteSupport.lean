@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.MeasureTheory.OptimalTransport.GraphPlan
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Space
 
 /-!
@@ -95,52 +94,25 @@ universe u
 
 variable {X : Type u} [MeasurableSpace X] {p : ℝ≥0∞}
 
-section Displacement
-
-variable [PseudoEMetricSpace X] {μ : Measure X} {T : X → X}
-
-/-- **The displacement bound.** The Wasserstein distance from a law to its pushforward along a
-map is at most the `L^p` seminorm of the displacement `x ↦ edist x (T x)`: the graph plan of `T`
-couples the two measures, and its objective is exactly that seminorm. -/
-theorem wassersteinEDist_map_le (hd : Measurable fun z : X × X ↦ edist z.1 z.2)
-    (hT : AEMeasurable T μ) (p : ℝ≥0∞) :
-    wassersteinEDist p μ (μ.map T) ≤ eLpNorm (fun x ↦ edist x (T x)) p μ := by
-  refine (wassersteinEDist_le (isCoupling_graphPlan_map hT) p).trans_eq ?_
-  rw [graphPlan_def,
-    eLpNorm_map_measure hd.aestronglyMeasurable (aemeasurable_prodMk_self hT)]
-  rfl
-
-end Displacement
-
 section FiniteCarrier
 
-variable [PseudoMetricSpace X] [OpensMeasurableSpace X] [SecondCountableTopology X]
-  {ν : Measure X} {s : Finset X}
+variable [PseudoMetricSpace X] [OpensMeasurableSpace X] {ν : Measure X} {s : Finset X}
 
 /-- A law carried by a finite set has finite `p`-moment, for every exponent: the ground distance
 to a basepoint is bounded on a finite set. -/
 theorem hasFiniteMoment_of_ae_mem_finset [IsFiniteMeasure ν] (x₀ : X)
     (hs : ∀ᵐ y ∂ν, y ∈ s) : HasFiniteMoment p ν := by
-  refine hasFiniteMoment_def.2 ⟨x₀,
-    (measurable_edist.comp (measurable_const.prodMk measurable_id)).aestronglyMeasurable, ?_⟩
-  rcases eq_or_ne ν 0 with rfl | hν
-  · simp
-  rcases eq_or_ne p 0 with rfl | hp0
-  · simp
-  have hle : eLpNorm (fun y ↦ edist x₀ y) p ν
-      ≤ eLpNorm (fun _ : X ↦ s.sup fun z ↦ edist x₀ z) p ν :=
-    eLpNorm_mono_enorm_ae (hs.mono fun y hy ↦ by
-      simpa using Finset.le_sup (f := fun z ↦ edist x₀ z) hy)
-  refine hle.trans_lt ?_
-  rw [eLpNorm_const _ hp0 hν]
-  refine ENNReal.mul_lt_top ?_ (ENNReal.rpow_lt_top_of_nonneg (by positivity) (measure_ne_top ν _))
-  simpa using (Finset.sup_lt_iff (by simp)).2 fun z _ ↦ edist_lt_top x₀ z
+  refine hasFiniteMoment_def.2 ⟨x₀, MemLp.of_enorm_bound (C := s.sup fun z ↦ edist x₀ z)
+    measurable_edist_right.aestronglyMeasurable ?_ ?_⟩
+  · exact ((Finset.sup_lt_iff (by simp)).2 fun z _ ↦ edist_lt_top x₀ z).ne
+  · filter_upwards [hs] with y hy
+    simpa only [enorm_eq_self] using Finset.le_sup (f := fun z ↦ edist x₀ z) hy
 
 end FiniteCarrier
 
 section Approximation
 
-variable [PseudoMetricSpace X] [OpensMeasurableSpace X] [SecondCountableTopology X]
+variable [PseudoMetricSpace X] [OpensMeasurableSpace X] [TopologicalSpace.SeparableSpace X]
   {μ : Measure X} {ε : ℝ≥0∞}
 
 /-- **Approximation by a quantizer.** On a separable ground space, a probability measure with
@@ -177,8 +149,8 @@ theorem exists_map_wassersteinEDist_le (hp : 1 ≤ p) (hp_top : p ≠ ∞) [IsPr
   have hf_meas : Measurable f := measurable_edist.comp (measurable_const.prodMk measurable_id)
   have hmom : MemLp f p μ := hμ.memLp hf_meas.aestronglyMeasurable
   have hfin : ∫⁻ y, f y ^ p.toReal ∂μ ≠ ∞ := by
-    rw [← eLpNorm_rpow_eq_lintegral hp0 hp_top]
-    exact (ENNReal.rpow_lt_top_of_nonneg ht.le hmom.eLpNorm_ne_top).ne
+    simpa only [hasFiniteIntegral_iff_enorm, enorm_eq_self, lt_top_iff_ne_top] using
+      (hmom.integrable_enorm_rpow hp0 hp_top).hasFiniteIntegral
   -- the tail sets decrease to the empty set, so their contribution vanishes
   set A : ℕ → Set X := fun n ↦ {x | n ≤ idx x} with hA_def
   have hA_meas : ∀ n, MeasurableSet (A n) := fun n ↦ hidx_meas MeasurableSet.of_discrete
@@ -258,8 +230,7 @@ theorem exists_ae_mem_finset_wassersteinEDist_le (hp : 1 ≤ p) (hp_top : p ≠ 
     exact eq_empty_of_forall_notMem fun x hx ↦ hx (hTs x)
   refine ⟨s, μ.map T, inferInstance, hnull, ?_, hle⟩
   refine hasFiniteMoment_of_ae_mem_finset (s := s) (hasFiniteMoment_def.1 hμ).choose ?_
-  rw [ae_iff, show {y | y ∉ s} = ((s : Set X)ᶜ) by ext y; simp]
-  exact hnull
+  exact mem_ae_iff.2 hnull
 
 end Approximation
 
@@ -309,6 +280,14 @@ theorem wassersteinQuantizationError_le (hν : IsProbabilityMeasure ν)
     wassersteinQuantizationError p N μ ≤ wassersteinEDist p μ ν :=
   iInf_le_of_le ν (iInf_le_of_le hν (iInf_le _ hs))
 
+/-- A bound valid for every admissible competitor bounds the quantization error from below. -/
+theorem le_wassersteinQuantizationError {a : ℝ≥0∞}
+    (h : ∀ (ν : Measure X) (_ : IsProbabilityMeasure ν),
+      (∃ s : Finset X, s.card ≤ N ∧ ν ((s : Set X)ᶜ) = 0) →
+        a ≤ wassersteinEDist p μ ν) :
+    a ≤ wassersteinQuantizationError p N μ :=
+  le_iInf₂ fun ν hν ↦ le_iInf fun hs ↦ h ν hν hs
+
 /-- The quantization error decreases as more points are allowed. -/
 theorem antitone_wassersteinQuantizationError :
     Antitone fun N ↦ wassersteinQuantizationError p N μ := by
@@ -320,7 +299,7 @@ end Quantization
 
 section QuantizationTendsto
 
-variable [PseudoMetricSpace X] [OpensMeasurableSpace X] [SecondCountableTopology X]
+variable [PseudoMetricSpace X] [OpensMeasurableSpace X] [TopologicalSpace.SeparableSpace X]
   [MeasurableSingletonClass X] {μ : Measure X}
 
 /-- **The quantization error vanishes.** On a separable ground space with measurable singletons
