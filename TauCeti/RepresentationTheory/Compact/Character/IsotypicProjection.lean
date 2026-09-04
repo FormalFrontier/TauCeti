@@ -10,6 +10,7 @@ public import TauCeti.RepresentationTheory.Compact.Character.Projection
 public import Mathlib.RingTheory.SimpleModule.Isotypic
 import TauCeti.RepresentationTheory.Continuous.InvariantComplement
 import TauCeti.RepresentationTheory.Continuous.Intertwining
+import TauCeti.RepresentationTheory.Compact.UnitaryModel
 import TauCeti.RepresentationTheory.Irreducible
 
 /-!
@@ -233,8 +234,7 @@ theorem isotypicProjector_apply_subtype_of_equiv (hunitary : IsUnitary rho)
       simpa only [ContinuousLinearMap.comp_apply] using happly.symm
     _ = (v : V) := by rw [hblock, ContinuousLinearMap.id_apply, hiota]
 
-/-- **The isotypic projector vanishes on every inequivalent irreducible block.** -/
-theorem isotypicProjector_apply_subtype_of_not_equiv
+private theorem isotypicProjector_apply_subtype_of_not_equiv_of_isUnitary
     (sigma : ContRepresentation k G W) (hsigma : Continuous sigma) (hunitary : IsUnitary sigma)
     (hirr : Representation.IsIrreducible sigma.toRepresentation)
     {tau : Subrepresentation rho.toRepresentation} (htau : IsAtom tau)
@@ -286,11 +286,33 @@ theorem isotypicProjector_apply_subtype_of_not_equiv
       simpa only [ContinuousLinearMap.comp_apply] using happly.symm
     _ = 0 := by rw [hblock, zero_apply, map_zero]
 
+/-- **The isotypic projector vanishes on every inequivalent irreducible block.** -/
+theorem isotypicProjector_apply_subtype_of_not_equiv
+    (sigma : ContRepresentation k G W) (hsigma : Continuous sigma)
+    (hirr : Representation.IsIrreducible sigma.toRepresentation)
+    {tau : Subrepresentation rho.toRepresentation} (htau : IsAtom tau)
+    (hne : IsEmpty (tau.asSubmodule ≃ₗ[k[G]] sigma.toRepresentation.asModule))
+    (v : tau.toSubmodule) :
+    isotypicProjector rho hrho sigma hsigma (v : V) = 0 := by
+  obtain ⟨e, hunitary⟩ := TauCeti.ContRepresentation.exists_isUnitary_congr sigma hsigma
+  let sigma' := TauCeti.ContRepresentation.congr e sigma
+  let hsigma' : Continuous sigma' := TauCeti.ContRepresentation.continuous_congr e hsigma
+  have hirr' : Representation.IsIrreducible sigma'.toRepresentation :=
+    TauCeti.ContRepresentation.isIrreducible_congr e hirr
+  have hequiv : sigma.toRepresentation.Equiv sigma'.toRepresentation :=
+    (ContRepresentation.nonempty_equiv_iff.mp
+      ⟨_root_.ContRepresentation.congrEquiv sigma e⟩).some
+  let hne' : IsEmpty (tau.asSubmodule ≃ₗ[k[G]] sigma'.toRepresentation.asModule) :=
+    ⟨fun f ↦ hne.false
+      (f.trans (Representation.asModuleLinearEquivOfEquiv hequiv).symm)⟩
+  rw [isotypicProjector_eq_of_equiv rho hrho hsigma hsigma' hequiv]
+  exact isotypicProjector_apply_subtype_of_not_equiv_of_isUnitary rho hrho sigma' hsigma'
+    hunitary hirr' htau hne' v
+
 /-- **The character projector cuts out the isotypic component.** Its range is exactly Mathlib's
 sum of the simple `k[G]`-submodules isomorphic to the selected irreducible. -/
 theorem range_isotypicProjector (hunitary : IsUnitary rho)
     (sigma : ContRepresentation k G W) (hsigma : Continuous sigma)
-    (hunitarySigma : IsUnitary sigma)
     (hirr : Representation.IsIrreducible sigma.toRepresentation) :
     (isotypicProjector rho hrho sigma hsigma).toIntertwiningMap.range.asSubmodule =
       isotypicComponent k[G] rho.toRepresentation.asModule sigma.toRepresentation.asModule := by
@@ -332,7 +354,7 @@ theorem range_isotypicProjector (hunitary : IsUnitary rho)
       exact hxC
     · let hne : IsEmpty (m ≃ₗ[k[G]] sigma.toRepresentation.asModule) := ⟨fun e ↦ he ⟨e⟩⟩
       have happly := isotypicProjector_apply_subtype_of_not_equiv rho hrho sigma hsigma
-        hunitarySigma hirr htau hne (⟨x, hx⟩ : tau.toSubmodule)
+        hirr htau hne (⟨x, hx⟩ : tau.toSubmodule)
       have hP : P (rho.toRepresentation.asModuleEquiv x) = 0 := by
         rw [hP_apply, hasModuleEquiv_apply]
         exact happly
@@ -398,7 +420,6 @@ theorem isotypicProjector_apply_of_mem_isotypicComponent (hunitary : IsUnitary r
 /-- The character isotypic projector is idempotent. -/
 theorem isotypicProjector_idempotent (hunitary : IsUnitary rho)
     (sigma : ContRepresentation k G W) (hsigma : Continuous sigma)
-    (hunitarySigma : IsUnitary sigma)
     (hirr : Representation.IsIrreducible sigma.toRepresentation) :
     (isotypicProjector rho hrho sigma hsigma).comp (isotypicProjector rho hrho sigma hsigma) =
       isotypicProjector rho hrho sigma hsigma := by
@@ -414,7 +435,7 @@ theorem isotypicProjector_idempotent (hunitary : IsUnitary rho)
       (isotypicProjector rho hrho sigma hsigma).toIntertwiningMap.range.asSubmodule :=
     (Subrepresentation.mem_asSubmodule_iff
       (σ := (isotypicProjector rho hrho sigma hsigma).toIntertwiningMap.range)).mpr hmem
-  rwa [range_isotypicProjector rho hrho hunitary sigma hsigma hunitarySigma hirr] at hrange
+  rwa [range_isotypicProjector rho hrho hunitary sigma hsigma hirr] at hrange
 
 end IsotypicProjection
 
