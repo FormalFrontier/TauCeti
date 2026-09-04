@@ -46,7 +46,6 @@ linear representations have dimension `1`, while their Steinberg twists have dim
   character is the determinant character times the untwisted boundary character.
 * `TauCeti.character_GL2PrincipalSeries_self_eq_add`: its two character constituents are the
   linear and Steinberg-twist characters.
-* `TauCeti.simple_GL2Linear`: the linear constituent is irreducible.
 * `TauCeti.simple_GL2Steinberg` and `TauCeti.simple_GL2SteinbergTwist`: the two Steinberg
   families are irreducible (for universe-small finite fields).
 * `TauCeti.nonempty_iso_GL2PrincipalSeries_self`: the boundary principal series is the biproduct
@@ -122,14 +121,6 @@ Mathlib's character-norm criterion currently requires the coefficient field and 
 same universe. Accordingly the two Steinberg packaging results below use `F : Type`, as does the
 existing irreducibility theorem for the non-boundary principal series. The representations, their
 splitting, and the irreducibility of the linear constituent all remain universe-polymorphic. -/
-
-omit [Fintype F] in
-/-- **The linear constituent of the boundary principal series is irreducible.** It is a line, so
-it has no proper nonzero subrepresentation. -/
-theorem simple_GL2Linear (α : Fˣ →* ℂˣ) : Simple (GL2Linear F α) :=
-  have : Representation.IsIrreducible (GL2Linear F α).ρ :=
-    Representation.isIrreducible_of_finrank_eq_one _ (finrank_GL2Linear (F := F) α)
-  FDRep.simple_of_isIrreducible _
 
 section SmallUniverse
 

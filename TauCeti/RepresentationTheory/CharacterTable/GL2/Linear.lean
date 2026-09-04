@@ -42,6 +42,7 @@ is `TauCeti.nonempty_iso_GL2PrincipalSeries_self` in
 * `TauCeti.GL2LinearChar_comp_gl2BorelSubtype`: restriction to the Borel subgroup is the boundary
   character `α ⊗ α`.
 * `TauCeti.GL2Linear_character_injective`: distinct multiplicative characters give distinct rows.
+* `TauCeti.simple_GL2Linear`: every linear representation is irreducible.
 * The `_scalar`, `_diagGL`, `_jordanGL`, and `_gl2NonSplitTorusHom` theorems compute both families
   on the four class representatives.
 
@@ -178,6 +179,13 @@ end CommRing
 section Field
 
 variable {F : Type u} [Field F]
+
+/-- **Every linear representation of `GL₂` is irreducible.** It is a line, so it has no proper
+nonzero subrepresentation. -/
+theorem simple_GL2Linear (α : Fˣ →* ℂˣ) : CategoryTheory.Simple (GL2Linear F α) :=
+  have : Representation.IsIrreducible (GL2Linear F α).ρ :=
+    Representation.isIrreducible_of_finrank_eq_one _ (finrank_GL2Linear (F := F) α)
+  FDRep.simple_of_isIrreducible _
 
 section Elliptic
 
