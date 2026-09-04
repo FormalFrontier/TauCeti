@@ -81,14 +81,6 @@ theorem multiplicativeSquareClassEquiv_mk (u : Kˣ) :
       Multiplicative.ofAdd (squareClass u) := by
   rw [multiplicativeSquareClassEquiv, QuotientGroup.liftEquiv_mk, squareClassHom_apply]
 
-/-- A unit has trivial class in the multiplicative square-class group if and only if it is a
-square. -/
-@[simp]
-theorem multiplicativeSquareClass_mk_eq_one_iff (u : Kˣ) :
-    (QuotientGroup.mk u : MultiplicativeSquareClassGroup K) = 1 ↔ IsSquare u := by
-  rw [← (multiplicativeSquareClassEquiv (K := K)).injective.eq_iff,
-    multiplicativeSquareClassEquiv_mk, map_one, ofAdd_eq_one, squareClass_eq_zero_iff]
-
 /-- The generic elementary-two quotient of the unit group is canonically `ZMod 2`-linearly
 equivalent to the square-class group. -/
 noncomputable def elementaryTwoQuotientEquivSquareClassGroup :
