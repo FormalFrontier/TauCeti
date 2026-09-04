@@ -5,9 +5,11 @@ Authors: Codex
 -/
 module
 
+public import Mathlib.Probability.Moments.Basic
+public import Mathlib.Probability.Moments.IntegrableExpMul
 public import TauCeti.Probability.Distributions.Weibull.Basic
-public import TauCeti.Probability.Distributions.Exponential
 import TauCeti.MeasureTheory.Integral.Bochner.Basic
+import TauCeti.Probability.Distributions.Exponential
 
 /-!
 # Exponential moments of the Weibull distribution
