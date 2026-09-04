@@ -91,10 +91,7 @@ namespace Divisor
 
 /-- **Evaluation of a function on divisors**, as a homomorphism from the divisor group written
 multiplicatively. Being a homomorphism outright is what makes `eval_zero`, `eval_add`, `eval_neg`
-and `eval_sub` hypothesis-free.
-
-`private`: those four theorems are the whole of what it buys a consumer, and nothing outside this
-module needs the bundled map itself. It can be made public when something does. -/
+and `eval_sub` hypothesis-free. -/
 private noncomputable def evalHom (f : Fˣ) : Multiplicative (Divisor k F) →* kˣ :=
   (freeAbelianCharEquiv (σ := Place k F) (M := kˣ)).symm fun P ↦ P.normResidueOrOne f
 
