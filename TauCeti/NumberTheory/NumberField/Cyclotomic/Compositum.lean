@@ -8,6 +8,7 @@ module
 public import Mathlib.NumberTheory.Cyclotomic.Gal
 import TauCeti.FieldTheory.IntermediateField.Adjoin.EqTop
 public import TauCeti.NumberTheory.NumberField.Cyclotomic.Finrank
+import TauCeti.RingTheory.RootsOfUnity.PrimitiveRoots
 
 /-!
 # The cyclotomic compositum `M = L(μ_m)` and its joint restriction isomorphism
@@ -136,16 +137,7 @@ theorem restrictNormalHom_prod_autToPow_injective {ζ : M} (hζ : IsPrimitiveRoo
   intro σ hσ
   rw [MonoidHom.prod_apply, Prod.mk_eq_one] at hσ
   obtain ⟨hσL, hσζ⟩ := hσ
-  have hζfix : σ ζ = ζ := by
-    have hspec := hζ.autToPow_spec K σ
-    rw [hσζ] at hspec
-    rw [← hspec, Units.val_one]
-    rcases eq_or_lt_of_le (NeZero.one_le (n := m)) with h1 | h1
-    · have hm1 : m = 1 := h1.symm
-      subst hm1
-      have : ζ = 1 := by simpa using hζ.pow_eq_one
-      simp [this]
-    · rw [ZMod.val_one_eq_one_mod, Nat.mod_eq_of_lt h1, pow_one]
+  have hζfix : σ ζ = ζ := (hζ.autToPow_eq_one_iff σ).mp hσζ
   have hLfix : ∀ x : L, σ (algebraMap L M x) = algebraMap L M x := by
     intro x
     have hcomm := σ.restrictNormal_commutes L x

@@ -8,6 +8,7 @@ module
 public import Mathlib.Probability.Moments.Basic
 public import Mathlib.Probability.Moments.IntegrableExpMul
 public import TauCeti.Probability.Distributions.Weibull.Basic
+import Mathlib.MeasureTheory.Integral.DominatedConvergence
 import TauCeti.MeasureTheory.Integral.Bochner.Basic
 import TauCeti.Probability.Distributions.Exponential
 
@@ -22,7 +23,8 @@ This file proves that trichotomy. The superlinear case follows by comparison wit
 whose exponent has been halved; the sublinear case follows because every positive exponential
 eventually dominates the density's stretched-exponential decay. At shape one, identifying the
 Weibull law with an exponential law also gives the mgf `(1 - lam * t)⁻¹` and cgf
-`-log (1 - lam * t)`.
+`-log (1 - lam * t)`. In the superlinear case, integrating the exponential series term by term
+expresses the mgf as the exponential generating function of the Weibull moments.
 
 ## Main results
 
@@ -43,6 +45,9 @@ Weibull law with an exponential law also gives the mgf `(1 - lam * t)⁻¹` and 
   `(-∞, lam⁻¹)`;
 * `TauCeti.Probability.mgf_id_weibullMeasure_one` and
   `TauCeti.Probability.cgf_id_weibullMeasure_one`: the shape-one transforms.
+* `TauCeti.Probability.mgf_id_weibullMeasure_of_one_lt` and
+  `TauCeti.Probability.cgf_id_weibullMeasure_of_one_lt`: the superlinear transforms as a
+  convergent Gamma-coefficient series.
 
 ## References
 
@@ -295,6 +300,72 @@ theorem integrableExpSet_id_weibullMeasure (hk : 0 < k) (hlam : 0 < lam) :
     simpa using integrableExpSet_id_weibullMeasure_one hlam
   · have hone : 1 < k := lt_of_le_of_ne (not_lt.mp hklt) (Ne.symm hkone)
     simpa [hklt, hkone] using integrableExpSet_id_weibullMeasure_of_one_lt (lam := lam) hone
+
+/-- For shape greater than one, the Gamma-coefficient series converges to the moment-generating
+function of a Weibull law. -/
+theorem hasSum_mgf_id_weibullMeasure_of_one_lt (hk : 1 < k) (hlam : 0 < lam) (t : ℝ) :
+    HasSum (fun n : ℕ =>
+      (t * lam) ^ n * Real.Gamma (1 + (n : ℝ) / k) / n.factorial)
+      (mgf id (weibullMeasure k lam) t) := by
+  let F : ℕ → ℝ → ℝ := fun n x => (t * x) ^ n / n.factorial
+  let bound : ℕ → ℝ → ℝ := fun n x => ‖F n x‖
+  have hF_meas (n : ℕ) : AEStronglyMeasurable (F n) (weibullMeasure k lam) := by
+    fun_prop
+  have h_bound (n : ℕ) : ∀ᵐ x ∂weibullMeasure k lam, ‖F n x‖ ≤ bound n x :=
+    ae_of_all _ fun _ => le_rfl
+  have h_bound_summable : ∀ᵐ x ∂weibullMeasure k lam, Summable fun n => bound n x :=
+    ae_of_all _ fun x => NormedSpace.norm_expSeries_div_summable (t * x)
+  have hnorm_tsum (x : ℝ) :
+      ∑' n : ℕ, ‖((t * x) ^ n / n.factorial : ℝ)‖ = Real.exp |t * x| := by
+    have h := NormedSpace.expSeries_div_hasSum_exp (|t * x|)
+    rw [Real.exp_eq_exp_ℝ, ← h.tsum_eq]
+    apply tsum_congr
+    intro n
+    simp only [Real.norm_eq_abs, abs_div, abs_pow, abs_mul]
+    have hfac : |(n.factorial : ℝ)| = (n.factorial : ℝ) :=
+      abs_of_nonneg (Nat.cast_nonneg _)
+    rw [hfac]
+  have h_bound_integrable :
+      Integrable (fun x => ∑' n, bound n x) (weibullMeasure k lam) := by
+    refine (integrable_exp_mul_id_weibullMeasure_of_one_lt (lam := lam) hk |t|).congr ?_
+    filter_upwards [ae_pos_weibullMeasure k lam] with x hx
+    simp only [bound, F]
+    rw [hnorm_tsum x]
+    simp only [abs_mul, abs_of_pos hx]
+  have h_lim : ∀ᵐ x ∂weibullMeasure k lam,
+      HasSum (fun n => F n x) (Real.exp (t * x)) :=
+    ae_of_all _ fun x => by
+      simpa only [F, ← Real.exp_eq_exp_ℝ] using
+        NormedSpace.expSeries_div_hasSum_exp (t * x)
+  have h_integral := hasSum_integral_of_dominated_convergence bound hF_meas h_bound
+    h_bound_summable h_bound_integrable h_lim
+  have hterm (n : ℕ) :
+      ∫ x, F n x ∂weibullMeasure k lam =
+        (t * lam) ^ n * Real.Gamma (1 + (n : ℝ) / k) / n.factorial := by
+    have hF_term : F n = fun x => t ^ n / n.factorial * x ^ n := by
+      funext x
+      simp only [F, mul_pow]
+      ring
+    rw [hF_term, integral_const_mul,
+      integral_pow_weibullMeasure (lt_trans zero_lt_one hk) hlam, mul_pow]
+    ring
+  have hout := HasSum.congr_fun h_integral fun n => (hterm n).symm
+  simpa only [mgf, id_eq] using hout
+
+/-- For shape greater than one, the Weibull moment-generating function is the convergent
+Gamma-coefficient series obtained from its raw moments. -/
+theorem mgf_id_weibullMeasure_of_one_lt (hk : 1 < k) (hlam : 0 < lam) (t : ℝ) :
+    mgf id (weibullMeasure k lam) t =
+      ∑' n : ℕ, (t * lam) ^ n * Real.Gamma (1 + (n : ℝ) / k) / n.factorial :=
+  (hasSum_mgf_id_weibullMeasure_of_one_lt hk hlam t).tsum_eq.symm
+
+/-- For shape greater than one, the Weibull cumulant-generating function is the real logarithm
+of its Gamma-coefficient series. -/
+theorem cgf_id_weibullMeasure_of_one_lt (hk : 1 < k) (hlam : 0 < lam) (t : ℝ) :
+    cgf id (weibullMeasure k lam) t =
+      Real.log (∑' n : ℕ,
+        (t * lam) ^ n * Real.Gamma (1 + (n : ℝ) / k) / n.factorial) := by
+  rw [cgf, mgf_id_weibullMeasure_of_one_lt hk hlam t]
 
 /-- The moment-generating function of a shape-one Weibull law with positive scale, evaluated
 below the reciprocal scale. -/

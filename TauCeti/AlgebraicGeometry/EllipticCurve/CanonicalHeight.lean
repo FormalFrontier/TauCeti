@@ -6,6 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.AlgebraicGeometry.EllipticCurve.MordellWeil.NaiveHeight
+public import Mathlib.LinearAlgebra.QuadraticForm.Basic
+public import TauCeti.LinearAlgebra.End.InvertibleTwo
 import TauCeti.LinearAlgebra.QuadraticForm.OfParallelogram
 
 /-!
@@ -30,6 +32,10 @@ with — is half of it. Getting this wrong would scale every later invariant.
 ## Main definitions
 
 * `WeierstrassCurve.Affine.Point.canonicalHeight`: the limit above.
+* `WeierstrassCurve.Affine.canonicalHeightQuadratic`: the canonical height as a `ℤ`-quadratic map
+  with real values, which is the form Mathlib's polarisation API consumes.
+* `WeierstrassCurve.Affine.neronTatePairing`: the **Néron–Tate pairing**, the bilinear form
+  associated with that quadratic map.
 
 ## Main results
 
@@ -63,6 +69,17 @@ with — is half of it. Getting this wrong would scale every later invariant.
   constant depending only on the curve. This is what makes the two interchangeable in
   finiteness arguments — in particular Northcott finiteness transfers to it, which the `Northcott`
   instance below makes formal.
+* `WeierstrassCurve.Affine.neronTatePairing_apply`: the pairing is the polarisation — its value
+  at `P, Q` is half of `canonicalHeight (P + Q) - canonicalHeight P - canonicalHeight Q`.
+* `WeierstrassCurve.Affine.neronTatePairing_self`: it recovers the canonical height on the
+  diagonal, so the pairing and the height determine each other.
+* `WeierstrassCurve.Affine.neronTatePairing_eq_zero_of_isOfFinAddOrder_left` and
+  `WeierstrassCurve.Affine.neronTatePairing_eq_zero_of_isOfFinAddOrder_right`: it vanishes as soon
+  as either argument is torsion, which is what lets it descend to the free quotient
+  `W.Point ⧸ torsion` where the regulator is defined.
+* `WeierstrassCurve.Affine.neronTatePairing_comm` and
+  `WeierstrassCurve.Affine.neronTatePairing_flip`: it is symmetric, pointwise and as an equality
+  of bilinear maps.
 
 ## Implementation notes
 
@@ -323,5 +340,86 @@ theorem Point.canonicalHeight_eq_zero_iff_isOfFinAddOrder [W.toAffine.IsElliptic
     P.canonicalHeight = 0 ↔ IsOfFinAddOrder P :=
   ⟨Point.isOfFinAddOrder_of_canonicalHeight_eq_zero,
     Point.canonicalHeight_eq_zero_of_isOfFinAddOrder⟩
+
+variable (W) in
+/-- **The canonical height as a `ℤ`-quadratic map** with values in `ℝ`, which is what makes
+Mathlib's polarisation API available to it. -/
+noncomputable def canonicalHeightQuadratic [W.toAffine.IsElliptic] : QuadraticMap ℤ W.Point ℝ :=
+  TauCeti.QuadraticMap.ofParallelogram (smul_right_injective ℝ two_ne_zero)
+    canonicalHeight_parallelogram_nsmul
+
+-- Proved by applying `ofParallelogram_apply` rather than by unfolding the definition: since
+-- `canonicalHeight_parallelogram_nsmul` is `private`, the elaborator hoists it into an auxiliary
+-- constant that `simp [canonicalHeightQuadratic]` cannot see through.
+/-- The quadratic map is the canonical height. -/
+@[simp]
+theorem canonicalHeightQuadratic_apply [W.toAffine.IsElliptic] (P : W.Point) :
+    canonicalHeightQuadratic W P = P.canonicalHeight :=
+  TauCeti.QuadraticMap.ofParallelogram_apply _ _ P
+
+/-- The quadratic map is the canonical height, as functions. -/
+-- `QuadraticMap.polar` takes the function rather than its values, so this is the form that
+-- rewrites `polar ⇑(canonicalHeightQuadratic W)` into `polar Point.canonicalHeight`; the same
+-- reason `TauCeti.QuadraticMap.coe_ofParallelogram` is stated unapplied.
+@[simp]
+theorem coe_canonicalHeightQuadratic [W.toAffine.IsElliptic] :
+    (canonicalHeightQuadratic W : W.Point → ℝ) = fun P ↦ P.canonicalHeight :=
+  TauCeti.QuadraticMap.coe_ofParallelogram _ _
+
+variable (W) in
+-- `QuadraticMap.associated'` is available here because `TauCeti.instInvertibleTwoModuleEndInt`
+-- supplies the `Invertible (2 : Module.End ℤ ℝ)` that the halving needs.
+/-- **The Néron–Tate pairing** `⟨P, Q⟩`, the bilinear form associated with the canonical height.
+It is Mathlib's `QuadraticMap.associated'`, the halved polar form. -/
+noncomputable def neronTatePairing [W.toAffine.IsElliptic] : LinearMap.BilinMap ℤ W.Point ℝ :=
+  QuadraticMap.associated' (canonicalHeightQuadratic W)
+
+-- Deliberately **not** `@[simp]`, for the reason recorded on
+-- `Point.naiveHeight_eq_logHeight`: tagging a defining equation makes the pairing disappear on
+-- sight, which puts the sharper `neronTatePairing_self` out of simp-normal form. With `@[simp]`
+-- here the `simpNF` linter fails on `neronTatePairing_self`, reporting that its left-hand side
+-- simplifies to `((P + P).canonicalHeight - P.canonicalHeight - P.canonicalHeight) / 2`.
+/-- **The Néron–Tate pairing is the polarisation of the canonical height**: its value at `P, Q`
+is half of `canonicalHeight (P + Q) - canonicalHeight P - canonicalHeight Q`. -/
+theorem neronTatePairing_apply [W.toAffine.IsElliptic] (P Q : W.Point) : neronTatePairing W P Q =
+    ((P + Q).canonicalHeight - P.canonicalHeight - Q.canonicalHeight) / 2 := by
+  simp [neronTatePairing, QuadraticMap.associated_apply, inv_mul_eq_div]
+
+/-- **The pairing recovers the canonical height on the diagonal.** -/
+@[simp]
+theorem neronTatePairing_self [W.toAffine.IsElliptic] (P : W.Point) :
+    neronTatePairing W P P = P.canonicalHeight :=
+  (QuadraticMap.associated_eq_self_apply ℤ (canonicalHeightQuadratic W) P).trans
+    (canonicalHeightQuadratic_apply P)
+
+/-- **The pairing kills torsion in its first argument.** Together with symmetry this is what lets
+the pairing descend to the free quotient `W.Point ⧸ torsion`, where the regulator lives. -/
+@[simp]
+theorem neronTatePairing_eq_zero_of_isOfFinAddOrder_left [W.toAffine.IsElliptic] {P : W.Point}
+    (h : IsOfFinAddOrder P) (Q : W.Point) : neronTatePairing W P Q = 0 := by
+  -- `P ↦ ⟨P, Q⟩` is additive, so it preserves finite order, and `ℝ` is torsion-free.
+  -- (Taken through `flip` rather than on `neronTatePairing W` itself, because the space of
+  -- linear maps carries no `IsAddTorsionFree` instance.)
+  simpa using ((((neronTatePairing W).flip Q).toAddMonoidHom.isOfFinAddOrder h).eq_zero')
+
+/-- **The pairing is symmetric**: `⟨P, Q⟩ = ⟨Q, P⟩`. -/
+theorem neronTatePairing_comm [W.toAffine.IsElliptic] (P Q : W.Point) :
+    neronTatePairing W P Q = neronTatePairing W Q P :=
+  QuadraticMap.associated_isSymm ℤ (canonicalHeightQuadratic W) P Q
+
+/-- **The pairing kills torsion in its second argument.** -/
+@[simp]
+theorem neronTatePairing_eq_zero_of_isOfFinAddOrder_right [W.toAffine.IsElliptic] (P : W.Point)
+    {Q : W.Point} (h : IsOfFinAddOrder Q) : neronTatePairing W P Q = 0 := by
+  rw [neronTatePairing_comm, neronTatePairing_eq_zero_of_isOfFinAddOrder_left h]
+
+-- `LinearMap.IsSymm` does not apply to a bilinear map whose target is not the scalar ring, which
+-- is why symmetry is stated pointwise above and as `flip` here; Mathlib documents
+-- `QuadraticMap.associated_flip` as the general-target version for exactly this reason.
+/-- **The pairing is symmetric**, as an equality of bilinear maps. -/
+@[simp]
+theorem neronTatePairing_flip [W.toAffine.IsElliptic] :
+    (neronTatePairing W).flip = neronTatePairing W :=
+  QuadraticMap.associated_flip ℤ (canonicalHeightQuadratic W)
 
 end WeierstrassCurve.Affine

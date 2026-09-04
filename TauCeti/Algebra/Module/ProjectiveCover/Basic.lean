@@ -32,11 +32,11 @@ covering maps (`TauCeti.IsProjectiveCover.exists_linearEquiv`). Uniqueness is wh
 projective cover a well-defined object, and hence what makes the Cartan matrix `Cᵢⱼ = [Pᵢ : Sⱼ]` of
 a finite-dimensional algebra well defined.
 
-*Existence* of projective covers is a separate matter: over a semiperfect (in particular a
-finite-dimensional) algebra every *finitely generated* module has one — for a finite-dimensional
-algebra, every finite-dimensional module — while existence for arbitrary modules is a strictly
-stronger condition on the ring. None of this is proved here, and nothing below assumes it; every
-statement is conditional on a cover being given.
+*Existence* of projective covers is a separate matter: over a semiperfect ring every *finitely
+generated* module has one, while existence for arbitrary modules is a strictly stronger condition
+on the ring, met for instance by a semiprimary ring — a finite-dimensional algebra among them.
+Nothing here proves or assumes it; every statement below is conditional on a cover being given, and
+`TauCeti/Algebra/Module/ProjectiveCover/Existence.lean` supplies covers over a semiprimary ring.
 
 ## Main definitions
 
@@ -66,11 +66,11 @@ statement is conditional on a cover being given.
 
 ## References
 
-This implements the projective-cover half of the "projective covers and injective envelopes"
-bullet of Layer 3 of `TauCetiRoadmap/RepresentationTheory/QuiverRepresentations/README.md`
-("`projectiveCover M`: a projective `P` with an essential epimorphism `P ↠ M` (superfluous
-kernel), unique up to isomorphism"). Existence for finitely generated modules over a semiperfect
-algebra, and the dual injective envelope, are the remaining halves.
+Uniqueness, proved here, is what makes "the" projective cover of a module a well-defined object;
+that a cover exists at all is a condition on the ring, established for a semiprimary ring — a
+finite-dimensional algebra among them — in
+`TauCeti/Algebra/Module/ProjectiveCover/Existence.lean`. The dual notion, an injective envelope,
+is an essential monomorphism into an injective module; nothing here is used for it.
 
 See I. Assem, D. Simson, A. Skowroński, *Elements of the Representation Theory of Associative
 Algebras, Vol. 1*, Section I.5.
