@@ -6,6 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.HomDensity.SmallGraphs
+public import Mathlib.Combinatorics.SimpleGraph.CycleGraph
 import Mathlib.Probability.Moments.Variance
 
 /-!
@@ -29,6 +30,7 @@ compactness, and sampling layers are not needed.
 
 * `goodman_triangle_density` — Goodman's lower bound for triangle density;
 * `mantel_triangle_free` — a triangle-free graphon has edge density at most `1 / 2`.
+* `sidorenko_cycle_four` — the 4-cycle density is at least the fourth power of edge density.
 
 ## References
 
@@ -285,6 +287,258 @@ private theorem integral_graphonDegree_eq_edge_density (W : Graphon Ω μ) :
   rw [homDensity_top_fin_two_eq_integral_integral]
   rfl
 
+/-! ### The 4-cycle integral -/
+
+private def finFourArrowRight (Ω : Type*) [MeasurableSpace Ω] :
+    (Fin 4 → Ω) ≃ᵐ Ω × Ω × Ω × Ω :=
+  (MeasurableEquiv.piFinSuccAbove (fun _ : Fin 4 => Ω) 0).trans
+    (MeasurableEquiv.prodCongr (MeasurableEquiv.refl Ω)
+      ((MeasurableEquiv.piFinSuccAbove (fun _ : Fin 3 => Ω) 0).trans
+        (MeasurableEquiv.prodCongr (MeasurableEquiv.refl Ω)
+          MeasurableEquiv.finTwoArrow)))
+
+private def middleSwap (Ω : Type*) [MeasurableSpace Ω] :
+    (Ω × Ω × Ω) ≃ᵐ Ω × Ω × Ω :=
+  ((MeasurableEquiv.prodAssoc : ((Ω × Ω) × Ω) ≃ᵐ Ω × Ω × Ω).symm.trans
+    ((MeasurableEquiv.prodComm : (Ω × Ω) ≃ᵐ Ω × Ω).prodCongr
+      (MeasurableEquiv.refl Ω))).trans
+    (MeasurableEquiv.prodAssoc : ((Ω × Ω) × Ω) ≃ᵐ Ω × Ω × Ω)
+
+private def reorderFour (Ω : Type*) [MeasurableSpace Ω] :
+    (Ω × Ω × Ω × Ω) ≃ᵐ Ω × Ω × Ω × Ω :=
+  (MeasurableEquiv.refl Ω).prodCongr (middleSwap Ω)
+
+private def finFourArrowPairPair (Ω : Type*) [MeasurableSpace Ω] :
+    (Fin 4 → Ω) ≃ᵐ (Ω × Ω) × (Ω × Ω) :=
+  (finFourArrowRight Ω).trans (reorderFour Ω) |>.trans
+    ((MeasurableEquiv.prodAssoc : ((Ω × Ω) × (Ω × Ω)) ≃ᵐ Ω × Ω × (Ω × Ω)).symm)
+
+@[simp]
+private theorem finFourArrowPairPair_apply (x : Fin 4 → Ω) :
+    finFourArrowPairPair Ω x = ((x 0, x 2), (x 1, x 3)) := by
+  rfl
+
+private theorem measurePreserving_middleSwap (μ : Measure Ω) [SigmaFinite μ] :
+    MeasurePreserving (middleSwap Ω) (μ.prod (μ.prod μ)) (μ.prod (μ.prod μ)) := by
+  have hAssoc : MeasurePreserving
+      (MeasurableEquiv.prodAssoc : ((Ω × Ω) × Ω) ≃ᵐ Ω × Ω × Ω)
+      ((μ.prod μ).prod μ) (μ.prod (μ.prod μ)) :=
+    measurePreserving_prodAssoc μ μ μ
+  have hSwap : MeasurePreserving (MeasurableEquiv.prodComm : (Ω × Ω) ≃ᵐ Ω × Ω)
+      (μ.prod μ) (μ.prod μ) := Measure.measurePreserving_swap
+  convert hAssoc.comp ((hSwap.prod (MeasurePreserving.id μ)).comp hAssoc.symm) using 1
+  ext <;> rfl
+
+private theorem measurePreserving_finFourArrowPairPair (μ : Measure Ω) [SigmaFinite μ] :
+    MeasurePreserving (finFourArrowPairPair Ω) (Measure.pi fun _ : Fin 4 => μ)
+      ((μ.prod μ).prod (μ.prod μ)) := by
+  have hright : MeasurePreserving (finFourArrowRight Ω) (Measure.pi fun _ : Fin 4 => μ)
+      (μ.prod (μ.prod (μ.prod μ))) :=
+    ((MeasurePreserving.id μ).prod
+      (((MeasurePreserving.id μ).prod (measurePreserving_finTwoArrow μ)).comp
+        (measurePreserving_piFinSuccAbove (fun _ : Fin 3 => μ) 0))).comp
+      (measurePreserving_piFinSuccAbove (fun _ : Fin 4 => μ) 0)
+  have hswap : MeasurePreserving (reorderFour Ω)
+      (μ.prod (μ.prod (μ.prod μ))) (μ.prod (μ.prod (μ.prod μ))) :=
+    (MeasurePreserving.id μ).prod (measurePreserving_middleSwap μ)
+  have hassoc : MeasurePreserving
+      ((MeasurableEquiv.prodAssoc : ((Ω × Ω) × (Ω × Ω)) ≃ᵐ Ω × Ω × (Ω × Ω)).symm)
+      (μ.prod (μ.prod (μ.prod μ))) ((μ.prod μ).prod (μ.prod μ)) :=
+    (measurePreserving_prodAssoc μ μ (μ.prod μ)).symm
+  convert hassoc.comp (hswap.comp hright) using 1
+  ext <;> rfl
+
+private theorem homDensity_fin_four (F : SimpleGraph (Fin 4)) [DecidableRel F.Adj]
+    (W : Graphon Ω μ) :
+    homDensity F W =
+      ∫ p : (Ω × Ω) × (Ω × Ω),
+        ∏ e ∈ F.edgeFinset,
+          edgeFactor W ![p.1.1, p.2.1, p.1.2, p.2.2] e
+          ∂((μ.prod μ).prod (μ.prod μ)) := by
+  have key : ∀ x : Fin 4 → Ω,
+      (∏ e ∈ F.edgeFinset, edgeFactor W x e) =
+        ∏ e ∈ F.edgeFinset, edgeFactor W ![x 0, x 1, x 2, x 3] e := by
+    intro x
+    have hx : ![x 0, x 1, x 2, x 3] = x := FinVec.etaExpand_eq x
+    rw [hx]
+  rw [homDensity_def, ← (measurePreserving_finFourArrowPairPair μ).integral_comp
+    (finFourArrowPairPair Ω).measurableEmbedding
+    (fun p : (Ω × Ω) × (Ω × Ω) =>
+      ∏ e ∈ F.edgeFinset, edgeFactor W ![p.1.1, p.2.1, p.1.2, p.2.2] e)]
+  simp only [finFourArrowPairPair_apply]
+  exact integral_congr_ae (ae_of_all _ fun x => key x)
+
+private theorem prod_edgeFactor_cycle_four (W : Graphon Ω μ)
+    (p : (Ω × Ω) × (Ω × Ω)) :
+    ∏ e ∈ (SimpleGraph.cycleGraph 4).edgeFinset,
+        edgeFactor W ![p.1.1, p.2.1, p.1.2, p.2.2] e =
+      W p.1.1 p.2.1 * W p.2.1 p.1.2 * W p.1.2 p.2.2 * W p.2.2 p.1.1 := by
+  have hedge : (SimpleGraph.cycleGraph 4).edgeFinset =
+      {s(0, 1), s(0, 3), s(1, 2), s(2, 3)} := by decide
+  rw [hedge, Finset.prod_insert (by decide), Finset.prod_insert (by decide),
+    Finset.prod_insert (by decide), Finset.prod_singleton]
+  simp only [edgeFactor_mk, Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val_two,
+    Matrix.cons_val_three, Matrix.head_cons, Matrix.tail_cons]
+  rw [Graphon.symm (W := W) (p.1.1) (p.2.2)]
+  ring
+
+private theorem integrable_cycle_four (W : Graphon Ω μ) :
+    Integrable (fun p : (Ω × Ω) × (Ω × Ω) =>
+      W p.1.1 p.2.1 * W p.2.1 p.1.2 * W p.1.2 p.2.2 * W p.2.2 p.1.1)
+      ((μ.prod μ).prod (μ.prod μ)) := by
+  have h := integrable_prod_edgeFactor (Ω := Ω) (μ := μ)
+    (SimpleGraph.cycleGraph 4).edgeFinset (fun _ => W)
+  refine ((measurePreserving_finFourArrowPairPair μ).integrable_comp_emb
+    (finFourArrowPairPair Ω).measurableEmbedding).mp ?_
+  refine h.congr (ae_of_all _ fun x => ?_)
+  have hp := prod_edgeFactor_cycle_four W (finFourArrowPairPair Ω x)
+  simp only [finFourArrowPairPair_apply] at hp
+  simp only [Function.comp_apply, finFourArrowPairPair_apply]
+  rw [← FinVec.etaExpand_eq x]
+  exact hp
+
+private theorem homDensity_cycle_four (W : Graphon Ω μ) :
+    homDensity (SimpleGraph.cycleGraph 4) W =
+      ∫ p : (Ω × Ω) × (Ω × Ω),
+        W p.1.1 p.2.1 * W p.2.1 p.1.2 * W p.1.2 p.2.2 * W p.2.2 p.1.1
+          ∂((μ.prod μ).prod (μ.prod μ)) := by
+  rw [homDensity_fin_four]
+  exact integral_congr_ae (ae_of_all _ fun p => prod_edgeFactor_cycle_four W p)
+
+private def twoStepIntegral (W : Graphon Ω μ) (x z : Ω) : ℝ :=
+  ∫ y, W x y * W y z ∂μ
+
+private theorem integrable_twoStep_integrand (W : Graphon Ω μ) :
+    Integrable (fun p : (Ω × Ω) × Ω => W p.1.1 p.2 * W p.2 p.1.2)
+      ((μ.prod μ).prod μ) := by
+  apply (integrable_const (1 : ℝ)).mono
+    (by
+      have h₁ : Measurable (fun p : (Ω × Ω) × Ω => W p.1.1 p.2) :=
+        W.measurable.comp ((measurable_fst.comp measurable_fst).prodMk measurable_snd)
+      have h₂ : Measurable (fun p : (Ω × Ω) × Ω => W p.2 p.1.2) :=
+        W.measurable.comp
+          (measurable_snd.prodMk (measurable_snd.comp measurable_fst))
+      exact (h₁.mul h₂).aestronglyMeasurable)
+  filter_upwards [] with p
+  have h₁ := W.nonneg p.1.1 p.2
+  have h₂ := W.nonneg p.2 p.1.2
+  rw [Real.norm_eq_abs, abs_of_nonneg (mul_nonneg h₁ h₂), norm_one]
+  simpa only [one_mul] using mul_le_mul (W.le_one _ _) (W.le_one _ _) h₂ (by norm_num)
+
+private theorem integrable_twoStep (W : Graphon Ω μ) :
+    Integrable (fun p : Ω × Ω => twoStepIntegral W p.1 p.2) (μ.prod μ) := by
+  -- Unfold the local two-step notation so the product-measure integrability lemma applies.
+  change Integrable (fun p : Ω × Ω => ∫ y, W p.1 y * W y p.2 ∂μ) (μ.prod μ)
+  exact (integrable_twoStep_integrand W).integral_prod_left
+
+private theorem twoStep_nonneg (W : Graphon Ω μ) (x z : Ω) :
+    0 ≤ twoStepIntegral W x z := by
+  exact integral_nonneg fun y => mul_nonneg (W.nonneg _ _) (W.nonneg _ _)
+
+private theorem integrable_twoStep_slice (W : Graphon Ω μ) (x z : Ω) :
+    Integrable (fun y => W x y * W y z) μ := by
+  apply (integrable_const (1 : ℝ)).mono
+    ((W.measurable.comp (measurable_const.prodMk measurable_id)).mul
+      (W.measurable.comp (measurable_id.prodMk measurable_const))).aestronglyMeasurable
+  filter_upwards [] with y
+  have hbound : W x y * W y z ≤ 1 := by
+    simpa only [one_mul] using
+      mul_le_mul (W.le_one x y) (W.le_one y z) (W.nonneg y z) (by norm_num)
+  simpa [Function.comp_def, Real.norm_eq_abs,
+    abs_of_nonneg (W.nonneg x y), abs_of_nonneg (W.nonneg y z)] using hbound
+
+private theorem twoStep_le_one (W : Graphon Ω μ) (x z : Ω) :
+    twoStepIntegral W x z ≤ 1 := by
+  have h := integral_mono (integrable_twoStep_slice W x z) (integrable_const (1 : ℝ))
+    (fun y => by
+      simpa only [one_mul] using
+        mul_le_mul (W.le_one x y) (W.le_one y z) (W.nonneg y z) (by norm_num))
+  simpa [twoStepIntegral, one_mul, mul_one] using h
+
+private theorem integrable_twoStep_sq (W : Graphon Ω μ) :
+    Integrable (fun p : Ω × Ω => twoStepIntegral W p.1 p.2 ^ 2) (μ.prod μ) := by
+  apply (integrable_const (1 : ℝ)).mono
+    ((integrable_twoStep W).aestronglyMeasurable.pow 2)
+  filter_upwards [] with p
+  rw [Real.norm_eq_abs, abs_of_nonneg (sq_nonneg _), norm_one]
+  have hsq := mul_self_le_mul_self (twoStep_nonneg W p.1 p.2)
+    (twoStep_le_one W p.1 p.2)
+  simpa [pow_two] using hsq
+
+private theorem integral_twoStep_eq_degree_sq (W : Graphon Ω μ) :
+    (∫ p : Ω × Ω, twoStepIntegral W p.1 p.2 ∂(μ.prod μ)) =
+      ∫ x, graphonDegree W x ^ 2 ∂μ := by
+  -- Expose the iterated integral so Fubini can rewrite it as a product-measure integral.
+  change (∫ p : Ω × Ω, (∫ y, W p.1 y * W y p.2 ∂μ) ∂(μ.prod μ)) = _
+  rw [integral_integral (integrable_twoStep_integrand W)]
+  have hpath : MeasurePreserving
+      ((MeasurableEquiv.prodAssoc : ((Ω × Ω) × Ω) ≃ᵐ Ω × Ω × Ω).trans
+        ((MeasurableEquiv.refl Ω).prodCongr
+          (MeasurableEquiv.prodComm : (Ω × Ω) ≃ᵐ Ω × Ω)))
+      ((μ.prod μ).prod μ) (μ.prod (μ.prod μ)) :=
+    ((MeasurePreserving.id μ).prod Measure.measurePreserving_swap).comp
+      (measurePreserving_prodAssoc μ μ μ)
+  calc
+    (∫ z, (fun p : (Ω × Ω) × Ω => W p.1.1 p.2 * W p.2 p.1.2) z
+        ∂((μ.prod μ).prod μ)) =
+        ∫ q : Ω × Ω × Ω, W q.1 q.2.1 * W q.2.1 q.2.2
+          ∂(μ.prod (μ.prod μ)) := by
+      rw [← hpath.integral_comp
+        ((MeasurableEquiv.prodAssoc : ((Ω × Ω) × Ω) ≃ᵐ Ω × Ω × Ω).trans
+          ((MeasurableEquiv.refl Ω).prodCongr
+            (MeasurableEquiv.prodComm : (Ω × Ω) ≃ᵐ Ω × Ω))).measurableEmbedding]
+      rfl
+    _ = ∫ x, graphonDegree W x ^ 2 ∂μ := integral_triple_graphon_two_edges_right W
+
+private theorem integral_sq_ge_sq_integral {α : Type*} [MeasurableSpace α]
+    {ν : Measure α} [IsProbabilityMeasure ν] (f : α → ℝ) (hf : Integrable f ν)
+    (hfsq : Integrable (fun x => f x ^ 2) ν) :
+    (∫ x, f x ∂ν) ^ 2 ≤ ∫ x, f x ^ 2 ∂ν := by
+  have hLp : MemLp f 2 ν :=
+    (memLp_two_iff_integrable_sq hf.aestronglyMeasurable).2 hfsq
+  have h := ProbabilityTheory.variance_nonneg f ν
+  rw [ProbabilityTheory.variance_eq_sub hLp] at h
+  simp only [Pi.pow_apply] at h
+  linarith
+
+private theorem homDensity_cycle_four_eq_twoStep_sq (W : Graphon Ω μ) :
+    homDensity (SimpleGraph.cycleGraph 4) W =
+      ∫ p : Ω × Ω, twoStepIntegral W p.1 p.2 ^ 2 ∂(μ.prod μ) := by
+  calc
+    homDensity (SimpleGraph.cycleGraph 4) W =
+        ∫ p : (Ω × Ω) × (Ω × Ω),
+          W p.1.1 p.2.1 * W p.2.1 p.1.2 * W p.1.2 p.2.2 * W p.2.2 p.1.1
+            ∂((μ.prod μ).prod (μ.prod μ)) := homDensity_cycle_four W
+    _ = ∫ q : Ω × Ω, ∫ r : Ω × Ω,
+          (W q.1 r.1 * W r.1 q.2) *
+            (W q.2 r.2 * W r.2 q.1) ∂(μ.prod μ) ∂(μ.prod μ) := by
+      simpa only [mul_assoc] using integral_prod _ (integrable_cycle_four W)
+    _ = ∫ q : Ω × Ω,
+          (∫ y, W q.1 y * W y q.2 ∂μ) *
+            (∫ y, W q.2 y * W y q.1 ∂μ) ∂(μ.prod μ) := by
+      apply integral_congr_ae
+      filter_upwards [] with q
+      rw [integral_prod_mul
+        (fun y : Ω => W q.1 y * W y q.2)
+        (fun y : Ω => W q.2 y * W y q.1)]
+    _ = ∫ q : Ω × Ω, twoStepIntegral W q.1 q.2 ^ 2 ∂(μ.prod μ) := by
+      apply integral_congr_ae
+      filter_upwards [] with q
+      have hsecond : (∫ w, W q.2 w * W w q.1 ∂μ) =
+          ∫ w, W q.1 w * W w q.2 ∂μ := by
+        apply integral_congr_ae
+        filter_upwards [] with w
+        calc
+          W q.2 w * W w q.1 = W w q.2 * W q.1 w := by
+            congr 1
+            · exact Graphon.symm W q.2 w
+            · exact Graphon.symm W w q.1
+          _ = W q.1 w * W w q.2 := by
+            rw [Graphon.symm W w q.2]
+            ring
+      rw [hsecond]
+      simp only [twoStepIntegral, pow_two]
+
 private theorem integral_goodman_witness_value (W : Graphon Ω μ) :
     (∫ p : Ω × Ω × Ω,
       W p.1 p.2.1 * (1 - W p.1 p.2.2) * (1 - W p.2.1 p.2.2)
@@ -320,6 +574,30 @@ theorem mantel_triangle_free (W : Graphon Ω μ)
   have hgoodman := goodman_triangle_density W
   rw [htriangle] at hgoodman
   nlinarith [homDensity_nonneg (⊤ : SimpleGraph (Fin 2)) W]
+
+/-! ### The four-cycle inequality -/
+
+/-- **Sidorenko's inequality for the 4-cycle.**  The 4-cycle homomorphism density is at least the
+fourth power of the edge density, on every probability carrier. -/
+theorem sidorenko_cycle_four (W : Graphon Ω μ) :
+    homDensity (SimpleGraph.cycleGraph 4) W ≥
+      homDensity (⊤ : SimpleGraph (Fin 2)) W ^ 4 := by
+  have hmean := integral_sq_ge_sq_integral
+    (fun p : Ω × Ω => twoStepIntegral W p.1 p.2)
+    (integrable_twoStep W) (integrable_twoStep_sq W)
+  rw [integral_twoStep_eq_degree_sq W] at hmean
+  rw [← homDensity_cycle_four_eq_twoStep_sq W] at hmean
+  have hdegree := integral_graphonDegree_sq_ge W
+  rw [integral_graphonDegree_eq_edge_density] at hdegree
+  calc
+    homDensity (⊤ : SimpleGraph (Fin 2)) W ^ 4 =
+        (homDensity (⊤ : SimpleGraph (Fin 2)) W ^ 2) *
+          (homDensity (⊤ : SimpleGraph (Fin 2)) W ^ 2) := by ring
+    _ ≤ (∫ x, graphonDegree W x ^ 2 ∂μ) *
+        (∫ x, graphonDegree W x ^ 2 ∂μ) :=
+      mul_self_le_mul_self (sq_nonneg _) hdegree
+    _ = (∫ x, graphonDegree W x ^ 2 ∂μ) ^ 2 := by ring
+    _ ≤ homDensity (SimpleGraph.cycleGraph 4) W := hmean
 
 end DenseGraphLimits
 
