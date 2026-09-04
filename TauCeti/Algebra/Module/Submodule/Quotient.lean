@@ -6,6 +6,7 @@ Authors: Codex
 module
 
 public import Mathlib.LinearAlgebra.Isomorphisms
+public import Mathlib.LinearAlgebra.FreeModule.Finite.Quotient
 public import Mathlib.LinearAlgebra.Quotient.Basic
 
 /-!
@@ -25,6 +26,14 @@ induces when it is injective or surjective.
   the images of two submodules with the subquotient of the two submodules themselves.
 * `TauCeti.comapSubquotientEquivOfSurjective`: a surjective linear map identifies the subquotient
   of the preimages of two submodules with the subquotient of the two submodules themselves.
+* `Submodule.quotientEquivPiZModOfBasis`: a quotient by a submodule with a specified diagonal
+  basis is a product of cyclic groups with the specified diagonal orders.
+
+## References
+
+The diagonal quotient construction follows Mathlib's
+`Submodule.quotientEquivPiSpan` and `Submodule.quotientEquivPiZMod`, with the bases and diagonal
+coefficients made explicit so an externally normalized Smith form can be retained.
 -/
 
 public section
@@ -195,5 +204,74 @@ theorem comapSubquotientEquivOfSurjective_symm_apply (f : M →ₗ[R] N) (hf : F
     LinearEquiv.symm_apply_apply]
 
 end Subquotient
+
+section DiagonalQuotient
+
+open Module
+
+variable {M ι : Type*} [AddCommGroup M] [Finite ι]
+
+/-- A quotient by a submodule with a specified diagonal basis is a product of cyclic groups.
+
+Unlike `Submodule.quotientEquivPiZMod`, this construction takes both bases and their diagonal
+coefficients as input. This lets a caller retain a normalized choice of Smith invariant factors
+rather than using the coefficients selected internally by Mathlib's basis-level Smith form. -/
+noncomputable def _root_.Submodule.quotientEquivPiZModOfBasis (N : Submodule ℤ M)
+    (b : Basis ι ℤ M) (bN : Basis ι ℤ N) (a : ι → ℤ)
+    (hdiag : ∀ i, (bN i : M) = a i • b i) :
+    M ⧸ N ≃+ ∀ i, ZMod (a i).natAbs := by
+  classical
+  letI := Fintype.ofFinite ι
+  let N' : Submodule ℤ (ι → ℤ) :=
+    Submodule.pi Set.univ fun i ↦ Ideal.span ({a i} : Set ℤ)
+  have mem_N_iff : ∀ x : M, x ∈ N ↔ ∀ i, a i ∣ b.repr x i := by
+    intro x
+    rw [bN.mem_submodule_iff' (x := x)]
+    simp_rw [hdiag]
+    have hrepr : ∀ (c : ι → ℤ) (i),
+        b.repr (∑ j, c j • a j • b j) i = a i * c i := by
+      intro c i
+      simp only [← mul_smul, b.repr_sum_self, mul_comm]
+    constructor
+    · rintro ⟨c, rfl⟩ i
+      exact ⟨c i, hrepr c i⟩
+    · rintro ha
+      choose c hc using ha
+      exact ⟨c, b.ext_elem fun i ↦ Eq.trans (hc i) (hrepr c i).symm⟩
+  have hmap : Submodule.map (b.equivFun : M →ₗ[ℤ] ι → ℤ) N = N' := by
+    ext x
+    simp only [N', Submodule.mem_map, Submodule.mem_pi, mem_N_iff, Set.mem_univ,
+      Ideal.mem_span_singleton, forall_true_left, LinearEquiv.coe_coe,
+      Basis.equivFun_apply]
+    constructor
+    · rintro ⟨y, hy, rfl⟩ i
+      exact hy i
+    · rintro hdvd
+      refine ⟨∑ i, x i • b i, fun i ↦ ?_, ?_⟩
+      · rw [b.repr_sum_self x]
+        exact hdvd i
+      · exact b.repr_sum_self x
+  refine ((Submodule.Quotient.equiv N N' b.equivFun hmap :
+      (M ⧸ N) ≃ₗ[ℤ] ((ι → ℤ) ⧸ N')).toAddEquiv.trans ?_)
+  let e : ((ι → ℤ) ⧸ N') ≃ₗ[ℤ] ∀ i, ℤ ⧸ Ideal.span ({a i} : Set ℤ) := by
+    classical
+    exact Submodule.quotientPi fun i ↦ Ideal.span ({a i} : Set ℤ)
+  let e' : (∀ i, ℤ ⧸ Ideal.span ({a i} : Set ℤ)) ≃+ ∀ i, ZMod (a i).natAbs :=
+    AddEquiv.piCongrRight fun i ↦ ↑(Int.quotientSpanEquivZMod (a i))
+  exact e.toAddEquiv.trans e'
+
+/-- The diagonal quotient equivalence sends a representative to its coordinates modulo the
+corresponding diagonal coefficients. -/
+@[simp]
+theorem _root_.Submodule.quotientEquivPiZModOfBasis_mk_apply (N : Submodule ℤ M)
+    (b : Basis ι ℤ M) (bN : Basis ι ℤ N) (a : ι → ℤ)
+    (hdiag : ∀ i, (bN i : M) = a i • b i) (x : M) (i : ι) :
+    N.quotientEquivPiZModOfBasis b bN a hdiag (Submodule.Quotient.mk x) i =
+      ((b.repr x i : ℤ) : ZMod (a i).natAbs) := by
+  classical
+  let _ := Fintype.ofFinite ι
+  rfl
+
+end DiagonalQuotient
 
 end TauCeti

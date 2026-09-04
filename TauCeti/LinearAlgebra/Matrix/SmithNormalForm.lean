@@ -29,6 +29,8 @@ operations of determinant one:
 * `Matrix.exists_smith_normal_form_of_det_pos`: for `A : Matrix (Fin n) (Fin n) ℤ` with
   `0 < A.det` there are `L R : SpecialLinearGroup (Fin n) ℤ` and a positive `d : Fin n → ℤ`,
   monotone under divisibility, with `L * A * R = diagonal d`.
+* `Matrix.exists_smith_normal_form_of_det_ne_zero`: without a sign assumption, the same positive
+  diagonal is obtained using general-linear transformations.
 * `Matrix.smith_normal_form_unique`: two nonnegative chained diagonals in the same
   `GL_n(ℤ)`-equivalence class are equal, so the invariant factors of `A` are well defined.
 * `Matrix.invariant_factor_zero_dvd_entries`: the first entry of a chained diagonal form
@@ -715,6 +717,53 @@ theorem exists_smith_normal_form_of_det_pos (A : Matrix (Fin n) (Fin n) ℤ) (hA
       = ↑L₁ * (↑L₀ * A * ↑R₀) * ↑R₁ := by simp only [Matrix.mul_assoc]
     _ = ↑L₁ * Matrix.diagonal d₀ * ↑R₁ := by rw [hLR₀]
     _ = Matrix.diagonal d := hLR₁
+
+/-- **Smith normal form for every nonsingular integer matrix.** Every square integer matrix with
+nonzero determinant is equivalent under general-linear row and column operations to a positive
+diagonal whose entries form a divisibility chain.
+
+When the determinant is positive, the transformations can be chosen special linear by
+`exists_smith_normal_form_of_det_pos`. For a negative determinant, changing the sign of one row
+makes it positive; the resulting single-coordinate sign matrix is absorbed into the left
+general-linear factor. -/
+theorem exists_smith_normal_form_of_det_ne_zero (A : Matrix (Fin n) (Fin n) ℤ)
+    (hA : A.det ≠ 0) :
+    ∃ (L R : GeneralLinearGroup (Fin n) ℤ) (d : Fin n → ℤ), (∀ i, 0 < d i) ∧
+      (∀ ⦃i j : Fin n⦄, i ≤ j → d i ∣ d j) ∧
+      (L : Matrix (Fin n) (Fin n) ℤ) * A * (R : Matrix (Fin n) (Fin n) ℤ) =
+        Matrix.diagonal d := by
+  rcases lt_or_gt_of_ne hA with hneg | hpos
+  · have hn : 0 < n := by
+      rcases Nat.eq_zero_or_pos n with rfl | hn
+      · simp [Matrix.det_isEmpty] at hneg
+      · exact hn
+    let _ : NeZero n := ⟨Nat.ne_of_gt hn⟩
+    let S : Matrix (Fin n) (Fin n) ℤ :=
+      Matrix.diagonal (Function.update 1 0 (-1))
+    have hS_def : S = Matrix.diagonal (Function.update 1 0 (-1)) := rfl
+    have hS_det : S.det = -1 := by
+      rw [hS_def, Matrix.det_diagonal,
+        Finset.prod_update_of_mem (Finset.mem_univ 0)]
+      simp
+    have hS_sq : S * S = 1 := by
+      rw [hS_def, Matrix.diagonal_mul_diagonal]
+      ext i j
+      simp only [Matrix.diagonal_apply, Matrix.one_apply]
+      by_cases hij : i = j
+      · subst j
+        by_cases hi : i = 0 <;> simp [hi]
+      · simp [hij]
+    let S' : GeneralLinearGroup (Fin n) ℤ := ⟨S, S, hS_sq, hS_sq⟩
+    have hSA : 0 < (S * A).det := by
+      rw [Matrix.det_mul, hS_det]
+      linarith
+    obtain ⟨L, R, d, hd_pos, hd_dvd, hLR⟩ :=
+      exists_smith_normal_form_of_det_pos (S * A) hSA
+    refine ⟨(L : GeneralLinearGroup (Fin n) ℤ) * S', R, d, hd_pos, hd_dvd, ?_⟩
+    simpa only [Units.val_mul, SpecialLinearGroup.coe_GL_coe_matrix, Matrix.mul_assoc] using hLR
+  · obtain ⟨L, R, d, hd_pos, hd_dvd, hLR⟩ :=
+      exists_smith_normal_form_of_det_pos A hpos
+    exact ⟨L, R, d, hd_pos, hd_dvd, hLR⟩
 
 /-! ## Uniqueness of the invariant factors
 
