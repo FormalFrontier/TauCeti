@@ -290,4 +290,14 @@ theorem mapPointsFunctor_innerConjugationIso_hom_app_apply
   exact (HopfAlgebra.productMap_comp_conjugationAlgHom (R := R) (H := H)
     (extendPoint H A g) x)
 
+/-- On points over any commutative value algebra, the inverse coordinate inner automorphism acts
+by conjugation by the inverse of the extended rational point. -/
+theorem mapPointsFunctor_innerConjugationIso_inv_app_apply
+    (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R))
+    (A : CommAlgCat.{v} R) (x : HopfAlgebra.points (R := R) (H := H) A) :
+    (mapPointsFunctor (innerConjugationIso H g).inv).app A x =
+      (extendPoint H A g)⁻¹ * x * extendPoint H A g := by
+  rw [← Iso.symm_hom, ← innerConjugationIso_inv_point,
+    mapPointsFunctor_innerConjugationIso_hom_app_apply, map_inv, inv_inv]
+
 end TauCeti.CommHopfAlgCat
