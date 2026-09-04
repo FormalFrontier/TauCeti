@@ -170,41 +170,46 @@ all test functions, and an `L²` function orthogonal to every test function vani
 everywhere by the fundamental lemma of the calculus of variations. -/
 theorem W1p0.denseRange_valueL_two :
     DenseRange (W1p0.valueL (mu := mu) (Omega := Omega) (p := 2)) := by
-  change Dense (Set.range fun u : W1p0 mu Omega 2 => W1p0.valueL u)
-  change Dense (↑(LinearMap.range
-    (W1p0.valueL (mu := mu) (Omega := Omega) (p := 2) :
-      W1p0 mu Omega 2 →ₗ[ℝ] Lp ℝ 2 (mu.restrict Omega))) :
-        Set (Lp ℝ 2 (mu.restrict Omega)))
-  rw [Submodule.dense_iff_topologicalClosure_eq_top]
-  rw [Submodule.topologicalClosure_eq_top_iff, Submodule.eq_bot_iff]
-  intro f hf
-  apply Lp.ext
-  have hzero : ∀ᵐ x ∂mu.restrict Omega, f x = 0 := by
-    rw [ae_restrict_iff' Omega.isOpen.measurableSet]
-    refine Omega.isOpen.ae_eq_zero_of_integral_contDiff_smul_eq_zero
-      (locallyIntegrableOn_of_locallyIntegrable_restrict
-        ((Lp.memLp f).locallyIntegrable (by simp))) fun g hg hgc hgs => ?_
-    let phi : 𝓓(Omega, ℝ) := ⟨g, hg, hgc, hgs⟩
-    let u : W1p0 mu Omega 2 :=
-      ⟨W1p.ofTestFunctionₗ mu Omega 2 phi, W1p.ofTestFunctionₗ_mem_w1p0Submodule phi⟩
-    have hinner : ⟪W1p0.valueL u, f⟫_ℝ = 0 := hf _ ⟨u, rfl⟩
-    rw [L2.inner_def, W1p0.valueL_apply, W1p.value_ofTestFunctionₗ] at hinner
-    calc
-      ∫ x, g x • f x ∂mu = ∫ x in Omega, g x • f x ∂mu := by
-        rw [← integral_indicator Omega.isOpen.measurableSet]
-        congr 1
-        symm
-        apply Set.indicator_eq_self.2
-        exact (Function.support_smul_subset_left g fun x => f x).trans
-          ((subset_tsupport g).trans hgs)
-      _ = 0 := by
-        rw [← hinner]
-        apply integral_congr_ae
-        filter_upwards [testFunctionLp_apply_ae (mu := mu) 2 phi] with x hx
-        rw [hx]
-        exact mul_comm _ _
-  exact Filter.EventuallyEq.trans hzero
-    (Lp.coeFn_zero ℝ 2 (mu.restrict Omega)).symm
+  have hcoe : (LinearMap.range (W1p0.valueL (mu := mu) (Omega := Omega) (p := 2) :
+      W1p0 mu Omega 2 →ₗ[ℝ] Lp ℝ 2 (mu.restrict Omega)) :
+        Set (Lp ℝ 2 (mu.restrict Omega))) =
+      Set.range (W1p0.valueL (mu := mu) (Omega := Omega) (p := 2)) := by
+    rw [LinearMap.coe_range, ContinuousLinearMap.coe_coe]
+  have hdense : Dense ((LinearMap.range (W1p0.valueL (mu := mu) (Omega := Omega) (p := 2) :
+      W1p0 mu Omega 2 →ₗ[ℝ] Lp ℝ 2 (mu.restrict Omega)) :
+        Set (Lp ℝ 2 (mu.restrict Omega)))) := by
+    rw [Submodule.dense_iff_topologicalClosure_eq_top,
+      Submodule.topologicalClosure_eq_top_iff, Submodule.eq_bot_iff]
+    intro f hf
+    apply Lp.ext
+    have hzero : ∀ᵐ x ∂mu.restrict Omega, f x = 0 := by
+      rw [ae_restrict_iff' Omega.isOpen.measurableSet]
+      refine Omega.isOpen.ae_eq_zero_of_integral_contDiff_smul_eq_zero
+        (locallyIntegrableOn_of_locallyIntegrable_restrict
+          ((Lp.memLp f).locallyIntegrable (by simp))) fun g hg hgc hgs => ?_
+      let phi : 𝓓(Omega, ℝ) := ⟨g, hg, hgc, hgs⟩
+      let u : W1p0 mu Omega 2 :=
+        ⟨W1p.ofTestFunctionₗ mu Omega 2 phi, W1p.ofTestFunctionₗ_mem_w1p0Submodule phi⟩
+      have hinner : ⟪W1p0.valueL u, f⟫_ℝ = 0 := hf _ ⟨u, rfl⟩
+      rw [L2.inner_def, W1p0.valueL_apply, W1p.value_ofTestFunctionₗ] at hinner
+      calc
+        ∫ x, g x • f x ∂mu = ∫ x in Omega, g x • f x ∂mu := by
+          rw [← integral_indicator Omega.isOpen.measurableSet]
+          congr 1
+          symm
+          apply Set.indicator_eq_self.2
+          exact (Function.support_smul_subset_left g fun x => f x).trans
+            ((subset_tsupport g).trans hgs)
+        _ = 0 := by
+          rw [← hinner]
+          apply integral_congr_ae
+          filter_upwards [testFunctionLp_apply_ae (mu := mu) 2 phi] with x hx
+          rw [hx]
+          exact mul_comm _ _
+    exact Filter.EventuallyEq.trans hzero
+      (Lp.coeFn_zero ℝ 2 (mu.restrict Omega)).symm
+  rw [hcoe] at hdense
+  exact hdense
 
 /-- A nonempty open set contains a zero-boundary Sobolev function with nonzero `L²` value. -/
 theorem W1p0.exists_value_ne_zero (hOmega : (Omega : Set E).Nonempty) :

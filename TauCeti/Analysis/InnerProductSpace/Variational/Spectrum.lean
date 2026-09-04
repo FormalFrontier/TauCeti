@@ -54,8 +54,8 @@ eigenfunction.
 * `IsCoercive.pos_of_forall_apply_eq_smul_inner` and
   `IsCoercive.le_of_forall_apply_eq_smul_inner`: positivity of a variational eigenvalue, and
   the lower bound by the coercivity constant.
-* `IsCoercive.orthogonalComplement_iSup_eigenspace_formSolutionOperator_eq_bot` and
-  `IsCoercive.orthogonalComplement_iSup_eigenspace_ne_zero_eq_bot`: the eigenvectors of `S`
+* `IsCoercive.orthogonalComplement_iSup_eigenspaces_formSolutionOperator_eq_bot` and
+  `IsCoercive.orthogonalComplement_iSup_eigenspaces_ne_zero_eq_bot`: the eigenvectors of `S`
   span a dense subspace, and only the nonzero eigenvalues are needed when `J` has dense range.
 
 ## References
@@ -340,7 +340,7 @@ theorem finiteDimensional_eigenspace_formSolutionOperator (hB : IsCoercive B) {J
 
 /-- **The spectral theorem for the solution operator**: its eigenvectors span a dense subspace
 of `H`. -/
-theorem orthogonalComplement_iSup_eigenspace_formSolutionOperator_eq_bot (hB : IsCoercive B)
+theorem orthogonalComplement_iSup_eigenspaces_formSolutionOperator_eq_bot (hB : IsCoercive B)
     {J : V →L[ℝ] H} (hJ : IsCompactOperator J) (hsymm : ∀ u v : V, B u v = B v u) :
     (⨆ mu : ℝ, eigenspace (hB.formSolutionOperator J : H →ₗ[ℝ] H) mu)ᗮ = ⊥ :=
   ContinuousLinearMap.orthogonalComplement_iSup_eigenspaces_eq_bot
@@ -350,13 +350,13 @@ theorem orthogonalComplement_iSup_eigenspace_formSolutionOperator_eq_bot (hB : I
 /-- **The eigenfunctions of the variational eigenvalue problem span a dense subspace of `H`**:
 when `J` is compact with dense range and the form is symmetric, the eigenspaces of the solution
 operator at its nonzero eigenvalues already have trivial orthogonal complement. -/
-theorem orthogonalComplement_iSup_eigenspace_ne_zero_eq_bot (hB : IsCoercive B)
+theorem orthogonalComplement_iSup_eigenspaces_ne_zero_eq_bot (hB : IsCoercive B)
     {J : V →L[ℝ] H} (hJ : IsCompactOperator J) (hJdense : DenseRange J)
     (hsymm : ∀ u v : V, B u v = B v u) :
     (⨆ mu : ℝ, ⨆ _ : mu ≠ 0,
       eigenspace (hB.formSolutionOperator J : H →ₗ[ℝ] H) mu)ᗮ = ⊥ := by
   refine le_bot_iff.mp ?_
-  rw [← hB.orthogonalComplement_iSup_eigenspace_formSolutionOperator_eq_bot hJ hsymm]
+  rw [← hB.orthogonalComplement_iSup_eigenspaces_formSolutionOperator_eq_bot hJ hsymm]
   refine Submodule.orthogonal_le (iSup_le fun mu => ?_)
   rcases eq_or_ne mu 0 with rfl | hne
   · rw [hB.eigenspace_formSolutionOperator_zero_eq_bot hJdense]

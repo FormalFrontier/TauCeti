@@ -548,6 +548,14 @@ theorem W1p.integral_value_sq_eq_norm_value_sq (u : W1p mu Omega 2) :
   exact integral_congr_ae (Filter.Eventually.of_forall fun x => by
     simp [Real.norm_eq_abs, sq_abs])
 
+omit [FiniteDimensional ℝ E] in
+/-- The `L²` pairing of the value components of two Sobolev functions, as an integral over `Ω`. -/
+theorem W1p.inner_value_eq_setIntegral (u v : W1p mu Omega 2) :
+    ⟪W1p.value u, W1p.value v⟫_ℝ = ∫ x in Omega, W1p.value u x * W1p.value v x ∂mu := by
+  rw [L2.inner_def]
+  exact integral_congr_ae (Filter.Eventually.of_forall fun x => by
+    simp [RCLike.inner_apply, mul_comm])
+
 /-- `W^{1,p}(Ω)` is complete in its value-gradient graph norm. -/
 instance : CompleteSpace (W1p mu Omega p) :=
   (w1pSubmodule mu Omega p).isClosed.completeSpace_coe

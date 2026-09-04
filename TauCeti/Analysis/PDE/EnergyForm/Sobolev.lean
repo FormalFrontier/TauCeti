@@ -96,6 +96,8 @@ hypothesis is carried explicitly, and the interior estimates do not see the boun
 * `TauCeti.PDE.energyFormH1L` and `TauCeti.PDE.energyFormH1L0`: the energy form bundled as a
   continuous bilinear map on `H¹(Ω)` and on `H¹₀(Ω)`, built from
   `TauCeti.PDE.energyFormLpVariable`.
+* `TauCeti.PDE.energyFormH1L0_comm`: symmetry of the bundled `H¹₀` energy form, from symmetry of
+  the energy form at the functions of `H¹₀(Ω)`.
 * `TauCeti.PDE.UniformlyEllipticOn.integrable_energyIntegrand_jetField`: the energy density of
   two Sobolev functions is integrable.
 * `TauCeti.PDE.UniformlyEllipticOn.norm_energyFormH1_le`: boundedness of the energy form, with
@@ -566,6 +568,20 @@ theorem energyFormH1L0_apply
       energyFormH1 a b c (u : W1p mu Omega 2) (v : W1p mu Omega 2) := by
   rw [energyFormH1L0, ContinuousLinearMap.bilinearComp_apply, energyFormH1L_apply]
   simp only [Submodule.subtypeL_apply]
+
+omit [DecidableEq ι] in
+/-- **Symmetry of the bundled `H¹₀` energy form.**  Only symmetry of `energyFormH1` at the
+Sobolev functions underlying `H¹₀(Ω)` is needed; with no drift and an almost everywhere symmetric
+principal coefficient `TauCeti.PDE.energyFormH1_comm_of_isSymm_ae` supplies it. -/
+theorem energyFormH1L0_comm
+    (hcoeff : MemLp (fun x => energyIntegrand (a x) (b x) (c x)) ⊤ (mu.restrict Omega))
+    (hsymm : ∀ u v : W1p0 mu Omega 2,
+      energyFormH1 a b c (u : W1p mu Omega 2) (v : W1p mu Omega 2) =
+        energyFormH1 a b c (v : W1p mu Omega 2) (u : W1p mu Omega 2))
+    (u v : W1p0 mu Omega 2) :
+    energyFormH1L0 hcoeff u v = energyFormH1L0 hcoeff v u := by
+  rw [energyFormH1L0_apply, energyFormH1L0_apply]
+  exact hsymm u v
 
 namespace UniformlyEllipticOn
 
