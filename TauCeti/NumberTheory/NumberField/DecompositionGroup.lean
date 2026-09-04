@@ -14,9 +14,11 @@ public import TauCeti.NumberTheory.RamificationInertia.Galois
 
 Let `L / K` be a finite Galois extension of number fields with Galois group `G = Gal(L/K)`, and
 let `Q` be a nonzero prime of `𝓞 L` lying over `𝔭 = Q ∩ 𝓞 K`. Mathlib's `IsArithFrobAt`
-supplies an element `σ ∈ G` with `σ x ≡ x ^ #(𝓞 K ⧸ 𝔭) (mod Q)`, unique when `L / K` is
-unramified at `Q`. This file identifies what that element is: a generator of the decomposition
-group of `Q`, mapping to the Frobenius automorphism of the residue extension.
+expresses that an element `σ ∈ G` satisfies `σ x ≡ x ^ #(𝓞 K ⧸ 𝔭) (mod Q)`. Tau Ceti's
+`NumberField.exists_isArithFrobAt` supplies such an element, and
+`NumberField.isArithFrobAt_eq_of_isUnramifiedAt` proves it unique when `L / K` is unramified at
+`Q`. This file identifies what that element is: a generator of the decomposition group of `Q`,
+mapping to the Frobenius automorphism of the residue extension.
 
 The link is Mathlib's `Ideal.Quotient.stabilizerHom`, the action of the decomposition group
 `MulAction.stabilizer G Q` on the residue extension `(𝓞 L ⧸ Q) / (𝓞 K ⧸ 𝔭)`. Its kernel is the
