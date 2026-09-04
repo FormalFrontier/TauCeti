@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Symplectic.GaussianGeneration
-import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Diagonal
 
 /-!
 # Generating the symplectic diagonal torus by root subgroups
