@@ -275,10 +275,9 @@ theorem pow_mul (C : ConjClasses M) (i j : ℕ) : (C ^ i) ^ j = C ^ (i * j) := b
   obtain ⟨a, rfl⟩ := ConjClasses.exists_rep C
   rw [mk_pow, mk_pow, mk_pow, _root_.pow_mul]
 
-/-- The image of the class of `a` under `ConjClasses.map f` is the class of `f a`.
-
-Mathlib defines `ConjClasses.map` as a `Quotient.lift` but provides no computation rule for it, so
-this is the single definitional reduction on which every naturality statement below rests. -/
+/-- The image of the class of `a` under `ConjClasses.map f` is the class of `f a`. -/
+-- Mathlib defines `ConjClasses.map` as a `Quotient.lift` and provides no computation rule for it,
+-- so this reduction is stated here once and every naturality statement below rewrites with it.
 @[simp]
 theorem map_mk {N : Type*} [Monoid N] (f : M →* N) (a : M) :
     ConjClasses.map f (ConjClasses.mk a) = ConjClasses.mk (f a) := rfl
