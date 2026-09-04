@@ -339,53 +339,41 @@ theorem pgf_negativeBinomialMeasure_zero (p t : ℝ) :
 
 /-- The convolution of two negative-binomial laws with the same success probability is
 negative-binomial, with the shape parameters added. This includes either shape-zero boundary and
-the success-probability-one Dirac family. -/
+the success-probability-one Dirac family; outside the valid probability range all three measures
+vanish. -/
 @[simp]
 theorem negativeBinomialMeasure_conv_negativeBinomialMeasure {r s p : ℝ}
-    (hr : 0 ≤ r) (hs : 0 ≤ s) (hp : 0 < p) (hp1 : p ≤ 1) :
+    (hr : 0 ≤ r) (hs : 0 ≤ s) :
     negativeBinomialMeasure r p ∗ negativeBinomialMeasure s p =
       negativeBinomialMeasure (r + s) p := by
-  rcases hr.eq_or_lt with rfl | hr
-  · rw [negativeBinomialMeasure_zero hp hp1, Measure.dirac_zero_conv, zero_add]
-  rcases hs.eq_or_lt with rfl | hs
-  · rw [negativeBinomialMeasure_zero hp hp1, Measure.conv_dirac_zero, add_zero]
-  let _ := isProbabilityMeasure_negativeBinomialMeasure hr.le hp hp1
-  let _ := isProbabilityMeasure_negativeBinomialMeasure hs.le hp hp1
-  let _ := isProbabilityMeasure_negativeBinomialMeasure (add_pos hr hs).le hp hp1
-  apply measure_eq_of_pgf_eqOn
-  intro t ht
-  have ht_abs : |t| < 1 := abs_lt.mpr ht
-  have hdom : |(1 - p) * t| < 1 := by
-    rw [abs_mul, abs_of_nonneg (sub_nonneg.mpr hp1)]
-    calc
-      (1 - p) * |t| ≤ 1 * |t| :=
-        mul_le_mul_of_nonneg_right (by linarith : 1 - p ≤ 1) (abs_nonneg t)
-      _ < 1 := by simpa using ht_abs
-  have hbase : 0 < p / (1 - (1 - p) * t) := by
-    apply div_pos hp
-    exact sub_pos.mpr (lt_of_le_of_lt (le_abs_self _) hdom)
-  have hpgf_conv :
-      pgf id (negativeBinomialMeasure r p ∗ negativeBinomialMeasure s p) t =
-        pgf id (negativeBinomialMeasure r p) t *
-          pgf id (negativeBinomialMeasure s p) t := by
-    rw [Measure.conv, pgf_map (by fun_prop)]
-    -- `pgf_map` leaves coordinate addition under a lambda, while
-    -- `IndepFun.pgf_add_of_abs_le_one` expects the definitionally equal pointwise sum.
-    change pgf ((fun z : ℕ × ℕ => z.1) + fun z => z.2)
-      ((negativeBinomialMeasure r p).prod (negativeBinomialMeasure s p)) t = _
-    have hindep : IndepFun (fun z : ℕ × ℕ => z.1) (fun z => z.2)
-        ((negativeBinomialMeasure r p).prod (negativeBinomialMeasure s p)) :=
-      indepFun_prod (μ := negativeBinomialMeasure r p)
-        (ν := negativeBinomialMeasure s p) (X := id) (Y := id)
-        measurable_id measurable_id
-    rw [TauCeti.Probability.IndepFun.pgf_add_of_abs_le_one hindep
-      measurable_fst.aemeasurable measurable_snd.aemeasurable ht_abs.le]
-    rw [← pgf_map measurable_fst.aemeasurable, ← pgf_map measurable_snd.aemeasurable]
-    simp
-  rw [hpgf_conv, pgf_negativeBinomialMeasure hr hp hp1 hdom,
-    pgf_negativeBinomialMeasure hs hp hp1 hdom,
-    pgf_negativeBinomialMeasure (add_pos hr hs) hp hp1 hdom]
-  exact (Real.rpow_add hbase r s).symm
+  by_cases hp_valid : 0 < p ∧ p ≤ 1
+  · rcases hp_valid with ⟨hp, hp1⟩
+    rcases hr.eq_or_lt with rfl | hr
+    · rw [negativeBinomialMeasure_zero hp hp1, Measure.dirac_zero_conv, zero_add]
+    rcases hs.eq_or_lt with rfl | hs
+    · rw [negativeBinomialMeasure_zero hp hp1, Measure.conv_dirac_zero, add_zero]
+    let _ := isProbabilityMeasure_negativeBinomialMeasure hr.le hp hp1
+    let _ := isProbabilityMeasure_negativeBinomialMeasure hs.le hp hp1
+    let _ := isProbabilityMeasure_negativeBinomialMeasure (add_pos hr hs).le hp hp1
+    apply measure_eq_of_pgf_eqOn
+    intro t ht
+    have ht_abs : |t| < 1 := abs_lt.mpr ht
+    have hdom : |(1 - p) * t| < 1 := by
+      rw [abs_mul, abs_of_nonneg (sub_nonneg.mpr hp1)]
+      calc
+        (1 - p) * |t| ≤ 1 * |t| :=
+          mul_le_mul_of_nonneg_right (by linarith : 1 - p ≤ 1) (abs_nonneg t)
+        _ < 1 := by simpa using ht_abs
+    have hbase : 0 < p / (1 - (1 - p) * t) := by
+      apply div_pos hp
+      exact sub_pos.mpr (lt_of_le_of_lt (le_abs_self _) hdom)
+    rw [pgf_conv _ _ ht_abs.le, pgf_negativeBinomialMeasure hr hp hp1 hdom,
+      pgf_negativeBinomialMeasure hs hp hp1 hdom,
+      pgf_negativeBinomialMeasure (add_pos hr hs) hp hp1 hdom]
+    exact (Real.rpow_add hbase r s).symm
+  · have hzero (a : ℝ) : negativeBinomialMeasure a p = 0 :=
+      negativeBinomialMeasure_eq_zero_of_invalid (fun h => hp_valid h.2)
+    simp only [hzero, Measure.zero_conv]
 
 end Probability
 
