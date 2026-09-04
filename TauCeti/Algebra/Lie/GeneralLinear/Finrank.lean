@@ -14,8 +14,8 @@ import Mathlib.LinearAlgebra.Dual.Lemmas
 # The dimension of the special linear Lie algebra
 
 Over a field, `sl n K` is the kernel of the trace functional on the `n × n` matrices. The trace is
-surjective as soon as there is an index at all — the matrix unit `Eᵢᵢ` scaled by `c` has trace `c` —
-so it is a nonzero functional and its kernel is a hyperplane:
+surjective as soon as there is an index at all (`Matrix.trace_surjective`), so it is a nonzero
+functional and its kernel is a hyperplane:
 
 `finrank K (sl n K) = (card n) ^ 2 - 1`.
 
@@ -33,7 +33,6 @@ satisfying the strong rank condition). The hyperplane argument used here instead
 
 ## Main results
 
-* `TauCeti.traceLinearMap_surjective`: the trace of a square matrix is surjective onto the scalars.
 * `TauCeti.finrank_sl`: `sl n K` has dimension `(card n) ^ 2 - 1`.
 * `TauCeti.finrank_slIdeal`: the same for the trace-zero ideal of `gl n K`, which by
   `TauCeti.derivedSeries_one_eq_slIdeal` is the derived ideal `⁅gl n K, gl n K⁆`.
@@ -49,19 +48,6 @@ open Matrix Module LieAlgebra
 attribute [local instance 100] LieRing.ofAssociativeRing
 
 variable {K : Type*} {n : Type*} [Fintype n]
-
-section Trace
-
-variable (K n) [Semiring K] [Nonempty n]
-
-/-- **The trace is surjective onto the scalars** as soon as there is an index: the matrix unit
-`Eᵢᵢ` scaled by `c` has trace `c`. This is `Matrix.trace_surjective` for the trace as a linear
-map. -/
-theorem traceLinearMap_surjective :
-    Function.Surjective (Matrix.traceLinearMap n K K) :=
-  Matrix.trace_surjective
-
-end Trace
 
 section Finrank
 
@@ -87,9 +73,10 @@ theorem finrank_sl :
     have hle := Submodule.finrank_le (LinearMap.ker (Matrix.traceLinearMap n K K))
     omega
   · have hne : Matrix.traceLinearMap n K K ≠ 0 := fun h => by
-      obtain ⟨A, hA⟩ := traceLinearMap_surjective K n (1 : K)
-      rw [h, LinearMap.zero_apply] at hA
-      exact zero_ne_one hA
+      obtain ⟨A, hA⟩ := Matrix.trace_surjective (n := n) (R := K) (1 : K)
+      have hA' : Matrix.traceLinearMap n K K A = 1 := by simpa using hA
+      rw [h, LinearMap.zero_apply] at hA'
+      exact zero_ne_one hA'
     have hhyp := Module.Dual.finrank_ker_add_one_of_ne_zero hne
     omega
 
