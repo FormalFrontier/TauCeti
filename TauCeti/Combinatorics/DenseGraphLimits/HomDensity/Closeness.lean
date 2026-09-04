@@ -87,21 +87,6 @@ theorem homDensityFin_sub_injHomDensity_le (F : SimpleGraph V) (G : SimpleGraph 
     let _ : MeasurableSpace W := ⊤
     let A : Set (V → W) := {f | ∀ a b, F.Adj a b → G.Adj (f a) (f b)}
     let E : Set (V → W) := {f | Function.Injective f}
-    have uniformOn_toReal (S T : Set (V → W)) :
-        (ProbabilityTheory.uniformOn S T).toReal =
-          (Nat.card {f : V → W // f ∈ S ∩ T} : ℝ) /
-            (Nat.card {f : V → W // f ∈ S} : ℝ) := by
-      rw [ProbabilityTheory.uniformOn, ProbabilityTheory.cond_apply S.toFinite.measurableSet,
-        ENNReal.toReal_mul, ENNReal.toReal_inv]
-      rw [MeasureTheory.Measure.count_apply_finite _ (S.toFinite.inter_of_left T),
-        MeasureTheory.Measure.count_apply_finite _ S.toFinite]
-      rw [← Set.ncard_eq_toFinset_card (S ∩ T) (S.toFinite.inter_of_left T),
-        ← Set.ncard_eq_toFinset_card S S.toFinite]
-      have hcard (U : Set (V → W)) : Nat.card {f : V → W // f ∈ U} = U.ncard := by
-        rw [Nat.card_eq_fintype_card, Set.fintypeCard_eq_ncard]
-      rw [← hcard (S ∩ T), ← hcard S]
-      simp only [ENNReal.toReal_natCast]
-      rw [mul_comm, div_eq_mul_inv]
     have hA : Nat.card {f : V → W // f ∈ A} = Nat.card (F →g G) := by
       simpa [A] using (card_hom_eq_card_adjPreservingMaps F G).symm
     have hEA : Nat.card {f : V → W // f ∈ E ∩ A} =
@@ -133,7 +118,7 @@ theorem homDensityFin_sub_injHomDensity_le (F : SimpleGraph V) (G : SimpleGraph 
           (Nat.card {f : V → W // f ∈ Set.univ ∩ A} : ℝ) /
               (Nat.card {f : V → W // f ∈ Set.univ} : ℝ) +
             ((Fintype.card V).choose 2 : ℝ) / (Fintype.card W : ℝ) := by
-      rw [← uniformOn_toReal E A, ← uniformOn_toReal Set.univ A]
+      rw [← Probability.uniformOn_toReal E A, ← Probability.uniformOn_toReal Set.univ A]
       have h := (ENNReal.toReal_le_toReal (by finiteness) (by finiteness)).2 hleft
       rw [ENNReal.toReal_add (by finiteness) (by finiteness), ENNReal.toReal_div] at h
       simpa [E, ENNReal.toReal_natCast] using h
@@ -143,7 +128,7 @@ theorem homDensityFin_sub_injHomDensity_le (F : SimpleGraph V) (G : SimpleGraph 
           (Nat.card {f : V → W // f ∈ E ∩ A} : ℝ) /
               (Nat.card {f : V → W // f ∈ E} : ℝ) +
             ((Fintype.card V).choose 2 : ℝ) / (Fintype.card W : ℝ) := by
-      rw [← uniformOn_toReal Set.univ A, ← uniformOn_toReal E A]
+      rw [← Probability.uniformOn_toReal Set.univ A, ← Probability.uniformOn_toReal E A]
       have h := (ENNReal.toReal_le_toReal (by finiteness) (by finiteness)).2 hright
       rw [ENNReal.toReal_add (by finiteness) (by finiteness), ENNReal.toReal_div] at h
       simpa [E, ENNReal.toReal_natCast] using h
