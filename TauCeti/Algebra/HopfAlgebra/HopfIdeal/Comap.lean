@@ -286,7 +286,7 @@ theorem comapOfSurjective_bialgEquiv_symm_apply (I : HopfIdeal R H) (e : H ≃�
     e.symm_apply_apply]
 
 /-- Inverse image along a bialgebra equivalence is an order isomorphism of Hopf ideals. -/
-@[expose] noncomputable def comapOrderIso (e : H ≃ₐc[R] K) :
+noncomputable def comapOrderIso (e : H ≃ₐc[R] K) :
     HopfIdeal R K ≃o HopfIdeal R H where
   toFun I := I.comapOfSurjective e.toBialgHom (EquivLike.surjective e)
   invFun I := I.comapOfSurjective e.symm.toBialgHom (EquivLike.surjective e.symm)
@@ -294,6 +294,30 @@ theorem comapOfSurjective_bialgEquiv_symm_apply (I : HopfIdeal R H) (e : H ≃�
   right_inv I := comapOfSurjective_bialgEquiv_symm_apply I e
   map_rel_iff' := comapOfSurjective_le_comapOfSurjective_iff e.toBialgHom
     (EquivLike.surjective e)
+
+private theorem comapOrderIso_apply_def (e : H ≃ₐc[R] K) (I : HopfIdeal R K) :
+    comapOrderIso e I =
+      I.comapOfSurjective e.toBialgHom (EquivLike.surjective e) :=
+  (rfl)
+
+private theorem comapOrderIso_symm_apply_def (e : H ≃ₐc[R] K) (I : HopfIdeal R H) :
+    (comapOrderIso e).symm I =
+      I.comapOfSurjective e.symm.toBialgHom (EquivLike.surjective e.symm) :=
+  (rfl)
+
+/-- The forward map of `comapOrderIso` is inverse image along the equivalence. -/
+@[simp]
+theorem comapOrderIso_apply (e : H ≃ₐc[R] K) (I : HopfIdeal R K) :
+    comapOrderIso e I =
+      I.comapOfSurjective e.toBialgHom (EquivLike.surjective e) :=
+  comapOrderIso_apply_def e I
+
+/-- The inverse map of `comapOrderIso` is inverse image along the inverse equivalence. -/
+@[simp]
+theorem comapOrderIso_symm_apply (e : H ≃ₐc[R] K) (I : HopfIdeal R H) :
+    (comapOrderIso e).symm I =
+      I.comapOfSurjective e.symm.toBialgHom (EquivLike.surjective e.symm) :=
+  comapOrderIso_symm_apply_def e I
 
 section Field
 

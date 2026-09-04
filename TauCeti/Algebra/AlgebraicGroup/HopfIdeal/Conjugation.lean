@@ -68,6 +68,7 @@ belongs to the conjugate closed subgroup.
 
 Thus conjugation gives a bijection from the original subgroup's `A`-points to the conjugate
 subgroup's `A`-points, uniformly in the commutative value algebra `A`. -/
+@[simp]
 theorem conj_mem_quotientPointsSubgroup_conjugate_iff (I : HopfIdeal R H)
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R))
     (A : CommAlgCat.{v} R) (x : HopfAlgebra.points (R := R) (H := H) A) :
@@ -77,11 +78,11 @@ theorem conj_mem_quotientPointsSubgroup_conjugate_iff (I : HopfIdeal R H)
   let f := (CommHopfAlgCat.innerConjugationIso H g).hom.hom
   have hf : Function.Bijective f :=
     ConcreteCategory.bijective_of_isIso (CommHopfAlgCat.innerConjugationIso H g).hom
-  rw [← CommHopfAlgCat.mapPointsFunctor_innerConjugationIso_hom_app_apply H g A x]
-  rw [CommHopfAlgCat.mapPointsFunctor_app_apply]
-  rw [← AlgHom.mapDomain_apply]
-  change AlgHom.mapDomain f x ∈ CommHopfAlgCat.quotientPointsSubgroup H (I.conjugate g) A ↔
-    x ∈ CommHopfAlgCat.quotientPointsSubgroup H I A
+  have hmap :
+      (CommHopfAlgCat.mapPointsFunctor
+        (CommHopfAlgCat.innerConjugationIso H g).hom).app A x = AlgHom.mapDomain f x := by
+    rw [CommHopfAlgCat.mapPointsFunctor_app_apply, AlgHom.mapDomain_apply]
+  rw [← CommHopfAlgCat.mapPointsFunctor_innerConjugationIso_hom_app_apply H g A x, hmap]
   have he : (BialgEquiv.ofBijective f hf).toBialgHom = f := by
     ext y
     exact congrFun (BialgEquiv.coe_ofBijective f hf) y
@@ -143,7 +144,8 @@ noncomputable def conjugateOrderIso
 theorem conjugateOrderIso_apply
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) (I : HopfIdeal R H) :
     conjugateOrderIso g I = I.conjugate g := by
-  unfold conjugateOrderIso comapOrderIso conjugate
+  rw [conjugateOrderIso, comapOrderIso_apply]
+  unfold conjugate
   rfl
 
 /-- Applying the inverse conjugation order isomorphism conjugates by the inverse point. -/
