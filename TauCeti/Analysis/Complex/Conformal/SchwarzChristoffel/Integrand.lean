@@ -5,9 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.Calculus.LogDeriv
 public import Mathlib.Analysis.Complex.UpperHalfPlane.Basic
-public import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
+public import TauCeti.Analysis.Complex.UpperHalfPlane.Cpow
 
 /-!
 # The Schwarz--Christoffel integrand
@@ -24,8 +23,8 @@ usual choice is `e i = α i / π - 1`.
 This file defines that product using the principal complex power and establishes its analytic
 properties on the upper half-plane.  Each difference `z - a i` lies in
 `Complex.slitPlane` there, so the chosen branch is holomorphic.  The integrand is nowhere zero,
-away from the prevertices its norm is the product of the expected real powers, and its
-logarithmic derivative is the sum of the simple fractions `e i / (z - a i)`.
+its norm is the product of the expected real powers, and its logarithmic derivative is the sum
+of the simple fractions `e i / (z - a i)`.
 
 These facts are the analytic input for constructing the Schwarz--Christoffel map as a primitive
 of the integrand.  Nonvanishing will make that primitive locally conformal, while the real-power
@@ -84,79 +83,41 @@ theorem schwarzChristoffelIntegrand_zero (a : ι → ℝ) :
   ext z
   simp [schwarzChristoffelIntegrand]
 
-/-- Translating an upper-half-plane point by a real prevertex leaves it in the slit plane. -/
-lemma sub_ofReal_mem_slitPlane_of_im_pos {z : ℂ} (hz : 0 < z.im) (x : ℝ) :
-    z - (x : ℂ) ∈ slitPlane := by
-  simp [slitPlane, hz.ne']
-
-/-- A principal-power factor in the Schwarz--Christoffel integrand is differentiable at every
-point of the upper half-plane. -/
-lemma differentiableAt_cpow_sub_of_im_pos {z : ℂ} (hz : 0 < z.im) (x r : ℝ) :
-    DifferentiableAt ℂ (fun w : ℂ => (w - (x : ℂ)) ^ (r : ℂ)) z :=
-  (differentiableAt_id.sub_const (x : ℂ)).cpow_const
-    (sub_ofReal_mem_slitPlane_of_im_pos hz x)
-
 /-- The Schwarz--Christoffel integrand is holomorphic on the open upper half-plane. -/
 theorem differentiableOn_schwarzChristoffelIntegrand (a e : ι → ℝ) :
     DifferentiableOn ℂ (schwarzChristoffelIntegrand a e) upperHalfPlaneSet := by
   intro z hz
-  rw [show schwarzChristoffelIntegrand a e =
-    (fun w => ∏ i, (w - (a i : ℂ)) ^ (e i : ℂ)) from
-      funext (schwarzChristoffelIntegrand_def a e)]
   exact DifferentiableWithinAt.fun_finsetProd fun i _ =>
-    (differentiableAt_cpow_sub_of_im_pos hz (a i) (e i)).differentiableWithinAt
-
-/-- No principal-power factor in the Schwarz--Christoffel integrand vanishes in the upper
-half-plane. -/
-lemma cpow_sub_ne_zero_of_im_pos {z : ℂ} (hz : 0 < z.im) (x r : ℝ) :
-    (z - (x : ℂ)) ^ (r : ℂ) ≠ 0 := by
-  rw [Complex.cpow_ne_zero_iff]
-  left
-  intro h
-  have := congr_arg Complex.im h
-  simp only [sub_im, ofReal_im, sub_zero, zero_im] at this
-  exact hz.ne' this
+    (differentiableAt_sub_cpow_of_im_pos hz (a i) (e i)).differentiableWithinAt
 
 /-- The Schwarz--Christoffel integrand is nowhere zero in the upper half-plane.  Consequently,
 any primitive of it is locally conformal there. -/
 theorem schwarzChristoffelIntegrand_ne_zero (a e : ι → ℝ) {z : ℂ} (hz : z ∈ upperHalfPlaneSet) :
     schwarzChristoffelIntegrand a e z ≠ 0 := by
   rw [schwarzChristoffelIntegrand_def]
-  exact Finset.prod_ne_zero_iff.mpr fun i _ => cpow_sub_ne_zero_of_im_pos hz (a i) (e i)
+  exact Finset.prod_ne_zero_iff.mpr fun i _ => sub_cpow_ne_zero_of_im_pos hz (a i) (e i)
 
-/-- Adding two exponent families multiplies their Schwarz--Christoffel integrands in the upper
-half-plane.  The domain hypothesis is essential because the principal complex power is additive
-in its exponent only away from a zero base. -/
-theorem schwarzChristoffelIntegrand_add (a e d : ι → ℝ) {z : ℂ}
-    (hz : z ∈ upperHalfPlaneSet) :
+/-- Adding two exponent families multiplies their Schwarz--Christoffel integrands at any point
+off the prevertices.  The hypothesis is essential because the principal complex power is
+additive in its exponent only away from a zero base. -/
+theorem schwarzChristoffelIntegrand_add (a e d : ι → ℝ) {z : ℂ} (hz : ∀ i, z ≠ (a i : ℂ)) :
     schwarzChristoffelIntegrand a (e + d) z =
       schwarzChristoffelIntegrand a e z * schwarzChristoffelIntegrand a d z := by
-  simp_rw [schwarzChristoffelIntegrand_def, Pi.add_apply, ofReal_add,
-    Complex.cpow_add _ _ (slitPlane_ne_zero (sub_ofReal_mem_slitPlane_of_im_pos hz _)),
-    Finset.prod_mul_distrib]
+  simp_rw [schwarzChristoffelIntegrand_def, Pi.add_apply, ofReal_add]
+  rw [← Finset.prod_mul_distrib]
+  exact Finset.prod_congr rfl fun i _ =>
+    Complex.cpow_add _ _ (sub_ne_zero_of_ne (hz i))
 
-/-- Away from the prevertices, the norm of a Schwarz--Christoffel integrand is the product of the
-corresponding real powers of the distances to its prevertices. -/
-theorem norm_schwarzChristoffelIntegrand (a e : ι → ℝ) (z : ℂ)
-    (_hz : ∀ i, z ≠ (a i : ℂ)) :
+/-- The norm of a Schwarz--Christoffel integrand is the product of the corresponding real powers
+of the distances to its prevertices.  Both sides are totalized in the same way at a prevertex,
+so no hypothesis on `z` is needed; the common value there is not analytic boundary data, which
+has to be described by a punctured limit instead. -/
+theorem norm_schwarzChristoffelIntegrand (a e : ι → ℝ) (z : ℂ) :
     ‖schwarzChristoffelIntegrand a e z‖ = ∏ i, dist z (a i : ℂ) ^ e i := by
   rw [schwarzChristoffelIntegrand_def, norm_prod]
   apply Finset.prod_congr rfl
   intro i _
   rw [Complex.norm_cpow_real, dist_eq]
-
-/-- The logarithmic derivative of one principal-power factor in the upper half-plane is the
-corresponding simple fraction. -/
-lemma logDeriv_cpow_sub_of_im_pos {z : ℂ} (hz : 0 < z.im) (x r : ℝ) :
-    logDeriv (fun w : ℂ => (w - (x : ℂ)) ^ (r : ℂ)) z = (r : ℂ) / (z - (x : ℂ)) := by
-  have hslit := sub_ofReal_mem_slitPlane_of_im_pos hz x
-  have hbase : z - (x : ℂ) ≠ 0 := slitPlane_ne_zero hslit
-  have hpow : (z - (x : ℂ)) ^ (r : ℂ) ≠ 0 :=
-    cpow_sub_ne_zero_of_im_pos hz x r
-  rw [logDeriv_apply,
-    ((hasDerivAt_id' z).sub_const (x : ℂ)).cpow_const hslit |>.deriv,
-    mul_one, Complex.cpow_sub _ _ hbase, Complex.cpow_one]
-  field_simp
 
 /-- The logarithmic derivative of the Schwarz--Christoffel integrand is the sum of its simple
 fractions.  Its possible poles are the real prevertices and hence lie on the boundary of the
@@ -165,13 +126,15 @@ theorem logDeriv_schwarzChristoffelIntegrand (a e : ι → ℝ) {z : ℂ}
     (hz : z ∈ upperHalfPlaneSet) :
     logDeriv (schwarzChristoffelIntegrand a e) z =
       ∑ i, (e i : ℂ) / (z - (a i : ℂ)) := by
-  rw [show schwarzChristoffelIntegrand a e =
-    (fun w => ∏ i, (w - (a i : ℂ)) ^ (e i : ℂ)) from
-      funext (schwarzChristoffelIntegrand_def a e)]
-  rw [logDeriv_fun_prod]
-  · exact Finset.sum_congr rfl fun i _ => logDeriv_cpow_sub_of_im_pos hz (a i) (e i)
-  · exact fun i _ => cpow_sub_ne_zero_of_im_pos hz (a i) (e i)
-  · exact fun i _ => differentiableAt_cpow_sub_of_im_pos hz (a i) (e i)
+  -- `logDeriv_fun_prod` rewrites a syntactic product of functions, so present the integrand
+  -- as one before rewriting with it.
+  have hfun : schwarzChristoffelIntegrand a e =
+      fun w : ℂ => ∏ i, (w - (a i : ℂ)) ^ (e i : ℂ) :=
+    funext (schwarzChristoffelIntegrand_def a e)
+  rw [hfun, logDeriv_fun_prod]
+  · exact Finset.sum_congr rfl fun i _ => logDeriv_sub_cpow_of_im_pos hz (a i) (e i)
+  · exact fun i _ => sub_cpow_ne_zero_of_im_pos hz (a i) (e i)
+  · exact fun i _ => differentiableAt_sub_cpow_of_im_pos hz (a i) (e i)
 
 /-- The derivative of the Schwarz--Christoffel integrand, written as the integrand times its
 logarithmic derivative. -/
