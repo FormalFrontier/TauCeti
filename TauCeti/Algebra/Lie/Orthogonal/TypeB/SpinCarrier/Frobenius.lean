@@ -65,8 +65,8 @@ variable (n p k : ℕ) (A : Type v) [CommRing A] [ExpChar A p]
 
 /-- **The `p ^ k`-power Frobenius endomorphism of the full-weight type-`Bₙ₊₁` spin carrier.**
 
-For `p` prime, `0 < k`, and `A` an algebraic closure of `ZMod p`, this is the Frobenius component
-of the `Bₙ₊₁(p ^ k)` Steinberg map. -/
+For `p` prime, `0 < k`, and `A` an algebraic closure of `ZMod p`, this is intended to supply the
+Frobenius component in a future construction of the `Bₙ₊₁(p ^ k)` Steinberg map. -/
 def frobenius : points n A →* points n A :=
   pointsMap n (iterateFrobenius A p k)
 
