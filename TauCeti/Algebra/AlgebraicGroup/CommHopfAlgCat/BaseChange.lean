@@ -33,6 +33,8 @@ the original points evaluated on `K`-algebras.
   `(K ⊗[k] H →ₐ[K] A) ≃* (H →ₐ[k] A)`.
 * `CommHopfAlgCat.baseChangeIsoPointsMulEquiv`: the same equivalence for a Hopf `K`-algebra
   presented as a scalar extension by an isomorphism `L ≅ K ⊗[k] H`.
+* `CommHopfAlgCat.baseChangeIsoPointsMulEquiv_mapPointsFunctor`: point transport through such a
+  presentation commutes with a compatible square of coordinate morphisms.
 
 ## References
 
@@ -233,6 +235,36 @@ lemma baseChangeIsoPointsMulEquiv_apply_apply (e : L ≅ baseChange (K := K) H)
   rw [baseChangeIsoPointsMulEquiv, MulEquiv.trans_apply, baseChangePointsMulEquiv_apply_apply,
     AlgHom.mapDomainMulEquiv_apply, AlgHom.mapDomain_apply_apply]
   exact congrArg f.ofConv (_root_.CommHopfAlgCat.ofIso_apply e.symm _)
+
+/-- Point transport through a scalar-extension presentation commutes with a compatible square of
+coordinate morphisms. -/
+lemma baseChangeIsoPointsMulEquiv_mapPointsFunctor
+    {G : _root_.CommHopfAlgCat.{v} k}
+    {HK GK : _root_.CommHopfAlgCat.{max w v} K}
+    (e : HK ≅ baseChange (K := K) H)
+    (gG : baseChange (K := K) G ⟶ GK)
+    (f : H ⟶ G) (fK : HK ⟶ GK)
+    (hcompat : e.hom ≫ baseChangeMap f ≫ gG = fK)
+    (A : CommAlgCat.{x} K)
+    (q : HopfAlgebra.points (R := K) (H := GK) A) :
+    baseChangeIsoPointsMulEquiv e A
+        (WithConv.toConv (q.ofConv.comp fK.hom.toAlgHom)) =
+      WithConv.toConv
+        ((baseChangePointsMulEquiv (K := K) A G
+          (WithConv.toConv (q.ofConv.comp gG.hom.toAlgHom))).ofConv.comp
+            f.hom.toAlgHom) := by
+  apply WithConv.ofConv_injective
+  apply AlgHom.ext
+  intro x
+  rw [baseChangeIsoPointsMulEquiv_apply_apply]
+  simp only [AlgHom.comp_apply]
+  rw [baseChangePointsMulEquiv_apply_apply]
+  simp only [AlgHom.comp_apply]
+  rw [← hcompat, _root_.CommHopfAlgCat.hom_comp, _root_.CommHopfAlgCat.hom_comp]
+  change q.ofConv (gG.hom ((baseChangeMap f).hom
+      (e.hom.hom (e.inv (1 ⊗ₜ[k] x))))) =
+    q.ofConv (gG.hom (1 ⊗ₜ[k] f.hom x))
+  rw [Iso.inv_hom_id_apply, baseChangeMap_apply_tmul]
 
 /-- The presented point equivalence is natural in the value algebra. -/
 lemma baseChangeIsoPointsMulEquiv_mapPoints (e : L ≅ baseChange (K := K) H)
