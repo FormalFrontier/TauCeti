@@ -131,28 +131,17 @@ theorem killCompl_OMonomial_eq_prod_of_notMem {i : Fin n} {r : GridRectangle n}
       (Subtype.val_injective : Function.Injective
         (Subtype.val : {c : Fin n // c ≠ i} → Fin n)) (G.OMonomial R r) =
       ∏ c ∈ (G.OColumns r).subtype (· ≠ i), MvPolynomial.X c := by
-  rw [G.OMonomial_eq_monomial R]
-  rw [MvPolynomial.killCompl_monomial_eq_monomial_comapDomain_of_subset]
-  · have hexp :
-        (∑ c ∈ G.OColumns r, Finsupp.single c 1).comapDomain Subtype.val
-            Subtype.val_injective.injOn =
-          ∑ c ∈ (G.OColumns r).subtype (· ≠ i), Finsupp.single c 1 := by
-      ext c
-      simp only [Finsupp.comapDomain_apply, Finsupp.finsetSum_apply]
-      rw [← Finset.sum_subtype_of_mem (p := fun d : Fin n => d ≠ i)
-        (fun d : Fin n => (Finsupp.single d 1) c.val)
-        (fun d hd (hdi : d = i) => hi (hdi ▸ hd))]
-      simp [Finsupp.single_apply, Subtype.ext_iff]
-    rw [hexp, MvPolynomial.monomial_sum_one]
-    refine Finset.prod_congr rfl fun c _ => ?_
-    rw [← MvPolynomial.X_pow_eq_monomial, pow_one]
-  · have hsupport :
-        (∑ c ∈ G.OColumns r, Finsupp.single c 1).support = G.OColumns r := by
-      rw [Finsupp.support_sum_eq_biUnion _ (by simp)]
-      simp
-    rw [hsupport]
-    rintro c hc
-    exact ⟨⟨c, fun (hci : c = i) => hi (hci ▸ hc)⟩, rfl⟩
+  have hrename :
+      MvPolynomial.rename (Subtype.val : {c : Fin n // c ≠ i} → Fin n)
+          (∏ c ∈ (G.OColumns r).subtype (· ≠ i), MvPolynomial.X (R := R) c) =
+        G.OMonomial R r := by
+    rw [map_prod, G.OMonomial_eq_monomial R, MvPolynomial.monomial_sum_one]
+    simp only [MvPolynomial.rename_X]
+    simpa only [← MvPolynomial.X_pow_eq_monomial, pow_one] using
+      Finset.prod_subtype_of_mem (s := G.OColumns r) (p := fun c : Fin n => c ≠ i)
+        (MvPolynomial.X (R := R))
+        (fun c hc (hci : c = i) => hi (hci ▸ hc))
+  rw [← hrename, MvPolynomial.killCompl_rename_app]
 
 /-- The rectangles counted after blocking column `i`: unblocked rectangles which do not cover
 the `O`-marking in column `i`. -/
