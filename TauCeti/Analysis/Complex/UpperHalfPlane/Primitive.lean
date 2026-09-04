@@ -24,9 +24,9 @@ Mathlib's primitive on a ball, so it has derivative `f` throughout the half-plan
 
 * `TauCeti.IsConservativeOn.wedgeIntegral_sub_wedgeIntegral_eq_of_mem_upperHalfPlane` -- wedge
   integrals based at an upper-half-plane point are additive.
-* `TauCeti.DifferentiableOn.hasDerivAt_wedgeIntegral_upperHalfPlane` -- the explicit wedge integral
+* `TauCeti.hasDerivAt_wedgeIntegral_upperHalfPlane` -- the explicit wedge integral
   has derivative equal to its integrand.
-* `TauCeti.DifferentiableOn.isExactOn_upperHalfPlane` -- a holomorphic function on the upper
+* `TauCeti.isExactOn_upperHalfPlane` -- a holomorphic function on the upper
   half-plane has a primitive.
 -/
 
@@ -99,7 +99,7 @@ end IsConservativeOn
 
 /-- The wedge integral of a holomorphic function from an upper-half-plane base point has derivative
 equal to the function at every point of the upper half-plane. -/
-theorem DifferentiableOn.hasDerivAt_wedgeIntegral_upperHalfPlane
+theorem hasDerivAt_wedgeIntegral_upperHalfPlane
     (hf : DifferentiableOn ℂ f upperHalfPlaneSet) (b : UpperHalfPlane) {z : ℂ}
     (hz : z ∈ upperHalfPlaneSet) :
     HasDerivAt (fun w ↦ wedgeIntegral (b : ℂ) w f) (f z) z := by
@@ -114,9 +114,9 @@ theorem DifferentiableOn.hasDerivAt_wedgeIntegral_upperHalfPlane
   grind
 
 /-- Every holomorphic function on the upper half-plane has a global primitive. -/
-theorem DifferentiableOn.isExactOn_upperHalfPlane
+theorem isExactOn_upperHalfPlane
     (hf : DifferentiableOn ℂ f upperHalfPlaneSet) : IsExactOn f upperHalfPlaneSet := by
   refine ⟨fun z ↦ wedgeIntegral (UpperHalfPlane.I : ℂ) z f, fun z hz ↦ ?_⟩
-  simpa using DifferentiableOn.hasDerivAt_wedgeIntegral_upperHalfPlane hf UpperHalfPlane.I hz
+  simpa using hasDerivAt_wedgeIntegral_upperHalfPlane hf UpperHalfPlane.I hz
 
 end TauCeti

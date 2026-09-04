@@ -86,7 +86,7 @@ theorem hasDerivAt_schwarzChristoffelPrimitive (a e : ι → ℝ) (z₀ : UpperH
     {z : ℂ} (hz : z ∈ upperHalfPlaneSet) :
     HasDerivAt (schwarzChristoffelPrimitive a e z₀)
       (schwarzChristoffelIntegrand a e z) z := by
-  exact DifferentiableOn.hasDerivAt_wedgeIntegral_upperHalfPlane
+  exact hasDerivAt_wedgeIntegral_upperHalfPlane
     (differentiableOn_schwarzChristoffelIntegrand a e) z₀ hz
 
 /-- The derivative of the normalized Schwarz--Christoffel primitive on the upper half-plane. -/
