@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Analysis.Complex.Polynomial.Basic
 public import Mathlib.LinearAlgebra.Complex.FiniteDimensional
+public import TauCeti.LinearAlgebra.Complex.SesquilinearForm
 public import TauCeti.RepresentationTheory.InvariantForm.Hermitian
 public import TauCeti.RepresentationTheory.QuaternionicStructure
 public import TauCeti.RepresentationTheory.RealForm
@@ -55,10 +56,11 @@ second half of the file, and it needs neither irreducibility nor finite dimensio
 guess `B x y = H (K x) y` is bilinear, invariant and nondegenerate for free, but it obeys a flip
 rule only if `H` is compatible with `K` in the sense `H (K x) (K y) = conj (H x y)`, which an
 arbitrary invariant `H` need not be.  Replacing `H` by the **balanced** form
-`H x y + conj (H (K x) (K y))` -- still invariant, Hermitian and positive definite, since `K` is
-bijective -- makes it compatible, and then `B x y = H (K x) y` flips by the sign that `K ∘ K`
-carries: symmetric for a real structure, alternating for a quaternionic one.  Against a fixed `H`
-the two directions assemble into `Representation.exists_isRealStructure_iff` and
+`LinearMap.balance H K x y = H x y + conj (H (K x) (K y))` of
+`TauCeti/LinearAlgebra/Complex/SesquilinearForm.lean` -- still invariant, Hermitian and positive
+definite, since `K` is bijective -- makes it compatible, and then `B x y = H (K x) y` flips by the
+sign that `K ∘ K` carries: symmetric for a real structure, alternating for a quaternionic one.
+Against a fixed `H` the two directions assemble into `Representation.exists_isRealStructure_iff` and
 `Representation.exists_isQuaternionicStructure_iff`, which is what turns the Frobenius-Schur values
 `1` and `-1` into structure maps whenever a positive definite invariant Hermitian form is
 available -- by Haar averaging for a compact group as much as by summation for a finite one.
@@ -103,7 +105,8 @@ open Module (Dual)
 
 open scoped ComplexOrder
 
-open LinearMap (BilinForm)
+open LinearMap (BilinForm balance balance_apply balance_map_map isSymm_balance
+  balance_apply_self_ne_zero)
 
 open TauCeti
 
@@ -378,83 +381,6 @@ theorem exists_isQuaternionicStructure_of_isInvariantForm_of_isInvariantSesqForm
   exact ⟨J, fun x => by simpa using hJsq x, hJint⟩
 
 end StructureMap
-
-/-! ### The balanced Hermitian form of a conjugate-linear map -/
-
-section Balanced
-
-variable {V : Type*} [AddCommGroup V] [Module ℂ V]
-
-/-- The **balanced** form of a sesquilinear form `H` against a conjugate-linear map `K`:
-`x, y ↦ H x y + conj (H (K x) (K y))`.  Each argument of the second summand picks up a conjugation
-from `K`, and the outer conjugation restores the shape of a sesquilinear form, conjugate-linear in
-the first argument and linear in the second.  Adding it to `H` is what forces the compatibility
-`balance H K (K x) (K y) = conj (balance H K x y)` whenever `K ∘ K` is a real scalar of square
-one. -/
-private noncomputable def balance (H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ) (K : V →ₛₗ[starRingEnd ℂ] V) :
-    V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ where
-  toFun x :=
-    { toFun := fun y => H x y + (starRingEnd ℂ) (H (K x) (K y))
-      map_add' := fun y z => by simp only [map_add]; ring
-      map_smul' := fun c y => by
-        simp only [map_smulₛₗ, RingHom.id_apply, smul_eq_mul, map_mul, Complex.conj_conj]
-        ring }
-  map_add' x y := by
-    ext z
-    simp only [map_add, LinearMap.add_apply, LinearMap.coe_mk, AddHom.coe_mk]
-    ring
-  map_smul' c x := by
-    ext z
-    simp only [map_smulₛₗ, LinearMap.smul_apply, smul_eq_mul, map_mul, Complex.conj_conj,
-      LinearMap.coe_mk, AddHom.coe_mk]
-    ring
-
-private theorem balance_apply (H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ) (K : V →ₛₗ[starRingEnd ℂ] V) (x y : V) :
-    balance H K x y = H x y + (starRingEnd ℂ) (H (K x) (K y)) := (rfl)
-
-/-- **The balanced form is compatible with the map it was balanced against**: replacing both
-arguments by their `K`-images conjugates the value, as soon as `K ∘ K` is a real scalar of square
-one -- an involution, or a quaternionic structure.  This is the only property of `balance` that
-`H` alone does not already have, and the whole point of the construction. -/
-private theorem balance_map_map {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} {K : V →ₛₗ[starRingEnd ℂ] V} {ε : ℝ}
-    (hε : ε * ε = 1) (hK : ∀ x : V, K (K x) = (ε : ℂ) • x) (x y : V) :
-    balance H K (K x) (K y) = (starRingEnd ℂ) (balance H K x y) := by
-  have hεC : (ε : ℂ) * (ε : ℂ) = 1 := by exact_mod_cast hε
-  have hH : H ((ε : ℂ) • x) ((ε : ℂ) • y) = H x y := by
-    simp only [map_smulₛₗ, LinearMap.smul_apply, Complex.conj_ofReal, smul_eq_mul,
-      RingHom.id_apply]
-    linear_combination (H x y) * hεC
-  rw [balance_apply, balance_apply, hK x, hK y, hH, map_add, Complex.conj_conj, add_comm]
-
-/-- The balanced form is Hermitian if `H` is. -/
-private theorem isSymm_balance {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} (hH : H.IsSymm)
-    (K : V →ₛₗ[starRingEnd ℂ] V) : (balance H K).IsSymm where
-  eq x y := by
-    rw [balance_apply, balance_apply, map_add, Complex.conj_conj, hH.eq x y,
-      hH.eq (K y) (K x)]
-
-/-- A nonnegative complex number has vanishing imaginary part, so conjugation fixes it. -/
-private theorem conj_eq_self_of_nonneg {z : ℂ} (hz : 0 ≤ z) : (starRingEnd ℂ) z = z :=
-  Complex.conj_eq_iff_im.mpr (Complex.nonneg_iff.mp hz).2.symm
-
-/-- The balanced form is nonnegative if `H` is: both summands are, the second because conjugation
-fixes a nonnegative complex number. -/
-private theorem isNonneg_balance {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} (hH : H.IsNonneg)
-    (K : V →ₛₗ[starRingEnd ℂ] V) : (balance H K).IsNonneg where
-  nonneg x := by
-    rw [balance_apply, conj_eq_self_of_nonneg (hH.nonneg (K x))]
-    exact add_nonneg (hH.nonneg x) (hH.nonneg (K x))
-
-/-- The balanced form is definite off the origin if `H` is: the first summand is already nonzero
-and the second is nonnegative. -/
-private theorem balance_apply_self_ne_zero {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} (hH : H.IsNonneg)
-    (hdef : ∀ x : V, x ≠ 0 → H x x ≠ 0) (K : V →ₛₗ[starRingEnd ℂ] V) {x : V} (hx : x ≠ 0) :
-    balance H K x x ≠ 0 := by
-  rw [balance_apply, conj_eq_self_of_nonneg (hH.nonneg (K x))]
-  exact (add_pos_of_pos_of_nonneg
-    (lt_of_le_of_ne (hH.nonneg x) (Ne.symm (hdef x hx))) (hH.nonneg (K x))).ne'
-
-end Balanced
 
 /-! ### An invariant bilinear form out of a structure map -/
 
