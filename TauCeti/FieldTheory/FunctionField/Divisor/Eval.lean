@@ -31,8 +31,8 @@ classical regime — the divisor and function laws are formal and hold for every
 ## Main definitions
 
 * `TauCeti.Divisor.eval`: `f(D)`, as a unit of `k`.
-* `TauCeti.Divisor.evalHom`: the same as a bundled homomorphism in the divisor variable, which is
-  what makes the divisor laws below hypothesis-free and what a consumer composes or transports.
+* `TauCeti.Divisor.evalHom`: the same as a bundled homomorphism in the divisor variable, so the
+  divisor laws below hold with no admissibility hypothesis.
 * `TauCeti.Divisor.IsUnitAtSupport`: the admissibility condition — `f` is a unit at every place of
   `D`. This is exactly disjointness of `D` from the divisor of `f`
   (`isUnitAtSupport_iff_disjoint`).
@@ -70,11 +70,11 @@ has to survive that. With `0` as the neutral value in `k` it does not: at a plac
 unit, `eval (single P 1) * eval (single P (-1))` would be `0` while `eval 0 = 1`. In `kˣ` every
 `zpow` identity holds unconditionally and the law is automatic.
 
-**The definition is total, with the admissibility hypothesis carried by the theorems.** Making the
-hypothesis an argument of the definition would put a proof term inside `f(D)`, which then has to be
-transported through every rewrite of `D` or `f`, and would block packaging `f(-)` as a homomorphism
-at all. Instead `Place.normResidueOrOne` is total, `eval` is a homomorphism outright, and
-`eval_eq_prod_normResidue` recovers the textbook formula where the hypothesis holds.
+**The definition is total, with admissibility carried by the theorems.** Admissibility depends on
+the divisor, so a definition that demanded it could not be a homomorphism in the divisor variable
+at all: its domain would shrink with each `f`. Instead `Place.normResidueOrOne` is total, `eval` is
+a homomorphism outright, and `eval_eq_prod_normResidue` recovers the textbook formula wherever
+admissibility holds.
 
 ## References
 
@@ -166,14 +166,15 @@ product and Weil reciprocity is stated. -/
 def IsUnitAtSupport (D : Divisor k F) (f : Fˣ) : Prop :=
   ∀ P ∈ D.support, P.ord (f : F) = 0
 
-/-- The interface to `IsUnitAtSupport`: it is exactly the pointwise condition. This is both the
-introduction and the elimination rule, so the body of the definition is not exposed. -/
+/-- `IsUnitAtSupport D f` is exactly the pointwise condition `P.ord f = 0` at every place of `D`,
+in both directions. -/
 @[simp]
 theorem isUnitAtSupport_iff {D : Divisor k F} {f : Fˣ} :
     IsUnitAtSupport D f ↔ ∀ P ∈ D.support, P.ord (f : F) = 0 := Iff.rfl
 
-/-- On an admissible divisor, `f(D)` is the textbook product `∏ N(f(P)) ^ n_P`. Indexing by
-`D.support` as a subtype carries exactly the membership proof `normResidue` needs. -/
+/-- On an admissible divisor, `f(D)` is the textbook product `∏ N(f(P)) ^ n_P`. -/
+-- The product is indexed by `D.support` as a subtype because `normResidue` takes the place's
+-- membership in the support as an argument.
 theorem eval_eq_prod_normResidue {D : Divisor k F} {f : Fˣ} (h : IsUnitAtSupport D f) :
     eval D f
       = ∏ P : D.support, P.1.normResidue f (isUnitAtSupport_iff.1 h P.1 P.2)

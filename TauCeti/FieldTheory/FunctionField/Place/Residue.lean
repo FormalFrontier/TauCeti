@@ -41,10 +41,8 @@ not consume one — so the guarantee is recorded here rather than in the signatu
 ## Main results
 
 * `TauCeti.Place.coe_residueUnit` and `TauCeti.Place.coe_normResidue`: the underlying field values
-  of the two units, as `@[simp]` normal forms, named after `TauCeti.Algebra.coe_normUnits` — the
-  adjacent lemma of exactly this shape. They are the whole reason a consumer never has to unfold
-  either definition: they name the `IsLocalRing.residue` and `Algebra.norm` the units are built
-  from.
+  of the two units: `IsLocalRing.residue` and the `Algebra.norm` of it. Both are `@[simp]`, and
+  are named after `TauCeti.Algebra.coe_normUnits`, the adjacent lemma of the same shape.
 * `TauCeti.Place.normResidueOrOne_of_ord_eq_zero` and
   `TauCeti.Place.normResidueOrOne_of_ord_ne_zero`: the two branches of the total extension.
 * The group laws in the function: `residueUnit_one`, `residueUnit_mul`, `residueUnit_inv` and
