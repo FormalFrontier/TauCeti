@@ -6,8 +6,7 @@ Authors: Prime Agent
 module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.HomDensity.Finite
-public import TauCeti.Data.Nat.Factorial.Bounds
-public import TauCeti.Algebra.Order.Field.Bounds
+import TauCeti.Probability.UniformSampling
 import Mathlib.Data.Fintype.CardEmbedding
 import Mathlib.Data.Nat.Choose.Basic
 import Mathlib.Tactic.Linarith
@@ -47,85 +46,20 @@ namespace DenseGraphLimits
 
 variable {V W : Type*} [Fintype V] [Fintype W]
 
-/-! ### Non-injective maps are rare -/
-
-/-- Non-injective homomorphisms are outnumbered by non-injective maps: removing the injective
-ones from both sides preserves the inequality. -/
-private theorem card_hom_sub_card_inj_le (F : SimpleGraph V) (G : SimpleGraph W) :
-    Nat.card (F →g G) - Nat.card {φ : F →g G // Function.Injective ⇑φ}
-      ≤ Fintype.card W ^ Fintype.card V
-        - (Fintype.card W).descFactorial (Fintype.card V) := by
-  classical
-  set A : Finset (V → W) :=
-    Finset.univ.filter (fun f => ∀ a b, F.Adj a b → G.Adj (f a) (f b)) with hA
-  set B : Finset (V → W) := A.filter (fun f => Function.Injective f) with hB
-  set I : Finset (V → W) := Finset.univ.filter (fun f => Function.Injective f) with hI
-  have hBA : B ⊆ A := by
-    intro x hx
-    rw [hB] at hx
-    exact (Finset.mem_filter.mp hx).1
-  have hmaps : Nat.card (V → W) = Fintype.card W ^ Fintype.card V := by
-    rw [Nat.card_fun, Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]
-  have hemb : Nat.card (V ↪ W)
-      = (Fintype.card W).descFactorial (Fintype.card V) := by
-    rw [Nat.card_eq_fintype_card, Fintype.card_embedding_eq]
-  have hcardA : A.card = Nat.card (F →g G) := by
-    rw [card_hom_eq_card_adjPreservingMaps F G, Nat.card_eq_fintype_card,
-      Fintype.card_subtype]
-  have hcardB : B.card = Nat.card {φ : F →g G // Function.Injective ⇑φ} := by
-    have e : {ψ : V → W // (∀ a b, F.Adj a b → G.Adj (ψ a) (ψ b)) ∧ Function.Injective ψ}
-        ≃ {φ : F →g G // Function.Injective ⇑φ} :=
-      { toFun := fun ψ => ⟨⟨ψ.1, fun {a b} h => ψ.2.1 a b h⟩, ψ.2.2⟩,
-        invFun := fun φ => ⟨⇑φ.1, (fun a b h => φ.1.map_rel h), φ.2⟩,
-        left_inv := fun _ => rfl,
-        right_inv := fun _ => rfl }
-    have hB' : B.card = Nat.card {ψ : V → W //
-        (∀ a b, F.Adj a b → G.Adj (ψ a) (ψ b)) ∧ Function.Injective ψ} := by
-      rw [hB, hA, Finset.filter_filter, ← Fintype.card_subtype,
-        ← Nat.card_eq_fintype_card]
-    rw [hB', Nat.card_congr e]
-  have hcardI : I.card
-      = (Fintype.card W).descFactorial (Fintype.card V) := by
-    have e : {f : V → W // Function.Injective f} ≃ (V ↪ W) :=
-      { toFun := fun f => ⟨f.1, f.2⟩,
-        invFun := fun e => ⟨e.1, e.2⟩,
-        left_inv := fun _ => rfl,
-        right_inv := fun _ => rfl }
-    have h1 : I.card = Nat.card {f : V → W // Function.Injective f} := by
-      rw [Nat.card_eq_fintype_card, Fintype.card_subtype]
-    rw [h1, Nat.card_congr e, hemb]
-  have hcardU : (Finset.univ : Finset (V → W)).card
-      = Fintype.card W ^ Fintype.card V := by
-    have h1 : (Finset.univ : Finset (V → W)).card = Nat.card (V → W) := by
-      rw [Nat.card_eq_fintype_card, Finset.card_univ]
-    rw [h1, hmaps]
-  have hsub : A \ B ⊆ Finset.univ \ I := by
-    grind
-  have hle := Finset.card_le_card hsub
-  rw [Finset.card_sdiff_of_subset hBA, Finset.card_sdiff_of_subset (Finset.subset_univ I)] at hle
-  rw [hcardA, hcardB, hcardU, hcardI] at hle
-  exact hle
-
-
-/-- The homomorphism density and the injective homomorphism density differ by at most
+/-- **Layer 9a (hom-versus-injective closeness).** The homomorphism density and the injective
+homomorphism density differ by at most
 `C(k,2) / n`, where `k` is the number of vertices of the pattern and `n` the number of
-vertices of the host. -/
+vertices of the host. This is the finite-host generalization of
+`TauCetiRoadmap/DenseGraphLimits/Suggested.lean`, Layer 9a.
+-/
 theorem homDensityFin_sub_injHomDensity_le (F : SimpleGraph V) (G : SimpleGraph W) :
     |homDensityFin F G - injHomDensity F G|
       ≤ ((Fintype.card V).choose 2 : ℝ) / (Fintype.card W : ℝ) := by
   classical
   by_cases hW0 : Fintype.card W = 0
-  · -- Empty host: both densities coincide, so the left side vanishes.
-    have hRHS : (0 : ℝ)
-        ≤ ((Fintype.card V).choose 2 : ℝ) / (Fintype.card W : ℝ) :=
-      div_nonneg (Nat.cast_nonneg _) (Nat.cast_nonneg _)
-    suffices heq : homDensityFin F G = injHomDensity F G by
-      rw [heq, sub_self, abs_zero]
-      exact hRHS
-    rw [homDensityFin_def, injHomDensity_def]
+  · rw [homDensityFin_def, injHomDensity_def]
     by_cases hk0 : Fintype.card V = 0
-    · -- Empty pattern: every homomorphism is vacuously injective.
-      have hV : IsEmpty V := Fintype.card_eq_zero_iff.mp hk0
+    · have hV : IsEmpty V := Fintype.card_eq_zero_iff.mp hk0
       have hsub : ∀ φ : F →g G, Function.Injective (⇑φ : V → W) := by
         intro φ a b _
         exact False.elim (hV.false a)
@@ -134,12 +68,9 @@ theorem homDensityFin_sub_injHomDensity_le (F : SimpleGraph V) (G : SimpleGraph 
           invFun := Subtype.val
           left_inv := fun _ => rfl
           right_inv := fun ⟨_, _⟩ => rfl }
-      have hcards : Nat.card (F →g G)
-          = Nat.card {φ : F →g G // Function.Injective ⇑φ} :=
-        Nat.card_congr e
-      rw [hcards, hk0, pow_zero, Nat.descFactorial_zero, Nat.cast_one]
-    · -- Nonempty pattern over an empty host: there are no maps at all.
-      have hhom0 : Nat.card (F →g G) = 0 := by
+      rw [Nat.card_congr e, hk0, pow_zero, Nat.descFactorial_zero, Nat.cast_one]
+      simp [hW0]
+    · have hhom0 : Nat.card (F →g G) = 0 := by
         apply Nat.eq_zero_of_le_zero
         calc Nat.card (F →g G) ≤ Fintype.card W ^ Fintype.card V :=
               card_hom_le F G
@@ -153,65 +84,85 @@ theorem homDensityFin_sub_injHomDensity_le (F : SimpleGraph V) (G : SimpleGraph 
             rw [hW0]
             exact Nat.descFactorial_eq_zero_iff_lt.mpr (by omega)
       rw [hhom0, hinj0, Nat.cast_zero, zero_div, zero_div]
+      simp [hW0]
   · have hn : 0 < Fintype.card W := Nat.pos_of_ne_zero hW0
+    let _ : MeasurableSpace W := ⊤
+    let A : Set (V → W) := {f | ∀ a b, F.Adj a b → G.Adj (f a) (f b)}
+    let E : Set (V → W) := {f | Function.Injective f}
+    have uniformOn_toReal (S T : Set (V → W)) :
+        (ProbabilityTheory.uniformOn S T).toReal =
+          (Nat.card {f : V → W // f ∈ S ∩ T} : ℝ) /
+            (Nat.card {f : V → W // f ∈ S} : ℝ) := by
+      rw [ProbabilityTheory.uniformOn, ProbabilityTheory.cond_apply S.toFinite.measurableSet,
+        ENNReal.toReal_mul, ENNReal.toReal_inv]
+      rw [MeasureTheory.Measure.count_apply_finite _ (S.toFinite.inter_of_left T),
+        MeasureTheory.Measure.count_apply_finite _ S.toFinite]
+      rw [← Set.ncard_eq_toFinset_card (S ∩ T) (S.toFinite.inter_of_left T),
+        ← Set.ncard_eq_toFinset_card S S.toFinite]
+      have hcard (U : Set (V → W)) : Nat.card {f : V → W // f ∈ U} = U.ncard := by
+        rw [Nat.card_eq_fintype_card, Set.fintypeCard_eq_ncard]
+      rw [← hcard (S ∩ T), ← hcard S]
+      simp only [ENNReal.toReal_natCast]
+      rw [mul_comm, div_eq_mul_inv]
+    have hA : Nat.card {f : V → W // f ∈ A} = Nat.card (F →g G) := by
+      simpa [A] using (card_hom_eq_card_adjPreservingMaps F G).symm
+    have hEA : Nat.card {f : V → W // f ∈ E ∩ A} =
+        Nat.card {φ : F →g G // Function.Injective ⇑φ} := by
+      let e : {f : V → W // f ∈ E ∩ A} ≃ {φ : F →g G // Function.Injective ⇑φ} :=
+        { toFun := fun f => ⟨⟨f.1, fun {a b} hab => f.2.2 a b hab⟩, f.2.1⟩
+          invFun := fun φ => ⟨⇑φ.1, φ.2, fun {a b} hab => φ.1.map_rel hab⟩
+          left_inv := by intro f; rfl
+          right_inv := by
+            intro φ
+            apply Subtype.ext
+            exact RelHom.ext (fun _ => rfl) }
+      exact Nat.card_congr e
+    have hE : Nat.card {f : V → W // f ∈ E} =
+        (Fintype.card W).descFactorial (Fintype.card V) := by
+      let e : {f : V → W // f ∈ E} ≃ (V ↪ W) :=
+        { toFun := fun f => ⟨f.1, f.2⟩
+          invFun := fun e => ⟨e.1, e.2⟩
+          left_inv := by intro f; rfl
+          right_inv := by intro e; rfl }
+      rw [Nat.card_congr e, Nat.card_eq_fintype_card, Fintype.card_embedding_eq]
+    have hU : Nat.card (V → W) = Fintype.card W ^ Fintype.card V := by
+      rw [Nat.card_fun, Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]
+    have hleft := Probability.uniformOn_injective_le_add_choose_two_div (ι := V) (κ := W) A
+    have hright := Probability.uniformOn_univ_le_injective_add_choose_two_div (ι := V) (κ := W) A
+    have hleftR :
+        (Nat.card {f : V → W // f ∈ E ∩ A} : ℝ) /
+            (Nat.card {f : V → W // f ∈ E} : ℝ) ≤
+          (Nat.card {f : V → W // f ∈ Set.univ ∩ A} : ℝ) /
+              (Nat.card {f : V → W // f ∈ Set.univ} : ℝ) +
+            ((Fintype.card V).choose 2 : ℝ) / (Fintype.card W : ℝ) := by
+      rw [← uniformOn_toReal E A, ← uniformOn_toReal Set.univ A]
+      have h := (ENNReal.toReal_le_toReal (by finiteness) (by finiteness)).2 hleft
+      rw [ENNReal.toReal_add (by finiteness) (by finiteness), ENNReal.toReal_div] at h
+      simpa [E, ENNReal.toReal_natCast] using h
+    have hrightR :
+        (Nat.card {f : V → W // f ∈ Set.univ ∩ A} : ℝ) /
+            (Nat.card {f : V → W // f ∈ Set.univ} : ℝ) ≤
+          (Nat.card {f : V → W // f ∈ E ∩ A} : ℝ) /
+              (Nat.card {f : V → W // f ∈ E} : ℝ) +
+            ((Fintype.card V).choose 2 : ℝ) / (Fintype.card W : ℝ) := by
+      rw [← uniformOn_toReal Set.univ A, ← uniformOn_toReal E A]
+      have h := (ENNReal.toReal_le_toReal (by finiteness) (by finiteness)).2 hright
+      rw [ENNReal.toReal_add (by finiteness) (by finiteness), ENNReal.toReal_div] at h
+      simpa [E, ENNReal.toReal_natCast] using h
     rw [homDensityFin_def, injHomDensity_def]
-    set k := Fintype.card V with hk
-    set n := Fintype.card W with hn'
-    have hnR : (0 : ℝ) < (n : ℝ) := by exact_mod_cast hn
-    have hN : (0 : ℝ) < (n : ℝ) ^ k := pow_pos hnR k
-    have haN : (Nat.card (F →g G) : ℝ) ≤ (n : ℝ) ^ k := by
-      have h : Nat.card (F →g G) ≤ n ^ k := by
-        simpa [n, k] using card_hom_le F G
-      exact_mod_cast h
-    have hbM : (Nat.card {φ : F →g G // Function.Injective ⇑φ} : ℝ)
-        ≤ ((n.descFactorial k : ℕ) : ℝ) := by
-      have h : Nat.card {φ : F →g G // Function.Injective ⇑φ} ≤ n.descFactorial k := by
-        simpa [n, k] using card_injective_hom_le F G
-      exact_mod_cast h
-    have hba_nat : Nat.card {φ : F →g G // Function.Injective ⇑φ}
-        ≤ Nat.card (F →g G) :=
-      Nat.card_le_card_of_injective _ Subtype.val_injective
-    have hMNnat : n.descFactorial k ≤ n ^ k := Nat.descFactorial_le_pow n k
-    have hba : (Nat.card {φ : F →g G // Function.Injective ⇑φ} : ℝ)
-        ≤ (Nat.card (F →g G) : ℝ) := by
-      exact_mod_cast hba_nat
-    have hMN : ((n.descFactorial k : ℕ) : ℝ) ≤ (n : ℝ) ^ k := by
-      exact_mod_cast hMNnat
-    have hab : (Nat.card (F →g G) : ℝ) - (Nat.card {φ : F →g G // Function.Injective ⇑φ} : ℝ)
-        ≤ (n : ℝ) ^ k - ((n.descFactorial k : ℕ) : ℝ) := by
-      have h := card_hom_sub_card_inj_le F G
-      have hR : ((Nat.card (F →g G) - Nat.card {φ : F →g G // Function.Injective ⇑φ} : ℕ) : ℝ)
-          ≤ ((Fintype.card W ^ Fintype.card V
-            - (Fintype.card W).descFactorial (Fintype.card V) : ℕ) : ℝ) := by
-        exact_mod_cast h
-      rw [Nat.cast_sub hba_nat, Nat.cast_sub hMNnat] at hR
-      push_cast at hR
-      exact hR
-    have hstep := abs_div_sub_div_le _ _ _ _ hN (Nat.cast_nonneg _) haN (Nat.cast_nonneg _)
-      hbM (Nat.cast_nonneg _) hMN hba hab
-    have hC := pow_sub_descFactorial_le n k
-    have hdiv1 : ((n : ℝ) ^ k - ((n.descFactorial k : ℕ) : ℝ)) / (n : ℝ) ^ k
-        ≤ (((k.choose 2 : ℕ) : ℝ) * (n : ℝ) ^ (k - 1)) / (n : ℝ) ^ k :=
-      div_le_div_of_nonneg_right hC (le_of_lt hN)
-    have hdiv2 : ((((k.choose 2 : ℕ) : ℝ) * (n : ℝ) ^ (k - 1))) / (n : ℝ) ^ k
-        ≤ ((k.choose 2 : ℕ) : ℝ) / (n : ℝ) := by
-      by_cases hk0 : k = 0
-      · have hc0 : Nat.choose 0 2 = 0 := by decide
-        simp only [hk0, hc0, Nat.cast_zero, zero_mul, zero_div, le_refl]
-      · have hk1 : 1 ≤ k := by omega
-        have hpow : (n : ℝ) ^ (k - 1) * (n : ℝ) = (n : ℝ) ^ k := by
-          have hps := pow_succ (n : ℝ) (k - 1)
-          rw [Nat.sub_add_cancel hk1] at hps
-          exact hps.symm
-        have hn0 : (n : ℝ) ≠ 0 := ne_of_gt hnR
-        have hP : (n : ℝ) ^ (k - 1) ≠ 0 := pow_ne_zero _ hn0
-        have key : (((k.choose 2 : ℕ) : ℝ) * (n : ℝ) ^ (k - 1))
-              / ((n : ℝ) ^ (k - 1) * (n : ℝ))
-            = ((k.choose 2 : ℕ) : ℝ) / (n : ℝ) := by
-          rw [div_eq_div_iff (mul_ne_zero hP hn0) hn0]
-          ring
-        rw [← hpow, key]
-    exact le_trans hstep (le_trans hdiv1 hdiv2)
+    have hU0 : Nat.card {f : V → W // f ∈ Set.univ} = Nat.card (V → W) := by
+      rw [Nat.card_congr]
+      exact Equiv.Set.univ (V → W)
+    have hUA : Nat.card {f : V → W // f ∈ Set.univ ∩ A} = Nat.card {f : V → W // f ∈ A} := by
+      apply Nat.card_congr
+      exact { toFun := fun f => ⟨f.1, by simpa using f.2⟩
+              invFun := fun f => ⟨f.1, by simp [f.2]⟩
+              left_inv := by intro f; rfl
+              right_inv := by intro f; rfl }
+    rw [hUA, hU0, hA, hEA, hE, hU] at hleftR hrightR
+    push_cast at hleftR hrightR
+    rw [abs_le]
+    constructor <;> linarith [hleftR, hrightR]
 
 end DenseGraphLimits
 
