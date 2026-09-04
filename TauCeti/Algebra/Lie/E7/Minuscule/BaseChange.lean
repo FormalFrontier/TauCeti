@@ -92,13 +92,13 @@ noncomputable def baseChangeDefiningIdeal :
 
 /-- The coordinate Hopf algebra of the full-weight type-`E₇` minuscule carrier after base
 change to `A`. -/
-noncomputable abbrev coordinateHopfAlgebra :=
+public noncomputable abbrev coordinateHopfAlgebra :=
   CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra A 56)
     (baseChangeDefiningIdeal A)
 
 /-- The quotient coordinate morphism `O(GL₅₆) ⟶ O(carrier)`, representing the closed immersion
 of the specialized minuscule carrier into `GL₅₆`. -/
-noncomputable abbrev coordinateMap :
+public noncomputable abbrev coordinateMap :
     GeneralLinear.coordinateHopfAlgebra A 56 ⟶ coordinateHopfAlgebra A :=
   CommHopfAlgCat.mkQuotient _ _
 
