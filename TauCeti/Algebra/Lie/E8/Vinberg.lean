@@ -7,8 +7,9 @@ module
 
 public import TauCeti.Algebra.Lie.GeneralLinear.Finrank
 
-public import Mathlib.LinearAlgebra.Dual.Lemmas
 public import Mathlib.LinearAlgebra.ExteriorPower.Basis
+public import Mathlib.LinearAlgebra.FreeModule.Finite.Matrix
+public import Mathlib.RingTheory.Finiteness.Prod
 
 /-!
 # The dimension of the Vinberg `ℤ/3`-model of split `E₈`
@@ -23,10 +24,11 @@ the three summands have dimensions `80`, `84` and `84`, so the carrier is `248`-
 dimension of `E₈`.
 
 The three inputs are `TauCeti.finrank_sl` for `𝔰𝔩₉`, Mathlib's `exteriorPower.finrank_eq` (which
-gives `(dim K⁹).choose 3 = 84`) for `⋀³(K⁹)`, and `Subspace.dual_finrank_eq` for the dual summand.
-The `84` is a numeric instance of `exteriorPower.finrank_eq` rather than a piece of general
+gives `(dim K⁹).choose 3 = 84`) for `⋀³(K⁹)`, and `Module.finrank_linearMap_self` for the dual
+summand. The `84` is a numeric instance of `exteriorPower.finrank_eq` rather than a piece of general
 exterior-power theory, so it lives here beside the count that consumes it. The direct sum of three
-summands is spelled as an iterated product, the form `Module.finrank_prod` computes with.
+summands is spelled as an iterated product, the form `Module.finrank_prod` computes with. All three
+summands are finite free, so no field is needed anywhere: a nontrivial commutative ring does.
 
 **What is not proved here.** Only the underlying `K`-module is treated: the graded bracket, the
 Jacobi identity for it, Killing-simplicity of type `E₈`, and the comparison with Mathlib's
@@ -72,12 +74,12 @@ theorem finrank_sl_fin_nine (K : Type*) [CommRing K] [StrongRankCondition K] :
 `finrank (𝔰𝔩₉ ⊕ ⋀³(K⁹) ⊕ ⋀³(K⁹)^*) = 80 + 84 + 84 = 248`.
 
 Only the `K`-module is at issue; the graded Lie bracket that makes the sum `E₈` is not built
-here. Unlike the two summand counts, this one is over a field: the dual summand contributes its
-`84` by `Subspace.dual_finrank_eq`, which is a statement about finite-dimensional vector spaces. -/
-theorem finrank_prod_sl_exteriorPower_dual (K : Type*) [Field K] :
+here. Like the two summand counts this needs no more than a nontrivial commutative ring: the dual
+summand is finite free of the same rank as `⋀³(K⁹)` by `Module.finrank_linearMap_self`. -/
+theorem finrank_prod_sl_exteriorPower_dual (K : Type*) [CommRing K] [Nontrivial K] :
     finrank K (SpecialLinear.sl (Fin 9) K ×
         ⋀[K]^3 (Fin 9 → K) × Dual K (⋀[K]^3 (Fin 9 → K))) = 248 := by
-  rw [Module.finrank_prod, Module.finrank_prod, Subspace.dual_finrank_eq,
+  rw [Module.finrank_prod, Module.finrank_prod, Module.finrank_linearMap_self,
     finrank_sl_fin_nine, finrank_exteriorPower_three_nine]
 
 end TauCeti

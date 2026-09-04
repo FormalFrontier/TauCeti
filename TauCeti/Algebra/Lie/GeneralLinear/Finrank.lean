@@ -33,15 +33,20 @@ by nontriviality. The rank-two case is counted separately, in
 ## Main results
 
 * `TauCeti.finrank_sl`: `sl n R` has rank `(card n) ^ 2 - 1`.
-* `TauCeti.finrank_slIdeal`: the same for the trace-zero ideal of `gl n R`, which by
-  `TauCeti.derivedSeries_one_eq_slIdeal` is the derived ideal `⁅gl n R, gl n R⁆`.
 * `TauCeti.finrank_sl_add_one`: the untruncated form, for a nonempty index type.
+
+The same coordinate system also gives the `Module.Free` and `Module.Finite` instances for `sl n R`
+that any rank computation involving it needs; over a commutative ring these do not come for free
+from finiteness of the matrices.
 
 ## Implementation notes
 
 The coordinate system above is a private linear equivalence, together with the private coordinate
 map, the private matrix it inverts to and their two round-trip lemmas: they exist only to feed
-`Basis.ofEquivFun`, and the public surface of the file is the three rank statements.
+`Basis.ofEquivFun`, and the public surface of the file is the two rank statements and the two
+instances. The trace-zero reading of membership in `sl n R` is likewise a private lemma, obtained
+from the located bridge `TauCeti.slIdeal_toLieSubalgebra_eq_sl` so that no proof here unfolds
+Mathlib's `LieSubalgebra` wrapper by hand.
 -/
 
 public section
@@ -100,9 +105,19 @@ private lemma trace_ofOffDiag (g : {p : n × n // p ≠ (i₀, i₀)} → R) :
   simp only [hdiag]
   exact neg_add_cancel _
 
+/-- Membership in `sl n R` is the vanishing of the trace.
+
+Mathlib builds `LieAlgebra.SpecialLinear.sl` out of `LinearMap.ker (Matrix.traceLinearMap n R R)`,
+so the two readings of membership are definitionally equal; that conversion is crossed once here,
+through the named bridge `TauCeti.slIdeal_toLieSubalgebra_eq_sl`, rather than by unfolding the
+`LieSubalgebra` wrapper at each use. -/
+private lemma mem_sl_iff {A : Matrix n n R} : A ∈ SpecialLinear.sl n R ↔ A.trace = 0 := by
+  rw [← slIdeal_toLieSubalgebra_eq_sl R n]
+  exact mem_slIdeal_iff
+
 private lemma ofOffDiag_mem_sl (g : {p : n × n // p ≠ (i₀, i₀)} → R) :
     ofOffDiag i₀ g ∈ SpecialLinear.sl n R :=
-  LinearMap.mem_ker.mpr (trace_ofOffDiag i₀ g)
+  mem_sl_iff.mpr (trace_ofOffDiag i₀ g)
 
 /-- A trace-zero matrix is recovered from its coordinates: the entry it omits is forced. -/
 private lemma ofOffDiag_offDiagCoords {A : Matrix n n R} (hA : A.trace = 0) :
@@ -133,10 +148,29 @@ private def slEquivFun : SpecialLinear.sl n R ≃ₗ[R] ({p : n × n // p ≠ (i
   map_add' _ _ := rfl
   map_smul' _ _ := rfl
   invFun g := ⟨ofOffDiag i₀ g, ofOffDiag_mem_sl i₀ g⟩
-  left_inv A := Subtype.ext (ofOffDiag_offDiagCoords i₀ (LinearMap.mem_ker.mp A.2))
+  left_inv A := Subtype.ext (ofOffDiag_offDiagCoords i₀ (mem_sl_iff.mp A.2))
   right_inv g := offDiagCoords_ofOffDiag i₀ g
 
 end Coordinates
+
+section FreeFinite
+
+variable [CommRing R]
+
+/-- **`sl n R` is a free module.** For a nonempty index type the coordinates above are a basis of
+it; for an empty one it is the zero module. -/
+instance : Module.Free R (SpecialLinear.sl n R) := by
+  rcases isEmpty_or_nonempty n with hn | ⟨⟨i₀⟩⟩
+  · infer_instance
+  · exact Module.Free.of_basis (Basis.ofEquivFun (slEquivFun i₀))
+
+/-- **`sl n R` is a finite module**, the coordinates above being finite in number. -/
+instance : Module.Finite R (SpecialLinear.sl n R) := by
+  rcases isEmpty_or_nonempty n with hn | ⟨⟨i₀⟩⟩
+  · infer_instance
+  · exact Module.Finite.of_basis (Basis.ofEquivFun (slEquivFun i₀))
+
+end FreeFinite
 
 section Finrank
 
@@ -149,10 +183,9 @@ subtraction `0 - 1` doing the work. -/
 theorem finrank_sl :
     finrank R (SpecialLinear.sl n R) = Fintype.card n ^ 2 - 1 := by
   rcases isEmpty_or_nonempty n with hn | ⟨⟨i₀⟩⟩
-  -- With no indices at all the only matrix is `0`, and `0 - 1 = 0` in `ℕ`.
-  · have hsub : Subsingleton (SpecialLinear.sl n R) :=
-      ⟨fun A B => Subtype.ext (Matrix.ext fun i => isEmptyElim i)⟩
-    have hnt : Nontrivial R := nontrivial_of_invariantBasisNumber R
+  -- With no indices at all the only matrix is `0`, and `0 - 1 = 0` in `ℕ`. `Subsingleton (sl n R)`
+  -- is an instance there; `hnt` installs the other hypothesis of `finrank_zero_of_subsingleton`.
+  · have hnt : Nontrivial R := nontrivial_of_invariantBasisNumber R
     rw [Module.finrank_zero_of_subsingleton, Fintype.card_eq_zero]
     simp
   -- Otherwise the free coordinates are the places other than `(i₀, i₀)`, and there are
@@ -162,15 +195,6 @@ theorem finrank_sl :
     simp only [Fintype.card_option, Fintype.card_prod] at hcard
     rw [sq, ← hcard]
     omega
-
-/-- The trace-zero ideal of `gl n R` has rank `(card n) ^ 2 - 1`: the `TauCeti.slIdeal`
-spelling of `TauCeti.finrank_sl`. By `TauCeti.derivedSeries_one_eq_slIdeal` this is the rank of the
-derived ideal `⁅gl n R, gl n R⁆`. -/
-theorem finrank_slIdeal :
-    finrank R (slIdeal R n) = Fintype.card n ^ 2 - 1 := by
-  rw [← finrank_sl R n]
-  exact LinearEquiv.finrank_eq (LinearEquiv.ofEq _ _
-    (congrArg LieSubalgebra.toSubmodule (slIdeal_toLieSubalgebra_eq_sl R n)))
 
 variable [Nonempty n]
 
