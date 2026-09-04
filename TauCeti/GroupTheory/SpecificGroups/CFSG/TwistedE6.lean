@@ -92,8 +92,14 @@ imports. What this file supplies is the `²E₆` branch's explicit carrier, its 
 characters read in the `E₆` root datum, the diagram-symmetry data that milestone L1's
 `γ (x_α(t)) = x_{γ α}(t)` will be proved from, and milestone L1's other factor `Frob_q` together
 with its own pinned equation `Frob_q (x_α(t)) = x_α(t ^ q)`; they transfer to the L0 carrier along
-that Layer 9 identification, and not before. The counterparts on the branches already assembled
-are `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeA.lean`,
+that Layer 9 identification, and not before. Milestone L0 names
+`TauCeti.ValidLieTypeIndex.AmbientGroup`, its `Group` instance, `TauCeti.ValidLieTypeIndex.Closure`
+and `TauCeti.ValidLieTypeIndex.simpleRootSubgroup` as its output; what this branch contributes to
+the first and the last of those is `TauCeti.TypeTwistedE6LieIndex.AmbientGroup` and
+`TauCeti.TypeTwistedE6LieIndex.simpleRootSubgroup` above, and the Frobenius below is an
+endomorphism of that ambient group whose milestone L1 equation is stated against those simple-root
+subgroups. The counterparts on the branches already assembled are
+`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeA.lean`,
 `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeE6.lean` and
 `TauCeti/GroupTheory/SpecificGroups/CFSG/Unimodular.lean`, and the branch that likewise stops short
 of a Steinberg map is `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeB2.lean`.
