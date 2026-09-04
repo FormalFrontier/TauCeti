@@ -39,7 +39,7 @@ results over the rows multiplies the determinant by the total of the factors.
   assuming `NoZeroSMulDivisors R N`.
 * `LinearMap.IsAlt.compl₁₂_self_eq_det_smul` and `LinearMap.det_eq_of_compl₁₂_self_eq_smul`: the
   same two statements for an alternating bilinear form on a module of rank two.
-* `TauCeti.Matrix.detRowAlternating_mulVec`: multiplication by a square matrix scales the
+* `Matrix.detRowAlternating_mulVec`: multiplication by a square matrix scales the
   standard-basis determinant form by the matrix determinant.
 * `Matrix.sum_det_updateRow_mul_row`: Jacobi's formula for a determinant, in row form.
 
@@ -67,7 +67,7 @@ The four transformation and recovery laws are ported from the AINTLIB `HasseWeil
 (Apache-2.0), revision `513e83879e2f`, file `HasseWeil/WeilPairing/PairingDet.lean`, declarations
 `alternating_comp_eq_det_smul` and `det_eq_of_alternating_scaling`. The source states them over a
 field, for a scalar-valued form, evaluated at a basis, and proves the first by expanding `φ (b j)`
-in coordinates; none of that is reproduced here. `TauCeti.Matrix.detRowAlternating_mulVec` predates
+in coordinates; none of that is reproduced here. `Matrix.detRowAlternating_mulVec` predates
 that port and is not from the source.
 -/
 
@@ -184,15 +184,16 @@ open Matrix
 
 universe u
 
-variable (k : Type u)
-
-namespace Matrix
+-- `k` is implicit so that `M` is the first explicit argument: that is what makes the name
+-- `Matrix.detRowAlternating_mulVec` usable as `M.detRowAlternating_mulVec`.
+variable {k : Type u}
 
 /-- Multiplication by a square matrix scales the standard-basis determinant form by its
 determinant. This is `AlternatingMap.compLinearMap_eq_det_smul` at `ω = (Pi.basisFun k ι).det`,
 in matrix vocabulary. -/
 @[simp]
-theorem detRowAlternating_mulVec [CommRing k] {ι : Type*} [Fintype ι] [DecidableEq ι]
+theorem _root_.Matrix.detRowAlternating_mulVec [CommRing k] {ι : Type*} [Fintype ι]
+    [DecidableEq ι]
     (M : Matrix ι ι k) (v : ι → ι → k) :
     Matrix.detRowAlternating (fun i => M *ᵥ v i) =
       M.det * Matrix.detRowAlternating v := by
@@ -201,8 +202,6 @@ theorem detRowAlternating_mulVec [CommRing k] {ι : Type*} [Fintype ι] [Decidab
   simpa only [Pi.basisFun_det, Function.comp_def, Matrix.toLin'_apply, Matrix.mulVecBilin_apply,
     LinearMap.det_toLin'] using
     (Module.Basis.det_comp (Pi.basisFun k ι) (Matrix.toLin' M) v)
-
-end Matrix
 
 end TauCeti
 

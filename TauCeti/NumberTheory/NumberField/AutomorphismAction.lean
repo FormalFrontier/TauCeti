@@ -13,6 +13,8 @@ public import Mathlib.NumberTheory.NumberField.Basic
 A ring automorphism of a field restricts to its ring of integers, because it preserves
 integrality. This file records how that restricted action relates to the ambient one: the
 structure map `𝓞 K → K` is equivariant, carrying `σ • z` to `σ` applied to the image of `z`.
+It also records that restriction to a normal subfield commutes with the map between the two
+rings of integers.
 
 For a tower `F / K` of fields it also records that the `Gal(F/K)`-action on `𝓞 F` commutes with
 the `𝓞 K`-scalar action: a `K`-algebra automorphism fixes `K` pointwise, hence fixes the image of
@@ -33,6 +35,8 @@ recorded once here rather than reconstructed at each use site.
 ## Main results
 
 * `NumberField.algebraMap_smul_eq_apply`: `algebraMap (𝓞 K) K (σ • z) = σ (algebraMap (𝓞 K) K z)`.
+* `NumberField.algebraMap_restrictNormal_smul`: mapping the action of a restricted automorphism
+  into the top ring of integers gives the action of the original automorphism.
 * `NumberField.RingOfIntegers.smulCommClass`: `Gal(F/K)` acting on `𝓞 F` commutes with the
   `𝓞 K`-action.
 * `AlgEquiv.mapAlgEquiv_symm_autCongr_smul`: restriction to rings of integers intertwines
@@ -57,6 +61,28 @@ Not named `algebraMap_smul`: that is Mathlib's unrelated `algebraMap R A r • m
   -- `integralClosure.coe_smul` proves this up to two definitional identifications:
   -- `RingOfIntegers.val` is an `abbrev` for `algebraMap`, and `AlgEquiv.smul_def` is `rfl`.
   integralClosure.coe_smul σ z
+
+variable {M L : Type*} [Field M] [Field L] [Algebra K M] [Algebra M L] [Algebra K L]
+  [IsScalarTower K M L] [Normal K M]
+
+/-- **Restriction of automorphisms commutes with the map between rings of integers.** If `M/K`
+is normal inside `L`, then acting on `𝓞 M` by the restriction of `σ ∈ Gal(L/K)` and mapping to
+`𝓞 L` agrees with first mapping and then acting by `σ`. -/
+@[simp]
+theorem algebraMap_restrictNormal_smul (σ : L ≃ₐ[K] L) (x : 𝓞 M) :
+    algebraMap (𝓞 M) (𝓞 L) (σ.restrictNormal M • x) =
+      σ • algebraMap (𝓞 M) (𝓞 L) x := by
+  apply RingOfIntegers.ext
+  -- `RingOfIntegers.ext` exposes coercions into `L`; state them as the canonical algebra maps so
+  -- the two scalar towers can be rewritten explicitly.
+  change algebraMap (𝓞 L) L (algebraMap (𝓞 M) (𝓞 L) (σ.restrictNormal M • x)) =
+    algebraMap (𝓞 L) L (σ • algebraMap (𝓞 M) (𝓞 L) x)
+  rw [← IsScalarTower.algebraMap_apply (𝓞 M) (𝓞 L) L,
+    IsScalarTower.algebraMap_apply (𝓞 M) M L,
+    algebraMap_smul_eq_apply, algebraMap_smul_eq_apply,
+    ← IsScalarTower.algebraMap_apply (𝓞 M) (𝓞 L) L,
+    IsScalarTower.algebraMap_apply (𝓞 M) M L]
+  exact AlgEquiv.restrictNormal_commutes σ M (algebraMap (𝓞 M) M x)
 
 variable {F : Type*} [Field F] [Algebra K F]
 

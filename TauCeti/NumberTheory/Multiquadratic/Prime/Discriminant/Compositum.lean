@@ -8,7 +8,6 @@ module
 public import TauCeti.NumberTheory.Multiquadratic.Galois.Basic
 public import TauCeti.NumberTheory.Multiquadratic.Prime.Discriminant.Field
 public import Mathlib.NumberTheory.NumberField.Discriminant.Different
-import TauCeti.NumberTheory.Multiquadratic.Degree
 import TauCeti.NumberTheory.Multiquadratic.Prime.Discriminant.Independence
 import Mathlib.Algebra.BigOperators.Option
 

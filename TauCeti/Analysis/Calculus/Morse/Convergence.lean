@@ -136,6 +136,63 @@ theorem exists_tendsto_comp_atTop
 
 /-! ### The gradient dies along the trajectory -/
 
+/-- **Across a short interval the energy drops by at least `δ * (ε / 2) ^ 2`.** If `‖∇ f (γ t)‖`
+is at least `ε` at a time `t ≥ 0`, and `δ` is short enough that the trajectory cannot move by `η`
+in that time, then the modulus `hUC` keeps the gradient above `ε / 2` throughout `[t, t + δ]`, and
+the energy identity turns that into the stated drop of `f`.
+
+The bound is vacuous when `δ = 0`, which the hypotheses permit; the caller supplies a positive
+`δ`. They do not permit `ε = 0`: `hUC` applied to `γ t` against itself forces `0 < ε`. -/
+private theorem energy_drop_of_le_norm_gradient {C δ ε η : ℝ}
+    (hγ : IsIntegralCurveOn γ (fun _ x ↦ -∇ f x) (Ici 0)) (hmaps : MapsTo γ (Ici 0) K)
+    (hdiff : ∀ y ∈ K, DifferentiableAt ℝ f y)
+    (hcontg : ContinuousOn (fun t ↦ ∇ f (γ t)) (Ici 0)) (hC : ∀ y ∈ K, ‖∇ f y‖ ≤ C)
+    (hUC : ∀ y ∈ K, ∀ z ∈ K, dist y z < η → dist (∇ f y) (∇ f z) < ε / 2)
+    (hδ : 0 ≤ δ) (hCδ : C * δ < η) {t : ℝ} (ht : 0 ≤ t)
+    (hbig : ε ≤ ‖∇ f (γ t)‖) :
+    δ * (ε / 2) ^ 2 ≤ f (γ t) - f (γ (t + δ)) := by
+  have hC0 : 0 ≤ C := (norm_nonneg _).trans (hC _ (hmaps (mem_Ici.mpr le_rfl)))
+  -- The modulus at `γ t` against itself is what forces `ε` positive, so it is not a hypothesis.
+  have hη : 0 < η := lt_of_le_of_lt (mul_nonneg hC0 hδ) hCδ
+  have hε : 0 < ε := by
+    have h := hUC _ (hmaps (mem_Ici.mpr ht)) _ (hmaps (mem_Ici.mpr ht)) (by rwa [dist_self])
+    rw [dist_self] at h
+    linarith
+  have htδ : t ≤ t + δ := by linarith
+  have hIcc : Icc t (t + δ) ⊆ Ici (0 : ℝ) := fun s hs ↦ mem_Ici.mpr (ht.trans hs.1)
+  have huIcc : [[t, t + δ]] = Icc t (t + δ) := uIcc_of_le htδ
+  have hlow : ∀ s ∈ Icc t (t + δ), ε / 2 ≤ ‖∇ f (γ s)‖ := by
+    intro s hs
+    have hs0 : s ∈ Ici (0 : ℝ) := hIcc hs
+    have hnorm : ‖s - t‖ ≤ δ := by
+      rw [Real.norm_eq_abs, abs_of_nonneg (by linarith [hs.1])]
+      linarith [hs.2]
+    have hdist : dist (γ s) (γ t) < η := by
+      rw [dist_eq_norm]
+      calc ‖γ s - γ t‖ ≤ C * ‖s - t‖ :=
+            norm_sub_le_of_norm_gradient_le hγ hmaps hC (mem_Ici.mpr ht) hs0
+        _ ≤ C * δ := by nlinarith
+        _ < η := hCδ
+    have h := hUC _ (hmaps hs0) _ (hmaps (mem_Ici.mpr ht)) hdist
+    rw [dist_eq_norm] at h
+    have h' : ‖∇ f (γ t)‖ - ‖∇ f (γ s)‖ ≤ ‖∇ f (γ s) - ∇ f (γ t)‖ := by
+      rw [norm_sub_rev]
+      exact norm_sub_norm_le _ _
+    linarith
+  have hint : IntervalIntegrable (fun s ↦ ‖∇ f (γ s)‖ ^ 2) volume t (t + δ) := by
+    refine ContinuousOn.intervalIntegrable ?_
+    rw [huIcc]
+    exact ((hcontg.mono hIcc).norm).pow 2
+  have heq : ∫ s in t..(t + δ), ‖∇ f (γ s)‖ ^ 2 = f (γ t) - f (γ (t + δ)) :=
+    integral_norm_gradient_sq_eq_sub hγ (huIcc ▸ hIcc)
+      (fun s hs ↦ hdiff _ (hmaps (hIcc (huIcc ▸ hs)))) hint
+  rw [← heq]
+  have hmono : ∫ _s in t..(t + δ), (ε / 2) ^ 2 ≤ ∫ s in t..(t + δ), ‖∇ f (γ s)‖ ^ 2 :=
+    intervalIntegral.integral_mono_on htδ intervalIntegrable_const hint fun s hs ↦
+      pow_le_pow_left₀ (by linarith) (hlow s hs) 2
+  simpa using hmono
+
+
 /-- **The gradient tends to zero along a confined negative gradient trajectory.**
 
 The trajectory is Lipschitz and `∇ f` is uniformly continuous on the compact set it stays in, so a
@@ -165,43 +222,6 @@ theorem tendsto_gradient_atTop
     rw [div_lt_iff₀ (by linarith)]
     nlinarith
   have hpos : 0 < δ * (ε / 2) ^ 2 := by positivity
-  -- Across a time interval of length `δ` starting at a time where the gradient is large, the
-  -- energy drops by a definite amount.
-  have key : ∀ t : ℝ, 0 ≤ t → ε ≤ ‖∇ f (γ t)‖ → δ * (ε / 2) ^ 2 ≤ f (γ t) - f (γ (t + δ)) := by
-    intro t ht hbig
-    have htδ : t ≤ t + δ := by linarith
-    have hIcc : Icc t (t + δ) ⊆ Ici (0 : ℝ) := fun s hs ↦ mem_Ici.mpr (ht.trans hs.1)
-    have huIcc : [[t, t + δ]] = Icc t (t + δ) := uIcc_of_le htδ
-    have hlow : ∀ s ∈ Icc t (t + δ), ε / 2 ≤ ‖∇ f (γ s)‖ := by
-      intro s hs
-      have hs0 : s ∈ Ici (0 : ℝ) := hIcc hs
-      have hnorm : ‖s - t‖ ≤ δ := by
-        rw [Real.norm_eq_abs, abs_of_nonneg (by linarith [hs.1])]
-        linarith [hs.2]
-      have hdist : dist (γ s) (γ t) < η := by
-        rw [dist_eq_norm]
-        calc ‖γ s - γ t‖ ≤ C * ‖s - t‖ :=
-              norm_sub_le_of_norm_gradient_le hγ hmaps hC (mem_Ici.mpr ht) hs0
-          _ ≤ C * δ := by nlinarith
-          _ < η := hCδ
-      have h := hUC _ (hmaps hs0) _ (hmaps (mem_Ici.mpr ht)) hdist
-      rw [dist_eq_norm] at h
-      have h' : ‖∇ f (γ t)‖ - ‖∇ f (γ s)‖ ≤ ‖∇ f (γ s) - ∇ f (γ t)‖ := by
-        rw [norm_sub_rev]
-        exact norm_sub_norm_le _ _
-      linarith
-    have hint : IntervalIntegrable (fun s ↦ ‖∇ f (γ s)‖ ^ 2) volume t (t + δ) := by
-      refine ContinuousOn.intervalIntegrable ?_
-      rw [huIcc]
-      exact ((hcontg.mono hIcc).norm).pow 2
-    have heq : ∫ s in t..(t + δ), ‖∇ f (γ s)‖ ^ 2 = f (γ t) - f (γ (t + δ)) :=
-      integral_norm_gradient_sq_eq_sub hγ (huIcc ▸ hIcc)
-        (fun s hs ↦ hdiff _ (hmaps (hIcc (huIcc ▸ hs)))) hint
-    rw [← heq]
-    have hmono : ∫ _s in t..(t + δ), (ε / 2) ^ 2 ≤ ∫ s in t..(t + δ), ‖∇ f (γ s)‖ ^ 2 :=
-      intervalIntegral.integral_mono_on htδ intervalIntegrable_const hint fun s hs ↦
-        pow_le_pow_left₀ (by positivity) (hlow s hs) 2
-    simpa using hmono
   -- The drops of the energy across intervals of length `δ` tend to `0`.
   have hdrop : Tendsto (fun t ↦ f (γ t) - f (γ (t + δ))) atTop (𝓝 0) := by
     have h2 : Tendsto (fun t ↦ f (γ (t + δ))) atTop (𝓝 c) :=
@@ -210,7 +230,8 @@ theorem tendsto_gradient_atTop
   obtain ⟨t, hbig, ht0, hlt⟩ :=
     (hcon.and_eventually ((eventually_ge_atTop (0 : ℝ)).and
       (hdrop.eventually (gt_mem_nhds hpos)))).exists
-  exact absurd (key t ht0 (not_lt.mp hbig)) (not_le.mpr hlt)
+  exact absurd (energy_drop_of_le_norm_gradient hγ hmaps hdiff hcontg hC hUC hδ.le hCδ ht0
+    (not_lt.mp hbig)) (not_le.mpr hlt)
 
 /-! ### The ω-limit set -/
 

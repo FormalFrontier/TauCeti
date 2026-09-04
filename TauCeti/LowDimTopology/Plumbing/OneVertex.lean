@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.LowDimTopology.Plumbing.Tower
-import TauCeti.LowDimTopology.Plumbing.Cube.Weight.Recursion
 import TauCeti.LowDimTopology.Plumbing.DiagonalDominance
 import TauCeti.LowDimTopology.Plumbing.TopDegree
 import TauCeti.LowDimTopology.Plumbing.Weight.Polarization

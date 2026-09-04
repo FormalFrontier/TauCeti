@@ -341,6 +341,19 @@ theorem primePowerProd_eq_factorization_prod (f : ℕ → ℕ → M) (n : ℕ) :
         _ = n.factorization.prod f := Finsupp.mul_prod_erase _ _ _ (minFac_mem_primeFactors h1)
     · rcases Nat.le_one_iff_eq_zero_or_eq_one.1 (not_lt.1 h1) with rfl | rfl <;> simp
 
+/-- **Splitting the assembly at a prime**: `primePowerProd f m` is its `p`-block
+`primePowerProd f (p ^ v_p(m))` times the assembly over the `p`-free part `ordCompl[p] m`. -/
+theorem primePowerProd_eq_ordProj_mul_ordCompl (f : ℕ → ℕ → M) {p m : ℕ} (hp : p.Prime)
+    (hm : m ≠ 0) :
+    primePowerProd f m =
+      primePowerProd f (p ^ m.factorization p) * primePowerProd f (ordCompl[p] m) := by
+  have hm_eq : m = p ^ m.factorization p * ordCompl[p] m :=
+    (Nat.ordProj_mul_ordCompl_eq_self m p).symm
+  conv_lhs => rw [hm_eq]
+  exact primePowerProd_mul_of_coprime f
+    ((hp.coprime_iff_not_dvd.2 (Nat.not_dvd_ordCompl hp hm)).pow_left _)
+    fun _ _ _ _ _ ↦ Commute.all _ _
+
 end CommMonoid
 
 end Nat

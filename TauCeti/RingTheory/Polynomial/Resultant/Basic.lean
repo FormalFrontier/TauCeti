@@ -8,12 +8,16 @@ module
 public import Mathlib.RingTheory.Polynomial.Resultant.Basic
 
 /-!
-# The resultant against a reversed linear factor
+# Resultant lemmas
 
 Mathlib evaluates the resultant against the linear polynomial `X - C x` on either side
 (`Polynomial.resultant_X_sub_C_left`, `Polynomial.resultant_X_sub_C_right`). This file records the
 companion for the *reversed* polynomial `C x - X`, which is the shape that arises as `x - θ` in
 `AdjoinRoot f`: the answer is `f.eval x`, with **no sign**.
+
+The file also normalizes bounded resultants with a monic left argument. This makes the resultant
+independent of the chosen valid right degree bound, as needed when comparing resultant-based
+discriminant formulas that use different bounds.
 
 That absence is the point. `C x - X` is `C (-1) * (X - C x)`, which contributes `(-1) ^ m`, and
 `resultant_X_sub_C_right` contributes another `(-1) ^ m`, so the two cancel.
@@ -21,6 +25,8 @@ That absence is the point. `C x - X` is `C (-1) * (X - C x)`, which contributes 
 ## Main results
 
 * `Polynomial.resultant_C_sub_X_right`
+* `Polynomial.Monic.resultant_of_le`: for a monic left argument, the resultant is independent of
+  the valid degree bound supplied for the right argument.
 
 ## Provenance
 
@@ -47,3 +53,21 @@ theorem resultant_C_sub_X_right (f : R[X]) (x : R) (m : ℕ) (hm : f.natDegree �
     ← two_mul, pow_mul, neg_one_sq, one_pow, one_mul]
 
 end Polynomial
+
+namespace TauCeti
+
+open Polynomial
+
+variable {R : Type*} [CommRing R]
+
+/-- For monic `f`, `f.resultant g` does not depend on which valid upper bound is supplied for the
+degree of `g`. -/
+theorem _root_.Polynomial.Monic.resultant_of_le {f g : R[X]} (hf : f.Monic) {n : ℕ}
+    (hn : g.natDegree ≤ n) : f.resultant g f.natDegree n = f.resultant g := by
+  have hn' : n = g.natDegree + (n - g.natDegree) :=
+    (Nat.add_sub_cancel' hn).symm
+  conv_lhs => rw [hn']
+  rw [Polynomial.resultant_add_right_deg _ _ _ _ _ le_rfl, Polynomial.coeff_natDegree,
+    hf.leadingCoeff, one_pow, one_mul]
+
+end TauCeti

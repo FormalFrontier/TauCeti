@@ -31,6 +31,8 @@ reductive, that its torus is maximal, or that its root datum has been identified
 
 * `TauCeti.E7Minuscule.baseChangeDefiningIdeal`: the transported defining ideal in
   `O(GL₅₆/A)`.
+* `TauCeti.E7Minuscule.coordinateHopfAlgebra` and `TauCeti.E7Minuscule.coordinateMap`: the
+  specialized carrier coordinate algebra and its ambient quotient map.
 * `TauCeti.E7Minuscule.baseChangeCoordinateIso`: its quotient is the scalar extension of the
   integral carrier coordinate Hopf algebra.
 * `TauCeti.E7Minuscule.rootSubgroupToBaseChangeCoordinateMap`: the transported numbered root
@@ -87,6 +89,18 @@ noncomputable def baseChangeDefiningIdeal :
     (TauCeti.serreH ℚ (CartanMatrix.E 7)) rep lattice.toAddSubgroup
     rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator latticeBasis
     e7MinusculeWeight A
+
+/-- The coordinate Hopf algebra of the full-weight type-`E₇` minuscule carrier after base
+change to `A`. -/
+noncomputable abbrev coordinateHopfAlgebra :=
+  CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra A 56)
+    (baseChangeDefiningIdeal A)
+
+/-- The quotient coordinate morphism `O(GL₅₆) ⟶ O(carrier)`, representing the closed immersion
+of the specialized minuscule carrier into `GL₅₆`. -/
+noncomputable abbrev coordinateMap :
+    GeneralLinear.coordinateHopfAlgebra A 56 ⟶ coordinateHopfAlgebra A :=
+  CommHopfAlgCat.mkQuotient _ _
 
 /-- Membership in the transported defining ideal is membership of the corresponding element in
 the base change of the named integral defining ideal. -/

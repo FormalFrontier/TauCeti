@@ -33,6 +33,8 @@ these delegate to; no ring topology and no multiplicative continuity is used.
 * `Ideal.Quotient.t1Space_iff`: `T1Space (R ⧸ I) ↔ IsClosed (I : Set R)`.
 * `Ideal.Quotient.instT1Space`: the instance form, so that `T0Space (R ⧸ I)` is found
   automatically once `I` is known to be closed.
+* `Ideal.Quotient.continuous_lift`: a continuous ring homomorphism annihilating `I` induces a
+  *continuous* homomorphism on `R ⧸ I`, with no hypothesis on `I`.
 
 ## References
 
@@ -57,5 +59,18 @@ instance, with the closedness of `I` as an instance argument, so that the separa
 is available to instance search wherever `I` is known to be closed; this follows
 `Ideal.Quotient.normedCommRing`, which takes `IsClosed (I : Set R)` the same way. -/
 instance instT1Space [IsClosed (I : Set R)] : T1Space (R ⧸ I) := (t1Space_iff I).mpr ‹_›
+
+omit [SeparatelyContinuousAdd R] in
+/-- **A continuous ring homomorphism that kills `I` lifts to a continuous map on `R ⧸ I`.**
+
+No hypothesis on `I` is needed: closedness of `I` is what makes `R ⧸ I` separated
+(`Ideal.Quotient.instT1Space` above), which matters for maps *into* `R ⧸ I`, not for maps out
+of it. -/
+theorem continuous_lift {S : Type*} [Semiring S] [TopologicalSpace S] {f : R →+* S}
+    (hf : Continuous f) (hI : ∀ a ∈ I, f a = 0) :
+    Continuous (Ideal.Quotient.lift I f hI) :=
+  -- `R ⧸ I` carries the coinduced topology, so continuity of a map out of it is continuity of its
+  -- composite with the quotient map, which is `f`.
+  continuous_coinduced_dom.mpr hf
 
 end Ideal.Quotient

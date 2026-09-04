@@ -201,18 +201,6 @@ section Compat
 
 variable {A : Type*} [CommRing A] [TopologicalSpace A] [NonarchimedeanRing A]
 
-/-- The variable `X` of `A⟨X⟩`, as an element of the restricted subring. -/
-noncomputable def restrictedX : restrictedMvPowerSeriesSubring 1 A :=
-  ⟨MvPowerSeries.X 0, mem_restrictedMvPowerSeriesSubring.mpr <| by
-    rw [MvPowerSeries.X_def]
-    exact isRestricted_monomial _ _⟩
-
-/-- `restrictedX` is the power series `X` underneath. -/
-@[simp]
-theorem coe_restrictedX :
-    ((restrictedX : restrictedMvPowerSeriesSubring 1 A) : MvPowerSeries (Fin 1) A) =
-      MvPowerSeries.X 0 := (rfl)
-
 variable {M : Type*} [AddCommGroup M] [Module A M] [TopologicalSpace M] [ContinuousAdd M]
   [ContinuousSMul A M]
 
@@ -233,7 +221,7 @@ theorem coe_restrictedMulX (s : restrictedMvPowerSeriesSubmodule 1 A M) :
 comparison map's value up by one. -/
 theorem restrictedMvPowerSeriesBaseChange_tmul_restrictedX_mul (m : M)
     (b : restrictedMvPowerSeriesSubring 1 A) :
-    restrictedMvPowerSeriesBaseChange (TensorProduct.tmul A m (restrictedX * b)) =
+    restrictedMvPowerSeriesBaseChange (TensorProduct.tmul A m ((restrictedX 0) * b)) =
       restrictedMulX (restrictedMvPowerSeriesBaseChange (TensorProduct.tmul A m b)) := by
   apply restrictedMvPowerSeriesSubmodule_ext
   intro n
@@ -253,7 +241,7 @@ theorem restrictedMvPowerSeriesBaseChange_tmul_restrictedX_mul (m : M)
 theorem restrictedMvPowerSeriesBaseChange_comp_lTensor_mulLeft_restrictedX :
     (restrictedMvPowerSeriesBaseChange : TensorProduct A M (restrictedMvPowerSeriesSubring 1 A)
         →ₗ[A] restrictedMvPowerSeriesSubmodule 1 A M) ∘ₗ
-      LinearMap.lTensor M (LinearMap.mulLeft A restrictedX) =
+      LinearMap.lTensor M (LinearMap.mulLeft A (restrictedX 0)) =
     restrictedMulX ∘ₗ restrictedMvPowerSeriesBaseChange :=
   TensorProduct.ext' fun m b ↦ by
     simp only [LinearMap.comp_apply, LinearMap.lTensor_tmul, LinearMap.mulLeft_apply]
@@ -262,7 +250,8 @@ theorem restrictedMvPowerSeriesBaseChange_comp_lTensor_mulLeft_restrictedX :
 /-- Through the comparison map, `X • ·` on `M ⊗[A] A⟨X⟩` is multiplication by `X` on `M⟨X⟩`. -/
 theorem restrictedMvPowerSeriesBaseChange_lTensor_mulLeft_restrictedX
     (z : TensorProduct A M (restrictedMvPowerSeriesSubring 1 A)) :
-    restrictedMvPowerSeriesBaseChange (LinearMap.lTensor M (LinearMap.mulLeft A restrictedX) z) =
+    restrictedMvPowerSeriesBaseChange
+        (LinearMap.lTensor M (LinearMap.mulLeft A (restrictedX 0)) z) =
       restrictedMulX (restrictedMvPowerSeriesBaseChange z) :=
   LinearMap.congr_fun restrictedMvPowerSeriesBaseChange_comp_lTensor_mulLeft_restrictedX z
 
@@ -270,8 +259,8 @@ omit [TopologicalSpace M] [ContinuousAdd M] [ContinuousSMul A M] in
 /-- `(1 - f X) • ·` on `M ⊗[A] A⟨X⟩`, in terms of `X • ·`. -/
 theorem lTensor_mulLeft_one_sub_algebraMap_mul_restrictedX (f : A) :
     LinearMap.lTensor M (LinearMap.mulLeft A
-        (1 - algebraMap A (restrictedMvPowerSeriesSubring 1 A) f * restrictedX)) =
-      LinearMap.id - f • LinearMap.lTensor M (LinearMap.mulLeft A restrictedX) :=
+        (1 - algebraMap A (restrictedMvPowerSeriesSubring 1 A) f * (restrictedX 0))) =
+      LinearMap.id - f • LinearMap.lTensor M (LinearMap.mulLeft A (restrictedX 0)) :=
   TensorProduct.ext' fun m b ↦ by
     simp [LinearMap.lTensor_tmul, LinearMap.mulLeft_apply, sub_mul, ← Algebra.smul_def,
       TensorProduct.tmul_sub, TensorProduct.tmul_smul]
@@ -280,8 +269,8 @@ omit [TopologicalSpace M] [ContinuousAdd M] [ContinuousSMul A M] in
 /-- `(f - X) • ·` on `M ⊗[A] A⟨X⟩`, in terms of `X • ·`. -/
 theorem lTensor_mulLeft_algebraMap_sub_restrictedX (f : A) :
     LinearMap.lTensor M (LinearMap.mulLeft A
-        (algebraMap A (restrictedMvPowerSeriesSubring 1 A) f - restrictedX)) =
-      f • LinearMap.id - LinearMap.lTensor M (LinearMap.mulLeft A restrictedX) :=
+        (algebraMap A (restrictedMvPowerSeriesSubring 1 A) f - (restrictedX 0))) =
+      f • LinearMap.id - LinearMap.lTensor M (LinearMap.mulLeft A (restrictedX 0)) :=
   TensorProduct.ext' fun m b ↦ by
     simp [LinearMap.lTensor_tmul, LinearMap.mulLeft_apply, sub_mul, ← Algebra.smul_def,
       TensorProduct.tmul_sub, TensorProduct.tmul_smul]
@@ -409,7 +398,7 @@ variable {A : Type*} [CommRing A] [UniformSpace A] [IsUniformAddGroup A] [Comple
 /-- `1 - f X` acts injectively on `N ⊗[A] A⟨X⟩` for a finite `N` with its module topology. -/
 theorem lTensor_mulLeft_one_sub_algebraMap_mul_restrictedX_injective (f : A) :
     Function.Injective (LinearMap.lTensor N (LinearMap.mulLeft A
-      (1 - algebraMap A (restrictedMvPowerSeriesSubring 1 A) f * restrictedX))) := by
+      (1 - algebraMap A (restrictedMvPowerSeriesSubring 1 A) f * (restrictedX 0)))) := by
   rw [lTensor_mulLeft_one_sub_algebraMap_mul_restrictedX, injective_iff_map_eq_zero]
   intro z hz
   have h := congrArg
@@ -427,7 +416,7 @@ theorem lTensor_mulLeft_one_sub_algebraMap_mul_restrictedX_injective (f : A) :
 /-- `f - X` acts injectively on `N ⊗[A] A⟨X⟩` for a finite `N` with its module topology. -/
 theorem lTensor_mulLeft_algebraMap_sub_restrictedX_injective (f : A) :
     Function.Injective (LinearMap.lTensor N (LinearMap.mulLeft A
-      (algebraMap A (restrictedMvPowerSeriesSubring 1 A) f - restrictedX))) := by
+      (algebraMap A (restrictedMvPowerSeriesSubring 1 A) f - (restrictedX 0)))) := by
   rw [lTensor_mulLeft_algebraMap_sub_restrictedX, injective_iff_map_eq_zero]
   intro z hz
   have h := congrArg
@@ -450,7 +439,7 @@ variable (A) in
 `NonarchimedeanRing`, `IsTateRing`, `IsNoetherianRing` for the ring. -/
 theorem flat_quotient_algebraMap_sub_restrictedX (f : A) :
     Module.Flat A (restrictedMvPowerSeriesSubring 1 A ⧸
-      Ideal.span {algebraMap A (restrictedMvPowerSeriesSubring 1 A) f - restrictedX}) := by
+      Ideal.span {algebraMap A (restrictedMvPowerSeriesSubring 1 A) f - (restrictedX 0)}) := by
   have := flat_restrictedMvPowerSeriesSubring (k := 1) (A := A)
   exact Module.Flat.quotient_span_singleton_of_lTensor_mulLeft_injective _ fun I _ ↦
     lTensor_mulLeft_algebraMap_sub_restrictedX_injective (N := A ⧸ I) f
@@ -461,7 +450,7 @@ variable (A) in
 Same standing hypotheses on `A` as `flat_quotient_algebraMap_sub_restrictedX`. -/
 theorem flat_quotient_one_sub_algebraMap_mul_restrictedX (f : A) :
     Module.Flat A (restrictedMvPowerSeriesSubring 1 A ⧸
-      Ideal.span {1 - algebraMap A (restrictedMvPowerSeriesSubring 1 A) f * restrictedX}) := by
+      Ideal.span {1 - algebraMap A (restrictedMvPowerSeriesSubring 1 A) f * (restrictedX 0)}) := by
   have := flat_restrictedMvPowerSeriesSubring (k := 1) (A := A)
   exact Module.Flat.quotient_span_singleton_of_lTensor_mulLeft_injective _ fun I _ ↦
     lTensor_mulLeft_one_sub_algebraMap_mul_restrictedX_injective (N := A ⧸ I) f

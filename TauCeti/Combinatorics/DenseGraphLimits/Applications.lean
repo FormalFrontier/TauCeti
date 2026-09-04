@@ -94,31 +94,6 @@ private theorem integral_graphonDegree_sq_ge (W : Graphon Ω μ) :
   simp only [Pi.pow_apply] at h
   linarith
 
-private theorem integrable_triple_graphon_product (W : Graphon Ω μ) :
-    Integrable (fun p : Ω × Ω × Ω =>
-      W p.1 p.2.1 * (1 - W p.1 p.2.2) * (1 - W p.2.1 p.2.2)) (μ.prod (μ.prod μ)) := by
-  apply (integrable_const (1 : ℝ)).mono
-    (by
-      have hxy : Measurable (fun p : Ω × Ω × Ω => W p.1 p.2.1) :=
-        W.measurable.comp (measurable_fst.prodMk (measurable_fst.comp measurable_snd))
-      have hxz : Measurable (fun p : Ω × Ω × Ω => W p.1 p.2.2) :=
-        W.measurable.comp (measurable_fst.prodMk (measurable_snd.comp measurable_snd))
-      have hyz : Measurable (fun p : Ω × Ω × Ω => W p.2.1 p.2.2) :=
-        W.measurable.comp (measurable_fst.comp measurable_snd |>.prodMk
-          (measurable_snd.comp measurable_snd))
-      exact (hxy.mul ((measurable_const.sub hxz))).mul (measurable_const.sub hyz)
-        |>.aestronglyMeasurable)
-  filter_upwards [] with p
-  have h₁ : 0 ≤ W p.1 p.2.1 := W.nonneg _ _
-  have h₂ : W p.1 p.2.1 ≤ 1 := W.le_one _ _
-  have h₃ : 0 ≤ 1 - W p.1 p.2.2 := sub_nonneg.mpr (W.le_one _ _)
-  have h₄ : 1 - W p.1 p.2.2 ≤ 1 := by linarith [W.nonneg p.1 p.2.2]
-  have h₅ : 0 ≤ 1 - W p.2.1 p.2.2 := sub_nonneg.mpr (W.le_one _ _)
-  have h₆ : 1 - W p.2.1 p.2.2 ≤ 1 := by linarith [W.nonneg p.2.1 p.2.2]
-  rw [Real.norm_eq_abs, abs_of_nonneg (mul_nonneg (mul_nonneg h₁ h₃) h₅), norm_one]
-  exact (mul_le_mul (mul_le_mul h₂ h₄ h₃ (by norm_num)) h₆ h₅ (by norm_num)).trans_eq
-    (by ring)
-
 private theorem integrable_triple_graphon_edge (W : Graphon Ω μ) :
     Integrable (fun p : Ω × Ω × Ω => W p.1 p.2.1) (μ.prod (μ.prod μ)) := by
   have hm : Measurable (fun p : Ω × Ω × Ω => W p.1 p.2.1) :=
