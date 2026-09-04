@@ -13,9 +13,9 @@ public import Mathlib.RingTheory.Valuation.Discrete.IsDiscreteValuationRing
 
 On a locally Noetherian integral scheme a regular function has nonnegative order at every point
 where it is defined (`TauCeti.AlgebraicGeometry.Scheme.ord_germToFunctionField_nonneg`). This file
-proves the converse for a scheme of dimension at most one whose codimension-one local rings are
-discrete valuation rings: a rational function with no poles on an open subset `U` is the germ of a
-regular function on `U`.
+proves the converse for a scheme of dimension at most one whose codimension-one local rings on an
+open subset `U` are discrete valuation rings: a rational function with no poles on `U` is the germ
+of a regular function on `U`.
 
 ## Main declarations
 
@@ -82,17 +82,19 @@ theorem exists_algebraMap_stalk_eq_of_coheight_eq_zero {x : X} (hx : coheight x 
     Ring.isField_iff_maximal_bot.mpr (Ring.krullDimLE_zero_iff.mp hdim ⊥ Ideal.isPrime_bot)
   exact IsFractionRing.surjective_iff_isField.mpr hfield f
 
-/-- **A rational function without poles is regular.** On a locally Noetherian integral scheme of
-dimension at most one whose codimension-one local rings are discrete valuation rings, a rational
-function whose order is nonnegative at every codimension-one point of a nonempty open subset `U`
-is the image of a section of `𝒪_X` over `U`.
+/-- **A rational function without poles is regular.** On a locally Noetherian integral scheme, let
+`U` be a nonempty open subset of dimension at most one whose codimension-one local rings are
+discrete valuation rings. A rational function whose order is nonnegative at every codimension-one
+point of `U` is the image of a section of `𝒪_X` over `U`.
 
 This is the one-dimensional case of algebraic Hartogs' principle. The hypothesis on the dimension
 enters only through the points of `U`: at a codimension-one point the discrete valuation gives the
 bound, and at a point with no proper generization the local ring is already the function field. -/
 theorem exists_germToFunctionField_eq_of_ord_nonneg
-    [∀ y : CodimensionOnePoint X, IsDiscreteValuationRing (X.presheaf.stalk (y : X))]
-    {U : X.Opens} [Nonempty U] (hU : ∀ y ∈ U, coheight y ≤ 1) {f : X.functionField}
+    {U : X.Opens} [Nonempty U]
+    (hDVR : ∀ y : CodimensionOnePoint X, (y : X) ∈ U →
+      IsDiscreteValuationRing (X.presheaf.stalk (y : X)))
+    (hU : ∀ y ∈ U, coheight y ≤ 1) {f : X.functionField}
     (hf : ∀ (y : CodimensionOnePoint X), (y : X) ∈ U → 0 ≤ X.ord f y) :
     ∃ a : Γ(X, U), X.germToFunctionField U a = f := by
   -- The generic point lies in every nonempty open subset, so germs there see every overlap.
@@ -106,8 +108,7 @@ theorem exists_germToFunctionField_eq_of_ord_nonneg
         algebraMap (X.presheaf.stalk (y : X)) X.functionField g = f := by
       rcases eq_or_lt_of_le (hU y y.2) with hy | hy
       · have : IsDiscreteValuationRing (X.presheaf.stalk (y : X)) :=
-          ‹∀ z : CodimensionOnePoint X, IsDiscreteValuationRing (X.presheaf.stalk (z : X))›
-            ⟨(y : X), hy⟩
+          hDVR ⟨(y : X), hy⟩ y.2
         exact exists_algebraMap_stalk_eq_of_ord_nonneg hy (hf ⟨(y : X), hy⟩ y.2)
       · exact exists_algebraMap_stalk_eq_of_coheight_eq_zero (Order.lt_one_iff.mp hy) f
     obtain ⟨g, hgf⟩ := hg

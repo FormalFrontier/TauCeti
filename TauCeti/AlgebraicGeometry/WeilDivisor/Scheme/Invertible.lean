@@ -61,10 +61,14 @@ section LocallyNoetherian
 
 variable [IsLocallyNoetherian X]
 
-/-- **The sections of `𝒪_X(0)` are the regular functions.** On a locally Noetherian scheme of
-dimension at most one, a rational function with no poles on `U` is regular on `U`, so the sections
-of the sheaf of the zero divisor over `U` are exactly the images of the sections of `𝒪_X`. -/
-theorem mem_sections_zero_iff {U : X.Opens} (hU : ∀ y ∈ U, coheight y ≤ 1)
+/-- **The sections of `𝒪_X(0)` are the regular functions.** On a locally Noetherian scheme, let `U`
+be an open subset of dimension at most one whose codimension-one local rings are discrete valuation
+rings. A rational function with no poles on `U` is regular on `U`, so the sections of the sheaf of
+the zero divisor over `U` are exactly the images of the sections of `𝒪_X`. -/
+theorem mem_sections_zero_iff {U : X.Opens}
+    (hDVR : ∀ y : CodimensionOnePoint X, (y : X) ∈ U →
+      IsDiscreteValuationRing (X.presheaf.stalk (y : X)))
+    (hU : ∀ y ∈ U, coheight y ≤ 1)
     (s : Γ(Scheme.rationalFunctions X, U)) :
     s ∈ sections (0 : SchemeWeilDivisor X) U ↔
       ∃ a : Γ(X, U), Scheme.Modules.Hom.app (Scheme.toRationalFunctions X) U a = s := by
@@ -84,7 +88,7 @@ theorem mem_sections_zero_iff {U : X.Opens} (hU : ∀ y ∈ U, coheight y ≤ 1)
         rw [h0]
         simp
       · exact fun y hy ↦ by simpa using h y hy
-    obtain ⟨a, ha⟩ := Scheme.exists_germToFunctionField_eq_of_ord_nonneg hU hord
+    obtain ⟨a, ha⟩ := Scheme.exists_germToFunctionField_eq_of_ord_nonneg hDVR hU hord
     refine ⟨a, (Scheme.rationalFunctionsEquiv U).injective ?_⟩
     rw [Scheme.rationalFunctionsEquiv_toRationalFunctions_app, ha]
   · rintro ⟨a, rfl⟩
@@ -113,7 +117,7 @@ theorem isIso_unitToSheaf_zero (hX : ∀ y : X, coheight y ≤ 1) :
       rw [← key U a, ← key U b, hab]
     · intro t
       obtain ⟨a, ha⟩ :=
-        (mem_sections_zero_iff (fun y _ ↦ hX y) _).mp
+        (mem_sections_zero_iff (fun _ _ ↦ inferInstance) (fun y _ ↦ hX y) _).mp
           (sheafι_app_mem (0 : SchemeWeilDivisor X) U t)
       exact ⟨a, sheafι_app_injective (0 : SchemeWeilDivisor X) U (by rw [key U a, ha])⟩
   exact Scheme.Modules.Hom.isIso_iff_isIso_app.mpr h
