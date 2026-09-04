@@ -169,8 +169,8 @@ theorem profiniteOrder_eq_of_finite :
       simpa [U] using Nat.card_congr QuotientGroup.quotientBot.toEquiv
     exact le_of_eq <| congrArg Supernatural.ofNat <| Subtype.ext hcard.symm
 
-/-- Pointwise form of `profiniteOrder_eq_of_finite`. -/
-@[simp]
+/-- Pointwise form of `profiniteOrder_eq_of_finite`.  This is not a `simp` lemma: `simp`
+already rewrites its left-hand side through `profiniteOrder_apply`. -/
 theorem profiniteOrder_apply_of_finite (p : Nat.Primes) :
     profiniteOrder G p = (padicValNat p (Nat.card G) : ℕ∞) := by
   rw [profiniteOrder_eq_of_finite]
