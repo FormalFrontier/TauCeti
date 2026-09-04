@@ -298,6 +298,7 @@ theorem mapPointsFunctor_innerConjugationIso_hom_app_apply
     simp only [Algebra.TensorProduct.productMap_apply_tmul, AlgHom.comp_apply,
       AlgHom.id_apply,
       Algebra.ofId_apply, map_mul]
+    rw [HopfAlgebra.extendPoint_ofConv]
     exact congrArg (fun c : A ↦ c * x.ofConv b) (x.ofConv.commutes (g.ofConv a))
   rw [hprod]
   exact (HopfAlgebra.productMap_comp_conjugationAlgHom (R := R) (H := H)

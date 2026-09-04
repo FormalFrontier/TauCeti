@@ -59,7 +59,7 @@ noncomputable abbrev points (A : CommAlgCat.{w} R) : GrpCat.{max v w} :=
   GrpCat.of (WithConv (H →ₐ[R] A))
 
 /-- Extension of ground-ring-valued points to `A`-valued points along the structure map of `A`. -/
-@[expose] noncomputable def extendPoint (H : Type v) [Semiring H] [_root_.HopfAlgebra R H]
+noncomputable def extendPoint (H : Type v) [Semiring H] [_root_.HopfAlgebra R H]
     (A : CommAlgCat.{w} R) :
     points (H := H) (CommAlgCat.of R R) →* points (H := H) A :=
   AlgHom.mapValue (Algebra.ofId R A)
