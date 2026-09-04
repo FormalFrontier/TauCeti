@@ -38,6 +38,15 @@ not consume one — so the guarantee is recorded here rather than in the signatu
   unit, so that it is a total function of the place. Totality is what lets
   `TauCeti.Divisor.eval` be a homomorphism outright.
 
+## Main results
+
+* `TauCeti.Place.val_residueUnit` and `TauCeti.Place.val_normResidue`: the underlying field values
+  of the two units, as `@[simp]` normal forms. Both are `rfl`, and they are the whole reason a
+  consumer never has to unfold either definition: they name the `IsLocalRing.residue` and
+  `Algebra.norm` the units are built from.
+* `TauCeti.Place.normResidueOrOne_of_ord_eq_zero` and
+  `TauCeti.Place.normResidueOrOne_of_ord_ne_zero`: the two branches of the total extension.
+
 ## References
 
 * [J. Silverman, *The Arithmetic of Elliptic Curves*][silverman2009], III.8 — the local factors
@@ -60,6 +69,12 @@ noncomputable def residueUnit (P : Place k F) (f : Fˣ) (hf : P.ord (f : F) = 0)
   Units.mk0 (IsLocalRing.residue P.integers ⟨(f : F), P.mem_integers_iff_ord_nonneg.2 hf.ge⟩)
     (by rw [Ne, P.residue_eq_zero_iff_ord_pos (Units.ne_zero f), hf]; omega)
 
+@[simp]
+theorem val_residueUnit (P : Place k F) (f : Fˣ) (hf : P.ord (f : F) = 0) :
+    (P.residueUnit f hf : P.ResidueField)
+      = IsLocalRing.residue P.integers ⟨(f : F), P.mem_integers_iff_ord_nonneg.2 hf.ge⟩ := by
+  simp [residueUnit]
+
 /-- **The norm to `k` of the residue of a function that is a unit at `P`.** The residue field
 varies with `P`; the norm is what puts the value in `k`, the one field all the local factors of
 `TauCeti.Divisor.eval` have to share.
@@ -72,6 +87,11 @@ absent the same hypothesis. The hypothesis is not in the signature because `Alge
 not consume one, so requiring it here would leave it unused. -/
 noncomputable def normResidue (P : Place k F) (f : Fˣ) (hf : P.ord (f : F) = 0) : kˣ :=
   Units.map (Algebra.norm k) (P.residueUnit f hf)
+
+@[simp]
+theorem val_normResidue (P : Place k F) (f : Fˣ) (hf : P.ord (f : F) = 0) :
+    (P.normResidue f hf : k) = Algebra.norm k (P.residueUnit f hf : P.ResidueField) := by
+  simp [normResidue]
 
 /-- `normResidue` extended by `1` where `f` is not a unit, making it a total function of the
 place. `1` is the only workable neutral value: the coefficient of a place in a divisor is an

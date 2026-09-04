@@ -102,6 +102,7 @@ theorem eval_eq_finsuppProd (D : Divisor k F) (f : Fˣ) :
 theorem eval_zero (f : Fˣ) : eval (0 : Divisor k F) f = 1 :=
   map_one (evalHom f)
 
+@[simp]
 theorem eval_add (D E : Divisor k F) (f : Fˣ) : eval (D + E) f = eval D f * eval E f :=
   map_mul (evalHom f) _ _
 
@@ -109,6 +110,7 @@ theorem eval_add (D E : Divisor k F) (f : Fˣ) : eval (D + E) f = eval D f * eva
 theorem eval_neg (D : Divisor k F) (f : Fˣ) : eval (-D) f = (eval D f)⁻¹ :=
   map_inv (evalHom f) _
 
+@[simp]
 theorem eval_sub (D E : Divisor k F) (f : Fˣ) : eval (D - E) f = eval D f / eval E f :=
   map_div (evalHom f) _ _
 
