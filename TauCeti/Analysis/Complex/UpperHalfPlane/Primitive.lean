@@ -24,17 +24,8 @@ Mathlib's primitive on a ball, so it has derivative `f` throughout the half-plan
 
 * `Complex.IsConservativeOn.wedgeIntegral_sub_wedgeIntegral_eq_of_mem_upperHalfPlane` -- wedge
   integrals based at an upper-half-plane point are additive.
-* `TauCeti.hasDerivAt_wedgeIntegral_upperHalfPlane` -- the explicit wedge integral
+* `DifferentiableOn.hasDerivAt_wedgeIntegral_upperHalfPlane` -- the explicit wedge integral
   has derivative equal to its integrand.
-
-## Implementation notes
-
-The additivity proof is adapted from Mathlib's ball-based
-`Complex.IsConservativeOn.eventually_nhds_wedgeIntegral_sub_wedgeIntegral` in
-`Mathlib.Analysis.Complex.HasPrimitives`: the eight partial integrals and the closing
-`grind [wedgeIntegral]` step are taken from there, while the ball is replaced by the upper
-half-plane, so the integrability side conditions and the rectangle containment come from
-positivity of the imaginary parts and convexity of the half-plane instead.
 -/
 
 public section
@@ -51,6 +42,9 @@ variable {f : ℂ → E}
 namespace TauCeti
 
 omit [CompleteSpace E] in
+-- This proof adapts
+-- `Complex.IsConservativeOn.eventually_nhds_wedgeIntegral_sub_wedgeIntegral` from
+-- `Mathlib.Analysis.Complex.HasPrimitives` from a ball to the upper half-plane.
 /-- Wedge integrals based at a point of the upper half-plane are additive along any intermediate
 point there.  Equivalently, the integral around the rectangle left between the three wedge paths
 vanishes. -/
@@ -102,7 +96,7 @@ theorem _root_.Complex.IsConservativeOn.wedgeIntegral_sub_wedgeIntegral_eq_of_me
 
 /-- The wedge integral of a holomorphic function from an upper-half-plane base point has derivative
 equal to the function at every point of the upper half-plane. -/
-theorem hasDerivAt_wedgeIntegral_upperHalfPlane
+theorem _root_.DifferentiableOn.hasDerivAt_wedgeIntegral_upperHalfPlane
     (hf : DifferentiableOn ℂ f upperHalfPlaneSet) (b : UpperHalfPlane) {z : ℂ}
     (hz : z ∈ upperHalfPlaneSet) :
     HasDerivAt (fun w ↦ wedgeIntegral (b : ℂ) w f) (f z) z := by

@@ -37,6 +37,8 @@ separate boundary analysis.
 
 * `TauCeti.hasDerivAt_schwarzChristoffelPrimitive` -- its derivative is the
   Schwarz--Christoffel integrand.
+* `TauCeti.schwarzChristoffelPrimitive_change_base` -- changing the normalization point subtracts
+  the value at the new base point.
 * `TauCeti.conformalAt_schwarzChristoffelPrimitive` -- it is conformal throughout the upper
   half-plane.
 * `TauCeti.eqOn_schwarzChristoffelPrimitive` -- the derivative and normalization uniquely
@@ -68,12 +70,6 @@ noncomputable def schwarzChristoffelPrimitive (a e : ι → ℝ) (z₀ : UpperHa
     (z : ℂ) : ℂ :=
   wedgeIntegral (z₀ : ℂ) z (schwarzChristoffelIntegrand a e)
 
-/-- The normalized Schwarz--Christoffel primitive is the wedge integral of its integrand. -/
-theorem schwarzChristoffelPrimitive_def (a e : ι → ℝ) (z₀ : UpperHalfPlane) (z : ℂ) :
-    schwarzChristoffelPrimitive a e z₀ z =
-      wedgeIntegral (z₀ : ℂ) z (schwarzChristoffelIntegrand a e) :=
-  (rfl)
-
 /-- The normalized Schwarz--Christoffel primitive vanishes at its base point. -/
 @[simp]
 theorem schwarzChristoffelPrimitive_apply_base (a e : ι → ℝ) (z₀ : UpperHalfPlane) :
@@ -86,8 +82,19 @@ theorem hasDerivAt_schwarzChristoffelPrimitive (a e : ι → ℝ) (z₀ : UpperH
     {z : ℂ} (hz : z ∈ upperHalfPlaneSet) :
     HasDerivAt (schwarzChristoffelPrimitive a e z₀)
       (schwarzChristoffelIntegrand a e z) z := by
-  exact hasDerivAt_wedgeIntegral_upperHalfPlane
-    (differentiableOn_schwarzChristoffelIntegrand a e) z₀ hz
+  exact (differentiableOn_schwarzChristoffelIntegrand a e).hasDerivAt_wedgeIntegral_upperHalfPlane
+    z₀ hz
+
+/-- Changing the base point of a normalized Schwarz--Christoffel primitive subtracts its value at
+the new base point. -/
+theorem schwarzChristoffelPrimitive_change_base (a e : ι → ℝ) (b c : UpperHalfPlane)
+    {z : ℂ} (hz : z ∈ upperHalfPlaneSet) :
+    schwarzChristoffelPrimitive a e b z =
+      schwarzChristoffelPrimitive a e c z - schwarzChristoffelPrimitive a e c b := by
+  symm
+  exact (differentiableOn_schwarzChristoffelIntegrand a e).isConservativeOn
+    |>.wedgeIntegral_sub_wedgeIntegral_eq_of_mem_upperHalfPlane
+      (differentiableOn_schwarzChristoffelIntegrand a e).continuousOn c.coe_im_pos b.coe_im_pos hz
 
 /-- The derivative of the normalized Schwarz--Christoffel primitive on the upper half-plane. -/
 theorem deriv_schwarzChristoffelPrimitive (a e : ι → ℝ) (z₀ : UpperHalfPlane)
