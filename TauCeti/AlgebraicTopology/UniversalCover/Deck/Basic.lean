@@ -12,9 +12,8 @@ public import TauCeti.Topology.Algebra.ConstMulAction
 # Deck transformations of a map
 
 For a map `p : E → B`, its deck transformations are the homeomorphisms of `E` over `B`,
-viewed as a subgroup of the homeomorphism group `E ≃ₜ E`. This is the first algebraic
-piece needed by the universal-covers roadmap Stage 0.4: for a covering projection `p`, the
-subgroup `Deck p` will be the deck transformation group.
+viewed as a subgroup of the homeomorphism group `E ≃ₜ E`. For a covering projection `p` this
+subgroup is the classical deck transformation group.
 
 The action of `Deck p` on the total space is inherited, by subgroup transfer, from the
 tautological action of the ambient homeomorphism group `E ≃ₜ E` on `E`
@@ -26,8 +25,7 @@ injective map leaves it unchanged (`TauCeti.deck_comp_of_injective`).
 
 ## References
 
-This file follows the deck-transformation target in the Tau Ceti universal-covers roadmap,
-Stage 0.4, and the shape of the construction in Kim Morrison's mathlib4#40135.
+The construction follows the shape of Kim Morrison's mathlib4#40135.
 -/
 
 public section

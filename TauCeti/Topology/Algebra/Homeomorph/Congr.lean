@@ -51,7 +51,6 @@ namespace Homeomorph
 /-- Conjugation by a homeomorphism `e : M ≃ₜ N` as a group isomorphism between the
 self-homeomorphism groups: `homeoCongr e φ = e ∘ φ ∘ e⁻¹`. This is the homeomorphism analogue of
 `Equiv.permCongrHom` and the target of the forgetful naturality of `Diffeomorph.diffCongr`. -/
-@[expose, simps apply]
 def homeoCongr (e : M ≃ₜ N) : (M ≃ₜ M) ≃* (N ≃ₜ N) where
   toFun φ := (e.symm.trans φ).trans e
   invFun ψ := (e.trans ψ).trans e.symm
@@ -62,7 +61,7 @@ def homeoCongr (e : M ≃ₜ N) : (M ≃ₜ M) ≃* (N ≃ₜ N) where
 /-- The conjugating isomorphism acts pointwise by `homeoCongr e φ x = e (φ (e.symm x))`. -/
 @[simp, grind =]
 theorem homeoCongr_apply_apply (e : M ≃ₜ N) (φ : M ≃ₜ M) (x : N) :
-    homeoCongr e φ x = e (φ (e.symm x)) := rfl
+    homeoCongr e φ x = e (φ (e.symm x)) := (rfl)
 
 /-- The inverse of `homeoCongr e φ` is `homeoCongr e φ⁻¹`, since conjugation is a homomorphism. -/
 theorem homeoCongr_inv (e : M ≃ₜ N) (φ : M ≃ₜ M) :
