@@ -229,10 +229,10 @@ theorem curveVelocityLiftWithin_apply (γ : 𝕜 → M) (s : Set 𝕜) (t : 𝕜
     curveVelocityLiftWithin I γ s t =
       TotalSpace.mk' E (γ t) (curveVelocityWithin I γ s t) := (rfl)
 
-/-- The unrestricted velocity lift is the lift taken within the whole parameter space. -/
+/-- The velocity lift taken within the whole parameter space is the unrestricted lift. -/
 @[simp]
-theorem curveVelocityLift_eq_curveVelocityLiftWithin_univ (γ : 𝕜 → M) :
-    curveVelocityLift I γ = curveVelocityLiftWithin I γ Set.univ := (rfl)
+theorem curveVelocityLiftWithin_univ (γ : 𝕜 → M) :
+    curveVelocityLiftWithin I γ Set.univ = curveVelocityLift I γ := (rfl)
 
 /-- The velocity lift lies over the curve. -/
 @[simp]

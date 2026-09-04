@@ -9,12 +9,21 @@ public import Mathlib.Geometry.Manifold.MFDeriv.Atlas
 public import Mathlib.Geometry.Manifold.VectorBundle.LocalFrame
 
 /-!
-# Tangent-bundle trivializations at their own base point, and open submanifolds
+# Tangent-bundle trivializations, coordinate changes on `T(TM)`, and open submanifolds
 
 The canonical tangent-bundle trivialization at a point `x` is built from the chart at `x`, so on
-the fibre over `x` itself it is the identity.  This file records that fact in both directions.
+the fibre over `x` itself it is the identity.  This file records that fact in both directions, and
+notes that reading a tangent vector through the preferred trivializations of two charts is the
+tangent coordinate change between them, which is `C^n` in the base point.
 
-It then identifies the tangent spaces of an open submanifold with those of its ambient manifold
+It then computes the coordinate changes of the tangent bundle of the tangent bundle: a tangent
+vector `(u, w)` to `TM` at a point with `x`-coordinates `u`, read in the tangent-bundle chart
+centred at the zero vector over `x₀`, has base component the tangent coordinate change of `u`, and
+fibre component the product-rule sum of the derivative of that coordinate change in the base point
+and the coordinate change applied to `w`.  This is the transformation law obeyed by a second-order
+vector field on `TM`, such as a geodesic spray, when it is carried between tangent-bundle charts.
+
+Finally it identifies the tangent spaces of an open submanifold with those of its ambient manifold
 and shows that, near each point, the inverse tangent-bundle trivializations agree under that
 identification.
 

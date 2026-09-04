@@ -302,7 +302,7 @@ an all-time geodesic. -/
 theorem isMIntegralCurve_curveVelocityLift_iff (hγ : ContMDiff 𝓘(ℝ, ℝ) I 2 γ) :
     IsMIntegralCurve (curveVelocityLift I γ) (geodesicSpray I M) ↔ IsGeodesicCurve I γ := by
   rw [isMIntegralCurve_iff_isMIntegralCurveOn, ← isGeodesicCurveOn_univ]
-  rw [curveVelocityLift_eq_curveVelocityLiftWithin_univ]
+  rw [← curveVelocityLiftWithin_univ]
   exact isMIntegralCurveOn_curveVelocityLiftWithin_iff uniqueDiffOn_univ
     (contMDiffOn_univ.2 hγ)
 
