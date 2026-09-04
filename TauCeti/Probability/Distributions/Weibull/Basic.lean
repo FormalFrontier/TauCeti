@@ -461,36 +461,25 @@ private lemma cdf_weibullMeasure_one_eq_cdf_expMeasure_of_pos (hlam : 0 < lam) (
     congr 3
     field_simp
 
-/-- The shape-one Gamma density is the exponential density of the same rate. Proved from the
-closed formulas for both densities, so nothing here rests on the two definitions unfolding to
-the same term. -/
-private lemma gammaPDF_one_eq_exponentialPDF (r : ℝ) : gammaPDF 1 r = exponentialPDF r := by
-  funext x
-  rw [gammaPDF_eq, exponentialPDF_eq]
-  simp only [Real.rpow_one, Real.Gamma_one, div_one, sub_self, Real.rpow_zero, mul_one]
-
-/-- The exponential measure is Lebesgue measure weighted by its exponential density. -/
-private lemma expMeasure_eq_withDensity_exponentialPDF (r : ℝ) :
-    expMeasure r = volume.withDensity (exponentialPDF r) := by
-  rw [expMeasure, gammaMeasure, gammaPDF_one_eq_exponentialPDF]
-
 /-- **A shape-one Weibull law is exponential.** Its scale `lam` is the reciprocal of the
 exponential rate. No positivity is needed: at a nonpositive scale both sides are the zero
-measure, since the exponential density too is built from `ENNReal.ofReal` of a nonpositive
-quantity. -/
+measure, since the exponential law is the shape-one Gamma law, whose density is `ENNReal.ofReal`
+of a nonpositive quantity at a nonpositive rate. -/
 @[simp]
 theorem weibullMeasure_one_eq_expMeasure (lam : ℝ) :
     weibullMeasure 1 lam = expMeasure lam⁻¹ := by
   rcases le_or_gt lam 0 with hlam | hlam
-  · have hpdf : exponentialPDF lam⁻¹ = 0 := by
+  -- The zero branch stays inside the Gamma presentation: `expMeasure` unfolds to `gammaMeasure 1`,
+  -- so its density is `gammaPDF 1`, and no bridge between two density presentations is needed.
+  · have hpdf : gammaPDF 1 lam⁻¹ = 0 := by
       funext y
-      rw [exponentialPDF_eq, Pi.zero_apply, ENNReal.ofReal_eq_zero]
+      rw [gammaPDF_eq, Pi.zero_apply, ENNReal.ofReal_eq_zero]
+      simp only [Real.rpow_one, Real.Gamma_one, div_one, sub_self, Real.rpow_zero, mul_one]
       split_ifs
       · exact mul_nonpos_of_nonpos_of_nonneg (inv_nonpos.mpr hlam) (Real.exp_pos _).le
       · exact le_rfl
     have hexp : expMeasure lam⁻¹ = 0 := by
-      rw [expMeasure_eq_withDensity_exponentialPDF]
-      rw [hpdf, withDensity_zero]
+      rw [expMeasure, gammaMeasure, hpdf, withDensity_zero]
     rw [weibullMeasure_of_not_pos fun h ↦ absurd h.2 (not_lt.mpr hlam), hexp]
   · let _ : IsProbabilityMeasure (weibullMeasure 1 lam) :=
       isProbabilityMeasure_weibullMeasure one_pos hlam
