@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.MultiplicativeType.Semisimple
 public import TauCeti.Algebra.AlgebraicGroup.Reductive.Basic
-public import TauCeti.Algebra.AlgebraicGroup.Smooth.GeometricallyReduced
 public import TauCeti.Algebra.AlgebraicGroup.Torus.SmoothConnected
 
 /-!

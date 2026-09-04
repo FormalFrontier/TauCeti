@@ -8,6 +8,7 @@ module
 public import Mathlib.NumberTheory.Cyclotomic.Gal
 import TauCeti.FieldTheory.IntermediateField.Adjoin.EqTop
 public import TauCeti.NumberTheory.NumberField.Cyclotomic.Finrank
+import TauCeti.RingTheory.RootsOfUnity.PrimitiveRoots
 
 /-!
 # The cyclotomic compositum `M = L(μ_m)` and its joint restriction isomorphism
@@ -33,6 +34,10 @@ character — are *jointly* bijective:
   `IsCyclotomicExtension.autToPow_galEquivProd_symm` eliminating its inverse. Those three
   `simp` lemmas are the whole interface: no consumer needs the `MulEquiv.ofBijective` that
   packages the equivalence, in either direction.
+* `IsCyclotomicExtension.ker_autToPow_eq_comap_galEquivProd` and
+  `IsCyclotomicExtension.ker_restrictNormalHom_eq_comap_galEquivProd`: the same interface one
+  level up, on subgroups rather than elements — each component's kernel is what `galEquivProd`
+  reads off as the opposite factor.
 
 The two general prerequisites this rests on are stated where they belong rather than here:
 the degree identity `[M : K] = φ m` is `IsCyclotomicExtension.finrank_eq_totient` in
@@ -132,16 +137,7 @@ theorem restrictNormalHom_prod_autToPow_injective {ζ : M} (hζ : IsPrimitiveRoo
   intro σ hσ
   rw [MonoidHom.prod_apply, Prod.mk_eq_one] at hσ
   obtain ⟨hσL, hσζ⟩ := hσ
-  have hζfix : σ ζ = ζ := by
-    have hspec := hζ.autToPow_spec K σ
-    rw [hσζ] at hspec
-    rw [← hspec, Units.val_one]
-    rcases eq_or_lt_of_le (NeZero.one_le (n := m)) with h1 | h1
-    · have hm1 : m = 1 := h1.symm
-      subst hm1
-      have : ζ = 1 := by simpa using hζ.pow_eq_one
-      simp [this]
-    · rw [ZMod.val_one_eq_one_mod, Nat.mod_eq_of_lt h1, pow_one]
+  have hζfix : σ ζ = ζ := (hζ.autToPow_eq_one_iff σ).mp hσζ
   have hLfix : ∀ x : L, σ (algebraMap L M x) = algebraMap L M x := by
     intro x
     have hcomm := σ.restrictNormal_commutes L x
@@ -274,6 +270,47 @@ theorem autToPow_galEquivProd_symm (hcop : ((NumberField.discr L).natAbs).Coprim
   have h := galEquivProd_apply K L M m hcop hζ ((galEquivProd K L M m hcop hζ).symm x)
   rw [MulEquiv.apply_symm_apply] at h
   exact (congrArg Prod.snd h).symm
+
+/-- **The cyclotomic character's kernel is the first factor of the joint restriction.** The
+automorphisms of `M` acting trivially on the `m`-th roots of unity are exactly those that
+`galEquivProd` sends into `Gal(L/K) × 1`; equivalently, the kernel of the cyclotomic character
+is the part of `Gal(M/K)` that the equivalence reads off as pure `Gal(L/K)`.
+
+This is the subgroup-level companion to `galEquivProd_apply`: that lemma computes the
+equivalence on elements, this one transports a distinguished subgroup across it.
+
+Source: the identification of `Gal(M/K(μ_m))` with the `Gal(L/K) × 1` factor is credited to
+[CBirkbeck/chebotarev-density](https://github.com/CBirkbeck/chebotarev-density) (Apache-2.0,
+Birkbeck--Brasca) at commit `55a89985d47a3befcf6069aca1da250ff088b5c7`, which states it in the
+docstring of the private `autToPow_eq_one_of_fixes` (`CebotarevDensity/Abelian.lean:659`) and
+performs the step inline; isolating it as a lemma over `galEquivProd` is not the source's. -/
+theorem ker_autToPow_eq_comap_galEquivProd (hcop : ((NumberField.discr L).natAbs).Coprime m)
+    {ζ : M} (hζ : IsPrimitiveRoot ζ m) :
+    (hζ.autToPow K).ker = Subgroup.comap (galEquivProd K L M m hcop hζ).toMonoidHom
+      ((⊤ : Subgroup Gal(L/K)).prod (⊥ : Subgroup (ZMod m)ˣ)) := by
+  ext σ
+  simp [Subgroup.mem_prod]
+
+/-- **The restriction's kernel is the second factor of the joint restriction.** The automorphisms
+of `M` acting trivially on `L` are exactly those that `galEquivProd` sends into `1 × (ZMod m)ˣ`.
+
+This is the mirror of `ker_autToPow_eq_comap_galEquivProd`: between them the two components of
+the equivalence are each characterised on subgroups, so a consumer holding either
+`Gal(M/L)` or `Gal(M/K(μ_m))` can transport it without unfolding `galEquivProd`.
+
+Source: as for `ker_autToPow_eq_comap_galEquivProd`. -/
+theorem ker_restrictNormalHom_eq_comap_galEquivProd
+    (hcop : ((NumberField.discr L).natAbs).Coprime m) {ζ : M} (hζ : IsPrimitiveRoot ζ m) :
+    (AlgEquiv.restrictNormalHom (F := K) (K₁ := M) L).ker =
+      Subgroup.comap (galEquivProd K L M m hcop hζ).toMonoidHom
+        ((⊥ : Subgroup Gal(L/K)).prod (⊤ : Subgroup (ZMod m)ˣ)) := by
+  ext σ
+  simp only [MonoidHom.mem_ker, Subgroup.mem_comap, MulEquiv.coe_toMonoidHom,
+    galEquivProd_apply, Subgroup.mem_prod, Subgroup.mem_bot, Subgroup.mem_top, and_true]
+  -- Rewriting rather than closing by `rfl`: `restrictNormalHom` is `MonoidHom.mk'` around
+  -- `restrictNormal`, so its equation lemma plus `MonoidHom.mk'_apply` gets there without
+  -- depending on how the wrapper is packaged.
+  rw [AlgEquiv.restrictNormalHom, MonoidHom.mk'_apply]
 
 end Compositum
 

@@ -8,7 +8,9 @@ module
 public import Mathlib.MeasureTheory.Function.LpSeminorm.CompareExp
 public import Mathlib.MeasureTheory.Function.LpSeminorm.Count
 public import Mathlib.MeasureTheory.Function.LpSeminorm.TriangleInequality
+public import TauCeti.MeasureTheory.Function.Lp.LIntegralRpow
 public import TauCeti.MeasureTheory.OptimalTransport.Existence
+public import TauCeti.MeasureTheory.OptimalTransport.GraphPlan
 public import TauCeti.MeasureTheory.OptimalTransport.Gluing
 
 /-!
@@ -45,13 +47,15 @@ what the gluing lemma consumes.
 
 * `TauCeti.wassersteinEDist p μ ν` — the infimum of `eLpNorm (fun z ↦ edist z.1 z.2) p π` over the
   couplings `π` of `μ` and `ν`.
-* `TauCeti.HasFiniteMoment p μ` — the `MemLp` finite-moment condition about some basepoint.
+* `TauCeti.HasFiniteMoment p μ` — the `MemLp` finite-moment condition about some basepoint, with
+  `TauCeti.hasFiniteMoment_of_ae_mem_finset` supplying finite moments for finite carriers.
 
 ## Main statements
 
 * `TauCeti.wassersteinEDist_le` and `TauCeti.le_wassersteinEDist` — the two halves of the universal
-  property of the infimum, with `TauCeti.wassersteinEDist_lt_iff` its order-theoretic restatement
-  and `TauCeti.wassersteinEDist_eq_top_iff` the characterization of an infinite value;
+  property of the infimum, with `TauCeti.wassersteinEDist_map_le` providing the graph-plan
+  pushforward bound, `TauCeti.wassersteinEDist_lt_iff` its order-theoretic restatement, and
+  `TauCeti.wassersteinEDist_eq_top_iff` the characterization of an infinite value;
 * `TauCeti.wassersteinEDist_top` — the `p = ∞` characterization by coupling-wise essential
   suprema;
 * `TauCeti.wassersteinEDist_self`, `TauCeti.wassersteinEDist_comm` and
@@ -65,7 +69,9 @@ what the gluing lemma consumes.
   bounds for changing the basepoint, inside a fixed finite-distance component;
 * `TauCeti.memLp_edist_iff_wassersteinEDist_dirac_ne_top` and
   `TauCeti.memLp_edist_iff_of_edist_ne_top` — the `MemLp` form of the Dirac identity and
-  basepoint independence;
+  basepoint independence, with `TauCeti.hasFiniteMoment_iff_memLp_edist` and
+  `TauCeti.hasFiniteMoment_iff_wassersteinEDist_dirac_ne_top` testing the finite-moment predicate
+  itself at a prescribed basepoint of a pseudometric ground space;
 * `TauCeti.wassersteinEDist_rpow_eq_transportCost` and
   `TauCeti.wassersteinEDist_eq_transportCost_rpow` — for `0 < p < ∞`, the exact bridge to Layer 1's
   transport cost of `edist ^ p`, with `TauCeti.isOptimalCoupling_edist_rpow_iff` identifying the
@@ -75,7 +81,8 @@ what the gluing lemma consumes.
 * `TauCeti.wassersteinEDist_eq_zero_iff` — on a Polish metric space and for a finite nonzero
   exponent, `W_p (μ, ν) = 0` exactly when `μ = ν` if the source measure is finite, with
   `TauCeti.wassersteinEDist_top_eq_zero_iff` giving the endpoint `p = ∞` under the same
-  finiteness hypothesis.
+  finiteness hypothesis and `TauCeti.eq_of_wassersteinEDist_eq_zero` packaging the two into a
+  single statement.
 
 ## Implementation notes
 
@@ -149,6 +156,18 @@ theorem wassersteinEDist_top (μ ν : Measure X) :
 theorem wassersteinEDist_le (hπ : IsCoupling π μ ν) (p : ℝ≥0∞) :
     wassersteinEDist p μ ν ≤ eLpNorm (fun z : X × X ↦ edist z.1 z.2) p π :=
   iInf₂_le π hπ
+
+/-- **The displacement bound.** The Wasserstein distance from a law to its pushforward along a
+map is at most the `L^p` seminorm of the displacement `x ↦ edist x (T x)`: the graph plan of `T`
+couples the two measures, and its objective is exactly that seminorm. -/
+theorem wassersteinEDist_map_le {T : X → X}
+    (hd : Measurable fun z : X × X ↦ edist z.1 z.2) (hT : AEMeasurable T μ) (p : ℝ≥0∞) :
+    wassersteinEDist p μ (μ.map T) ≤ eLpNorm (fun x ↦ edist x (T x)) p μ := by
+  refine (wassersteinEDist_le (isCoupling_graphPlan_map hT) p).trans_eq ?_
+  rw [graphPlan_def,
+    eLpNorm_map_measure hd.aestronglyMeasurable (aemeasurable_prodMk_self hT)]
+  exact eLpNorm_congr_ae (.of_forall fun x ↦ by
+    simp only [Function.comp_apply])
 
 /-- A bound valid on every coupling bounds the Wasserstein distance from below. -/
 theorem le_wassersteinEDist
@@ -490,18 +509,39 @@ theorem HasFiniteMoment.memLp
   obtain ⟨x₀, hx₀⟩ := h
   exact (memLp_edist_iff_of_edist_ne_top hx₀.1 hd (edist_ne_top x x₀)).1 hx₀
 
+/-- A finite measure carried by a finite set has finite `p`-moment for every exponent: the ground
+distance to a basepoint is bounded on that finite set. -/
+theorem hasFiniteMoment_of_ae_mem_finset [OpensMeasurableSpace X] {ν : Measure X}
+    {s : Finset X} [IsFiniteMeasure ν] (x₀ : X) (hs : ∀ᵐ y ∂ν, y ∈ s) :
+    HasFiniteMoment p ν := by
+  refine hasFiniteMoment_def.2 ⟨x₀, MemLp.of_enorm_bound (C := s.sup fun z ↦ edist x₀ z)
+    measurable_edist_right.aestronglyMeasurable ?_ ?_⟩
+  · exact ((Finset.sup_lt_iff (by simp)).2 fun z _ ↦ edist_lt_top x₀ z).ne
+  · filter_upwards [hs] with y hy
+    simpa only [enorm_eq_self] using Finset.le_sup (f := fun z ↦ edist x₀ z) hy
+
+/-- On an ordinary pseudometric space, the finite-moment condition can be tested at any prescribed
+basepoint whose distance section is almost-everywhere strongly measurable. -/
+theorem hasFiniteMoment_iff_memLp_edist {x : X} {ν : Measure X}
+    (hd : AEStronglyMeasurable (fun y ↦ edist x y) ν) [IsFiniteMeasure ν] :
+    HasFiniteMoment p ν ↔ MemLp (fun y ↦ edist x y) p ν :=
+  ⟨fun h ↦ h.memLp hd, fun h ↦ ⟨x, h⟩⟩
+
+/-- On an ordinary pseudometric space, the finite-moment condition is equivalent to finite
+Wasserstein distance from the Dirac law at any prescribed basepoint. -/
+theorem hasFiniteMoment_iff_wassersteinEDist_dirac_ne_top
+    (hd : Measurable fun z : X × X ↦ edist z.1 z.2) (x : X) (ν : Measure X)
+    [IsProbabilityMeasure ν] :
+    HasFiniteMoment p ν ↔ wassersteinEDist p (Measure.dirac x) ν ≠ ∞ :=
+  (hasFiniteMoment_iff_memLp_edist (x := x)
+      (hd.comp (measurable_const.prodMk measurable_id)).aestronglyMeasurable).trans
+    (memLp_edist_iff_wassersteinEDist_dirac_ne_top hd x ν)
+
 end MetricMoment
 
 section Bridge
 
 variable [EDist X]
-
-private theorem eLpNorm_rpow_eq_lintegral {α : Type*} [MeasurableSpace α]
-    (hp0 : p ≠ 0) (hp : p ≠ ∞) (f : α → ℝ≥0∞) (μ : Measure α) :
-    eLpNorm f p μ ^ p.toReal = ∫⁻ a, f a ^ p.toReal ∂μ := by
-  rw [eLpNorm_eq_eLpNorm' hp0 hp,
-    ← lintegral_rpow_enorm_eq_rpow_eLpNorm' (ENNReal.toReal_pos hp0 hp)]
-  simp
 
 /-- **The bridge to the primal Kantorovich problem.** For a finite nonzero exponent the `p`-th
 power of the Wasserstein distance is the transport cost of the cost `edist ^ p`, so the two
@@ -686,6 +726,18 @@ theorem wassersteinEDist_top_eq_zero_iff (μ ν : Measure X) [IsFiniteMeasure μ
     _ = m • ν' := congrArg (m • ·) heq
     _ = ν := by
       simp [ν', smul_smul, ENNReal.mul_inv_cancel hm₀ hm_top]
+
+/-- **Separation of measures, uniformly in the exponent.** On a Polish metric space, two finite
+measures at zero `p`-Wasserstein distance are equal, for every nonzero exponent. This packages
+`TauCeti.wassersteinEDist_eq_zero_iff` together with its endpoint
+`TauCeti.wassersteinEDist_top_eq_zero_iff`, so that consumers need not repeat the case split on
+`p = ∞`. -/
+theorem eq_of_wassersteinEDist_eq_zero (hp : p ≠ 0) (μ ν : Measure X) [IsFiniteMeasure μ]
+    (h : wassersteinEDist p μ ν = 0) : μ = ν := by
+  by_cases hp' : p = ∞
+  · subst hp'
+    exact (wassersteinEDist_top_eq_zero_iff _ _).1 h
+  · exact (wassersteinEDist_eq_zero_iff hp hp' _ _).1 h
 
 end Polish
 

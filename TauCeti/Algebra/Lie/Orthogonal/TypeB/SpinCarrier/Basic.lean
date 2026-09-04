@@ -223,7 +223,28 @@ noncomputable def rootSubgroup (k : Fin (n + 1) ⊕ Fin (n + 1)) :
     (TauCeti.typeBSimpleRootGeneratorFamily (K := ℚ))
     (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
     (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
-    (latticeBasis n) (basisWeight n) k
+    (latticeBasis n) (basisWeight n) k ≫
+  eqToHom (by rfl : kostantToralGroupScheme
+    (TauCeti.typeBSimpleRootGeneratorFamily (K := ℚ))
+    (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
+    (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
+    (latticeBasis n) (basisWeight n) = groupScheme n)
+
+/-- The numbered root subgroup is the generic Kostant root subgroup factored through the toral
+closure at the type-`Bₙ₊₁` spin data. -/
+theorem rootSubgroup_def (k : Fin (n + 1) ⊕ Fin (n + 1)) :
+    rootSubgroup n k =
+      kostantRootSubgroupToToral
+        (TauCeti.typeBSimpleRootGeneratorFamily (K := ℚ))
+        (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
+        (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
+        (latticeBasis n) (basisWeight n) k ≫
+      eqToHom (by rfl : kostantToralGroupScheme
+        (TauCeti.typeBSimpleRootGeneratorFamily (K := ℚ))
+        (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
+        (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
+        (latticeBasis n) (basisWeight n) = groupScheme n) := by
+  rw [rootSubgroup]
 
 /-- Including a root subgroup into the ambient general linear group gives its exponential. -/
 @[simp]

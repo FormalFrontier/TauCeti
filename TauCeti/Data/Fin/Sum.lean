@@ -9,27 +9,30 @@ public import Mathlib.Logic.Equiv.Defs
 import Mathlib.Logic.Equiv.Fin.Basic
 
 /-!
-# The two-element sum as `Fin 2`
+# Iterated two-element sums as `Fin 2` and `Fin 3`
 
-`Unit ⊕ Unit` and `Fin 2` are the two ways a two-element index type arises: one variable per
-named slot, or one variable per numeral. Translating between them is pure bookkeeping, needed
-wherever an object indexed by named slots must be presented against an API indexed by `Fin 2`.
+`Unit ⊕ Unit` and `Fin 2`, or `Unit ⊕ Unit ⊕ Unit` and `Fin 3`, are the two ways a small index
+type arises: one variable per named slot, or one variable per numeral. Translating between them
+is pure bookkeeping, needed wherever an object indexed by named slots must be presented against
+an API indexed by `Fin n`.
 
-This is Mathlib's own composition — `finOneEquiv` on each summand, then `finSumFinEquiv` — given
-a name and the four evaluation lemmas, so that call sites reindexing a two-variable object can
-rewrite rather than unfold it.
+These are Mathlib's own compositions — `finOneEquiv` on each summand, then `finSumFinEquiv` —
+given a name and their evaluation lemmas, so that call sites reindexing a two- or three-variable
+object can rewrite rather than unfold them.
 
 ## Main definitions
 
 * `unitSumUnitEquivFinTwo`: the equivalence `Unit ⊕ Unit ≃ Fin 2`, sending the left summand to
   `0` and the right to `1`.
+* `unitSumUnitSumUnitEquivFinThree`: the equivalence `Unit ⊕ Unit ⊕ Unit ≃ Fin 3`, sending the
+  outer left summand to `0` and the two inner ones to `1` and `2`.
 
 ## Implementation notes
 
-The composition is an implementation detail: the four evaluation lemmas characterise the
-equivalence completely, so `Mathlib.Logic.Equiv.Fin.Basic`, which supplies `finOneEquiv` and
-`finSumFinEquiv` and is used only in the definition body, is imported privately rather than
-re-exported. Only `Mathlib.Logic.Equiv.Defs`, needed for the type of the declaration, is public.
+Each composition is an implementation detail: the evaluation lemmas characterise the equivalence
+completely, so `Mathlib.Logic.Equiv.Fin.Basic`, which supplies `finOneEquiv` and `finSumFinEquiv`
+and is used only in the definition bodies, is imported privately rather than re-exported. Only
+`Mathlib.Logic.Equiv.Defs`, needed for the types of the declarations, is public.
 -/
 
 public section
@@ -55,3 +58,35 @@ theorem unitSumUnitEquivFinTwo_symm_zero :
 @[simp]
 theorem unitSumUnitEquivFinTwo_symm_one :
     unitSumUnitEquivFinTwo.symm 1 = Sum.inr () := by decide
+
+/-- The equivalence `Unit ⊕ Unit ≃ Fin 2` iterated on the right, `Unit ⊕ Unit ⊕ Unit ≃ Fin 3`,
+sending the outer left summand to `0` and the two inner summands to `1` and `2`.
+
+The nesting is the one a three-variable identity meets: an outer variable together with a pair of
+inner ones, matching the shape in which an associativity law names its three slots. -/
+def unitSumUnitSumUnitEquivFinThree : (Unit ⊕ Unit ⊕ Unit) ≃ Fin 3 :=
+  (Equiv.sumCongr finOneEquiv.symm unitSumUnitEquivFinTwo).trans finSumFinEquiv
+
+@[simp]
+theorem unitSumUnitSumUnitEquivFinThree_inl :
+    unitSumUnitSumUnitEquivFinThree (Sum.inl ()) = 0 := by decide
+
+@[simp]
+theorem unitSumUnitSumUnitEquivFinThree_inr_inl :
+    unitSumUnitSumUnitEquivFinThree (Sum.inr (Sum.inl ())) = 1 := by decide
+
+@[simp]
+theorem unitSumUnitSumUnitEquivFinThree_inr_inr :
+    unitSumUnitSumUnitEquivFinThree (Sum.inr (Sum.inr ())) = 2 := by decide
+
+@[simp]
+theorem unitSumUnitSumUnitEquivFinThree_symm_zero :
+    unitSumUnitSumUnitEquivFinThree.symm 0 = Sum.inl () := by decide
+
+@[simp]
+theorem unitSumUnitSumUnitEquivFinThree_symm_one :
+    unitSumUnitSumUnitEquivFinThree.symm 1 = Sum.inr (Sum.inl ()) := by decide
+
+@[simp]
+theorem unitSumUnitSumUnitEquivFinThree_symm_two :
+    unitSumUnitSumUnitEquivFinThree.symm 2 = Sum.inr (Sum.inr ()) := by decide

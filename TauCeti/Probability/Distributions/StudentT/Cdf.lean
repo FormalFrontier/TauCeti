@@ -71,38 +71,14 @@ private lemma integral_Ioi_studentTPDFReal_eq_betaKernel_tail (hν : 0 < ν) {y 
       image_sq_div_const_Ioi hν hy]
   have h12 : ∫ z in Ioi y, |2 * z / ν| • g1 (z ^ 2 / ν) =
       ∫ z in Ioi y, studentTPDFReal ν z := by
-    apply setIntegral_congr_fun measurableSet_Ioi
-    intro z hz
-    have hz0 : 0 < z := hy.trans_lt hz
-    have h := abs_deriv_smul_studentTPDFReal hν 0 hz0
-    have hhq : ((0 - 1) / 2 : ℝ) = -(1 / 2 : ℝ) := by ring
-    have h' : |2 * z / ν| • g1 (z ^ 2 / ν) = studentTPDFReal ν z := by
-      have hrpow0 : Real.rpow ν (1 / 2 : ℝ) = Real.rpow ν ((0 + 1) / 2) := by
-        congr 1; norm_num
-      have hhs : s = (ν + 1) / 2 := hs.symm
-      have hhqp : studentTBetaKernel ν 0 (z ^ 2 / ν) =
-          (z ^ 2 / ν) ^ (-(1 / 2 : ℝ)) * (1 + z ^ 2 / ν) ^ (-s) := by
-        simp only [studentTBetaKernel, hs, hhq]
-      have hg1 : g1 (z ^ 2 / ν) =
-          Real.Gamma s / (Real.sqrt (ν * Real.pi) * Real.Gamma (ν / 2)) *
-            Real.rpow ν (1 / 2 : ℝ) / 2 *
-            ((z ^ 2 / ν) ^ (-(1 / 2 : ℝ)) * (1 + z ^ 2 / ν) ^ (-s)) := by
-        dsimp only [g1]
-        rw [hC]; rfl
-      have hg1' : g1 (z ^ 2 / ν) =
-          Real.Gamma ((ν + 1) / 2) / (Real.sqrt (ν * Real.pi) * Real.Gamma (ν / 2)) *
-            Real.rpow ν ((0 + 1) / 2) / 2 * studentTBetaKernel ν 0 (z ^ 2 / ν) := by
-        rw [hg1, hhqp, hhs, hrpow0]
-      have h'' : |2 * z / ν| •
-          (Real.Gamma ((ν + 1) / 2) / (Real.sqrt (ν * Real.pi) * Real.Gamma (ν / 2)) *
-            Real.rpow ν ((0 + 1) / 2) / 2 * studentTBetaKernel ν 0 (z ^ 2 / ν)) =
-          studentTPDFReal ν z := by
-        have h3 := h
-        rw [Real.rpow_zero, mul_one] at h3
-        exact h3
-      rw [hg1']
-      exact h''
-    exact h'
+    refine setIntegral_congr_fun measurableSet_Ioi fun z hz => ?_
+    -- The chart lemma at `q = 0`: its `z ^ (0 : ℝ)` factor disappears, and the beta kernel
+    -- abbreviation unfolds to the explicit powers that `g1` is written with.
+    have h := abs_deriv_smul_studentTPDFReal hν 0 (hy.trans_lt hz)
+    rw [Real.rpow_zero, mul_one] at h
+    dsimp only [g1]
+    rw [hC, hs, ← h, studentTBetaKernel]
+    norm_num
   have h1 : ∫ z in Ioi y, studentTPDFReal ν z = ∫ w in Ioi y0, g1 w := by
     rw [← h12, ← h11]
   set K := C * Real.rpow ν (1 / 2 : ℝ) / 2 with hK

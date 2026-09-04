@@ -173,16 +173,16 @@ theorem IsJordanDomain.locallyConnectedSpace_frontier (h : IsJordanDomain U) :
 joined by connected subsets of the boundary that are small at a rate independent of where they sit.
 
 This is `TauCeti.IsJordanDomain.locallyConnectedSpace_frontier` upgraded by
-`TauCeti.IsCompact.isUniformlyLocallyConnected`, the upgrade costing nothing because the boundary
-of a bounded set is compact. The uniform form is what the hard direction of the L5 milestone
-consumes: Carathéodory's continuity theorem controls the image of a crosscut by joining its two
+`IsCompact.isUniformlyLocallyConnected`, costing nothing because the boundary of a bounded set is
+compact. The uniform form is what the hard direction of the L5 milestone consumes: Carathéodory's
+continuity theorem controls the image of a crosscut by joining its two
 boundary endpoints inside a small connected piece of `frontier U`, and the estimate has to be
 uniform over all crosscuts at once. -/
 theorem IsJordanDomain.isUniformlyLocallyConnected_frontier (h : IsJordanDomain U) :
     IsUniformlyLocallyConnected (frontier U) :=
   haveI := h.locallyConnectedSpace_frontier
-  IsCompact.isUniformlyLocallyConnected
-    (h.isCompact_closure.of_isClosed_subset isClosed_frontier frontier_subset_closure)
+  (h.isCompact_closure.of_isClosed_subset isClosed_frontier
+    frontier_subset_closure).isUniformlyLocallyConnected
 
 /-- A Jordan domain is not all of `ℂ`. -/
 theorem IsJordanDomain.ne_univ (h : IsJordanDomain U) : U ≠ univ := by

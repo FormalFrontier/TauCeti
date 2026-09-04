@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.NumberTheory.ModularForms.QExpansion
+public import TauCeti.Analysis.Complex.Periodic
 
 /-!
 # The `q`-expansion as a linear map, and uniqueness of coefficients for raw functions
@@ -21,10 +22,19 @@ invoke it. The proof is Mathlib's, run through `UpperHalfPlane.hasFPowerSeriesOn
 which *is* stated for `{f : ℍ → ℂ}`, with `qExpansionFormalMultilinearSeries` spelled out
 inline for the same reason.
 
+Alongside those, the effect of a `1 / d` translation on the `q`-powers a support condition
+leaves alive: shifting the argument by `1 / d` scales the `n`-th `q`-power by a `d`-th root of
+unity raised to `n`, so a coefficient function supported on the multiples of `d` does not see the
+shift. That is what a `q`-support hypothesis is spent on when descending along `V_d`, and it is
+stated here rather than at the descent because it mentions only coefficients, divisibility and
+`Function.Periodic.qParam`.
+
 ## Main declarations
 
 * `TauCeti.ModularForm.qExpansionLinearMap`.
 * `TauCeti.UpperHalfPlane.qExpansion_coeff_unique`.
+* `TauCeti.smul_qParam_pow_shift_eq`: a shift by `1 / d` fixes every `q`-power that a
+  `d`-supported coefficient function leaves alive.
 
 ## References
 
@@ -73,6 +83,37 @@ lemma UpperHalfPlane.qExpansion_coeff_unique {f : ℍ → ℂ} {c : ℕ → ℂ}
     simpa [_root_.UpperHalfPlane.qExpansion_coeff, div_eq_mul_inv, mul_comm]
       using hfanalytic.hasFPowerSeriesAt
   simpa using congr_arg (FormalMultilinearSeries.coeff · m) (h1.eq_formalMultilinearSeries h2)
+
+/-- The translate `1 / d +ᵥ σ`, read in `ℂ`, is the subtraction `TauCeti.Periodic.qParam_sub`
+expects: that lemma is stated at `z - j`, and the shift here enters as a `+ᵥ` on `ℍ`. Naming the
+coercion bridge keeps the root-of-unity computation below free of casting. -/
+private lemma coe_vadd_one_div_eq_sub {d : ℕ} (σ : ℍ) :
+    ((((1 : ℝ) / (d : ℝ)) +ᵥ σ : ℍ) : ℂ) = (σ : ℂ) - -(1 / (d : ℂ)) := by
+  rw [UpperHalfPlane.coe_vadd]
+  push_cast
+  ring
+
+/-- **A shift by `1 / d` fixes every `q`-power the support condition leaves alive.** Translating
+the argument by `1 / d` scales the `n`-th `q`-power by a `d`-th root of unity raised to `n`, which
+is trivial exactly on the multiples of `d` — and a coefficient function supported there kills
+every other index. This is what a `q`-support hypothesis is spent on when descending along `V_d`.
+-/
+theorem smul_qParam_pow_shift_eq {d : ℕ} [NeZero d] {c : ℕ → ℂ}
+    (hc : ∀ n : ℕ, ¬ d ∣ n → c n = 0) (σ : ℍ) (n : ℕ) :
+    c n • Function.Periodic.qParam (1 : ℝ) ((((1 : ℝ) / (d : ℝ)) +ᵥ σ : ℍ) : ℂ) ^ n =
+      c n • Function.Periodic.qParam (1 : ℝ) (σ : ℂ) ^ n := by
+  have hqP : Function.Periodic.qParam (1 : ℝ) ((((1 : ℝ) / (d : ℝ)) +ᵥ σ : ℍ) : ℂ) =
+      Function.Periodic.qParam (1 : ℝ) (σ : ℂ) *
+        Complex.exp (2 * (Real.pi : ℂ) * Complex.I / (d : ℂ)) := by
+    rw [coe_vadd_one_div_eq_sub, TauCeti.Periodic.qParam_sub]
+    congr 1
+    push_cast
+    ring_nf
+  by_cases hdn : d ∣ n
+  · obtain ⟨m, rfl⟩ := hdn
+    rw [hqP, mul_pow, pow_mul (Complex.exp _) d m,
+      (Complex.isPrimitiveRoot_exp d (NeZero.ne d)).pow_eq_one, one_pow, mul_one]
+  · rw [hc n hdn, zero_smul, zero_smul]
 
 end TauCeti
 

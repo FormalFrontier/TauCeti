@@ -19,7 +19,7 @@ a connected subset of `s` of diameter at most `ε`.
 
 This is the metric strengthening of local connectedness, and the two notions are *equivalent on a
 compact set*. That equivalence is what this file proves:
-`TauCeti.IsCompact.isUniformlyLocallyConnected` derives the uniform statement from the local one by
+`IsCompact.isUniformlyLocallyConnected` derives the uniform statement from the local one by
 a Lebesgue-number argument, and `TauCeti.IsUniformlyLocallyConnected.locallyConnectedSpace` returns
 from the uniform statement to the local one with no compactness at all.
 
@@ -57,13 +57,13 @@ it, and no Lebesgue-number consequence of this shape.
 
 ## Main results
 
-* `TauCeti.IsCompact.isUniformlyLocallyConnected` — a compact locally connected set is uniformly
-  locally connected.
+* `IsCompact.isUniformlyLocallyConnected` — a compact locally connected set is uniformly locally
+  connected.
 * `TauCeti.IsUniformlyLocallyConnected.locallyConnectedSpace` — a uniformly locally connected set
   is locally connected; no compactness is used.
 * `TauCeti.IsUniformlyLocallyConnected.exists_isConnected_superset` — a small enough subset is
   enclosed in a small connected subset, at a rate independent of the subset.
-* `TauCeti.IsCompact.isUniformlyLocallyConnected_iff` — on a compact set the two notions agree.
+* `IsCompact.isUniformlyLocallyConnected_iff` — on a compact set the two notions agree.
 * `TauCeti.Convex.isUniformlyLocallyConnected` — a convex set in a real normed space is uniformly
   locally connected, with the joining segment as the connected set.
 * `TauCeti.isUniformlyLocallyConnected_image_of_isCompact` — a continuous image of a compact,
@@ -212,7 +212,7 @@ the ball of radius `ε / 2` about it — the connected component of that ball, o
 the subspace is locally connected. These cover the compact set, and a Lebesgue number `δ` for the
 cover does the rest: two points at distance less than `δ` lie in a common ball of radius `δ`, hence
 in a common member of the cover, whose points are pairwise within `ε` of one another. -/
-protected theorem IsCompact.isUniformlyLocallyConnected [LocallyConnectedSpace s]
+protected theorem _root_.IsCompact.isUniformlyLocallyConnected [LocallyConnectedSpace s]
     (hs : IsCompact s) : IsUniformlyLocallyConnected s := by
   have : CompactSpace s := isCompact_iff_compactSpace.mp hs
   rw [isUniformlyLocallyConnected_def]
@@ -280,10 +280,10 @@ theorem IsUniformlyLocallyConnected.locallyConnectedSpace (h : IsUniformlyLocall
 
 /-- **On a compact set, uniform local connectedness and local connectedness agree.** The forward
 implication is `TauCeti.IsUniformlyLocallyConnected.locallyConnectedSpace`, which needs no
-compactness; the backward one is `TauCeti.IsCompact.isUniformlyLocallyConnected`, which does. -/
-protected theorem IsCompact.isUniformlyLocallyConnected_iff (hs : IsCompact s) :
+compactness; the backward one is `IsCompact.isUniformlyLocallyConnected`, which does. -/
+protected theorem _root_.IsCompact.isUniformlyLocallyConnected_iff (hs : IsCompact s) :
     IsUniformlyLocallyConnected s ↔ LocallyConnectedSpace s :=
-  ⟨fun h => h.locallyConnectedSpace, fun h => haveI := h; IsCompact.isUniformlyLocallyConnected hs⟩
+  ⟨fun h => h.locallyConnectedSpace, fun h => haveI := h; hs.isUniformlyLocallyConnected⟩
 
 /-! ## Continuous images -/
 
@@ -294,6 +294,6 @@ theorem isUniformlyLocallyConnected_image_of_isCompact {Z : Type*} [TopologicalS
     {t : Set Z} {g : Z → X} [LocallyConnectedSpace t] (ht : IsCompact t) (hg : ContinuousOn g t) :
     IsUniformlyLocallyConnected (g '' t) :=
   haveI := locallyConnectedSpace_image_of_isCompact ht hg
-  IsCompact.isUniformlyLocallyConnected (ht.image_of_continuousOn hg)
+  (ht.image_of_continuousOn hg).isUniformlyLocallyConnected
 
 end TauCeti

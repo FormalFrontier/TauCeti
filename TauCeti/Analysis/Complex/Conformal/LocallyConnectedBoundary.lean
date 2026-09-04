@@ -21,7 +21,7 @@ extension, so a domain whose boundary is not locally connected admits no such ex
 Each conclusion comes in two forms. The pointwise one is `LocallyConnectedSpace`; the uniform one,
 `TauCeti.IsUniformlyLocallyConnected`, asks for a single `δ` per `ε` joining any two nearby points
 by a small connected subset, and is what an argument ranging over the whole boundary at once needs.
-The two agree on a compact set (`TauCeti.IsCompact.isUniformlyLocallyConnected_iff`), and every set
+The two agree on a compact set (`IsCompact.isUniformlyLocallyConnected_iff`), and every set
 appearing below is compact, so each result is recorded in both forms.
 
 The mechanism is purely topological and is isolated in `TauCeti/Topology/LocallyConnected.lean`:

@@ -5,9 +5,11 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.Analytic.Binomial
 public import Mathlib.Analysis.SpecialFunctions.Gamma.Beta
 public import Mathlib.MeasureTheory.Measure.Dirac.Basic
+public import TauCeti.Analysis.Analytic.Binomial
+public import TauCeti.Probability.GeneratingFunction
+import Mathlib.MeasureTheory.Integral.Bochner.SumMeasure
 
 /-!
 # The negative-binomial distribution
@@ -19,9 +21,18 @@ native mass is the Gamma-expression
 
 The definition is totalized explicitly: the positive family is used for `0 < r` and `0 < p ≤ 1`,
 the boundary `r = 0` is a Dirac mass at zero, and every other parameter value gives the zero
-measure.  This first slice supplies the normalized measure and its native singleton interface.  The
-generating-function, convolution, transform, and moment formulas are the next
-part of the roadmap item.
+measure.  The file supplies the normalized measure, its native singleton and support interfaces,
+the exact integrability domain and closed form of its probability-generating function, and the
+additivity of the shape parameter under convolution.
+
+## Main results
+
+* `negativeBinomialMeasure_singleton` and `negativeBinomialMeasure_real_singleton` compute the
+  native masses;
+* `negativeBinomialMeasure_singleton_ne_zero_iff` characterizes their exact support, including the
+  shape-zero and success-probability-one boundary laws;
+* `pgf_negativeBinomialMeasure` computes the probability-generating function on its exact domain;
+* `negativeBinomialMeasure_conv_negativeBinomialMeasure` proves that convolution adds shapes.
 
 The normalization uses Mathlib's real binomial power series, after identifying its coefficients
 with the Gamma quotient.  The distributional convention follows Johnson, Kemp, and Kotz,
@@ -159,47 +170,40 @@ theorem negativeBinomialWeight_toReal (hr : 0 ≤ r) (hp : 0 ≤ p) (hp1 : p ≤
   rw [negativeBinomialWeight, ENNReal.toReal_ofReal]
   exact negativeBinomialWeightReal_nonneg hr hp hp1 k
 
+private theorem hasSum_negativeBinomialWeightReal_mul_pow (hr : 0 < r) (hp : 0 < p)
+    {t : ℝ} (ht : |(1 - p) * t| < 1) :
+    HasSum (fun k => negativeBinomialWeightReal r p k * t ^ k)
+      (Real.rpow (p / (1 - (1 - p) * t)) r) := by
+  have hsum := hasSum_multichoose_mul_geometric_of_abs_lt_one (r := r) ht
+  have hsum' := hsum.mul_right (Real.rpow p r)
+  have hweight (k : ℕ) :
+      negativeBinomialWeightReal r p k * t ^ k =
+        (Ring.multichoose r k : ℝ) * ((1 - p) * t) ^ k * Real.rpow p r := by
+    rw [negativeBinomialWeightReal_eq_coeff hr k, mul_pow]
+    ring
+  have hden : 0 ≤ 1 - (1 - p) * t := by
+    linarith [le_abs_self ((1 - p) * t)]
+  -- Normalize the real-power notation inherited from the analytic-series theorem.
+  have hden_rpow : (1 - (1 - p) * t) ^ r =
+      Real.rpow (1 - (1 - p) * t) r := rfl
+  rw [hden_rpow] at hsum'
+  have hvalue : 1 / Real.rpow (1 - (1 - p) * t) r * Real.rpow p r =
+      Real.rpow (p / (1 - (1 - p) * t)) r := by
+    calc
+      1 / Real.rpow (1 - (1 - p) * t) r * Real.rpow p r =
+          Real.rpow p r / Real.rpow (1 - (1 - p) * t) r := by
+            rw [one_div, div_eq_mul_inv, mul_comm]
+      _ = Real.rpow (p / (1 - (1 - p) * t)) r :=
+        (Real.div_rpow hp.le hden r).symm
+  rw [hvalue] at hsum'
+  exact HasSum.congr_fun hsum' hweight
+
 private theorem hasSum_negativeBinomialWeightReal (hr : 0 < r) (hp : 0 < p) (hp1 : p ≤ 1) :
     HasSum (fun k => negativeBinomialWeightReal r p k) 1 := by
-  have hq : |1 - p| < 1 := by
-    rw [abs_of_nonneg (by linarith)]
+  have ht : |(1 - p) * (1 : ℝ)| < 1 := by
+    rw [mul_one, abs_of_nonneg (by linarith)]
     linarith
-  have hseries := Real.one_div_one_sub_rpow_hasFPowerSeriesOnBall_zero r
-  have hmem : ‖(1 - p : ℝ)‖ₑ < (1 : ℝ≥0∞) := by
-    rw [enorm_eq_nnnorm]
-    -- `Metric.mem_eball` uses the extended norm, so first state the NNReal version.
-    exact_mod_cast (show ‖(1 - p : ℝ)‖₊ < (1 : ℝ≥0) by
-      have hq' : ‖(1 - p : ℝ)‖ < 1 := by
-        simpa [Real.norm_eq_abs] using hq
-      exact_mod_cast hq')
-  have hsum := hseries.hasSum_sub (y := 1 - p) (by simpa [Metric.mem_eball] using hmem)
-  simp only [FormalMultilinearSeries.ofScalars_apply_eq, sub_zero, smul_eq_mul] at hsum
-  have hchoose (n : ℕ) :
-      Ring.choose (r + (n : ℝ) - 1) n = Ring.multichoose r n := by
-    rw [Ring.multichoose_eq]
-  have hsum' : HasSum (fun k => (Ring.multichoose r k : ℝ) * (1 - p) ^ k)
-      (1 / (1 - (1 - p)) ^ r) := by
-    simpa only [hchoose] using hsum
-  have hpow : (1 - (1 - p)) ^ r = p ^ r := by ring_nf
-  have hp_rpow : 0 < Real.rpow p r := Real.rpow_pos_of_pos hp r
-  have hsum2 := hsum'.mul_right (Real.rpow p r)
-  rw [hpow] at hsum2
-  have hcancel : 1 / Real.rpow p r * Real.rpow p r = 1 := by
-    rw [one_div]
-    exact inv_mul_cancel₀ hp_rpow.ne'
-  have hcancel' : 1 / p ^ r * Real.rpow p r = 1 := by
-    -- The notation `p ^ r` here is the real-power instance.
-    change 1 / Real.rpow p r * Real.rpow p r = 1
-    exact hcancel
-  have hweight (k : ℕ) :
-      negativeBinomialWeightReal r p k =
-        (Ring.multichoose r k : ℝ) * (1 - p) ^ k * Real.rpow p r := by
-    rw [negativeBinomialWeightReal_eq_coeff hr k]
-    ring
-  have hsum3 : HasSum
-      (fun k => (Ring.multichoose r k : ℝ) * (1 - p) ^ k * Real.rpow p r) 1 := by
-    simpa only [hcancel'] using hsum2
-  exact HasSum.congr_fun hsum3 hweight
+  simpa [hp.ne'] using (hasSum_negativeBinomialWeightReal_mul_pow hr hp ht)
 
 /-- The negative-binomial measure is a probability measure in its classical parameter range. -/
 theorem isProbabilityMeasure_negativeBinomialMeasure (hr : 0 ≤ r) (hp : 0 < p) (hp1 : p ≤ 1) :
@@ -231,6 +235,147 @@ theorem negativeBinomialMeasure_real_singleton {r p : ℝ} (hr : 0 ≤ r) (hp : 
     (negativeBinomialMeasure r p).real {k} = negativeBinomialWeightReal r p k := by
   rw [measureReal_def, negativeBinomialMeasure_singleton hr hp hp1,
     negativeBinomialWeight_toReal hr hp.le hp1]
+
+/-! ### Support -/
+
+/-- A real negative-binomial weight is positive exactly at zero or in the nondegenerate family.
+
+Thus the shape-zero and success-probability-one laws are supported only at zero, while positive
+shape and success probability strictly below one give positive mass to every natural number. -/
+@[simp]
+theorem negativeBinomialWeightReal_pos_iff {r p : ℝ} (hr : 0 ≤ r) (hp : 0 < p)
+    (hp1 : p ≤ 1) (k : ℕ) :
+    0 < negativeBinomialWeightReal r p k ↔ k = 0 ∨ (0 < r ∧ p < 1) := by
+  rcases hr.eq_or_lt with rfl | hr
+  · by_cases hk : k = 0
+    · simp [negativeBinomialWeightReal, hk]
+    · simp [negativeBinomialWeightReal, hk]
+  rw [negativeBinomialWeightReal_eq_gamma hr.ne' k]
+  have hcoeff : 0 < Real.Gamma (k + r) / (k.factorial * Real.Gamma r) := by
+    apply div_pos (Real.Gamma_pos_of_pos (by positivity))
+    exact mul_pos (by positivity) (Real.Gamma_pos_of_pos hr)
+  have hp_rpow : 0 < Real.rpow p r := Real.rpow_pos_of_pos hp r
+  constructor
+  · intro h
+    by_cases hk : k = 0
+    · exact Or.inl hk
+    · refine Or.inr ⟨hr, ?_⟩
+      by_contra hnot
+      have hpeq : p = 1 := le_antisymm hp1 (le_of_not_gt hnot)
+      subst p
+      simp [hk] at h
+  · intro h
+    rcases h with rfl | ⟨_, hp_lt_one⟩
+    · simpa using mul_pos (mul_pos hcoeff hp_rpow) (pow_pos one_pos 0)
+    · exact mul_pos (mul_pos hcoeff hp_rpow) (pow_pos (sub_pos.mpr hp_lt_one) k)
+
+/-- A negative-binomial weight is nonzero exactly at zero or in the nondegenerate family. -/
+@[simp]
+theorem negativeBinomialWeight_ne_zero_iff {r p : ℝ} (hr : 0 ≤ r) (hp : 0 < p)
+    (hp1 : p ≤ 1) (k : ℕ) :
+    negativeBinomialWeight r p k ≠ 0 ↔ k = 0 ∨ (0 < r ∧ p < 1) := by
+  rw [negativeBinomialWeight, ENNReal.ofReal_ne_zero_iff,
+    negativeBinomialWeightReal_pos_iff hr hp hp1]
+
+/-- The singleton mass of a valid negative-binomial law is nonzero exactly at zero or in the
+nondegenerate family. -/
+theorem negativeBinomialMeasure_singleton_ne_zero_iff {r p : ℝ} (hr : 0 ≤ r) (hp : 0 < p)
+    (hp1 : p ≤ 1) (k : ℕ) :
+    negativeBinomialMeasure r p {k} ≠ 0 ↔ k = 0 ∨ (0 < r ∧ p < 1) := by
+  rw [negativeBinomialMeasure_singleton hr hp hp1,
+    negativeBinomialWeight_ne_zero_iff hr hp hp1]
+
+/-- For positive shape and valid success probability, the negative-binomial
+probability-generating-function integrand is integrable exactly inside its disk of convergence.
+Thus it is non-integrable both on and beyond the boundary. -/
+theorem integrable_pow_negativeBinomialMeasure_iff {r p : ℝ} (hr : 0 < r)
+    (hp : 0 < p) (hp1 : p ≤ 1) (t : ℝ) :
+    Integrable (fun k : ℕ => t ^ k) (negativeBinomialMeasure r p) ↔
+      |(1 - p) * t| < 1 := by
+  rw [negativeBinomialMeasure_eq_sum_dirac hr.le hp hp1,
+    integrable_sum_dirac_iff (by simp [negativeBinomialWeight])]
+  simp_rw [negativeBinomialWeight_toReal hr.le hp.le hp1, Real.norm_eq_abs, abs_pow]
+  have hp_rpow : 0 < Real.rpow p r := Real.rpow_pos_of_pos hp r
+  have hfun : (fun k : ℕ => negativeBinomialWeightReal r p k * |t| ^ k) =
+      (fun k : ℕ => Real.rpow p r *
+        ((Ring.multichoose r k : ℝ) * |(1 - p) * t| ^ k)) := by
+    funext k
+    rw [negativeBinomialWeightReal_eq_coeff hr k, abs_mul,
+      abs_of_nonneg (by linarith : 0 ≤ 1 - p), mul_pow]
+    ring
+  rw [hfun, summable_mul_left_iff hp_rpow.ne']
+  simpa [Real.norm_eq_abs] using
+    (summable_multichoose_mul_geometric_iff_norm_lt_one
+      (𝕂 := ℝ) (q := |(1 - p) * t|) hr)
+
+/-- The probability-generating function of a negative-binomial law with positive shape, on its
+exact integrability domain. -/
+theorem pgf_negativeBinomialMeasure {r p : ℝ} (hr : 0 < r) (hp : 0 < p) (hp1 : p ≤ 1)
+    {t : ℝ} (ht : |(1 - p) * t| < 1) :
+    pgf id (negativeBinomialMeasure r p) t =
+      Real.rpow (p / (1 - (1 - p) * t)) r := by
+  rw [pgf_def, negativeBinomialMeasure_eq_sum_dirac hr.le hp hp1,
+    integral_sum_dirac (by simp [negativeBinomialWeight])]
+  simp only [id_eq, smul_eq_mul]
+  rw [← (hasSum_negativeBinomialWeightReal_mul_pow hr hp ht).tsum_eq]
+  congr with k
+  rw [negativeBinomialWeight_toReal hr.le hp.le hp1]
+
+/-- At shape zero, the negative-binomial PGF is one in the valid probability range and zero
+outside it, in accordance with the totalization of `negativeBinomialMeasure`. -/
+@[simp]
+theorem pgf_negativeBinomialMeasure_zero (p t : ℝ) :
+    pgf id (negativeBinomialMeasure 0 p) t = if 0 < p ∧ p ≤ 1 then 1 else 0 := by
+  by_cases h : 0 < p ∧ p ≤ 1
+  · rw [ite_eq_left h, negativeBinomialMeasure_zero h.1 h.2, pgf_def]
+    simp
+  · rw [ite_eq_right h]
+    have hz : negativeBinomialMeasure 0 p = 0 := by
+      apply negativeBinomialMeasure_eq_zero_of_invalid
+      simpa using h
+    rw [hz, pgf_def]
+    simp
+
+/-! ### Convolution -/
+
+/-- The convolution of two negative-binomial laws with the same success probability is
+negative-binomial, with the shape parameters added. This includes either shape-zero boundary and
+the success-probability-one Dirac family; outside the valid probability range all three measures
+vanish. -/
+@[simp]
+theorem negativeBinomialMeasure_conv_negativeBinomialMeasure {r s p : ℝ}
+    (hr : 0 ≤ r) (hs : 0 ≤ s) :
+    negativeBinomialMeasure r p ∗ negativeBinomialMeasure s p =
+      negativeBinomialMeasure (r + s) p := by
+  by_cases hp_valid : 0 < p ∧ p ≤ 1
+  · rcases hp_valid with ⟨hp, hp1⟩
+    rcases hr.eq_or_lt with rfl | hr
+    · rw [negativeBinomialMeasure_zero hp hp1, Measure.dirac_zero_conv, zero_add]
+    rcases hs.eq_or_lt with rfl | hs
+    · rw [negativeBinomialMeasure_zero hp hp1, Measure.conv_dirac_zero, add_zero]
+    let _ := isProbabilityMeasure_negativeBinomialMeasure hr.le hp hp1
+    let _ := isProbabilityMeasure_negativeBinomialMeasure hs.le hp hp1
+    let _ := isProbabilityMeasure_negativeBinomialMeasure (add_pos hr hs).le hp hp1
+    apply measure_eq_of_pgf_eqOn
+    intro t ht
+    have ht_abs : |t| < 1 := abs_lt.mpr ht
+    have hdom : |(1 - p) * t| < 1 := by
+      rw [abs_mul, abs_of_nonneg (sub_nonneg.mpr hp1)]
+      calc
+        (1 - p) * |t| ≤ 1 * |t| :=
+          mul_le_mul_of_nonneg_right (by linarith : 1 - p ≤ 1) (abs_nonneg t)
+        _ < 1 := by simpa using ht_abs
+    have hbase : 0 < p / (1 - (1 - p) * t) := by
+      apply div_pos hp
+      exact sub_pos.mpr (lt_of_le_of_lt (le_abs_self _) hdom)
+    rw [Measure.pgf_conv_of_abs_le_one _ _ ht_abs.le,
+      pgf_negativeBinomialMeasure hr hp hp1 hdom,
+      pgf_negativeBinomialMeasure hs hp hp1 hdom,
+      pgf_negativeBinomialMeasure (add_pos hr hs) hp hp1 hdom]
+    exact (Real.rpow_add hbase r s).symm
+  · have hzero (a : ℝ) : negativeBinomialMeasure a p = 0 :=
+      negativeBinomialMeasure_eq_zero_of_invalid (fun h => hp_valid h.2)
+    simp only [hzero, Measure.zero_conv]
 
 end Probability
 

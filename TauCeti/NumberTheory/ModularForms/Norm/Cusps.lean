@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Data.ZMod.QuotientGroup
-public import TauCeti.NumberTheory.ModularForms.Norm.Order
 public import TauCeti.NumberTheory.ModularForms.Norm.Trace
 public import TauCeti.NumberTheory.ModularForms.Norm.Valence
 

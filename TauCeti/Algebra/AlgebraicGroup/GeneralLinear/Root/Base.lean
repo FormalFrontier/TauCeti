@@ -321,12 +321,6 @@ private theorem diagonalRootIndexOfNe_snd {n : ℕ} (i j : Fin n) (hij : i ≠ j
     (diagonalRootIndexOfNe i j hij).1.2 = ULift.up j := by
   rfl
 
-private theorem diagonalRootIndexOfNe_eq_diagonalSimpleRootIndex (n : ℕ) (i : Fin n) :
-    diagonalRootIndexOfNe i.castSucc i.succ i.castSucc_lt_succ.ne =
-      diagonalSimpleRootIndex n i := by
-  apply Subtype.ext
-  apply Prod.ext <;> simp
-
 private theorem diagonalRootIndexOfNe_isPos_of_lt (n : ℕ) (i j : Fin (n + 1))
     (hij : i < j) :
     (diagonalRootBase.{u} n).IsPos (diagonalRootIndexOfNe i j hij.ne) := by

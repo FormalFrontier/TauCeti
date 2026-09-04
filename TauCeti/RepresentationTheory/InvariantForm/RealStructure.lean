@@ -366,14 +366,6 @@ private theorem isSymm_balance {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} (hH : H.
 private theorem conj_eq_self_of_nonneg {z : ℂ} (hz : 0 ≤ z) : (starRingEnd ℂ) z = z :=
   Complex.conj_eq_iff_im.mpr (Complex.nonneg_iff.mp hz).2.symm
 
-/-- The balanced form is nonnegative if `H` is: both summands are, the second because conjugation
-fixes a nonnegative complex number. -/
-private theorem isNonneg_balance {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} (hH : H.IsNonneg)
-    (K : V →ₛₗ[starRingEnd ℂ] V) : (balance H K).IsNonneg where
-  nonneg x := by
-    rw [balance_apply, conj_eq_self_of_nonneg (hH.nonneg (K x))]
-    exact add_nonneg (hH.nonneg x) (hH.nonneg (K x))
-
 /-- The balanced form is definite off the origin if `H` is: the first summand is already nonzero
 and the second is nonnegative. -/
 private theorem balance_apply_self_ne_zero {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} (hH : H.IsNonneg)
