@@ -12,15 +12,17 @@ import TauCeti.MeasureTheory.Integral.Bochner.Basic
 /-!
 # Extremal inequalities for graphons
 
-This file records the first analytic extremal consequences of the graphon API.  The main result is
-Goodman's inequality
+This file records the first analytic extremal consequences of the graphon API.  The main results
+are Goodman's inequality
 
 `t(K₃, W) ≥ 2 * t(K₂, W)^2 - t(K₂, W)`,
 
-followed by Mantel's triangle-free corollary.  The proof writes the nonnegative integral
+and Sidorenko's inequality for the four-cycle.  Goodman's proof writes the nonnegative integral
 `∫ W(x,y) (1 - W(x,z)) (1 - W(y,z))` in two ways and uses Cauchy--Schwarz for the degree
-function.  All statements are for arbitrary probability carriers; no atomlessness or standard
-Borel assumption is involved.
+function, followed by Mantel's triangle-free corollary.  The four-cycle proof identifies its
+density with the square of a two-step integral and applies two second-moment inequalities.  All
+statements are for arbitrary probability carriers; no atomlessness or standard Borel assumption
+is involved.
 
 The inequalities are Layer 7 validation targets of the dense graph limits roadmap.  They consume
 only the strict graphon carrier and the explicit edge and triangle integral API; the later quotient,
@@ -37,6 +39,8 @@ compactness, and sampling layers are not needed.
 * Roadmap: `TauCetiRoadmap/DenseGraphLimits/README.md`, Layer 7 and its worked-example gates.
 * A. Goodman, "On sets of acquaintances and strangers at a party", *American Mathematical Monthly*
   66 (1959), 778--783; see also L. Lovász, *Large Networks and Graph Limits*, §7.2.
+* Y. Zhao, *Graph Theory and Additive Combinatorics*, Cambridge University Press (2023),
+  Theorem 5.2.1, [online notes](https://yufeizhao.com/gtacbook/gtacbook.pdf).
 -/
 
 public section
@@ -87,9 +91,11 @@ private theorem integrable_graphonDegree_sq (W : Graphon Ω μ) :
 
 private theorem integral_graphonDegree_sq_ge (W : Graphon Ω μ) :
     (∫ x, graphonDegree W x ∂μ) ^ 2 ≤ ∫ x, graphonDegree W x ^ 2 ∂μ := by
-  exact TauCeti.MeasureTheory.integral_sq_ge_sq_integral (graphonDegree W)
-    (integrable_graphonDegree W)
-    (integrable_graphonDegree_sq W)
+  have h := TauCeti.MeasureTheory.sq_setIntegral_le_measureReal_mul_setIntegral_sq
+    (graphonDegree W) Set.univ (measure_ne_top μ Set.univ)
+    (by simpa using integrable_graphonDegree W)
+    (by simpa using integrable_graphonDegree_sq W)
+  simpa [measureReal_def, IsProbabilityMeasure.measure_univ] using h
 
 private theorem integrable_triple_graphon_product (W : Graphon Ω μ) :
     Integrable (fun p : Ω × Ω × Ω =>
@@ -308,6 +314,10 @@ private def finFourArrowPairPair (Ω : Type*) [MeasurableSpace Ω] :
   (finFourArrowRight Ω).trans (reorderFour Ω) |>.trans
     ((MeasurableEquiv.prodAssoc : ((Ω × Ω) × (Ω × Ω)) ≃ᵐ Ω × Ω × (Ω × Ω)).symm)
 
+private theorem middleSwap_apply (p : Ω × Ω × Ω) :
+    middleSwap Ω p = (p.2.1, p.1, p.2.2) := by
+  rfl
+
 @[simp]
 private theorem finFourArrowPairPair_apply (x : Fin 4 → Ω) :
     finFourArrowPairPair Ω x = ((x 0, x 2), (x 1, x 3)) := by
@@ -322,7 +332,8 @@ private theorem measurePreserving_middleSwap (μ : Measure Ω) [SigmaFinite μ] 
   have hSwap : MeasurePreserving (MeasurableEquiv.prodComm : (Ω × Ω) ≃ᵐ Ω × Ω)
       (μ.prod μ) (μ.prod μ) := Measure.measurePreserving_swap
   convert hAssoc.comp ((hSwap.prod (MeasurePreserving.id μ)).comp hAssoc.symm) using 1
-  ext <;> rfl
+  funext p
+  exact middleSwap_apply p
 
 private theorem measurePreserving_finFourArrowPairPair (μ : Measure Ω) [SigmaFinite μ] :
     MeasurePreserving (finFourArrowPairPair Ω) (Measure.pi fun _ : Fin 4 => μ)
@@ -341,7 +352,8 @@ private theorem measurePreserving_finFourArrowPairPair (μ : Measure Ω) [SigmaF
       (μ.prod (μ.prod (μ.prod μ))) ((μ.prod μ).prod (μ.prod μ)) :=
     (measurePreserving_prodAssoc μ μ (μ.prod μ)).symm
   convert hassoc.comp (hswap.comp hright) using 1
-  ext <;> rfl
+  funext x
+  exact finFourArrowPairPair_apply x
 
 private theorem homDensity_fin_four (F : SimpleGraph (Fin 4)) [DecidableRel F.Adj]
     (W : Graphon Ω μ) :
@@ -569,15 +581,22 @@ theorem mantel_triangle_free (W : Graphon Ω μ)
 /-! ### The four-cycle inequality -/
 
 /-- **Sidorenko's inequality for the 4-cycle.**  The 4-cycle homomorphism density is at least the
-fourth power of the edge density, on every probability carrier. -/
+fourth power of the edge density, on every probability carrier. This is the graphon form of the
+`K_{2,2}` case in Y. Zhao, *Graph Theory and Additive Combinatorics*, Theorem 5.2.1. -/
 theorem sidorenko_cycle_four (W : Graphon Ω μ) :
     homDensity (SimpleGraph.cycleGraph 4) W ≥
       homDensity (⊤ : SimpleGraph (Fin 2)) W ^ 4 := by
-  have hmean := TauCeti.MeasureTheory.integral_sq_ge_sq_integral
-    (fun p : Ω × Ω => twoStepIntegral W p.1 p.2)
-    (integrable_twoStep W) (integrable_twoStep_sq W)
-  rw [integral_twoStep_eq_degree_sq W] at hmean
-  rw [← homDensity_cycle_four_eq_twoStep_sq W] at hmean
+  have hmean := TauCeti.MeasureTheory.sq_setIntegral_le_measureReal_mul_setIntegral_sq
+    (fun p : Ω × Ω => twoStepIntegral W p.1 p.2) Set.univ
+    (measure_ne_top (μ.prod μ) Set.univ)
+    (by simpa using integrable_twoStep W)
+    (by simpa using integrable_twoStep_sq W)
+  have hmean' :
+      (∫ p : Ω × Ω, twoStepIntegral W p.1 p.2 ∂(μ.prod μ)) ^ 2 ≤
+        ∫ p : Ω × Ω, twoStepIntegral W p.1 p.2 ^ 2 ∂(μ.prod μ) := by
+    simpa [measureReal_def, IsProbabilityMeasure.measure_univ] using hmean
+  rw [integral_twoStep_eq_degree_sq W] at hmean'
+  rw [← homDensity_cycle_four_eq_twoStep_sq W] at hmean'
   have hdegree := integral_graphonDegree_sq_ge W
   rw [integral_graphonDegree_eq_edge_density] at hdegree
   calc
@@ -588,7 +607,7 @@ theorem sidorenko_cycle_four (W : Graphon Ω μ) :
         (∫ x, graphonDegree W x ^ 2 ∂μ) :=
       mul_self_le_mul_self (sq_nonneg _) hdegree
     _ = (∫ x, graphonDegree W x ^ 2 ∂μ) ^ 2 := by ring
-    _ ≤ homDensity (SimpleGraph.cycleGraph 4) W := hmean
+    _ ≤ homDensity (SimpleGraph.cycleGraph 4) W := hmean'
 
 end DenseGraphLimits
 

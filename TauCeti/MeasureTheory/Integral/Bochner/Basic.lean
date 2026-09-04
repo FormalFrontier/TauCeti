@@ -9,25 +9,25 @@ public import Mathlib.MeasureTheory.Integral.Bochner.Set
 public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 import Mathlib.Analysis.Convex.Integral
 import Mathlib.Analysis.Convex.Mul
-import Mathlib.Probability.Moments.Variance
 
 /-!
 # Additional lemmas for the Bochner integral
 
-This file records general-purpose bridges between real-valued Bochner integrals and
-extended-nonnegative Lebesgue integrals.
+This file records general-purpose lemmas for Bochner integrals, including bridges between
+real-valued Bochner integrals and extended-nonnegative Lebesgue integrals, as well as inequalities
+for set and probability integrals.
 
 ## Positive parts
 
 * `ofReal_integral_le_lintegral_ofReal` bounds the positive part of a real-valued
   function's integral by the integral of its pointwise positive part.
 
-## Set integrals
+## Set and probability integrals
 
 * `sq_setIntegral_le_measureReal_mul_setIntegral_sq` is Cauchy--Schwarz for a real-valued set
   integral, in squared form.
-* `integral_sq_ge_sq_integral` is the second-moment lower bound for a real-valued function on a
-  probability space.
+* The set-integral inequality specializes to the second-moment lower bound for a real-valued
+  function on a probability space.
 
 ## `L¹` convergence
 
@@ -119,20 +119,6 @@ theorem sq_setIntegral_le_measureReal_mul_setIntegral_sq {Ω : Type*} [Measurabl
       _ ≤ μ.real S ^ 2 * ((μ.real S)⁻¹ * ∫ x in S, f x ^ 2 ∂μ) :=
         mul_le_mul_of_nonneg_left hkey (sq_nonneg _)
       _ = μ.real S * ∫ x in S, f x ^ 2 ∂μ := by field_simp
-
-/-- **Second moment dominates the square of the first moment.** On a probability measure, the
-square of the integral of a real-valued integrable function is at most the integral of its square.
--/
-theorem integral_sq_ge_sq_integral {α : Type*} [MeasurableSpace α]
-    {ν : Measure α} [IsProbabilityMeasure ν] (f : α → ℝ) (hf : Integrable f ν)
-    (hfsq : Integrable (fun x => f x ^ 2) ν) :
-    (∫ x, f x ∂ν) ^ 2 ≤ ∫ x, f x ^ 2 ∂ν := by
-  have hLp : MemLp f 2 ν :=
-    (memLp_two_iff_integrable_sq hf.aestronglyMeasurable).2 hfsq
-  have h := ProbabilityTheory.variance_nonneg f ν
-  rw [ProbabilityTheory.variance_eq_sub hLp] at h
-  simp only [Pi.pow_apply] at h
-  linarith
 
 /-- The positive part of the integral of a real-valued function is at most the integral of its
 pointwise positive part. No integrability or pointwise sign assumption on `f` is needed. -/
