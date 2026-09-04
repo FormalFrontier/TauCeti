@@ -38,12 +38,11 @@ linear representations have dimension `1`, while their Steinberg twists have dim
 
 ## Main results
 
-* `TauCeti.character_GL2PrincipalSeries_mul_eq_mul`: twisting both principal-series parameters by
-  `γ` multiplies the character by the determinant character of `γ`.
 * `TauCeti.character_GL2PrincipalSeries_self_eq_add`: its two character constituents are the
   linear and Steinberg-twist characters.
-* `TauCeti.simple_GL2Steinberg` and `TauCeti.simple_GL2SteinbergTwist`: the two Steinberg
-  families are irreducible (for universe-small finite fields).
+* `TauCeti.simple_GL2Steinberg` and `TauCeti.simple_GL2SteinbergTwist`: the Steinberg
+  representation and all its determinant twists are irreducible (for universe-small finite
+  fields).
 * `TauCeti.nonempty_iso_GL2PrincipalSeries_self`: the boundary principal series is the biproduct
   of those two representations.
 
@@ -64,24 +63,6 @@ namespace TauCeti
 universe u
 
 variable (F : Type u) [Field F] [Fintype F]
-
-/-- **Twisting both principal-series parameters multiplies the character by a determinant
-character.** For `γ α β : Fˣ → ℂˣ`, the equality
-`χ(Ind_B^GL₂(γα ⊗ γβ)) = (γ ∘ det) · χ(Ind_B^GL₂(α ⊗ β))`
-is the class-function projection formula, because `γα ⊗ γβ` is the pointwise product of `α ⊗ β`
-with the restriction of `γ ∘ det` to the Borel subgroup. -/
-theorem character_GL2PrincipalSeries_mul_eq_mul (γ α β : Fˣ →* ℂˣ) :
-    (GL2PrincipalSeries F (γ * α) (γ * β)).character =
-      (GL2Linear F γ).character * (GL2PrincipalSeries F α β).character := by
-  rw [GL2PrincipalSeries_def, ← indClassFun_ofFDRep_character,
-    GL2PrincipalSeries_def, ← indClassFun_ofFDRep_character]
-  rw [← indClassFun_comp_subtype_mul
-    (ClassFunction.mem_iff.mpr fun g x => (GL2Linear F γ).char_conj g x)]
-  congr 1
-  funext b
-  rw [Pi.mul_apply, character_GL2BorelRep, character_GL2BorelRep, character_GL2Linear,
-    GL2Borel.det_diag, map_mul]
-  simp [mul_mul_mul_comm]
 
 /-- **The repeated-parameter principal series has the sum of the linear and Steinberg-twist
 characters.** This is the character-theoretic two-constituent decomposition at the boundary of
