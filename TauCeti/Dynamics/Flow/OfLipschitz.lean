@@ -27,14 +27,13 @@ the initial condition, and the joint continuity required by `Flow` is
 * `Flow.hasDerivAt_ofLipschitz` and `Flow.isIntegralCurve_ofLipschitz`: its orbits solve the
   differential equation.
 * `Flow.eq_ofLipschitz`: every global solution is an orbit of the flow.
+* `Flow.ofLipschitz_congr`: it does not depend on the chosen Lipschitz bound.
 * `Flow.forall_ofLipschitz_eq_self_iff`: the rest points of the flow are the zeros of the vector
   field.
 
 ## References
 
 * J. Dieudonné, *Foundations of Modern Analysis*, Academic Press, 1969, Chapter X.
-* [Heegaard Floer homology roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/HeegaardFloer/README.md),
-  Lane M, "Morse homology".
 -/
 
 public section
@@ -62,6 +61,12 @@ noncomputable def ofLipschitz (v : E → E) {K : ℝ≥0} (hv : LipschitzWith K 
 @[simp]
 theorem ofLipschitz_apply (hv : LipschitzWith K v) (t : ℝ) (x : E) :
     ofLipschitz v hv t x = ODE.globalSolution v hv x t := (rfl)
+
+/-- **Independence of the Lipschitz bound.** Two Lipschitz witnesses for the same vector field,
+with possibly different constants, produce the same flow. -/
+theorem ofLipschitz_congr {K' : ℝ≥0} (hv : LipschitzWith K v) (hv' : LipschitzWith K' v) :
+    ofLipschitz v hv = ofLipschitz v hv' :=
+  Flow.ext fun t x ↦ congrFun (ODE.globalSolution_congr v hv hv' x) t
 
 /-- Every orbit of the flow solves the differential equation. -/
 theorem hasDerivAt_ofLipschitz (hv : LipschitzWith K v) (x : E) (t : ℝ) :

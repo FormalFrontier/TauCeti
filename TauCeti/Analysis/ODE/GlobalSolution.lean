@@ -7,9 +7,7 @@ module
 
 public import Mathlib.Analysis.ODE.Basic
 public import Mathlib.Analysis.ODE.ExistUnique
-public import Mathlib.Analysis.ODE.Gronwall
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
-public import Mathlib.MeasureTheory.Integral.DominatedConvergence
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 public import Mathlib.Topology.ContinuousMap.Bounded.Normed
 public import Mathlib.Topology.MetricSpace.Contracting
@@ -43,6 +41,7 @@ Mathlib's `ODE_solution_unique_univ`, and the fixed point depends on the initial
   problem.
 * `ODE.globalSolution_zero` and `ODE.hasDerivAt_globalSolution`: it is a solution.
 * `ODE.eq_globalSolution`: every global solution with the same initial value is equal to it.
+* `ODE.globalSolution_congr`: it does not depend on the chosen Lipschitz bound.
 * `ODE.globalSolution_neg`: reversing time solves the negated field.
 * `ODE.dist_globalSolution_le`: two solutions drift apart at most exponentially.
 * `ODE.continuous_globalSolution`: joint continuity in time and initial condition.
@@ -50,8 +49,6 @@ Mathlib's `ODE_solution_unique_univ`, and the fixed point depends on the initial
 ## References
 
 * J. Dieudonné, *Foundations of Modern Analysis*, Academic Press, 1969, Chapter X.
-* [Heegaard Floer homology roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/HeegaardFloer/README.md),
-  Lane M, "Morse homology".
 -/
 
 public section
@@ -62,11 +59,6 @@ open scoped BoundedContinuousFunction NNReal
 namespace ODE
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-
-/-- The hyperbolic sine is dominated by the hyperbolic cosine. -/
-private theorem abs_sinh_le_cosh (y : ℝ) : |Real.sinh y| ≤ Real.cosh y := by
-  rw [abs_le, Real.sinh_eq, Real.cosh_eq]
-  constructor <;> nlinarith [Real.exp_pos y, Real.exp_pos (-y)]
 
 /-- The estimate that drives the whole construction: an integrand dominated by `C * cosh (2 k ·)`
 has a primitive dominated by `C * cosh (2 k ·) / (2 k)`, with no restriction on the sign of the
@@ -102,7 +94,8 @@ private theorem norm_integral_le_cosh {k C : ℝ} (hk : 0 < k) (hC : 0 ≤ C) {F
         rw [hcalc, abs_div, abs_mul, abs_of_nonneg hC, abs_of_pos hk2]
     _ ≤ C * Real.cosh (2 * k * t) / (2 * k) := by
         gcongr
-        exact abs_sinh_le_cosh _
+        rw [Real.abs_sinh, ← Real.cosh_abs (2 * k * t)]
+        exact (Real.sinh_lt_cosh _).le
 
 /-- The curve carried by a bounded continuous profile `u`, weighted so that the Picard operator
 below is a contraction on the whole line. -/
@@ -176,44 +169,50 @@ private theorem picardOp_apply {v : E → E} (hvc : Continuous v) {k : ℝ} (hk 
     (hv : ∀ y z, ‖v y - v z‖ ≤ k * ‖y - z‖) (x : E) (u : ℝ →ᵇ E) (t : ℝ) :
     picardOp hvc hk hv x u t = picardMap v k x u t := rfl
 
-/-- The Picard operator halves distances, uniformly in the initial point. -/
-private theorem contractingWith_picardOp {v : E → E} (hvc : Continuous v) {k : ℝ} (hk : 0 < k)
-    (hv : ∀ y z, ‖v y - v z‖ ≤ k * ‖y - z‖) (x : E) :
-    ContractingWith (1 / 2 : ℝ≥0) (picardOp hvc hk hv x) := by
-  refine ⟨by norm_num, LipschitzWith.of_dist_le_mul fun u₁ u₂ ↦ ?_⟩
-  have hd : (0 : ℝ) ≤ dist u₁ u₂ := dist_nonneg
-  have hcast : ((1 / 2 : ℝ≥0) : ℝ) = 1 / 2 := by norm_num
-  rw [hcast, BoundedContinuousFunction.dist_le (by positivity)]
+/-- The single estimate behind both contraction properties of the Picard operator: a bound on the
+carried curves, in the weight `cosh (2 k ·)`, halves to a bound on the values of the operator. -/
+private theorem dist_picardOp_le {v : E → E} (hvc : Continuous v) {k : ℝ} (hk : 0 < k)
+    (hv : ∀ y z, ‖v y - v z‖ ≤ k * ‖y - z‖) {x y : E} {u₁ u₂ : ℝ →ᵇ E} {D : ℝ} (hD : 0 ≤ D)
+    (hb : ∀ s, ‖picardCurve k x u₁ s - picardCurve k y u₂ s‖ ≤ D * Real.cosh (2 * k * s)) :
+    dist (picardOp hvc hk hv x u₁) (picardOp hvc hk hv y u₂) ≤ D / 2 := by
+  rw [BoundedContinuousFunction.dist_le (by linarith)]
   intro t
   have hcosh : (0 : ℝ) < Real.cosh (2 * k * t) := Real.cosh_pos _
   have hi₁ : ∀ a b : ℝ, IntervalIntegrable (fun s ↦ v (picardCurve k x u₁ s)) volume a b :=
-    fun a b ↦ ((hvc.comp (continuous_picardCurve k x u₁)).intervalIntegrable a b)
-  have hi₂ : ∀ a b : ℝ, IntervalIntegrable (fun s ↦ v (picardCurve k x u₂ s)) volume a b :=
-    fun a b ↦ ((hvc.comp (continuous_picardCurve k x u₂)).intervalIntegrable a b)
-  have hbound : ∀ s : ℝ, ‖v (picardCurve k x u₁ s) - v (picardCurve k x u₂ s)‖ ≤
-      (k * dist u₁ u₂) * Real.cosh (2 * k * s) := by
+    fun a b ↦ (hvc.comp (continuous_picardCurve k x u₁)).intervalIntegrable a b
+  have hi₂ : ∀ a b : ℝ, IntervalIntegrable (fun s ↦ v (picardCurve k y u₂ s)) volume a b :=
+    fun a b ↦ (hvc.comp (continuous_picardCurve k y u₂)).intervalIntegrable a b
+  have hbound : ∀ s : ℝ, ‖v (picardCurve k x u₁ s) - v (picardCurve k y u₂ s)‖ ≤
+      k * D * Real.cosh (2 * k * s) := by
     intro s
     refine (hv _ _).trans ?_
-    rw [picardCurve_sub, norm_smul, Real.norm_eq_abs, abs_of_pos (Real.cosh_pos _)]
-    have : ‖u₁ s - u₂ s‖ ≤ dist u₁ u₂ := by
-      rw [← dist_eq_norm]
-      exact u₁.dist_coe_le_dist s
-    calc k * (Real.cosh (2 * k * s) * ‖u₁ s - u₂ s‖)
-        ≤ k * (Real.cosh (2 * k * s) * dist u₁ u₂) := by
-          gcongr
-      _ = k * dist u₁ u₂ * Real.cosh (2 * k * s) := by ring
-  have hsub : ∫ s in (0 : ℝ)..t, (v (picardCurve k x u₁ s) - v (picardCurve k x u₂ s)) =
+    rw [mul_assoc]
+    exact mul_le_mul_of_nonneg_left (hb s) hk.le
+  have hsub : ∫ s in (0 : ℝ)..t, (v (picardCurve k x u₁ s) - v (picardCurve k y u₂ s)) =
       (∫ s in (0 : ℝ)..t, v (picardCurve k x u₁ s)) -
-        ∫ s in (0 : ℝ)..t, v (picardCurve k x u₂ s) :=
+        ∫ s in (0 : ℝ)..t, v (picardCurve k y u₂ s) :=
     intervalIntegral.integral_sub (hi₁ 0 t) (hi₂ 0 t)
   have hint := norm_integral_le_cosh (F := fun s ↦
-    v (picardCurve k x u₁ s) - v (picardCurve k x u₂ s)) hk
-    (by positivity) hbound t
+    v (picardCurve k x u₁ s) - v (picardCurve k y u₂ s)) hk (mul_nonneg hk.le hD) hbound t
   rw [hsub] at hint
   rw [dist_eq_norm, picardOp_apply, picardOp_apply, picardMap, picardMap, ← smul_sub, norm_smul,
     Real.norm_eq_abs, abs_of_pos (inv_pos.2 hcosh), inv_mul_le_iff₀ hcosh]
   refine hint.trans_eq ?_
   field_simp
+
+/-- The Picard operator halves distances, uniformly in the initial point. -/
+private theorem contractingWith_picardOp {v : E → E} (hvc : Continuous v) {k : ℝ} (hk : 0 < k)
+    (hv : ∀ y z, ‖v y - v z‖ ≤ k * ‖y - z‖) (x : E) :
+    ContractingWith (1 / 2 : ℝ≥0) (picardOp hvc hk hv x) := by
+  refine ⟨by norm_num, LipschitzWith.of_dist_le_mul fun u₁ u₂ ↦ ?_⟩
+  have hcast : ((1 / 2 : ℝ≥0) : ℝ) = 1 / 2 := by norm_num
+  rw [hcast]
+  refine (dist_picardOp_le hvc hk hv dist_nonneg fun s ↦ ?_).trans_eq (by ring)
+  rw [picardCurve_sub, norm_smul, Real.norm_eq_abs, abs_of_pos (Real.cosh_pos _),
+    mul_comm (dist u₁ u₂)]
+  gcongr
+  rw [← dist_eq_norm]
+  exact u₁.dist_coe_le_dist s
 
 variable [CompleteSpace E]
 
@@ -292,39 +291,22 @@ theorem eq_globalSolution (v : E → E) {K : ℝ≥0} (hv : LipschitzWith K v) {
     (fun t ↦ ⟨hasDerivAt_globalSolution v hv (γ 0) t, trivial⟩)
     (by rw [globalSolution_zero])
 
+/-- **Independence of the Lipschitz bound.** Two Lipschitz witnesses for the same vector field,
+with possibly different constants, produce the same global solution. -/
+theorem globalSolution_congr (v : E → E) {K K' : ℝ≥0} (hv : LipschitzWith K v)
+    (hv' : LipschitzWith K' v) (x : E) : globalSolution v hv x = globalSolution v hv' x := by
+  have h := eq_globalSolution v hv' (γ := globalSolution v hv x) (hasDerivAt_globalSolution v hv x)
+  rwa [globalSolution_zero] at h
+
 /-- The Picard fixed point depends on the initial condition `1`-Lipschitzly. -/
 private theorem dist_picardFixedPoint_le {v : E → E} (hvc : Continuous v) {k : ℝ} (hk : 0 < k)
     (hv : ∀ y z, ‖v y - v z‖ ≤ k * ‖y - z‖) (x y : E) :
     dist (picardFixedPoint hvc hk hv x) (picardFixedPoint hvc hk hv y) ≤ ‖x - y‖ := by
   have hC : ∀ u : ℝ →ᵇ E,
-      dist (picardOp hvc hk hv x u) (picardOp hvc hk hv y u) ≤ ‖x - y‖ / 2 := by
-    intro u
-    rw [BoundedContinuousFunction.dist_le (by positivity)]
-    intro t
-    have hcosh : (0 : ℝ) < Real.cosh (2 * k * t) := Real.cosh_pos _
-    have hi₁ : ∀ a b : ℝ, IntervalIntegrable (fun s ↦ v (picardCurve k x u s)) volume a b :=
-      fun a b ↦ ((hvc.comp (continuous_picardCurve k x u)).intervalIntegrable a b)
-    have hi₂ : ∀ a b : ℝ, IntervalIntegrable (fun s ↦ v (picardCurve k y u s)) volume a b :=
-      fun a b ↦ ((hvc.comp (continuous_picardCurve k y u)).intervalIntegrable a b)
-    have hbound : ∀ s : ℝ, ‖v (picardCurve k x u s) - v (picardCurve k y u s)‖ ≤
-        (k * ‖x - y‖) * Real.cosh (2 * k * s) := by
-      intro s
-      refine (hv _ _).trans ?_
+      dist (picardOp hvc hk hv x u) (picardOp hvc hk hv y u) ≤ ‖x - y‖ / 2 := fun u ↦
+    dist_picardOp_le hvc hk hv (norm_nonneg _) fun s ↦ by
       rw [picardCurve_sub_const]
-      nlinarith [Real.one_le_cosh (2 * k * s), norm_nonneg (x - y), hk.le,
-        mul_nonneg hk.le (norm_nonneg (x - y))]
-    have hsub : ∫ s in (0 : ℝ)..t, (v (picardCurve k x u s) - v (picardCurve k y u s)) =
-        (∫ s in (0 : ℝ)..t, v (picardCurve k x u s)) -
-          ∫ s in (0 : ℝ)..t, v (picardCurve k y u s) :=
-      intervalIntegral.integral_sub (hi₁ 0 t) (hi₂ 0 t)
-    have hint := norm_integral_le_cosh
-      (F := fun s ↦ v (picardCurve k x u s) - v (picardCurve k y u s)) hk (by positivity)
-      hbound t
-    rw [hsub] at hint
-    rw [dist_eq_norm, picardOp_apply, picardOp_apply, picardMap, picardMap, ← smul_sub, norm_smul,
-      Real.norm_eq_abs, abs_of_pos (inv_pos.2 hcosh), inv_mul_le_iff₀ hcosh]
-    refine hint.trans_eq ?_
-    field_simp
+      exact le_mul_of_one_le_right (norm_nonneg _) (Real.one_le_cosh _)
   have h := ContractingWith.fixedPoint_lipschitz_in_map (contractingWith_picardOp hvc hk hv x)
     (contractingWith_picardOp hvc hk hv y) hC
   have hcast : (1 : ℝ) - ((1 / 2 : ℝ≥0) : ℝ) = 1 / 2 := by norm_num
