@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Analysis.PDE.EnergyForm.Integrability
 public import TauCeti.Analysis.PDE.EnergyForm.Integrated.Basic
+public import TauCeti.Analysis.PDE.EnergyForm.Integrated.Symmetry
 public import TauCeti.Analysis.PDE.EnergyForm.VariableLp
 public import TauCeti.Analysis.Sobolev.Poincare.W1p0
 
@@ -90,6 +91,8 @@ hypothesis is carried explicitly, and the interior estimates do not see the boun
 
 * `TauCeti.PDE.jetField`: the value-gradient jet field of a Sobolev function.
 * `TauCeti.PDE.energyFormH1`: the divergence-form energy form on `H¹(Ω) = W^{1,2}(Ω)`.
+* `TauCeti.PDE.energyFormH1_comm_of_isSymm_ae`: symmetry of the drift-free energy form under an
+  almost everywhere symmetric principal coefficient.
 * `TauCeti.PDE.energyFormH1L` and `TauCeti.PDE.energyFormH1L0`: the energy form bundled as a
   continuous bilinear map on `H¹(Ω)` and on `H¹₀(Ω)`, built from
   `TauCeti.PDE.energyFormLpVariable`.
@@ -382,6 +385,16 @@ theorem energyFormH1_smul_right (a : EuclideanSpace ℝ ι → Matrix ι ι ℝ)
       energyFormIntegral_congr_ae (mu.restrict Omega) a b c (jetField u) (jetField (r • v))
         .rfl .rfl .rfl .rfl (jetField_smul_ae r v)
     _ = r * energyFormH1 a b c u v := energyFormIntegral_smul_right _ _ _ _ _ _ r
+
+/-- **Symmetry of the energy form on `H¹(Ω)`.** With no drift and an almost everywhere symmetric
+principal coefficient the divergence-form energy form is symmetric, which is what makes the
+associated eigenvalue problem a self-adjoint one. The mass coefficient is unrestricted: it
+enters the form through the symmetric term `c u v`. -/
+theorem energyFormH1_comm_of_isSymm_ae
+    (ha : ∀ᵐ x ∂mu.restrict (Omega : Set (EuclideanSpace ℝ ι)), (a x).IsSymm)
+    (u v : W1p mu Omega 2) :
+    energyFormH1 a 0 c u v = energyFormH1 a 0 c v u :=
+  energyFormIntegral_zero_drift_comm_of_isSymm_ae ha
 
 /-- The coefficient in
 `TauCeti.PDE.UniformlyEllipticOn.mul_norm_sq_le_energyFormH1_self_of_poincare` is positive under the

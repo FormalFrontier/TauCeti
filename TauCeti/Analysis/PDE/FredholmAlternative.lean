@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.InnerProductSpace.VariationalFredholm
+public import TauCeti.Analysis.InnerProductSpace.Variational.Fredholm
 public import TauCeti.Analysis.PDE.DirichletProblem
 public import TauCeti.Analysis.Sobolev.RellichKondrachov
 
