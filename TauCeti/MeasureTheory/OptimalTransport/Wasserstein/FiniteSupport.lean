@@ -10,11 +10,12 @@ public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Space
 /-!
 # Approximation of a finite-moment law by a finitely supported one
 
-On a separable ground space every probability measure with finite `p`-moment is a Wasserstein
-limit of measures carried by finite sets, for every finite exponent `1 ≤ p < ∞`. This file proves
-that approximation and records its two standard consequences: the finitely supported laws are
-dense in `TauCeti.WassersteinSpace p X`, and the `N`-point quantization error of a fixed law tends
-to `0`.
+On a separable ground space every probability measure with finite `p`-moment can be pushed within
+any prescribed Wasserstein accuracy by a quantizer, for every finite exponent `1 ≤ p < ∞`. When
+singletons are measurable, these pushforwards are measures carried by finite sets. This file also
+records the two standard consequences: the finitely supported laws are dense in
+`TauCeti.WassersteinSpace p X` under the compatible standard-Borel and second-countability
+hypotheses, and the `N`-point quantization error of a fixed law tends to `0`.
 
 The approximating measures are produced by a *quantizer*: a measurable map `T : X → X` with
 finitely many values, approximating the identity. The displacement bound
@@ -53,9 +54,10 @@ the whole ball of radius `0` around its atom, so it is not finite.
 * `TauCeti.exists_map_wassersteinEDist_le` — the approximation theorem in quantizer form: some
   measurable map with finitely many values pushes `μ` to within `ε` of itself;
 * `TauCeti.exists_ae_mem_finset_wassersteinEDist_le` — its measure form, with the approximating
-  law carried by a finite set and again of finite `p`-moment;
+  law carried by a finite set and again of finite `p`-moment, assuming measurable singletons;
 * `TauCeti.WassersteinSpace.dense_setOfPred_ae_mem_finset` — the finitely supported laws are dense
-  in `P_p (X)` on a separable pseudometric ground space with a standard Borel structure;
+  in `P_p (X)` on a pseudometric ground space with `[StandardBorelSpace X]`, `[BorelSpace X]`,
+  and `[SecondCountableTopology X]`;
 * `TauCeti.wassersteinQuantizationError` and `TauCeti.tendsto_wassersteinQuantizationError` — the
   `N`-point quantization error and its convergence to `0`.
 
@@ -225,9 +227,10 @@ namespace WassersteinSpace
 variable [PseudoMetricSpace X] [StandardBorelSpace X] [BorelSpace X]
   [SecondCountableTopology X] [Fact (1 ≤ p)]
 
-/-- **The finitely supported laws are dense in `P_p (X)`.** On a separable pseudometric ground
-space with a standard Borel measurable structure, and for a finite exponent `1 ≤ p < ∞`, every
-finite-moment law is a Wasserstein limit of laws carried by finite sets. -/
+/-- **The finitely supported laws are dense in `P_p (X)`.** On a pseudometric ground space with
+`[StandardBorelSpace X]`, a compatible `[BorelSpace X]`, and `[SecondCountableTopology X]`, and
+for a finite exponent `1 ≤ p < ∞`, every finite-moment law is a Wasserstein limit of laws carried
+by finite sets. -/
 theorem dense_setOfPred_ae_mem_finset (hp_top : p ≠ ∞) :
     Dense {μ : WassersteinSpace p X |
       ∃ s : Finset X, ((μ : ProbabilityMeasure X) : Measure X) ((s : Set X)ᶜ) = 0} := by
@@ -284,7 +287,7 @@ theorem wassersteinQuantizationError_lt_iff {a : ℝ≥0∞} :
   simp only [wassersteinQuantizationError, iInf_lt_iff, exists_prop]
 
 /-- The quantization error decreases as more points are allowed. -/
-theorem antitone_wassersteinQuantizationError :
+theorem wassersteinQuantizationError_antitone :
     Antitone fun N ↦ wassersteinQuantizationError p N μ := by
   refine fun N M hNM ↦ le_iInf₂ fun ν hν ↦ le_iInf fun hs ↦ ?_
   obtain ⟨s, hcard, hnull⟩ := hs
@@ -305,7 +308,7 @@ theorem tendsto_wassersteinQuantizationError (hp : 1 ≤ p) (hp_top : p ≠ ∞)
     [IsProbabilityMeasure μ] (hμ : HasFiniteMoment p μ) :
     Tendsto (fun N ↦ wassersteinQuantizationError p N μ) atTop (𝓝 0) := by
   refine (ENNReal.tendsto_atTop_zero_iff_le_of_antitone
-    antitone_wassersteinQuantizationError).2 fun ε hε ↦ ?_
+    wassersteinQuantizationError_antitone).2 fun ε hε ↦ ?_
   obtain ⟨s, ν, hν, hnull, -, hle⟩ :=
     exists_ae_mem_finset_wassersteinEDist_le hp hp_top hμ hε.ne'
   exact ⟨s.card, (wassersteinQuantizationError_le hν ⟨s, le_rfl, hnull⟩).trans hle⟩
