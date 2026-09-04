@@ -67,6 +67,10 @@ noncomputable instance instFreeZigzagComponentAlgebra (C : G.ConnectedComponent)
         (C.connected_toSimpleGraph.preconnected.not_isIsolated i)
   · let _ : Subsingleton C := not_nontrivial_iff_subsingleton.mp hC
     rw [zigzagComponentAlgebra_eq_uliftDualNumber]
+    -- Mathlib exposes `DualNumber k` as `TrivSqZeroExt k k`, whose carrier is `k × k`, and defines
+    -- its module structure as `inferInstanceAs <| Module k (k × k)`; both definitions are public
+    -- and marked `@[expose]`.  There is no `Module.Free`/`Module.Finite` instance or linear
+    -- equivalence for `TrivSqZeroExt` in Mathlib, so this public representation is the only route.
     change Module.Free k (ULift (k × k))
     infer_instance
 
@@ -85,6 +89,10 @@ noncomputable instance instFiniteZigzagComponentAlgebra (C : G.ConnectedComponen
         (C.connected_toSimpleGraph.preconnected.not_isIsolated i)
   · let _ : Subsingleton C := not_nontrivial_iff_subsingleton.mp hC
     rw [zigzagComponentAlgebra_eq_uliftDualNumber]
+    -- Mathlib exposes `DualNumber k` as `TrivSqZeroExt k k`, whose carrier is `k × k`, and defines
+    -- its module structure as `inferInstanceAs <| Module k (k × k)`; both definitions are public
+    -- and marked `@[expose]`.  There is no `Module.Free`/`Module.Finite` instance or linear
+    -- equivalence for `TrivSqZeroExt` in Mathlib, so this public representation is the only route.
     change Module.Finite k (ULift (k × k))
     infer_instance
 
@@ -115,8 +123,8 @@ theorem finrank_zigzagComponentAlgebra (C : G.ConnectedComponent) :
     let _ : Unique C := Unique.mk' C
     let _ : IsEmpty C.toSimpleGraph.Dart :=
       ⟨fun d => d.fst_ne_snd (Subsingleton.elim d.fst d.snd)⟩
-    -- Mathlib exposes `DualNumber k` as `TrivSqZeroExt k k`, whose carrier is `k × k`;
-    -- both definitions are public and marked `@[expose]`, so this reduction uses their public API.
+    -- As above, `DualNumber k` is `TrivSqZeroExt k k`, whose exposed carrier is `k × k`, so this
+    -- reduction uses Mathlib's public representation.
     change Module.finrank k (k × k) = _
     rw [Module.finrank_prod]
     simp
