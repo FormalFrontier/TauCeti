@@ -40,9 +40,11 @@ field norm.
   the two together are the bilinearity Weil reciprocity is stated against. Note the asymmetry:
   `eval_one` and `eval_inv` need no hypothesis, while `eval_mul` and `eval_div` need admissibility
   for both arguments.
-* `TauCeti.Divisor.isUnitAtSupport_one`, `IsUnitAtSupport.mul`, `isUnitAtSupport_inv_iff` and
-  `IsUnitAtSupport.div`: admissibility is a subgroup condition on the function, which is what makes
-  those laws usable together.
+* Admissibility is a subgroup condition in *each* variable, which is what makes those laws usable
+  together: `isUnitAtSupport_one`, `IsUnitAtSupport.mul`, `isUnitAtSupport_inv_iff` and
+  `IsUnitAtSupport.div` in the function, and `isUnitAtSupport_zero`, `IsUnitAtSupport.add`,
+  `isUnitAtSupport_neg_iff` and `IsUnitAtSupport.sub` in the divisor. The divisor side is what
+  moving a divisor within its class to obtain disjoint support needs.
 
 ## Implementation notes
 
@@ -155,12 +157,39 @@ theorem eval_eq_prod_normResidue {D : Divisor k F} {f : Fˣ} (h : IsUnitAtSuppor
         Finset.prod_congr rfl fun P _ ↦ by
           rw [Place.normResidueOrOne_of_ord_eq_zero (isUnitAtSupport_iff.1 h P.1 P.2)]
 
+/-- Every function is admissible for the zero divisor, which has empty support. -/
+theorem isUnitAtSupport_zero (f : Fˣ) : IsUnitAtSupport (0 : Divisor k F) f := by
+  simp
+
+/-- Admissibility is closed under sums of divisors: `(D + E).support ⊆ D.support ∪ E.support`. -/
+theorem IsUnitAtSupport.add {D E : Divisor k F} {f : Fˣ} (hD : IsUnitAtSupport D f)
+    (hE : IsUnitAtSupport E f) : IsUnitAtSupport (D + E) f := fun P hP ↦ by
+  -- `(D + E) P ≠ 0` forces `D P ≠ 0` or `E P ≠ 0`. Argued pointwise rather than through
+  -- `Finsupp.support_add`, whose union needs `DecidableEq (Place k F)`.
+  rw [Finsupp.mem_support_iff, Finsupp.add_apply] at hP
+  by_cases h : D P = 0
+  · exact hE P (Finsupp.mem_support_iff.2 fun h' ↦ hP (by rw [h, h', add_zero]))
+  · exact hD P (Finsupp.mem_support_iff.2 h)
+
+/-- Admissibility is *invariant* under negating the divisor, not merely closed under it:
+`(-D).support = D.support`. -/
+theorem isUnitAtSupport_neg_iff {D : Divisor k F} {f : Fˣ} :
+    IsUnitAtSupport (-D) f ↔ IsUnitAtSupport D f := by
+  simp only [isUnitAtSupport_iff, Finsupp.support_neg]
+
+/-- Admissibility is closed under differences of divisors. -/
+theorem IsUnitAtSupport.sub {D E : Divisor k F} {f : Fˣ} (hD : IsUnitAtSupport D f)
+    (hE : IsUnitAtSupport E f) : IsUnitAtSupport (D - E) f := by
+  rw [sub_eq_add_neg]
+  exact hD.add (isUnitAtSupport_neg_iff.2 hE)
+
 /-- `1` is admissible for every divisor.
 
-Neither this nor `isUnitAtSupport_inv_iff` is `@[simp]`, and that is checked rather than assumed:
-with `isUnitAtSupport_iff` tagged, `simp` proves both outright, and the environment linter reports
-them as redundant simp lemmas if they carry the attribute. They are kept as named lemmas because
-they are the closure facts a term-mode proof reaches for. -/
+None of the four "invariance" closure lemmas — this one, `isUnitAtSupport_inv_iff`,
+`isUnitAtSupport_zero` and `isUnitAtSupport_neg_iff` — is `@[simp]`, and that is checked rather
+than assumed: with `isUnitAtSupport_iff` tagged, `simp` proves them outright, and the environment
+linter reports them as redundant simp lemmas if they carry the attribute. They are kept as named
+lemmas because they are the closure facts a term-mode proof reaches for. -/
 theorem isUnitAtSupport_one (D : Divisor k F) : IsUnitAtSupport D (1 : Fˣ) :=
   fun P _ ↦ P.ord_one_units
 
