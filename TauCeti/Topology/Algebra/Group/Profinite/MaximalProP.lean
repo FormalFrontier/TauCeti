@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.GroupTheory.QuotientGroup.Basic
 public import TauCeti.GroupTheory.PGroup
 public import TauCeti.Topology.Algebra.Group.Profinite.Basic
 public import TauCeti.Topology.Algebra.Group.Profinite.ProP
@@ -40,6 +39,7 @@ hold there. Compactness of `G` is assumed exactly where it is used.
 
 * `TauCeti.proPKernel`: the intersection of the open normal subgroups with `p`-group quotient.
 * `TauCeti.maximalProPQuotient`: the quotient `G ⧸ proPKernel p G`, written `G(p)` in prose.
+* `TauCeti.maximalProPQuotient.mk`: the canonical quotient homomorphism.
 * `TauCeti.maximalProPQuotient.map`: the functorial action on continuous homomorphisms.
 
 ## Main results
@@ -52,8 +52,8 @@ hold there. Compactness of `G` is assumed exactly where it is used.
   from `G` to a profinite pro-`p` group factors uniquely and continuously through `G(p)`.
 * `TauCeti.proPKernel_eq_bot_iff`: `G` is pro-`p` if and only if its pro-`p` kernel is trivial;
   with `TauCeti.proPKernel_maximalProPQuotient_eq_bot` this is idempotence of `G ↦ G(p)`.
-* `TauCeti.proPKernel_map_continuousMulEquiv`: the pro-`p` kernel is characteristic for
-  continuous automorphisms.
+* `TauCeti.map_proPKernel_eq`: continuous multiplicative equivalences preserve the pro-`p`
+  kernel.
 
 ## References
 
@@ -64,7 +64,7 @@ public section
 
 namespace TauCeti
 
-universe u v
+universe u v w
 
 section Defs
 
@@ -76,12 +76,31 @@ universal continuous homomorphism from `G` to a pro-`p` group. -/
 def proPKernel : Subgroup G :=
   ⨅ U : {U : OpenNormalSubgroup G // IsPGroup p (G ⧸ U.toSubgroup)}, U.1.toSubgroup
 
-/-- The pro-`p` kernel is normal, being an intersection of normal subgroups. -/
+/-- The pro-`p` kernel is a normal subgroup. -/
 instance proPKernel_normal : (proPKernel p G).Normal :=
   Subgroup.normal_iInf_normal fun U ↦ U.1.isNormal'
 
 /-- The **maximal pro-`p` quotient** `G(p) = G ⧸ proPKernel p G`. -/
 abbrev maximalProPQuotient : Type u := G ⧸ proPKernel p G
+
+/-- The canonical homomorphism from `G` to its maximal pro-`p` quotient. -/
+abbrev maximalProPQuotient.mk : G →* maximalProPQuotient p G :=
+  QuotientGroup.mk' (proPKernel p G)
+
+/-- The canonical quotient homomorphism sends an element to its quotient class. -/
+@[simp]
+theorem maximalProPQuotient.mk_apply (x : G) :
+    maximalProPQuotient.mk p G x = QuotientGroup.mk x :=
+  rfl
+
+/-- The canonical homomorphism to the maximal pro-`p` quotient is surjective. -/
+theorem maximalProPQuotient.mk_surjective :
+    Function.Surjective (maximalProPQuotient.mk p G) :=
+  QuotientGroup.mk'_surjective (proPKernel p G)
+
+/-- The canonical homomorphism to the maximal pro-`p` quotient is continuous. -/
+theorem maximalProPQuotient.continuous_mk : Continuous (maximalProPQuotient.mk p G) :=
+  QuotientGroup.continuous_mk
 
 end Defs
 
@@ -100,9 +119,7 @@ theorem proPKernel_le {U : OpenNormalSubgroup G} (hU : IsPGroup p (G ⧸ U.toSub
     proPKernel p G ≤ U.toSubgroup :=
   fun _ hx ↦ mem_proPKernel_iff.mp hx U hU
 
-/-- The pro-`p` kernel is closed, being an intersection of open — hence closed — subgroups.
-Together with `QuotientGroup.instTotallyDisconnectedSpace` this is what makes the maximal
-pro-`p` quotient of a profinite group profinite again. -/
+/-- The pro-`p` kernel is closed, so its quotient is profinite when `G` is profinite. -/
 instance isClosed_proPKernel [IsTopologicalGroup G] :
     IsClosed ((proPKernel p G : Subgroup G) : Set G) := by
   rw [proPKernel, Subgroup.coe_iInf]
@@ -110,9 +127,7 @@ instance isClosed_proPKernel [IsTopologicalGroup G] :
 
 /-! ### Functoriality -/
 
-/-- A continuous homomorphism carries the pro-`p` kernel into the pro-`p` kernel: the preimage
-of an open normal subgroup with `p`-group quotient is again one, by
-`IsPGroup.quotient_comap`. No compactness is needed. -/
+/-- A continuous homomorphism carries the pro-`p` kernel into the pro-`p` kernel. -/
 theorem proPKernel_le_comap (f : G →* H) (hf : Continuous f) :
     proPKernel p G ≤ (proPKernel p H).comap f := by
   intro x hx
@@ -127,11 +142,10 @@ theorem map_proPKernel_le (f : G →* H) (hf : Continuous f) :
     (proPKernel p G).map f ≤ proPKernel p H :=
   Subgroup.map_le_iff_le_comap.mpr (proPKernel_le_comap f hf)
 
-/-- The pro-`p` kernel is characteristic for *continuous* automorphisms. Continuity is the
-right hypothesis: the subgroup is defined through the open normal subgroups, and an abstract
-automorphism of a profinite group need not be continuous. -/
-theorem proPKernel_map_continuousMulEquiv (e : G ≃ₜ* G) :
-    (proPKernel p G).map e.toMulEquiv.toMonoidHom = proPKernel p G := by
+/-- Continuous multiplicative equivalences identify the pro-`p` kernels of their source and
+target. In particular, the pro-`p` kernel is characteristic under continuous automorphisms. -/
+theorem map_proPKernel_eq (e : G ≃ₜ* H) :
+    (proPKernel p G).map e.toMulEquiv.toMonoidHom = proPKernel p H := by
   refine le_antisymm (map_proPKernel_le _ e.continuous) fun x hx ↦ ?_
   have hsymm : e.symm x ∈ proPKernel p G :=
     map_proPKernel_le e.symm.toMulEquiv.toMonoidHom e.symm.continuous
@@ -146,7 +160,8 @@ def maximalProPQuotient.map (f : G →* H) (hf : Continuous f) :
 /-- The induced map on maximal pro-`p` quotients is computed on classes by `f`. -/
 @[simp]
 theorem maximalProPQuotient.map_mk (f : G →* H) (hf : Continuous f) (x : G) :
-    maximalProPQuotient.map (p := p) f hf (QuotientGroup.mk x) = QuotientGroup.mk (f x) := by
+    maximalProPQuotient.map (p := p) f hf (maximalProPQuotient.mk p G x) =
+      maximalProPQuotient.mk p H (f x) := by
   rfl
 
 /-- The induced map on maximal pro-`p` quotients is continuous. -/
@@ -163,7 +178,8 @@ theorem maximalProPQuotient.map_id :
   rfl
 
 /-- Functoriality: the induced maps compose. -/
-theorem maximalProPQuotient.map_comp {K : Type u} [Group K] [TopologicalSpace K] (f : G →* H)
+@[simp]
+theorem maximalProPQuotient.map_comp {K : Type w} [Group K] [TopologicalSpace K] (f : G →* H)
     (hf : Continuous f) (g : H →* K) (hg : Continuous g) :
     maximalProPQuotient.map (p := p) (g.comp f) (hg.comp hf) =
       (maximalProPQuotient.map g hg).comp (maximalProPQuotient.map f hf) := by
@@ -176,13 +192,8 @@ section Compact
 
 variable [IsTopologicalGroup G] [CompactSpace G]
 
-/-- **The compactness step.** An open subgroup `M` of a compact topological group containing
-the pro-`p` kernel already contains a single open normal subgroup with `p`-group quotient.
-
-The sets `U \ M`, for `U` running over the open normal subgroups with `p`-group quotient, are
-closed in the compact space `G` and downward directed, because that family of subgroups is
-closed under intersection (`IsPGroup.quotient_inf`) and contains `⊤`. Their intersection is
-`proPKernel p G \ M = ∅`, so by Cantor's intersection theorem one of them is already empty. -/
+/-- An open subgroup containing the pro-`p` kernel contains an open normal subgroup with
+`p`-group quotient. -/
 theorem exists_openNormalSubgroup_isPGroup_le {M : Subgroup G} (hM : IsOpen (M : Set G))
     (hKM : proPKernel p G ≤ M) :
     ∃ U : OpenNormalSubgroup G, IsPGroup p (G ⧸ U.toSubgroup) ∧ U.toSubgroup ≤ M := by
@@ -219,9 +230,7 @@ theorem exists_openNormalSubgroup_isPGroup_le {M : Subgroup G} (hM : IsOpen (M :
   rw [Set.mem_iInter] at hx
   exact (hx htop).2 (hKM (mem_proPKernel_iff.mpr fun U hU ↦ (hx ⟨U, hU⟩).1))
 
-/-- An open normal subgroup containing the pro-`p` kernel has `p`-group quotient: it contains
-a member `V` of the defining family, and `G ⧸ U` is then a quotient of the `p`-group
-`G ⧸ V`. -/
+/-- An open normal subgroup containing the pro-`p` kernel has `p`-group quotient. -/
 theorem isPGroup_quotient_of_proPKernel_le {U : OpenNormalSubgroup G}
     (hU : proPKernel p G ≤ U.toSubgroup) : IsPGroup p (G ⧸ U.toSubgroup) := by
   obtain ⟨V, hV, hVU⟩ := exists_openNormalSubgroup_isPGroup_le U.toOpenSubgroup.isOpen hU
@@ -237,12 +246,10 @@ theorem proPKernel_le_iff_isPGroup_quotient {U : OpenNormalSubgroup G} :
     proPKernel p G ≤ U.toSubgroup ↔ IsPGroup p (G ⧸ U.toSubgroup) :=
   ⟨isPGroup_quotient_of_proPKernel_le, proPKernel_le⟩
 
-/-- **The maximal pro-`p` quotient is pro-`p`.** An open normal subgroup `M` of `G(p)` pulls
-back to an open normal subgroup `M'` of `G` containing the pro-`p` kernel, so `G ⧸ M'` is a
-`p`-group; and `G(p) ⧸ M` is a quotient of `G ⧸ M'`. -/
+/-- **The maximal pro-`p` quotient is pro-`p`.** -/
 theorem isProP_maximalProPQuotient : IsProP p (maximalProPQuotient p G) := by
   refine isProP_iff.mpr fun M ↦ ?_
-  let π : G →* maximalProPQuotient p G := QuotientGroup.mk' (proPKernel p G)
+  let π : G →* maximalProPQuotient p G := maximalProPQuotient.mk p G
   let M' : OpenNormalSubgroup G :=
     { toOpenSubgroup := M.toOpenSubgroup.comap π QuotientGroup.continuous_mk
       isNormal' := M.isNormal'.comap π }
@@ -255,14 +262,13 @@ theorem isProP_maximalProPQuotient : IsProP p (maximalProPQuotient p G) := by
     rw [hx1]
     exact one_mem _
   have hM' : IsPGroup p (G ⧸ M'.toSubgroup) := isPGroup_quotient_of_proPKernel_le hKM'
-  refine hM'.of_surjective
-    (QuotientGroup.lift M'.toSubgroup ((QuotientGroup.mk' M.toSubgroup).comp π) ?_) ?_
-  · intro x hx
-    exact (QuotientGroup.eq_one_iff (π x)).mpr ((hmem x).mp hx)
-  · rintro y
-    obtain ⟨z, rfl⟩ := QuotientGroup.mk'_surjective M.toSubgroup y
-    obtain ⟨x, rfl⟩ := QuotientGroup.mk'_surjective (proPKernel p G) z
-    exact ⟨QuotientGroup.mk x, rfl⟩
+  let q := (QuotientGroup.mk' M.toSubgroup).comp π
+  have hq : M'.toSubgroup ≤ q.ker := fun x hx ↦
+    (QuotientGroup.eq_one_iff (π x)).mpr ((hmem x).mp hx)
+  refine hM'.of_surjective (QuotientGroup.lift M'.toSubgroup q hq) ?_
+  exact QuotientGroup.lift_surjective_of_surjective M'.toSubgroup q
+    ((QuotientGroup.mk'_surjective M.toSubgroup).comp
+      (maximalProPQuotient.mk_surjective p G)) hq
 
 end Compact
 
@@ -273,9 +279,7 @@ section UniversalProperty
 variable {P : Type v} [Group P] [TopologicalSpace P] [IsTopologicalGroup P] [CompactSpace P]
   [TotallyDisconnectedSpace P]
 
-/-- A continuous homomorphism from `G` to a profinite pro-`p` group kills the pro-`p` kernel:
-each open normal subgroup `V` of `P` pulls back to an open normal subgroup of `G` with
-`p`-group quotient, and the open normal subgroups of `P` intersect in `1`. -/
+/-- A continuous homomorphism to a profinite pro-`p` group kills the pro-`p` kernel. -/
 theorem proPKernel_le_ker (hP : IsProP p P) (f : G →* P) (hf : Continuous f) :
     proPKernel p G ≤ f.ker := by
   intro x hx
@@ -284,13 +288,12 @@ theorem proPKernel_le_ker (hP : IsProP p P) (f : G →* P) (hf : Continuous f) :
   exact mem_proPKernel_iff.mp hx ⟨V.toOpenSubgroup.comap f hf, V.isNormal'.comap f⟩
     ((isProP_iff.mp hP V).quotient_comap f)
 
-/-- **The universal property of the maximal pro-`p` quotient.** A continuous homomorphism from
-`G` to a profinite pro-`p` group `P` factors through `G(p)` by a unique continuous
-homomorphism. Uniqueness needs no continuity, the quotient map being surjective. -/
+/-- **The universal property of the maximal pro-`p` quotient.** A continuous homomorphism to a
+profinite pro-`p` group factors uniquely and continuously through the canonical quotient map. -/
 theorem existsUnique_continuousMonoidHom_maximalProPQuotient (hP : IsProP p P) (f : G →* P)
     (hf : Continuous f) :
     ∃! g : maximalProPQuotient p G →* P,
-      Continuous g ∧ ∀ x : G, g (QuotientGroup.mk x) = f x := by
+      Continuous g ∧ ∀ x : G, g (maximalProPQuotient.mk p G x) = f x := by
   refine ⟨QuotientGroup.lift (proPKernel p G) f fun x hx ↦ proPKernel_le_ker hP f hf hx,
     ⟨?_, fun _ ↦ rfl⟩, ?_⟩
   · exact (QuotientGroup.isQuotientMap_mk (proPKernel p G)).continuous_iff.mpr hf
@@ -318,11 +321,33 @@ theorem proPKernel_eq_bot_iff : proPKernel p G = ⊥ ↔ IsProP p G := by
 theorem IsProP.proPKernel_eq_bot (hG : IsProP p G) : proPKernel p G = ⊥ :=
   proPKernel_eq_bot_iff.mpr hG
 
-/-- **Idempotence.** Passing to the maximal pro-`p` quotient twice changes nothing: the pro-`p`
-kernel of `G(p)` is already trivial. -/
+/-- The canonical continuous multiplicative equivalence from the maximal pro-`p` quotient of a
+profinite pro-`p` group to the group itself. -/
+abbrev maximalProPQuotient.equivOfIsProP (hG : IsProP p G) :
+    maximalProPQuotient p G ≃ₜ* G :=
+  ContinuousMulEquiv.mk
+    ((QuotientGroup.quotientMulEquivOfEq hG.proPKernel_eq_bot).trans
+      QuotientGroup.quotientBot)
+    ((QuotientGroup.isQuotientMap_mk (proPKernel p G)).continuous_iff.mpr continuous_id)
+    (maximalProPQuotient.continuous_mk p G)
+
+/-- The canonical equivalence from a pro-`p` group's maximal pro-`p` quotient sends each class
+to its representative. -/
+@[simp]
+theorem maximalProPQuotient.equivOfIsProP_mk (hG : IsProP p G) (x : G) :
+    maximalProPQuotient.equivOfIsProP hG (maximalProPQuotient.mk p G x) = x :=
+  rfl
+
+/-- **Idempotence.** The pro-`p` kernel of a maximal pro-`p` quotient is trivial. -/
 theorem proPKernel_maximalProPQuotient_eq_bot :
     proPKernel p (maximalProPQuotient p G) = ⊥ :=
   proPKernel_eq_bot_iff.mpr isProP_maximalProPQuotient
+
+/-- **Idempotence.** Applying the maximal pro-`p` quotient construction twice gives a group
+canonically continuously equivalent to applying it once. -/
+def maximalProPQuotient.idempotentEquiv :
+    maximalProPQuotient p (maximalProPQuotient p G) ≃ₜ* maximalProPQuotient p G :=
+  maximalProPQuotient.equivOfIsProP isProP_maximalProPQuotient
 
 end Idempotence
 

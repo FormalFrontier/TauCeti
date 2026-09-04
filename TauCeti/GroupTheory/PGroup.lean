@@ -36,12 +36,7 @@ namespace TauCeti
 
 variable {p : ℕ} {G : Type*} [Group G] {H : Type*} [Group H]
 
-/-- If the quotients of `G` by two normal subgroups `M` and `N` are `p`-groups, then so is the
-quotient by `M ⊓ N`: if `g ^ p ^ m` lies in `M` and `g ^ p ^ n` lies in `N`, then
-`g ^ p ^ (m + n)`, which is a power of each of these, lies in both.
-
-Consequently the normal subgroups of `G` with `p`-group quotient are closed under binary
-intersection, hence downward directed. -/
+/-- The normal subgroups of `G` with `p`-group quotient are closed under binary intersection. -/
 theorem _root_.IsPGroup.quotient_inf {M N : Subgroup G} [M.Normal] [N.Normal]
     (hM : IsPGroup p (G ⧸ M)) (hN : IsPGroup p (G ⧸ N)) : IsPGroup p (G ⧸ M ⊓ N) := by
   intro x
@@ -57,19 +52,14 @@ theorem _root_.IsPGroup.quotient_inf {M N : Subgroup G} [M.Normal] [N.Normal]
   · rw [pow_add, mul_comm, pow_mul]
     exact Subgroup.pow_mem N hn _
 
-/-- If the quotient of `H` by a normal subgroup `N` is a `p`-group, then so is the quotient of
-`G` by the preimage of `N` along any homomorphism `f : G →* H`: the induced map
-`G ⧸ N.comap f →* H ⧸ N` is injective, because `N.comap f` consists of exactly the elements
-that `f` sends into `N`. -/
+/-- The preimage of a normal subgroup with `p`-group quotient also has `p`-group quotient. -/
 theorem _root_.IsPGroup.quotient_comap {N : Subgroup H} [N.Normal] (hN : IsPGroup p (H ⧸ N))
     (f : G →* H) : IsPGroup p (G ⧸ N.comap f) := by
-  refine hN.of_injective (QuotientGroup.map (N.comap f) N f le_rfl) ?_
-  intro a b hab
-  obtain ⟨x, rfl⟩ := QuotientGroup.mk'_surjective (N.comap f) a
-  obtain ⟨y, rfl⟩ := QuotientGroup.mk'_surjective (N.comap f) b
-  rw [QuotientGroup.mk'_apply, QuotientGroup.mk'_apply, QuotientGroup.map_mk,
-    QuotientGroup.map_mk, QuotientGroup.eq] at hab
-  rw [QuotientGroup.mk'_apply, QuotientGroup.mk'_apply, QuotientGroup.eq]
-  simpa using hab
+  let φ := (QuotientGroup.mk' N).comp f
+  have hφ : N.comap f = φ.ker := by
+    simpa [φ] using MonoidHom.comap_ker (g := QuotientGroup.mk' N) (f := f)
+  exact (hN.of_injective (QuotientGroup.kerLift φ)
+    (QuotientGroup.kerLift_injective φ)).of_equiv
+      (QuotientGroup.quotientMulEquivOfEq hφ.symm)
 
 end TauCeti
