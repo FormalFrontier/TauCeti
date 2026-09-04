@@ -6,18 +6,17 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.Frobenius
-public import TauCeti.RingTheory.Unramified.AlgEquiv
+public import TauCeti.RingTheory.Ideal.AlgEquiv
 
 /-!
-# Transporting unramifiedness and Frobenius data along an algebra equivalence
+# Transporting ideals and Frobenius data along an algebra equivalence
 
 An algebra equivalence `e : S ≃ₐ[R] T` of commutative `R`-algebras moves ideals of `S` to ideals
 of `T` and conjugates endomorphisms of `S` into endomorphisms of `T`.  The local data attached to
 an ideal is invariant under this transport:
 
 * the contraction to `R` of an ideal is unchanged by mapping it along `e`
-  (`Ideal.under_mapAlgEquiv`), and mapping along `e` and back along `e.symm` recovers the ideal
-  (`Ideal.map_of_equiv`);
+  (`Ideal.under_mapAlgEquiv`);
 * an arithmetic Frobenius `φ : S →ₐ[R] S` conjugates to an arithmetic Frobenius at the mapped
   ideal, and the property is an equivalence (`AlgHom.IsArithFrobAt.mapAlgEquiv`,
   `AlgHom.IsArithFrobAt.mapAlgEquiv_iff`).
@@ -29,30 +28,6 @@ automorphism actions on rings of integers in
 -/
 
 public section
-
-namespace Ideal
-
-variable {R S T : Type*} [CommRing R] [CommRing S] [CommRing T] [Algebra R S] [Algebra R T]
-
-/-- **Mapping an ideal along an algebra equivalence preserves its contraction.**  For an
-`R`-algebra equivalence `e : S ≃ₐ[R] T`, the ideal `Q.map e` of `T` has the same contraction to
-`R` as `Q`. -/
-@[simp]
-theorem under_mapAlgEquiv (e : S ≃ₐ[R] T) (Q : Ideal S) :
-    (Q.map e).under R = Q.under R := by
-  rw [under_def, under_def]
-  -- `Ideal.map` is applied via `RingHomClass`, so the `AlgEquiv` and `RingEquiv`
-  -- coercions give syntactically different terms; they coincide definitionally
-  -- (Mathlib proves the underlying `RingHom` equality
-  -- `AlgEquiv.toRingEquiv_toRingHom` itself by `rfl`), hence this `rfl`.
-  have hmap : Q.map e = Q.map (e.toRingEquiv : S →+* T) := rfl
-  rw [hmap, map_comap_of_equiv]
-  ext x
-  simp only [mem_comap]
-  rw [← e.commutes]
-  simp
-
-end Ideal
 
 namespace AlgHom.IsArithFrobAt
 
