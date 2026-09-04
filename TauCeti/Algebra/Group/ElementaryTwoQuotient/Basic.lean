@@ -46,7 +46,8 @@ names around it. The cardinality identity is still expressed through the squarin
 * `TauCeti.elementaryTwoQuotientMk_surjective` and `TauCeti.elementaryTwoQuotientMk_eq_iff`: the
   class map is surjective, and two elements have the same class iff they differ by a square.
 * `TauCeti.elementaryTwoQuotientLiftEquiv` and `TauCeti.elementaryTwoQuotientLinearLiftEquiv`: the
-  universal property for maps out of `G/G²`, inherited from `ModN.liftEquiv`.
+  universal property for maps out of `G/G²`, inherited from `ModN.liftEquiv`, with
+  `TauCeti.elementaryTwoQuotientLinearLiftEquiv_symm_mk` as its computation rule.
 * `TauCeti.elementaryTwoQuotientMap` and `TauCeti.elementaryTwoQuotientCongr`: transport along
   homomorphisms and equivalences of commutative groups.
 * `TauCeti.elementaryTwoQuotientMap_apply_eq_self_of_isSquare_div`,
@@ -143,6 +144,14 @@ additive homomorphisms from `Additive G` whose values are killed by `2`. -/
 protected def elementaryTwoQuotientLinearLiftEquiv [AddCommGroup H] [Module (ZMod 2) H] :
     (ElementaryTwoQuotient G →ₗ[ZMod 2] H) ≃ {φ : Additive G →+ H // ∀ g, 2 • φ g = 0} :=
   ModN.liftEquiv'
+
+/-- The linear map obtained from the universal property of `G/G²` evaluates on the class of `g`
+as the original additive homomorphism evaluates on `Additive.ofMul g`. -/
+@[simp] theorem elementaryTwoQuotientLinearLiftEquiv_symm_mk [AddCommGroup H]
+    [Module (ZMod 2) H] (φ : Additive G →+ H) (hφ : ∀ g, 2 • φ g = 0) (g : G) :
+    (TauCeti.elementaryTwoQuotientLinearLiftEquiv.symm ⟨φ, hφ⟩)
+        (elementaryTwoQuotientMk g) = φ (Additive.ofMul g) := by
+  rfl
 
 /-- The class map to `G / G²` sends a product to the sum of the classes. -/
 @[simp] theorem elementaryTwoQuotientMk_mul (g h : G) :
