@@ -20,7 +20,7 @@ decomposition of the symplectic group.
 
 ## Main result
 
-* `TauCeti.exists_isUnit_add_mul_of_ker_inter_eq_bot_of_transpose_mul_comm` constructs the
+* `TauCeti.exists_isSymm_isUnit_add_mul_of_ker_inter_eq_bot_of_transpose_mul_comm` constructs the
   symmetric pivot.
 
 ## References
@@ -44,7 +44,7 @@ universe u
 
 /-- Given square matrices `A` and `C` over a field, if the only vector annihilated by both is
 zero and `Aᵀ C = Cᵀ A`, then a symmetric left multiplier makes `A + X C` invertible. -/
-theorem exists_isUnit_add_mul_of_ker_inter_eq_bot_of_transpose_mul_comm
+theorem exists_isSymm_isUnit_add_mul_of_ker_inter_eq_bot_of_transpose_mul_comm
     {K : Type u} [Field K] {l : Type*} [Fintype l] [DecidableEq l]
     {A C : Matrix l l K}
     (hker : ∀ x : l → K, A • x = 0 → C • x = 0 → x = 0)

@@ -238,7 +238,7 @@ theorem eq_top_of_root_subgroups_of_diagonal
       (M.fromBlocks_toBlocks ▸ hM)
     exact hblocks.1
   obtain ⟨X, hX, hunit⟩ :=
-    exists_isUnit_add_mul_of_ker_inter_eq_bot_of_transpose_mul_comm hker hcomm
+    exists_isSymm_isUnit_add_mul_of_ker_inter_eq_bot_of_transpose_mul_comm hker hcomm
   -- Left multiplication by `[1 X; 0 1]` changes the leading block to `A + XC`.
   have hu : upperUnipotent X hX ∈ H := hupper X hX
   have hprod : upperUnipotent X hX * g ∈ H := by

@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.GraphAutomorphism
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.MkOfDetNeZero
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Symplectic.Basic
 public import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Transvection
 
@@ -277,44 +278,6 @@ theorem leviHom_toGL_mem_of_difference {K : Type*} [Field K]
     rw [htop]
     exact Subgroup.mem_top A
   exact Subgroup.mem_comap.mp hA
-
-/-- Coercing a matrix packaged by `mkOfDetNeZero` recovers the original matrix. -/
-private theorem coe_mkOfDetNeZero {K : Type*} [Field K]
-    (M : Matrix (Fin m) (Fin m) K) (hM : M.det ≠ 0) :
-    ((Matrix.GeneralLinearGroup.mkOfDetNeZero M hM : GL (Fin m) K) :
-      Matrix (Fin m) (Fin m) K) = M := by
-  rfl
-
-/-- Packaging a product by `mkOfDetNeZero` agrees with multiplication in `GL`. -/
-private theorem mkOfDetNeZero_mul {K : Type*} [Field K]
-    (M N : Matrix (Fin m) (Fin m) K) (hM : M.det ≠ 0) (hN : N.det ≠ 0)
-    (hMN : (M * N).det ≠ 0) :
-    Matrix.GeneralLinearGroup.mkOfDetNeZero (M * N) hMN =
-      Matrix.GeneralLinearGroup.mkOfDetNeZero M hM *
-        Matrix.GeneralLinearGroup.mkOfDetNeZero N hN := by
-  apply Matrix.GeneralLinearGroup.ext
-  intro i j
-  rw [coe_mkOfDetNeZero, Matrix.GeneralLinearGroup.coe_mul, coe_mkOfDetNeZero,
-    coe_mkOfDetNeZero]
-
-/-- Repackaging the matrix underlying a `GL` element by `mkOfDetNeZero` recovers that element. -/
-private theorem mkOfDetNeZero_coe {K : Type*} [Field K] (A : GL (Fin m) K) :
-    Matrix.GeneralLinearGroup.mkOfDetNeZero
-      (A : Matrix (Fin m) (Fin m) K) A.det_ne_zero = A := by
-  apply Matrix.GeneralLinearGroup.ext
-  intro i j
-  rw [coe_mkOfDetNeZero]
-
-/-- Packaging a transvection matrix by `mkOfDetNeZero` recovers its canonical `GL` element. -/
-private theorem mkOfDetNeZero_transvection {K : Type*} [Field K]
-    {i j : Fin m} (hij : i ≠ j) (c : K)
-    (hdet : (Matrix.TransvectionStruct.mk i j hij c).toMatrix.det ≠ 0) :
-    Matrix.GeneralLinearGroup.mkOfDetNeZero
-        (Matrix.TransvectionStruct.mk i j hij c).toMatrix hdet =
-      (Matrix.SpecialLinearGroup.transvection hij c).toGL := by
-  apply Matrix.GeneralLinearGroup.ext
-  intro a b
-  rfl
 
 /-- Every general-linear Levi element belongs to a subgroup containing all difference-root
 elements and every diagonal Levi element. -/
