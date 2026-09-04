@@ -184,6 +184,21 @@ lemma span_eq_iInf_span (hf : f ≠ 0) (hsq : Squarefree f) :
   rw [Ideal.iInf_span_singleton fun _ _ hpq ↦ isCoprime hpq]
   exact (Ideal.span_singleton_eq_span_singleton.mpr (associated_prod hf hsq)).symm
 
+/-- A prime factor of the image of `f` under a field embedding divides the image of one of the
+monic irreducible factors of `f`.
+
+This is what lets a local computation be indexed by the factors of `f` over the base field: every
+prime of the extension divides the image of at least one of them. -/
+lemma exists_dvd_map {L : Type*} [Field L] (σ : K →+* L) (hf : f ≠ 0) {q : L[X]} (hq : Prime q)
+    (hdvd : q ∣ f.map σ) : ∃ p : f.Factors, q ∣ (p : K[X]).map σ := by
+  classical
+  have h1 : Associated ((normalizedFactors f).map (Polynomial.map σ)).prod (f.map σ) := by
+    have h2 := (prod_normalizedFactors hf).map (mapRingHom σ)
+    rwa [map_multiset_prod, coe_mapRingHom] at h2
+  obtain ⟨g, hgmem, hgdvd⟩ := hq.exists_mem_multiset_dvd (hdvd.trans h1.symm.dvd)
+  obtain ⟨p₀, hp₀, rfl⟩ := Multiset.mem_map.mp hgmem
+  exact ⟨⟨p₀, (Polynomial.mem_normalizedFactors_iff hf).mp hp₀⟩, hgdvd⟩
+
 end Factors
 
 end Polynomial

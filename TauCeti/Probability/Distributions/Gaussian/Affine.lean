@@ -40,6 +40,51 @@ namespace TauCeti
 
 variable {ι κ : Type*} [Fintype ι] [Fintype κ] [DecidableEq ι] [DecidableEq κ]
 
+/-- The covariance form of an affine image of a multivariate Gaussian is the one belonging to the
+congruated matrix `L * S * Lᵀ`. The map `L` may be rectangular; no rank hypothesis is needed. -/
+private theorem covarianceBilin_map_affine_multivariateGaussian (m : EuclideanSpace ℝ ι)
+    {S : Matrix ι ι ℝ} (hS : S.PosSemidef) (L : Matrix κ ι ℝ) (c : EuclideanSpace ℝ κ) :
+    covarianceBilin
+        (((multivariateGaussian m S).map L.toEuclideanLin.toContinuousLinearMap).map
+          fun y => y + c) =
+      covarianceBilin
+        (multivariateGaussian (L.toEuclideanLin m + c) (L * S * L.transpose)) := by
+  set T : EuclideanSpace ℝ ι →L[ℝ] EuclideanSpace ℝ κ :=
+    L.toEuclideanLin.toContinuousLinearMap with hT
+  -- The covariance API states translation with the constant on the left.
+  have h_translate : (fun y : EuclideanSpace ℝ κ => y + c) = fun y => c + y := by
+    funext y
+    exact add_comm y c
+  rw [h_translate]
+  rw [covarianceBilin_map_const_add]
+  ext x y
+  -- Over `ℝ` the conjugate transpose is the ordinary transpose, so the congruate is positive
+  -- semidefinite with no rank hypothesis on the rectangular matrix.
+  have hLS : (L * S * L.transpose).PosSemidef := by
+    rw [← Matrix.conjTranspose_eq_transpose_of_trivial L]
+    exact hS.mul_mul_conjTranspose_same L
+  have hTadj : T.adjoint = L.transpose.toEuclideanLin.toContinuousLinearMap := by
+    rw [← LinearMap.adjoint_toContinuousLinearMap]
+    congr 1
+    rw [← Matrix.toEuclideanLin_conjTranspose_eq_adjoint,
+      Matrix.conjTranspose_eq_transpose_of_trivial L]
+  rw [covarianceBilin_map IsGaussian.memLp_two_id,
+    covarianceBilin_multivariateGaussian hS,
+    covarianceBilin_multivariateGaussian hLS, hTadj]
+  simp only [LinearMap.coe_toContinuousLinearMap']
+  have h_apply (z : EuclideanSpace ℝ κ) :
+      (L.transpose.toEuclideanLin z).ofLp = Matrix.mulVec L.transpose z.ofLp := by
+    simpa only [Matrix.toLin'_apply] using
+      Matrix.ofLp_toLpLin (p := 2) (q := 2) L.transpose z
+  rw [h_apply, h_apply, ← Matrix.mulVec_mulVec, ← Matrix.mulVec_mulVec]
+  calc
+    L.transpose.mulVec x.ofLp ⬝ᵥ S.mulVec (L.transpose.mulVec y.ofLp) =
+        Matrix.vecMul x.ofLp L ⬝ᵥ S.mulVec (L.transpose.mulVec y.ofLp) := by
+      rw [Matrix.mulVec_transpose]
+    _ = x.ofLp ⬝ᵥ L.mulVec (S.mulVec (L.transpose.mulVec y.ofLp)) :=
+      (Matrix.dotProduct_mulVec x.ofLp L
+        (S.mulVec (L.transpose.mulVec y.ofLp))).symm
+
 /-- The image of a multivariate Gaussian under a rectangular affine map is the multivariate
 Gaussian with the corresponding transformed mean and covariance. -/
 @[simp]
@@ -78,40 +123,6 @@ theorem map_affine_multivariateGaussian (m : EuclideanSpace ℝ ι) {S : Matrix 
           simp only [T, LinearMap.coe_toContinuousLinearMap']
     · fun_prop
     · fun_prop
-  · -- The covariance API states translation with the constant on the left.
-    have h_translate : (fun y : EuclideanSpace ℝ κ => y + c) = fun y => c + y := by
-      funext y
-      exact add_comm y c
-    rw [h_translate]
-    rw [covarianceBilin_map_const_add]
-    ext x y
-    -- Over `ℝ`, conjugate transpose is ordinary transpose; this also proves positivity of the
-    -- transformed covariance without any rank hypothesis on the rectangular matrix.
-    have hLstar : L.conjTranspose = L.transpose := by
-      ext i j
-      simp
-    have hLS : (L * S * L.transpose).PosSemidef := by
-      rw [← hLstar]
-      exact hS.mul_mul_conjTranspose_same L
-    have hTadj : T.adjoint = L.transpose.toEuclideanLin.toContinuousLinearMap := by
-      rw [← LinearMap.adjoint_toContinuousLinearMap]
-      congr 1
-      rw [← Matrix.toEuclideanLin_conjTranspose_eq_adjoint, hLstar]
-    rw [covarianceBilin_map IsGaussian.memLp_two_id,
-      covarianceBilin_multivariateGaussian hS,
-      covarianceBilin_multivariateGaussian hLS, hTadj]
-    simp only [LinearMap.coe_toContinuousLinearMap']
-    have h_apply (z : EuclideanSpace ℝ κ) :
-        (L.transpose.toEuclideanLin z).ofLp = Matrix.mulVec L.transpose z.ofLp := by
-      simpa only [Matrix.toLin'_apply] using
-        Matrix.ofLp_toLpLin (p := 2) (q := 2) L.transpose z
-    rw [h_apply, h_apply, ← Matrix.mulVec_mulVec, ← Matrix.mulVec_mulVec]
-    calc
-      L.transpose.mulVec x.ofLp ⬝ᵥ S.mulVec (L.transpose.mulVec y.ofLp) =
-          Matrix.vecMul x.ofLp L ⬝ᵥ S.mulVec (L.transpose.mulVec y.ofLp) := by
-        rw [Matrix.mulVec_transpose]
-      _ = x.ofLp ⬝ᵥ L.mulVec (S.mulVec (L.transpose.mulVec y.ofLp)) :=
-        (Matrix.dotProduct_mulVec x.ofLp L
-          (S.mulVec (L.transpose.mulVec y.ofLp))).symm
+  · exact covarianceBilin_map_affine_multivariateGaussian m hS L c
 
 end TauCeti

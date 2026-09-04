@@ -35,6 +35,8 @@ recorded once here rather than reconstructed at each use site.
 * `NumberField.algebraMap_smul_eq_apply`: `algebraMap (𝓞 K) K (σ • z) = σ (algebraMap (𝓞 K) K z)`.
 * `NumberField.RingOfIntegers.smulCommClass`: `Gal(F/K)` acting on `𝓞 F` commutes with the
   `𝓞 K`-action.
+* `AlgEquiv.mapAlgEquiv_symm_autCongr_smul`: restriction to rings of integers intertwines
+  conjugation of automorphisms along an algebra equivalence.
 -/
 
 public section
@@ -75,3 +77,21 @@ instance RingOfIntegers.smulCommClass : SMulCommClass (F ≃ₐ[K] F) (𝓞 K) (
       IsScalarTower.algebraMap_apply (𝓞 K) K F, AlgEquiv.commutes]
 
 end NumberField
+
+namespace AlgEquiv
+
+variable {R K L : Type*} [Field R] [Field K] [Field L] [Algebra R K] [Algebra R L]
+
+/-- Restriction to rings of integers intertwines conjugation of automorphisms along an algebra
+equivalence. -/
+theorem mapAlgEquiv_symm_autCongr_smul (e : K ≃ₐ[R] L) (σ : K ≃ₐ[R] K)
+    (x : 𝓞 L) :
+    (NumberField.RingOfIntegers.mapAlgEquiv e).symm (autCongr e σ • x) =
+      σ • (NumberField.RingOfIntegers.mapAlgEquiv e).symm x := by
+  apply NumberField.RingOfIntegers.ext
+  -- `mapAlgEquiv` has no application lemma; after applying extensionality, unfold its restriction
+  -- to the ambient fields, where `autCongr` is visibly conjugation by `e`.
+  change e.symm ((autCongr e σ • x : 𝓞 L) : L) = σ (e.symm (x : L))
+  simp
+
+end AlgEquiv

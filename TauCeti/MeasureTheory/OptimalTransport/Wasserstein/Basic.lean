@@ -65,7 +65,9 @@ what the gluing lemma consumes.
   bounds for changing the basepoint, inside a fixed finite-distance component;
 * `TauCeti.memLp_edist_iff_wassersteinEDist_dirac_ne_top` and
   `TauCeti.memLp_edist_iff_of_edist_ne_top` — the `MemLp` form of the Dirac identity and
-  basepoint independence;
+  basepoint independence, with `TauCeti.hasFiniteMoment_iff_memLp_edist` and
+  `TauCeti.hasFiniteMoment_iff_wassersteinEDist_dirac_ne_top` testing the finite-moment predicate
+  itself at a prescribed basepoint of a pseudometric ground space;
 * `TauCeti.wassersteinEDist_rpow_eq_transportCost` and
   `TauCeti.wassersteinEDist_eq_transportCost_rpow` — for `0 < p < ∞`, the exact bridge to Layer 1's
   transport cost of `edist ^ p`, with `TauCeti.isOptimalCoupling_edist_rpow_iff` identifying the
@@ -75,7 +77,8 @@ what the gluing lemma consumes.
 * `TauCeti.wassersteinEDist_eq_zero_iff` — on a Polish metric space and for a finite nonzero
   exponent, `W_p (μ, ν) = 0` exactly when `μ = ν` if the source measure is finite, with
   `TauCeti.wassersteinEDist_top_eq_zero_iff` giving the endpoint `p = ∞` under the same
-  finiteness hypothesis.
+  finiteness hypothesis and `TauCeti.eq_of_wassersteinEDist_eq_zero` packaging the two into a
+  single statement.
 
 ## Implementation notes
 
@@ -490,6 +493,23 @@ theorem HasFiniteMoment.memLp
   obtain ⟨x₀, hx₀⟩ := h
   exact (memLp_edist_iff_of_edist_ne_top hx₀.1 hd (edist_ne_top x x₀)).1 hx₀
 
+/-- On an ordinary pseudometric space, the finite-moment condition can be tested at any prescribed
+basepoint whose distance section is almost-everywhere strongly measurable. -/
+theorem hasFiniteMoment_iff_memLp_edist {x : X} {ν : Measure X}
+    (hd : AEStronglyMeasurable (fun y ↦ edist x y) ν) [IsFiniteMeasure ν] :
+    HasFiniteMoment p ν ↔ MemLp (fun y ↦ edist x y) p ν :=
+  ⟨fun h ↦ h.memLp hd, fun h ↦ ⟨x, h⟩⟩
+
+/-- On an ordinary pseudometric space, the finite-moment condition is equivalent to finite
+Wasserstein distance from the Dirac law at any prescribed basepoint. -/
+theorem hasFiniteMoment_iff_wassersteinEDist_dirac_ne_top
+    (hd : Measurable fun z : X × X ↦ edist z.1 z.2) (x : X) (ν : Measure X)
+    [IsProbabilityMeasure ν] :
+    HasFiniteMoment p ν ↔ wassersteinEDist p (Measure.dirac x) ν ≠ ∞ :=
+  (hasFiniteMoment_iff_memLp_edist (x := x)
+      (hd.comp (measurable_const.prodMk measurable_id)).aestronglyMeasurable).trans
+    (memLp_edist_iff_wassersteinEDist_dirac_ne_top hd x ν)
+
 end MetricMoment
 
 section Bridge
@@ -686,6 +706,18 @@ theorem wassersteinEDist_top_eq_zero_iff (μ ν : Measure X) [IsFiniteMeasure μ
     _ = m • ν' := congrArg (m • ·) heq
     _ = ν := by
       simp [ν', smul_smul, ENNReal.mul_inv_cancel hm₀ hm_top]
+
+/-- **Separation of measures, uniformly in the exponent.** On a Polish metric space, two finite
+measures at zero `p`-Wasserstein distance are equal, for every nonzero exponent. This packages
+`TauCeti.wassersteinEDist_eq_zero_iff` together with its endpoint
+`TauCeti.wassersteinEDist_top_eq_zero_iff`, so that consumers need not repeat the case split on
+`p = ∞`. -/
+theorem eq_of_wassersteinEDist_eq_zero (hp : p ≠ 0) (μ ν : Measure X) [IsFiniteMeasure μ]
+    (h : wassersteinEDist p μ ν = 0) : μ = ν := by
+  by_cases hp' : p = ∞
+  · subst hp'
+    exact (wassersteinEDist_top_eq_zero_iff _ _).1 h
+  · exact (wassersteinEDist_eq_zero_iff hp hp' _ _).1 h
 
 end Polish
 

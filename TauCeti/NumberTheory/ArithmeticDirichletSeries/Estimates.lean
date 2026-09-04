@@ -8,6 +8,7 @@ module
 public import Mathlib.NumberTheory.LSeries.Convergence
 public import Mathlib.NumberTheory.LSeries.SumCoeff
 public import Mathlib.NumberTheory.NumberField.Ideal.Asymptotics
+public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Regroup
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Trivial
 
 /-!
@@ -75,7 +76,7 @@ public section
 namespace TauCeti
 
 open Filter
-open scoped nonZeroDivisors NumberField Topology
+open scoped nonZeroDivisors NumberField Topology ComplexOrder
 
 variable (K : Type*) [Field K] [NumberField K]
 
@@ -409,6 +410,15 @@ theorem LSeriesSummable_normCoeff_one_iff {s : ℂ} :
         (not_LSeriesSummable_normCoeff_one K)
   · rw [abscissaOfAbsConv_normCoeff_one K]
     exact_mod_cast h
+
+/-- The ideal-indexed Dirichlet series of the trivial ideal weight converges absolutely exactly on
+`Re s > 1`. -/
+theorem summable_idealTerm_one_iff {K : Type*} [Field K] [NumberField K] {s : ℂ} :
+    Summable (idealTerm K (1 : IdealArithmeticFunction K) s) ↔ 1 < s.re := by
+  refine ⟨fun h ↦ (LSeriesSummable_normCoeff_one_iff K).mp (LSeriesSummable_normCoeff K h),
+    fun h ↦ ?_⟩
+  exact summable_idealTerm_of_nonneg K 1 (fun _ ↦ zero_le_one)
+    ((LSeriesSummable_normCoeff_one_iff K).mpr h)
 
 /-- **The Dedekind zeta series has abscissa of absolute convergence `1`.** -/
 @[simp]

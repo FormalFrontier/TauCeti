@@ -159,10 +159,7 @@ theorem finite_selmerGroupA
     (AdjoinRoot.modPowEquivPiFactors W.f_ne_zero W.squarefree_f 2)
 
 /-- Membership of the class of a unit in the `2`-Selmer group of a field factor: its valuation is
-even at every prime of the ring of integers not lying above a bad prime.
-
-Proved through `mem_selmerGroupAbove_iff` rather than by unfolding: `selmerGroupAbove` is not
-`@[expose]`, so its definition is unavailable here, and only its characterising lemma is. -/
+even at every prime of the ring of integers not lying above a bad prime. -/
 @[simp]
 lemma mem_selmerGroupFactor_unit_iff (p : W.f.Factors) (u : (𝕃 p)ˣ) :
     (QuotientGroup.mk u : (𝕃 p)ˣ ⧸ (powMonoidHom 2 : (𝕃 p)ˣ →* (𝕃 p)ˣ).range) ∈
@@ -170,6 +167,8 @@ lemma mem_selmerGroupFactor_unit_iff (p : W.f.Factors) (u : (𝕃 p)ˣ) :
       ∀ w : HeightOneSpectrum (W.ringOfIntegersFactor R p),
         w ∉ HeightOneSpectrum.primesAbove R (W.ringOfIntegersFactor R p) (W.badPrimes R) →
           (2 : ℤ) ∣ Multiplicative.toAdd (w.valuationOfNeZero u) := by
+  -- through `mem_selmerGroupAbove_iff` rather than by unfolding: `selmerGroupAbove` is not
+  -- `@[expose]`, so only its characterising lemma is available here.
   rw [selmerGroupFactor, mem_selmerGroupAbove_iff]
   exact forall₂_congr fun w _ ↦ HeightOneSpectrum.valuationOfNeZeroMod_mk_eq_one_iff w 2 u
 

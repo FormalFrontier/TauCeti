@@ -44,6 +44,25 @@ uniformities are shadowed, so the evaluation the statement is about is never re-
   univariate series viewed in several variables is evaluating it at the matching entry of the
   family — the case of `aeval_subst` at a single variable, which is how a one-variable series
   meets a two-variable evaluation.
+* `MvPowerSeries.hasSubst_pair` : a pair of series with vanishing constant coefficient is a
+  legitimate substitution family for the two variables indexed by `Unit ⊕ Unit`.
+* `MvPowerSeries.coordSpecialize`, `MvPowerSeries.hasSubst_coordSpecialize` and the two
+  `subst_coordSpecialize_X_*` lemmas : the substitution sending one coordinate variable to `X` and
+  every other to `0`, for an index type of any size.
+* `MvPowerSeries.ne_of_subst_eq_X_of_subst_eq_zero` : a substitution sending one series to `X` and
+  another to `0` separates them.
+
+## Separating multivariable parameters
+
+The second group of results above is about *distinguishing* series rather than evaluating them.
+Two series of `MvPowerSeries σ' O` can be told apart by exhibiting a substitution that sends one
+to `X` and the other to `0`, since `X ≠ 0` in a nontrivial coefficient ring; `coordSpecialize i`
+is the substitution that does this for the coordinate variables, specializing `X i` to `X` and
+every other coordinate to `0`. Together they turn a distinctness obligation into a computation
+with `subst`, which is how a multivariable identity proved by comparing parametrized points gets
+its "the parameters are pairwise distinct" hypotheses. `hasSubst_pair` is the companion for the
+two-variable case, packaging the substitutability side condition that every substitution into a
+two-variable series has to discharge.
 
 The two `aeval_subst` results are wanted for the formal group of an elliptic curve over a complete
 local ring, where the group law is a power series over the very ring it is evaluated in: the
@@ -131,6 +150,78 @@ theorem aeval_subst {a : σ → MvPowerSeries τ S} {ε : MvPowerSeries τ S →
       substAlgHom_X, hx]
   simpa only [AlgHom.coe_comp, Function.comp_apply, substAlgHom_apply] using DFunLike.congr_fun
     ((aeval_unique h1).symm.trans (mid.trans (aeval_unique h2'))) f
+
+section HasSubstPair
+
+variable {O : Type*} [CommRing O] {q₁ q₂ : MvPowerSeries σ O}
+
+/-- A pair of series with vanishing constant coefficient is a legitimate substitution family for
+the two variables indexed by `Unit ⊕ Unit`.
+
+This packages the `rintro`-and-`simpa` discharge of `hasSubst_of_constantCoeff_zero`'s hypothesis
+for the two-variable case, which is otherwise repeated at every substitution into a two-variable
+series. -/
+theorem hasSubst_pair (h₁ : constantCoeff q₁ = 0) (h₂ : constantCoeff q₂ = 0) :
+    HasSubst (Sum.elim (fun _ ↦ q₁) (fun _ ↦ q₂) : Unit ⊕ Unit → MvPowerSeries σ O) :=
+  hasSubst_of_constantCoeff_zero (by rintro (j | j) <;> simpa)
+
+end HasSubstPair
+
+section CoordSpecialize
+
+variable {O : Type*} [CommRing O] {σ' : Type*}
+
+/-- The substitution sending the coordinate variable `i` to `X` and every other coordinate to `0`.
+
+Specializing to it separates the coordinate `i` from all the others: with
+`ne_of_subst_eq_X_of_subst_eq_zero`, two series that this substitution sends to `X` and to `0`
+respectively are distinct. -/
+noncomputable def coordSpecialize (i : σ') : σ' → MvPowerSeries Unit O :=
+  -- classical decidability suffices: the definition is noncomputable regardless, so asking the
+  -- caller for `[DecidableEq σ']` would only narrow the API.
+  letI := Classical.decEq σ'
+  fun j ↦ if j = i then PowerSeries.X else 0
+
+/-- The coordinate specialization at `i` is a legitimate substitution family, for an index type of
+any size: every image is `X` or `0`, so every constant coefficient vanishes, and the coordinates
+carrying a given coefficient all lie in the singleton `{i}`. -/
+theorem hasSubst_coordSpecialize (i : σ') : HasSubst (coordSpecialize (O := O) i) where
+  const_coeff j := by
+    have h : constantCoeff (coordSpecialize (O := O) i j) = 0 := by
+      unfold coordSpecialize
+      split
+      · exact PowerSeries.constantCoeff_X
+      · exact map_zero _
+    rw [h]
+    exact IsNilpotent.zero
+  -- `Finite σ'` would give this immediately, but it is not needed: the family is `0` away from
+  -- `i`, so the coordinates carrying a nonzero coefficient sit inside the singleton `{i}`.
+  coeff_zero d := Set.Finite.subset (Set.finite_singleton i) fun j hj ↦ by
+    simp only [Set.mem_singleton_iff]
+    by_contra hne
+    exact hj (by simp [coordSpecialize, hne])
+
+/-- The specialization at `i` sends the `i`-th coordinate to `X`. -/
+@[simp]
+theorem subst_coordSpecialize_X_self (i : σ') :
+    subst (coordSpecialize (O := O) i) (X i : MvPowerSeries σ' O) = PowerSeries.X := by
+  simp [subst_X (hasSubst_coordSpecialize i), coordSpecialize]
+
+/-- The specialization at `i` kills every other coordinate. -/
+@[simp]
+theorem subst_coordSpecialize_X_of_ne {i j : σ'} (h : j ≠ i) :
+    subst (coordSpecialize (O := O) i) (X j : MvPowerSeries σ' O) = 0 := by
+  simp [subst_X (hasSubst_coordSpecialize i), coordSpecialize, h]
+
+end CoordSpecialize
+
+/-- A substitution that sends one series to `X` and another to `0` separates them: it is how a
+distinctness hypothesis is discharged by specializing one coordinate to `X` and the rest to
+`0`. -/
+theorem ne_of_subst_eq_X_of_subst_eq_zero {O : Type*} [CommRing O] [Nontrivial O] {σ' : Type*}
+    {g : σ' → MvPowerSeries Unit O} {a b : MvPowerSeries σ' O}
+    (ha : subst g a = PowerSeries.X) (hb : subst g b = 0) : a ≠ b := fun hab ↦
+  PowerSeries.X_ne_zero (by rw [← ha, hab]; exact hb)
 
 end MvPowerSeries
 

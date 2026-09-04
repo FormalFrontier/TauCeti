@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.RepresentationTheory.ClassicalGroups.BrauerGenerators.Basic
+public import TauCeti.LinearAlgebra.PiTensorProduct.TwoStrand
 public import TauCeti.RepresentationTheory.ClassicalGroups.Symplectic
 public import TauCeti.RepresentationTheory.Symmetric.TensorAction.Basic
 public import TauCeti.RepresentationTheory.Tensor.Power
@@ -76,9 +76,12 @@ The index set is `Fin n ⊕ Fin n` rather than a general `l ⊕ l`, even though 
 `TauCeti.stdSymplecticBilinForm` and the standard representation `TauCeti.stdSymplecticRep` that
 this file consumes are pinned at `Fin n`.
 
-The bookkeeping for pure tensors on two strands that this file shares with the orthogonal one --
-`TauCeti.sum_pi_fin_two` and `TauCeti.tprod_fin_two` -- carries no symplectic content and lives in
-`TauCeti.RepresentationTheory.ClassicalGroups.BrauerGenerators.Basic`.
+The bookkeeping for pure tensors on two strands carries no symplectic content and lives in
+`TauCeti.LinearAlgebra.PiTensorProduct.TwoStrand`. This file consumes one lemma from there,
+`Matrix.piTensorProductMap_bivector`, which pushes a whole bivector through the tensor square; the
+orthogonal file consumes the pointwise `Matrix.piTensorProductMap_tprod_single` together with
+`TauCeti.tprod_fin_two`, and `TauCeti.sum_pi_fin_two` supports
+`Matrix.piTensorProductMap_tprod_single` from inside that module.
 
 ## Main definitions
 
@@ -405,85 +408,6 @@ theorem symplecticCap_comp_piTensorProductMap
     stdSymplecticBilinForm_apply]
   rw [Matrix.mulVec_mulVec, Matrix.dotProduct_mulVec, ← Matrix.vecMul_transpose,
     Matrix.vecMul_vecMul, ← Matrix.mul_assoc, hA, ← Matrix.dotProduct_mulVec]
-
-/-- Two nested double sums may be exchanged as a whole. -/
-private theorem sum_comm_four {ι M : Type*} [Fintype ι] [AddCommMonoid M]
-    (F : ι → ι → ι → ι → M) :
-    ∑ x : ι, ∑ y : ι, ∑ p : ι, ∑ q : ι, F x y p q
-      = ∑ p : ι, ∑ q : ι, ∑ x : ι, ∑ y : ι, F x y p q :=
-  calc ∑ x : ι, ∑ y : ι, ∑ p : ι, ∑ q : ι, F x y p q
-      = ∑ x : ι, ∑ p : ι, ∑ y : ι, ∑ q : ι, F x y p q :=
-        Finset.sum_congr rfl fun _ _ => Finset.sum_comm
-    _ = ∑ p : ι, ∑ x : ι, ∑ y : ι, ∑ q : ι, F x y p q := Finset.sum_comm
-    _ = ∑ p : ι, ∑ x : ι, ∑ q : ι, ∑ y : ι, F x y p q :=
-        Finset.sum_congr rfl fun _ _ => Finset.sum_congr rfl fun _ _ => Finset.sum_comm
-    _ = ∑ p : ι, ∑ q : ι, ∑ x : ι, ∑ y : ι, F x y p q :=
-        Finset.sum_congr rfl fun _ _ => Finset.sum_comm
-
-/-- Applying a matrix in both tensor factors turns the bivector of `K` into the bivector of the
-congruate `A * K * Aᵀ`. This is the computation behind the invariance of the cup. -/
-private theorem piTensorProductMap_bivector
-    (A K : Matrix (Fin n ⊕ Fin n) (Fin n ⊕ Fin n) k) :
-    PiTensorProduct.map (fun _ : Fin 2 => Matrix.mulVecLin A)
-        (∑ x : Fin n ⊕ Fin n, ∑ y : Fin n ⊕ Fin n, K x y •
-          PiTensorProduct.tprod k ![Pi.single x (1 : k), Pi.single y (1 : k)]) =
-      ∑ p : Fin n ⊕ Fin n, ∑ q : Fin n ⊕ Fin n, (A * K * Aᵀ) p q •
-        PiTensorProduct.tprod k ![Pi.single p (1 : k), Pi.single q (1 : k)] := by
-  have hcol : ∀ x : Fin n ⊕ Fin n,
-      A *ᵥ Pi.single x (1 : k) = ∑ p : Fin n ⊕ Fin n, A p x • Pi.single p (1 : k) := by
-    intro x
-    rw [Matrix.mulVec_single_one, ← (Pi.basisFun k (Fin n ⊕ Fin n)).sum_repr (A.col x)]
-    simp [Matrix.col_apply]
-  -- Expand both slots in the standard basis and collect the coefficients.
-  have hstep : ∀ x y : Fin n ⊕ Fin n,
-      PiTensorProduct.map (fun _ : Fin 2 => Matrix.mulVecLin A)
-          (PiTensorProduct.tprod k ![Pi.single x (1 : k), Pi.single y (1 : k)]) =
-        ∑ p : Fin n ⊕ Fin n, ∑ q : Fin n ⊕ Fin n, (A p x * A q y) •
-          PiTensorProduct.tprod k ![Pi.single p (1 : k), Pi.single q (1 : k)] := by
-    intro x y
-    have hfun : (fun i : Fin 2 =>
-        Matrix.mulVecLin A (![Pi.single x (1 : k), Pi.single y (1 : k)] i)) =
-        fun i : Fin 2 => ∑ p : Fin n ⊕ Fin n, A p (![x, y] i) • Pi.single p (1 : k) := by
-      funext i
-      fin_cases i <;> simp [hcol]
-    rw [PiTensorProduct.map_tprod, hfun,
-      MultilinearMap.map_sum (PiTensorProduct.tprod k)
-        (g := fun i : Fin 2 => fun p : Fin n ⊕ Fin n =>
-          A p (![x, y] i) • Pi.single p (1 : k)),
-      ← sum_pi_fin_two fun p q => (A p x * A q y) •
-        PiTensorProduct.tprod k ![Pi.single p (1 : k), Pi.single q (1 : k)]]
-    refine Finset.sum_congr rfl fun r _ => ?_
-    have hr : PiTensorProduct.tprod k (fun i : Fin 2 => Pi.single (r i) (1 : k))
-        = PiTensorProduct.tprod k ![Pi.single (r 0) (1 : k), Pi.single (r 1) (1 : k)] :=
-      tprod_fin_two _
-    rw [MultilinearMap.map_smul_univ, hr, Fin.prod_univ_two]
-    simp
-  have hcoef : ∀ p q : Fin n ⊕ Fin n,
-      ∑ x : Fin n ⊕ Fin n, ∑ y : Fin n ⊕ Fin n, K x y * (A p x * A q y) = (A * K * Aᵀ) p q := by
-    intro p q
-    rw [Matrix.mul_apply, Finset.sum_comm]
-    refine Finset.sum_congr rfl fun y _ => ?_
-    rw [Matrix.mul_apply, Finset.sum_mul]
-    refine Finset.sum_congr rfl fun x _ => ?_
-    simp only [Matrix.transpose_apply]
-    ring
-  calc
-    PiTensorProduct.map (fun _ : Fin 2 => Matrix.mulVecLin A)
-        (∑ x : Fin n ⊕ Fin n, ∑ y : Fin n ⊕ Fin n, K x y •
-          PiTensorProduct.tprod k ![Pi.single x (1 : k), Pi.single y (1 : k)])
-        = ∑ x : Fin n ⊕ Fin n, ∑ y : Fin n ⊕ Fin n, ∑ p : Fin n ⊕ Fin n, ∑ q : Fin n ⊕ Fin n,
-            (K x y * (A p x * A q y)) •
-              PiTensorProduct.tprod k ![Pi.single p (1 : k), Pi.single q (1 : k)] := by
-          simp only [map_sum, map_smul, hstep, Finset.smul_sum, smul_smul]
-    _ = ∑ p : Fin n ⊕ Fin n, ∑ q : Fin n ⊕ Fin n, ∑ x : Fin n ⊕ Fin n, ∑ y : Fin n ⊕ Fin n,
-          (K x y * (A p x * A q y)) •
-            PiTensorProduct.tprod k ![Pi.single p (1 : k), Pi.single q (1 : k)] :=
-          sum_comm_four _
-    _ = ∑ p : Fin n ⊕ Fin n, ∑ q : Fin n ⊕ Fin n, (A * K * Aᵀ) p q •
-          PiTensorProduct.tprod k ![Pi.single p (1 : k), Pi.single q (1 : k)] := by
-          refine Finset.sum_congr rfl fun p _ => Finset.sum_congr rfl fun q _ => ?_
-          simp only [← Finset.sum_smul]
-          rw [hcoef p q]
 
 /-- **The cup is invariant** under every matrix `A` with `A * J * Aᵀ = J`. This is the other
 one-sided identity: the cap consumes `Aᵀ * J * A = J` and the cup consumes `A * J * Aᵀ = J`. -/

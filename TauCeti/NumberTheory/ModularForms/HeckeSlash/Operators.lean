@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.GroupWithZero.Divisibility
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Prime
 
 /-!
@@ -143,18 +144,18 @@ theorem coe_heckeTCuspNat_prime (hp : p.Prime)
 operator modern sources denote by `U_p`. -/
 theorem heckeTNat_eq_upperTri (hpN : p ∣ N) :
     heckeTNat (N := N) k p
-      (_hn := ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩) =
+      (_hn := NeZero.of_dvd hpN) =
       heckeSlashUpperTriModularFormEnd k hpN := by
-  let _ : NeZero p := ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩
+  let _ : NeZero p := NeZero.of_dvd hpN
   rw [heckeTNat_def, heckeSlashGamma1ModularFormEnd_diagCosetGamma1 k hpN]
 
 /-- At a positive index dividing the level, the cusp-form `T_p` is the upper-triangular
 operator. -/
 theorem heckeTCuspNat_eq_upperTri (hpN : p ∣ N) :
     heckeTCuspNat (N := N) k p
-      (_hn := ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩) =
+      (_hn := NeZero.of_dvd hpN) =
       heckeSlashUpperTriCuspFormEnd k hpN := by
-  let _ : NeZero p := ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩
+  let _ : NeZero p := NeZero.of_dvd hpN
   rw [heckeTCuspNat_def, heckeSlashGamma1CuspFormEnd_diagCosetGamma1 k hpN]
 
 /-- The first Hecke operator on modular forms is the identity. -/

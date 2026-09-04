@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.RepresentationTheory.ClassicalGroups.BrauerGenerators.Basic
+public import TauCeti.LinearAlgebra.PiTensorProduct.TwoStrand
 public import TauCeti.RepresentationTheory.ClassicalGroups.Orthogonal
 public import TauCeti.RepresentationTheory.Symmetric.TensorAction.Basic
 public import TauCeti.RepresentationTheory.Tensor.Power
@@ -257,38 +257,27 @@ theorem piTensorProductMap_comp_orthogonalCup {A : Matrix (Fin n) (Fin n) k} (hA
     PiTensorProduct.map (fun _ : Fin 2 => Matrix.mulVecLin A) ∘ₗ orthogonalCup k n =
       orthogonalCup k n := by
   refine LinearMap.ext_ring ?_
-  simp only [LinearMap.coe_comp, Function.comp_apply, orthogonalCup_apply_one, map_sum,
-    PiTensorProduct.map_tprod, Matrix.mulVecLin_apply]
+  simp only [LinearMap.coe_comp, Function.comp_apply, orthogonalCup_apply_one, map_sum]
   -- Expand each column of `A` in the standard basis and collect the coefficients.
   calc
-    ∑ j : Fin n, PiTensorProduct.tprod k (fun _ : Fin 2 => A *ᵥ Pi.single j (1 : k))
-        = ∑ j : Fin n, ∑ r : Fin 2 → Fin n,
-            (∏ i : Fin 2, A (r i) j) •
-              PiTensorProduct.tprod k fun i : Fin 2 => Pi.single (r i) (1 : k) := by
+    ∑ j : Fin n, PiTensorProduct.map (fun _ : Fin 2 => Matrix.mulVecLin A)
+        (PiTensorProduct.tprod k fun _ : Fin 2 => Pi.single j (1 : k))
+        = ∑ j : Fin n, ∑ p : Fin n, ∑ q : Fin n, (A p j * A q j) •
+            PiTensorProduct.tprod k ![Pi.single p (1 : k), Pi.single q (1 : k)] := by
           refine Finset.sum_congr rfl fun j _ => ?_
-          have hcol : A *ᵥ Pi.single j (1 : k) = ∑ p : Fin n, A p j • Pi.single p (1 : k) := by
-            rw [Matrix.mulVec_single_one, ← (Pi.basisFun k (Fin n)).sum_repr (A.col j)]
-            simp [Matrix.col_apply]
-          simp_rw [hcol]
-          rw [MultilinearMap.map_sum (PiTensorProduct.tprod k)
-            (g := fun _ : Fin 2 => fun p : Fin n => A p j • Pi.single p (1 : k))]
-          exact Finset.sum_congr rfl fun r _ => MultilinearMap.map_smul_univ _ _ _
-    _ = ∑ r : Fin 2 → Fin n,
-          ((1 : Matrix (Fin n) (Fin n) k) (r 0) (r 1)) •
-            PiTensorProduct.tprod k fun i : Fin 2 => Pi.single (r i) (1 : k) := by
-          rw [Finset.sum_comm]
-          refine Finset.sum_congr rfl fun r _ => ?_
-          rw [← Finset.sum_smul, ← hA]
-          congr 1
-          simp [Matrix.mul_apply, Fin.prod_univ_two]
+          rw [tprod_fin_two, Matrix.piTensorProductMap_tprod_single]
     _ = ∑ p : Fin n, ∑ q : Fin n,
           ((1 : Matrix (Fin n) (Fin n) k) p q) •
             PiTensorProduct.tprod k ![Pi.single p (1 : k), Pi.single q (1 : k)] := by
-          rw [← sum_pi_fin_two fun p q => ((1 : Matrix (Fin n) (Fin n) k) p q) •
-            PiTensorProduct.tprod k ![Pi.single p (1 : k), Pi.single q (1 : k)]]
-          exact Finset.sum_congr rfl fun r _ =>
-            congrArg (fun t : ⨂[k]^2 (Fin n → k) =>
-              ((1 : Matrix (Fin n) (Fin n) k) (r 0) (r 1)) • t) (tprod_fin_two _)
+          rw [Finset.sum_comm]
+          refine Finset.sum_congr rfl fun p _ => ?_
+          rw [Finset.sum_comm]
+          refine Finset.sum_congr rfl fun q _ => ?_
+          -- `A * Aᵀ = 1` says exactly that row `p` dotted with row `q` is the identity entry
+          have hrow : ∑ j : Fin n, A p j * A q j = (1 : Matrix (Fin n) (Fin n) k) p q := by
+            rw [← hA]
+            simp [Matrix.mul_apply, Matrix.transpose_apply]
+          rw [← Finset.sum_smul, hrow]
     _ = ∑ j : Fin n, PiTensorProduct.tprod k fun _ : Fin 2 => Pi.single j (1 : k) := by
           refine Finset.sum_congr rfl fun p _ => ?_
           rw [Finset.sum_eq_single p]

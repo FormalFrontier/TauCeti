@@ -9,7 +9,7 @@ public import TauCeti.Analysis.Complex.Conformal.RiemannMapping.Conformal
 import Mathlib.Analysis.Complex.Liouville
 import Mathlib.Analysis.Normed.Module.Ball.Homeomorph
 import TauCeti.Analysis.Complex.Conformal.UnitDisc.Automorphism.Group
-import TauCeti.Analysis.Complex.Conformal.InverseFunction
+import TauCeti.Analysis.Complex.Conformal.Inverse.Function
 
 /-!
 # Conformal equivalence of simply connected domains

@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.Orthogonal.TypeD.RootGenerators
-public import TauCeti.RepresentationTheory.Spin.Polarization.SplitEven
+public import TauCeti.RepresentationTheory.Spin.Polarization.Split.Even
 public import TauCeti.RepresentationTheory.Spin.Polarization.TypeD.KostantLattice
 public import
   TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Points

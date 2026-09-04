@@ -548,8 +548,9 @@ theorem isProConstructible_val_preimage_setOfPred_forall_vle_one (I : Ideal A)
     ext w
     simp [hsingle]
   rw [h]
-  exact IsProConstructible.biInter fun a _ ↦ IsCompact.isProConstructible
-    (isCompact_of_mem_rationalFamily I hfg ⟨{a, 1}, 1, isAdmissible_of_one_mem (by simp), rfl⟩)
-    ((isOpen_basicOpenFinset _ _).preimage continuous_subtype_val)
+  exact IsProConstructible.biInter fun a _ ↦
+    (isCompact_of_mem_rationalFamily I hfg
+      ⟨{a, 1}, 1, isAdmissible_of_one_mem (by simp), rfl⟩).isProConstructible
+      ((isOpen_basicOpenFinset _ _).preimage continuous_subtype_val)
 
 end TauCeti.ValuationSpectrum

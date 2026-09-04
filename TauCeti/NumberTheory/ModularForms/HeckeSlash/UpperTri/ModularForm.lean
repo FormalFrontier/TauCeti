@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+import TauCeti.Algebra.GroupWithZero.Divisibility
 import TauCeti.NumberTheory.ModularForms.HeckeSlash.UpperTri.Holomorphic
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.UpperTri.Cusps
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.UpperTri.Invariance
@@ -90,7 +91,7 @@ private noncomputable def heckeSlashUpperTriModularForm (hpN : p ∣ N)
   toFun := heckeSlashUpperTri k p f
   slash_action_eq' γ hγ := by
     obtain ⟨δ, hδ, rfl⟩ := Subgroup.mem_map.mp hγ
-    let _ : NeZero p := ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩
+    let _ : NeZero p := NeZero.of_dvd hpN
     rw [← ModularForm.rat_slash_mapGL]
     exact heckeSlashUpperTri_slash_mapGL_of_mem_Gamma1 k hpN hδ
       fun _ hε ↦ rat_slash_eq_of_mem_Gamma1 k f hε

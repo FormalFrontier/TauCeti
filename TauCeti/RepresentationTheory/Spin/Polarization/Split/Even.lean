@@ -32,9 +32,6 @@ directly into the spin representation and Kostant-lattice constructions.
 
 * C. Chevalley, *The Algebraic Theory of Spinors*, Chapter II.
 * N. Bourbaki, *Groupes et algèbres de Lie*, Chapters 4--6, Plate IV.
-
-This is the concrete split-polarization input for the full-weight type-`D` spin carrier in
-Layer 9, "The Chevalley--Demazure construction", of the ReductiveGroups roadmap.
 -/
 
 public section

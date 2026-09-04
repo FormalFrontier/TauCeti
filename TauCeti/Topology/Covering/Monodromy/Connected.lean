@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Topology.Covering.Monodromy.Full
 public import TauCeti.Topology.Homotopy.Monodromy.Basic
+public import TauCeti.Topology.IsLocalHomeomorph
 
 /-!
 # Monodromy of connected covering spaces
@@ -124,33 +125,6 @@ namespace ConnectedCoveringSpace
 
 variable {X : TopCat.{u}}
 
-/-- A local homeomorphism with locally path-connected codomain has locally path-connected
-domain. This local form passes local path-connectedness from the base to the total space of a
-covering. -/
-private theorem locallyPathConnectedSpace_of_isLocalHomeomorph
-    {E B : Type u} [TopologicalSpace E] [TopologicalSpace B]
-    [LocallyPathConnectedSpace B] {p : E → B} (hp : IsLocalHomeomorph p) :
-    LocallyPathConnectedSpace E := by
-  constructor
-  intro e
-  rw [Filter.hasBasis_self]
-  intro U hU
-  obtain ⟨W, hWU, hWopen, heW⟩ := mem_nhds_iff.mp hU
-  let φ := hp.localInverseAt e
-  have hpe_source : p e ∈ φ.source := hp.apply_self_mem_localInverseAt_source
-  have hsource : IsOpen (φ.source ∩ φ ⁻¹' W) :=
-    φ.continuousOn_toFun.isOpen_inter_preimage φ.open_source hWopen
-  have hpe : p e ∈ φ.source ∩ φ ⁻¹' W := by
-    refine ⟨hpe_source, ?_⟩
-    simpa only [Set.mem_preimage, φ, hp.localInverseAt_apply_self] using heW
-  obtain ⟨V, ⟨hVopen, hpeV, hVpath⟩, hVsub⟩ :=
-    (isOpen_isPathConnected_basis (p e)).mem_iff.mp (hsource.mem_nhds hpe)
-  refine ⟨φ '' V, ?_, hVpath.image' (φ.continuousOn_toFun.mono fun _ hv => (hVsub hv).1), ?_⟩
-  · exact (φ.isOpen_image_of_subset_source hVopen
-      (hVsub.trans Set.inter_subset_left)).mem_nhds ⟨p e, hpeV, by simp [φ]⟩
-  · rintro z ⟨y, hyV, rfl⟩
-    exact hWU (hVsub hyV).2
-
 /-- The ordinary monodromy functor of a connected cover is pretransitive on every fibre. -/
 theorem monodromy_isFiberwisePretransitive [LocallyPathConnectedSpace X]
     (p : ConnectedCoveringSpace X) :
@@ -161,7 +135,7 @@ theorem monodromy_isFiberwisePretransitive [LocallyPathConnectedSpace X]
   intro x e e'
   rcases x with ⟨x⟩
   let _ : LocallyPathConnectedSpace (p : TopCat) :=
-    locallyPathConnectedSpace_of_isLocalHomeomorph p.isCoveringMap_proj.isLocalHomeomorph
+    p.isCoveringMap_proj.isLocalHomeomorph.locallyPathConnectedSpace
   let _ : PathConnectedSpace (p : TopCat) := PathConnectedSpace.of_locallyPathConnectedSpace
   exact IsCoveringMap.exists_monodromy_eq p.isCoveringMap_proj e e'
 
@@ -176,7 +150,7 @@ theorem isPretransitive_fiberAction [LocallyPathConnectedSpace X] (p : Connected
     letI := p.isCoveringMap_proj.fundamentalGroupMulAction x₀
     MulAction.IsPretransitive (FundamentalGroup X x₀) (⇑p.proj ⁻¹' {x₀}) := by
   let _ : LocallyPathConnectedSpace (p : TopCat) :=
-    locallyPathConnectedSpace_of_isLocalHomeomorph p.isCoveringMap_proj.isLocalHomeomorph
+    p.isCoveringMap_proj.isLocalHomeomorph.locallyPathConnectedSpace
   let _ : PathConnectedSpace (p : TopCat) := PathConnectedSpace.of_locallyPathConnectedSpace
   exact IsCoveringMap.monodromy_isPretransitive p.isCoveringMap_proj x₀
 
