@@ -48,9 +48,7 @@ variable {V W : Type*} [Fintype V] [Fintype W]
 
 /-- The homomorphism density and the injective homomorphism density differ by at most
 `C(k,2) / n`, where `k` is the number of vertices of the pattern and `n` the number of
-vertices of the host, for every finite pattern and host graph. This formalizes the corresponding
-declaration `homDensityFin_sub_injHomDensity_le` in
-`TauCetiRoadmap/DenseGraphLimits/Suggested.lean`.
+vertices of the host, for every finite pattern and host graph.
 -/
 theorem homDensityFin_sub_injHomDensity_le (F : SimpleGraph V) (G : SimpleGraph W) :
     |homDensityFin F G - injHomDensity F G|
