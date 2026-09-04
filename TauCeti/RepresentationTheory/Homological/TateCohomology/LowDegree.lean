@@ -13,8 +13,9 @@ public import Mathlib.RepresentationTheory.Homological.TateCohomology.Basic
 
 This file gives the two low-degree descriptions used by the Nakayama map. For a representation
 `M` of a finite group, degree zero is the quotient of the invariant submodule by the image of the
-norm. For the trivial integral representation, the comparison with first group homology
-identifies degree `-2` with the additive form of the abelianization.
+norm. For a trivial integral representation `A`, the comparison with first group homology
+identifies degree `-2` with `Gᵃᵇ ⊗[ℤ] A`, and hence, for `A = ℤ`, with the additive form of the
+abelianization.
 
 The degree-zero construction is adapted from
 `ClassFieldTheory/Cohomology/TateCohomology.lean` in `kbuzzard/ClassFieldTheory`, commit
@@ -24,8 +25,11 @@ right unitor.
 
 ## Main definitions
 
-* `TauCeti.TateCohomology.tateHZeroEquivNormQuotient`: `Ĥ⁰(G, M) ≅ Mᴳ / N_G M`.
-* `TauCeti.TateCohomology.tateHMinusTwoEquivAbelianization`:
+* `TauCeti.TateCohomology.H0IsoNormQuotient`: `Ĥ⁰(G, M) ≅ Mᴳ / N_G M`.
+* `TauCeti.TateCohomology.HNegTwoIsoH1`: `Ĥ⁻²(G, M) ≅ H₁(G, M)`.
+* `TauCeti.TateCohomology.HNegTwoAddEquivTensorOfIsTrivial`:
+  `Ĥ⁻²(G, A) ≃+ Gᵃᵇ ⊗[ℤ] A` for a trivial `A : Rep ℤ G`.
+* `TauCeti.TateCohomology.HNegTwoAddEquivAbelianization`:
   `Ĥ⁻²(G, ℤ) ≃+ Additive (Gᵃᵇ)`.
 
 ## References
@@ -34,11 +38,12 @@ right unitor.
 * K. S. Brown, *Cohomology of Groups*, Chapter VI, §5.
 -/
 
-@[expose] public noncomputable section
+public noncomputable section
 
 universe u
 
 open CategoryTheory Limits groupCohomology groupHomology LinearMap Rep
+open scoped TensorProduct
 
 namespace TauCeti.TateCohomology
 
@@ -49,13 +54,11 @@ namespace Zero
 variable (M : Rep R G)
 
 /-- The concrete short complex whose homology is degree-zero Tate cohomology. -/
-@[simps]
-def shortComplex : ShortComplex (ModuleCat R) :=
+private def shortComplex : ShortComplex (ModuleCat R) :=
   .mk M.norm.toModuleCatHom (d₀₁ M) (norm_comp_d_eq_zero M)
 
 /-- The degree-zero part of the Tate complex is the norm-to-coboundary short complex. -/
-@[simps!]
-def isoShortComplex : (tateComplex M).sc 0 ≅ shortComplex M := by
+private def isoShortComplex : (tateComplex M).sc 0 ≅ shortComplex M := by
   have hnorm :
       (chainsIso₀ M).hom ≫ M.norm.toModuleCatHom = M.tateNorm ≫ (cochainsIso₀ M).hom := by
     simp only [Rep.tateNorm, Category.assoc, Iso.inv_hom_id, Category.comp_id]
@@ -67,7 +70,7 @@ end Zero
 
 /-- Degree-zero Tate cohomology is the quotient of the invariant submodule by the image of the
 norm. -/
-def tateHZeroEquivNormQuotient (M : Rep R G) :
+def H0IsoNormQuotient (M : Rep R G) :
     tateCohomology M 0 ≅
       ModuleCat.of R (M.ρ.invariants ⧸ (range M.ρ.norm).submoduleOf M.ρ.invariants) := calc
   tateCohomology M 0
@@ -85,41 +88,52 @@ def tateHZeroEquivNormQuotient (M : Rep R G) :
     · rintro ⟨y, rfl⟩
       exact ⟨⟨M.norm.hom y, norm_comp_d_eq_zero_apply _ y⟩, ⟨_, rfl⟩, rfl⟩
 
-variable {G : Type} [Group G] [Fintype G]
+/-- In degree `-2`, Tate cohomology agrees with first group homology. This is the degree-`-2`
+component of Mathlib's comparison `TateCohomology.isoGroupHomology`, named so that composites with
+it, and the lemmas identifying their values, can be stated at the type `groupHomology.H1 M`. -/
+def HNegTwoIsoH1 (M : Rep R G) : tateCohomology M (-2) ≅ groupHomology.H1 M :=
+  (TateCohomology.isoGroupHomology (-2) 1 (by omega)).app M
 
-/-- In degree `-2`, Mathlib's comparison between Tate cohomology and group homology specializes to
-an isomorphism with first group homology. -/
-def negTwoIsoGroupHomology :
-    tateCohomology (Rep.trivial ℤ G ℤ) (-2) ≅
-      groupHomology (Rep.trivial ℤ G ℤ) 1 :=
-  (TateCohomology.isoGroupHomology (-2) 1 (by omega)).app (Rep.trivial ℤ G ℤ)
+variable {G : Type} [Group G] [Fintype G] (A : Rep ℤ G) [A.IsTrivial]
+
+/-- For a trivial representation `A` over `ℤ`, degree-`-2` Tate cohomology is the tensor product of
+the additive abelianization of the group with `A`. -/
+def HNegTwoAddEquivTensorOfIsTrivial :
+    tateCohomology A (-2) ≃+ (Additive <| Abelianization G) ⊗[ℤ] A :=
+  (HNegTwoIsoH1 A).toLinearEquiv.toAddEquiv.trans (H1AddEquivOfIsTrivial A)
+
+/-- The degree-`-2` identification sends the homology class represented by `(g, a)` to the
+elementary tensor `⟦g⟧ ⊗ₜ a`. -/
+@[simp]
+theorem HNegTwoAddEquivTensorOfIsTrivial_apply_HNegTwoIsoH1_inv (g : G) (a : A) :
+    HNegTwoAddEquivTensorOfIsTrivial A
+      ((HNegTwoIsoH1 A).inv (H1π A ((cycles₁IsoOfIsTrivial A).inv (Finsupp.single g a)))) =
+      Additive.ofMul (Abelianization.of g) ⊗ₜ[ℤ] a := by
+  have hx : (HNegTwoIsoH1 A).toLinearEquiv.toAddEquiv
+      ((HNegTwoIsoH1 A).inv (H1π A ((cycles₁IsoOfIsTrivial A).inv (Finsupp.single g a)))) =
+      H1π A ((cycles₁IsoOfIsTrivial A).inv (Finsupp.single g a)) :=
+    (HNegTwoIsoH1 A).inv_hom_id_apply _
+  simp only [HNegTwoAddEquivTensorOfIsTrivial, AddEquiv.trans_apply]
+  rw [hx, H1AddEquivOfIsTrivial_single]
 
 /-- The degree-`-2` Tate cohomology of the trivial integral representation is the additive
 abelianization of the group. -/
-def tateHMinusTwoEquivAbelianization :
+def HNegTwoAddEquivAbelianization :
     tateCohomology (Rep.trivial ℤ G ℤ) (-2) ≃+ Additive (Abelianization G) :=
-  ((negTwoIsoGroupHomology (G := G)).toLinearEquiv.toAddEquiv.trans
-    (groupHomology.H1AddEquivOfIsTrivial (Rep.trivial ℤ G ℤ))).trans
+  (HNegTwoAddEquivTensorOfIsTrivial (Rep.trivial ℤ G ℤ)).trans
     (TensorProduct.rid ℤ (Additive (Abelianization G))).toAddEquiv
 
 /-- The degree-`-2` identification sends the homology class represented by `(g, 1)` to the class
 of `g` in the additive abelianization. -/
 @[simp]
-theorem tateHMinusTwoEquivAbelianization_apply_negTwoIsoGroupHomology_inv (g : G) :
-    tateHMinusTwoEquivAbelianization
-      ((negTwoIsoGroupHomology (G := G)).inv
-        (groupHomology.H1π (Rep.trivial ℤ G ℤ)
-          ((groupHomology.cycles₁IsoOfIsTrivial (Rep.trivial ℤ G ℤ)).inv
-            (Finsupp.single g 1)))) =
+theorem HNegTwoAddEquivAbelianization_apply_HNegTwoIsoH1_inv (g : G) :
+    HNegTwoAddEquivAbelianization
+      ((HNegTwoIsoH1 (Rep.trivial ℤ G ℤ)).inv
+        (H1π (Rep.trivial ℤ G ℤ)
+          ((cycles₁IsoOfIsTrivial (Rep.trivial ℤ G ℤ)).inv (Finsupp.single g 1)))) =
       Additive.ofMul (Abelianization.of g) := by
-  let x := groupHomology.H1π (Rep.trivial ℤ G ℤ)
-    ((groupHomology.cycles₁IsoOfIsTrivial (Rep.trivial ℤ G ℤ)).inv (Finsupp.single g 1))
-  have hx : (negTwoIsoGroupHomology (G := G)).toLinearEquiv.toAddEquiv
-      ((negTwoIsoGroupHomology (G := G)).inv x) = x :=
-    (negTwoIsoGroupHomology (G := G)).inv_hom_id_apply x
-  simp only [tateHMinusTwoEquivAbelianization, AddEquiv.trans_apply]
-  rw [hx]
-  rw [groupHomology.H1AddEquivOfIsTrivial_single]
+  simp only [HNegTwoAddEquivAbelianization, AddEquiv.trans_apply]
+  rw [HNegTwoAddEquivTensorOfIsTrivial_apply_HNegTwoIsoH1_inv]
   simp
 
 end TauCeti.TateCohomology
