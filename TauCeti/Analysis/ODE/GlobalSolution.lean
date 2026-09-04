@@ -10,7 +10,6 @@ public import Mathlib.Analysis.ODE.ExistUnique
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 public import Mathlib.Topology.ContinuousMap.Bounded.Normed
-public import Mathlib.Topology.MetricSpace.Contracting
 
 /-!
 # The global solution of a globally Lipschitz autonomous ODE
