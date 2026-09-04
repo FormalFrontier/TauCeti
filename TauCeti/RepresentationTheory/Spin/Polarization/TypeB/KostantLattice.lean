@@ -116,6 +116,79 @@ theorem typeBSpinRep_simpleRootGenerator_sq (k : Fin (n + 1) ⊕ Fin (n + 1)) :
       rw [typeBSimpleRootGeneratorFamily_inr, ← pow_two,
         P.typeBQuadraticEquiv_typeBSimpleNegativeRootGenerator_mul_self b z hz i, map_zero]
 
+/-- A nonterminal positive simple-root operator moves the next exterior singleton one coordinate
+to the left. -/
+theorem typeBSpinRep_simpleRootGenerator_castSucc_exteriorBasis_singleton (j : Fin n) :
+    P.typeBSpinRep b z hz
+        (_root_.UniversalEnvelopingAlgebra.ι K
+          (typeBSimpleRootGeneratorFamily (.inl j.castSucc)))
+        (b.ExteriorAlgebra {j.succ}) =
+      b.ExteriorAlgebra {j.castSucc} := by
+  rw [_root_.UniversalEnvelopingAlgebra.ι_apply, P.typeBSpinRep_ι b z hz,
+    typeBSimpleRootGeneratorFamily_inl, typeBSimpleRootGenerator_castSucc,
+    P.typeBQuadraticEquiv_typeBLongRootGenerator b z hz,
+    bivector_eq_ι_mul_ι_of_isOrtho Q (P.isOrtho_basis_dualVector b
+      (ne_of_lt j.castSucc_lt_succ)), map_mul, Module.End.mul_apply,
+    spinAction_ι_wedge, spinAction_ι_contract, P.pairingEquiv_dualVector,
+    TauCeti.ExteriorAlgebra.basis_singleton, CliffordAlgebra.contractLeft_ι]
+  simp [TauCeti.ExteriorAlgebra.basis_singleton]
+
+/-- A nonterminal negative simple-root operator moves an exterior singleton one coordinate to the
+right. -/
+theorem typeBSpinRep_simpleNegativeRootGenerator_castSucc_exteriorBasis_singleton (j : Fin n) :
+    P.typeBSpinRep b z hz
+        (_root_.UniversalEnvelopingAlgebra.ι K
+          (typeBSimpleRootGeneratorFamily (.inr j.castSucc)))
+        (b.ExteriorAlgebra {j.castSucc}) =
+      b.ExteriorAlgebra {j.succ} := by
+  rw [_root_.UniversalEnvelopingAlgebra.ι_apply, P.typeBSpinRep_ι b z hz,
+    typeBSimpleRootGeneratorFamily_inr, typeBSimpleNegativeRootGenerator_castSucc,
+    P.typeBQuadraticEquiv_typeBLongRootGenerator b z hz,
+    bivector_eq_ι_mul_ι_of_isOrtho Q (P.isOrtho_basis_dualVector b
+      (ne_of_gt j.castSucc_lt_succ)), map_mul, Module.End.mul_apply,
+    spinAction_ι_wedge, spinAction_ι_contract, P.pairingEquiv_dualVector,
+    TauCeti.ExteriorAlgebra.basis_singleton, CliffordAlgebra.contractLeft_ι]
+  simp [TauCeti.ExteriorAlgebra.basis_singleton]
+
+/-- The terminal positive short-root operator creates the final exterior coordinate from the
+vacuum when the distinguished remainder vector has coordinate one. -/
+theorem typeBSpinRep_simpleRootGenerator_last_exteriorBasis_empty
+    (hcoord : P.lineCoordinate z = 1) :
+    P.typeBSpinRep b z hz
+        (_root_.UniversalEnvelopingAlgebra.ι K
+          (typeBSimpleRootGeneratorFamily (.inl (Fin.last n))))
+        (b.ExteriorAlgebra ∅) =
+      b.ExteriorAlgebra {Fin.last n} := by
+  rw [_root_.UniversalEnvelopingAlgebra.ι_apply, P.typeBSpinRep_ι b z hz,
+    typeBSimpleRootGeneratorFamily_inl, typeBSimpleRootGenerator_last,
+    P.typeBQuadraticEquiv_typeBShortRootGenerator b z hz,
+    bivector_eq_ι_mul_ι_of_isOrtho Q (P.isOrtho_W_line _ z), map_mul,
+    Module.End.mul_apply, spinAction_ι_wedge, spinAction_ι_lineOperator, hcoord,
+    TauCeti.ExteriorAlgebra.involute_basis]
+  have hEmpty : b.ExteriorAlgebra (∅ : Finset (Fin (n + 1))) = 1 := by
+    rw [ExteriorAlgebra.basis_apply]
+    simp
+  simp only [Finset.card_empty, pow_zero, one_smul]
+  rw [hEmpty, mul_one, TauCeti.ExteriorAlgebra.basis_singleton]
+
+/-- The terminal negative short-root operator annihilates the final exterior coordinate to the
+vacuum when the distinguished remainder vector has coordinate one. -/
+theorem typeBSpinRep_simpleNegativeRootGenerator_last_exteriorBasis_singleton
+    (hcoord : P.lineCoordinate z = 1) :
+    P.typeBSpinRep b z hz
+        (_root_.UniversalEnvelopingAlgebra.ι K
+          (typeBSimpleRootGeneratorFamily (.inr (Fin.last n))))
+        (b.ExteriorAlgebra {Fin.last n}) =
+      b.ExteriorAlgebra ∅ := by
+  rw [_root_.UniversalEnvelopingAlgebra.ι_apply, P.typeBSpinRep_ι b z hz,
+    typeBSimpleRootGeneratorFamily_inr, typeBSimpleNegativeRootGenerator_last,
+    P.typeBQuadraticEquiv_typeBShortNegativeRootGenerator b z hz,
+    bivector_eq_ι_mul_ι_of_isOrtho Q (P.isOrtho_line_W' z _), map_mul,
+    Module.End.mul_apply, spinAction_ι_contract, P.pairingEquiv_dualVector,
+    TauCeti.ExteriorAlgebra.basis_singleton, CliffordAlgebra.contractLeft_ι,
+    spinAction_ι_lineOperator, hcoord]
+  simp [ExteriorAlgebra.basis_apply]
+
 /-! ## The weights of the simple coroots -/
 
 /-- The integral eigenvalue of a numbered simple coroot on an exterior-basis vector. -/
