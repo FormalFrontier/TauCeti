@@ -115,7 +115,8 @@ theorem exists_germToFunctionField_eq_of_ord_nonneg
     obtain ⟨W, hyW, s, hs⟩ := X.presheaf.exists_germ_eq g
     have hmem : (y : X) ∈ (W ⊓ U : X.Opens) := ⟨hyW, y.2⟩
     have hWU : Nonempty (W ⊓ U : X.Opens) := ⟨⟨(y : X), hmem⟩⟩
-    have hWne : Nonempty W := ⟨⟨(y : X), hyW⟩⟩
+    -- Only needed as an instance, so that `algebraMap_germ_eq_germToFunctionField` applies at `W`.
+    have : Nonempty W := ⟨⟨(y : X), hyW⟩⟩
     refine ⟨W ⊓ U, hmem, inf_le_right, X.presheaf.map (homOfLE inf_le_left).op s, ?_⟩
     rw [X.presheaf.germ_res_apply (homOfLE (inf_le_left : W ⊓ U ≤ W)) (genericPoint X)
       (hgen _ hWU) s, ← hgf, ← hs]
