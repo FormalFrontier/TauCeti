@@ -20,9 +20,6 @@ and carries unramifiedness from `q` to `q.comap ψ`.
 
 * `AlgEquiv.isUnramifiedAt_of_eq_comap`: if `B` is unramified at `q` over `R`, then `A` is
   unramified at any prime equal to `q.comap ψ`.
-* `Algebra.IsUnramifiedAt.mapAlgEquiv`: unramifiedness is preserved by mapping a prime along an
-  algebra equivalence.
-* `Algebra.IsUnramifiedAt.mapAlgEquiv_iff`: the preceding preservation is an equivalence.
 -/
 
 public section
@@ -46,28 +43,3 @@ theorem isUnramifiedAt_of_eq_comap (ψ : A ≃ₐ[R] B) {q : Ideal B} [q.IsPrime
       (Ideal.map_primeCompl_comap_of_surjective ψ ψ.surjective q)).symm
 
 end AlgEquiv
-
-namespace Algebra.IsUnramifiedAt
-
-variable {R S T : Type*} [CommRing R] [CommRing S] [CommRing T] [Algebra R S] [Algebra R T]
-
-/-- **Unramifiedness is preserved by an algebra equivalence.**  If `S` is unramified over `R` at
-the prime `Q` and `e : S ≃ₐ[R] T`, then `T` is unramified over `R` at the mapped prime. -/
-theorem mapAlgEquiv (e : S ≃ₐ[R] T) (Q : Ideal S) [Q.IsPrime]
-    (hQ : IsUnramifiedAt R Q) : IsUnramifiedAt R (Q.map e) := by
-  exact e.symm.isUnramifiedAt_of_eq_comap (Ideal.map_comap_of_equiv e.toRingEquiv)
-
-/-- **Unramifiedness is invariant under an algebra equivalence.** -/
-@[simp]
-theorem mapAlgEquiv_iff (e : S ≃ₐ[R] T) (Q : Ideal S) [Q.IsPrime] :
-    IsUnramifiedAt R (Q.map e) ↔ IsUnramifiedAt R Q := by
-  constructor
-  · intro h
-    have _hp : ((Q.map e : Ideal T)).IsPrime := Ideal.map_isPrime_of_equiv e
-    have hQ := mapAlgEquiv e.symm (Q.map e) h
-    have hmap : (Q.map e).map e.symm = Q := Ideal.map_of_equiv e.toRingEquiv
-    simp only [hmap] at hQ
-    exact hQ
-  · exact mapAlgEquiv e Q
-
-end Algebra.IsUnramifiedAt
