@@ -28,10 +28,9 @@ periodicity. The degree-zero and negative-degree comparisons are separate low-de
 
 The corresponding all-degree construction is `Rep.periodicTateCohomology` in
 `ClassFieldTheory/Cohomology/FiniteCyclic/UpDown.lean` from `kbuzzard/ClassFieldTheory`, commit
-`ccc3323c6750abca25b49b35106f54eb3a398509`. The implementation here is new: in positive degrees
-the pinned Mathlib already provides the periodic-resolution calculations
-`Rep.FiniteCyclicGroup.groupCohomologyIsoEven` and `groupCohomologyIsoOdd`, so no dimension-shift
-construction is copied.
+`ccc3323c6750abca25b49b35106f54eb3a398509`. Its positive-degree specialization has the same
+mathematical content as the periodicity below, expressed through the periodic-resolution
+calculations `Rep.FiniteCyclicGroup.groupCohomologyIsoEven` and `groupCohomologyIsoOdd`.
 
 ## Main definitions
 
@@ -93,11 +92,11 @@ def positiveOddIso (M : Rep R G) (g : G) (hg : ∀ x, x ∈ Subgroup.zpowers g)
   exact (_root_.TateCohomology.isoGroupCohomology n).app M ≪≫
     _root_.Rep.FiniteCyclicGroup.groupCohomologyIsoOdd M g hg n hn
 
-/-- **Positive-degree two-periodicity for Tate cohomology of a finite cyclic group.** Positive
-Tate degrees congruent modulo two are isomorphic. The construction compares both degrees with the
-same homology object of the standard periodic resolution, using the even model or the odd model
-according to their common parity. -/
-def positivePeriodicIso (M : Rep R G) (g : G) (hg : ∀ x, x ∈ Subgroup.zpowers g)
+/-- The generator-dependent comparison underlying positive-degree two-periodicity. It compares
+both degrees with the same homology object of the standard periodic resolution, using the even
+model or the odd model according to their common parity. -/
+def positivePeriodicIsoOfGenerator (M : Rep R G) (g : G)
+    (hg : ∀ x, x ∈ Subgroup.zpowers g)
     (m n : ℕ) [NeZero m] [NeZero n] (hmn : m ≡ n [MOD 2]) :
     tateCohomology M m ≅ tateCohomology M n := by
   by_cases hm : Even m
@@ -116,34 +115,46 @@ def positivePeriodicIso (M : Rep R G) (g : G) (hg : ∀ x, x ∈ Subgroup.zpower
     exact (positiveOddIso M g hg m (Nat.not_even_iff_odd.mp hm)).trans
       (positiveOddIso M g hg n hn).symm
 
-/-- In even degrees, `positivePeriodicIso` is the unique comparison obtained by identifying both
-Tate groups with the even homology object of the periodic resolution. -/
+/-- **Positive-degree two-periodicity for Tate cohomology of a finite cyclic group.** Positive
+Tate degrees congruent modulo two are isomorphic. -/
+def positivePeriodicIso (M : Rep R G) [IsCyclic G]
+    (m n : ℕ) [NeZero m] [NeZero n] (hmn : m ≡ n [MOD 2]) :
+    tateCohomology M m ≅ tateCohomology M n := by
+  let hgen := isCyclic_iff_exists_zpowers_eq_top.mp (inferInstance : IsCyclic G)
+  let g := hgen.choose
+  exact positivePeriodicIsoOfGenerator M g
+    (fun x ↦ hgen.choose_spec.ge (Subgroup.mem_top x)) m n hmn
+
+/-- In even degrees, `positivePeriodicIsoOfGenerator` is the unique comparison obtained by
+identifying both Tate groups with the even homology object of the periodic resolution. -/
 @[simp, reassoc]
-theorem positivePeriodicIso_hom_comp_positiveEvenIso_hom
+theorem positivePeriodicIsoOfGenerator_hom_comp_positiveEvenIso_hom
     (M : Rep R G) (g : G) (hg : ∀ x, x ∈ Subgroup.zpowers g)
     (m n : ℕ) [NeZero m] [NeZero n] (hmn : m ≡ n [MOD 2])
     (hm : Even m) (hn : Even n) :
-    (positivePeriodicIso M g hg m n hmn).hom ≫ (positiveEvenIso M g hg n hn).hom =
+    (positivePeriodicIsoOfGenerator M g hg m n hmn).hom ≫
+        (positiveEvenIso M g hg n hn).hom =
       (positiveEvenIso M g hg m hm).hom := by
-  simp [positivePeriodicIso, hm]
+  simp [positivePeriodicIsoOfGenerator, hm]
 
-/-- In odd degrees, `positivePeriodicIso` is the unique comparison obtained by identifying both
-Tate groups with the odd homology object of the periodic resolution. -/
+/-- In odd degrees, `positivePeriodicIsoOfGenerator` is the unique comparison obtained by
+identifying both Tate groups with the odd homology object of the periodic resolution. -/
 @[simp, reassoc]
-theorem positivePeriodicIso_hom_comp_positiveOddIso_hom
+theorem positivePeriodicIsoOfGenerator_hom_comp_positiveOddIso_hom
     (M : Rep R G) (g : G) (hg : ∀ x, x ∈ Subgroup.zpowers g)
     (m n : ℕ) [NeZero m] [NeZero n] (hmn : m ≡ n [MOD 2])
     (hm : Odd m) (hn : Odd n) :
-    (positivePeriodicIso M g hg m n hmn).hom ≫ (positiveOddIso M g hg n hn).hom =
+    (positivePeriodicIsoOfGenerator M g hg m n hmn).hom ≫
+        (positiveOddIso M g hg n hn).hom =
       (positiveOddIso M g hg m hm).hom := by
-  simp [positivePeriodicIso, Nat.not_even_iff_odd.mpr hm]
+  simp [positivePeriodicIsoOfGenerator, Nat.not_even_iff_odd.mpr hm]
 
 /-- Positive Tate cohomology groups in degrees congruent modulo two have the same cardinality.
 This is the form used in Herbrand-quotient computations. -/
 theorem natCard_tateCohomology_eq_of_pos_of_modEq
-    (M : Rep R G) (g : G) (hg : ∀ x, x ∈ Subgroup.zpowers g)
+    (M : Rep R G) [IsCyclic G]
     (m n : ℕ) [NeZero m] [NeZero n] (hmn : m ≡ n [MOD 2]) :
     Nat.card (tateCohomology M m) = Nat.card (tateCohomology M n) :=
-  Nat.card_congr (positivePeriodicIso M g hg m n hmn).toLinearEquiv.toEquiv
+  Nat.card_congr (positivePeriodicIso M m n hmn).toLinearEquiv.toEquiv
 
 end Rep.FiniteCyclicGroup
