@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.NumberTheory.NumberField.Basic
 public import TauCeti.NumberTheory.NumberField.RingOfIntegers.Equiv
 
 /-!
