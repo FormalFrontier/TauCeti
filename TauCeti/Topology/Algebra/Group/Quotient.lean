@@ -7,6 +7,7 @@ module
 
 public import Mathlib.GroupTheory.QuotientGroup.Basic
 public import Mathlib.Topology.Algebra.OpenSubgroup
+public import TauCeti.Topology.Algebra.Group.OpenNormalSubgroup
 
 /-!
 # Quotients of topological groups by normal subgroups
@@ -54,44 +55,47 @@ theorem isClopen_image_mk (U : OpenSubgroup G) :
 `G ⧸ N` correspond, as lattices, to the open normal subgroups of `G` containing `N`. -/
 def comapMk'OpenNormalOrderIso (N : Subgroup G) [N.Normal] :
     OpenNormalSubgroup (G ⧸ N) ≃o
-      { U : OpenNormalSubgroup G // (N : Subgroup G) ≤ U.toSubgroup } where
-  toFun U :=
-    ⟨{ toOpenSubgroup :=
-        ⟨Subgroup.comap (QuotientGroup.mk' N) U.toSubgroup,
-          (U.toOpenSubgroup.isOpen').preimage (QuotientGroup.continuous_mk (N := N))⟩ },
-      QuotientGroup.le_comap_mk' N U.toSubgroup⟩
-  invFun U :=
-    { toOpenSubgroup :=
-        ⟨Subgroup.map (QuotientGroup.mk' N) U.1.toSubgroup,
-          QuotientGroup.isOpenMap_coe _ U.1.toOpenSubgroup.isOpen'⟩
-      isNormal' :=
-        Subgroup.Normal.map inferInstance (QuotientGroup.mk' N) (QuotientGroup.mk'_surjective N) }
-  left_inv U := OpenNormalSubgroup.toSubgroup_injective
-    (Subgroup.map_comap_eq_self_of_surjective (QuotientGroup.mk'_surjective N) _)
-  right_inv U := Subtype.ext <| OpenNormalSubgroup.toSubgroup_injective <|
-    by
-      dsimp only
-      rw [QuotientGroup.comap_map_mk']
-      exact sup_eq_right.mpr U.2
-  map_rel_iff' {U V} := by
-    constructor
-    · intro h
-      exact (Subgroup.comap_le_comap_of_surjective (QuotientGroup.mk'_surjective N)).mp h
-    · intro h
-      exact (Subgroup.comap_le_comap_of_surjective (QuotientGroup.mk'_surjective N)).mpr h
+      { U : OpenNormalSubgroup G // (N : Subgroup G) ≤ U.toSubgroup } :=
+  -- `QuotientGroup.continuous_mk` is stated for `QuotientGroup.mk`, and binding it at the
+  -- coerced type `⇑(QuotientGroup.mk' N)` keeps the `comap` terms below reducibly
+  -- type-correct, so that `OpenNormalSubgroup.toSubgroup_comap` rewrites in them.
+  have hmk : Continuous ⇑(QuotientGroup.mk' N) := QuotientGroup.continuous_mk
+  { toFun U := ⟨OpenNormalSubgroup.comap U (QuotientGroup.mk' N) hmk,
+      le_of_le_of_eq (QuotientGroup.le_comap_mk' N U.toSubgroup)
+        (OpenNormalSubgroup.toSubgroup_comap U _ _).symm⟩
+    invFun U :=
+      { toOpenSubgroup :=
+          ⟨Subgroup.map (QuotientGroup.mk' N) U.1.toSubgroup,
+            QuotientGroup.isOpenMap_coe _ U.1.toOpenSubgroup.isOpen'⟩
+        isNormal' :=
+          Subgroup.Normal.map inferInstance (QuotientGroup.mk' N)
+            (QuotientGroup.mk'_surjective N) }
+    left_inv U := OpenNormalSubgroup.toSubgroup_injective <|
+      (congrArg (Subgroup.map (QuotientGroup.mk' N))
+          (OpenNormalSubgroup.toSubgroup_comap U _ _)).trans
+        (Subgroup.map_comap_eq_self_of_surjective (QuotientGroup.mk'_surjective N) _)
+    right_inv U := Subtype.ext <| OpenNormalSubgroup.toSubgroup_injective <|
+      (OpenNormalSubgroup.toSubgroup_comap _ _ _).trans <|
+        (QuotientGroup.comap_map_mk' N U.1.toSubgroup).trans (sup_eq_right.mpr U.2)
+    map_rel_iff' {U V} := by
+      simp only [Equiv.coe_fn_mk, Subtype.mk_le_mk, SetLike.le_def,
+        OpenNormalSubgroup.mem_comap]
+      refine ⟨fun h x hx => ?_, fun h _ hg => h hg⟩
+      obtain ⟨g, rfl⟩ := QuotientGroup.mk'_surjective N x
+      exact h hx }
 
 @[simp]
 theorem comapMk'OpenNormalOrderIso_apply_toSubgroup (U : OpenNormalSubgroup (G ⧸ N)) :
     (comapMk'OpenNormalOrderIso N U : OpenNormalSubgroup G).toSubgroup =
-      Subgroup.comap (QuotientGroup.mk' N) U.toSubgroup := by
-  simp [comapMk'OpenNormalOrderIso]
+      Subgroup.comap (QuotientGroup.mk' N) U.toSubgroup :=
+  OpenNormalSubgroup.toSubgroup_comap U _ _
 
 @[simp]
 theorem comapMk'OpenNormalOrderIso_symm_apply_toSubgroup
     (U : { V : OpenNormalSubgroup G // (N : Subgroup G) ≤ V.toSubgroup }) :
     ((comapMk'OpenNormalOrderIso N).symm U : OpenNormalSubgroup (G ⧸ N)).toSubgroup =
-      Subgroup.map (QuotientGroup.mk' N) U.1.toSubgroup := by
-  simp [comapMk'OpenNormalOrderIso]
+      Subgroup.map (QuotientGroup.mk' N) U.1.toSubgroup :=
+  (rfl)
 
 end QuotientGroup
 
