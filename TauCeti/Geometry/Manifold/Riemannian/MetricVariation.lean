@@ -17,43 +17,40 @@ ambient metric.  Consequently the total metric variation of a `C¹` path is exac
 `Manifold.pathELength`: both are the integral of the norm of the ambient derivative.  This file
 connects the vector-valued metric-variation identity with the canonical Riemannian path-length API.
 
-The equality gives lower semicontinuity of Riemannian path length for uniformly convergent `C¹`
-paths in any open submanifold of an inner-product space.  The corresponding theorem for an
-arbitrary Riemannian manifold still requires the local chart comparison and finite subdivision
-argument.
+The equality gives lower semicontinuity of Riemannian path length for pointwise convergent `C¹`
+paths in any open submanifold of an inner-product space.
 
 ## Main results
 
-* `TauCeti.Manifold.eVariationOn_eq_pathELength`: total metric variation equals Riemannian path
+* `TauCeti.Manifold.eVariationOn_eq_pathELength_open`: total metric variation equals Riemannian path
   length for a `C¹` path in any open submanifold of an inner-product space.
-* `TauCeti.Manifold.pathELength_le_liminf`: path length is lower semicontinuous under
-  uniform convergence of `C¹` paths in that submanifold.
+* `TauCeti.Manifold.pathELength_le_liminf_open`: path length is lower semicontinuous under
+  pointwise convergence of `C¹` paths in that submanifold.
 
 ## References
 
 * M. P. do Carmo, *Riemannian Geometry*, Chapter 7, Section 2.
-* The Hopf--Rinow roadmap, Layer 0, “Regular reparametrization and limits”.
 -/
 
 public section
 
 open Filter MeasureTheory Set TopologicalSpace
-open scoped Bundle ContDiff ENNReal Manifold Topology
+open scoped Bundle ContDiff ENNReal Manifold Topology TauCeti
 
 noncomputable section
 
 namespace TauCeti.Manifold
 
 variable {F : Type*} [NormedAddCommGroup F] [InnerProductSpace ℝ F]
-  [FiniteDimensional ℝ F]
+  [CompleteSpace F]
   {U : Opens F} {γ : ℝ → U} {a b : ℝ}
 
-omit [InnerProductSpace ℝ F] [FiniteDimensional ℝ F] in
+omit [InnerProductSpace ℝ F] [CompleteSpace F] in
 private theorem eVariationOn_subtypeVal_comp {γ : ℝ → U} {s : Set ℝ} :
     eVariationOn γ s = eVariationOn ((Subtype.val : U → F) ∘ γ) s := by
   rfl
 
-omit [FiniteDimensional ℝ F] in
+omit [CompleteSpace F] in
 private theorem contDiffOn_subtypeVal_comp {γ : ℝ → U}
     (hγ : CMDiff[Icc a b] 1 γ) :
     ContDiffOn ℝ 1 ((Subtype.val : U → F) ∘ γ) (Icc a b) := by
@@ -63,7 +60,7 @@ private theorem contDiffOn_subtypeVal_comp {γ : ℝ → U}
 /-- **Metric variation equals Riemannian path length on an open submanifold.** If `U` is an open
 subset of an inner-product space and `γ` is `C¹` on `[a, b]`, then the total variation of `γ` for
 the restricted metric is its Riemannian path length. -/
-theorem eVariationOn_eq_pathELength
+theorem eVariationOn_eq_pathELength_open
     (hγ : CMDiff[Icc a b] 1 γ) :
     eVariationOn γ (Icc a b) = Manifold.pathELength 𝓘(ℝ, F) γ a b := by
   rw [eVariationOn_subtypeVal_comp, eVariationOn_eq_lintegral_enorm_derivWithin
@@ -80,24 +77,33 @@ theorem eVariationOn_eq_pathELength
   rw [fderivWithin_derivWithin]
 
 /-- **Lower semicontinuity on an open submanifold.** Let `γᵢ` be eventually `C¹` on a fixed compact
-interval and converge uniformly there to a `C¹` path `γ`. For the restricted Riemannian metric on
+interval and converge pointwise there to a `C¹` path `γ`. For the restricted Riemannian metric on
 an open subset, the length of `γ` is at most the `liminf` of the lengths of `γᵢ`. -/
-theorem pathELength_le_liminf
+theorem pathELength_le_liminf_open
     {ι : Type*} {l : Filter ι} {γi : ι → ℝ → U}
     (hγi : ∀ᶠ i in l, CMDiff[Icc a b] 1 (γi i))
     (hγ : CMDiff[Icc a b] 1 γ)
-    (hconv : TendstoUniformlyOn γi γ l (Icc a b)) :
+    (hconv : ∀ t ∈ Icc a b, Tendsto (fun i ↦ γi i t) l (𝓝 (γ t))) :
     Manifold.pathELength 𝓘(ℝ, F) γ a b ≤
       liminf (fun i ↦ Manifold.pathELength 𝓘(ℝ, F) (γi i) a b) l := by
-  rw [← eVariationOn_eq_pathELength hγ]
+  rw [← eVariationOn_eq_pathELength_open hγ]
+  have hconv' : ∀ t ∈ Icc a b,
+      Tendsto (fun i ↦ (γi i t : F)) l (𝓝 (γ t : F)) := fun t ht ↦
+    continuous_subtype_val.continuousAt.tendsto.comp (hconv t ht)
   calc
-    eVariationOn γ (Icc a b) ≤
-        liminf (fun i ↦ eVariationOn (γi i) (Icc a b)) l :=
-      eVariationOn_le_liminf_of_eventually_le
-        (hγi.mono fun _ _ ↦ le_rfl)
-        (fun t ht ↦ hconv.tendsto_at ht)
+    eVariationOn γ (Icc a b) =
+        eVariationOn ((Subtype.val : U → F) ∘ γ) (Icc a b) :=
+      eVariationOn_subtypeVal_comp.symm
+    _ ≤ liminf (fun i ↦
+        Manifold.pathELength 𝓘(ℝ, F) ((Subtype.val : U → F) ∘ γi i) a b) l :=
+      eVariationOn_le_liminf_pathELength
+        (I := 𝓘(ℝ, F)) (M := F)
+        (hγi.mono fun i hi ↦
+          contMDiffOn_iff_contDiffOn.mpr (contDiffOn_subtypeVal_comp (γ := γi i) hi))
+        hconv'
     _ = liminf (fun i ↦ Manifold.pathELength 𝓘(ℝ, F) (γi i) a b) l :=
-      liminf_congr (hγi.mono fun i hi ↦ eVariationOn_eq_pathELength hi)
+      liminf_congr (hγi.mono fun i hi ↦
+        (Manifold.pathELength_subtypeVal_comp (γ := γi i) hi).symm)
 
 end TauCeti.Manifold
 
