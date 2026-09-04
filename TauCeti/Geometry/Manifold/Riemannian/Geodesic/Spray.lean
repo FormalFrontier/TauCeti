@@ -95,6 +95,9 @@ variable [FiniteDimensional ℝ E] [IsManifold I 2 M]
   [RiemannianBundle (fun x : M ↦ TangentSpace I x)]
   [IsContMDiffRiemannianBundle I 1 E (fun x : M ↦ TangentSpace I x)]
 
+-- The geodesic-spray construction below, and the identification of its integral curves with the
+-- velocity lifts of geodesics, follow the geodesic-spray development of the Tau Ceti Hopf--Rinow
+-- roadmap, https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/HopfRinow/README.md
 variable (I M) in
 /-- **The geodesic spray** of the ambient Riemannian bundle instance: the vector field
 `(x, v) ↦ (v, -Γ_x (v, v))` on the tangent bundle, where `Γ` is the model-space Christoffel map of
