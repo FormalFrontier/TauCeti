@@ -303,6 +303,7 @@ theorem leviHom_mem_of_difference_of_diagonal {K : Type*} [Field K]
       apply Units.ext
       exact (diagGL_coe d).symm
     · rintro ⟨i, j, hij, c⟩ hdet
+      simp only [Matrix.TransvectionStruct.toMatrix_mk] at hdet ⊢
       rw [mkOfDetNeZero_transvection hij c hdet]
       rw [leviHom_transvection]
       exact hdifference hij c
