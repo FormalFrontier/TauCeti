@@ -207,12 +207,8 @@ theorem exists_openNormalSubgroup_isPGroup_le {M : Subgroup G} (hM : IsOpen (M :
   -- The family contains the whole group, so it is nonempty.
   let topU : OpenNormalSubgroup G := { toOpenSubgroup := ⊤, isNormal' := Subgroup.normal_top }
   let _ : topU.toSubgroup.Normal := topU.isNormal'
-  have htopP : IsPGroup p (G ⧸ topU.toSubgroup) := by
-    intro x
-    obtain ⟨g, rfl⟩ := QuotientGroup.mk'_surjective topU.toSubgroup x
-    refine ⟨0, ?_⟩
-    rw [pow_zero, pow_one, QuotientGroup.mk'_apply, QuotientGroup.eq_one_iff]
-    exact Subgroup.mem_top g
+  have _ : Subsingleton (G ⧸ topU.toSubgroup) := QuotientGroup.subsingleton_quotient_top
+  have htopP : IsPGroup p (G ⧸ topU.toSubgroup) := .of_subsingleton p _
   have htop : S := ⟨topU, htopP⟩
   have hne : Nonempty S := ⟨htop⟩
   suffices h : ∃ U : S, t U = ∅ by
