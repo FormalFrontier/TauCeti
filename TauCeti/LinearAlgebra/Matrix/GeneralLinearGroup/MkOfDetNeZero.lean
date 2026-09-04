@@ -37,9 +37,10 @@ variable {K : Type v} [Field K]
 
 /-- Packaging a product by `mkOfDetNeZero` agrees with multiplication in `GL`. -/
 @[simp]
-theorem mkOfDetNeZero_mul (M N : Matrix n n K) (hM : M.det ≠ 0) (hN : N.det ≠ 0)
-    (hMN : (M * N).det ≠ 0) :
-    Matrix.GeneralLinearGroup.mkOfDetNeZero (M * N) hMN =
+theorem mkOfDetNeZero_mul (M N : Matrix n n K) (hM : M.det ≠ 0) (hN : N.det ≠ 0) :
+    Matrix.GeneralLinearGroup.mkOfDetNeZero (M * N) (by
+        rw [Matrix.det_mul]
+        exact mul_ne_zero hM hN) =
       Matrix.GeneralLinearGroup.mkOfDetNeZero M hM *
         Matrix.GeneralLinearGroup.mkOfDetNeZero N hN := by
   apply Matrix.GeneralLinearGroup.ext
@@ -59,10 +60,11 @@ theorem mkOfDetNeZero_coe (A : GL n K) :
 /-- Packaging a transvection matrix by `mkOfDetNeZero` recovers its canonical element of
 `GL`. -/
 @[simp]
-theorem mkOfDetNeZero_transvection {i j : n} (hij : i ≠ j) (c : K)
-    (hdet : (Matrix.transvection i j c).det ≠ 0) :
+theorem mkOfDetNeZero_transvection {i j : n} (hij : i ≠ j) (c : K) :
     Matrix.GeneralLinearGroup.mkOfDetNeZero
-        (Matrix.transvection i j c) hdet =
+        (Matrix.transvection i j c) (by
+          rw [Matrix.det_transvection_of_ne i j hij c]
+          exact one_ne_zero) =
       (Matrix.SpecialLinearGroup.transvection hij c).toGL := by
   rw [toGL_transvection_eq_transvectionUnit]
   apply Matrix.GeneralLinearGroup.ext

@@ -302,13 +302,13 @@ theorem leviHom_mem_of_difference_of_diagonal {K : Type*} [Field K]
       apply congrArg leviHom
       apply Units.ext
       exact (diagGL_coe d).symm
-    · rintro ⟨i, j, hij, c⟩ hdet
-      simp only [Matrix.TransvectionStruct.toMatrix_mk] at hdet ⊢
-      rw [mkOfDetNeZero_transvection hij c hdet]
+    · rintro ⟨i, j, hij, c⟩ _
+      simp only [Matrix.TransvectionStruct.toMatrix_mk]
+      rw [mkOfDetNeZero_transvection hij c]
       rw [leviHom_transvection]
       exact hdifference hij c
-    · intro M N hM hN ihM ihN hMN
-      rw [mkOfDetNeZero_mul M N hM hN hMN, map_mul]
+    · intro M N hM hN ihM ihN _
+      rw [mkOfDetNeZero_mul M N hM hN, map_mul]
       exact H.mul_mem (ihM hM) (ihN hN)
   have hA' := hA A.det_ne_zero
   convert hA' using 1
