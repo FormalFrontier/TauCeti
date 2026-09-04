@@ -90,7 +90,10 @@ This advances Layer 9, "The Chevalley--Demazure construction", of
 `TauCetiRoadmap/ReductiveGroups/README.md`, whose pinned carriers carry diagram automorphisms; the
 consumer is milestone L1, "ordinary and graph Steinberg maps", of
 `TauCetiRoadmap/CFSGStatement/README.md`, which needs the graph automorphism `γ` of the pinned
-ambient group of the `²Dₙ(q)` and `³D₄(q)` branches. Descending the operator built here to
+ambient group of the `²Dₙ(q)` branch. Only that branch is served here: `TauCeti.graphPermD` is the
+order-two exchange of the two fork nodes, whereas the `³D₄(q)` branch is twisted by the order-three
+triality permutation of the three outer nodes of `D₄`, which a separate operator has still to
+supply. Descending the operator built here to
 `TauCeti.TypeDSpinCarrier.groupScheme` and its points, which is what produces `γ` itself, is
 subsequent work.
 -/
@@ -297,14 +300,30 @@ private theorem ι_typeDGraphVector_mul_occupation_last (hn : 2 ≤ n) :
 /-- The graph permutation sends the fork node to the penultimate node. -/
 private theorem graphPermD_of_val_eq_last (hn : 2 ≤ n) {i : Fin n} (hi : (i : ℕ) = n - 1) :
     graphPermD n hn i = (⟨n - 2, by omega⟩ : Fin n) := by
-  rw [show i = (⟨n - 1, by omega⟩ : Fin n) from Fin.ext hi]
+  have hlast : i = (⟨n - 1, by omega⟩ : Fin n) := Fin.ext hi
+  rw [hlast]
   exact graphPermD_apply_right n hn
 
 /-- The graph permutation sends the penultimate node to the fork node. -/
 private theorem graphPermD_of_val_eq_penultimate (hn : 2 ≤ n) {i : Fin n} (hi : (i : ℕ) = n - 2) :
     graphPermD n hn i = (⟨n - 1, by omega⟩ : Fin n) := by
-  rw [show i = (⟨n - 2, by omega⟩ : Fin n) from Fin.ext hi]
+  have hpenultimate : i = (⟨n - 2, by omega⟩ : Fin n) := Fin.ext hi
+  rw [hpenultimate]
   exact graphPermD_apply_left n hn
+
+/-- The basis vector at a node known only through its value `n - 2`. The fork branches of the
+proofs below meet the penultimate node as the value equation `(i : ℕ) = n - 2` rather than as an
+index, so the equation has to be transported through `b` and the inclusion of the isotropic
+summand before it can rewrite the goal. -/
+private theorem basis_coe_of_val_eq_penultimate {i : Fin n} (hi : (i : ℕ) = n - 2) :
+    (b i : V) = (b ⟨n - 2, by omega⟩ : V) :=
+  congrArg _ (congrArg b (Fin.ext hi))
+
+/-- The dual basis vector at a node known only through its value `n - 2`, the polar-dual
+counterpart of `basis_coe_of_val_eq_penultimate`. -/
+private theorem dualVector_coe_of_val_eq_penultimate {i : Fin n} (hi : (i : ℕ) = n - 2) :
+    (P.dualVector b i : V) = (P.dualVector b ⟨n - 2, by omega⟩ : V) :=
+  congrArg _ (congrArg (P.dualVector b) (Fin.ext hi))
 
 /-- **The graph generator exchanges the two fork raising operators** and commutes with the others:
 multiplying the positive type-`D` representative at a node by the Clifford generator of the graph
@@ -326,7 +345,7 @@ theorem ι_typeDGraphVector_mul_typeDSimpleRootBivector (hn : 2 ≤ n) (i : Fin 
           (show n - 1 = (i : ℕ) + 1 by omega),
         graphPermD_of_val_eq_penultimate hn hpen,
         P.typeDSimpleRootBivector_of_fork b hn (show ¬n - 1 + 1 < n by omega),
-        show (b i : V) = (b ⟨n - 2, by omega⟩ : V) from congrArg _ (congrArg b (Fin.ext hpen))]
+        P.basis_coe_of_val_eq_penultimate b hpen]
       exact P.ι_typeDGraphVector_mul_ι_mul_ι b hn
         (P.ι_typeDGraphVector_mul_ι_of_polar_eq_zero b hn
           (P.polar_typeDGraphVector_basis_of_ne b hn (show n - 2 ≠ n - 1 by omega)))
@@ -361,8 +380,7 @@ theorem ι_typeDGraphVector_mul_typeDSimpleNegativeRootBivector (hn : 2 ≤ n) (
           (show n - 1 = (i : ℕ) + 1 by omega),
         graphPermD_of_val_eq_penultimate hn hpen,
         P.typeDSimpleNegativeRootBivector_of_fork b hn (show ¬n - 1 + 1 < n by omega),
-        show (P.dualVector b i : V) = (P.dualVector b ⟨n - 2, by omega⟩ : V) from
-          congrArg _ (congrArg (P.dualVector b) (Fin.ext hpen))]
+        P.dualVector_coe_of_val_eq_penultimate b hpen]
       exact P.ι_typeDGraphVector_mul_ι_mul_ι b hn
         (P.ι_typeDGraphVector_mul_ι_basis_last b hn)
         (P.ι_typeDGraphVector_mul_ι_of_polar_eq_zero b hn
@@ -397,10 +415,8 @@ theorem ι_typeDGraphVector_mul_typeDSimpleCorootBivector (hn : 2 ≤ n) (i : Fi
           (show n - 1 = (i : ℕ) + 1 by omega),
         graphPermD_of_val_eq_penultimate hn hpen,
         P.typeDSimpleCorootBivector_of_fork b hn (show ¬n - 1 + 1 < n by omega),
-        show (b i : V) = (b ⟨n - 2, by omega⟩ : V) from congrArg _ (congrArg b (Fin.ext hpen)),
-        show (P.dualVector b i : V) = (P.dualVector b ⟨n - 2, by omega⟩ : V) from
-          congrArg _ (congrArg (P.dualVector b) (Fin.ext hpen)),
-        mul_sub,
+        P.basis_coe_of_val_eq_penultimate b hpen,
+        P.dualVector_coe_of_val_eq_penultimate b hpen, mul_sub,
         P.ι_typeDGraphVector_mul_occupation_of_ne b hn (show n - 2 ≠ n - 1 by omega),
         P.ι_typeDGraphVector_mul_occupation_last b hn]
       noncomm_ring
