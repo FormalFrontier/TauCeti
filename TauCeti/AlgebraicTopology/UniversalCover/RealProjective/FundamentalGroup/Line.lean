@@ -61,6 +61,15 @@ def fundamentalGroupMulEquiv (x : RealProjectiveSpace 1) :
   (FundamentalGroup.homeomorphMulEquiv homeomorphCircle x).trans
     (homeomorphCircle x).fundamentalGroupMulEquiv
 
+/-- The defining equation of `fundamentalGroupMulEquiv`, whose body is not exposed: it factors
+through the homeomorphism from the real projective line to the circle, followed by the circle
+fundamental-group computation. -/
+theorem fundamentalGroupMulEquiv_def (x : RealProjectiveSpace 1) :
+    fundamentalGroupMulEquiv x =
+      (FundamentalGroup.homeomorphMulEquiv homeomorphCircle x).trans
+        (homeomorphCircle x).fundamentalGroupMulEquiv :=
+  (rfl)
+
 /-- The fundamental group of `RP¹` at any basepoint is nontrivial. -/
 theorem nontrivial_fundamentalGroup (x : RealProjectiveSpace 1) :
     Nontrivial (FundamentalGroup (RealProjectiveSpace 1) x) :=
