@@ -26,11 +26,12 @@ invertible by `ContinuousLinearMap.isInvertible_of_norm_sub_le_half`. This file 
 estimate and runs Mathlib's smooth inverse function theorem at every point of the target.
 
 Two forms are given. The first is about Mathlib's own homeomorphism, over an arbitrary
-nontrivially normed field and from strict differentiability alone; it is the form a consumer that
-cannot choose its homeomorphism — such as the implicit-function chart of a level set — needs. The
-second packages the classical statement over `ℝ` or `ℂ`: a `C^n` map with invertible derivative at
-a point of an open set `s` restricts to an `OpenPartialHomeomorph` inside `s` whose inverse is
-`C^n` on its target.
+nontrivially normed field: strict differentiability alone makes derivative invertibility persist,
+while inverse `C^n` regularity also assumes the corresponding `C^n` regularity of the map. It is
+the form a consumer that cannot choose its homeomorphism — such as the implicit-function chart of
+a level set — needs. The second packages the classical statement over `ℝ` or `ℂ`: a `C^n` map with
+invertible derivative at a point of an open set `s` restricts to an `OpenPartialHomeomorph` inside
+`s` whose inverse is `C^n` on its target.
 
 ## Main results
 
