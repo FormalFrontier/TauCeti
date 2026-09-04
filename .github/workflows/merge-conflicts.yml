@@ -44,8 +44,8 @@ on:
   # -- GitHub has just invalidated it for every open PR, so most come back UNKNOWN
   # and are deliberately skipped -- and scheduled dispatches have been observed
   # dropping for hours at a time, so neither trigger can be relied on alone. The
-  # push gives promptness, the cron gives a settled read and covers a scheduler
-  # that skipped.
+  # push gives promptness and still fires when a scheduled dispatch is dropped;
+  # the cron gives the settled read the push cannot.
   push:
     branches: [main]
   schedule:
