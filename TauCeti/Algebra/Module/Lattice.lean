@@ -334,8 +334,6 @@ example, the injective map `ℤ² → ℝ` given by `(a, b) ↦ a + √2 * b`.
 * D. Cox, J. Little, and H. Schenck, *Toric Varieties*, §1.1.
 * W. Fulton, *Introduction to Toric Varieties*, §1.2.
 
-The interface follows the human-authored `AnalyticToricGeometry` roadmap and its suggested Lean
-interface.
 -/
 
 attribute [local instance 1001] NormedAddCommGroup.toAddCommGroup AddCommGroup.toAddCommMonoid
@@ -343,12 +341,6 @@ attribute [local instance 1001] NormedAddCommGroup.toAddCommGroup AddCommGroup.t
 universe u' v'
 
 variable {N : Type u} {V : Type v} [AddCommGroup N] [AddCommGroup V] [Module ℝ V]
-
-/-- The scalar action of `ℤ` on `ℝ` is faithful. -/
-instance faithfulSMulIntReal : FaithfulSMul ℤ ℝ where
-  eq_of_smul_eq_smul {m₁ m₂} h := by
-    apply (Int.cast_injective : Function.Injective (Int.cast : ℤ → ℝ))
-    simpa only [Int.smul_one_eq_cast] using h (1 : ℝ)
 
 private noncomputable instance moduleOfNormedSpace (E : Type w) [NormedAddCommGroup E]
     [NormedSpace ℝ E] : Module ℝ E :=
