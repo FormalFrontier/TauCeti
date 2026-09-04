@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.InnerProductSpace.Variational.Spectrum
-public import TauCeti.LinearAlgebra.BilinearForm.PosSemidef
+public import Mathlib.LinearAlgebra.BilinearForm.Properties
 
 /-!
 # The Rayleigh principle for a coercive variational problem
@@ -34,8 +34,8 @@ The lower bound `‖S‖⁻¹ ‖J v‖² ≤ B v v` needs no compactness and no
 `‖J v‖² = B w v` and `B w w = ⟪J v, S (J v)⟫ ≤ ‖S‖ ‖J v‖²`, and
 `(B w v)² ≤ B w w · B v v` closes the loop.  Coercivity enters only through the
 nonnegativity of the diagonal, which is what makes the energy form obey Cauchy--Schwarz;
-that inequality is `LinearMap.BilinForm.IsPosSemidef.sq_apply_le_mul_apply_self`, transferred
-to continuous bilinear forms here by
+that inequality is `LinearMap.BilinForm.apply_sq_le_of_symm`, transferred to continuous
+bilinear forms here by
 `ContinuousLinearMap.sq_apply_le_apply_self_mul_apply_self`.
 
 The *attainment* is where compactness enters: `‖S‖` is an eigenvalue of the compact symmetric
@@ -78,19 +78,16 @@ variable {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V] {B : V →L[ℝ]
 
 /-- **Cauchy--Schwarz for a symmetric continuous bilinear form with nonnegative diagonal**:
 `(B u v)² ≤ B u u · B v v`.  This transfers
-`LinearMap.BilinForm.IsPosSemidef.sq_apply_le_mul_apply_self` — where the inequality is proved,
-by a discriminant, with no continuity in sight — to the bundled continuous bilinear forms that
-carry a variational problem. -/
+`LinearMap.BilinForm.apply_sq_le_of_symm` to the bundled continuous bilinear forms that carry a
+variational problem. -/
 theorem ContinuousLinearMap.sq_apply_le_apply_self_mul_apply_self
     (hsymm : ∀ u v : V, B u v = B v u) (hnonneg : ∀ w : V, 0 ≤ B w w) (u v : V) :
     B u v ^ 2 ≤ B u u * B v v := by
   let B' : LinearMap.BilinForm ℝ V :=
     LinearMap.mk₂ ℝ (fun u v => B u v) (fun _ _ _ => by simp) (fun _ _ _ => by simp)
       (fun _ _ _ => by simp) (fun _ _ _ => by simp)
-  have hB' : B'.IsPosSemidef :=
-    (LinearMap.BilinForm.isPosSemidef_iff_forall_nonneg B'
-      (LinearMap.BilinForm.isSymm_def.2 hsymm)).2 hnonneg
-  exact hB'.sq_apply_le_mul_apply_self u v
+  have hB'symm : B'.IsSymm := LinearMap.BilinForm.isSymm_def.2 hsymm
+  exact B'.apply_sq_le_of_symm hnonneg (LinearMap.BilinForm.isSymm_iff.mp hB'symm) u v
 
 end CauchySchwarz
 
