@@ -6,7 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.Probability.Distributions.Gamma.Basic
-public import TauCeti.Probability.Distributions.NegativeBinomial
+public import TauCeti.Probability.Distributions.NegativeBinomial.Basic
 public import Mathlib.Probability.Distributions.Poisson.Basic
 import TauCeti.Probability.Distributions.Measurability
 
