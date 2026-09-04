@@ -7,36 +7,42 @@ module
 
 public import TauCeti.Algebra.Lie.GeneralLinear.Basic
 
-import Mathlib.LinearAlgebra.Dimension.Constructions
-import Mathlib.LinearAlgebra.Dual.Lemmas
+import Mathlib.LinearAlgebra.Dimension.Finite
+import Mathlib.LinearAlgebra.Dimension.StrongRankCondition
 
 /-!
 # The dimension of the special linear Lie algebra
 
-Over a field, `sl n K` is the kernel of the trace functional on the `n × n` matrices. The trace is
-surjective as soon as there is an index at all (`Matrix.trace_surjective`), so it is a nonzero
-functional and its kernel is a hyperplane:
+`sl n R` is the kernel of the trace on the `n × n` matrices, and it is free of rank
+`(card n) ^ 2 - 1` over any commutative ring: after fixing an index `i₀`, the entries away from the
+`(i₀, i₀)` place are free coordinates, and the trace-zero condition determines the `(i₀, i₀)` entry
+as minus the sum of the other diagonal entries. Reading the rank off that coordinate system gives
 
-`finrank K (sl n K) = (card n) ^ 2 - 1`.
+`finrank R (sl n R) = (card n) ^ 2 - 1`.
 
 The truncated subtraction is not a fudge. For an empty index type the matrix algebra is the zero
 ring and both sides are `0`, since `0 - 1 = 0` in `ℕ`. The statement therefore carries no
 nonemptiness hypothesis, and `TauCeti.finrank_sl_add_one` records the untruncated form
-`finrank K (sl n K) + 1 = (card n) ^ 2` where nonemptiness is available.
+`finrank R (sl n R) + 1 = (card n) ^ 2` where nonemptiness is available.
 
-A field is genuinely used. The same formula holds over any commutative ring, because `sl n R` is
-free on the off-diagonal matrix units together with the differences `Eᵢᵢ - E_{i₀i₀}`, but reading
-it off needs that explicit basis; only its rank-two case is on `main`
-(`TauCeti.slFinTwoBasis`, with `TauCeti.finrank_sl_fin_two` its dimension count over any ring
-satisfying the strong rank condition). The hyperplane argument used here instead goes through
-`Module.Dual.finrank_ker_add_one_of_ne_zero`, and so needs the field.
+No field, characteristic or algebraic closure hypothesis is used: the strong rank condition is all
+that `finrank` needs in order to count the basis vectors, and over a commutative ring it is implied
+by nontriviality. The rank-two case is counted separately, in
+`TauCeti/Algebra/Lie/Sl2/Basic.lean`: there the rank is read off the named basis
+`e`, `f`, `h` (`TauCeti.slFinTwoBasis`) that the `sl₂`-triple calculus of that file needs anyway.
 
 ## Main results
 
-* `TauCeti.finrank_sl`: `sl n K` has dimension `(card n) ^ 2 - 1`.
-* `TauCeti.finrank_slIdeal`: the same for the trace-zero ideal of `gl n K`, which by
-  `TauCeti.derivedSeries_one_eq_slIdeal` is the derived ideal `⁅gl n K, gl n K⁆`.
+* `TauCeti.finrank_sl`: `sl n R` has rank `(card n) ^ 2 - 1`.
+* `TauCeti.finrank_slIdeal`: the same for the trace-zero ideal of `gl n R`, which by
+  `TauCeti.derivedSeries_one_eq_slIdeal` is the derived ideal `⁅gl n R, gl n R⁆`.
 * `TauCeti.finrank_sl_add_one`: the untruncated form, for a nonempty index type.
+
+## Implementation notes
+
+The coordinate system above is a private linear equivalence, together with the private matrix it
+inverts to: they exist only to feed `Basis.ofEquivFun`, and the public surface of the file is the
+three rank statements.
 -/
 
 public section
@@ -47,53 +53,111 @@ open Matrix Module LieAlgebra
 
 attribute [local instance 100] LieRing.ofAssociativeRing
 
-variable {K : Type*} {n : Type*} [Fintype n]
+variable {R : Type*} {n : Type*} [Fintype n] [DecidableEq n]
+
+section Coordinates
+
+variable [CommRing R] (i₀ : n)
+
+/-- The diagonal place `(k, k)`, for `k ≠ i₀`, as one of the free coordinates of a trace-zero
+matrix. -/
+private def diagIdx (k : {k : n // k ≠ i₀}) : {p : n × n // p ≠ (i₀, i₀)} :=
+  ⟨(k.1, k.1), fun hk => k.2 (congrArg Prod.fst hk)⟩
+
+/-- The matrix with prescribed entries away from the `(i₀, i₀)` place, the entry there being the one
+that makes the trace vanish. -/
+private def ofOffDiag (g : {p : n × n // p ≠ (i₀, i₀)} → R) : Matrix n n R :=
+  Matrix.of fun i j =>
+    if h : (i, j) = (i₀, i₀) then -∑ k : {k : n // k ≠ i₀}, g (diagIdx i₀ k) else g ⟨(i, j), h⟩
+
+private lemma ofOffDiag_apply_of_ne (g : {p : n × n // p ≠ (i₀, i₀)} → R) {i j : n}
+    (h : (i, j) ≠ (i₀, i₀)) : ofOffDiag i₀ g i j = g ⟨(i, j), h⟩ :=
+  dite_eq_right h
+
+private lemma ofOffDiag_apply_self (g : {p : n × n // p ≠ (i₀, i₀)} → R) :
+    ofOffDiag i₀ g i₀ i₀ = -∑ k : {k : n // k ≠ i₀}, g (diagIdx i₀ k) :=
+  dite_eq_left rfl
+
+private lemma trace_ofOffDiag (g : {p : n × n // p ≠ (i₀, i₀)} → R) :
+    (ofOffDiag i₀ g).trace = 0 := by
+  have hdiag : ∀ k : {k : n // k ≠ i₀}, ofOffDiag i₀ g k.1 k.1 = g (diagIdx i₀ k) :=
+    fun k => ofOffDiag_apply_of_ne i₀ g (diagIdx i₀ k).2
+  simp only [Matrix.trace, Matrix.diag_apply]
+  rw [Fintype.sum_eq_add_sum_subtype_ne _ i₀, ofOffDiag_apply_self]
+  simp only [hdiag]
+  exact neg_add_cancel _
+
+private lemma ofOffDiag_mem_sl (g : {p : n × n // p ≠ (i₀, i₀)} → R) :
+    ofOffDiag i₀ g ∈ SpecialLinear.sl n R :=
+  LinearMap.mem_ker.mpr (trace_ofOffDiag i₀ g)
+
+/-- **Coordinates on `sl n R`.** A trace-zero matrix is determined by its entries away from the
+`(i₀, i₀)` place, and those entries are arbitrary: the trace-zero condition reads the remaining
+entry off as minus the sum of the other diagonal ones. -/
+private def slEquivFun : SpecialLinear.sl n R ≃ₗ[R] ({p : n × n // p ≠ (i₀, i₀)} → R) where
+  toFun A p := A.val p.1.1 p.1.2
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+  invFun g := ⟨ofOffDiag i₀ g, ofOffDiag_mem_sl i₀ g⟩
+  left_inv A := by
+    refine Subtype.ext (Matrix.ext fun i j => ?_)
+    change ofOffDiag i₀ (fun p => A.val p.1.1 p.1.2) i j = A.val i j
+    by_cases h : (i, j) = (i₀, i₀)
+    · have hi : i = i₀ := congrArg Prod.fst h
+      have hj : j = i₀ := congrArg Prod.snd h
+      rw [hi, hj, ofOffDiag_apply_self]
+      change -∑ k : {k : n // k ≠ i₀}, A.val k.1 k.1 = A.val i₀ i₀
+      have htr : A.val.trace = 0 := A.2
+      simp only [Matrix.trace, Matrix.diag_apply] at htr
+      rw [Fintype.sum_eq_add_sum_subtype_ne _ i₀] at htr
+      exact neg_eq_of_add_eq_zero_left htr
+    · exact ofOffDiag_apply_of_ne i₀ _ h
+  right_inv g := by
+    funext p
+    change ofOffDiag i₀ g p.1.1 p.1.2 = g p
+    exact ofOffDiag_apply_of_ne i₀ g p.2
+
+end Coordinates
 
 section Finrank
 
-variable (K n) [Field K] [DecidableEq n]
+variable (R n) [CommRing R] [StrongRankCondition R]
 
-/-- **`sl n K` is a hyperplane in the matrices**: `finrank K (sl n K) = (card n) ^ 2 - 1`.
+/-- **The rank of `sl n R`**: `finrank R (sl n R) = (card n) ^ 2 - 1`.
 
 For an empty index type the matrix algebra is trivial and both sides are `0`, the truncated
 subtraction `0 - 1` doing the work. -/
 theorem finrank_sl :
-    finrank K (SpecialLinear.sl n K) = Fintype.card n ^ 2 - 1 := by
-  have hmatrix : finrank K (Matrix n n K) = Fintype.card n ^ 2 := by
-    rw [Module.finrank_matrix, finrank_self, mul_one, sq]
-  -- `sl n K` is by definition the kernel of the trace, so the two have the same dimension.
-  have hsub : (SpecialLinear.sl n K : Submodule K (Matrix n n K))
-      = LinearMap.ker (Matrix.traceLinearMap n K K) := Submodule.ext fun _ => Iff.rfl
-  have hker : finrank K (SpecialLinear.sl n K)
-      = finrank K (LinearMap.ker (Matrix.traceLinearMap n K K)) :=
-    LinearEquiv.finrank_eq (LinearEquiv.ofEq _ _ hsub)
-  rw [hker]
-  rcases isEmpty_or_nonempty n with _ | _
-  · have hcard : Fintype.card n ^ 2 = 0 := by simp [Fintype.card_eq_zero]
-    have hle := Submodule.finrank_le (LinearMap.ker (Matrix.traceLinearMap n K K))
-    omega
-  · have hne : Matrix.traceLinearMap n K K ≠ 0 := fun h => by
-      obtain ⟨A, hA⟩ := Matrix.trace_surjective (n := n) (R := K) (1 : K)
-      have hA' : Matrix.traceLinearMap n K K A = 1 := by simpa using hA
-      rw [h, LinearMap.zero_apply] at hA'
-      exact zero_ne_one hA'
-    have hhyp := Module.Dual.finrank_ker_add_one_of_ne_zero hne
+    finrank R (SpecialLinear.sl n R) = Fintype.card n ^ 2 - 1 := by
+  rcases isEmpty_or_nonempty n with hn | ⟨⟨i₀⟩⟩
+  -- With no indices at all the only matrix is `0`, and `0 - 1 = 0` in `ℕ`.
+  · have hsub : Subsingleton (SpecialLinear.sl n R) :=
+      ⟨fun A B => Subtype.ext (Matrix.ext fun i => isEmptyElim i)⟩
+    have hnt : Nontrivial R := nontrivial_of_invariantBasisNumber R
+    rw [Module.finrank_zero_of_subsingleton, Fintype.card_eq_zero]
+    simp
+  -- Otherwise the free coordinates are the places other than `(i₀, i₀)`, and there are
+  -- `(card n) ^ 2 - 1` of them.
+  · rw [finrank_eq_card_basis (Basis.ofEquivFun (slEquivFun i₀))]
+    have hcard := Fintype.card_congr (Equiv.optionSubtypeNe ((i₀, i₀) : n × n))
+    simp only [Fintype.card_option, Fintype.card_prod] at hcard
+    rw [sq, ← hcard]
     omega
 
-/-- The trace-zero ideal of `gl n K` has dimension `(card n) ^ 2 - 1`: the `TauCeti.slIdeal`
-spelling of `TauCeti.finrank_sl`. By `TauCeti.derivedSeries_one_eq_slIdeal` this is the dimension
-of the derived ideal `⁅gl n K, gl n K⁆`. -/
+/-- The trace-zero ideal of `gl n R` has rank `(card n) ^ 2 - 1`: the `TauCeti.slIdeal`
+spelling of `TauCeti.finrank_sl`. By `TauCeti.derivedSeries_one_eq_slIdeal` this is the rank of the
+derived ideal `⁅gl n R, gl n R⁆`. -/
 theorem finrank_slIdeal :
-    finrank K (slIdeal K n) = Fintype.card n ^ 2 - 1 := by
-  rw [← finrank_sl K n]
+    finrank R (slIdeal R n) = Fintype.card n ^ 2 - 1 := by
+  rw [← finrank_sl R n]
   exact LinearEquiv.finrank_eq (LinearEquiv.ofEq _ _
-    (congrArg LieSubalgebra.toSubmodule (slIdeal_toLieSubalgebra_eq_sl K n)))
+    (congrArg LieSubalgebra.toSubmodule (slIdeal_toLieSubalgebra_eq_sl R n)))
 
 variable [Nonempty n]
 
-/-- The untruncated codimension-one statement: `sl n K` is a hyperplane in the matrices. -/
+/-- The untruncated codimension-one statement: `sl n R` is a hyperplane in the matrices. -/
 theorem finrank_sl_add_one :
-    finrank K (SpecialLinear.sl n K) + 1 = Fintype.card n ^ 2 := by
+    finrank R (SpecialLinear.sl n R) + 1 = Fintype.card n ^ 2 := by
   have hpos : 1 ≤ Fintype.card n ^ 2 := Nat.one_le_pow _ _ Fintype.card_pos
   rw [finrank_sl]
   omega

@@ -61,8 +61,9 @@ theorem finrank_exteriorPower_three_nine (K : Type*) [CommRing K] [Nontrivial K]
   decide
 
 /-- **`𝔰𝔩₉` is `80`-dimensional**, the degree-zero summand of the Vinberg `ℤ/3`-model of split
-`E₈`. -/
-theorem finrank_sl_fin_nine (K : Type*) [Field K] :
+`E₈`. Like the exterior cube above, this needs no more than a commutative ring in which `finrank`
+counts basis vectors. -/
+theorem finrank_sl_fin_nine (K : Type*) [CommRing K] [StrongRankCondition K] :
     finrank K (SpecialLinear.sl (Fin 9) K) = 80 := by
   rw [finrank_sl, Fintype.card_fin]
   decide
@@ -71,7 +72,8 @@ theorem finrank_sl_fin_nine (K : Type*) [Field K] :
 `finrank (𝔰𝔩₉ ⊕ ⋀³(K⁹) ⊕ ⋀³(K⁹)^*) = 80 + 84 + 84 = 248`.
 
 Only the `K`-module is at issue; the graded Lie bracket that makes the sum `E₈` is not built
-here. -/
+here. Unlike the two summand counts, this one is over a field: the dual summand contributes its
+`84` by `Subspace.dual_finrank_eq`, which is a statement about finite-dimensional vector spaces. -/
 theorem finrank_prod_sl_exteriorPower_dual (K : Type*) [Field K] :
     finrank K (SpecialLinear.sl (Fin 9) K ×
         ⋀[K]^3 (Fin 9 → K) × Dual K (⋀[K]^3 (Fin 9 → K))) = 248 := by
