@@ -376,6 +376,14 @@ noncomputable def IsIntegralLattice.equiv (i : N →+ V) (h : IsIntegralLattice 
     TensorProduct ℤ ℝ N ≃ₗ[ℝ] V :=
   Classical.choose h.exists_equiv
 
+/-- An integral lattice has finite-dimensional real span. -/
+theorem IsIntegralLattice.finiteDimensional (i : N →+ V) (h : IsIntegralLattice i) :
+    FiniteDimensional ℝ V := by
+  let _ : Module.Finite ℤ N := h.finite
+  let _ : Module.Finite ℝ (TensorProduct ℤ ℝ N) :=
+    Module.Finite.base_change ℤ ℝ N
+  exact (IsIntegralLattice.equiv i h).finiteDimensional
+
 /-- The chosen scalar-extension equivalence has the prescribed value on lattice vectors. -/
 lemma IsIntegralLattice.equiv_one_tmul (i : N →+ V) (h : IsIntegralLattice i) (n : N) :
     IsIntegralLattice.equiv i h ((1 : ℝ) ⊗ₜ[ℤ] n) = i n :=
@@ -423,26 +431,16 @@ theorem IsIntegralLattice.range_eq_span_realBasis (i : N →+ V) (h : IsIntegral
     Set.range i =
       (Submodule.span ℤ (Set.range (IsIntegralLattice.realBasis i h)) : Set V) := by
   have hrange : Set.range i = (LinearMap.range i.toIntLinearMap : Set V) := by
-    ext x
-    constructor
-    · rintro ⟨n, rfl⟩
-      exact ⟨n, by simp only [AddMonoidHom.coe_toIntLinearMap]⟩
-    · rintro ⟨n, rfl⟩
-      exact ⟨n, by simp only [AddMonoidHom.coe_toIntLinearMap]⟩
+    simp only [LinearMap.coe_range, AddMonoidHom.coe_toIntLinearMap]
   rw [hrange]
   have hrange' : LinearMap.range i.toIntLinearMap =
       Submodule.span ℤ (Set.range (IsIntegralLattice.realBasis i h)) := by
     rw [LinearMap.range_eq_map, ← (@Module.Free.chooseBasis ℤ N _ _ _ h.free).span_eq,
       Submodule.map_span, ← Set.range_comp]
     congr 1
-    ext v
-    constructor
-    · rintro ⟨j, rfl⟩
-      exact ⟨j, by simp only [Function.comp_apply, IsIntegralLattice.realBasis_apply,
-        AddMonoidHom.coe_toIntLinearMap]⟩
-    · rintro ⟨j, rfl⟩
-      exact ⟨j, by simp only [Function.comp_apply, IsIntegralLattice.realBasis_apply,
-        AddMonoidHom.coe_toIntLinearMap]⟩
+    exact congrArg Set.range <| funext fun j ↦ by
+      simp only [Function.comp_apply, IsIntegralLattice.realBasis_apply,
+        AddMonoidHom.coe_toIntLinearMap]
   exact congrArg (fun p : Submodule ℤ V => (p : Set V)) hrange'
 
 /-- The rank of a full integral lattice equals the real dimension of its ambient space. -/
