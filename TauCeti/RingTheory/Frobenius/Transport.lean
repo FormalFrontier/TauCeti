@@ -13,7 +13,7 @@ public import Mathlib.RingTheory.Localization.AtPrime.Basic
 
 An algebra equivalence `e : S ≃ₐ[R] T` of commutative `R`-algebras moves ideals of `S` to ideals
 of `T` and conjugates endomorphisms of `S` into endomorphisms of `T`.  The local data attached to
-a prime is invariant under this transport:
+an ideal is invariant under this transport:
 
 * the contraction to `R` of an ideal is unchanged by mapping it along `e`
   (`Ideal.under_mapAlgEquiv`), and mapping along `e` and back along `e.symm` recovers the ideal
@@ -21,7 +21,7 @@ a prime is invariant under this transport:
 * unramifiedness at a prime is preserved, and is an equivalence
   (`Algebra.IsUnramifiedAt.mapAlgEquiv`, `Algebra.IsUnramifiedAt.mapAlgEquiv_iff`);
 * an arithmetic Frobenius `φ : S →ₐ[R] S` conjugates to an arithmetic Frobenius at the mapped
-  prime, and the property is an equivalence (`AlgHom.IsArithFrobAt.mapAlgEquiv`,
+  ideal, and the property is an equivalence (`AlgHom.IsArithFrobAt.mapAlgEquiv`,
   `AlgHom.IsArithFrobAt.mapAlgEquiv_iff`).
 
 These are the generic commutative-algebra forms of the number-field transport facts in
@@ -92,8 +92,8 @@ variable {R S T : Type*} [CommRing R] [CommRing S] [CommRing T] [Algebra R S] [A
 
 /-- **An arithmetic Frobenius conjugates to an arithmetic Frobenius.**  If `φ : S →ₐ[R] S` is an
 arithmetic Frobenius at `Q` and `e : S ≃ₐ[R] T`, then the conjugate
-`e ∘ φ ∘ e.symm : T →ₐ[R] T` is an arithmetic Frobenius at the mapped prime `Q.map e`.  The
-exponent is unchanged because the mapped prime has the same contraction to `R`
+`e ∘ φ ∘ e.symm : T →ₐ[R] T` is an arithmetic Frobenius at the mapped ideal `Q.map e`.  The
+exponent is unchanged because the mapped ideal has the same contraction to `R`
 (`Ideal.under_mapAlgEquiv`). -/
 theorem mapAlgEquiv (e : S ≃ₐ[R] T) (Q : Ideal S) (φ : S →ₐ[R] S)
     (hφ : φ.IsArithFrobAt Q) :

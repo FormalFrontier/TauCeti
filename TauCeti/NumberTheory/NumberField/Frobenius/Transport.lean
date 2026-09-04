@@ -24,8 +24,9 @@ algebra-homomorphism formulation used there.  Unramifiedness needs no specializa
 use `Algebra.IsUnramifiedAt.mapAlgEquiv` and `Algebra.IsUnramifiedAt.mapAlgEquiv_iff` directly
 with `RingOfIntegers.mapAlgEquiv e`.
 
-The prime-ideal map is used rather than a second prime carrier.  In particular, the statements
-remain conditional at a prime and do not assign a Frobenius to a ramified prime.
+The ideal map is used rather than a second ideal carrier.  In particular, the statements remain
+conditional on an arithmetic Frobenius witness at the ideal; they do not extend that predicate to
+ideals without such a witness.
 
 ## Main results
 
@@ -58,7 +59,7 @@ theorem toAlgHom_autCongr (e : L ≃ₐ[K] L') (τ : L ≃ₐ[K] L) :
     RingOfIntegers.mapAlgEquiv_apply]
 
 /-- An arithmetic Frobenius is transported to the conjugate automorphism at the transported
-prime.  The exponent is unchanged because the two primes have the same contraction to `𝓞 K`
+ideal.  The exponent is unchanged because the two ideals have the same contraction to `𝓞 K`
 (`Ideal.under_mapAlgEquiv`). -/
 theorem isArithFrobAt_autCongr_map_ringOfIntegersAlgEquiv (e : L ≃ₐ[K] L')
     (Q : Ideal (𝓞 L))
@@ -72,7 +73,7 @@ theorem isArithFrobAt_autCongr_map_ringOfIntegersAlgEquiv (e : L ≃ₐ[K] L')
   rw [toAlgHom_autCongr]
   exact AlgHom.IsArithFrobAt.mapAlgEquiv (RingOfIntegers.mapAlgEquiv e) Q _ hτ
 
-/-- The Frobenius transport theorem is an equivalence when the transported prime is written as the
+/-- The Frobenius transport theorem is an equivalence when the transported ideal is written as the
 map of the original one. -/
 @[simp]
 theorem isArithFrobAt_autCongr_map_ringOfIntegersAlgEquiv_iff
