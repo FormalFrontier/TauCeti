@@ -26,6 +26,8 @@ compatible with: the total-degree grading of the underlying tensor product of gr
 
 * `TauCeti.gradedTensorGrading`: the total-degree grading of `𝒜 ᵍ⊗[R] ℬ`, whose degree-`n` piece
   is the sum of the images of `𝒜 p ⊗ ℬ (n - p)`.
+* `TauCeti.gradedTensorLift`: the graded universal-property map induced by two graded algebra maps
+  whose images satisfy the Koszul commutation rule.
 * `TauCeti.gradedTensorIncludeLeft` and `TauCeti.gradedTensorIncludeRight`: the inclusions
   `a ↦ a ᵍ⊗ₜ 1` and `b ↦ 1 ᵍ⊗ₜ b` of the two factors, as homomorphisms of graded algebras.
 
@@ -56,7 +58,7 @@ open scoped DirectSum TensorProduct
 
 namespace TauCeti
 
-universe uR uA uB
+universe uR uA uB uC
 
 variable {R : Type uR} {A : Type uA} {B : Type uB}
   [CommRing R] [Ring A] [Ring B] [Algebra R A] [Algebra R B]
@@ -140,6 +142,59 @@ algebra for the total-degree grading. -/
 noncomputable instance instGradedAlgebraGradedTensorGrading :
     GradedAlgebra (gradedTensorGrading 𝒜 ℬ) :=
   (isInternal_gradedTensorGrading 𝒜 ℬ).gradedAlgebra
+
+section Lift
+
+variable {C : Type uC} [Ring C] [Algebra R C]
+  (𝒞 : ℤ → Submodule R C) [GradedAlgebra 𝒞]
+
+private theorem gradedTensorLift_map_mem (F : (𝒜 ᵍ⊗[R] ℬ) →ₐ[R] C)
+    (f : 𝒜 →ₐᵍ[R] 𝒞) (g : ℬ →ₐᵍ[R] 𝒞) (hF : ∀ a b, F (a ᵍ⊗ₜ[R] b) = f a * g b)
+    {n : ℤ} {x : 𝒜 ᵍ⊗[R] ℬ} (hx : x ∈ gradedTensorGrading 𝒜 ℬ n) : F x ∈ 𝒞 n := by
+  refine gradedTensorGrading_le 𝒜 ℬ (C := Submodule.comap
+    F.toLinearMap (𝒞 n)) (fun p a ha b hb ↦ ?_) hx
+  rw [Submodule.mem_comap, AlgHom.toLinearMap_apply, hF]
+  have hfg := SetLike.mul_mem_graded (f.map_mem ha) (g.map_mem hb)
+  -- `mul_mem_graded` uses the stored graded ring maps; expose the definitionally equal
+  -- `GradedAlgHom` coercions before normalizing the degree.
+  change f a * g b ∈ 𝒞 (p + (n - p)) at hfg
+  simpa only [add_sub_cancel] using hfg
+
+/-- The graded algebra map out of a graded tensor product induced by two graded algebra maps whose
+images satisfy the Koszul commutation rule. -/
+@[expose] noncomputable def gradedTensorLift (f : 𝒜 →ₐᵍ[R] 𝒞) (g : ℬ →ₐᵍ[R] 𝒞)
+    (h : ∀ ⦃i j⦄ (a : 𝒜 i) (b : ℬ j),
+      f a * g b = (-1 : ℤˣ) ^ (j * i) • (g b * f a)) :
+    gradedTensorGrading 𝒜 ℬ →ₐᵍ[R] 𝒞 := by
+  have h' : ∀ ⦃i j⦄ (a : 𝒜 i) (b : ℬ j),
+      f.toAlgHom a * g.toAlgHom b = (-1 : ℤˣ) ^ (j * i) •
+        (g.toAlgHom b * f.toAlgHom a) := by
+    intro i j a b
+    -- Mathlib's lift accepts the stored `AlgHom`s, whose applications are definitionally the
+    -- applications of the graded maps in the supplied commutation hypothesis.
+    change f a * g b = (-1 : ℤˣ) ^ (j * i) • (g b * f a)
+    exact h a b
+  let F : (𝒜 ᵍ⊗[R] ℬ) →ₐ[R] C :=
+    GradedTensorProduct.lift 𝒜 ℬ f.toAlgHom g.toAlgHom h'
+  exact { F with
+    map_mem := by
+      apply gradedTensorLift_map_mem 𝒜 ℬ 𝒞
+        (F := F) (f := f) (g := g)
+      intro a b
+      -- The local `F` is Mathlib's underlying lift; expose its stored factor maps to use its
+      -- pure-tensor computation theorem.
+      change F (a ᵍ⊗ₜ[R] b) = f.toAlgHom a * g.toAlgHom b
+      exact GradedTensorProduct.lift_tmul 𝒜 ℬ f.toAlgHom g.toAlgHom h' a b }
+
+/-- The graded tensor lift sends a pure tensor to the product of the two factor maps. -/
+@[simp]
+theorem gradedTensorLift_tmul (f : 𝒜 →ₐᵍ[R] 𝒞) (g : ℬ →ₐᵍ[R] 𝒞)
+    (h : ∀ ⦃i j⦄ (a : 𝒜 i) (b : ℬ j),
+      f a * g b = (-1 : ℤˣ) ^ (j * i) • (g b * f a)) (a : A) (b : B) :
+    gradedTensorLift 𝒜 ℬ 𝒞 f g h (a ᵍ⊗ₜ[R] b) = f a * g b :=
+  rfl
+
+end Lift
 
 /-- A pure tensor of the graded tensor product is additive in its left factor. -/
 @[simp]

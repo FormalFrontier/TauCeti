@@ -70,6 +70,7 @@ noncomputable def dgTensorDifferential (dA : A →ₗ[R] A) (dB : B →ₗ[R] B)
 variable {𝒜 ℬ} {dA : A →ₗ[R] A} {dB : B →ₗ[R] B}
 
 /-- The differential of a tensor product, evaluated on a pure tensor. -/
+@[simp]
 theorem dgTensorDifferential_tmul (a : A) (b : B) :
     dgTensorDifferential 𝒜 ℬ dA dB (a ᵍ⊗ₜ[R] b) =
       dA a ᵍ⊗ₜ[R] b + (InternalGrading.ofDecomposition 𝒜).koszulTwist 1 a ᵍ⊗ₜ[R] dB b := by
@@ -122,8 +123,9 @@ private theorem dgTensorDifferential_leibniz_tmul (hA : IsDGAlgebra 𝒜 dA) (hB
   have hq : ((q.negOnePow : ℤ) : R) * ((q.negOnePow : ℤ) : R) = 1 := by
     rw [← Int.cast_mul, ← Units.val_mul, ← Int.negOnePow_add, Int.negOnePow_even _ ⟨q, rfl⟩]
     norm_num
-  simp only [show (q + 1) * p' = q * p' + p' by ring, show q * (p' + 1) = q * p' + q by ring,
-    Int.negOnePow_add, Units.val_mul, Int.cast_mul]
+  have h_left_degree : (q + 1) * p' = q * p' + p' := by ring
+  have h_right_degree : q * (p' + 1) = q * p' + q := by ring
+  simp only [h_left_degree, h_right_degree, Int.negOnePow_add, Units.val_mul, Int.cast_mul]
   match_scalars
   · ring
   · linear_combination (-(((q * p').negOnePow : ℤ) : R) * ((p.negOnePow : ℤ) : R)) * hq
@@ -163,10 +165,10 @@ theorem isDGAlgebra_gradedTensorGrading (hA : IsDGAlgebra 𝒜 dA) (hB : IsDGAlg
       (gradedTensorGrading 𝒜 ℬ (n + 1))) (fun p a ha b hb ↦ ?_) hx
     rw [Submodule.mem_comap, dgTensorDifferential_tmul_of_mem' ha]
     refine Submodule.add_mem _ ?_ (Submodule.smul_mem _ _ ?_)
-    · rw [show n + 1 = p + 1 + (n - p) by ring]
-      exact tmul_mem_gradedTensorGrading 𝒜 ℬ (hA.map_mem ha) hb
-    · rw [show n + 1 = p + (n - p + 1) by ring]
-      exact tmul_mem_gradedTensorGrading 𝒜 ℬ ha (hB.map_mem hb)
+    · have h_degree : p + 1 + (n - p) = n + 1 := by ring
+      simpa only [h_degree] using tmul_mem_gradedTensorGrading 𝒜 ℬ (hA.map_mem ha) hb
+    · have h_degree : p + (n - p + 1) = n + 1 := by ring
+      simpa only [h_degree] using tmul_mem_gradedTensorGrading 𝒜 ℬ ha (hB.map_mem hb)
   sq_zero x := by
     have key : (dgTensorDifferential 𝒜 ℬ dA dB ∘ₗ dgTensorDifferential 𝒜 ℬ dA dB :
         (𝒜 ᵍ⊗[R] ℬ) →ₗ[R] (𝒜 ᵍ⊗[R] ℬ)) = 0 := by
@@ -188,8 +190,8 @@ theorem isDGAlgebra_gradedTensorGrading (hA : IsDGAlgebra 𝒜 dA) (hB : IsDGAlg
       simp only [LinearMap.mem_ker, LinearMap.sub_apply, LinearMap.comp_apply,
         LinearMap.add_apply, LinearMap.smul_apply, LinearMap.flip_apply,
         ← GradedTensorProduct.mul_def, sub_eq_zero]
-      rw [show m = p + (m - p) by ring]
-      exact dgTensorDifferential_leibniz_tmul_left hA hB ha hb y
+      have h_degree : p + (m - p) = m := by ring
+      simpa only [h_degree] using dgTensorDifferential_leibniz_tmul_left hA hB ha hb y
     simp only [LinearMap.mem_ker, LinearMap.sub_apply, LinearMap.comp_apply,
       LinearMap.add_apply, LinearMap.smul_apply, LinearMap.flip_apply,
       ← GradedTensorProduct.mul_def, sub_eq_zero] at key
@@ -207,6 +209,8 @@ noncomputable def dgTensorIncludeLeft (hA : IsDGAlgebra 𝒜 dA) (hB : IsDGAlgeb
 @[simp]
 theorem dgTensorIncludeLeft_apply (hA : IsDGAlgebra 𝒜 dA) (hB : IsDGAlgebra ℬ dB) (a : A) :
     dgTensorIncludeLeft hA hB a = a ᵍ⊗ₜ[R] (1 : B) := by
+  -- The `DGAlgHom` coercion is definitionally its stored `GradedAlgHom`; `change` exposes that
+  -- projection so the graded inclusion's public application lemma applies.
   change gradedTensorIncludeLeft 𝒜 ℬ a = _
   exact gradedTensorIncludeLeft_apply 𝒜 ℬ a
 
@@ -223,6 +227,8 @@ noncomputable def dgTensorIncludeRight (hA : IsDGAlgebra 𝒜 dA) (hB : IsDGAlge
 @[simp]
 theorem dgTensorIncludeRight_apply (hA : IsDGAlgebra 𝒜 dA) (hB : IsDGAlgebra ℬ dB) (b : B) :
     dgTensorIncludeRight hA hB b = (1 : A) ᵍ⊗ₜ[R] b := by
+  -- The `DGAlgHom` coercion is definitionally its stored `GradedAlgHom`; `change` exposes that
+  -- projection so the graded inclusion's public application lemma applies.
   change gradedTensorIncludeRight 𝒜 ℬ b = _
   exact gradedTensorIncludeRight_apply 𝒜 ℬ b
 
