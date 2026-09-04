@@ -17,13 +17,14 @@ series-level lemma about it is stated in. Mathlib's `FormalGroup`, by contrast, 
 series in `MvPowerSeries (Fin 2) R`. This file transports the two linear coefficients along the
 reindexing `unitSumUnitEquivFinTwo`.
 
-Those two are the `lin_coeff_X` and `lin_coeff_Y` fields of the eventual `FormalGroup` instance.
-The constant coefficient is discharged directly by `simp`, while associativity is transported at
-the construction site by the general `MvPowerSeries.rename_unitSumUnitEquivFinTwo_assoc` theorem.
+Those two are the `lin_coeff_X` and `lin_coeff_Y` fields of the `FormalGroup` structure built by
+`WeierstrassCurve.formalGroup`. The constant coefficient is discharged directly by `simp`, while
+associativity is transported at the construction site by the general
+`MvPowerSeries.rename_unitSumUnitEquivFinTwo_assoc` theorem.
 
 `formalAdd` over `Unit ⊕ Unit` stays the working object: nothing here re-founds it over `Fin 2`,
 and the `Fin 2` presentation is not a second public spelling of the addition series — it exists to
-be the `toPowerSeries` field of the instance.
+be the `toPowerSeries` field of that structure.
 
 ## Main results
 

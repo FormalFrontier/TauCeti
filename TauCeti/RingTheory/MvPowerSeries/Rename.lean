@@ -13,8 +13,9 @@ import TauCeti.RingTheory.MvPowerSeries.Substitution
 /-!
 # Renaming the variables of a multivariate power series
 
-Two gaps in Mathlib's `rename` API, both about comparing a renaming with another operation on the
-same series.
+Two gaps in Mathlib's `rename` API, each about comparing a renaming with another operation on the
+same series, and one consequence of them: that reindexing a two-variable series along
+`unitSumUnitEquivFinTwo` carries an associativity identity with it.
 
 Substituting after renaming is the substitution along the renamed index: Mathlib has both
 operations and the law that lets them be compared — `rename_eq_subst`, which says a renaming *is*
@@ -24,6 +25,11 @@ what a caller reindexing a series needs.
 Reading the coefficient of a single-variable monomial through a renaming along an embedding is
 likewise available only through `coeff_embDomain_rename`, which speaks about `Finsupp.embDomain`;
 at one variable raised to an arbitrary power the `single (e i) n` spelling is the more usable one.
+
+Associativity is where the two spellings of a two-variable series genuinely diverge: the named
+form substitutes an already-substituted series through `Sum.elim`, the `Fin 2` form through a
+`Matrix.cons` family over `Fin 3`. Transporting the identity therefore means reindexing the
+three-variable ambient ring as well, along `unitSumUnitSumUnitEquivFinThree`.
 
 ## Main results
 
@@ -36,9 +42,10 @@ at one variable raised to an arbitrary power the `single (e i) n` spelling is th
 
 ## Provenance
 
-No external source: both statements are gaps in Mathlib's `MvPowerSeries` API and each proof is a
-few steps of that same API. They are recorded here rather than inside their callers because they
-carry no elliptic content.
+No external source. The first two statements are gaps in Mathlib's `MvPowerSeries` API and each
+proof is a few steps of that same API; the third is the reindexing they were extracted for, and
+its proof rewrites both sides of the identity through the three-variable renaming. All three are
+recorded here rather than inside their callers because they carry no elliptic content.
 -/
 
 public section
@@ -66,30 +73,6 @@ end CommSemiring
 section CommRing
 
 variable [CommRing R]
-
-private def unitSumUnitSumUnitEquivFinThree : (Unit ⊕ Unit ⊕ Unit) ≃ Fin 3 :=
-  (Equiv.sumCongr finOneEquiv.symm unitSumUnitEquivFinTwo).trans finSumFinEquiv
-
-@[simp]
-private theorem unitSumUnitSumUnitEquivFinThree_inl :
-    unitSumUnitSumUnitEquivFinThree (Sum.inl ()) = 0 := by
-  decide
-
-@[simp]
-private theorem unitSumUnitSumUnitEquivFinThree_inr_inl :
-    unitSumUnitSumUnitEquivFinThree (Sum.inr (Sum.inl ())) = 1 := by
-  -- The private equivalence is opaque, so expose its outer sum equivalence before rewriting.
-  change finSumFinEquiv (Sum.inr (unitSumUnitEquivFinTwo (Sum.inl ()))) = 1
-  rw [unitSumUnitEquivFinTwo_inl, finSumFinEquiv_apply_right]
-  rfl
-
-@[simp]
-private theorem unitSumUnitSumUnitEquivFinThree_inr_inr :
-    unitSumUnitSumUnitEquivFinThree (Sum.inr (Sum.inr ())) = 2 := by
-  -- The private equivalence is opaque, so expose its outer sum equivalence before rewriting.
-  change finSumFinEquiv (Sum.inr (unitSumUnitEquivFinTwo (Sum.inr ()))) = 2
-  rw [unitSumUnitEquivFinTwo_inr, finSumFinEquiv_apply_right]
-  rfl
 
 private theorem rename_unitSumUnitEquivFinTwo_assoc_left_family
     (p : MvPowerSeries (Unit ⊕ Unit) R) :
