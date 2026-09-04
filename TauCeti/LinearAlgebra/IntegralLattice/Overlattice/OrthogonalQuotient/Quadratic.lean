@@ -121,6 +121,7 @@ private theorem dualCarrierToOrthogonalQuotient_eq_zero_iff
       (L.discriminantSubgroup M) ((isEven_iff_isIsotropic_discriminantSubgroup hL M).mp hM)
       ⟨hM.isIntegral.dualClassHom y,
         hM.isIntegral.dualClassHom_mem_orthogonalComplement y⟩).trans (by
+    -- Remove the exposed discriminant-module carrier and orthogonal-complement subtype projections.
     change hM.isIntegral.dualClassHom y ∈ L.discriminantSubgroup M ↔ (y : V) ∈ M.1
     rw [hM.isIntegral.dualClassHom_apply]
     exact L.mk_mem_discriminantSubgroup_iff M _)
@@ -190,6 +191,7 @@ private theorem quadratic_dualCarrierToOrthogonalQuotient
   refine ((L.discriminantQuadraticModule hL).orthogonalQuotient_quadratic_mk
     (L.discriminantSubgroup M) ((isEven_iff_isIsotropic_discriminantSubgroup hL M).mp hM)
     _).trans ?_
+  -- Remove the orthogonal-complement subtype projection from the quotient representative.
   change (L.discriminantQuadraticModule hL).quadratic (hM.isIntegral.dualClassHom y) = _
   rw [L.discriminantQuadraticModule_quadratic]
   rw [hM.isIntegral.dualClassHom_apply]
@@ -261,6 +263,7 @@ theorem pairing_discriminantOrthogonalQuotientIsometry_mk
     (L.discriminantSubgroup M) ((isEven_iff_isIsotropic_discriminantSubgroup hL M).mp hM)
     _ _).trans ?_
   refine (L.discriminantBilinearModule_pairing _ _).trans ?_
+  -- Remove the exposed discriminant-module carrier and orthogonal-complement subtype projections.
   change L.discriminantPairing (hM.isIntegral.dualClassHom y)
     (hM.isIntegral.dualClassHom z) = _
   rw [hM.isIntegral.dualClassHom_apply, hM.isIntegral.dualClassHom_apply]

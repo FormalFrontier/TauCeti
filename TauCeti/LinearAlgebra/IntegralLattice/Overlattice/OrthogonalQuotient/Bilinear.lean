@@ -112,6 +112,7 @@ private theorem dualCarrierToBilinearOrthogonalQuotient_eq_zero_iff
   (L.discriminantBilinearModule.orthogonalQuotientMk_eq_zero_iff
       (L.discriminantSubgroup M)
       ⟨hM.dualClassHom y, hM.dualClassHom_mem_orthogonalComplement y⟩).trans (by
+    -- Remove the exposed discriminant-module carrier and orthogonal-complement subtype projections.
     change hM.dualClassHom y ∈ L.discriminantSubgroup M ↔ (y : V) ∈ M.1
     rw [hM.dualClassHom_apply]
     exact L.mk_mem_discriminantSubgroup_iff M _)
@@ -180,6 +181,7 @@ private theorem pairing_dualCarrierToBilinearOrthogonalQuotient
   refine (L.discriminantBilinearModule.orthogonalQuotient_pairing_mk
     (L.discriminantSubgroup M) _ _).trans ?_
   refine (L.discriminantBilinearModule_pairing _ _).trans ?_
+  -- Remove the exposed discriminant-module carrier and orthogonal-complement subtype projections.
   change L.discriminantPairing (hM.dualClassHom y) (hM.dualClassHom z) = _
   rw [hM.dualClassHom_apply, hM.dualClassHom_apply]
   exact L.discriminantPairing_mk ⟨(y : V), hM.dualCarrier_le y.2⟩
