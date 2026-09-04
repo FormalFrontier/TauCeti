@@ -8,7 +8,6 @@ module
 public import TauCeti.Algebra.Lie.GeneralLinear.Basic
 
 import Mathlib.LinearAlgebra.Dimension.Finite
-import Mathlib.LinearAlgebra.Dimension.StrongRankCondition
 
 /-!
 # The dimension of the special linear Lie algebra
@@ -40,9 +39,9 @@ by nontriviality. The rank-two case is counted separately, in
 
 ## Implementation notes
 
-The coordinate system above is a private linear equivalence, together with the private matrix it
-inverts to: they exist only to feed `Basis.ofEquivFun`, and the public surface of the file is the
-three rank statements.
+The coordinate system above is a private linear equivalence, together with the private coordinate
+map, the private matrix it inverts to and their two round-trip lemmas: they exist only to feed
+`Basis.ofEquivFun`, and the public surface of the file is the three rank statements.
 -/
 
 public section
@@ -63,6 +62,20 @@ variable [CommRing R] (i₀ : n)
 matrix. -/
 private def diagIdx (k : {k : n // k ≠ i₀}) : {p : n × n // p ≠ (i₀, i₀)} :=
   ⟨(k.1, k.1), fun hk => k.2 (congrArg Prod.fst hk)⟩
+
+/-- The coordinates of a matrix: its entries away from the `(i₀, i₀)` place. -/
+private def offDiagCoords (A : Matrix n n R) (p : {p : n × n // p ≠ (i₀, i₀)}) : R :=
+  A p.1.1 p.1.2
+
+omit [Fintype n] [DecidableEq n] [CommRing R] in
+private lemma offDiagCoords_apply (A : Matrix n n R) (p : {p : n × n // p ≠ (i₀, i₀)}) :
+    offDiagCoords i₀ A p = A p.1.1 p.1.2 :=
+  rfl
+
+omit [Fintype n] [DecidableEq n] [CommRing R] in
+private lemma offDiagCoords_diagIdx (A : Matrix n n R) (k : {k : n // k ≠ i₀}) :
+    offDiagCoords i₀ A (diagIdx i₀ k) = A k.1 k.1 :=
+  rfl
 
 /-- The matrix with prescribed entries away from the `(i₀, i₀)` place, the entry there being the one
 that makes the trace vanish. -/
@@ -91,31 +104,37 @@ private lemma ofOffDiag_mem_sl (g : {p : n × n // p ≠ (i₀, i₀)} → R) :
     ofOffDiag i₀ g ∈ SpecialLinear.sl n R :=
   LinearMap.mem_ker.mpr (trace_ofOffDiag i₀ g)
 
+/-- A trace-zero matrix is recovered from its coordinates: the entry it omits is forced. -/
+private lemma ofOffDiag_offDiagCoords {A : Matrix n n R} (hA : A.trace = 0) :
+    ofOffDiag i₀ (offDiagCoords i₀ A) = A := by
+  refine Matrix.ext fun i j => ?_
+  by_cases h : (i, j) = (i₀, i₀)
+  · have hi : i = i₀ := congrArg Prod.fst h
+    have hj : j = i₀ := congrArg Prod.snd h
+    rw [hi, hj, ofOffDiag_apply_self]
+    simp only [offDiagCoords_diagIdx]
+    simp only [Matrix.trace, Matrix.diag_apply] at hA
+    rw [Fintype.sum_eq_add_sum_subtype_ne _ i₀] at hA
+    exact neg_eq_of_add_eq_zero_left hA
+  · rw [ofOffDiag_apply_of_ne i₀ _ h, offDiagCoords_apply]
+
+/-- The coordinates of the matrix built from a prescribed family are that family back again. -/
+private lemma offDiagCoords_ofOffDiag (g : {p : n × n // p ≠ (i₀, i₀)} → R) :
+    offDiagCoords i₀ (ofOffDiag i₀ g) = g := by
+  funext p
+  rw [offDiagCoords_apply]
+  exact ofOffDiag_apply_of_ne i₀ g p.2
+
 /-- **Coordinates on `sl n R`.** A trace-zero matrix is determined by its entries away from the
 `(i₀, i₀)` place, and those entries are arbitrary: the trace-zero condition reads the remaining
 entry off as minus the sum of the other diagonal ones. -/
 private def slEquivFun : SpecialLinear.sl n R ≃ₗ[R] ({p : n × n // p ≠ (i₀, i₀)} → R) where
-  toFun A p := A.val p.1.1 p.1.2
+  toFun A := offDiagCoords i₀ A.val
   map_add' _ _ := rfl
   map_smul' _ _ := rfl
   invFun g := ⟨ofOffDiag i₀ g, ofOffDiag_mem_sl i₀ g⟩
-  left_inv A := by
-    refine Subtype.ext (Matrix.ext fun i j => ?_)
-    change ofOffDiag i₀ (fun p => A.val p.1.1 p.1.2) i j = A.val i j
-    by_cases h : (i, j) = (i₀, i₀)
-    · have hi : i = i₀ := congrArg Prod.fst h
-      have hj : j = i₀ := congrArg Prod.snd h
-      rw [hi, hj, ofOffDiag_apply_self]
-      change -∑ k : {k : n // k ≠ i₀}, A.val k.1 k.1 = A.val i₀ i₀
-      have htr : A.val.trace = 0 := A.2
-      simp only [Matrix.trace, Matrix.diag_apply] at htr
-      rw [Fintype.sum_eq_add_sum_subtype_ne _ i₀] at htr
-      exact neg_eq_of_add_eq_zero_left htr
-    · exact ofOffDiag_apply_of_ne i₀ _ h
-  right_inv g := by
-    funext p
-    change ofOffDiag i₀ g p.1.1 p.1.2 = g p
-    exact ofOffDiag_apply_of_ne i₀ g p.2
+  left_inv A := Subtype.ext (ofOffDiag_offDiagCoords i₀ (LinearMap.mem_ker.mp A.2))
+  right_inv g := offDiagCoords_ofOffDiag i₀ g
 
 end Coordinates
 
