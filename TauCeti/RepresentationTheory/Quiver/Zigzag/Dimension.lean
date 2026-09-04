@@ -35,11 +35,8 @@ coefficient ring by dual numbers on singleton components restores the missing vo
 
 ## References
 
-This is the dimension clause of Layer 2 of `TauCetiRoadmap/ZigzagPreprojective/README.md`, whose
-target signature `finrank_zigzagAlgebra` appears in
-`TauCetiRoadmap/ZigzagPreprojective/Suggested.lean`.  See Huerfano--Khovanov, *A category for the
-adjoint representation*, Section 3, and Ehrig--Tubbenhauer, *Algebraic properties of zigzag
-algebras*, Section 2.
+See Huerfano--Khovanov, *A category for the adjoint representation*, Section 3, and
+Ehrig--Tubbenhauer, *Algebraic properties of zigzag algebras*, Section 2.
 -/
 
 public section
@@ -81,6 +78,8 @@ theorem finrank_zigzagComponentAlgebra (C : G.ConnectedComponent) :
     let _ : Unique C := Unique.mk' C
     let _ : IsEmpty C.toSimpleGraph.Dart :=
       ⟨fun d => d.fst_ne_snd (Subsingleton.elim d.fst d.snd)⟩
+    -- Mathlib exposes `DualNumber k` as `TrivSqZeroExt k k`, whose carrier is `k × k`;
+    -- both definitions are public and marked `@[expose]`, so this reduction uses their public API.
     change Module.finrank k (k × k) = _
     rw [Module.finrank_prod]
     simp
