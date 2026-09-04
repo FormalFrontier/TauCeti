@@ -216,7 +216,7 @@ theorem exists_contDiffAt_picard_solution
   let _ : CompleteSpace F := FiniteDimensional.complete ℝ F
   -- Replace the local vector-field germ by a global smooth representative so the Banach-space
   -- implicit function theorem applies without changing the ODE near the base point.
-  obtain ⟨g, hg, hgf⟩ :=
+  obtain ⟨g, hg, -, hgf⟩ :=
     hf.exists_contDiff_eventuallyEq_of_finiteDimensional (n + 1)
   let gc : C(E × F, F) := ⟨g, hg.continuous⟩
   let R := picardResidual gc x₀
