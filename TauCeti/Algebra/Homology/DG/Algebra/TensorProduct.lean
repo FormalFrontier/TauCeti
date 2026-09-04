@@ -82,7 +82,7 @@ theorem dgTensorDifferential_tmul_of_mem {p : ℤ} {a : A} (ha : a ∈ 𝒜 p) (
       dA a ᵍ⊗ₜ[R] b + p.negOnePow • (a ᵍ⊗ₜ[R] dB b : 𝒜 ᵍ⊗[R] ℬ) := by
   rw [dgTensorDifferential_tmul,
     (InternalGrading.ofDecomposition 𝒜).koszulTwist_apply_of_mem
-      (InternalGrading.mem_ofDecomposition_piece.2 ha) 1]
+      (by simpa only [InternalGrading.ofDecomposition_piece] using ha) 1]
   congr 1
   rw [gradedTensor_smul_tmul, Units.smul_def, ← Int.cast_smul_eq_zsmul R, one_mul]
 
@@ -204,6 +204,12 @@ noncomputable def dgTensorIncludeLeft (hA : IsDGAlgebra 𝒜 dA) (hB : IsDGAlgeb
     simp only [gradedTensorIncludeLeft_apply]
     rw [dgTensorDifferential_tmul, hB.map_one_eq_zero, gradedTensor_tmul_zero, add_zero]
 
+@[simp]
+theorem dgTensorIncludeLeft_apply (hA : IsDGAlgebra 𝒜 dA) (hB : IsDGAlgebra ℬ dB) (a : A) :
+    dgTensorIncludeLeft hA hB a = a ᵍ⊗ₜ[R] (1 : B) := by
+  change gradedTensorIncludeLeft 𝒜 ℬ a = _
+  exact gradedTensorIncludeLeft_apply 𝒜 ℬ a
+
 /-- The inclusion `b ↦ 1 ᵍ⊗ₜ b` of the right factor, as a morphism of differential graded
 algebras. -/
 noncomputable def dgTensorIncludeRight (hA : IsDGAlgebra 𝒜 dA) (hB : IsDGAlgebra ℬ dB) :
@@ -213,5 +219,11 @@ noncomputable def dgTensorIncludeRight (hA : IsDGAlgebra 𝒜 dA) (hB : IsDGAlge
     simp only [gradedTensorIncludeRight_apply]
     rw [dgTensorDifferential_tmul_of_mem (SetLike.one_mem_graded 𝒜), hA.map_one_eq_zero,
       gradedTensor_zero_tmul, zero_add, Int.negOnePow_zero, one_smul]
+
+@[simp]
+theorem dgTensorIncludeRight_apply (hA : IsDGAlgebra 𝒜 dA) (hB : IsDGAlgebra ℬ dB) (b : B) :
+    dgTensorIncludeRight hA hB b = (1 : A) ᵍ⊗ₜ[R] b := by
+  change gradedTensorIncludeRight 𝒜 ℬ b = _
+  exact gradedTensorIncludeRight_apply 𝒜 ℬ b
 
 end TauCeti

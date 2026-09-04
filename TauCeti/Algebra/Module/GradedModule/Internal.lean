@@ -96,10 +96,6 @@ noncomputable def ofDecomposition (ℳ : ℤ → Submodule R M) [DirectSum.Decom
 theorem ofDecomposition_piece (ℳ : ℤ → Submodule R M) [DirectSum.Decomposition ℳ] :
     (ofDecomposition ℳ).piece = ℳ := (rfl)
 
-theorem mem_ofDecomposition_piece {ℳ : ℤ → Submodule R M} [DirectSum.Decomposition ℳ] {p : ℤ}
-    {x : M} : x ∈ (ofDecomposition ℳ).piece p ↔ x ∈ ℳ p := by
-  rw [ofDecomposition_piece]
-
 /-- An additive map that vanishes on every homogeneous piece except degree `i` sees only the
 degree-`i` component of each argument. -/
 theorem map_eq_map_decompose {N : Type w} [AddCommMonoid N] (G : InternalGrading R M)
