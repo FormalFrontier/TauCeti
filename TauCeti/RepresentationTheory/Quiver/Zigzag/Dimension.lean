@@ -37,8 +37,6 @@ coefficient ring by dual numbers on singleton components restores the missing vo
 
 ## References
 
-Roadmap blueprint: `TauCetiRoadmap/ZigzagPreprojective/README.md`, Layer 2.
-
 See Huerfano--Khovanov, *A category for the adjoint representation*, Section 3, and
 Ehrig--Tubbenhauer, *Algebraic properties of zigzag algebras*, Section 2.
 -/
