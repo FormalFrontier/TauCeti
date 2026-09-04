@@ -24,10 +24,6 @@ weights span the complete character lattice. The spanning statement is the input
 weight torus in the eventual integral minuscule carrier be a closed immersion, rather than seeing
 only the index-two root lattice of the adjoint representation.
 
-No representation or group scheme is constructed here. This is the pinned full-weight lattice
-input for the type-`E₇` Chevalley--Demazure construction in Layer 9 of the ReductiveGroups
-roadmap, consumed by the explicit pinned-carrier milestone of the CFSG statement roadmap.
-
 ## Main declarations
 
 * `TauCeti.DynkinType.e7MinusculeWeight`: the fifty-six weights in fundamental coordinates.

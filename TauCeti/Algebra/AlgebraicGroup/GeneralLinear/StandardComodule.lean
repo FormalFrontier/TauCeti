@@ -170,6 +170,7 @@ theorem rid_lTensor_comp_standardCoact (f : coordinateHopfAlgebra R n →ₗ[R] 
   simp [Matrix.mulVec, dotProduct, Pi.single_apply, Finset.sum_ite_eq']
 
 /-- A base-valued point acts on the standard comodule by multiplication with its matrix. -/
+@[simp]
 theorem basePointsRepresentation_eq_mulVec
     (g : WithConv (coordinateHopfAlgebra R n →ₐ[R] R)) (w : Fin n → R) :
     Comodule.basePointsRepresentation (H := coordinateHopfAlgebra R n) (Fin n → R) g w =
