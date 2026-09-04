@@ -67,23 +67,25 @@ open Filter MeasureTheory Set Topology
 /-- The truncated integrand is eventually interval-integrable on a crossing window lying in
 `[a, b]`, by restriction. -/
 private theorem eventually_intervalIntegrable_truncated_window {γ : ℝ → ℂ} {s : ℂ}
-    {g : ℂ → ℂ} {a b r t : ℝ} (hab : a ≤ b) (h_lo : a ≤ t - r) (h_hi : t + r ≤ b)
+    {g : ℂ → ℂ} {a b r t : ℝ} (h_lo : a ≤ t - r) (h_hi : t + r ≤ b)
     (hr_nonneg : 0 ≤ r) (h_int_tr : ∀ ε : ℝ, 0 < ε →
       IntervalIntegrable (fun u => if ‖γ u - s‖ > ε then g (γ u) * deriv γ u else 0)
         MeasureTheory.volume a b) :
     ∀ᶠ ε in 𝓝[>] (0 : ℝ),
       IntervalIntegrable (fun u => if ‖γ u - s‖ > ε then g (γ u) * deriv γ u else 0)
         MeasureTheory.volume (t - r) (t + r) := by
+  have h_window : t - r ≤ t + r := by linarith
+  have hab : a ≤ b := h_lo.trans (h_window.trans h_hi)
   filter_upwards [self_mem_nhdsWithin] with ε hε
   exact (h_int_tr ε hε).mono_set (by
-    rw [uIcc_of_le (show t - r ≤ t + r by linarith), uIcc_of_le hab]
+    rw [uIcc_of_le h_window, uIcc_of_le hab]
     exact Icc_subset_Icc (by linarith) h_hi)
 
 /-- The between-piece principal value on a subinterval of `[a, b]` keeping distance `≥ m` from
 `s`: the plain integral, with the truncated integrability restricted from `[a, b]`. Both public
 aggregations discharge their piece hypothesis through this. -/
 private theorem hasCauchyPVAt_plain_piece {γ : ℝ → ℂ} {s : ℂ} {g : ℂ → ℂ} {a b m : ℝ}
-    (hab : a ≤ b) (hm_pos : 0 < m) (h_int_tr : ∀ ε : ℝ, 0 < ε →
+    (hm_pos : 0 < m) (h_int_tr : ∀ ε : ℝ, 0 < ε →
       IntervalIntegrable (fun t => if ‖γ t - s‖ > ε then g (γ t) * deriv γ t else 0)
         MeasureTheory.volume a b)
     {l u : ℝ} (hA : a ≤ l) (hlu : l ≤ u) (hu : u ≤ b)
@@ -92,7 +94,7 @@ private theorem hasCauchyPVAt_plain_piece {γ : ℝ → ℂ} {s : ℂ} {g : ℂ 
   HasCauchyPVAt.of_dist_lower_bound hm_pos (by rwa [uIcc_of_le hlu]) <| by
     filter_upwards [self_mem_nhdsWithin] with ε hε
     exact (h_int_tr ε hε).mono_set (by
-      rw [uIcc_of_le hlu, uIcc_of_le hab]
+      rw [uIcc_of_le hlu, uIcc_of_le (hA.trans (hlu.trans hu))]
       exact Icc_subset_Icc hA hu)
 
 /-- **Real-part boundary aggregation**: like
@@ -123,7 +125,7 @@ theorem exists_hasCauchyPVAt_re_eq_of_perWindow_tendsto_of_interiorDisjoint
   exact sorted_crossing_gluing_induction
     (Q := fun l u => ∃ v : ℂ, HasCauchyPVAt γ l u g s v ∧ v.re = Ψ u - Ψ l)
     (fun l u hA hlu hu h_far' => ⟨_,
-      hasCauchyPVAt_plain_piece hab hm_pos h_int_tr hA hlu hu h_far',
+      hasCauchyPVAt_plain_piece hm_pos h_int_tr hA hlu hu h_far',
       h_piece_re l u hA hlu hu h_far'⟩)
     (fun _ _ _ _ _ ⟨v₁, h₁, r₁⟩ ⟨v₂, h₂, r₂⟩ =>
       ⟨v₁ + v₂, h₁.concat h₂, by rw [Complex.add_re, r₁, r₂]; ring⟩)
@@ -137,7 +139,7 @@ theorem exists_hasCauchyPVAt_re_eq_of_perWindow_tendsto_of_interiorDisjoint
     (fun t ht => by
       have h_mem := (Finset.mem_sort (α := ℝ) (· ≤ ·)).mp ht
       obtain ⟨v, hv_re, hv_tendsto⟩ := h_win t h_mem
-      exact ⟨v, hasCauchyPVAt_iff.mpr ⟨eventually_intervalIntegrable_truncated_window hab
+      exact ⟨v, hasCauchyPVAt_iff.mpr ⟨eventually_intervalIntegrable_truncated_window
         (h_lo t h_mem) (h_hi t h_mem) (hr_nonneg ⟨t, h_mem⟩) h_int_tr, hv_tendsto⟩, hv_re⟩)
     (fun u hu h_avoid => hm u hu fun t ht => h_avoid t ((Finset.mem_sort _).mpr ht))
 
@@ -165,7 +167,7 @@ theorem cauchyPVExistsAt_of_perWindow_tendsto_of_interiorDisjoint {γ : ℝ → 
   obtain ⟨v, hv⟩ := sorted_crossing_gluing_induction
     (Q := fun l u => ∃ v : ℂ, HasCauchyPVAt γ l u g s v)
     (fun l u hA hlu hu h_far' =>
-      ⟨_, hasCauchyPVAt_plain_piece hab hm_pos h_int_tr hA hlu hu h_far'⟩)
+      ⟨_, hasCauchyPVAt_plain_piece hm_pos h_int_tr hA hlu hu h_far'⟩)
     (fun _ _ _ _ _ ⟨v₁, h₁⟩ ⟨v₂, h₂⟩ => ⟨v₁ + v₂, h₁.concat h₂⟩)
     (crossings.sort (· ≤ ·)) (Finset.sortedLT_sort crossings)
     (fun h => hr_nonneg (Finset.nonempty_iff_ne_empty.mpr fun he => h (by simp [he])))
@@ -177,7 +179,7 @@ theorem cauchyPVExistsAt_of_perWindow_tendsto_of_interiorDisjoint {γ : ℝ → 
     (fun t ht => by
       have h_mem := (Finset.mem_sort (α := ℝ) (· ≤ ·)).mp ht
       obtain ⟨v, hv⟩ := h_win t h_mem
-      exact ⟨v, hasCauchyPVAt_iff.mpr ⟨eventually_intervalIntegrable_truncated_window hab
+      exact ⟨v, hasCauchyPVAt_iff.mpr ⟨eventually_intervalIntegrable_truncated_window
         (h_lo t h_mem) (h_hi t h_mem) (hr_nonneg ⟨t, h_mem⟩) h_int_tr, hv⟩⟩)
     (fun u hu h_avoid => hm u hu fun t ht => h_avoid t ((Finset.mem_sort _).mpr ht))
   exact CauchyPVExistsAt.intro hv
@@ -211,7 +213,7 @@ theorem hasCauchyPVAt_of_perWindow_boundary_tendsto_of_interiorDisjoint {γ : �
         have h_bd := h_far' t ht
         rw [h_eq, sub_self, norm_zero] at h_bd
         linarith
-      have h0 := hasCauchyPVAt_plain_piece hab hm_pos h_int_tr hA hlu hu h_far'
+      have h0 := hasCauchyPVAt_plain_piece hm_pos h_int_tr hA hlu hu h_far'
       rwa [h_plain_eq l u hA hlu hu h_ne] at h0)
     (fun l u₀ u _ _ h₁ h₂ => by
       have h0 := h₁.concat h₂
@@ -226,7 +228,7 @@ theorem hasCauchyPVAt_of_perWindow_boundary_tendsto_of_interiorDisjoint {γ : �
       t' ((Finset.mem_sort _).mp ht') hne)
     (fun t ht => by
       have h_mem := (Finset.mem_sort (α := ℝ) (· ≤ ·)).mp ht
-      exact hasCauchyPVAt_iff.mpr ⟨eventually_intervalIntegrable_truncated_window hab
+      exact hasCauchyPVAt_iff.mpr ⟨eventually_intervalIntegrable_truncated_window
         (h_lo t h_mem) (h_hi t h_mem) (hr_nonneg ⟨t, h_mem⟩) h_int_tr, h_win t h_mem⟩)
     (fun u hu h_avoid => hm u hu fun t ht => h_avoid t ((Finset.mem_sort _).mpr ht))
 

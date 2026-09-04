@@ -11,6 +11,7 @@ public import Mathlib.Algebra.Order.Hom.Monoid
 public import Mathlib.Algebra.Order.Hom.MonoidWithZero
 public import Mathlib.GroupTheory.QuotientGroup.Basic
 public import Mathlib.Order.Quotient
+public import TauCeti.Algebra.Order.Group.Subgroup
 
 /-!
 # Convex subgroups of linearly ordered groups
@@ -181,6 +182,11 @@ theorem coe_toSubgroup (H : ConvexSubgroup Γ) : ((H.toSubgroup : Subgroup Γ) :
 @[simp]
 theorem toSubgroup_le {H K : ConvexSubgroup Γ} : H.toSubgroup ≤ K.toSubgroup ↔ H ≤ K :=
   Iff.rfl
+
+/-- Strict inclusion of convex subgroups is strict inclusion of the underlying subgroups. -/
+@[simp]
+theorem toSubgroup_lt {H K : ConvexSubgroup Γ} : H.toSubgroup < K.toSubgroup ↔ H < K := by
+  simp [lt_iff_le_not_ge, toSubgroup_le]
 
 /-- A convex subgroup is determined by the subgroup underlying it: convexity is a property,
 not extra data. -/
@@ -535,23 +541,11 @@ theorem eq_bot_or_eq_top_of_mulArchimedean [MulArchimedean Γ] (H : ConvexSubgro
   by_contra hH
   push Not at hH
   obtain ⟨hbot, htop⟩ := hH
-  obtain ⟨y, hy, hy1⟩ : ∃ y ∈ H, 1 < y := by
-    obtain ⟨y, hy, hy1⟩ : ∃ y ∈ H, y ≠ 1 := by
-      by_contra h
-      push Not at h
-      exact hbot (ext fun x ↦ ⟨fun hx ↦ mem_bot.mpr (h x hx), fun hx ↦ mem_bot.mp hx ▸ one_mem H⟩)
-    rcases lt_or_gt_of_ne hy1 with h | h
-    · exact ⟨y⁻¹, inv_mem hy, one_lt_inv'.mpr h⟩
-    · exact ⟨y, hy, h⟩
-  obtain ⟨x, hx, hx1⟩ : ∃ x, x ∉ H ∧ 1 < x := by
-    obtain ⟨x, hxH⟩ : ∃ x, x ∉ H := by
-      by_contra h
-      push Not at h
-      exact htop (ext fun x ↦ ⟨fun _ ↦ mem_top, fun _ ↦ h x⟩)
-    have hx_ne_one : x ≠ 1 := fun h ↦ hxH (h ▸ one_mem H)
-    rcases lt_or_gt_of_ne hx_ne_one with h | h
-    · exact ⟨x⁻¹, inv_mem_iff.not.mpr hxH, one_lt_inv'.mpr h⟩
-    · exact ⟨x, hxH, h⟩
+  obtain ⟨y, hy, -, hy1⟩ := Subgroup.exists_one_lt_of_lt
+    (by simpa using toSubgroup_lt.mpr (bot_lt_iff_ne_bot.mpr hbot))
+  obtain ⟨x, -, hx, hx1⟩ := Subgroup.exists_one_lt_of_lt
+    (by simpa using toSubgroup_lt.mpr (lt_top_iff_ne_top.mpr htop))
+  rw [mem_toSubgroup] at hy hx
   obtain ⟨n, hn⟩ := MulArchimedean.arch x hy1
   exact hx (H.convex (one_mem H) (pow_mem hy n) hx1.le hn)
 

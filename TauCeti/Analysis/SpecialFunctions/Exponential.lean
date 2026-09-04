@@ -10,6 +10,7 @@ import Mathlib.Analysis.Calculus.Deriv.Mul
 import Mathlib.Analysis.Calculus.Deriv.Shift
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 import TauCeti.Analysis.Normed.Algebra.Basic
+import TauCeti.Data.Finset.Basic
 
 /-!
 # Duhamel formulas for the Banach-algebra exponential
@@ -177,36 +178,16 @@ theorem expFDerivTerm_eq_derivSeries (x : R) (n : ℕ) :
   change _ = continuousMultilinearCurryFin1 𝕂 R R _ y
   rw [continuousMultilinearCurryFin1_apply, _root_.sum_apply, Fin.snoc_zero]
   simp_rw [FormalMultilinearSeries.changeOriginSeriesTerm_apply]
-  let e : Fin (n + 1) ≃ Fin (1 + n) := finCongr (Nat.add_comm n 1)
-  have hsum :
-      (∑ s : {s : Finset (Fin (1 + n)) // s.card = n},
-          expSeries 𝕂 R (1 + n) (s.1.piecewise (fun _ ↦ x) fun _ ↦ y)) =
-        ∑ i : Fin (n + 1),
-          expSeries 𝕂 R (1 + n) (Function.update (fun _ ↦ x) (e i) y) := by
-    refine (Fintype.sum_bijective
-      ((fun a : Fin (1 + n) ↦ ⟨{a}ᶜ, by
-        rw [Finset.card_compl, Fintype.card_fin, Finset.card_singleton]
-        omega⟩) ∘ e) (.comp ?_ e.bijective) _ _ fun i ↦ ?_).symm
-    · use fun _ _ ↦
-        (Finset.singleton_injective <| compl_injective <| Subtype.ext_iff.mp ·)
-      intro ⟨s, hs⟩
-      have h : sᶜ.card = 1 := by
-        rw [Finset.card_compl, hs, Fintype.card_fin]
-        omega
-      obtain ⟨a, ha⟩ := Finset.card_eq_one.mp h
-      exact ⟨a, Subtype.ext (compl_eq_comm.mp ha)⟩
-    · rw [Function.comp_apply, Subtype.coe_mk, Finset.compl_singleton,
-        Finset.piecewise_erase_univ]
-  rw [hsum]
-  simp only [mul_assoc, expSeries, finCongr_apply, smul_apply,
+  rw [sum_piecewise_eq_sum_update_of_card_eq_succ (by rw [Fintype.card_fin]; omega)]
+  simp only [mul_assoc, expSeries, smul_apply,
     ContinuousMultilinearMap.mkPiAlgebraFin_apply, List.ofFn_eq_map,
     (List.nodup_finRange (1 + n)).map_update, List.mem_finRange, ↓reduceIte,
-    List.map_const', List.length_finRange, List.idxOf_finRange, Fin.val_cast, List.prod_set,
+    List.map_const', List.length_finRange, List.idxOf_finRange, List.prod_set,
     List.take_replicate, List.prod_replicate, List.length_replicate, mul_ite, mul_one,
-    List.drop_replicate, ite_mul, smul_ite, e]
-  have hi (i : Fin (n + 1)) : (i : ℕ) < 1 + n := by omega
+    List.drop_replicate, ite_mul, smul_ite]
+  have hi (i : Fin (1 + n)) : (i : ℕ) < 1 + n := i.isLt
   simp_rw [ite_eq_left (hi _), Nat.min_eq_left (hi _).le]
-  have hsub (i : Fin (n + 1)) : 1 + n - ((i : ℕ) + 1) = n - i := by omega
+  have hsub (i : Fin (1 + n)) : 1 + n - ((i : ℕ) + 1) = n - i := by omega
   simp_rw [hsub]
   rw [Nat.add_comm 1 n]
   -- After normalizing the cardinality, the `Fin`-indexed summand is definitionally displayed as

@@ -86,13 +86,19 @@ noncomputable def localPowerSeries (D : EulerProductData K)
 theorem coeff_localPowerSeries (D : EulerProductData K)
     (P : HeightOneSpectrum (𝓞 K)) (n : ℕ) :
     PowerSeries.coeff n (D.localPowerSeries P) =
-      D ⟨P.asIdeal ^ n, mem_nonZeroDivisors_of_ne_zero (pow_ne_zero n P.ne_bot)⟩ :=
+      D (P.primeIdealPow n) :=
   IdealArithmeticFunction.coeff_localPowerSeries D.toIdealArithmeticFunction P n
 
 /-- The canonical local arithmetic factor of bundled Euler-product data at a height-one prime. -/
 noncomputable def localArithmeticFactor (D : EulerProductData K)
     (P : HeightOneSpectrum (𝓞 K)) : ArithmeticFunction ℂ :=
   D.toIdealArithmeticFunction.localArithmeticFactor P
+
+/-- The bundled local arithmetic factor is the canonical factor of its coefficient function. -/
+theorem localArithmeticFactor_eq (D : EulerProductData K)
+    (P : HeightOneSpectrum (𝓞 K)) :
+    D.localArithmeticFactor P = D.toIdealArithmeticFunction.localArithmeticFactor P :=
+  (rfl)
 
 /-- The bundled local arithmetic factor is Mathlib's arithmetic function associated to the
 bundled local power series at `P`. -/
@@ -108,7 +114,7 @@ coefficient. -/
 theorem localArithmeticFactor_apply_pow (D : EulerProductData K)
     (P : HeightOneSpectrum (𝓞 K)) (n : ℕ) :
     D.localArithmeticFactor P (Ideal.absNorm P.asIdeal ^ n) =
-      D ⟨P.asIdeal ^ n, mem_nonZeroDivisors_of_ne_zero (pow_ne_zero n P.ne_bot)⟩ :=
+      D (P.primeIdealPow n) :=
   IdealArithmeticFunction.localArithmeticFactor_apply_pow D.toIdealArithmeticFunction P n
 
 /-- Away from the powers of `N(P)`, the bundled local arithmetic factor vanishes. Together with
@@ -133,6 +139,13 @@ noncomputable def ofMultiplicativeIdealWeight (χ : MultiplicativeIdealWeight K)
     EulerProductData K where
   toIdealArithmeticFunction := χ.toIdealArithmeticFunction
   isMultiplicative := χ.isMultiplicative_toIdealArithmeticFunction
+
+/-- The coefficient function underlying the Euler-product data of a multiplicative ideal weight. -/
+@[simp]
+theorem toIdealArithmeticFunction_ofMultiplicativeIdealWeight (χ : MultiplicativeIdealWeight K) :
+    (ofMultiplicativeIdealWeight χ).toIdealArithmeticFunction = χ.toIdealArithmeticFunction := by
+  funext I
+  rfl
 
 @[simp]
 theorem ofMultiplicativeIdealWeight_apply (χ : MultiplicativeIdealWeight K)

@@ -80,8 +80,6 @@ private noncomputable def volumeLoop (i : V) :
 private noncomputable def volumePath (i : V) : Quiver.TotalPath (DoubledQuiver G) :=
   ⟨vertex G i, vertex G i, volumeLoop G i⟩
 
-private theorem volumePath_fst (i : V) : (volumePath G i).1 = vertex G i := (rfl)
-
 private theorem length_volumeLoop {i j : V} (h : G.Adj i j) : (volumeLoop G i).length = 2 := by
   rw [volumeLoop, dite_eq_left (⟨j, h⟩ : ∃ j, G.Adj i j)]
   exact length_backtrackPath G _

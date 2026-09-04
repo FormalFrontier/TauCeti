@@ -72,7 +72,10 @@ counterexample in `IsWeightFamily`'s docstring shows the hypothesis is not autom
   soon as its value does, and `TauCeti.Huber.isOpen_weightedNhd` that `U⟨X⟩` is open whenever `U`
   is.
 * `TauCeti.Huber.weightedRestrictedSubring_one_weight`: for the trivial weight this is the ordinary
-  ring of restricted power series (Wedhorn Example 5.54).
+  ring of restricted power series (Wedhorn Example 5.54), with
+  `TauCeti.Huber.subringCongr_one_weight_weightedX` and
+  `TauCeti.Huber.subringCongr_one_weight_weightedC` saying where that identification sends the
+  generators — to `restrictedX` and to the algebra map.
 * `TauCeti.Huber.weightedPolynomials`, the polynomials as a subring of `A⟨X⟩_T`, with
   `mem_weightedPolynomials_iff` identifying it with finite support and the generators
   `weightedC`/`weightedX` in it; `TauCeti.Huber.dense_weightedPolynomials` is Wedhorn 5.49(1),
@@ -762,6 +765,29 @@ theorem weightedRestrictedSubring_one_weight [NonarchimedeanRing A] :
   ext f
   rw [mem_weightedRestrictedSubring, mem_restrictedMvPowerSeriesSubring,
     isWeightedRestricted_one_weight_iff, isRestricted_iff_coeff]
+
+/-- **The weighted variable is the restricted variable.** Transporting `weightedX` along the
+identification above gives `restrictedX`.
+
+`weightedRestrictedSubring_one_weight` is an equality of subrings, so it transports elements along
+`RingEquiv.subringCongr`; what it does not say is where the generators go. This and the companion
+below say it, so that a generator-level statement proved over one of the two subrings can be read
+over the other instead of being re-transported at each use site. -/
+@[simp]
+theorem subringCongr_one_weight_weightedX [NonarchimedeanRing A] (i : Fin k) :
+    RingEquiv.subringCongr (weightedRestrictedSubring_one_weight (k := k) (A := A))
+        (weightedX _ isWeightFamily_one_weight i)
+      = restrictedX i :=
+  Subtype.ext (by simp)
+
+/-- **The weighted constant is the algebra map.** Transporting `weightedC a` along the same
+identification gives the image of `a` under the structure map of the restricted subring. -/
+@[simp]
+theorem subringCongr_one_weight_weightedC [NonarchimedeanRing A] (a : A) :
+    RingEquiv.subringCongr (weightedRestrictedSubring_one_weight (k := k) (A := A))
+        (weightedC _ isWeightFamily_one_weight a)
+      = algebraMap A (restrictedMvPowerSeriesSubring k A) a :=
+  Subtype.ext (by simp [MvPowerSeries.algebraMap_apply])
 
 /-- The neighbourhood subgroups are monotone in `U`. -/
 theorem weightedNhd_mono [NonarchimedeanRing A] {T : Fin k → Set A} {hT : IsWeightFamily T}

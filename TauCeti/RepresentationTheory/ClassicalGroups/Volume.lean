@@ -57,13 +57,13 @@ variable [CommRing k]
 
 This is deliberately not a `simp` lemma: `stdSLRep_apply` already rewrites `stdSLRep k n g` to
 `Matrix.mulVecLin ↑g`, so the left-hand side here is not in `simp` normal form and the rewrite
-could never fire. Use `TauCeti.Matrix.detRowAlternating_mulVec` for the `simp`-normal statement. -/
+could never fire. Use `Matrix.detRowAlternating_mulVec` for the `simp`-normal statement. -/
 theorem detRowAlternating_stdSLRep (g : Matrix.SpecialLinearGroup (Fin n) k)
     (v : Fin n → Fin n → k) :
     Matrix.detRowAlternating (fun i => stdSLRep k n g (v i)) =
       Matrix.detRowAlternating v := by
   simpa only [stdSLRep_apply_apply, g.det_coe, one_mul] using
-    Matrix.detRowAlternating_mulVec k (ι := Fin n) (g : Matrix (Fin n) (Fin n) k) v
+    Matrix.detRowAlternating_mulVec (ι := Fin n) (g : Matrix (Fin n) (Fin n) k) v
 
 /-- The special linear group acts trivially on the top exterior power of the standard
 representation: a matrix acts there by its determinant, which is one.

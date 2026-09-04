@@ -47,7 +47,8 @@ conjugation action.
   `j`-th power of a member of `C`, with `ConjClasses.mk_pow` the computation rule.
 * `ConjClasses.pow_zero`, `ConjClasses.pow_one` and
   `ConjClasses.pow_mul`: the identity and composition laws for that power.
-* `ConjClasses.map_pow`: the power is natural in the monoid.
+* `ConjClasses.map_mk`: the computation rule for `ConjClasses.map` on representatives,
+  with `ConjClasses.map_pow` the consequence that the power is natural in the monoid.
 
 ## Implementation notes
 
@@ -274,17 +275,22 @@ theorem pow_mul (C : ConjClasses M) (i j : ℕ) : (C ^ i) ^ j = C ^ (i * j) := b
   obtain ⟨a, rfl⟩ := ConjClasses.exists_rep C
   rw [mk_pow, mk_pow, mk_pow, _root_.pow_mul]
 
+/-- The image of the class of `a` under `ConjClasses.map f` is the class of `f a`. -/
+-- Mathlib defines `ConjClasses.map` as a `Quotient.lift` and provides no computation rule for it,
+-- so this reduction is stated here once and every naturality statement below rewrites with it.
+@[simp]
+theorem map_mk {N : Type*} [Monoid N] (f : M →* N) (a : M) :
+    ConjClasses.map f (ConjClasses.mk a) = ConjClasses.mk (f a) := rfl
+
 /-- Powering a conjugacy class is natural in the monoid. -/
 @[simp]
 theorem map_pow {N : Type*} [Monoid N] (f : M →* N) (C : ConjClasses M) (j : ℕ) :
     ConjClasses.map f (C ^ j) = ConjClasses.map f C ^ j := by
   obtain ⟨a, rfl⟩ := ConjClasses.exists_rep C
-  -- Every reduction here is named rather than left to definitional unfolding. Mathlib has no
-  -- `map_mk` computation lemma for `ConjClasses.map`, which is a `Quotient.lift` and so computes
-  -- on representatives; that single reduction is isolated in `hmap` and used explicitly, after
-  -- which `mk_pow` handles both powers and `map_pow` finishes in `N`.
-  have hmap : ∀ x : M, ConjClasses.map f (ConjClasses.mk x) = ConjClasses.mk (f x) := fun _ ↦ rfl
-  rw [mk_pow, hmap, hmap, mk_pow, _root_.map_pow]
+  -- Every reduction here is named rather than left to definitional unfolding: `map_mk` computes
+  -- the map on representatives, after which `mk_pow` handles both powers and `map_pow` finishes
+  -- in `N`.
+  rw [mk_pow, map_mk, map_mk, mk_pow, _root_.map_pow]
 
 /-- **A nonidentity square in the cyclic group of order four.** The class of the generator
 squares to the class of the element of order two. A group of exponent two cannot witness this:

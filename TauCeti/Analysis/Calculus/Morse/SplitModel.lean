@@ -6,9 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Analysis.InnerProductSpace.ProdL2
-public import Mathlib.Analysis.SpecialFunctions.ExpDeriv
 public import TauCeti.Analysis.Calculus.Morse.Basic
-public import TauCeti.Analysis.Calculus.Morse.GradientFlow
+public import TauCeti.Analysis.Calculus.Morse.FlowExistence
 public import TauCeti.Analysis.Calculus.Morse.Stable
 import Mathlib.Analysis.InnerProductSpace.Calculus
 import Mathlib.Analysis.InnerProductSpace.Dual
@@ -36,9 +35,12 @@ and Hessian determine the corresponding linearized gradient flow and its contrac
 
 * `TauCeti.splitQuadratic`: the standard split quadratic function.
 * `TauCeti.gradient_splitQuadratic`: its gradient is `(x, -y)`.
+* `TauCeti.lipschitzWith_gradient_splitQuadratic`: its gradient is globally `1`-Lipschitz.
 * `TauCeti.isNondegenerateCriticalPoint_splitQuadratic_zero`: the origin is nondegenerate.
 * `TauCeti.splitQuadraticFlow`: its explicit negative-gradient flow.
 * `Flow.isNegativeGradient_splitQuadraticFlow`: the flow solves the negative-gradient equation.
+* `TauCeti.negativeGradientFlow_splitQuadratic`: the general construction of the negative gradient
+  flow returns this explicit flow.
 * `Flow.stableSet_splitQuadraticFlow_zero`: the stable set is the first coordinate plane.
 * `Flow.unstableSet_splitQuadraticFlow_zero`: the unstable set is the second coordinate plane.
 
@@ -110,6 +112,17 @@ theorem gradient_splitQuadratic_eq_zero_iff [InnerProductSpace ℝ Eₛ] [InnerP
     · simpa using congrArg WithLp.snd h
   · rintro rfl
     simp
+
+/-- The gradient of the split quadratic function is an isometry of the underlying space, hence in
+particular globally `1`-Lipschitz.  This is the hypothesis under which the negative gradient flow
+of a function exists on the whole line. -/
+theorem lipschitzWith_gradient_splitQuadratic [InnerProductSpace ℝ Eₛ] [InnerProductSpace ℝ Eᵤ]
+    [CompleteSpace Eₛ] [CompleteSpace Eᵤ] :
+    LipschitzWith 1 (∇ (splitQuadratic (Eₛ := Eₛ) (Eᵤ := Eᵤ))) := by
+  refine LipschitzWith.of_dist_le_mul fun z w ↦ ?_
+  rw [NNReal.coe_one, one_mul, gradient_splitQuadratic, gradient_splitQuadratic,
+    WithLp.prod_dist_eq_of_L2, WithLp.prod_dist_eq_of_L2]
+  simp
 
 /-- The origin is a nondegenerate critical point of the split quadratic function. -/
 theorem isNondegenerateCriticalPoint_splitQuadratic_zero
@@ -194,6 +207,24 @@ theorem Flow.isNegativeGradient_splitQuadraticFlow
     rw [TauCeti.gradient_splitQuadratic]
     apply WithLp.ofLp_injective
     ext <;> simp
+
+namespace TauCeti
+
+/-- On the split quadratic model, the negative gradient flow built from a globally Lipschitz
+gradient is the explicit hyperbolic flow. -/
+theorem negativeGradientFlow_splitQuadratic [InnerProductSpace ℝ Eₛ] [InnerProductSpace ℝ Eᵤ]
+    [CompleteSpace Eₛ] [CompleteSpace Eᵤ] :
+    negativeGradientFlow (splitQuadratic (Eₛ := Eₛ) (Eᵤ := Eᵤ))
+        lipschitzWith_gradient_splitQuadratic = splitQuadraticFlow := by
+  refine _root_.Flow.ext fun t z ↦ ?_
+  have hγ := (Flow.isNegativeGradient_splitQuadraticFlow (Eₛ := Eₛ) (Eᵤ := Eᵤ)).isIntegralCurve z
+  have h := eq_negativeGradientFlow (splitQuadratic (Eₛ := Eₛ) (Eᵤ := Eᵤ))
+    lipschitzWith_gradient_splitQuadratic hγ t
+  have h0 : splitQuadraticFlow (Eₛ := Eₛ) (Eᵤ := Eᵤ) 0 z = z := _root_.Flow.map_zero_apply _ z
+  rw [h0] at h
+  exact h.symm
+
+end TauCeti
 
 variable [NormedSpace ℝ Eₛ] [NormedSpace ℝ Eᵤ]
 

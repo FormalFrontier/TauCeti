@@ -51,6 +51,9 @@ corresponding measure-integral formulas directly.
 * `TauCeti.Probability.IndepFun.pgf_add_of_abs_le_one` and
   `TauCeti.Probability.iIndepFun.pgf_sum_of_abs_le_one` — the corresponding formulas on the
   interval `[-1, 1]`, where integrability is automatic.
+* `Measure.pgf_conv` and `Measure.pgf_conv_of_abs_le_one` — convolution becomes
+  multiplication under the natural integrability hypotheses, and for finite measures on
+  `[-1, 1]`.
 * `TauCeti.Probability.hasSum_pgf` and `TauCeti.Probability.pgf_eq_tsum` — the power-series
   expansion in the singleton masses, valid on `[-1, 1]`.
 * `TauCeti.Probability.hasFPowerSeriesOnBall_pgf` and `TauCeti.Probability.analyticOnNhd_pgf` —
@@ -165,6 +168,31 @@ theorem IndepFun.pgf_add_of_abs_le_one [IsFiniteMeasure μ] {X Y : Ω → ℕ}
     (ht : |t| ≤ 1) : pgf (X + Y) μ t = pgf X μ t * pgf Y μ t :=
   IndepFun.pgf_add hXY t (integrable_pow_of_abs_le_one hX ht)
     (integrable_pow_of_abs_le_one hY ht)
+
+/-- The probability-generating function sends convolution to multiplication whenever both factor
+integrands are integrable. -/
+theorem _root_.MeasureTheory.Measure.pgf_conv (μ ν : Measure ℕ) [SFinite μ] [SFinite ν]
+    (t : ℝ) (hμ : Integrable (fun k => t ^ k) μ) (hν : Integrable (fun k => t ^ k) ν) :
+    pgf id (μ ∗ ν) t = pgf id μ t * pgf id ν t := by
+  have hconv : Integrable (fun k : ℕ => t ^ k) (μ ∗ ν) := by
+    rw [Measure.conv, integrable_map_measure .of_discrete .of_discrete]
+    convert hμ.mul_prod hν using 1
+    ext z
+    simp [pow_add]
+  rw [pgf_def]
+  simp only [id_eq]
+  rw [integral_conv hconv]
+  simp_rw [pow_add, integral_const_mul]
+  rw [integral_mul_const, ← pgf_def, ← pgf_def]
+  rfl
+
+/-- On `[-1, 1]`, the probability-generating function sends convolution of finite measures to
+multiplication. -/
+theorem _root_.MeasureTheory.Measure.pgf_conv_of_abs_le_one (μ ν : Measure ℕ)
+    [IsFiniteMeasure μ] [IsFiniteMeasure ν] {t : ℝ} (ht : |t| ≤ 1) :
+    pgf id (μ ∗ ν) t = pgf id μ t * pgf id ν t :=
+  Measure.pgf_conv μ ν t (integrable_pow_of_abs_le_one aemeasurable_id ht)
+    (integrable_pow_of_abs_le_one aemeasurable_id ht)
 
 /-- A probability-generating function turns a finite sum of independent random variables into the
 product of their generating functions whenever every factor integrand is integrable. -/

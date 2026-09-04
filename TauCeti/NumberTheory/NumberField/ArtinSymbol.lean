@@ -7,7 +7,9 @@ module
 
 public import Mathlib.NumberTheory.RamificationInertia.Galois
 public import Mathlib.RingTheory.Frobenius
-public import TauCeti.NumberTheory.NumberField.Frobenius
+public import TauCeti.NumberTheory.NumberField.Frobenius.Restriction
+public import TauCeti.NumberTheory.NumberField.UnramifiedTower
+import TauCeti.Algebra.Group.Conj
 
 /-!
 # The Artin symbol of an unramified prime
@@ -19,6 +21,10 @@ predicate or representative is introduced here.
 
 The construction follows Jürgen Neukirch, *Algebraic Number Theory*, Chapter I, §9,
 Exercise 2.
+
+The same reference gives functoriality in a normal tower: restriction maps the Artin symbol of
+`L/K` to the Artin symbol of `M/K`. Unramifiedness in the intermediate extension is derived from
+unramifiedness in the top extension, rather than assumed separately.
 -/
 
 public section
@@ -87,6 +93,35 @@ theorem artinSymbol_eq_mk_of_isArithFrobAt {L : Type*} [Field L] [NumberField L]
       NumberField.algebraMap_smul_eq_apply, NumberField.algebraMap_smul_eq_apply] at hQ''
     simpa [galRestrict_apply, algebraMap_galRestrict_apply] using hQ''
   simpa [hQeq] using hconj
+
+/-- **The Artin symbol is functorial under restriction to a normal subextension.** For a normal
+tower `L/M/K`, applying restriction to the conjugacy class `artinSymbol 𝔭` for `L/K` gives the
+Artin symbol for `M/K`. The latter's unramifiedness witness is derived canonically from the
+hypothesis for `L/K`. -/
+theorem artinSymbol_map_restrictNormalHom {M L : Type*} [Field M] [NumberField M]
+    [Field L] [NumberField L] [Algebra K M] [Algebra M L] [Algebra K L]
+    [IsScalarTower K M L] [IsGalois K L] [IsGalois K M]
+    (𝔭 : Ideal (𝓞 K)) [𝔭.IsMaximal]
+    (hur : ∀ (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver 𝔭],
+      Algebra.IsUnramifiedAt (𝓞 K) Q) :
+    ConjClasses.map (AlgEquiv.restrictNormalHom (F := K) (K₁ := L) M)
+        (artinSymbol 𝔭 hur) =
+      artinSymbol 𝔭 (isUnramifiedAt_of_intermediateExtension (M := M) (L := L) 𝔭 hur) := by
+  let Q : 𝔭.primesOver (𝓞 L) := Classical.choice inferInstance
+  let _ : Q.1.IsPrime := Q.2.1
+  let _ : Q.1.LiesOver 𝔭 := Q.2.2
+  have h𝔭ne : 𝔭 ≠ ⊥ :=
+    (𝔭.bot_lt_of_maximal (RingOfIntegers.not_isField K)).ne'
+  obtain ⟨σ, hσ⟩ := exists_isArithFrobAt K Q.1
+    (Ideal.ne_bot_of_liesOver_of_ne_bot h𝔭ne Q.1)
+  rw [artinSymbol_eq_mk_of_isArithFrobAt 𝔭 hur Q.1 σ hσ,
+    artinSymbol_eq_mk_of_isArithFrobAt 𝔭
+      (isUnramifiedAt_of_intermediateExtension (M := M) (L := L) 𝔭 hur)
+      (Q.1.under (𝓞 M))
+      (σ.restrictNormal M) hσ.restrictNormal]
+  -- `AlgEquiv.restrictNormalHom M σ` is `σ.restrictNormal M`, so this is exactly the computation
+  -- rule for `ConjClasses.map` on representatives.
+  exact ConjClasses.map_mk _ σ
 
 /-- Every representative of `artinSymbol 𝔭 hur` is an arithmetic Frobenius at some prime above
 `𝔭`. -/
