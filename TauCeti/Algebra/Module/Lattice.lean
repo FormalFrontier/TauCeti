@@ -354,6 +354,12 @@ private noncomputable instance moduleOfNormedSpace (E : Type w) [NormedAddCommGr
     [NormedSpace ℝ E] : Module ℝ E :=
   NormedSpace.toModule
 
+end TauCeti
+
+universe u v w u' v'
+
+variable {N : Type u} {V : Type v} [AddCommGroup N] [AddCommGroup V] [Module ℝ V]
+
 namespace AddMonoidHom
 
 /-- An additive map is a full integral lattice when its scalar extension to `ℝ` is an equivalence.
@@ -499,5 +505,3 @@ theorem IsIntegralLattice.comp_equiv_eq_equiv_comp_baseChange
         (IsIntegralLattice.equiv_one_tmul i' h' (f.toIntLinearMap n)).symm
 
 end AddMonoidHom
-
-end TauCeti
