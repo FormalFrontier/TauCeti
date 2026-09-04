@@ -12,10 +12,11 @@ public import TauCeti.AlgebraicGeometry.WeilDivisor.Scheme.Sheaf
 /-!
 # The sheaf of a principal Weil divisor is a line bundle
 
-Let `X` be an integral scheme of dimension at most one whose codimension-one local rings are
-discrete valuation rings. This file identifies the sheaf `𝒪_X(0)` of the zero divisor with the
-structure sheaf and deduces that `𝒪_X(D)` is an invertible sheaf whenever `D` is the divisor of a
-nonzero rational function.
+Let `X` be a locally Noetherian integral scheme of dimension at most one whose codimension-one
+local rings are discrete valuation rings. This file identifies the sheaf `𝒪_X(0)` of the zero
+divisor with the structure sheaf. When `X` is moreover Noetherian, which is the hypothesis under
+which the divisor `div g` of a rational function is available, it deduces that `𝒪_X(D)` is an
+invertible sheaf whenever `D` is the divisor of a nonzero rational function.
 
 ## Main declarations
 
@@ -60,9 +61,9 @@ section LocallyNoetherian
 
 variable [IsLocallyNoetherian X]
 
-/-- **The sections of `𝒪_X(0)` are the regular functions.** On a scheme of dimension at most one,
-a rational function with no poles on `U` is regular on `U`, so the sections of the sheaf of the
-zero divisor over `U` are exactly the images of the sections of `𝒪_X`. -/
+/-- **The sections of `𝒪_X(0)` are the regular functions.** On a locally Noetherian scheme of
+dimension at most one, a rational function with no poles on `U` is regular on `U`, so the sections
+of the sheaf of the zero divisor over `U` are exactly the images of the sections of `𝒪_X`. -/
 theorem mem_sections_zero_iff {U : X.Opens} (hU : ∀ y ∈ U, coheight y ≤ 1)
     (s : Γ(Scheme.rationalFunctions X, U)) :
     s ∈ sections (0 : SchemeWeilDivisor X) U ↔
@@ -139,7 +140,8 @@ lemma unitIsoSheafZero_inv_toRationalFunctions (hX : ∀ y : X, coheight y ≤ 1
       sheafι (0 : SchemeWeilDivisor X) :=
   (Iso.inv_comp_eq (unitIsoSheafZero hX)).mpr (by rw [unitIsoSheafZero_hom, unitToSheaf_ι])
 
-/-- The sheaf of the zero divisor is an invertible sheaf. -/
+/-- The sheaf of the zero divisor is an invertible sheaf, `X` being locally Noetherian of
+dimension at most one. -/
 theorem isInvertible_sheaf_zero (hX : ∀ y : X, coheight y ≤ 1) :
     SheafOfModules.isInvertible X (sheaf (0 : SchemeWeilDivisor X)) :=
   TauCeti.SheafOfModules.IsInvertible.of_iso
@@ -152,8 +154,8 @@ section Noetherian
 
 variable [IsNoetherian X]
 
-/-- **The sheaf of a principal divisor is trivial.** Multiplication by `g` identifies
-`𝒪_X(div g)` with `𝒪_X(0)`, which is the structure sheaf. -/
+/-- **The sheaf of a principal divisor is trivial.** On a Noetherian scheme of dimension at most
+one, multiplication by `g` identifies `𝒪_X(div g)` with `𝒪_X(0)`, which is the structure sheaf. -/
 def sheafPrincipalDivisorIsoUnit (hX : ∀ y : X, coheight y ≤ 1)
     (g : Additive X.functionFieldˣ) :
     sheaf ((WeilDivisor.OrderSystem.ofScheme X).principalDivisor g) ≅
@@ -195,9 +197,10 @@ lemma sheafPrincipalDivisorIsoUnit_inv_sheafι (hX : ∀ y : X, coheight y ≤ 1
   simp only [Category.assoc, rationalFunctionsMul_comp_neg, Category.comp_id] at h
   exact h.trans (Category.assoc _ _ _)
 
-/-- **The sheaf of a principal Weil divisor is a line bundle.** This is the case of the
-divisor-to-line-bundle dictionary in which the divisor is globally the divisor of a rational
-function; it sends the trivial divisor class to the trivial line bundle. -/
+/-- **The sheaf of a principal Weil divisor is a line bundle.** On a Noetherian integral scheme
+of dimension at most one whose codimension-one local rings are discrete valuation rings, this is
+the case of the divisor-to-line-bundle dictionary in which the divisor is globally the divisor of
+a rational function; it sends the trivial divisor class to the trivial line bundle. -/
 theorem isInvertible_sheaf_principalDivisor (hX : ∀ y : X, coheight y ≤ 1)
     (g : Additive X.functionFieldˣ) :
     SheafOfModules.isInvertible X
