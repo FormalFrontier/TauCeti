@@ -60,7 +60,8 @@ Krull--Schmidt hypotheses of a finite-dimensional algebra.
   comparison maps between that group and `G₀(mod R)`.
 * `TauCeti.moduleEulerClassOf` and `TauCeti.moduleEulerClass`: the alternating class in
   `K₀(proj R)` determined by any finite resolution by finitely generated projectives, and the
-  specialized value for a particular resolution.
+  value at a particular resolution, evaluated by `TauCeti.moduleEulerClass_base` and
+  `TauCeti.moduleEulerClass_step`.
 * `TauCeti.cartanInverse` and `TauCeti.cartanEquiv`: the inverse of the Cartan map and the
   resulting isomorphism, under the hypothesis that every finitely generated module has a finite
   resolution by finitely generated projectives.
@@ -317,7 +318,12 @@ noncomputable def moduleEulerClassOf {M : ModuleCat.{u} R}
     (ExactStructure.isExtensionClosed_of_le_isProjective
       (finiteProjectiveModules_le_isProjective R)) hM
 
-/-- The alternating class of a particular finite resolution by finitely generated projectives. -/
+/-- The alternating class of a particular finite resolution by finitely generated projectives.
+This is `TauCeti.ExactStructure.FiniteResolution.eulerClassFullSubcategory` at the exact structure
+`TauCeti.finiteProjectiveModulesExactStructure`, which the generic declaration cannot be stated
+against directly: its type is the exact `K₀` of the induced structure, and the two agree only up to
+the definition of `finiteProjectiveModulesExactStructure`. The two equations below evaluate it on
+both constructors of a resolution. -/
 noncomputable def moduleEulerClass {M : ModuleCat.{u} R}
     (r : (ExactStructure.abelian (ModuleCat.{u} R)).FiniteResolution
       (finiteProjectiveModules R) M) :
@@ -325,6 +331,27 @@ noncomputable def moduleEulerClass {M : ModuleCat.{u} R}
   r.eulerClassFullSubcategory.{u, u, u + 1}
     (ExactStructure.isExtensionClosed_of_le_isProjective
       (finiteProjectiveModules_le_isProjective R))
+
+/-- The alternating class of the resolution of a finitely generated projective module by itself is
+the class of that module. -/
+@[simp] theorem moduleEulerClass_base {M : ModuleCat.{u} R}
+    (hM : finiteProjectiveModules R M) :
+    moduleEulerClass R (.base hM) = ExactK0.of ⟨M, hM⟩ := by
+  simp only [moduleEulerClass]
+  exact ExactStructure.FiniteResolution.eulerClassFullSubcategory_base.{u, u, u + 1} _ hM
+
+/-- Prepending a resolving term to a finite resolution subtracts the remaining alternating class
+from the class of that term. -/
+@[simp] theorem moduleEulerClass_step {K Q M : ModuleCat.{u} R}
+    (hQ : finiteProjectiveModules R Q) (i : K ⟶ Q) (p : Q ⟶ M) (zero : i ≫ p = 0)
+    (hp : (ExactStructure.abelian (ModuleCat.{u} R)).Conflation (ShortComplex.mk i p zero))
+    (r : (ExactStructure.abelian (ModuleCat.{u} R)).FiniteResolution
+      (finiteProjectiveModules R) K) :
+    moduleEulerClass R (.step hQ i p zero hp r) =
+      ExactK0.of ⟨Q, hQ⟩ - moduleEulerClass R r := by
+  simp only [moduleEulerClass]
+  exact ExactStructure.FiniteResolution.eulerClassFullSubcategory_step.{u, u, u + 1}
+    _ hQ i p zero hp r
 
 /-- Every finite resolution of a module by finitely generated projectives computes its alternating
 class. -/
