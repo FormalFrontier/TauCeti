@@ -21,14 +21,21 @@ basis, which leaves the coefficient sum unchanged.
 
 For a finite `X` whose cardinality is invertible in `k` the two are complementary, so `k[X]` splits
 as a line carrying the trivial representation plus a representation of dimension `|X| - 1`.  That
-is the source of the *deleted* permutation representations, of which the standard representation of
-the symmetric group in `TauCeti.RepresentationTheory.Symmetric.Standard` is the first example.
+splitting is recorded as an equivalence of representations
+`TauCeti.ofMulActionEquivProdAugmentation`, whose first factor is the trivial representation on `k`
+itself: a scalar names the multiple it takes of the sum of the standard basis.  It is the source of
+the *deleted* permutation representations, of which the standard representation of the symmetric
+group in `TauCeti.RepresentationTheory.Symmetric.Standard` is the first example.
 
 ## Main definitions
 
 * `TauCeti.permutationSum`: the sum of the standard basis of `k[X]`, for a finite `X`.
 * `TauCeti.invariantLine`: the line spanned by `TauCeti.permutationSum`, as a subrepresentation.
 * `TauCeti.augmentationSubrepresentation`: the kernel of the augmentation, as a subrepresentation.
+* `TauCeti.invariantLineEquivTrivial`: for a nonempty `X`, the invariant line is the trivial
+  representation on `k` itself.
+* `TauCeti.ofMulActionEquivProdAugmentation`: when `|X|` is invertible in `k`, the permutation
+  representation is the trivial representation plus the augmentation subrepresentation.
 
 ## Main results
 
@@ -345,6 +352,63 @@ theorem finrank_augmentationSubrepresentation :
   rw [hrange, hcard] at hsum
   rw [toSubmodule_augmentationSubrepresentation]
   omega
+
+/-! ### The splitting as trivial plus augmentation -/
+
+section Splitting
+
+variable (k G X) [Nonempty X]
+
+/-- **The invariant line is the trivial representation on `k` itself.**  A scalar `c` names the
+multiple `c • permutationSum k X` of the sum of the standard basis, which is a bijection onto the
+line because that sum is nonzero, and it is equivariant because the sum is fixed. -/
+noncomputable def invariantLineEquivTrivial :
+    (invariantLine k G X).toRepresentation.Equiv (Representation.trivial k G k) :=
+  Representation.Equiv.mk
+    ((LinearEquiv.ofEq _ _ (toSubmodule_invariantLine k G X)).trans
+      (LinearEquiv.coord k (MonoidAlgebra k X) (permutationSum k X) permutationSum_ne_zero))
+    fun g => by rw [toRepresentation_invariantLine]; rfl
+
+/-- The scalar `c` names the multiple `c • permutationSum k X` of the sum of the standard basis. -/
+@[simp]
+theorem coe_invariantLineEquivTrivial_symm_apply (c : k) :
+    (((invariantLineEquivTrivial k G X).symm c : (invariantLine k G X).toSubmodule) :
+      MonoidAlgebra k X) = c • permutationSum k X :=
+  (rfl)
+
+/-- **The permutation representation is the trivial representation plus the augmentation
+subrepresentation.**  When `|X|` is invertible in `k` the invariant line is a complement of the
+augmentation subrepresentation, by
+`TauCeti.isCompl_invariantLine_augmentationSubrepresentation`, so `k[X]` splits as the product of
+the two representations they carry; the line carries the trivial representation on `k` itself, by
+`TauCeti.invariantLineEquivTrivial`. -/
+noncomputable def ofMulActionEquivProdAugmentation (h : (Fintype.card X : k) ≠ 0) :
+    (Representation.ofMulAction k G X).Equiv
+      ((Representation.trivial k G k).prod
+        (augmentationSubrepresentation k G X).toRepresentation) :=
+  (Subrepresentation.prodEquivOfIsCompl
+      (isCompl_invariantLine_augmentationSubrepresentation (Or.inr h))).trans
+    (Representation.Equiv.mk
+      (LinearEquiv.prodCongr (invariantLineEquivTrivial k G X).toLinearEquiv
+        (LinearEquiv.refl k _))
+      fun g => by
+        refine LinearMap.ext fun v => Prod.ext ?_ rfl
+        simp)
+
+/-- The splitting adds a multiple of the sum of the standard basis to a vector of the augmentation
+subrepresentation. -/
+@[simp]
+theorem ofMulActionEquivProdAugmentation_symm_apply (h : (Fintype.card X : k) ≠ 0)
+    (v : k × (augmentationSubrepresentation k G X).toSubmodule) :
+    (ofMulActionEquivProdAugmentation k G X h).symm v =
+      v.1 • permutationSum k X + (v.2 : MonoidAlgebra k X) := by
+  change (Subrepresentation.prodEquivOfIsCompl
+      (isCompl_invariantLine_augmentationSubrepresentation (Or.inr h))).symm
+      ((invariantLineEquivTrivial k G X).symm v.1, v.2) = _
+  rw [Subrepresentation.prodEquivOfIsCompl_symm_apply,
+    coe_invariantLineEquivTrivial_symm_apply]
+
+end Splitting
 
 /-! ### The character of the augmentation subrepresentation -/
 

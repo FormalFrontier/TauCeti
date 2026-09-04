@@ -40,12 +40,14 @@ are what they are proved for. In the same spirit,
 across `Subrepresentation.subrepresentationSubmoduleOrderIso`, so that Mathlib's simple- and
 semisimple-module API applies to minimal subrepresentations; being about `asSubmodule` it asks for
 the coefficients to be a commutative ring, as `Subrepresentation.asSubmodule` and
-`IsSimpleModule` between them do.  Finally, `Subrepresentation.isCompl_toSubmodule` moves `IsCompl`
-across the same dictionary, and `Subrepresentation.prodEquivOfIsCompl` upgrades a complement to an
-equivalence of representations `ρ ≃ ρ₁ × ρ₂`: `Submodule.prodEquivOfIsCompl` supplies the linear
-isomorphism and each `ρ g`, being additive and preserving both summands, supplies the
-equivariance.  Being about `Submodule.prodEquivOfIsCompl`, it asks for the coefficients to be a
-ring and the module to be a group, as that construction does.
+`IsSimpleModule` between them do.  `Subrepresentation.isCompl_toSubmodule` is one more entry in
+the lattice dictionary, moving `IsCompl` across it, and stated with the rest of that dictionary at
+the typeclasses `Subrepresentation` itself asks for.  Finally,
+`Subrepresentation.prodEquivOfIsCompl` upgrades a complement to an equivalence of representations
+`ρ ≃ ρ₁ × ρ₂`: `Submodule.prodEquivOfIsCompl` supplies the linear isomorphism and each `ρ g`,
+being additive and preserving both summands, supplies the equivariance.  Being about
+`Submodule.prodEquivOfIsCompl`, it asks for the coefficients to be a ring and the module to be a
+group, as that construction does.
 
 ## Main results
 
@@ -54,6 +56,7 @@ ring and the module to be a group, as that construction does.
 * `Subrepresentation.toSubmodule_top`
 * `Subrepresentation.toSubmodule_le_toSubmodule`
 * `Subrepresentation.toSubmodule_lt_toSubmodule`
+* `Subrepresentation.isCompl_toSubmodule`
 * `Subrepresentation.toRepresentation_apply`
 * `Representation.IntertwiningMap.eq_zero_iff_range_eq_bot`
 * `Representation.IntertwiningMap.surjective_iff_range_eq_top`
@@ -68,7 +71,6 @@ ring and the module to be a group, as that construction does.
 * `Subrepresentation.coe_toRepresentation_asAlgebraHom_apply`
 * `Subrepresentation.asModuleEquivAsSubmodule`
 * `Subrepresentation.isSimpleModule_asSubmodule_iff`
-* `Subrepresentation.isCompl_toSubmodule`
 * `Subrepresentation.prodEquivOfIsCompl`
 -/
 
@@ -104,6 +106,16 @@ is. -/
 lemma toSubmodule_lt_toSubmodule {ρ₁ ρ₂ : Subrepresentation ρ} :
     ρ₁.toSubmodule < ρ₂.toSubmodule ↔ ρ₁ < ρ₂ := by
   simp only [lt_iff_le_not_ge, toSubmodule_le_toSubmodule]
+
+/-- Two subrepresentations are complementary exactly when the subspaces they carry are.  This is
+the counterpart, for `IsCompl`, of `Subrepresentation.toSubmodule_le_toSubmodule`: it is what lets
+a splitting established in the submodule lattice -- by a dimension count, say, or by an explicit
+projection -- be read as a splitting of representations. -/
+@[simp]
+theorem isCompl_toSubmodule {ρ₁ ρ₂ : Subrepresentation ρ} :
+    IsCompl ρ₁.toSubmodule ρ₂.toSubmodule ↔ IsCompl ρ₁ ρ₂ := by
+  simp only [isCompl_iff, disjoint_iff, codisjoint_iff, ← toSubmodule_inf, ← toSubmodule_sup,
+    ← toSubmodule_bot (ρ := ρ), ← toSubmodule_top (ρ := ρ), toSubmodule_injective.eq_iff]
 
 /-- The action on a subrepresentation is the restriction of the original action. -/
 theorem toRepresentation_apply (S : Subrepresentation ρ) (g : G) :
@@ -257,16 +269,6 @@ section Splitting
 
 variable {A G W : Type*} [Ring A] [Monoid G] [AddCommGroup W] [Module A W]
   {ρ : Representation A G W}
-
-/-- Two subrepresentations are complementary exactly when the subspaces they carry are.  This is
-the counterpart, for `IsCompl`, of `Subrepresentation.toSubmodule_le_toSubmodule`: it is what lets
-a splitting established in the submodule lattice -- by a dimension count, say, or by an explicit
-projection -- be read as a splitting of representations. -/
-@[simp]
-theorem isCompl_toSubmodule {ρ₁ ρ₂ : Subrepresentation ρ} :
-    IsCompl ρ₁.toSubmodule ρ₂.toSubmodule ↔ IsCompl ρ₁ ρ₂ := by
-  simp only [isCompl_iff, disjoint_iff, codisjoint_iff, ← toSubmodule_inf, ← toSubmodule_sup,
-    ← toSubmodule_bot (ρ := ρ), ← toSubmodule_top (ρ := ρ), toSubmodule_injective.eq_iff]
 
 /-- **Complementary subrepresentations split the representation as a direct sum.**  Adding a
 vector of `ρ₁` to one of `ρ₂` is a linear isomorphism `ρ₁ × ρ₂ ≃ W` by

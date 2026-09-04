@@ -34,10 +34,9 @@ points (`TauCeti.quotientStabilizerEquiv`), equivariantly, and an equivariant eq
 isomorphism replaces the multinomial dimension `n! / (n-1)!` by `n`, and the count of fixed
 tabloids by the count of fixed points -- the natural permutation character.  Splitting
 `ℚ[Fin (n+2)]` into the invariant line and the augmentation subrepresentation
-(`TauCeti.isCompl_invariantLine_augmentationSubrepresentation`, turned into an equivalence of
-representations by `TauCeti.Subrepresentation.prodEquivOfIsCompl`) then decomposes `M^{(n-1,1)}`
-as the trivial representation plus the standard representation.  On characters that decomposition
-is the point-stabilizer identity
+(`TauCeti.ofMulActionEquivProdAugmentation`) then decomposes `M^{(n-1,1)}` as the trivial
+representation plus the standard representation.  On characters that decomposition is the
+point-stabilizer identity
 `TauCeti.char_ind_trivial_stabilizer_eq_one_add_char_standardRepresentation`.
 
 ## Main definitions
@@ -46,8 +45,8 @@ is the point-stabilizer identity
   of `g` naming `g` applied to the last label.
 * `TauCeti.permutationModuleSingletonSecondRowIso`: hence `M^{(n+1,1)}` is `ℚ[Fin (n+2)]`.
 * `TauCeti.permutationModuleSingletonSecondRowEquivProd`: **`M^{(n-1,1)} = triv ⊕ standard`**, an
-  equivalence of representations onto the product of the invariant line -- trivial, by
-  `TauCeti.toRepresentation_invariantLine` -- and the standard representation.
+  equivalence of representations onto the product of the trivial representation on `ℚ` and the
+  standard representation.
 
 ## Main results
 
@@ -145,22 +144,19 @@ theorem char_permutationModule_singletonSecondRow (n : ℕ) (σ : Equiv.Perm (Fi
 /-- **The Young permutation module of `(n+1, 1)` is the trivial representation plus the standard
 representation.**  Transporting `M^{(n+1,1)}` to `ℚ[Fin (n+2)]` along
 `TauCeti.permutationModuleSingletonSecondRowIso` and splitting the latter along
-`TauCeti.isCompl_invariantLine_augmentationSubrepresentation` -- the invariant line and the
-augmentation subrepresentation are complementary, `n+2` being invertible in `ℚ` -- decomposes it
-as a product of two representations.  The first factor is the trivial representation, by
-`TauCeti.toRepresentation_invariantLine`, and the second is the standard representation, by
-`TauCeti.toRepresentation_augmentationSubrepresentation`; this is the roadmap's
+`TauCeti.ofMulActionEquivProdAugmentation` -- the invariant line, which carries the trivial
+representation on `ℚ` itself, is a complement of the augmentation subrepresentation, `n+2` being
+invertible in `ℚ` -- decomposes it as a product of two representations, the second being the
+standard representation by `TauCeti.toRepresentation_augmentationSubrepresentation`.  In short,
 `M^{(n-1,1)} = triv ⊕ standard`. -/
 noncomputable def permutationModuleSingletonSecondRowEquivProd (n : ℕ) :
     (permutationModule (Nat.Partition.singletonSecondRow n)).ρ.Equiv
-      ((invariantLine ℚ (Equiv.Perm (Fin (n + 2))) (Fin (n + 2))).toRepresentation.prod
+      ((Representation.trivial ℚ (Equiv.Perm (Fin (n + 2))) ℚ).prod
         (standardRepresentation ℚ (Fin (n + 2)))) :=
   (Representation.equivOfIso (permutationModuleSingletonSecondRowIso n)).trans
     (toRepresentation_augmentationSubrepresentation ℚ (Fin (n + 2)) ▸
-      Subrepresentation.prodEquivOfIsCompl
-        (isCompl_invariantLine_augmentationSubrepresentation (k := ℚ)
-          (G := Equiv.Perm (Fin (n + 2))) (X := Fin (n + 2))
-          (Or.inr (by rw [Fintype.card_fin]; positivity))))
+      ofMulActionEquivProdAugmentation ℚ (Equiv.Perm (Fin (n + 2))) (Fin (n + 2))
+        (by rw [Fintype.card_fin]; positivity))
 
 /-- **The character of `M^{(n+1,1)}` is `1` plus the character of the standard representation.**
 This is the character-level form of the decomposition
