@@ -108,22 +108,27 @@ theorem eval_eq_finsuppProd (D : Divisor k F) (f : Fˣ) :
     eval D f = D.prod fun P n ↦ P.normResidueOrOne f ^ n := by
   simp [eval, evalHom]
 
+/-- `f(0) = 1`: the empty product. -/
 @[simp]
 theorem eval_zero (f : Fˣ) : eval (0 : Divisor k F) f = 1 :=
   map_one (evalHom f)
 
+/-- `f(D + E) = f(D) · f(E)`: adding divisors multiplies values. -/
 @[simp]
 theorem eval_add (D E : Divisor k F) (f : Fˣ) : eval (D + E) f = eval D f * eval E f :=
   map_mul (evalHom f) _ _
 
+/-- `f(-D) = f(D)⁻¹`: negating a divisor inverts the value. -/
 @[simp]
 theorem eval_neg (D : Divisor k F) (f : Fˣ) : eval (-D) f = (eval D f)⁻¹ :=
   map_inv (evalHom f) _
 
+/-- `f(D - E) = f(D) / f(E)`. -/
 @[simp]
 theorem eval_sub (D E : Divisor k F) (f : Fˣ) : eval (D - E) f = eval D f / eval E f :=
   map_div (evalHom f) _ _
 
+/-- On a single place with multiplicity, `f(n·P)` is the local factor raised to `n`. -/
 @[simp]
 theorem eval_single (P : Place k F) (n : ℤ) (f : Fˣ) :
     eval (Finsupp.single P n : Divisor k F) f = P.normResidueOrOne f ^ n := by

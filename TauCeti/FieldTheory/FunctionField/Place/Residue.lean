@@ -92,6 +92,7 @@ noncomputable def residueUnit (P : Place k F) (f : Fˣ) (hf : P.ord (f : F) = 0)
     P.ResidueFieldˣ :=
   P.integers.unitGroupToResidueFieldUnits ⟨f, P.mem_unitGroup_of_ord_eq_zero hf⟩
 
+/-- The residue field element underlying `residueUnit`: the residue of `f` in `𝒪_P / 𝔪_P`. -/
 @[simp]
 theorem coe_residueUnit (P : Place k F) (f : Fˣ) (hf : P.ord (f : F) = 0) :
     (P.residueUnit f hf : P.ResidueField)
@@ -114,6 +115,7 @@ residue. -/
 noncomputable def normResidue (P : Place k F) (f : Fˣ) (hf : P.ord (f : F) = 0) : kˣ :=
   Algebra.normUnits k (P.residueUnit f hf)
 
+/-- The element of `k` underlying `normResidue`: the norm of the residue. -/
 @[simp]
 theorem coe_normResidue (P : Place k F) (f : Fˣ) (hf : P.ord (f : F) = 0) :
     (P.normResidue f hf : k) = Algebra.norm k (P.residueUnit f hf : P.ResidueField) := by
@@ -126,11 +128,13 @@ survives that. -/
 noncomputable def normResidueOrOne (P : Place k F) (f : Fˣ) : kˣ :=
   if hf : P.ord (f : F) = 0 then P.normResidue f hf else 1
 
+/-- Where `f` is a unit at `P`, the total local factor is the genuine norm of the residue. -/
 @[simp]
 theorem normResidueOrOne_of_ord_eq_zero {P : Place k F} {f : Fˣ} (hf : P.ord (f : F) = 0) :
     P.normResidueOrOne f = P.normResidue f hf := by
   simp [normResidueOrOne, hf]
 
+/-- Where `f` is not a unit at `P`, the total local factor is the neutral value `1`. -/
 @[simp]
 theorem normResidueOrOne_of_ord_ne_zero {P : Place k F} {f : Fˣ} (hf : P.ord (f : F) ≠ 0) :
     P.normResidueOrOne f = 1 := by
