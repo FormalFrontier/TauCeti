@@ -22,9 +22,7 @@ This file supplies that missing input:
 
 * the whole cube `I^N` is path connected (`TauCeti.isPathConnected_cube`);
 * its boundary is path connected as soon as the index type has at least two elements
-  (`TauCeti.isPathConnected_cubeBoundary`), with the `Fin` reformulation
-  `TauCeti.isPathConnected_cubeBoundary_fin` for `2 ≤ n`, plus the `IsConnected` and
-  `IsPreconnected` corollaries.
+  (`TauCeti.isPathConnected_cubeBoundary`).
 
 The resulting path-connectedness declarations expose `JoinedIn` witnesses through their
 `.joinedIn` methods, so callers can use the generic connectedness API directly.
@@ -47,7 +45,6 @@ induces isomorphisms on `π_ n` for `n ≥ 2`.
 * `TauCeti.zero_mem_cubeBoundary`: the corner `0` lies on the boundary.
 * `TauCeti.isPathConnected_cubeBoundary`: for `[Nontrivial N]`, `Cube.boundary N` is path
   connected.
-* `TauCeti.isPathConnected_cubeBoundary_fin`: the `Fin` version for `2 ≤ n`.
 -/
 
 public section
@@ -139,21 +136,5 @@ theorem isPathConnected_cubeBoundary [Nontrivial N] : IsPathConnected (Cube.boun
     ⟨cubeCollapseCoord i₀ (y i₀), fun t =>
       ⟨j₀, Or.inl <| by rw [cubeCollapseCoord_apply, Function.update_of_ne hj₀]; rfl⟩⟩
   exact (h1.trans h2).symm
-
-/-- The boundary of the cube `I^N` is connected once the index type has at least two elements. -/
-theorem isConnected_cubeBoundary [Nontrivial N] : IsConnected (Cube.boundary N) :=
-  isPathConnected_cubeBoundary.isConnected
-
-/-- The boundary of the cube `I^N` is preconnected once the index type has at least two
-elements. -/
-theorem isPreconnected_cubeBoundary [Nontrivial N] : IsPreconnected (Cube.boundary N) :=
-  isConnected_cubeBoundary.isPreconnected
-
-/-- The boundary of the `n`-cube `I^(Fin n)` is path connected for `2 ≤ n`. This is the shape
-in which the connectivity feeds into `π_ n` for `n ≥ 2`. -/
-theorem isPathConnected_cubeBoundary_fin {n : ℕ} (hn : 2 ≤ n) :
-    IsPathConnected (Cube.boundary (Fin n)) :=
-  have : Nontrivial (Fin n) := Fin.nontrivial_iff_two_le.2 hn
-  isPathConnected_cubeBoundary
 
 end TauCeti
