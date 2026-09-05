@@ -88,10 +88,11 @@ its pinning, and any identification of a carrier with it are Layer 9 targets of
 `TauCetiRoadmap/ReductiveGroups/README.md` that the CFSG roadmap consumes rather than builds; none
 of them is proved of `TauCeti.E6DoubledMinuscule.groupScheme` here or in the files this one
 imports. What this file supplies is the `²E₆` branch's explicit carrier, its numbered root
-characters read in the `E₆` root datum, the diagram-symmetry data that milestone L1's
-`γ (x_α(t)) = x_{γ α}(t)` will be proved from, and milestone L1's other factor `Frob_q` together
-with its own pinned equation `Frob_q (x_α(t)) = x_α(t ^ q)`; they transfer to the L0 carrier along
-that Layer 9 identification, and not before. The counterparts on the branches already assembled
+characters read in the `E₆` root datum, the diagram-symmetry data that a graph automorphism's
+equation `γ (x_α(t)) = x_{γ α}(t)` will be proved from, and the `q`-power Frobenius `Frob_q`
+together with its own pinned equation `Frob_q (x_α(t)) = x_α(t ^ q)`; they transfer to the points
+of the pinned group along an identification of it with this carrier, and not before. The
+counterparts on the branches already assembled
 are `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeA.lean`,
 `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeE6.lean` and
 `TauCeti/GroupTheory/SpecificGroups/CFSG/Unimodular.lean`, and the branch that likewise stops short
