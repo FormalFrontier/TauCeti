@@ -50,6 +50,24 @@ namespace TauCeti
 variable {G : Type*} [Group G] [TopologicalSpace G] [IsTopologicalGroup G] [CompactSpace G]
   [TotallyDisconnectedSpace G]
 
+omit [TotallyDisconnectedSpace G] in
+/-- Taking the topological closure of a subgroup does not change its image in a finite
+continuous quotient. -/
+@[simp]
+theorem _root_.Subgroup.map_topologicalClosure_quotient_eq (H : Subgroup G)
+    (N : OpenNormalSubgroup G) :
+    H.topologicalClosure.map (QuotientGroup.mk' N.toSubgroup) =
+      H.map (QuotientGroup.mk' N.toSubgroup) := by
+  apply le_antisymm
+  · rw [Subgroup.map_le_iff_le_comap]
+    apply H.topologicalClosure_minimal
+      (Subgroup.le_comap_map (QuotientGroup.mk' N.toSubgroup) H)
+    exact
+      (Set.toFinite
+        (H.map (QuotientGroup.mk' N.toSubgroup) : Set (G ⧸ N.toSubgroup))).isClosed.preimage
+          (QuotientGroup.continuous_mk (N := N.toSubgroup))
+  · exact Subgroup.map_mono H.le_topologicalClosure
+
 /-- A closed subgroup of a profinite group is the infimum of the subgroups `N ⊔ U`, over the
 open normal subgroups `U` of `G`: the open normal subgroups are cofinal among the open
 subgroups containing `N`. This is the saturation statement behind the clopen-image argument

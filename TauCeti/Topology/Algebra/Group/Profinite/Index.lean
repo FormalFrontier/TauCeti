@@ -68,17 +68,17 @@ theorem _root_.Subgroup.profiniteIndex_apply (H : Subgroup G) (ℓ : Nat.Primes)
       (padicValNat ℓ ((H.map (QuotientGroup.mk' N.toSubgroup)).index) : ℕ∞) :=
   by rw [Subgroup.profiniteIndex, Supernatural.ofFun_apply]
 
-end Subgroup
-
 /-- The whole group has supernatural index one. -/
 @[simp]
-theorem profiniteIndex_top : Subgroup.profiniteIndex (⊤ : Subgroup G) = 1 := by
+theorem _root_.Subgroup.profiniteIndex_top : Subgroup.profiniteIndex (⊤ : Subgroup G) = 1 := by
   have hmap : ∀ N : OpenNormalSubgroup G,
       (⊤ : Subgroup G).map (QuotientGroup.mk' N.toSubgroup) = ⊤ := fun N ↦
     Subgroup.map_top_of_surjective _ (QuotientGroup.mk'_surjective N.toSubgroup)
   ext ℓ
   simp_rw [Subgroup.profiniteIndex_apply, hmap]
   simp
+
+end Subgroup
 
 section Profinite
 
@@ -217,20 +217,6 @@ theorem _root_.OpenSubgroup.profiniteIndex_apply [TotallyDisconnectedSpace G]
 
 end OpenSubgroup
 
-private theorem map_topologicalClosure_quotient_eq (H : Subgroup G)
-    (N : OpenNormalSubgroup G) :
-    H.topologicalClosure.map (QuotientGroup.mk' N.toSubgroup) =
-      H.map (QuotientGroup.mk' N.toSubgroup) := by
-  apply le_antisymm
-  · rw [Subgroup.map_le_iff_le_comap]
-    apply H.topologicalClosure_minimal
-      (Subgroup.le_comap_map (QuotientGroup.mk' N.toSubgroup) H)
-    exact
-      (Set.toFinite
-        (H.map (QuotientGroup.mk' N.toSubgroup) : Set (G ⧸ N.toSubgroup))).isClosed.preimage
-          (QuotientGroup.continuous_mk (N := N.toSubgroup))
-  · exact Subgroup.map_mono H.le_topologicalClosure
-
 namespace Subgroup
 
 /-- Taking the topological closure of a subgroup does not change its supernatural index. -/
@@ -238,7 +224,7 @@ namespace Subgroup
 theorem _root_.Subgroup.profiniteIndex_topologicalClosure (H : Subgroup G) :
     Subgroup.profiniteIndex H.topologicalClosure = Subgroup.profiniteIndex H := by
   ext ℓ
-  simp_rw [Subgroup.profiniteIndex_apply, map_topologicalClosure_quotient_eq]
+  simp_rw [Subgroup.profiniteIndex_apply, Subgroup.map_topologicalClosure_quotient_eq]
 
 variable [TotallyDisconnectedSpace G]
 
@@ -273,7 +259,7 @@ theorem _root_.Subgroup.profiniteIndex_eq_one_iff_topologicalClosure_eq_top (H :
           Subgroup.comap_top]
       _ ≤ H.topologicalClosure ⊔ N.toSubgroup := sup_le_sup_right H.le_topologicalClosure _
   · intro hclosure
-    rw [← Subgroup.profiniteIndex_topologicalClosure H, hclosure, profiniteIndex_top]
+    rw [← Subgroup.profiniteIndex_topologicalClosure H, hclosure, Subgroup.profiniteIndex_top]
 
 /-- A closed subgroup of a profinite group has supernatural index one exactly when it is the
 whole group. -/
