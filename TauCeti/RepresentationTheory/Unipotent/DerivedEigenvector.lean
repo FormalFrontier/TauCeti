@@ -31,8 +31,7 @@ eigenvalues assemble into a unit-valued character of `G`.
 * J. C. Jantzen, *Representations of Algebraic Groups*, I.2.
 * T. A. Springer, *Linear Algebraic Groups*, Theorem 6.3.1.
 
-This is the abstract representation-theoretic reduction used in the Lie--Kolchin milestone of
-Layer 5 of the ReductiveGroups roadmap.
+This supplies the abstract reduction used in Lie--Kolchin arguments.
 -/
 
 public section
