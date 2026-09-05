@@ -51,7 +51,7 @@ def ofTwo (σ0 σ1 : Equiv.Perm (Fin n)) : PermutationTriple n where
 @[simp] theorem ofTwo_σ1 (σ0 σ1 : Equiv.Perm (Fin n)) : (ofTwo σ0 σ1).σ1 = σ1 :=
   (rfl)
 
-theorem ofTwo_σinf (σ0 σ1 : Equiv.Perm (Fin n)) :
+@[simp] theorem ofTwo_σinf (σ0 σ1 : Equiv.Perm (Fin n)) :
     (ofTwo σ0 σ1).σinf = (σ1 * σ0)⁻¹ := (rfl)
 
 /-- The third monodromy is determined by the first two. -/
@@ -87,6 +87,12 @@ def equivPair (n : ℕ) : PermutationTriple n ≃
   left_inv t := (ext_of_two (t := t) (t' := ofTwo t.σ0 t.σ1) rfl rfl).symm
   right_inv _ := rfl
 
+@[simp] theorem equivPair_apply (t : PermutationTriple n) :
+    equivPair n t = (t.σ0, t.σ1) := (rfl)
+
+@[simp] theorem equivPair_symm_apply (p : Equiv.Perm (Fin n) × Equiv.Perm (Fin n)) :
+    (equivPair n).symm p = ofTwo p.1 p.2 := (rfl)
+
 /-- Transport a permutation triple along an equivalence of its degree sets. -/
 def transport {m : ℕ} (e : Fin n ≃ Fin m) :
     PermutationTriple n ≃ PermutationTriple m where
@@ -121,7 +127,7 @@ def transport {m : ℕ} (e : Fin n ≃ Fin m) :
 @[simp] theorem transport_σ1 {m : ℕ} (e : Fin n ≃ Fin m) (t : PermutationTriple n) :
     (transport e t).σ1 = e.permCongrHom t.σ1 := (rfl)
 
-theorem transport_σinf {m : ℕ} (e : Fin n ≃ Fin m) (t : PermutationTriple n) :
+@[simp] theorem transport_σinf {m : ℕ} (e : Fin n ≃ Fin m) (t : PermutationTriple n) :
     (transport e t).σinf = e.permCongrHom t.σinf := (rfl)
 
 /-- Transporting along the identity equivalence does nothing. -/
@@ -239,7 +245,7 @@ def invComponents : PermutationTriple n ≃ ReversePermutationTriple n where
 @[simp] theorem invComponents_symm_σ1 (t : ReversePermutationTriple n) :
     (invComponents.symm t).σ1 = t.σ1⁻¹ := (rfl)
 
-theorem invComponents_symm_σinf (t : ReversePermutationTriple n) :
+@[simp] theorem invComponents_symm_σinf (t : ReversePermutationTriple n) :
     (invComponents.symm t).σinf = t.σinf⁻¹ := (rfl)
 
 end PermutationTriple
