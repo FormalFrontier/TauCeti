@@ -7,7 +7,6 @@ module
 
 public import Mathlib.LinearAlgebra.TensorProduct.Graded.Internal
 public import Mathlib.RingTheory.GradedAlgebra.AlgHom
-public import TauCeti.Algebra.Module.GradedModule.Opposite
 public import TauCeti.Algebra.Module.GradedModule.TensorProduct
 
 /-!
