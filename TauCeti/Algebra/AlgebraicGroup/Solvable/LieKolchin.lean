@@ -198,7 +198,7 @@ theorem hasNonzeroWeightVector_of_geometricallyUnipotent_derived
 
 /-- If a unipotent closed subgroup contains the derived subgroup, then every finite-dimensional
 representation admits an upper-triangular basis with characters on the diagonal. -/
-theorem exists_basis_coefficientMatrix_isUpperTriangular_of_forall_isUnipotentPoint_of_le_derived
+theorem exists_basis_upperTriangular_of_forall_isUnipotentPoint_of_le_derivedDefiningIdeal
     [FiniteDimensional k M]
     (I : HopfIdeal k H) (hID : I ≤ CommHopfAlgCat.derivedDefiningIdeal H)
     (hI : ∀ g : WithConv
@@ -225,13 +225,13 @@ theorem exists_basis_coefficientMatrix_isUpperTriangular_of_forall_isUnipotentPo
     ∃ (n : ℕ) (b : Module.Basis (Fin n) k M),
       (coefficientMatrix (C := H) b).IsUpperTriangular ∧
         ∀ i, IsGroupLikeElem k (coefficientMatrix (C := H) b i i) :=
-  exists_basis_coefficientMatrix_isUpperTriangular_of_forall_isUnipotentPoint_of_le_derived
+  exists_basis_upperTriangular_of_forall_isUnipotentPoint_of_le_derivedDefiningIdeal
     (CommHopfAlgCat.derivedDefiningIdeal H) le_rfl hderived
 
 /-- If a geometrically unipotent closed subgroup contains the derived subgroup, then every
 finite-dimensional representation admits an upper-triangular basis with characters on the
 diagonal. -/
-theorem exists_basis_coefficientMatrix_isUpperTriangular_of_geometricallyUnipotent_of_le_derived
+theorem exists_basis_upperTriangular_of_geometricallyUnipotent_of_le_derivedDefiningIdeal
     [FiniteDimensional k M]
     (I : HopfIdeal k H) (hID : I ≤ CommHopfAlgCat.derivedDefiningIdeal H)
     (hI : geometricallyUnipotentPointsCommHopfAlgProperty k
@@ -256,7 +256,7 @@ theorem exists_basis_coefficientMatrix_isUpperTriangular_of_geometricallyUnipote
     ∃ (n : ℕ) (b : Module.Basis (Fin n) k M),
       (coefficientMatrix (C := H) b).IsUpperTriangular ∧
         ∀ i, IsGroupLikeElem k (coefficientMatrix (C := H) b i i) :=
-  exists_basis_coefficientMatrix_isUpperTriangular_of_geometricallyUnipotent_of_le_derived
+  exists_basis_upperTriangular_of_geometricallyUnipotent_of_le_derivedDefiningIdeal
     (CommHopfAlgCat.derivedDefiningIdeal H) le_rfl hderived
 
 end Comodule
