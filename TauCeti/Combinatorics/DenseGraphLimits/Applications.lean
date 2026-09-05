@@ -20,12 +20,11 @@ are Goodman's inequality
 and Sidorenko's inequality for the four-cycle.  Goodman's proof writes the nonnegative integral
 `∫ W(x,y) (1 - W(x,z)) (1 - W(y,z))` in two ways and uses Cauchy--Schwarz for the degree
 function, followed by Mantel's triangle-free corollary.  The four-cycle proof identifies its
-density with the square of a two-step integral and applies two second-moment inequalities.  All
-statements are for arbitrary probability carriers; no atomlessness or standard Borel assumption
-is involved.
+density with the integral of the square of a two-step kernel and applies two second-moment
+inequalities.  All statements are for arbitrary probability carriers; no atomlessness or standard
+Borel assumption is involved.
 
-They consume only the strict graphon carrier and the explicit edge and triangle integral API; the
-later quotient, compactness, and sampling layers are not needed.
+They use only the strict graphon carrier and its edge, triangle, and product-integral APIs.
 
 ## Main results
 
