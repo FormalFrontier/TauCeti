@@ -36,6 +36,8 @@ that the pointwise quotient is already an fppf sheaf, or construct a representin
 ## References
 
 * J. S. Milne, *Algebraic Groups* (2017), Examples 5.49 and 21.4.
+* The quotient equivalence, point functor, naturality proof, and natural isomorphism adapt the
+  corresponding constructions in `TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Projective`.
 
 This advances Layer 6, "Reductive and semisimple groups", of the ReductiveGroups roadmap: the
 central quotient relating the simply connected form `SLₙ` and the adjoint form `PGLₙ`.
@@ -95,23 +97,15 @@ theorem projectiveMap_mk (f : R →+* S) (g : Matrix.SpecialLinearGroup (Fin n) 
 @[simp]
 theorem projectiveMap_id :
     projectiveMap n (RingHom.id R) = MonoidHom.id _ := by
-  apply MonoidHom.ext
-  intro x
-  induction x using QuotientGroup.induction_on with
-  | H g =>
-      rw [projectiveMap_mk]
-      congr 1
+  rw [projectiveMap]
+  exact QuotientGroup.map_id _ _
 
 /-- Successive extensions of scalars compose on projective special linear groups. -/
 @[simp]
 theorem projectiveMap_comp {T : Type u} [CommRing T] (f : R →+* S) (g : S →+* T) :
     (projectiveMap n g).comp (projectiveMap n f) = projectiveMap n (g.comp f) := by
-  apply MonoidHom.ext
-  intro x
-  induction x using QuotientGroup.induction_on with
-  | H x =>
-      rw [MonoidHom.comp_apply, projectiveMap_mk, projectiveMap_mk, projectiveMap_mk]
-      congr 1
+  rw [projectiveMap, projectiveMap, projectiveMap]
+  exact QuotientGroup.map_comp_map _ _ _ _ _ _ _ _
 
 end ProjectiveMap
 
@@ -135,9 +129,15 @@ theorem map_centerPointsSubgroup_pointsMulEquiv_eq_center (hn : 0 < n)
     let ζ : rootsOfUnity n A :=
       Matrix.SpecialLinearGroup.centerMulEquivRootsOfUnityFin n hn A c
     let f := (RootsOfUnityGroup.pointsMulEquiv (R := k) (A := A) n).symm ζ
-    refine ⟨rootsOfUnityScalarPoints n f,
-      rootsOfUnityScalarPoints_mem_centerPointsSubgroup n f, ?_⟩
-    change pointsMulEquiv (R := k) (A := A) n (rootsOfUnityScalarPoints n f) = g
+    let q := rootsOfUnityScalarCenterMulEquiv (S := k) n hn A f
+    refine ⟨q.1, ?_, ?_⟩
+    · rw [CommHopfAlgCat.centerPointsSubgroup_eq_center]
+      exact q.2
+    change pointsMulEquiv (R := k) (A := A) n q.1 = g
+    rw [show q.1 = (rootsOfUnityScalarCenterHom n A f).1 by
+        rw [rootsOfUnityScalarCenterMulEquiv_apply,
+          coe_rootsOfUnityScalarCenterHom_apply],
+      coe_rootsOfUnityScalarCenterHom_apply]
     rw [pointsMulEquiv_rootsOfUnityScalarPoints n f, MulEquiv.apply_symm_apply]
     apply Subtype.ext
     rw [coe_rootsOfUnityScalarSL,
