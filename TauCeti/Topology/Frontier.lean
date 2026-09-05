@@ -80,7 +80,7 @@ alone a holomorphic map.
 
 ## Main results
 
-* `TauCeti.IsPreconnected.inter_frontier_nonempty` — a preconnected set meeting both a set and its
+* `IsPreconnected.inter_frontier_nonempty` — a preconnected set meeting both a set and its
   complement meets the frontier of that set.
 * `TauCeti.frontier_image_subset_image_union_frontier_image` — for a set split into two sides with
   disjoint open images plus a remainder, the frontier of the image of the side lying in that set
@@ -105,8 +105,8 @@ preconnected and contains a point of `V` and a point outside `V`, then `S` meets
 Nothing is assumed about `V`; the argument is that `(frontier V)ᶜ` is the union of the two disjoint
 open sets `interior V` and `interior Vᶜ`, so a preconnected set missing the frontier is confined to
 one of them and therefore cannot straddle `V`. -/
-theorem IsPreconnected.inter_frontier_nonempty (hS : IsPreconnected S) (h₁ : (S ∩ V).Nonempty)
-    (h₂ : (S \ V).Nonempty) : (S ∩ frontier V).Nonempty := by
+theorem _root_.IsPreconnected.inter_frontier_nonempty (hS : IsPreconnected S)
+    (h₁ : (S ∩ V).Nonempty) (h₂ : (S \ V).Nonempty) : (S ∩ frontier V).Nonempty := by
   by_contra hcon
   have hsub : S ⊆ interior V ∪ interior Vᶜ := by
     rw [← compl_frontier_eq_union_interior]

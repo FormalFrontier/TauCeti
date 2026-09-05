@@ -28,7 +28,9 @@ carries the spectral theory: it is compact for a bounded `Ω` because the inclus
 nonzero eigenvalues are exactly the reciprocals of the Dirichlet eigenvalues.  Mathlib's
 spectral theorem for compact self-adjoint operators then applies, giving eigenvectors with dense
 span in `L²(Ω)` and finite-dimensional eigenspaces at the nonzero eigenvalues; the eigenvalue `0`
-is absent because the value map `H¹₀(Ω) → L²(Ω)` has dense range.
+is absent because the value map `H¹₀(Ω) → L²(Ω)` has dense range.  Assembling Hilbert bases of
+the eigenspaces turns that density into an orthonormal basis of `L²(Ω)` of Dirichlet
+eigenfunctions, in which the solution operator is diagonal.
 
 ## Hypotheses, and what each result needs
 
@@ -80,6 +82,9 @@ weak solution for every `f ∈ L²(Ω)`
 * `TauCeti.PDE.finiteDimensional_eigenspace_dirichletSolutionOperator` and
   `TauCeti.PDE.orthogonalComplement_iSup_eigenspaces_dirichletSolutionOperator_eq_bot`: the
   eigenspaces are finite dimensional and the eigenfunctions span a dense subspace of `L²(Ω)`.
+* `TauCeti.PDE.exists_hilbertBasis_forall_isDirichletEigenvalue`: the Dirichlet eigenfunctions
+  form an orthonormal basis of `L²(Ω)`, and the Dirichlet problem is solved in it by the
+  eigenfunction expansion.
 * `TauCeti.PDE.UniformlyEllipticOn.le_of_isDirichletEigenvalue_of_subset_ball` and
   `TauCeti.PDE.le_of_isDirichletEigenvalue_laplacian_of_subset_ball`: the explicit lower bound
   on the Dirichlet spectrum of a domain inside a ball, and its `-Δ` case
@@ -458,6 +463,46 @@ theorem orthogonalComplement_iSup_eigenspaces_ne_zero_dirichletSolutionOperator_
   exact hcoercive.orthogonalComplement_iSup_eigenspaces_ne_zero_formSolutionOperator_eq_bot
     (W1p0.isCompactOperator_valueL (by simp) hOmega) W1p0.denseRange_valueL_two
     (energyFormH1L0_comm hcoeff hsymm)
+
+/-- **The Dirichlet eigenfunctions form an orthonormal basis of `L²(Ω)`.**  On a bounded domain
+and for a symmetric energy form, `L²(Ω)` has an orthonormal basis whose vectors are the values of
+weak solutions `u ∈ H¹₀(Ω)` of `L u = κ u` at positive Dirichlet eigenvalues `κ`, and the
+`L²(Ω)` value of the weak solution to the Dirichlet problem has the eigenfunction expansion
+`W1p.value u = ∑ κ⁻¹ ⟪eₖ, f⟫ eₖ`.  No regularity of `∂Ω` enters, and `L²(Ω)` is not assumed
+separable, so the basis is indexed by a set of functions as in `exists_hilbertBasis`. -/
+theorem exists_hilbertBasis_forall_isDirichletEigenvalue
+    (hcoeff : MemLp (fun x => energyIntegrand (a x) (b x) (c x)) ⊤ (mu.restrict Omega))
+    (hcoercive : IsCoercive (energyFormH1L0 hcoeff))
+    (hOmega : IsBounded (Omega : Set (EuclideanSpace ℝ ι)))
+    (hsymm : ∀ u v : W1p0 mu Omega 2,
+      energyFormH1 a b c (u : W1p mu Omega 2) (v : W1p mu Omega 2) =
+        energyFormH1 a b c (v : W1p mu Omega 2) (u : W1p mu Omega 2)) :
+    ∃ (s : Set (Lp ℝ 2 (mu.restrict Omega)))
+      (basis : HilbertBasis s ℝ (Lp ℝ 2 (mu.restrict Omega))) (kappa : s → ℝ)
+      (u : s → W1p0 mu Omega 2),
+      ⇑basis = ((↑) : s → Lp ℝ 2 (mu.restrict Omega)) ∧ (∀ f : s, 0 < kappa f) ∧
+      (∀ f : s, IsDirichletEigenvalue mu Omega a b c (kappa f)) ∧
+      (∀ f : s, W1p.value (u f : W1p mu Omega 2) = (f : Lp ℝ 2 (mu.restrict Omega))) ∧
+      (∀ (f : s) (v : W1p0 mu Omega 2),
+        energyFormH1 a b c (u f : W1p mu Omega 2) (v : W1p mu Omega 2) =
+          kappa f * ⟪W1p.value (u f : W1p mu Omega 2), W1p.value (v : W1p mu Omega 2)⟫_ℝ) ∧
+      ∀ f : Lp ℝ 2 (mu.restrict Omega),
+        HasSum (fun g : s => (kappa g)⁻¹ • basis.repr f g • basis g)
+          (dirichletSolutionOperator hcoeff hcoercive f) := by
+  obtain ⟨s, basis, kappa, u, hbasis, hpos, hune, hvalue, heq, hsum⟩ :=
+    hcoercive.exists_hilbertBasis_forall_apply_eq_smul_inner
+      (W1p0.isCompactOperator_valueL (by simp) hOmega) W1p0.denseRange_valueL_two
+      (energyFormH1L0_comm hcoeff hsymm)
+  have heq' : ∀ (f : s) (v : W1p0 mu Omega 2),
+      energyFormH1 a b c (u f : W1p mu Omega 2) (v : W1p mu Omega 2) =
+        kappa f * ⟪W1p.value (u f : W1p mu Omega 2),
+          W1p.value (v : W1p mu Omega 2)⟫_ℝ := fun f v => by
+    simpa only [energyFormH1L0_apply, W1p0.valueL_apply] using heq f v
+  refine ⟨s, basis, kappa, u, hbasis, hpos, fun f => ⟨u f, hune f, heq' f⟩,
+    fun f => ?_, heq', ?_⟩
+  · simpa only [W1p0.valueL_apply] using hvalue f
+  · rw [dirichletSolutionOperator]
+    exact hsum
 
 /-- **The Fredholm alternative in eigenvalue language.**  On a bounded domain, if `κ` is not a
 Dirichlet eigenvalue then `L u - κ u = f` in `Ω`, `u = 0` on `∂Ω`, has exactly one weak solution
