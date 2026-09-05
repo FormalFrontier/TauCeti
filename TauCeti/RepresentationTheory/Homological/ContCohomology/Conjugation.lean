@@ -76,21 +76,32 @@ noncomputable def explicitConj1 (N : Subgroup G) [N.Normal] (g : G) : H1 N M →
   explicitMap1 N M N M (inverseConjugationHom N g) (DistribSMul.toAddMonoidHom M g)
     ((continuous_const_smul g).congr fun _ => rfl) (inverseConjugationHom_smul N g)
 
+/-- The conjugation/coefficient action on explicit first cohomology, defined by
+`explicitConj1`. -/
+noncomputable instance (N : Subgroup G) [N.Normal] : SMul G (H1 N M) where
+  smul g := explicitConj1 (M := M) N g
+
+/-- The installed scalar action is the map `explicitConj1`. -/
+@[simp]
+theorem explicitConj1_apply_eq_smul (N : Subgroup G) [N.Normal] (g : G) (x : H1 N M) :
+    explicitConj1 N g x = g • x :=
+  rfl
+
 /-- The representative formula for `explicitConj1`. -/
 @[simp]
 theorem explicitConj1_mk (N : Subgroup G) [N.Normal] (g : G) (c : Z1 N M) :
-    explicitConj1 N g (c : H1 N M) =
+    g • (c : H1 N M) =
       (cocyclesMap1 N M N M (inverseConjugationHom N g)
         (DistribSMul.toAddMonoidHom M g) ((continuous_const_smul g).congr fun _ => rfl)
         (inverseConjugationHom_smul N g) c : H1 N M) :=
   explicitMap1_mk N M N M _ _ _ _ c
 
 /-- The degree-one component of the bar homotopy for inverse conjugation. -/
-def inverseConjugationHomotopy1 (N : Subgroup G) [N.Normal] (g : N) (c : N → M) : M :=
+def inverseConjugationHomotopy1 (N : Subgroup G) (g : N) (c : N → M) : M :=
   c g
 
 /-- The degree-two component of the bar homotopy for inverse conjugation. -/
-def inverseConjugationHomotopy2 (N : Subgroup G) [N.Normal] (g : N) (c : N × N → M) : N → M :=
+def inverseConjugationHomotopy2 (N : Subgroup G) (g : N) (c : N × N → M) : N → M :=
   fun n => c (g, (g : N)⁻¹ * n * g) - c (n, g)
 
 omit [TopologicalSpace M] [IsTopologicalAddGroup M] [ContinuousSMul G M] in
@@ -202,7 +213,7 @@ theorem inverseConjugationHomotopy2_spec (N : Subgroup G) [N.Normal] (g : N) (c 
   abel
 
 omit [IsTopologicalGroup G] in
-private theorem explicitMap1_congr_of_eq (N : Subgroup G) [N.Normal]
+private theorem explicitMap1_congr_of_eq (N : Subgroup G)
     {φ ψ : N →ₜ* N} {f q : M →+ M}
     {hf : Continuous f} {hq : Continuous q}
     {hφ : ∀ (n : N) (m : M), f (φ n • m) = n • f m}
@@ -276,17 +287,6 @@ theorem explicitConj1_mul (N : Subgroup G) [N.Normal] (g h : G) :
       (DistribSMul.toAddMonoidHom M g) hcontg
       (inverseConjugationHom_smul N g) hcomp)
 
-/-- The conjugation/coefficient action on explicit first cohomology, defined by
-`explicitConj1`. -/
-noncomputable instance (N : Subgroup G) [N.Normal] : SMul G (H1 N M) where
-  smul g := explicitConj1 (M := M) N g
-
-/-- The installed scalar action is the map `explicitConj1`. -/
-@[simp]
-theorem explicitConj1_apply_eq_smul (N : Subgroup G) [N.Normal] (g : G) (x : H1 N M) :
-    explicitConj1 N g x = g • x :=
-  rfl
-
 /-- The conjugation/coefficient action on explicit first cohomology satisfies the group action
 laws. -/
 noncomputable instance (N : Subgroup G) [N.Normal] : MulAction G (H1 N M) where
@@ -312,7 +312,7 @@ theorem explicitConj1_eq_id_of_mem (N : Subgroup G) [N.Normal] (g : N) :
   intro x
   induction x using QuotientAddGroup.induction_on with
   | _ c =>
-      rw [explicitConj1_mk, AddMonoidHom.id_apply, H1pi_eq_iff]
+      rw [explicitConj1_apply_eq_smul, explicitConj1_mk, AddMonoidHom.id_apply, H1pi_eq_iff]
       refine mem_B1_iff.2 ⟨(c : N → M) g, ?_⟩
       intro n
       simpa [d0_apply, inverseConjugationHomotopy1] using
