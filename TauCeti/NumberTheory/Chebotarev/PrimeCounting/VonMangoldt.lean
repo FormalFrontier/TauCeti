@@ -84,10 +84,9 @@ theorem mem_frobeniusPrimePowerSet_iff_artinSymbol_pow_eq {A : IdealPrimePower K
       artinSymbol (primePowerBase A).asIdeal hur ^ primePowerExponent A = C :=
   ⟨fun ⟨_, h⟩ ↦ h, fun h ↦ ⟨hur, h⟩⟩
 
-/-- At exponent one, the powered Frobenius fibre is the ordinary Frobenius prime set.
-
-Not `@[simp]`: `mem_frobeniusPrimePowerSet_iff` together with `primePowerBase_ofPrime`,
-`primePowerExponent_ofPrime` and `ConjClasses.pow_one` already rewrites the left-hand side. -/
+-- Not `@[simp]`: `mem_frobeniusPrimePowerSet_iff` together with `primePowerBase_ofPrime`,
+-- `primePowerExponent_ofPrime` and `ConjClasses.pow_one` already rewrites the left-hand side.
+/-- At exponent one, the powered Frobenius fibre is the ordinary Frobenius prime set. -/
 theorem ofPrime_mem_frobeniusPrimePowerSet_iff {𝔭 : HeightOneSpectrum (𝓞 K)}
     {C : ConjClasses (L ≃ₐ[K] L)} :
     IdealPrimePower.ofPrime 𝔭 ∈ frobeniusPrimePowerSet K L C ↔
@@ -182,6 +181,16 @@ theorem frobeniusPsi_mono (C : ConjClasses (L ≃ₐ[K] L)) :
     Monotone (frobeniusPsi K L C) :=
   primePowerSummatory_mono K _ (frobeniusPrimePowerWeight_nonneg C)
 
+/-- The Frobenius `ϑ` function is nonnegative. -/
+theorem frobeniusTheta_nonneg (C : ConjClasses (L ≃ₐ[K] L)) (x : ℝ) :
+    0 ≤ frobeniusTheta K L C x :=
+  primeTheta_nonneg (frobeniusPrimeSet K L C) x
+
+/-- The Frobenius `ϑ` function is monotone in its inclusive cutoff. -/
+theorem frobeniusTheta_mono (C : ConjClasses (L ≃ₐ[K] L)) :
+    Monotone (frobeniusTheta K L C) :=
+  primeTheta_mono (frobeniusPrimeSet K L C)
+
 variable (K L) in
 /-- The powered Frobenius weight on nonzero ideals, extended by zero away from prime powers. -/
 noncomputable def frobeniusVonMangoldtWeight (C : ConjClasses (L ≃ₐ[K] L))
@@ -199,6 +208,7 @@ theorem frobeniusVonMangoldtWeight_idealPrimePower (C : ConjClasses (L ≃ₐ[K]
   simp [frobeniusVonMangoldtWeight, A.2]
 
 /-- The ideal weight vanishes away from prime-power ideals. -/
+@[simp]
 theorem frobeniusVonMangoldtWeight_eq_zero_of_not_isPrimePow
     (C : ConjClasses (L ≃ₐ[K] L)) {I : (Ideal (𝓞 K))⁰}
     (hI : ¬ IsPrimePow (I : Ideal (𝓞 K))) : frobeniusVonMangoldtWeight K L C I = 0 := by
