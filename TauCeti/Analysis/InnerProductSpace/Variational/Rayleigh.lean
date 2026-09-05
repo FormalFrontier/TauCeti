@@ -34,9 +34,8 @@ The lower bound `‖S‖⁻¹ ‖J v‖² ≤ B v v` needs no compactness and no
 `‖J v‖² = B w v` and `B w w = ⟪J v, S (J v)⟫ ≤ ‖S‖ ‖J v‖²`, and
 `(B w v)² ≤ B w w · B v v` closes the loop.  Coercivity enters only through the
 nonnegativity of the diagonal, which is what makes the energy form obey Cauchy--Schwarz;
-that inequality is `LinearMap.BilinForm.apply_sq_le_of_symm`, transferred to continuous
-bilinear forms here by
-`ContinuousLinearMap.sq_apply_le_apply_self_mul_apply_self`.
+that inequality is `LinearMap.BilinForm.apply_sq_le_of_symm`, applied to the continuous form's
+underlying bilinear form.
 
 The *attainment* is where compactness enters: `‖S‖` is an eigenvalue of the compact symmetric
 positive operator `S` (`IsCoercive.exists_ne_zero_forall_apply_eq_inv_norm_smul_inner`), and its
@@ -46,8 +45,6 @@ not.
 
 ## Main declarations
 
-* `ContinuousLinearMap.sq_apply_le_apply_self_mul_apply_self`: Cauchy--Schwarz for a symmetric
-  continuous bilinear form with nonnegative diagonal.
 * `IsCoercive.norm_apply_sq_le_norm_formSolutionOperator_mul`: the estimate
   `‖J v‖² ≤ ‖S‖ B v v`, and `IsCoercive.inv_norm_formSolutionOperator_mul_norm_apply_sq_le` its
   reciprocal form `‖S‖⁻¹ ‖J v‖² ≤ B v v`.
@@ -71,25 +68,6 @@ noncomputable section
 
 open Module.End
 open scoped InnerProduct InnerProductSpace
-
-section CauchySchwarz
-
-variable {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V] {B : V →L[ℝ] V →L[ℝ] ℝ}
-
-/-- **Cauchy--Schwarz for a symmetric continuous bilinear form with nonnegative diagonal**:
-`(B u v)² ≤ B u u · B v v`.  This transfers
-`LinearMap.BilinForm.apply_sq_le_of_symm` to the bundled continuous bilinear forms that carry a
-variational problem. -/
-theorem ContinuousLinearMap.sq_apply_le_apply_self_mul_apply_self
-    (hsymm : ∀ u v : V, B u v = B v u) (hnonneg : ∀ w : V, 0 ≤ B w w) (u v : V) :
-    B u v ^ 2 ≤ B u u * B v v := by
-  let B' : LinearMap.BilinForm ℝ V :=
-    LinearMap.mk₂ ℝ (fun u v => B u v) (fun _ _ _ => by simp) (fun _ _ _ => by simp)
-      (fun _ _ _ => by simp) (fun _ _ _ => by simp)
-  have hB'symm : B'.IsSymm := LinearMap.BilinForm.isSymm_def.2 hsymm
-  exact B'.apply_sq_le_of_symm hnonneg (LinearMap.BilinForm.isSymm_iff.mp hB'symm) u v
-
-end CauchySchwarz
 
 namespace IsCoercive
 
@@ -124,7 +102,8 @@ theorem norm_apply_sq_le_norm_formSolutionOperator_mul (hB : IsCoercive B) (J : 
           mul_le_mul_of_nonneg_left ((hB.formSolutionOperator J).le_opNorm _) (norm_nonneg _)
       _ = ‖hB.formSolutionOperator J‖ * ‖J v‖ ^ 2 := by ring
   have hcs : B w v ^ 2 ≤ B w w * B v v :=
-    ContinuousLinearMap.sq_apply_le_apply_self_mul_apply_self hsymm hB.apply_self_nonneg w v
+    B.toBilinForm.apply_sq_le_of_symm hB.apply_self_nonneg
+      (LinearMap.BilinForm.isSymm_iff.mp (LinearMap.BilinForm.isSymm_def.2 hsymm)) w v
   rw [hwv] at hcs
   rcases eq_or_lt_of_le (norm_nonneg (J v)) with hzero | hpos
   · rw [← hzero]
