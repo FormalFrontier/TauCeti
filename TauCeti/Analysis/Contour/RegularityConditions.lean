@@ -371,6 +371,27 @@ theorem sectorCompatible_iff {f : ℂ → ℂ} {z₀ : ℂ} {θ : ℝ} :
           ∃ m : ℤ, (k.val : ℝ) * θ = (m : ℝ) * (2 * Real.pi) :=
   ⟨fun h => ⟨h.angle_rational, h.laurent_compatible⟩, fun h => ⟨h.1, h.2⟩⟩
 
+/-- **Simple poles are sector compatible at every rational angle.** If near `z₀` the integrand `f`
+is an analytic function plus a single simple-pole term `c / (z - z₀)`, then the
+`laurent_compatible` resonance requirement is vacuous — it constrains only the coefficients of
+order `k ≥ 1` — so `SectorCompatible f z₀ θ` holds for any `θ` that is a rational multiple of `π`.
+This is the witness that a simple pole never obstructs Hungerbühler–Wasem condition (B). -/
+theorem sectorCompatible_of_simple_pole {f g : ℂ → ℂ} {z₀ c : ℂ} {θ : ℝ}
+    (hθ : ∃ p q : ℕ, q ≠ 0 ∧ Nat.Coprime p q ∧ θ = (p : ℝ) * Real.pi / (q : ℝ))
+    (hg : AnalyticAt ℂ g z₀) (hf : ∀ᶠ z in 𝓝[≠] z₀, f z = g z + c / (z - z₀)) :
+    SectorCompatible f z₀ θ := by
+  refine ⟨hθ, 1, fun _ => c, g, hg, ?_, ?_⟩
+  · filter_upwards [hf] with z hz
+    simpa using hz
+  · intro k _ hk
+    exact absurd hk (by omega)
+
+/-- **The straight angle is rational.** `π = 1 · π / 1`, so the smooth-crossing value of
+`crossingAngle` and `basepointAngle` satisfies `SectorCompatible`'s `angle_rational` field. -/
+theorem angle_rational_pi :
+    ∃ p q : ℕ, q ≠ 0 ∧ Nat.Coprime p q ∧ Real.pi = (p : ℝ) * Real.pi / (q : ℝ) :=
+  ⟨1, 1, one_ne_zero, Nat.coprime_one_left 1, by norm_num⟩
+
 /-- **Hungerbühler–Wasem condition (B)** for `f` along `γ` on `[a, b]`: at each higher-order
 on-curve pole of `f` the crossing sector is `SectorCompatible`. Together with condition (A′)
 it is a hypothesis of the generalized residue theorem (HW Thm 3.3), where it forces the
