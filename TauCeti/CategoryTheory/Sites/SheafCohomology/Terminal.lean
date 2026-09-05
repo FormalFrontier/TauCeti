@@ -24,10 +24,10 @@ in terms of `Sheaf.H'`, so the comparison is what lets a covering of the whole s
 
 ## Main declarations
 
-* `CategoryTheory.Sheaf.cohomologyPresheafObjIsoH`: the comparison
-  `Hⁿ(T, F) ≅ Hⁿ(F)` at a terminal object `T`, as an isomorphism of abelian groups;
-* `TauCeti.CategoryTheory.Sheaf.cohomologyPresheafEvaluationIsoFunctorH`: the same comparison as a
-  natural isomorphism in the coefficient sheaf.
+* `CategoryTheory.Sheaf.cohomologyPresheafEvaluationIsoFunctorH`: the comparison as a natural
+  isomorphism in the coefficient sheaf;
+* `CategoryTheory.Sheaf.cohomologyPresheafObjIsoH`: its specialization
+  `Hⁿ(T, F) ≅ Hⁿ(F)` at a terminal object `T`, as an isomorphism of abelian groups.
 -/
 
 public section
@@ -70,8 +70,6 @@ end
 
 noncomputable section
 
-namespace Sheaf
-
 variable [HasSheafify J AddCommGrpCat.{v}] [HasExt.{w} (Sheaf J AddCommGrpCat.{v})]
 
 -- Mathlib's `functorH` and `extFunctorObj` use definitionally equal object and map data.
@@ -86,28 +84,31 @@ private noncomputable def functorHIso (n : ℕ) :
       ext
       rfl)
 
-variable (J) in
-/-- At a terminal object `T`, the cohomology presheaf evaluated at `T` is the cohomology of the
-site, naturally in the coefficient sheaf. -/
-def cohomologyPresheafEvaluationIsoFunctorH (n : ℕ) {T : C} (hT : IsTerminal T) :
-    _root_.CategoryTheory.Sheaf.cohomologyPresheafFunctor J n ⋙
-        (evaluation Cᵒᵖ AddCommGrpCat.{w}).obj (op T) ≅
-      _root_.CategoryTheory.Sheaf.functorH J n :=
-  (_root_.CategoryTheory.Abelian.extFunctor n).mapIso
-      (freeYonedaSheafIsoConstantSheaf hT).symm.op ≪≫
-    functorHIso n
-
-/-- At a terminal object, the cohomology of the object is the cohomology of the site. -/
-noncomputable abbrev _root_.CategoryTheory.Sheaf.cohomologyPresheafObjIsoH
-    (F : Sheaf J AddCommGrpCat.{v}) (n : ℕ) {T : C} (hT : IsTerminal T) :
-    _root_.CategoryTheory.Sheaf.H' F n T ≅
-      AddCommGrpCat.of (_root_.CategoryTheory.Sheaf.H F n) :=
-  (cohomologyPresheafEvaluationIsoFunctorH J n hT).app F
-
-end Sheaf
-
 end
 
 end CategoryTheory
 
 end TauCeti
+
+namespace CategoryTheory.Sheaf
+
+variable {C : Type u} [Category.{v} C] {J : GrothendieckTopology C}
+  [HasSheafify J AddCommGrpCat.{v}] [HasExt.{w} (Sheaf J AddCommGrpCat.{v})]
+
+variable (J) in
+/-- At a terminal object `T`, the cohomology presheaf evaluated at `T` is the cohomology of the
+site, naturally in the coefficient sheaf. -/
+noncomputable def cohomologyPresheafEvaluationIsoFunctorH (n : ℕ) {T : C} (hT : IsTerminal T) :
+    cohomologyPresheafFunctor J n ⋙ (evaluation Cᵒᵖ AddCommGrpCat.{w}).obj (op T) ≅
+      functorH J n :=
+  (Abelian.extFunctor n).mapIso
+      (TauCeti.CategoryTheory.freeYonedaSheafIsoConstantSheaf hT).symm.op ≪≫
+    TauCeti.CategoryTheory.functorHIso n
+
+/-- At a terminal object, the cohomology of the object is the cohomology of the site. -/
+noncomputable abbrev cohomologyPresheafObjIsoH (F : Sheaf J AddCommGrpCat.{v}) (n : ℕ)
+    {T : C} (hT : IsTerminal T) :
+    H' F n T ≅ AddCommGrpCat.of (H F n) :=
+  (cohomologyPresheafEvaluationIsoFunctorH J n hT).app F
+
+end CategoryTheory.Sheaf
