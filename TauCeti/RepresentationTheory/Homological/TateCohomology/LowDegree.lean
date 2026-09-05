@@ -105,6 +105,21 @@ theorem H0π_comp_H0IsoNormQuotient_hom (M : Rep R G) :
       ModuleCat.ofHom (Submodule.mkQ ((range M.ρ.norm).submoduleOf M.ρ.invariants)) := by
   simp [H0π]
 
+/-- An invariant represents the zero degree-zero Tate cohomology class exactly when it lies in
+the image of the norm. -/
+@[simp]
+theorem H0π_eq_zero_iff {M : Rep R G} (y : M.ρ.invariants) :
+    H0π M y = 0 ↔ y ∈ (range M.ρ.norm).submoduleOf M.ρ.invariants := by
+  rw [← Submodule.Quotient.mk_eq_zero, ← H0π_comp_H0IsoNormQuotient_hom_apply]
+  exact ((H0IsoNormQuotient M).toLinearEquiv.map_eq_zero_iff).symm
+
+/-- Two invariants represent the same degree-zero Tate cohomology class exactly when their
+difference lies in the image of the norm. -/
+@[simp]
+theorem H0π_eq_iff {M : Rep R G} (y z : M.ρ.invariants) :
+    H0π M y = H0π M z ↔ y - z ∈ (range M.ρ.norm).submoduleOf M.ρ.invariants := by
+  rw [← sub_eq_zero, ← map_sub, H0π_eq_zero_iff]
+
 /-- Every degree-zero Tate cohomology class is represented by an invariant, so a property of all
 classes follows from the property of the classes of invariants. -/
 @[elab_as_elim]
