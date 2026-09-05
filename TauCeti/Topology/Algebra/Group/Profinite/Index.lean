@@ -163,6 +163,7 @@ theorem profiniteIndex_apply_eq_iSup_openSubgroup [TotallyDisconnectedSpace G]
 
 /-- For an open subgroup, the supernatural index is the prime factorization of its ordinary
 index. -/
+@[simp]
 theorem profiniteIndex_openSubgroup [TotallyDisconnectedSpace G] (U : OpenSubgroup G) :
     profiniteIndex U.toSubgroup =
       Supernatural.ofNat
@@ -180,7 +181,6 @@ theorem profiniteIndex_openSubgroup [TotallyDisconnectedSpace G] (U : OpenSubgro
 
 /-- Primewise, the profinite index of an open subgroup is the valuation of its ordinary
 index. -/
-@[simp]
 theorem profiniteIndex_openSubgroup_apply [TotallyDisconnectedSpace G]
     (U : OpenSubgroup G) (ℓ : Nat.Primes) :
     profiniteIndex U.toSubgroup ℓ = (padicValNat ℓ U.toSubgroup.index : ℕ∞) := by
