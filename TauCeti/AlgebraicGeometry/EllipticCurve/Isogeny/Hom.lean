@@ -53,6 +53,8 @@ needs the rational addition formulas rather than anything in this file.
   map included — which is what the value `degree 0 = 0` is chosen for.
 * `TauCeti.Isogeny.Hom.comp_eq_zero_iff`: a composite vanishes exactly when a factor does, so the
   endomorphism monoid has no zero divisors.
+* `TauCeti.Isogeny.Hom.instNontrivial`: the carrier has more than one element, which is what
+  lets Mathlib's theory of nontrivial monoids with zero apply to it.
 
 ## Implementation notes
 
@@ -292,6 +294,12 @@ theorem comp_assoc {W₄ : WeierstrassCurve.Affine F} (h : Hom W₃ W₄) (g : H
 noncomputable def id (W : WeierstrassCurve.Affine F) : Hom W W :=
   ofIsogeny (Isogeny.id W)
 
+/-- The defining equation of `id`. -/
+-- Needed as a lemma rather than left to unfolding: `id`'s body is not exposed across a module
+-- boundary, so `rw [id]` in a downstream file fails with "Invalid rewrite argument".
+theorem id_def (W : WeierstrassCurve.Affine F) :
+    id W = ofIsogeny (Isogeny.id W) := (rfl)
+
 /-- **The identity is a left unit for composition.** -/
 @[simp]
 theorem id_comp (f : Hom W₁ W₂) : (id W₂).comp f = f := by
@@ -335,6 +343,13 @@ theorem mul_def (g f : Hom W₁ W₁) : g * f = g.comp f := (rfl)
 /-- The monoid's unit is the identity endomorphism. -/
 @[simp]
 theorem one_def : (1 : Hom W₁ W₁) = id W₁ := (rfl)
+
+/-- **The carrier has more than one element**: the zero map has degree `0` and the identity
+degree `1`. Supplying this makes Mathlib's generic theory of nontrivial monoids with zero apply,
+`not_isUnit_zero` among it. -/
+instance : Nontrivial (Hom W₁ W₁) :=
+  ⟨⟨0, id W₁, fun h => zero_ne_one (α := ℕ) (by rw [← degree_zero (W₁ := W₁) (W₂ := W₁), h,
+    degree_id])⟩⟩
 
 end Hom
 
