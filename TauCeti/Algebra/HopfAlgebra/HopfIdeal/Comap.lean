@@ -295,29 +295,11 @@ noncomputable def comapOrderIso (e : H ≃ₐc[R] K) :
   map_rel_iff' := comapOfSurjective_le_comapOfSurjective_iff e.toBialgHom
     (EquivLike.surjective e)
 
-private theorem comapOrderIso_apply_def (e : H ≃ₐc[R] K) (I : HopfIdeal R K) :
-    comapOrderIso e I =
-      I.comapOfSurjective e.toBialgHom (EquivLike.surjective e) :=
-  (rfl)
-
-private theorem comapOrderIso_symm_apply_def (e : H ≃ₐc[R] K) (I : HopfIdeal R H) :
-    (comapOrderIso e).symm I =
-      I.comapOfSurjective e.symm.toBialgHom (EquivLike.surjective e.symm) :=
-  (rfl)
-
 /-- The forward map of `comapOrderIso` is inverse image along the equivalence. -/
 @[simp]
 theorem comapOrderIso_apply (e : H ≃ₐc[R] K) (I : HopfIdeal R K) :
     comapOrderIso e I =
       I.comapOfSurjective e.toBialgHom (EquivLike.surjective e) :=
-  comapOrderIso_apply_def e I
-
--- This bridge isolates the definitional coercions from `BialgEquiv.ofBijective` and the
--- proof-irrelevant surjectivity fields stored by `comapOrderIso`.
-private theorem comapOrderIso_ofBijective_apply_def (f : H →ₐc[R] K)
-    (hf : Function.Bijective f)
-    (I : HopfIdeal R K) :
-    comapOrderIso (BialgEquiv.ofBijective f hf) I = I.comapOfSurjective f hf.2 :=
   (rfl)
 
 /-- The order isomorphism built from a bijective morphism acts by inverse image along the original
@@ -325,14 +307,14 @@ morphism. -/
 theorem comapOrderIso_ofBijective_apply (f : H →ₐc[R] K) (hf : Function.Bijective f)
     (I : HopfIdeal R K) :
     comapOrderIso (BialgEquiv.ofBijective f hf) I = I.comapOfSurjective f hf.2 :=
-  comapOrderIso_ofBijective_apply_def f hf I
+  (rfl)
 
 /-- The inverse map of `comapOrderIso` is inverse image along the inverse equivalence. -/
 @[simp]
 theorem comapOrderIso_symm_apply (e : H ≃ₐc[R] K) (I : HopfIdeal R H) :
     (comapOrderIso e).symm I =
       I.comapOfSurjective e.symm.toBialgHom (EquivLike.surjective e.symm) :=
-  comapOrderIso_symm_apply_def e I
+  (rfl)
 
 section Field
 

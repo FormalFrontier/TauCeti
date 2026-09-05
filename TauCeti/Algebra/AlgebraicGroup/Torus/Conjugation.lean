@@ -58,4 +58,14 @@ theorem conjugate (hI : IsMaximalTorus k H.obj I)
   rw [heq]
   exact hI.comapOfIso e
 
+/-- Conjugation by a rational point preserves and reflects the maximal-torus property. -/
+theorem conjugate_iff
+    (g : HopfAlgebra.points (R := k) (H := H.obj) (CommAlgCat.of k k)) :
+    IsMaximalTorus k H.obj (I.conjugate g) ↔ IsMaximalTorus k H.obj I := by
+  constructor
+  · intro hI
+    have hI' := hI.conjugate g⁻¹
+    rwa [HopfIdeal.conjugate_conjugate_inv] at hI'
+  · exact fun hI ↦ hI.conjugate g
+
 end TauCeti.HopfIdeal.IsMaximalTorus
