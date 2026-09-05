@@ -42,8 +42,7 @@ operator `A` is `t ↦ exp (t • A)` (`TauCeti/Analysis/Semigroups/BoundedGener
   orbit `u ↦ S (f u) (T u x)` is the generator contribution of `T`, pushed through `S (f s)`, plus
   the derivative of `u ↦ S (f u) (T s x)`.
 * `realOperator_apply_eq_of_hasDerivWithinAt_zero` (same namespace): a path
-  `u ↦ S (f u) (g u)` with vanishing right derivative on `[0, t)` has the same value at `t` and at
-  `0`.
+  `u ↦ S (f u) (g u)` with vanishing right derivative on `[0, t)` is constant on `[0, t]`.
 * `TauCeti.Semigroups.StronglyContinuousSemigroup.realOperator_eq_of_generator_eq`: two
   semigroups with the same generator agree on the generator domain.
 * `TauCeti.Semigroups.StronglyContinuousSemigroup.eq_of_generator_eq` and
@@ -143,16 +142,15 @@ private theorem hasDerivWithinAt_interpolate {S T : StronglyContinuousSemigroup 
 
 /-- **A path with vanishing right derivative is constant.** If `u ↦ S (f u) (g u)` has right
 derivative `0` on `[0, t)`, with `f` continuous and nonnegative and `g` continuous on `[0, t]`,
-then its value at `t` is its value at `0`. -/
+then it is constant on `[0, t]`, with value `S (f 0) (g 0)`. -/
 theorem realOperator_apply_eq_of_hasDerivWithinAt_zero
-    (S : StronglyContinuousSemigroup X) {f : ℝ → ℝ} {g : ℝ → X} {t : ℝ} (ht : 0 ≤ t)
+    (S : StronglyContinuousSemigroup X) {f : ℝ → ℝ} {g : ℝ → X} {t : ℝ}
     (hf : ContinuousOn f (Set.Icc 0 t)) (hf0 : ∀ u ∈ Set.Icc (0 : ℝ) t, 0 ≤ f u)
     (hg : ContinuousOn g (Set.Icc 0 t))
     (hderiv : ∀ u ∈ Set.Ico (0 : ℝ) t,
       HasDerivWithinAt (fun v : ℝ => S.realOperator (f v) (g v)) 0 (Set.Ici u) u) :
-    S.realOperator (f t) (g t) = S.realOperator (f 0) (g 0) :=
-  constant_of_has_deriv_right_zero (S.continuousOn_realOperator_apply hf hf0 hg) hderiv t
-    (Set.right_mem_Icc.mpr ht)
+    ∀ u ∈ Set.Icc (0 : ℝ) t, S.realOperator (f u) (g u) = S.realOperator (f 0) (g 0) :=
+  constant_of_has_deriv_right_zero (S.continuousOn_realOperator_apply hf hf0 hg) hderiv
 
 /-- Two strongly continuous semigroups with the same generator agree on the generator domain,
 at every nonnegative time. -/
@@ -160,9 +158,9 @@ theorem realOperator_eq_of_generator_eq {S T : StronglyContinuousSemigroup X}
     (hgen : S.generator = T.generator) {t : ℝ} (ht : 0 ≤ t) {x : X} (hx : x ∈ T.domain) :
     S.realOperator t x = T.realOperator t x := by
   have h := S.realOperator_apply_eq_of_hasDerivWithinAt_zero (f := fun u => t - u)
-    (g := fun u => T.realOperator u x) ht (continuous_sub_left t).continuousOn
+    (g := fun u => T.realOperator u x) (continuous_sub_left t).continuousOn
     (fun u hu => sub_nonneg.mpr hu.2) ((T.realOperator_continuousOn_Ici x).mono fun u hu => hu.1)
-    fun _ hu => hasDerivWithinAt_interpolate hgen hx hu.1 hu.2
+    (fun _ hu => hasDerivWithinAt_interpolate hgen hx hu.1 hu.2) t (Set.right_mem_Icc.mpr ht)
   simpa only [sub_self, sub_zero, S.realOperator_zero_apply, T.realOperator_zero_apply] using
     h.symm
 

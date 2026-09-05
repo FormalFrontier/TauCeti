@@ -314,11 +314,9 @@ private theorem StronglyContinuousSemigroup.norm_realOperator_apply_le_pow_mul_o
         linarith
       have htd_lt : t - δ < (↑k + 1) * δ := by
         push_cast [Nat.succ_eq_add_one] at ht_ub; linarith
-      have h_sg := S.realOperator_add δ (t - δ) hδ_pos.le htd_nn
-      rw [add_sub_cancel] at h_sg
       calc ‖S.realOperator t x‖
           = ‖S.realOperator δ (S.realOperator (t - δ) x)‖ := by
-            simp only [h_sg, ContinuousLinearMap.comp_apply]
+            rw [← S.realOperator_add_apply δ (t - δ) hδ_pos.le htd_nn, add_sub_cancel]
         _ ≤ ‖S.realOperator δ‖ * ‖S.realOperator (t - δ) x‖ :=
             ContinuousLinearMap.le_opNorm _ _
         _ ≤ L * (L ^ k * B) := by
@@ -422,14 +420,9 @@ private theorem StronglyContinuousSemigroup.strongContWithinAt_left
   refine ⟨δ, hδ_pos, fun t ht_mem ht_dist => ?_⟩
   simp only [Set.mem_Icc] at ht_mem
   have ht₀t_nn : 0 ≤ t₀ - t := by linarith [ht_mem.2]
-  have h_sg_eq : S.realOperator t₀ = (S.realOperator t).comp (S.realOperator (t₀ - t)) := by
-    have := S.realOperator_add t (t₀ - t) ht_mem.1 ht₀t_nn
-    rwa [add_sub_cancel] at this
   have h_diff : S.realOperator t x - S.realOperator t₀ x =
       S.realOperator t (x - S.realOperator (t₀ - t) x) := by
-    conv_rhs => rw [map_sub]
-    congr 1
-    rw [h_sg_eq, ContinuousLinearMap.comp_apply]
+    rw [map_sub, ← S.realOperator_add_apply t (t₀ - t) ht_mem.1 ht₀t_nn, add_sub_cancel]
   rw [dist_eq_norm, h_diff]
   calc ‖S.realOperator t (x - S.realOperator (t₀ - t) x)‖
       ≤ ‖S.realOperator t‖ * ‖x - S.realOperator (t₀ - t) x‖ :=
@@ -475,10 +468,7 @@ private theorem StronglyContinuousSemigroup.strongContWithinAt_right
   filter_upwards [self_mem_nhdsWithin] with t ht
   simp only [Set.mem_Ici] at ht
   have ht_nn : 0 ≤ t - t₀ := by linarith
-  have h_sg := S.realOperator_add t₀ (t - t₀) ht₀ ht_nn
-  have h_add_sub_t0 : t₀ + (t - t₀) = t := by ring
-  rw [h_add_sub_t0] at h_sg
-  rw [h_sg, ContinuousLinearMap.comp_apply]
+  rw [← S.realOperator_add_apply t₀ (t - t₀) ht₀ ht_nn, add_sub_cancel]
 
 /-- Strong continuity at every `t₀ ≥ 0`, not just at 0
 ([EN] Prop. I.5.3, [Linares] Cor. 1).
