@@ -52,7 +52,7 @@ open CategoryTheory
 
 namespace TauCeti
 
-universe uR uC
+universe uR uC uD
 
 /-- A differential graded category over `R` is a category enriched in cochain complexes of
 `R`-modules. -/
@@ -61,7 +61,7 @@ abbrev DGCategory (R : Type uR) [CommRing R] (C : Type uC) :=
 
 /-- A differential graded functor is a functor enriched in cochain complexes of modules. -/
 abbrev DGFunctor (R : Type uR) [CommRing R] (C : Type uC) [DGCategory R C]
-    (D : Type uC) [DGCategory R D] :=
+    (D : Type uD) [DGCategory R D] :=
   EnrichedFunctor (CochainComplex (ModuleCat.{uR} R) ℤ) C D
 
 namespace DGCategory
@@ -84,7 +84,7 @@ end DGCategory
 namespace DGFunctor
 
 variable {R : Type uR} [CommRing R]
-  {C D : Type uC} [DGCategory R C] [DGCategory R D]
+  {C : Type uC} {D : Type uD} [DGCategory R C] [DGCategory R D]
 
 /-- A DG functor acts on the categories of closed degree-zero morphisms. -/
 noncomputable abbrev zerothCycles (F : DGFunctor R C D) :
