@@ -170,7 +170,8 @@ theorem gradedExtDimension_shiftTarget {n : ℕ}
     (gradedExtShiftTargetEquiv k e X Y n j).symm).symm
 
 /-- Shifting the target multiplies every truncation of the q-Euler sum by `q`. -/
-theorem truncatedGradedExtEuler_shiftTarget (h : IsGradedExtInternallyFinite.{w} k e X Y) (N : ℕ) :
+private theorem truncatedGradedExtEuler_shiftTarget
+    (h : IsGradedExtInternallyFinite.{w} k e X Y) (N : ℕ) :
     truncatedGradedExtEuler k e h.shiftTarget N = T 1 * truncatedGradedExtEuler k e h N := by
   induction N with
   | zero => simp
@@ -314,7 +315,8 @@ theorem gradedExtDimension_shiftSource {n : ℕ}
     (gradedExtShiftSourceEquiv k e X Y n j).symm).symm
 
 /-- Shifting the source multiplies every truncation of the q-Euler sum by `q⁻¹`. -/
-theorem truncatedGradedExtEuler_shiftSource (h : IsGradedExtInternallyFinite.{w} k e X Y) (N : ℕ) :
+private theorem truncatedGradedExtEuler_shiftSource
+    (h : IsGradedExtInternallyFinite.{w} k e X Y) (N : ℕ) :
     truncatedGradedExtEuler k e h.shiftSource N = T (-1) * truncatedGradedExtEuler k e h N := by
   induction N with
   | zero => simp
