@@ -20,6 +20,9 @@ functoriality APIs (`Mathlib/LinearAlgebra/CliffordAlgebra/Basic.lean` and
 `Mathlib/LinearAlgebra/ExteriorAlgebra/Basic.lean`); `map_surjective` adapts the corresponding
 Clifford-algebra induction.
 
+The declaration order, API naming, and proof organization also adapt the prior
+Tau Ceti formalization in `TauCeti/Algebra/Lie/UniversalEnveloping/Functoriality.lean`.
+
 ## Main definitions
 
 * `SymmetricAlgebra.map`: the algebra homomorphism induced by a linear map.
