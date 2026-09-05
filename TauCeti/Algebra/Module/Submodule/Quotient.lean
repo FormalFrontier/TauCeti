@@ -252,6 +252,33 @@ private theorem map_equivFun_eq_pi_span (N : Submodule ℤ M)
       exact hdvd i
     · exact b.repr_sum_self x
 
+private noncomputable def coordinateQuotientEquiv (N : Submodule ℤ M)
+    (b : Basis ι ℤ M) (bN : Basis ι ℤ N) (a : ι → ℤ)
+    (hdiag : ∀ i, (bN i : M) = a i • b i) :
+    M ⧸ N ≃+ ((ι → ℤ) ⧸ (Submodule.pi Set.univ fun i ↦ Ideal.span ({a i} : Set ℤ))) :=
+  (Submodule.Quotient.equiv N _ b.equivFun
+    (map_equivFun_eq_pi_span N b bN a hdiag)).toAddEquiv
+
+private theorem coordinateQuotientEquiv_mk (N : Submodule ℤ M)
+    (b : Basis ι ℤ M) (bN : Basis ι ℤ N) (a : ι → ℤ)
+    (hdiag : ∀ i, (bN i : M) = a i • b i) (x : M) :
+    coordinateQuotientEquiv N b bN a hdiag (Submodule.Quotient.mk x) =
+      Submodule.Quotient.mk (b.equivFun x) :=
+  rfl
+
+private noncomputable def quotientPiZModEquiv (a : ι → ℤ) :
+    ((ι → ℤ) ⧸ (Submodule.pi Set.univ fun i ↦ Ideal.span ({a i} : Set ℤ))) ≃+
+      ∀ i, ZMod (a i).natAbs :=
+  letI : Fintype ι := Fintype.ofFinite ι
+  letI : DecidableEq ι := Classical.decEq ι
+  (Submodule.quotientPi fun i ↦ Ideal.span ({a i} : Set ℤ)).toAddEquiv.trans
+    (AddEquiv.piCongrRight fun i ↦ (Int.quotientSpanEquivZMod (a i) : _ ≃+ _))
+
+private theorem quotientPiZModEquiv_mk_apply (a : ι → ℤ) (x : ι → ℤ) (i : ι) :
+    quotientPiZModEquiv a (Submodule.Quotient.mk x) i =
+      ((x i : ℤ) : ZMod (a i).natAbs) :=
+  rfl
+
 /-- A quotient by a submodule with a specified diagonal basis is a product of cyclic groups.
 
 Unlike `Submodule.quotientEquivPiZMod`, this construction takes both bases and their diagonal
@@ -263,10 +290,7 @@ noncomputable def _root_.Submodule.quotientEquivPiZModOfBasis (N : Submodule ℤ
     M ⧸ N ≃+ ∀ i, ZMod (a i).natAbs :=
   letI : Fintype ι := Fintype.ofFinite ι
   letI : DecidableEq ι := Classical.decEq ι
-  (Submodule.Quotient.equiv N _ b.equivFun
-        (map_equivFun_eq_pi_span N b bN a hdiag)).toAddEquiv.trans
-    ((Submodule.quotientPi fun i ↦ Ideal.span ({a i} : Set ℤ)).toAddEquiv.trans
-      (AddEquiv.piCongrRight fun i ↦ (Int.quotientSpanEquivZMod (a i) : _ ≃+ _)))
+  (coordinateQuotientEquiv N b bN a hdiag).trans (quotientPiZModEquiv a)
 
 /-- The diagonal quotient equivalence sends a representative to its coordinates modulo the
 corresponding diagonal coefficients. -/
@@ -276,12 +300,9 @@ theorem _root_.Submodule.quotientEquivPiZModOfBasis_mk_apply (N : Submodule ℤ 
     (hdiag : ∀ i, (bN i : M) = a i • b i) (x : M) (i : ι) :
     N.quotientEquivPiZModOfBasis b bN a hdiag (Submodule.Quotient.mk x) i =
       ((b.repr x i : ℤ) : ZMod (a i).natAbs) := by
-  simp only [Submodule.quotientEquivPiZModOfBasis, AddEquiv.trans_apply, AddEquiv.coe_mk,
-    AddHom.toFun_eq_coe, LinearMap.coe_toAddHom, LinearEquiv.coe_coe, LinearEquiv.invFun_eq_symm,
-    Submodule.Quotient.equiv_symm, Equiv.coe_fn_mk, Submodule.Quotient.equiv_apply,
-    Submodule.mapQ_apply, Basis.equivFun_apply, AddEquiv.piCongrRight_apply,
-    Submodule.quotientPi_apply, Submodule.quotientPiLift_mk, Submodule.mkQ_apply,
-    Ideal.Quotient.mk_eq_mk, eq_intCast, RingEquiv.coe_toAddEquiv, map_intCast]
+  rw [Submodule.quotientEquivPiZModOfBasis, AddEquiv.trans_apply,
+    coordinateQuotientEquiv_mk, quotientPiZModEquiv_mk_apply]
+  rfl
 
 end DiagonalQuotient
 
