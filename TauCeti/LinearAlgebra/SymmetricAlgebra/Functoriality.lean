@@ -128,6 +128,25 @@ theorem map_surjective_of_rightInverse (f : M →ₗ[R] N) (g : N →ₗ[R] M)
     (h : Function.RightInverse g f) : Function.Surjective (map R f) :=
   (map_rightInverse R h).surjective
 
+/-- A surjective linear map induces a surjective map of symmetric algebras. -/
+theorem map_surjective_of_surjective (f : M →ₗ[R] N)
+    (h : Function.Surjective f) : Function.Surjective (map R f) := by
+  intro b
+  induction b using SymmetricAlgebra.induction with
+  | algebraMap r =>
+      exact ⟨algebraMap R (SymmetricAlgebra R M) r, by simp⟩
+  | ι y =>
+      obtain ⟨x, rfl⟩ := h y
+      exact ⟨ι R M x, by simp⟩
+  | mul a b ha hb =>
+      obtain ⟨a', ha'⟩ := ha
+      obtain ⟨b', hb'⟩ := hb
+      exact ⟨a' * b', by simp [ha', hb']⟩
+  | add a b ha hb =>
+      obtain ⟨a', ha'⟩ := ha
+      obtain ⟨b', hb'⟩ := hb
+      exact ⟨a' + b', by simp [ha', hb']⟩
+
 /-- A linear equivalence induces an algebra equivalence of symmetric algebras. -/
 noncomputable def mapEquiv (e : M ≃ₗ[R] N) :
     SymmetricAlgebra R M ≃ₐ[R] SymmetricAlgebra R N :=
@@ -148,6 +167,7 @@ theorem mapEquiv_apply (e : M ≃ₗ[R] N) (a : SymmetricAlgebra R M) :
   rw [← AlgEquiv.toAlgHom_apply, mapEquiv_toAlgHom]
 
 /-- The bundled equivalence acts on canonical generators by the underlying linear equivalence. -/
+@[simp]
 theorem mapEquiv_apply_ι (e : M ≃ₗ[R] N) (a : M) :
     mapEquiv R e (ι R M a) = ι R N (e a) := by
   simp [mapEquiv_apply]
