@@ -71,8 +71,9 @@ variable {F : Type u} [Field F] {E : Type v} [Field E] [Algebra F E] {f : F[X]}
 
 section Galois
 
-variable [DecidableEq E] [Fact ((f.map (algebraMap F E)).Splits)]
+variable [Fact ((f.map (algebraMap F E)).Splits)]
 
+open scoped Classical in
 /-- **The transformation law for the square root of the discriminant.** An automorphism `ϕ` of a
 splitting extension `E` over `F` multiplies the product of the root differences by the sign of the
 permutation that `ϕ` induces on the roots of `f`. -/
@@ -99,6 +100,7 @@ theorem _root_.AlgEquiv.map_discrSqrt (ϕ : E ≃ₐ[F] E) (e : Fin f.natDegree 
     simp only [discrSqrt_def, Equiv.trans_apply]
   rw [himage, ← hrenumber, discrSqrt_trans, ← Equiv.Perm.sign_permCongr e ρ, hcongr]
 
+open scoped Classical in
 /-- Away from characteristic `2`, the product of the root differences comes from the base field
 exactly when the Galois image consists of even permutations of the roots. -/
 theorem _root_.Polynomial.Monic.discrSqrt_mem_range_iff [FiniteDimensional F E] [IsGalois F E]
@@ -129,6 +131,7 @@ theorem _root_.Polynomial.Monic.discrSqrt_mem_range_iff [FiniteDimensional F E] 
   · intro hle ϕ
     rw [AlgEquiv.map_discrSqrt, Equiv.Perm.mem_alternatingGroup.mp (hle ⟨_, rfl⟩), one_smul]
 
+open scoped Classical in
 /-- **The discriminant test.** For a monic separable polynomial over a field of characteristic
 other than `2`, the discriminant is a square in the base field exactly when the Galois group acts
 on the roots by even permutations.

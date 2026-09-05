@@ -398,7 +398,7 @@ variable {F : Type*} [CommRing F] {E : Type*} [CommRing E] [IsDomain E] [Algebra
 /-- A numbering of the root set of a separable polynomial enumerates the whole root multiset:
 separability makes the roots simple, so the multiset is the image of the numbering. This is the
 hypothesis that the root-product formula for the discriminant takes. -/
-theorem _root_.Polynomial.Separable.roots_map_eq_map_numbering (hsep : f.Separable)
+private theorem _root_.Polynomial.Separable.roots_map_eq_map_numbering (hsep : f.Separable)
     (e : Fin f.natDegree ≃ f.rootSet E) :
     (f.map (algebraMap F E)).roots = Multiset.map (fun i ↦ ((e i : E))) univ.val := by
   have hmem : ∀ {a : E}, a ∈ (f.map (algebraMap F E)).roots ↔ a ∈ f.rootSet E := fun {_} ↦
