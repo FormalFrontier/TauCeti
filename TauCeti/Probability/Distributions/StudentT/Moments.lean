@@ -422,10 +422,10 @@ theorem variance_id_studentTMeasure (hν : 2 < ν) :
 
 /-- The beta kernel is integrable on the positive half-line precisely for `-1 < q < ν`: the
 exponent at `0` is `(q - 1) / 2` and the tail exponent is `(q - ν - 2) / 2`. -/
-private lemma integrableOn_studentTBetaKernel_Ioi_iff (hν : 0 < ν) (hq : -1 < q) :
+private lemma integrableOn_studentTBetaKernel_Ioi_iff (hq : -1 < q) :
     IntegrableOn (studentTBetaKernel ν q) (Ioi (0 : ℝ)) ↔ q < ν := by
   have h := integrableOn_rpow_mul_one_add_rpow_iff
-    (a := (q + 1) / 2) (b := (ν - q) / 2) (by linarith) (by linarith)
+    (a := (q + 1) / 2) (b := (ν - q) / 2) (by linarith)
   have hleft : (q + 1) / 2 - 1 = (q - 1) / 2 := by ring
   have hsum : (q + 1) / 2 + (ν - q) / 2 = (ν + 1) / 2 := by ring
   have htail : 0 < (ν - q) / 2 ↔ q < ν := by
@@ -471,7 +471,7 @@ private theorem integrableOn_pow_mul_studentTPDFReal_Ioi_iff (hν : 0 < ν) (hq 
     div_ne_zero (mul_ne_zero hC_ne (Real.rpow_pos_of_pos hν _).ne') (by norm_num)
   rw [← hiff]
   simpa [g, IntegrableOn, integrable_const_mul_iff hc] using
-    integrableOn_studentTBetaKernel_Ioi_iff hν hq
+    integrableOn_studentTBetaKernel_Ioi_iff hq
 
 /-! ### Exponential moments -/
 

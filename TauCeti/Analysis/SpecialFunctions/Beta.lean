@@ -290,13 +290,29 @@ private lemma not_integrableOn_rpow_mul_one_add_rpow_of_nonpos (hab : 0 < a + b)
   linarith
 
 /-- The integrand of Euler's second beta integral is integrable on the positive half-line exactly
-when its tail parameter is positive, provided its exponent at zero and total parameter are
-positive. -/
-theorem integrableOn_rpow_mul_one_add_rpow_iff (ha : 0 < a) (hab : 0 < a + b) :
+when its tail parameter is positive, provided its exponent at zero is positive. -/
+theorem integrableOn_rpow_mul_one_add_rpow_iff (ha : 0 < a) :
     IntegrableOn (fun x : ℝ => x ^ (a - 1) * (1 + x) ^ (-(a + b))) (Ioi 0) ↔ 0 < b := by
   constructor
   · intro h
-    exact lt_of_not_ge fun hb ↦ not_integrableOn_rpow_mul_one_add_rpow_of_nonpos hab hb h
+    refine lt_of_not_ge fun hb ↦ ?_
+    by_cases hab : 0 < a + b
+    · exact not_integrableOn_rpow_mul_one_add_rpow_of_nonpos hab hb h
+    · have hab' : a + b ≤ 0 := le_of_not_gt hab
+      have htail : IntegrableOn
+          (fun x : ℝ => x ^ (a - 1) * (1 + x) ^ (-(a + b))) (Ioi 1) :=
+        h.mono_set fun x hx ↦ by simpa only [mem_Ioi] using lt_trans zero_lt_one hx
+      have hpow : IntegrableOn (fun x : ℝ => x ^ (a - 1)) (Ioi 1) := by
+        refine htail.mono' (by fun_prop) ?_
+        filter_upwards [ae_restrict_mem measurableSet_Ioi] with x hx
+        have hx0 : 0 < x := lt_trans zero_lt_one hx
+        have hxp : 0 ≤ x ^ (a - 1) := Real.rpow_nonneg hx0.le _
+        have hfac : 1 ≤ (1 + x) ^ (-(a + b)) :=
+          Real.one_le_rpow (by linarith) (by linarith)
+        rw [Real.norm_eq_abs, abs_of_nonneg hxp]
+        exact le_mul_of_one_le_right hxp hfac
+      rw [integrableOn_Ioi_rpow_iff one_pos] at hpow
+      linarith
   · exact integrableOn_rpow_mul_one_add_rpow ha
 
 /-- **Euler's second beta integral**: for positive parameters the integral of

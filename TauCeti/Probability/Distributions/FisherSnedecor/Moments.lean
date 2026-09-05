@@ -12,28 +12,27 @@ import TauCeti.Analysis.SpecialFunctions.Beta
 /-!
 # Moments of Fisher's F distribution
 
-This file establishes the sharp first- and second-moment theory of the Fisher--Snedecor law:
-the mean, the second raw moment, the variance, and the exact integrability thresholds `2 < n`
-and `4 < n` at which the first two moments diverge.  These all come from a file-internal
-computation of the natural moment of order `q`, which exists exactly when `2 * q < n` and is
-then a quotient of beta functions.
+This file establishes the natural moments of the Fisher--Snedecor law.  The moment of order `q`
+exists exactly when `2 * q < n` and is then a quotient of beta functions.  The first two cases
+give the mean, second raw moment, and variance, together with the exact thresholds `2 < n` and
+`4 < n` at which those moments diverge.
 
 ## Main results
 
 * `integrable_id_fisherSnedecorMeasure_iff` and `integrable_sq_fisherSnedecorMeasure_iff` give
   the two sharp integrability thresholds, hence also the divergence at and below them.
+* `integrable_pow_fisherSnedecorMeasure_iff` and `integral_pow_fisherSnedecorMeasure` give the
+  integrability criterion and beta-function formula for every natural moment.
 * `integral_id_fisherSnedecorMeasure` computes the mean.
 * `integral_sq_fisherSnedecorMeasure` computes the second raw moment.
 * `variance_id_fisherSnedecorMeasure` computes the variance.
-
-The proof uses Euler's second beta integral for integrability and the beta pushforward
-representation for the exact value, following the formal proof pattern in
-`TauCeti.Probability.Distributions.StudentT.Moments`.
 
 ## References
 
 * N. L. Johnson, S. Kotz, and N. Balakrishnan, *Continuous Univariate Distributions*, vol. 2,
   2nd ed., Wiley (1995), chapter 27.
+* The formal beta-kernel argument follows
+  `TauCeti.Probability.Distributions.StudentT.Moments`.
 -/
 
 public section
@@ -52,14 +51,15 @@ variable {m n : ℝ}
 private def fisherMomentKernel (m n q x : ℝ) : ℝ :=
   x ^ (m / 2 + q - 1) * (1 + x) ^ (-((m + n) / 2))
 
-private lemma integrableOn_fisherMomentKernel_iff (hm : 0 < m) (hn : 0 < n) (q : ℝ)
+private lemma integrableOn_fisherMomentKernel_iff (hm : 0 < m) (q : ℝ)
     (hq : 0 ≤ q) :
     IntegrableOn (fisherMomentKernel m n q) (Ioi (0 : ℝ)) ↔ q < n / 2 := by
   have h := integrableOn_rpow_mul_one_add_rpow_iff
-    (a := m / 2 + q) (b := n / 2 - q) (by linarith) (by linarith)
+    (a := m / 2 + q) (b := n / 2 - q) (by linarith)
   have hsum : m / 2 + q + (n / 2 - q) = (m + n) / 2 := by ring
   have htail : 0 < n / 2 - q ↔ q < n / 2 := by
     constructor <;> intro hh <;> linarith
+  -- Expose the reducible kernel so the parameter-sum rewrite can reach its exponent.
   change IntegrableOn (fun x : ℝ ↦ x ^ (m / 2 + q - 1) *
     (1 + x) ^ (-((m + n) / 2))) (Ioi 0) ↔ q < n / 2
   simpa only [hsum, htail] using h
@@ -129,7 +129,7 @@ private lemma integrableOn_scaled_fisherMomentKernel_iff (hm : 0 < m) (hn : 0 < 
             rw [hscale]
             ring
   rw [mul_zero] at hcomp
-  rw [← integrableOn_fisherMomentKernel_iff hm hn q (Nat.cast_nonneg q), ← hcomp]
+  rw [← integrableOn_fisherMomentKernel_iff hm q (Nat.cast_nonneg q), ← hcomp]
   constructor
   · intro h
     have h' : IntegrableOn (fun x : ℝ ↦ C *
@@ -145,7 +145,7 @@ private lemma integrableOn_scaled_fisherMomentKernel_iff (hm : 0 < m) (hn : 0 < 
 
 /-- A natural power is integrable under a valid Fisher--Snedecor law exactly when twice its
 order is below the denominator degrees of freedom. -/
-private theorem integrable_pow_fisherSnedecorMeasure_iff (hm : 0 < m) (hn : 0 < n) (q : ℕ) :
+theorem integrable_pow_fisherSnedecorMeasure_iff (hm : 0 < m) (hn : 0 < n) (q : ℕ) :
     Integrable (fun x : ℝ ↦ x ^ q) (fisherSnedecorMeasure m n) ↔ 2 * q < n := by
   rw [integrable_fisherSnedecorMeasure_iff]
   have hC : IsUnit (Real.Gamma ((m + n) / 2) /
@@ -190,6 +190,7 @@ theorem integrable_id_fisherSnedecorMeasure_iff (hm : 0 < m) (hn : 0 < n) :
 
 /-- Squaring is integrable under a valid Fisher--Snedecor law exactly above four denominator
 degrees of freedom. -/
+@[simp]
 theorem integrable_sq_fisherSnedecorMeasure_iff (hm : 0 < m) (hn : 0 < n) :
     Integrable (fun x : ℝ ↦ x ^ 2) (fisherSnedecorMeasure m n) ↔ 4 < n := by
   have h := integrable_pow_fisherSnedecorMeasure_iff hm hn 2
@@ -228,11 +229,12 @@ private lemma betaMomentIntegrand_eq (q : ℕ) {u : ℝ}
         (u ^ (m / 2 + q - 1) * (1 - u) ^ (n / 2 - q - 1)) := by
       rw [hpowu, hpowv]
 
-/-- The `q`th natural moment of a valid Fisher--Snedecor law, in beta-function form. -/
-private theorem integral_pow_fisherSnedecorMeasure (hm : 0 < m) (hn : 0 < n) (q : ℕ)
+/-- The `q`th natural moment of a Fisher--Snedecor law, in beta-function form. -/
+theorem integral_pow_fisherSnedecorMeasure (hm : 0 < m) (q : ℕ)
     (hq : 2 * q < n) :
     ∫ x, x ^ q ∂fisherSnedecorMeasure m n =
       (n / m) ^ q * beta (m / 2 + q) (n / 2 - q) / beta (m / 2) (n / 2) := by
+  have hn : 0 < n := lt_of_le_of_lt (mul_nonneg (by norm_num) (Nat.cast_nonneg q)) hq
   rw [fisherSnedecorMeasure_eq_map hm hn,
     integral_map (measurable_fisherSnedecorMap m n).aemeasurable (by fun_prop), betaMeasure]
   -- `integral_withDensity_eq_integral_toReal_smul` expects the defining `ofReal` form of the
@@ -288,7 +290,8 @@ private lemma beta_add_two_sub_two_div {a b : ℝ} (ha : 0 < a) (hb : 2 < b) :
     (beta_pos (by linarith) (by linarith)).ne'
   have hb1 : b - 1 ≠ 0 := by linarith
   have hb2 : b - 2 ≠ 0 := by linarith
-  rw [show a + 2 = (a + 1) + 1 by ring]
+  have ha2 : a + 2 = (a + 1) + 1 := by ring
+  rw [ha2]
   calc
     beta ((a + 1) + 1) (b - 2) / beta a b =
         (beta ((a + 1) + 1) (b - 2) / beta (a + 1) (b - 1)) *
@@ -301,7 +304,7 @@ private lemma beta_add_two_sub_two_div {a b : ℝ} (ha : 0 < a) (hb : 2 < b) :
 @[simp]
 theorem integral_id_fisherSnedecorMeasure (hm : 0 < m) (hn : 2 < n) :
     ∫ x, x ∂fisherSnedecorMeasure m n = n / (n - 2) := by
-  have h := integral_pow_fisherSnedecorMeasure hm (lt_trans zero_lt_two hn) 1 (by simpa)
+  have h := integral_pow_fisherSnedecorMeasure hm 1 (by simpa)
   simp only [pow_one, Nat.cast_one] at h
   rw [h]
   calc
@@ -318,7 +321,7 @@ theorem integral_id_fisherSnedecorMeasure (hm : 0 < m) (hn : 2 < n) :
 theorem integral_sq_fisherSnedecorMeasure (hm : 0 < m) (hn : 4 < n) :
     ∫ x, x ^ 2 ∂fisherSnedecorMeasure m n =
       n ^ 2 * (m + 2) / (m * (n - 2) * (n - 4)) := by
-  have h := integral_pow_fisherSnedecorMeasure hm (by linarith) 2 (by norm_num; linarith)
+  have h := integral_pow_fisherSnedecorMeasure hm 2 (by norm_num; linarith)
   norm_num only [Nat.cast_ofNat] at h
   rw [h]
   calc
@@ -329,9 +332,10 @@ theorem integral_sq_fisherSnedecorMeasure (hm : 0 < m) (hn : 4 < n) :
         ((m / 2) * (m / 2 + 1) / ((n / 2 - 1) * (n / 2 - 2))) := by
       rw [beta_add_two_sub_two_div (by linarith) (by linarith)]
     _ = n ^ 2 * (m + 2) / (m * (n - 2) * (n - 4)) := by
-      rw [show m / 2 + 1 = (m + 2) / 2 by ring,
-        show n / 2 - 1 = (n - 2) / 2 by ring,
-        show n / 2 - 2 = (n - 4) / 2 by ring]
+      have hm2 : m / 2 + 1 = (m + 2) / 2 := by ring
+      have hn2 : n / 2 - 1 = (n - 2) / 2 := by ring
+      have hn4 : n / 2 - 2 = (n - 4) / 2 := by ring
+      rw [hm2, hn2, hn4]
       field_simp [hm.ne', (by linarith : n - 2 ≠ 0), (by linarith : n - 4 ≠ 0)]
 
 /-- The variance of a Fisher--Snedecor law is
