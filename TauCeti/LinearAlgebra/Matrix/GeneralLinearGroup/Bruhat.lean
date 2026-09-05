@@ -20,7 +20,7 @@ public import Mathlib.GroupTheory.Solvable
 import TauCeti.GroupTheory.DoubleCoset.Identity
 -- Non-public: perfect groups are nonsolvable, which proves that `GL₂` over an infinite field is
 -- nonsolvable.
-import Mathlib.GroupTheory.IsPerfect
+import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Borel
 -- Non-public: the order of `GL₂` over a finite field is used only inside the proof of the size of
 -- the big cell.
 import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Card
@@ -110,7 +110,7 @@ public section
 
 namespace TauCeti
 
-open Matrix
+open _root_.Matrix
 
 universe u
 
@@ -345,37 +345,9 @@ namespace Matrix.GeneralLinearGroup
 
 /-- The general linear group `GL₂` over an infinite field is not solvable. -/
 theorem not_isSolvable_fin_two [Infinite F] : ¬ Group.IsSolvable (GL (Fin 2) F) := by
-  let S : Set F := {0} ∪ {1} ∪ {-1}
-  let U := {x : F // x ∈ Sᶜ}
-  let _ : Infinite U := (Set.toFinite S).infinite_compl.to_subtype
-  obtain ⟨a, _, _⟩ := exists_pair_ne U
-  have ha0 : (a : F) ≠ 0 := by
-    intro h
-    apply a.property
-    simp [S, h]
-  have ha1 : (a : F) ^ 2 ≠ 1 := by
-    rw [sq_ne_one_iff]
-    constructor
-    · intro h
-      apply a.property
-      simp [S, h]
-    · intro h
-      apply a.property
-      simp [S, h]
-  let _ : Group.IsPerfect (Matrix.SpecialLinearGroup (Fin 2) F) :=
-    ⟨Matrix.SL2.commutator_eq_top ha0 ha1⟩
-  have h01 : (0 : Fin 2) ≠ 1 := by decide
-  let t : Matrix.SpecialLinearGroup (Fin 2) F :=
-    Matrix.SpecialLinearGroup.transvection h01 1
-  have ht : t ≠ 1 := by
-    intro ht
-    have hentry := congrArg
-      (fun s : Matrix.SpecialLinearGroup (Fin 2) F ↦ (s : Matrix (Fin 2) (Fin 2) F) 0 1) ht
-    simp [t, Matrix.SpecialLinearGroup.transvection_coe, Matrix.single] at hentry
-  let _ : Nontrivial (Matrix.SpecialLinearGroup (Fin 2) F) := ⟨t, 1, ht⟩
   intro hGL
   let _ : Group.IsSolvable (GL (Fin 2) F) := hGL
-  exact Group.IsPerfect.not_isSolvable (Matrix.SpecialLinearGroup (Fin 2) F) <|
+  exact Matrix.SpecialLinearGroup.not_isSolvable_fin_two F <|
     Group.isSolvable_of_isSolvable_injective
       (f := Matrix.SpecialLinearGroup.toGL) Matrix.SpecialLinearGroup.toGL_injective
 
