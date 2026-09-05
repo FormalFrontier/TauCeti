@@ -7,6 +7,7 @@ module
 
 public import TauCeti.LinearAlgebra.FiniteBilinearModule.Orthogonal.Prod
 public import TauCeti.LinearAlgebra.IntegralLattice.Overlattice.OrthogonalQuotient.Bilinear
+public import TauCeti.LinearAlgebra.IntegralLattice.Overlattice.OrthogonalQuotient.Quadratic
 
 /-!
 # The comparison `A_(P ⊕ Q) ≅ (H⊥ / H) ⊥ (K⊥ / K)` for an orthogonal direct sum
@@ -29,6 +30,9 @@ under a lattice isometry, proved in
 functoriality package the gluing theory asks of the comparison isometry attached to an integral
 overlattice.
 
+For even lattices and even overlattices, the same construction and representative formula are
+also given for the discriminant quadratic modules.
+
 The two ingredients are the splitting of an orthogonal quotient of finite bilinear modules along
 a product subgroup, from
 `TauCeti.LinearAlgebra.FiniteBilinearModule.Orthogonal.Prod`, and the componentwise description
@@ -44,6 +48,8 @@ of the intermediate-carrier correspondence, from
 * `IntermediateCarrier.discriminantBilinearOrthogonalQuotientIsometryOrthogonalSum_mk`: it is
   componentwise, that is, it agrees with the pair of the comparison isometries of `P` and
   of `Q`.
+* `IntermediateCarrier.discriminantQuadraticOrthogonalQuotientIsometryOrthogonalSum` and its
+  `_mk` theorem: the corresponding componentwise comparison of discriminant quadratic modules.
 
 ## References
 
@@ -169,6 +175,90 @@ theorem discriminantBilinearOrthogonalQuotientIsometryOrthogonalSum_mk
       (congrArg Prod.fst (discriminantBilinearIsometryOrthogonalSum_dualClassHom hP hQ y))
   · exact (FiniteBilinearModule.coe_orthogonalComplementProdSnd _ _ _).trans
       (congrArg Prod.snd (discriminantBilinearIsometryOrthogonalSum_dualClassHom hP hQ y))
+
+/-! ## The quadratic comparison for even overlattices -/
+
+/-- **The discriminant quadratic module of an assembled even overlattice as an orthogonal direct
+sum of orthogonal quotients.** This is the even refinement of
+`discriminantBilinearOrthogonalQuotientIsometryOrthogonalSum`. -/
+noncomputable def discriminantQuadraticOrthogonalQuotientIsometryOrthogonalSum
+    (hL : L.IsEven) (hM : M.IsEven) (hP : IsEven P) (hQ : IsEven Q) :
+    FiniteQuadraticModule.Isometry
+      ((hP.isIntegral.orthogonalSum hQ.isIntegral).toIntegralLattice.discriminantQuadraticModule
+        ((isEven_orthogonalSumIntermediateCarrier_iff P Q).mpr
+          ⟨hP, hQ⟩).isEven_toIntegralLattice)
+      (((L.discriminantQuadraticModule hL).orthogonalQuotient
+          (L.discriminantSubgroup P)
+          ((isEven_iff_isIsotropic_discriminantSubgroup hL P).mp hP)).prod
+        ((M.discriminantQuadraticModule hM).orthogonalQuotient
+          (M.discriminantSubgroup Q)
+          ((isEven_iff_isIsotropic_discriminantSubgroup hM Q).mp hQ))) := by
+  let hLM : (L.orthogonalSum M).IsEven :=
+    (L.isEven_orthogonalSum_iff M).mpr ⟨hL, hM⟩
+  let hPQ : IsEven (orthogonalSumIntermediateCarrier L M P Q) :=
+    (isEven_orthogonalSumIntermediateCarrier_iff P Q).mpr ⟨hP, hQ⟩
+  let hSubgroup := (isEven_iff_isIsotropic_discriminantSubgroup hLM
+    (orthogonalSumIntermediateCarrier L M P Q)).mp hPQ
+  have hMap := map_discriminantSubgroup_orthogonalSumIntermediateCarrier P Q
+  rw [← L.discriminantQuadraticIsometryOrthogonalSum_toAddEquiv M hL hM] at hMap
+  exact ((discriminantOrthogonalQuotientIsometry hLM hPQ).trans
+    ((L.discriminantQuadraticIsometryOrthogonalSum M hL hM).orthogonalQuotientEquiv
+      hSubgroup hMap)).trans
+    (FiniteQuadraticModule.orthogonalQuotientProdIsometry
+      ((isEven_iff_isIsotropic_discriminantSubgroup hL P).mp hP)
+      ((isEven_iff_isIsotropic_discriminantSubgroup hM Q).mp hQ))
+
+/-- **The quadratic comparison for an assembled even overlattice is componentwise.** It sends a
+dual-vector class to the pair of its component classes under the two quadratic comparison
+isometries. -/
+theorem discriminantQuadraticOrthogonalQuotientIsometryOrthogonalSum_mk
+    (hL : L.IsEven) (hM : M.IsEven) (hP : IsEven P) (hQ : IsEven Q)
+    (y : (hP.isIntegral.orthogonalSum hQ.isIntegral).toIntegralLattice.dualCarrier) :
+    discriminantQuadraticOrthogonalQuotientIsometryOrthogonalSum hL hM hP hQ
+        (Submodule.Quotient.mk y) =
+      (discriminantOrthogonalQuotientIsometry hL hP
+          (Submodule.Quotient.mk ⟨(y : V × W).1,
+            fst_mem_dualCarrier_orthogonalSum hP.isIntegral hQ.isIntegral y⟩),
+        discriminantOrthogonalQuotientIsometry hM hQ
+          (Submodule.Quotient.mk ⟨(y : V × W).2,
+            snd_mem_dualCarrier_orthogonalSum hP.isIntegral hQ.isIntegral y⟩)) := by
+  rw [discriminantQuadraticOrthogonalQuotientIsometryOrthogonalSum]
+  -- The definition is a composite of three quadratic isometries whose quotient carriers use
+  -- propositionally identified discriminant-group types. Expose the composite application after
+  -- elaboration so that the three public representative formulas can rewrite it.
+  change (FiniteQuadraticModule.orthogonalQuotientProdIsometry _ _)
+    (((L.discriminantQuadraticIsometryOrthogonalSum M hL hM).orthogonalQuotientEquiv _ _)
+      (discriminantOrthogonalQuotientIsometry _ _ (Submodule.Quotient.mk y))) = _
+  rw [discriminantOrthogonalQuotientIsometry_mk]
+  refine (congrArg (FiniteQuadraticModule.orthogonalQuotientProdIsometry _ _)
+    (FiniteQuadraticModule.Isometry.orthogonalQuotientEquiv_orthogonalQuotientMk
+      _ _ _ _)).trans ?_
+  refine (FiniteQuadraticModule.orthogonalQuotientProdIsometry_orthogonalQuotientMk
+    _ _ _).trans ?_
+  have hclass :
+      L.discriminantQuadraticIsometryOrthogonalSum M hL hM
+          ((hP.isIntegral.orthogonalSum hQ.isIntegral).dualClassHom y) =
+        (hP.isIntegral.dualClassHom
+            ⟨(y : V × W).1, fst_mem_dualCarrier_orthogonalSum
+              hP.isIntegral hQ.isIntegral y⟩,
+          hQ.isIntegral.dualClassHom
+            ⟨(y : V × W).2, snd_mem_dualCarrier_orthogonalSum
+              hP.isIntegral hQ.isIntegral y⟩) := by
+    rw [discriminantQuadraticIsometryOrthogonalSum_apply]
+    rw [← discriminantBilinearIsometryOrthogonalSum_apply]
+    exact discriminantBilinearIsometryOrthogonalSum_dualClassHom
+      hP.isIntegral hQ.isIntegral y
+  refine Prod.ext
+    (Eq.trans (congrArg ((L.discriminantQuadraticModule hL).orthogonalQuotientMk
+        (L.discriminantSubgroup P) _) (Subtype.ext ?_))
+      (discriminantOrthogonalQuotientIsometry_mk hL hP _).symm)
+    (Eq.trans (congrArg ((M.discriminantQuadraticModule hM).orthogonalQuotientMk
+        (M.discriminantSubgroup Q) _) (Subtype.ext ?_))
+      (discriminantOrthogonalQuotientIsometry_mk hM hQ _).symm)
+  · exact (FiniteBilinearModule.coe_orthogonalComplementProdFst _ _ _).trans
+      (congrArg Prod.fst hclass)
+  · exact (FiniteBilinearModule.coe_orthogonalComplementProdSnd _ _ _).trans
+      (congrArg Prod.snd hclass)
 
 end IntermediateCarrier
 
