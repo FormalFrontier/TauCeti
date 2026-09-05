@@ -77,6 +77,7 @@ open scoped Classical in
 /-- **The transformation law for the square root of the discriminant.** An automorphism `ϕ` of a
 splitting extension `E` over `F` multiplies the product of the root differences by the sign of the
 permutation that `ϕ` induces on the roots of `f`. -/
+@[simp]
 theorem _root_.AlgEquiv.map_discrSqrt (ϕ : E ≃ₐ[F] E) (e : Fin f.natDegree ≃ f.rootSet E) :
     ϕ (discrSqrt e) =
       Equiv.Perm.sign (Gal.galActionHom f E (Gal.restrict f E ϕ)) • discrSqrt e := by

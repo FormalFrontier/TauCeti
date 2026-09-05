@@ -413,6 +413,7 @@ theorem discrSqrt_def (e : Fin f.natDegree ≃ f.rootSet E) :
 
 /-- The defining property: the square of the product of the root differences is the discriminant.
 -/
+@[simp]
 theorem _root_.Polynomial.Monic.discrSqrt_sq (hf : f.Monic) (hsep : f.Separable)
     (e : Fin f.natDegree ≃ f.rootSet E) :
     discrSqrt e ^ 2 = algebraMap F E f.discr := by
@@ -422,6 +423,7 @@ theorem _root_.Polynomial.Monic.discrSqrt_sq (hf : f.Monic) (hsep : f.Separable)
 
 /-- Renumbering the roots by a permutation `π` multiplies the product of the root differences by
 the sign of `π`. This is the alternating behaviour that makes the discriminant test work. -/
+@[simp]
 theorem discrSqrt_trans (e : Fin f.natDegree ≃ f.rootSet E) (π : Equiv.Perm (Fin f.natDegree)) :
     discrSqrt (π.trans e) = Equiv.Perm.sign π • discrSqrt e := by
   have h := π.prod_Ioi_comp_eq_sign_mul_prod
