@@ -54,6 +54,16 @@ def quotientAugmentationIso (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
   exact ObjectProperty.isoMk _ <| _root_.CommHopfAlgCat.isoMk <|
     kerLiftBialgEquiv (Bialgebra.counitBialgHom k H) Bialgebra.counit_surjective
 
+/-- The quotient map followed by the quotient-augmentation isomorphism is the counit. -/
+@[simp]
+theorem mkQuotient_comp_quotientAugmentationIso_hom
+    (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
+    FiniteTypeCommHopfAlgCat.mkQuotient H (augmentation k H) ≫
+        (quotientAugmentationIso H).hom =
+      FiniteTypeCommHopfAlgCat.ofHom (Bialgebra.counitBialgHom k H) := by
+  apply FiniteTypeCommHopfAlgCat.hom_ext
+  ext
+
 end HopfIdeal
 
 end

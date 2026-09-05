@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Product.Properties
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.SmoothDimension
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Smooth.Dimension
 
 /-!
 # Maximal-dimensional families of closed subgroups
@@ -18,7 +18,7 @@ maximal Lie dimension and the scheme-theoretic product of `I` with each member o
 
 Indeed, multiplying a maximal-dimensional member `I` by another member `J` gives a member that
 contains `I`. Dimension maximality then makes the resulting closed immersion an equality, by the
-comparison of `TauCeti.Algebra.AlgebraicGroup.HopfIdeal.SmoothDimension`. Since the product also
+comparison of `TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Smooth.Dimension`. Since the product also
 contains `J`, the subgroup represented by `I` contains `J`.
 
 This argument is independent of the additional property defining the family. It is used for the

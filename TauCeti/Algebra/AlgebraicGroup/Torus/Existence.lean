@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Augmentation
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.SmoothDimension
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Smooth.Dimension
 public import TauCeti.Algebra.AlgebraicGroup.Torus.Maximal
 public import TauCeti.Algebra.AlgebraicGroup.Torus.SmoothConnected
 
@@ -69,7 +69,19 @@ def rankZeroSplitTorusIso (k : Type u) [Field k] :
   ObjectProperty.isoMk _ <| _root_.CommHopfAlgCat.isoMk <|
     MonoidAlgebra.bialgEquivOfSubsingleton (R := k) _
 
+/-- The rank-zero split-torus isomorphism is the counit on its coordinate ring. -/
+@[simp]
+theorem rankZeroSplitTorusIso_hom_apply (k : Type u) [Field k]
+    (x : DiagonalizableGroup.coordinateRing k
+      (SplitTorus.characterGroup (ULift.{u} (Fin 0)))) :
+    (rankZeroSplitTorusIso k).hom x = Coalgebra.counit (R := k) x := by
+  change (rankZeroSplitTorusIso k).hom.hom.hom x = Coalgebra.counit (R := k) x
+  simp only [rankZeroSplitTorusIso, ObjectProperty.isoMk_hom, ObjectProperty.homMk_hom,
+    _root_.CommHopfAlgCat.isoMk_hom, _root_.CommHopfAlgCat.hom_ofHom]
+  rfl
+
 /-- The trivial affine group is the split torus of rank zero. -/
+@[grind =>]
 theorem splitTorusCommHopfAlgProperty_trivial (k : Type u) [Field k] :
     splitTorusCommHopfAlgProperty k (FiniteTypeCommHopfAlgCat.of k k) :=
   (splitTorusCommHopfAlgProperty k).prop_of_iso (rankZeroSplitTorusIso k)
@@ -98,21 +110,17 @@ maximal torus cut out by `J` contains the torus cut out by `I`. -/
 theorem exists_isMaximalTorus_le {I : HopfIdeal k H}
     (hI : torusCommHopfAlgProperty k (FiniteTypeCommHopfAlgCat.quotient H I)) :
     ∃ J : HopfIdeal k H, J ≤ I ∧ IsMaximalTorus k H.obj J := by
-  obtain ⟨J, ⟨hJ, hJI⟩, hJmax⟩ :=
-    exists_maximal_finrank_quotientLie
+  obtain ⟨J, ⟨⟨hJ, hJI⟩, hJmin⟩⟩ :=
+    exists_minimal_of_smooth_of_connected
       (fun J : HopfIdeal k H ↦
         torusCommHopfAlgProperty k (FiniteTypeCommHopfAlgCat.quotient H J) ∧ J ≤ I)
+      (fun ⟨hJ, _⟩ ↦ torusCommHopfAlgProperty.smooth k _ hJ)
+      (fun ⟨hJ, _⟩ ↦ geometricallyConnectedCommHopfAlgProperty.connectedSpace k _
+        (torusCommHopfAlgProperty.geometricallyConnected k _ hJ))
       ⟨I, hI, le_rfl⟩
   refine ⟨J, hJI, ?_⟩
-  have hmin : Minimal
-      (fun K : HopfIdeal k H ↦
-        torusCommHopfAlgProperty k (FiniteTypeCommHopfAlgCat.quotient H K)) J :=
-    minimal_of_finrank_quotientLie_maximal _
-      (fun hK ↦ torusCommHopfAlgProperty.smooth k _ hK)
-      (fun hK ↦ geometricallyConnectedCommHopfAlgProperty.connectedSpace k _
-        (torusCommHopfAlgProperty.geometricallyConnected k _ hK))
-      hJ fun K hK hKJ ↦ hJmax K ⟨hK, hKJ.trans hJI⟩
-  exact (isMaximalTorus_iff k H.obj J).mpr ⟨hmin.1, fun K hK hKJ ↦ hmin.2 hK hKJ⟩
+  exact (isMaximalTorus_iff k H.obj J).mpr
+    ⟨hJ, fun K hK hKJ ↦ hJmin ⟨hK, hKJ.trans hJI⟩ hKJ⟩
 
 /-- **Every finite-type affine group over a field has a maximal torus.**
 

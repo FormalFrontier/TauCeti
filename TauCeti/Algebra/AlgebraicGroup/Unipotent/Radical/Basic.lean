@@ -9,7 +9,6 @@ public import TauCeti.Algebra.AlgebraicGroup.Connected.CommHopfAlgCat
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Cotangent
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Basic
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Augmentation
-public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Augmentation
 import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Central
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.FiniteType
 import TauCeti.Algebra.AlgebraicGroup.Trivial

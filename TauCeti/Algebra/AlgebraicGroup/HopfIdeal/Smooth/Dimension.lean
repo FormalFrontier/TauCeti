@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Basic
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.SmoothContainment
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Smooth.Containment
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Dimension
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.FiniteType
 
