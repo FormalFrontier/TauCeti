@@ -9,12 +9,14 @@ public import Mathlib.Topology.Algebra.ContinuousMonoidHom
 public import Mathlib.Topology.Algebra.Group.Quotient
 
 /-!
-# The inclusion of a subgroup and the projection onto a quotient, as continuous homomorphisms
+# Continuous subgroup inclusion, inverse conjugation, and quotient projection
 
 Mathlib's `Subgroup.subtype` and `QuotientGroup.mk'` are bare `MonoidHom`s, and its coercion
 `ContinuousMonoidHom.toContinuousMonoidHom` applies only to bundled types that already carry a
 `ContinuousMapClass` instance, so neither map is available as a `ContinuousMonoidHom`. This file
-packages the two, for a topological group and the subspace and quotient topologies.
+packages those maps for a topological group and the subspace and quotient topologies. It also
+provides inverse conjugation `n ↦ g⁻¹ * n * g` on a normal subgroup, together with its evaluation,
+identity, and composition laws.
 -/
 
 public section
@@ -66,6 +68,7 @@ def _root_.Subgroup.inverseConjugationHom [IsTopologicalGroup G] (N : Subgroup G
       apply Subtype.ext
       simp
 
+/-- Evaluation of inverse conjugation on a subgroup element. -/
 @[simp]
 theorem _root_.Subgroup.inverseConjugationHom_apply [IsTopologicalGroup G] (N : Subgroup G)
     [N.Normal] (g : G) (n : N) :
@@ -78,6 +81,7 @@ theorem _root_.Subgroup.inverseConjugationHom_apply [IsTopologicalGroup G] (N : 
   change ((MulAut.conjNormal g⁻¹ : MulAut N) n : G) = _
   simp
 
+/-- Inverse conjugation by the identity is the identity continuous homomorphism. -/
 @[simp]
 theorem _root_.Subgroup.inverseConjugationHom_one [IsTopologicalGroup G] (N : Subgroup G)
     [N.Normal] :
@@ -85,6 +89,7 @@ theorem _root_.Subgroup.inverseConjugationHom_one [IsTopologicalGroup G] (N : Su
   ext n
   simp [_root_.Subgroup.inverseConjugationHom_apply]
 
+/-- Inverse conjugation by a product is the reversed composition of inverse conjugations. -/
 @[simp]
 theorem _root_.Subgroup.inverseConjugationHom_mul [IsTopologicalGroup G] (N : Subgroup G)
     [N.Normal] (g h : G) :

@@ -23,6 +23,9 @@ their values on cocycle classes. The named specializations `explicitRes1`, `expl
 `explicitCoeff1`, and `explicitCoeff2` provide restriction and coefficient maps in positive
 degrees.
 
+The module also records the algebraic degree-one and degree-two bar homotopies for inverse
+conjugation, including the degree-two identity for cocycles.
+
 This is functoriality of the *explicit* model: the carriers are the quotients `Z¹/B¹` and `Z²/B²`
 of plain continuous cochains. Mathlib's `ContinuousCohomology.map` is the compatible-pair pullback
 on the canonical bundled carrier, and it is what the sibling file
@@ -41,7 +44,7 @@ public section
 
 namespace TauCeti.ContCohomology
 
-universe uG uH uM uN uK uP
+universe uG uH uM uN uK uP uA
 
 section Cochains
 
@@ -185,6 +188,78 @@ theorem comp_apply_smul
     (hq : ∀ (k : K) (n : N), q (ψ k • n) = k • q n) (k : K) (m : M) :
     (q.comp f) ((φ.comp ψ) k • m) = k • (q.comp f) m := by
   simp only [MonoidHom.comp_apply, AddMonoidHom.comp_apply, hf, hq]
+
+/-- The degree-one component of the bar homotopy for inverse conjugation. -/
+@[expose]
+def inverseConjugationHomotopy1 {K : Type uK} {A : Type uA} (g : K) (c : K → A) : A :=
+  c g
+
+/-- The degree-two component of the bar homotopy for inverse conjugation. -/
+@[expose]
+def inverseConjugationHomotopy2 {K : Type uK} [Group K] {A : Type uA} [AddCommGroup A]
+    (g : K) (c : K × K → A) : K → A :=
+  fun n => c (g, g⁻¹ * n * g) - c (n, g)
+
+/-- The degree-one algebraic cochain-homotopy identity for inverse conjugation. -/
+theorem inverseConjugationCochainHomotopy1 {K : Type uK} [Group K]
+    {A : Type uA} [AddCommGroup A] [DistribMulAction K A] (g : K) (c : K → A) :
+    cochainsMap1 (MulAut.conj g⁻¹ : K →* K) (DistribSMul.toAddMonoidHom A g) c - c =
+      d0 K A (inverseConjugationHomotopy1 g c) +
+        inverseConjugationHomotopy2 g (d1 K A c) := by
+  ext n
+  simp only [Pi.sub_apply, Pi.add_apply, cochainsMap1_apply, d0_apply, d1_apply,
+    inverseConjugationHomotopy1, inverseConjugationHomotopy2,
+    DistribSMul.toAddMonoidHom_apply]
+  -- The bundled additive hom and the scalar action have the same underlying function here.
+  change g • c ((MulAut.conj g⁻¹ : MulAut K) n) - c n = _
+  simp only [MulAut.conj_apply, inv_inv]
+  have hmul : g * (g⁻¹ * n * g) = n * g := by
+    simp [mul_assoc]
+  rw [hmul]
+  simp only [sub_eq_add_neg]
+  abel_nf
+
+/-- The degree-two component of the bar homotopy for an algebraic inverse conjugation, for a
+degree-two cocycle. -/
+theorem inverseConjugationCochainHomotopy2_of_isCocycle {K : Type uK} [Group K]
+    {A : Type uA} [AddCommGroup A] [DistribMulAction K A] (g : K) (c : K × K → A)
+    (hc : groupCohomology.IsCocycle₂ c) :
+    cochainsMap2 (MulAut.conj g⁻¹ : K →* K) (DistribSMul.toAddMonoidHom A g) c - c =
+      d1 K A (inverseConjugationHomotopy2 g c) := by
+  apply funext
+  rintro ⟨n, k⟩
+  simp only [Pi.sub_apply, cochainsMap2_apply, d1_apply, inverseConjugationHomotopy2,
+    DistribSMul.toAddMonoidHom_apply]
+  -- The cochain map is bundled, so expose its underlying conjugation before using `hc`.
+  change g • c ((MulAut.conj g⁻¹ : MulAut K) n, (MulAut.conj g⁻¹ : MulAut K) k) - c (n, k) = _
+  simp only [MulAut.conj_apply, inv_inv]
+  have hmul : g * (g⁻¹ * n * g) = n * g := by
+    simp [mul_assoc]
+  have hmul' : g * (g⁻¹ * k * g) = k * g := by
+    simp [mul_assoc]
+  have hconjmul : (g⁻¹ * n * g) * (g⁻¹ * k * g) = g⁻¹ * (n * k) * g := by
+    simp [mul_assoc]
+  have h₁ := hc g (g⁻¹ * n * g) (g⁻¹ * k * g)
+  have h₂ := hc n g (g⁻¹ * k * g)
+  have h₃ := hc n k g
+  simp only [hmul, hmul', hconjmul] at h₁ h₂ h₃
+  have h₁' : g • c (g⁻¹ * n * g, g⁻¹ * k * g) =
+      c (n * g, g⁻¹ * k * g) + c (g, g⁻¹ * n * g) - c (g, g⁻¹ * (n * k) * g) := by
+    apply (eq_sub_iff_add_eq).2
+    simpa [add_comm] using h₁.symm
+  have h₂' : n • c (g, g⁻¹ * k * g) =
+      c (n * g, g⁻¹ * k * g) + c (n, g) - c (n, k * g) := by
+    apply (eq_sub_iff_add_eq).2
+    simpa [add_comm] using h₂.symm
+  have h₃' : n • c (k, g) =
+      c (n * k, g) + c (n, k) - c (n, k * g) := by
+    apply (eq_sub_iff_add_eq).2
+    simpa [add_comm] using h₃.symm
+  rw [h₁']
+  simp only [smul_add, smul_neg, sub_eq_add_neg]
+  rw [h₂', h₃']
+  simp only [sub_eq_add_neg, add_assoc]
+  abel
 
 section Cocycles
 
