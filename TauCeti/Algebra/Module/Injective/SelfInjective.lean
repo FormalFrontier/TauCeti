@@ -112,28 +112,28 @@ theorem _root_.LinearMap.IsPerfPair.moduleBaer_self (hB : B.IsPerfPair)
   intro I f
   -- The trace turns `f` into a `k`-linear functional on `I`, which extends to all of `A`.
   obtain ⟨ψ, hψ⟩ : ∃ ψ : A →ₗ[k] k, ∀ (x : A) (hx : x ∈ I), ψ x = B 1 (f ⟨x, hx⟩) := by
+    let e : I.restrictScalars k →ₗ[k] I :=
+      { toFun := fun x => ⟨x, x.2⟩
+        map_add' := fun _ _ => Subtype.ext rfl
+        map_smul' := fun _ _ => Subtype.ext rfl }
     obtain ⟨ψ, hψ⟩ := LinearMap.exists_extend
-      ({ toFun := fun x : I.restrictScalars k => B 1 (f ⟨x.1, x.2⟩)
-         map_add' := fun x y => by
-           rw [show (⟨(x + y).1, (x + y).2⟩ : I) = ⟨x.1, x.2⟩ + ⟨y.1, y.2⟩ from rfl, map_add,
-             map_add]
-         map_smul' := fun c x => by
-           rw [show (⟨(c • x).1, (c • x).2⟩ : I) = c • (⟨x.1, x.2⟩ : I) from rfl,
-             f.map_smul_of_tower, map_smul, RingHom.id_apply] } : I.restrictScalars k →ₗ[k] k)
+      ((B 1).comp ((f.restrictScalars k).comp e))
     exact ⟨ψ, fun x hx => congr($hψ ⟨x, hx⟩)⟩
   -- Perfectness writes that functional as the pairing against a fixed element `a`.
   obtain ⟨a, ha⟩ := hbij.surjective ψ
   have hax : ∀ x : A, B x a = ψ x := fun x => congr($ha x)
-  refine ⟨{ toFun := fun x => x * a
-            map_add' := fun x y => add_mul x y a
-            map_smul' := fun c x => by simp [mul_assoc] }, fun x hx => ?_⟩
-  change x * a = f ⟨x, hx⟩
+  refine ⟨LinearMap.mulRight A a, fun x hx => ?_⟩
+  rw [LinearMap.mulRight_apply]
   -- The two candidates pair identically against every element, since `f` is `A`-linear.
   refine hbij.injective (LinearMap.ext fun y => ?_)
   have hyx : y * x ∈ I := I.mul_mem_left y hx
   have hf : f ⟨y * x, hyx⟩ = y * f ⟨x, hx⟩ := by
-    rw [show (⟨y * x, hyx⟩ : I) = y • (⟨x, hx⟩ : I) from rfl, map_smul, smul_eq_mul]
-  change B y (x * a) = B y (f ⟨x, hx⟩)
+    calc
+      f ⟨y * x, hyx⟩ = f (y • (⟨x, hx⟩ : I)) := by
+        exact congrArg f (Subtype.ext (smul_eq_mul y x).symm)
+      _ = y • f ⟨x, hx⟩ := map_smul f y ⟨x, hx⟩
+      _ = y * f ⟨x, hx⟩ := smul_eq_mul y _
+  simp only [LinearMap.flip_apply]
   rw [← hassoc, hax, hψ _ hyx, hf, ← hone]
 
 /-- **An algebra over a field carrying an associative perfect bilinear form is self-injective**:
