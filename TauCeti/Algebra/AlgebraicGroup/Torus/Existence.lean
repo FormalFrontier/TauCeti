@@ -75,10 +75,7 @@ theorem rankZeroSplitTorusIso_hom_apply (k : Type u) [Field k]
     (x : DiagonalizableGroup.coordinateRing k
       (SplitTorus.characterGroup (ULift.{u} (Fin 0)))) :
     (rankZeroSplitTorusIso k).hom x = Coalgebra.counit (R := k) x := by
-  change (rankZeroSplitTorusIso k).hom.hom.hom x = Coalgebra.counit (R := k) x
-  simp only [rankZeroSplitTorusIso, ObjectProperty.isoMk_hom, ObjectProperty.homMk_hom,
-    _root_.CommHopfAlgCat.isoMk_hom, _root_.CommHopfAlgCat.hom_ofHom]
-  rfl
+  exact Bialgebra.counitBialgHom_apply (R := k) x
 
 /-- The trivial affine group is the split torus of rank zero. -/
 @[grind =>]
