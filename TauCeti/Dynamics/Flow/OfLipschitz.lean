@@ -52,10 +52,7 @@ noncomputable def flowOfLipschitz (v : E → E) {K : ℝ≥0} (hv : LipschitzWit
   toFun t x := ODE.globalSolution v hv x t
   cont' := ODE.continuous_globalSolution v hv
   map_add' t₁ t₂ x := by
-    have hγ : ∀ t : ℝ, HasDerivAt (fun t : ℝ ↦ ODE.globalSolution v hv x (t + t₂))
-        (v (ODE.globalSolution v hv x (t + t₂))) t :=
-      (ODE.isIntegralCurve_globalSolution v hv x).comp_add t₂
-    simpa using congrFun (ODE.eq_globalSolution v hv hγ) t₁
+    simpa [add_comm] using ODE.globalSolution_add v hv x t₂ t₁
   map_zero' x := ODE.globalSolution_zero v hv x
 
 @[simp]
