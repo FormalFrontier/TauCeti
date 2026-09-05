@@ -36,6 +36,9 @@ projectivity is `TauCeti.zigzagProjective_projective`, and their indecomposabili
 
 * `TauCeti.zigzagAlgebraPairing`: the symmetric perfect associative pairing on the public zigzag
   algebra.
+* `TauCeti.zigzagAlgebraPairing_single_nontrivial` and
+  `TauCeti.zigzagAlgebraPairing_single_subsingleton`: on the factor of one connected component that
+  pairing is `TauCeti.zigzagTracePairing` respectively `TauCeti.dualNumberTracePairing`.
 * `TauCeti.moduleBaer_zigzagAlgebra` and `TauCeti.moduleInjective_zigzagAlgebra`: the public
   componentwise zigzag algebra of every finite simple graph is self-injective.
 * `TauCeti.moduleInjective_nonisolatedZigzagQuotient`: the relation-quotient presentation for a
@@ -87,6 +90,28 @@ private instance zigzagComponentPairing_isPerfPair (C : G.ConnectedComponent) :
   classical
   unfold zigzagComponentPairing
   split <;> infer_instance
+
+private theorem zigzagComponentPairing_apply_nontrivial (C : G.ConnectedComponent)
+    [Nontrivial C] (hns : ∀ i : C, ∃ j, C.toSimpleGraph.Adj i j)
+    (x y : zigzagComponentAlgebra k G C) :
+    zigzagComponentPairing k G C x y =
+      zigzagTracePairing k C.toSimpleGraph hns
+        (zigzagComponentAlgebraEquivNonisolated k G C x)
+        (zigzagComponentAlgebraEquivNonisolated k G C y) := by
+  classical
+  have hC : Nontrivial C := inferInstance
+  simp only [zigzagComponentPairing, hC]
+  rfl
+
+private theorem zigzagComponentPairing_apply_subsingleton (C : G.ConnectedComponent)
+    [Subsingleton C] (x y : zigzagComponentAlgebra k G C) :
+    zigzagComponentPairing k G C x y =
+      dualNumberTracePairing k (zigzagComponentAlgebraEquivULiftDualNumber k G C x).down
+        (zigzagComponentAlgebraEquivULiftDualNumber k G C y).down := by
+  classical
+  have hC : ¬ Nontrivial C := fun h => (not_subsingleton_iff_nontrivial.mpr h) inferInstance
+  simp only [zigzagComponentPairing, hC]
+  rfl
 
 private theorem zigzagComponentPairing_mul_assoc (C : G.ConnectedComponent)
     (x y z : zigzagComponentAlgebra k G C) :
@@ -223,6 +248,35 @@ theorem zigzagAlgebraPairing_apply (x y : zigzagAlgebra k G) :
   intro C _
   rw [zigzagAlgebraPairing_single_left, zigzagComponentProjection_zigzagAlgebraMk]
   simp
+
+open Classical in
+/-- On a nontrivial component the direct-sum pairing restricted to the embedded factor is the
+zigzag trace pairing of that component, transported along
+`TauCeti.zigzagComponentAlgebraEquivNonisolated`. -/
+theorem zigzagAlgebraPairing_single_nontrivial (C : G.ConnectedComponent) [Nontrivial C]
+    (hns : ∀ i : C, ∃ j, C.toSimpleGraph.Adj i j) (x y : zigzagComponentAlgebra k G C) :
+    zigzagAlgebraPairing k G (zigzagAlgebraMk k G (Pi.single C x))
+        (zigzagAlgebraMk k G (Pi.single C y)) =
+      zigzagTracePairing k C.toSimpleGraph hns
+        (zigzagComponentAlgebraEquivNonisolated k G C x)
+        (zigzagComponentAlgebraEquivNonisolated k G C y) := by
+  classical
+  rw [zigzagAlgebraPairing_single_left, zigzagComponentProjection_zigzagAlgebraMk,
+    Pi.single_eq_same, zigzagComponentPairing_apply_nontrivial k G C hns]
+
+open Classical in
+/-- On a singleton component the direct-sum pairing restricted to the embedded factor is the
+dual-number trace pairing, transported along
+`TauCeti.zigzagComponentAlgebraEquivULiftDualNumber`. -/
+theorem zigzagAlgebraPairing_single_subsingleton (C : G.ConnectedComponent) [Subsingleton C]
+    (x y : zigzagComponentAlgebra k G C) :
+    zigzagAlgebraPairing k G (zigzagAlgebraMk k G (Pi.single C x))
+        (zigzagAlgebraMk k G (Pi.single C y)) =
+      dualNumberTracePairing k (zigzagComponentAlgebraEquivULiftDualNumber k G C x).down
+        (zigzagComponentAlgebraEquivULiftDualNumber k G C y).down := by
+  classical
+  rw [zigzagAlgebraPairing_single_left, zigzagComponentProjection_zigzagAlgebraMk,
+    Pi.single_eq_same, zigzagComponentPairing_apply_subsingleton k G C]
 
 /-- The direct-sum Frobenius pairing on the public zigzag algebra is perfect. -/
 instance zigzagAlgebraPairing_isPerfPair : (zigzagAlgebraPairing k G).IsPerfPair := by
