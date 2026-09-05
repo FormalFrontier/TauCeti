@@ -23,6 +23,15 @@ use them without dragging in linear algebra.
 
 * `Int.eq_of_dvd_of_dvd_of_mul_eq_mul`: two tuples with positive, mutually dividing first
   entries and equal products are equal.
+
+## Provenance
+
+Adapted from [AINTLIB](https://github.com/CBirkbeck/AINTLIB) (Chris Birkbeck), Apache-2.0, at
+commit `2baa76f742bdb4fb8ee323fabba41203bd390e08`, from
+`LeanModularForms/HeckeRIngs/GLn/CongruenceHecke/AtkinLehner.lean`. The source's
+`snf_mutual_dvd_eq` draws the same conclusion from Smith-normal-form data and routes through
+`smith_normal_form_unique`; `Int.eq_of_dvd_of_dvd_of_mul_eq_mul` keeps none of those matrix
+hypotheses and does not use it.
 -/
 
 namespace Int

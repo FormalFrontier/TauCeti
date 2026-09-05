@@ -885,13 +885,7 @@ commit `2baa76f742bdb4fb8ee323fabba41203bd390e08`,
 divisibility directions privately at `Fin 2` as `snf_first_dvd_entry₂` and
 `dvd_snf_first_of_dvd_entries`, proved by entrywise cofactor algebra; the proofs here are a
 re-derivation at general `n`, where inverting the unimodular factors removes the need for that
-algebra. The source's third lemma `snf_mutual_dvd_eq` is adapted here as
-`Int.eq_of_dvd_of_dvd_of_mul_eq_mul`, which does *not* go through
-`Matrix.smith_normal_form_unique`. The statement here keeps none of the source's matrix
-hypotheses: it is arithmetic on two `Fin 2 → ℤ` tuples, concluding `dA = dB` from positivity
-of the two first entries, their mutual divisibility, and equality of the two products.
-Callers obtain that product equality from `Matrix.prod_eq_det_of_mul_mul_eq_diagonal` together
-with an equality of determinants. -/
+algebra. -/
 
 /-- **The first entry of a chained diagonal form divides every entry.** If
 `L * A * R = diagonal d` with `L`, `R` unimodular and `d 0` dividing every `d k`, then `d 0`
