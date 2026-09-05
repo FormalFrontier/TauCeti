@@ -595,13 +595,13 @@ lemma chafaiRescaled_zero (f : ℝ → ℝ) : chafaiRescaled f 0 = 0 := by
   rw [chafaiRescaled_eq_map, chafaiMeasure_zero, Measure.map_zero]
 
 private lemma integral_chafaiDensity_one_eq (f : ℝ → ℝ) (hcm : IsCompletelyMonotone f)
-    (T : ℝ) (hT : 0 < T) :
+    (T : ℝ) (hT : 0 ≤ T) :
     ∫ t in (0 : ℝ)..T, chafaiDensity f 1 t = f 0 - f T := by
   have h1 : ∫ t in (0 : ℝ)..T, chafaiDensity f 1 t =
       ∫ t in (0 : ℝ)..T, -iteratedDerivWithin 1 f (Ici 0) t :=
     intervalIntegral.integral_congr_ae (Filter.Eventually.of_forall fun t _ => chafaiDensity_one t)
   rw [h1]
-  exact IsCompletelyMonotone.integral_neg_iteratedDerivWithin_one_Ici_eq_sub hcm le_rfl hT.le
+  exact IsCompletelyMonotone.integral_neg_iteratedDerivWithin_one_Ici_eq_sub hcm le_rfl hT
 
 private lemma integral_chafaiDensity_le_sub (f : ℝ → ℝ) (hcm : IsCompletelyMonotone f)
     (j : ℕ) (hj : 1 ≤ j) (T : ℝ) (hT : 0 < T) :
@@ -611,7 +611,7 @@ private lemma integral_chafaiDensity_le_sub (f : ℝ → ℝ) (hcm : IsCompletel
   | succ p ih =>
     by_cases hp : p = 0
     · subst hp
-      exact le_of_eq (integral_chafaiDensity_one_eq f hcm T hT)
+      exact le_of_eq (integral_chafaiDensity_one_eq f hcm T hT.le)
     · calc ∫ t in (0 : ℝ)..T, chafaiDensity f (p + 1) t
           ≤ ∫ t in (0 : ℝ)..T, chafaiDensity f p t := by
             exact integral_chafaiDensity_le_pred f (k := p + 1) (by omega)
