@@ -8,7 +8,7 @@ module
 public import Mathlib.GroupTheory.Perm.Cycle.Type
 
 /-!
-# Powers and cycle decompositions of permutations
+# Powers of a cycle
 
 A cycle `f` of a finite type has order the number `n = f.support.card` of points it moves
 (`Equiv.Perm.IsCycle.orderOf`), and every power `f ^ k` again moves either all of those points or
@@ -24,23 +24,15 @@ order of a power (`orderOf_pow`) and decides when a power of a cycle is again a 
 all the cycles of `f ^ k` have the *same* length, which holds because `(f ^ m) x = x` is
 equivalent to `orderOf f ∣ m` independently of the point `x` of the support.
 
-The final results apply this power calculus to a general permutation with one 2-cycle and only
-odd-length remaining cycles. The product of the odd lengths kills every remaining cycle while
-preserving the 2-cycle, so it is an explicit odd exponent whose power is a transposition.
-
 ## Main results
 
 * `Equiv.Perm.IsCycle.pow_apply_eq_self_iff`: `(f ^ n) x = x` holds for one point moved by the
   cycle exactly when it holds for all of them, namely exactly when `orderOf f ∣ n`.
 * `Equiv.Perm.IsCycle.cycleType_pow_of_not_dvd`: for `n ∤ k`, the cycle type of `f ^ k` is
   `gcd n k` copies of `n / gcd n k`.
-* `Equiv.Perm.isSwap_pow_prod_erase_two_cycleType_and_odd`: if a permutation has exactly one
-  2-cycle and all its other cycles have odd length, an explicit odd power is a transposition.
-* `Equiv.Perm.exists_odd_isSwap_pow`: the corresponding existential form.
 
-The cycle-specific declarations are stated in the `Equiv.Perm.IsCycle` namespace, giving dot
-notation from `hf : f.IsCycle`. The recognition declarations are in `Equiv.Perm`, giving dot
-notation from the permutation itself.
+The declarations are stated in the `Equiv.Perm.IsCycle` namespace, giving dot notation from
+`hf : f.IsCycle`, as upstream candidates.
 
 ## References
 
@@ -123,61 +115,5 @@ theorem _root_.Equiv.Perm.IsCycle.cycleType_pow_of_not_dvd (hf : f.IsCycle) {k :
     refine Nat.eq_of_mul_eq_mul_right hpos ?_
     rw [hsum, Nat.mul_div_cancel' hd]
   rw [hrep, hcard]
-
-/-- If a permutation has exactly one cycle of length two and every other cycle has odd length,
-then raising it to the product of those other cycle lengths gives a transposition.
-
-The exponent is itself odd. This is the cycle-theoretic step used to turn a factorization pattern
-with one quadratic factor and only odd-degree remaining factors into a transposition in a Galois
-group. -/
-theorem _root_.Equiv.Perm.isSwap_pow_prod_erase_two_cycleType_and_odd {σ : Perm α}
-    (htwo : σ.cycleType.count 2 = 1)
-    (hodd : ∀ n ∈ σ.cycleType, n ≠ 2 → Odd n) :
-    (σ ^ (σ.cycleType.erase 2).prod).IsSwap ∧ Odd (σ.cycleType.erase 2).prod := by
-  have hmem : 2 ∈ σ.cycleType := Multiset.count_pos.mp (by omega)
-  obtain ⟨c, τ, hσ, hdisj, hc, hcard⟩ := mem_cycleType_iff.mp hmem
-  have hcSwap : c.IsSwap := card_support_eq_two.mp hcard
-  have hcycleType : σ.cycleType = {2} + τ.cycleType := by
-    rw [hσ, hdisj.cycleType_mul, hc.cycleType, hcard]
-  have herase : σ.cycleType.erase 2 = τ.cycleType := by
-    rw [hcycleType]
-    simp
-  have htwoτ : 2 ∉ τ.cycleType := by
-    rw [← Multiset.count_eq_zero]
-    have : 1 + τ.cycleType.count 2 = 1 := by
-      simpa [hcycleType] using htwo
-    omega
-  have hoddτ : ∀ n ∈ τ.cycleType, Odd n := by
-    intro n hn
-    have hnσ : n ∈ σ.cycleType := by
-      rw [hcycleType, Multiset.mem_add]
-      exact Or.inr hn
-    exact (hodd n hnσ) (fun hn2 ↦ htwoτ (hn2 ▸ hn))
-  have odd_prod : ∀ s : Multiset ℕ, (∀ n ∈ s, Odd n) → Odd s.prod := by
-    intro s hs
-    induction s using Multiset.induction_on with
-    | empty => simp
-    | @cons n s ih =>
-        rw [Multiset.prod_cons]
-        exact (hs n (by simp)).mul (ih fun m hm ↦ hs m (by simp [hm]))
-  have hkodd : Odd τ.cycleType.prod := odd_prod τ.cycleType hoddτ
-  have hτpow : τ ^ τ.cycleType.prod = 1 := by
-    rw [← orderOf_dvd_iff_pow_eq_one, ← lcm_cycleType]
-    exact Multiset.lcm_dvd.mpr fun _ hn ↦ Multiset.dvd_prod hn
-  have hcpow : c ^ τ.cycleType.prod = c := by
-    have hmod : τ.cycleType.prod ≡ 1 [MOD orderOf c] := by
-      rw [hcSwap.orderOf, Nat.ModEq, Nat.odd_iff.mp hkodd]
-    exact ((pow_eq_pow_iff_modEq).mpr hmod).trans (pow_one c)
-  rw [herase, hσ, hdisj.commute.mul_pow, hcpow, hτpow, mul_one]
-  exact ⟨hcSwap, hkodd⟩
-
-/-- A permutation with exactly one 2-cycle and all remaining cycle lengths odd has an odd power
-that is a transposition. -/
-theorem _root_.Equiv.Perm.exists_odd_isSwap_pow {σ : Perm α}
-    (htwo : σ.cycleType.count 2 = 1)
-    (hodd : ∀ n ∈ σ.cycleType, n ≠ 2 → Odd n) :
-    ∃ k, Odd k ∧ (σ ^ k).IsSwap := by
-  have h := σ.isSwap_pow_prod_erase_two_cycleType_and_odd htwo hodd
-  exact ⟨(σ.cycleType.erase 2).prod, h.2, h.1⟩
 
 end TauCeti
