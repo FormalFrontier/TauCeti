@@ -37,7 +37,7 @@ def _root_.QuadraticMap.Represents (Q : QuadraticMap R M N) (a : N) : Prop := �
 
 /-- Every quadratic map represents zero, using the zero vector. -/
 @[simp]
-theorem _root_.QuadraticMap.represents_zero (Q : QuadraticMap R M N) : Represents Q 0 :=
+theorem _root_.QuadraticMap.represents_zero (Q : QuadraticMap R M N) : ∃ v, Q v = 0 :=
   ⟨0, Q.map_zero⟩
 
 @[simp]
@@ -86,12 +86,11 @@ theorem _root_.QuadraticMap.represents_of_nondegenerate_of_isotropic (Q : Quadra
 /-- Multiplying a represented unit by a square preserves representation, in both directions. -/
 @[simp]
 theorem _root_.QuadraticMap.mem_unitValueSet_mul_square_iff (Q : QuadraticMap R M R) (a b : Rˣ) :
-    a * b ^ 2 ∈ unitValueSet Q ↔ a ∈ unitValueSet Q := by
+    (∃ v, Q v = (a : R) * (b : R) ^ 2) ↔ ∃ v, Q v = (a : R) := by
   constructor
   · rintro ⟨v, hv⟩
     refine ⟨(↑(b⁻¹ : Rˣ) : R) • v, ?_⟩
     rw [Q.map_smul, smul_eq_mul, hv]
-    rw [Units.val_mul, Units.val_pow_eq_pow_val]
     rw [pow_two]
     calc
       ((↑(b⁻¹ : Rˣ) : R) * ↑(b⁻¹ : Rˣ)) *
@@ -103,7 +102,6 @@ theorem _root_.QuadraticMap.mem_unitValueSet_mul_square_iff (Q : QuadraticMap R 
   · rintro ⟨v, hv⟩
     refine ⟨(b : R) • v, ?_⟩
     rw [Q.map_smul, smul_eq_mul, hv]
-    rw [Units.val_mul, Units.val_pow_eq_pow_val]
     rw [pow_two]
     ac_rfl
 
