@@ -77,6 +77,7 @@ def IsLatticeRational (i : N →+ V) (σ : PointedCone ℝ V) : Prop :=
 /-- The characteristic property of `IsLatticeRational`. The definition is not `@[expose]`, so
 this theorem, and not the anonymous constructor, is how downstream modules introduce and
 eliminate lattice rationality. -/
+@[simp]
 theorem isLatticeRational_iff :
     IsLatticeRational i σ ↔ ∃ s : Finset N, σ = PointedCone.hull ℝ (i '' (s : Set N)) := (Iff.rfl)
 
