@@ -116,6 +116,8 @@ private theorem symmetricAlgebraBialgEquiv_symm_ι {P N : Type*}
     (symmetricAlgebraBialgEquiv (K := K) e).symm (SymmetricAlgebra.ι K N n) =
     SymmetricAlgebra.ι K P (e.symm n) :=
   by
+    -- `BialgEquiv.ofAlgEquiv` keeps the underlying inverse algebra equivalence definitionally.
+    -- Expose that wrapper before using the generator equation for `mapEquiv.symm`.
     change (SymmetricAlgebra.mapEquiv K e).symm (SymmetricAlgebra.ι K N n) = _
     simp
 

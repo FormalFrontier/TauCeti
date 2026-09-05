@@ -24,8 +24,8 @@ passing to symmetric algebras.
 
 * `SymmetricAlgebra.map_ι`: evaluation of the induced map on a canonical generator.
 * `SymmetricAlgebra.map_id` and `SymmetricAlgebra.map_comp`: functoriality laws.
-* `SymmetricAlgebra.map_injective_of_leftInverse` and
-  `SymmetricAlgebra.map_surjective_of_rightInverse`: transport of split morphisms.
+* `SymmetricAlgebra.map_injective_of_leftInverse` and `SymmetricAlgebra.map_surjective`:
+  transport of injective and surjective morphisms.
 
 ## Roadmap
 
@@ -111,10 +111,24 @@ theorem map_injective_of_leftInverse (f : M →ₗ[R] N) (g : N →ₗ[R] M)
     (h : g.comp f = LinearMap.id) : Function.Injective (map R f) :=
   (map_leftInverse R h).injective
 
-/-- A split epimorphism induces a surjective map of symmetric algebras. -/
-theorem map_surjective_of_rightInverse (f : M →ₗ[R] N) (g : N →ₗ[R] M)
-    (h : f.comp g = LinearMap.id) : Function.Surjective (map R f) :=
-  (map_rightInverse R h).surjective
+/-- A surjective linear map induces a surjective map of symmetric algebras. -/
+theorem map_surjective {f : M →ₗ[R] N} (hf : Function.Surjective f) :
+    Function.Surjective (map R f) := by
+  intro a
+  induction a using SymmetricAlgebra.induction with
+  | algebraMap r =>
+      exact ⟨algebraMap R (SymmetricAlgebra R M) r, by simp [map]⟩
+  | ι n =>
+      obtain ⟨m, rfl⟩ := hf n
+      exact ⟨ι R M m, by simp⟩
+  | mul a b ha hb =>
+      obtain ⟨a', ha'⟩ := ha
+      obtain ⟨b', hb'⟩ := hb
+      exact ⟨a' * b', by simp [ha', hb']⟩
+  | add a b ha hb =>
+      obtain ⟨a', ha'⟩ := ha
+      obtain ⟨b', hb'⟩ := hb
+      exact ⟨a' + b', by simp [ha', hb']⟩
 
 /-- A linear equivalence induces an algebra equivalence of symmetric algebras. -/
 noncomputable def mapEquiv (e : M ≃ₗ[R] N) :
