@@ -37,11 +37,9 @@ subgroup of a connected solvable affine group is unipotent.
   derived subgroup supplies a weight vector in every nonzero finite-dimensional comodule.
 * `TauCeti.Comodule.hasNonzeroWeightVector_of_geometricallyUnipotent_derived`: the same conclusion
   phrased using the geometric-unipotence object property.
-* `TauCeti.Comodule.
-    exists_basis_coefficientMatrix_isUpperTriangular_of_forall_isUnipotentPoint_derived`:
+* `exists_basis_coefficientMatrix_isUpperTriangular_of_forall_isUnipotentPoint_derived`:
   the resulting Lie--Kolchin upper-triangular basis.
-* `TauCeti.Comodule.
-    exists_basis_coefficientMatrix_isUpperTriangular_of_geometricallyUnipotent_derived`:
+* `exists_basis_coefficientMatrix_isUpperTriangular_of_geometricallyUnipotent_derived`:
   the geometric-unipotence formulation of that basis theorem.
 
 The corresponding declarations taking `I` and `hID` apply to any closed subgroup containing the
