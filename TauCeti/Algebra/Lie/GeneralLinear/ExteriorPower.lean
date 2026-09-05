@@ -381,17 +381,6 @@ private theorem lie_single_basisPath_transition (d : ℕ) (v w : Fin d → ι)
   exact congrArg (ιMulti K d) (congrArg (fun f ↦
     fun l ↦ (Pi.single (f l) (1 : K) : ι → K)) hupdate)
 
-private theorem lie_single_basisPath_transition_of_update (d : ℕ) (v w : Fin d → ι)
-    (hv : Function.Injective v) (a : Fin d) (i : ι)
-    (hxa : i = w a) (hvw : ∀ l, l ≠ a → v l = w l) :
-    letI : LieRingModule (Matrix ι ι K) (⋀[K]^d (ι → K)) :=
-      glLieRingModule (K := K) (n := ι) d
-    ⁅Matrix.single i (v a) (1 : K),
-      ιMulti K d (fun l ↦ (Pi.single (v l) (1 : K) : ι → K))⁆ =
-        ιMulti K d (fun l ↦ (Pi.single (w l) (1 : K) : ι → K)) := by
-  apply lie_single_basisPath_transition (K := K) d v w hv a i
-  exact Function.update_eq_iff.2 ⟨hxa, hvw⟩
-
 private theorem basisPath_succ_eq_of_ne (d : ℕ) (h : d ≤ Fintype.card ι) (hk : k < d)
     (s : Set.powersetCard ι d) (a l : Fin d) (hla : l ≠ a)
     (ha : a = ⟨k, hk⟩) :
