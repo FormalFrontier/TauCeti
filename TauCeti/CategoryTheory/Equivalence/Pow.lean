@@ -42,8 +42,11 @@ universe v u
 variable {C : Type u} [Category.{v} C]
 
 /-- **The successor isomorphism `e ^ (j + 1) ≅ e ⋙ e ^ j`.**  Mathlib's power is built by
-prepending a copy of `e`, so this is the identity except at the two exponents where the recursion
-bottoms out. -/
+prepending a copy of `e`, so at a positive exponent the isomorphism is the identity.  Each of the
+remaining cases inserts exactly what the recursion leaves out there: a right unitor at `j = 0`,
+where `e ^ 0` is the identity functor; the unit isomorphism at `j = -1`, where `e ⋙ e ^ (-1)` is
+`e ⋙ e.inverse`; and at every `j ≤ -2` a composite of a left unitor, the unit isomorphism and an
+associator, which grows a negative power by inserting `e ⋙ e.inverse` in front of it. -/
 def _root_.CategoryTheory.Equivalence.powSuccIso (e : C ≌ C) : ∀ j : ℤ,
     (e ^ (j + 1)).functor ≅ e.functor ⋙ (e ^ j).functor
   | (0 : ℕ) => (Functor.rightUnitor e.functor).symm
