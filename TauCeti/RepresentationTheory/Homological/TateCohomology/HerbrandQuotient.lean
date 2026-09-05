@@ -13,24 +13,20 @@ public import Mathlib.Data.ZMod.QuotientRing
 # Herbrand quotients of finite cyclic group representations
 
 For a representation `M` of a finite cyclic group, its Herbrand quotient is the quotient of the
-orders of `H-hat^0(G, M)` and `H-hat^(-1)(G, M)`. This file first supplies the missing generic
-degree `-1` description
+orders of `H-hat^0(G, M)` and `H-hat^(-1)(G, M)`. This file defines it directly on Mathlib's
+Tate-cohomology carrier, on top of the low-degree descriptions
 
-`H-hat^(-1)(G, M) = ker(N) / I_G M`,
+`H-hat^0(G, M) = M^G / N M` and `H-hat^(-1)(G, M) = ker(N) / I_G M`,
 
-where `I_G M` is the kernel of the coinvariants quotient. It then defines the Herbrand quotient
-directly on Mathlib's Tate-cohomology carrier and proves its two base calculations: it is `1` for
-a finite module, and it is `|G|` for the trivial integral representation.
+and proves its two base calculations: the quotient is `1` for a finite module, and it is `|G|`
+for the trivial integral representation.
 
-The proofs are adapted to Mathlib's current Tate complex from the corresponding explicit models
-and calculations in `ClassFieldTheory/Cohomology/FiniteCyclic/ExplicitTate.lean` and
+The proofs are adapted to Mathlib's current Tate complex from the corresponding calculations in
 `ClassFieldTheory/Cohomology/FiniteCyclic/HerbrandQuotient/{Defs,Finite,Trivial}.lean` in
 `kbuzzard/ClassFieldTheory`, commit `ccc3323c6750abca25b49b35106f54eb3a398509`.
 
 ## Main definitions
 
-* `TauCeti.TateCohomology.HNegOneIsoNormKernelQuotient` identifies degree `-1` Tate cohomology
-  with the kernel of the norm modulo the augmentation submodule.
 * `TauCeti.TateCohomology.herbrandQuotient` is the Herbrand quotient.
 * `TauCeti.TateCohomology.herbrandQuotient_of_finite` computes it for a finite module.
 * `TauCeti.TateCohomology.herbrandQuotient_trivial_int_eq_card` computes it for trivial integral
@@ -52,92 +48,11 @@ namespace TauCeti.TateCohomology
 
 variable {R G : Type u} [CommRing R] [Group G] [Fintype G]
 
-namespace NegOne
-
-variable (M : Rep R G)
-
-/-- The concrete short complex computing degree `-1` Tate cohomology. -/
-private def shortComplex : ShortComplex (ModuleCat R) :=
-  .mk (d₁₀ M) M.norm.toModuleCatHom (Rep.comp_eq_zero M)
-
-/-- The degree `-1` part of the Tate complex is the augmentation-to-norm short complex. -/
-private def isoShortComplex : (tateComplex M).sc (-1) ≅ shortComplex M := by
-  have hnorm :
-      (chainsIso₀ M).hom ≫ M.norm.toModuleCatHom =
-        M.tateNorm ≫ (cochainsIso₀ M).hom := by
-    simp only [Rep.tateNorm, Category.assoc, Iso.inv_hom_id, Category.comp_id]
-  exact (tateComplex M).isoSc' (-2) (-1) 0 (by simp) (by simp) ≪≫
-    ShortComplex.isoMk (chainsIso₁ M) (chainsIso₀ M) (cochainsIso₀ M)
-      (comp_d₁₀_eq M) hnorm
-
-end NegOne
-
-/-- Degree `-1` Tate cohomology is the kernel of the norm modulo the augmentation submodule,
-namely the kernel of the quotient to coinvariants. -/
-def HNegOneIsoNormKernelQuotient (M : Rep R G) :
-    tateCohomology M (-1) ≅ ModuleCat.of R
-      (ker M.ρ.norm ⧸
-        (Representation.Coinvariants.ker M.ρ).submoduleOf (ker M.ρ.norm)) := calc
-  tateCohomology M (-1) ≅ (NegOne.shortComplex M).homology :=
-    ShortComplex.homologyMapIso (NegOne.isoShortComplex M)
-  _ ≅ ModuleCat.of R (ker M.ρ.norm ⧸ _) :=
-    ShortComplex.moduleCatHomologyIso _
-  _ ≅ ModuleCat.of R
-      (ker M.ρ.norm ⧸
-        (Representation.Coinvariants.ker M.ρ).submoduleOf (ker M.ρ.norm)) := by
-    refine (Submodule.Quotient.equiv _ _ (LinearEquiv.refl R _) ?_).toModuleIso
-    rw [← range_d₁₀_eq_coinvariantsKer]
-    refine Submodule.ext fun ⟨x, hx⟩ ↦ ⟨?_, ?_⟩
-    · rintro ⟨_, ⟨y, rfl⟩, hy⟩
-      exact ⟨y, congr(Subtype.val $hy)⟩
-    · rintro ⟨y, rfl⟩
-      exact ⟨⟨d₁₀ M y,
-        LinearMap.congr_fun (ModuleCat.hom_ext_iff.mp (Rep.comp_eq_zero M)) y⟩,
-        ⟨_, rfl⟩, rfl⟩
-
-/-- The quotient map from norm-zero representatives to degree `-1` Tate cohomology. -/
-def HNegOneπ (M : Rep R G) : ModuleCat.of R (ker M.ρ.norm) ⟶ tateCohomology M (-1) :=
-  ModuleCat.ofHom
-      (Submodule.mkQ ((Representation.Coinvariants.ker M.ρ).submoduleOf (ker M.ρ.norm))) ≫
-    (HNegOneIsoNormKernelQuotient M).inv
-
-instance (M : Rep R G) : Epi (HNegOneπ M) :=
-  have : Epi (ModuleCat.ofHom
-      (Submodule.mkQ ((Representation.Coinvariants.ker M.ρ).submoduleOf (ker M.ρ.norm)))) :=
-    (ModuleCat.epi_iff_surjective _).2 (Submodule.mkQ_surjective _)
-  inferInstanceAs <| Epi (_ ≫ _)
-
-/-- Under the degree `-1` identification, `HNegOneπ` is the quotient map by the augmentation
-submodule. -/
-@[reassoc (attr := simp), elementwise (attr := simp)]
-theorem HNegOneπ_comp_HNegOneIsoNormKernelQuotient_hom (M : Rep R G) :
-    HNegOneπ M ≫ (HNegOneIsoNormKernelQuotient M).hom =
-      ModuleCat.ofHom
-        (Submodule.mkQ
-          ((Representation.Coinvariants.ker M.ρ).submoduleOf (ker M.ρ.norm))) := by
-  simp [HNegOneπ]
-
-/-- A norm-zero element represents zero in degree `-1` Tate cohomology exactly when it belongs to
-the augmentation submodule. -/
-@[simp]
-theorem HNegOneπ_eq_zero_iff {M : Rep R G} (x : ker M.ρ.norm) :
-    HNegOneπ M x = 0 ↔ x ∈
-      (Representation.Coinvariants.ker M.ρ).submoduleOf (ker M.ρ.norm) := by
-  rw [← Submodule.Quotient.mk_eq_zero,
-    ← HNegOneπ_comp_HNegOneIsoNormKernelQuotient_hom_apply]
-  exact ((HNegOneIsoNormKernelQuotient M).toLinearEquiv.map_eq_zero_iff).symm
-
-/-- Two norm-zero elements represent the same degree `-1` Tate class exactly when their
-difference belongs to the augmentation submodule. -/
-@[simp]
-theorem HNegOneπ_eq_iff {M : Rep R G} (x y : ker M.ρ.norm) :
-    HNegOneπ M x = HNegOneπ M y ↔ x - y ∈
-      (Representation.Coinvariants.ker M.ρ).submoduleOf (ker M.ρ.norm) := by
-  rw [← sub_eq_zero, ← map_sub, HNegOneπ_eq_zero_iff]
-
-/-- The Herbrand quotient, with the usual convention that it is zero if either Tate group is
-infinite. The definition makes sense for any finite group; periodicity makes it useful for cyclic
-groups. -/
+/-- The Herbrand quotient, the order of degree-zero Tate cohomology divided by the order of
+degree `-1` Tate cohomology. Classically the invariant is only defined when both Tate groups are
+finite; this definition is totalized by `Nat.card`, which is `0` on an infinite type, so together
+with division by zero it returns `0` as soon as either group is infinite. The definition makes
+sense for any finite group; periodicity makes it useful for cyclic groups. -/
 def herbrandQuotient (M : Rep R G) : ℚ :=
   Nat.card (tateCohomology M 0) / Nat.card (tateCohomology M (-1))
 
@@ -242,37 +157,32 @@ section TrivialInt
 
 variable (H : Type) [Group H] [Fintype H]
 
-/-- For trivial integral coefficients, the norm image is the subgroup generated by the order of
-the group. -/
-private theorem range_norm_trivial_int :
-    range (Rep.trivial ℤ H ℤ).ρ.norm = Ideal.span {(Nat.card H : ℤ)} := by
-  ext x
-  simp [Representation.norm, Ideal.mem_span_singleton', mul_comm]
-
 /-- Degree-zero Tate cohomology with trivial integral coefficients is `ZMod |G|`. -/
-def H0IsoTrivialIntZModCard :
+def H0LinearEquivTrivialIntZModCard :
     tateCohomology (Rep.trivial ℤ H ℤ) 0 ≃ₗ[ℤ] ZMod (Nat.card H) := by
+  -- A trivial representation is its own invariant submodule, so the inclusion of the invariants
+  -- is an equivalence onto `ℤ`.
   let e : (Rep.trivial ℤ H ℤ).ρ.invariants ≃ₗ[ℤ] ℤ :=
     LinearEquiv.ofEq _ _ (Representation.invariants_eq_top _) ≪≫ₗ Submodule.topEquiv
+  have he : (e : (Rep.trivial ℤ H ℤ).ρ.invariants →ₗ[ℤ] ℤ) =
+      (Rep.trivial ℤ H ℤ).ρ.invariants.subtype := by
+    ext x
+    simp [e]
+  have hsurjective : Function.Surjective
+      ⇑(Rep.trivial ℤ H ℤ).ρ.invariants.subtype :=
+    LinearMap.range_eq_top.mp <| by
+      rw [Submodule.range_subtype, Representation.invariants_eq_top]
   refine (H0IsoNormQuotient (Rep.trivial ℤ H ℤ)).toLinearEquiv ≪≫ₗ
     Submodule.Quotient.equiv _ _ e ?_ ≪≫ₗ
       (Int.quotientSpanNatEquivZMod _).toIntLinearEquiv
-  have he : e.toLinearMap = (Rep.trivial ℤ H ℤ).ρ.invariants.subtype := by
-    ext
-    rfl
-  have hsurjective : Function.Surjective
-      (Rep.trivial ℤ H ℤ).ρ.invariants.subtype := by
-    rw [← he]
-    exact e.surjective
-  rw [show (e : _ →ₗ[ℤ] _) = (Rep.trivial ℤ H ℤ).ρ.invariants.subtype from he,
-    Submodule.submoduleOf, Submodule.map_comap_eq_of_surjective hsurjective,
+  rw [he, Submodule.submoduleOf, Submodule.map_comap_eq_of_surjective hsurjective,
     range_norm_trivial_int]
 
 /-- The order of degree-zero Tate cohomology with trivial integral coefficients is the order of
 the group. -/
 theorem natCard_tateCohomology_zero_trivial_int :
     Nat.card (tateCohomology (Rep.trivial ℤ H ℤ) 0) = Nat.card H := by
-  rw [Nat.card_congr (H0IsoTrivialIntZModCard H).toEquiv, Nat.card_zmod]
+  rw [Nat.card_congr (H0LinearEquivTrivialIntZModCard H).toEquiv, Nat.card_zmod]
 
 /-- Degree `-1` Tate cohomology with trivial integral coefficients is trivial. -/
 theorem subsingleton_tateCohomology_negOne_trivial_int :
