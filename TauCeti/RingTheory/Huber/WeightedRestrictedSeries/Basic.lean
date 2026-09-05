@@ -734,6 +734,11 @@ noncomputable instance weightedRestrictedSubring.instAlgebra [NonarchimedeanRing
     (T : Fin k → Set A) (hT : IsWeightFamily T) : Algebra A (weightedRestrictedSubring T hT) :=
   (weightedC T hT).toAlgebra
 
+/-- The structure map of the `A`-algebra `A⟨X⟩_T` is the constant-series embedding. -/
+theorem algebraMap_weightedRestrictedSubring [NonarchimedeanRing A] (T : Fin k → Set A)
+    (hT : IsWeightFamily T) :
+    algebraMap A (weightedRestrictedSubring T hT) = weightedC T hT := (rfl)
+
 @[simp]
 theorem coe_algebraMap_weightedRestrictedSubring [NonarchimedeanRing A] {T : Fin k → Set A}
     {hT : IsWeightFamily T} (a : A) :
