@@ -103,7 +103,7 @@ variable {R : Type*} [CommRing R] [IsDedekindDomain R]
 variable {K : Type*} [Field K] [Algebra R K] [IsFractionRing R K]
 
 /-- Only finitely many factors in the unit-level prime factorization are nontrivial. -/
-lemma finite_mulSupport_unitOfPrime_zpow (I : (FractionalIdeal R⁰ K)ˣ) :
+lemma hasFiniteMulSupport_unitOfPrime_zpow (I : (FractionalIdeal R⁰ K)ˣ) :
     (Function.mulSupport fun v : HeightOneSpectrum R ↦
       v.unitOfPrime K ^ count K v (I : FractionalIdeal R⁰ K)).Finite := by
   refine (Filter.eventually_cofinite.mp
@@ -122,7 +122,7 @@ lemma finprod_unitOfPrime_zpow_count (I : (FractionalIdeal R⁰ K)ˣ) :
         ((v.unitOfPrime K ^ count K v (I : FractionalIdeal R⁰ K) :
           (FractionalIdeal R⁰ K)ˣ) : FractionalIdeal R⁰ K) :=
     MonoidHom.map_finprod (Units.coeHom (FractionalIdeal R⁰ K))
-      (finite_mulSupport_unitOfPrime_zpow I)
+      (hasFiniteMulSupport_unitOfPrime_zpow I)
   refine Units.ext ?_
   rw [hmap]
   simp only [Units.val_zpow_eq_zpow_val, HeightOneSpectrum.coe_unitOfPrime]

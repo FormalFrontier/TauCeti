@@ -101,7 +101,7 @@ theorem idealsAway_eq_closure_primes (S : Finset (HeightOneSpectrum (𝓞 K))) :
   apply le_antisymm
   · intro I hI
     classical
-    have hfin := FractionalIdeal.finite_mulSupport_unitOfPrime_zpow (K := K) I
+    have hfin := FractionalIdeal.hasFiniteMulSupport_unitOfPrime_zpow (K := K) I
     rw [FractionalIdeal.finprod_unitOfPrime_zpow_count I,
       finprod_eq_prod_of_mulSupport_toFinset_subset _ hfin (Finset.Subset.refl _)]
     refine Subgroup.prod_mem _ fun v hv ↦ Subgroup.zpow_mem _ (Subgroup.subset_closure ?_) _

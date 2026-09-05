@@ -58,7 +58,7 @@ lemma _root_.ClassGroup.mk_mem_closure_of_count_eq_zero {T : Set (HeightOneSpect
     (h : ∀ v ∉ T, FractionalIdeal.count K v (I : FractionalIdeal R⁰ K) = 0) :
     ClassGroup.mk K I ∈ Subgroup.closure (HeightOneSpectrum.classGroupMk '' T) := by
   classical
-  have hfin := FractionalIdeal.finite_mulSupport_unitOfPrime_zpow (K := K) I
+  have hfin := FractionalIdeal.hasFiniteMulSupport_unitOfPrime_zpow (K := K) I
   rw [FractionalIdeal.finprod_unitOfPrime_zpow_count I,
     finprod_eq_prod_of_mulSupport_toFinset_subset _ hfin (Finset.Subset.refl _), map_prod]
   refine Subgroup.prod_mem _ fun v hv ↦ ?_
