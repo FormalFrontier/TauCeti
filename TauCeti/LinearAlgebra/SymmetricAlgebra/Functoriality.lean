@@ -15,6 +15,11 @@ map from the universal property, proves its identity and composition laws, and p
 equivalences as algebra equivalences. Chosen one-sided inverses remain one-sided inverses after
 passing to symmetric algebras.
 
+The construction and its lemma set follow Mathlib's `CliffordAlgebra.map` and `ExteriorAlgebra.map`
+functoriality APIs (`Mathlib/LinearAlgebra/CliffordAlgebra/Basic.lean` and
+`Mathlib/LinearAlgebra/ExteriorAlgebra/Basic.lean`); `map_surjective` adapts the corresponding
+Clifford-algebra induction.
+
 ## Main definitions
 
 * `SymmetricAlgebra.map`: the algebra homomorphism induced by a linear map.
@@ -23,9 +28,9 @@ passing to symmetric algebras.
 ## Main results
 
 * `SymmetricAlgebra.map_ι`: evaluation of the induced map on a canonical generator.
-* `SymmetricAlgebra.map_id` and `SymmetricAlgebra.map_comp`: functoriality laws.
+* `SymmetricAlgebra.map_id` and `SymmetricAlgebra.map_comp_map`: functoriality laws.
 * `SymmetricAlgebra.map_injective_of_leftInverse` and `SymmetricAlgebra.map_surjective`:
-  transport of injective and surjective morphisms.
+  transport of split monomorphisms and of surjections.
 
 ## Roadmap
 
@@ -57,21 +62,6 @@ theorem map_ι (f : M →ₗ[R] N) (a : M) :
     map R f (ι R M a) = ι R N (f a) := by
   simp [map]
 
-/-- An algebra homomorphism between symmetric algebras is induced by `f` exactly when it has the
-prescribed value on every canonical generator. -/
-theorem map_unique (f : M →ₗ[R] N)
-    (g : SymmetricAlgebra R M →ₐ[R] SymmetricAlgebra R N) :
-    (∀ a, g (ι R M a) = ι R N (f a)) ↔ g = map R f := by
-  constructor
-  · intro h
-    apply algHom_ext
-    apply LinearMap.ext
-    intro a
-    simp only [LinearMap.comp_apply]
-    exact (h a).trans (map_ι R f a).symm
-  · rintro rfl
-    exact map_ι R f
-
 /-- The identity linear map induces the identity algebra homomorphism. -/
 @[simp]
 theorem map_id :
@@ -80,10 +70,17 @@ theorem map_id :
   ext a
   simp
 
+/-- The induced map composed with the canonical generator map is the original linear map. -/
+@[simp]
+theorem map_comp_ι (f : M →ₗ[R] N) :
+    (map R f).toLinearMap ∘ₗ ι R M = ι R N ∘ₗ f := by
+  ext a
+  simp
+
 /-- Composition of linear maps becomes composition of the induced algebra homomorphisms. -/
 @[simp]
-theorem map_comp (g : N →ₗ[R] P) (f : M →ₗ[R] N) :
-    map R (g.comp f) = (map R g).comp (map R f) := by
+theorem map_comp_map (g : N →ₗ[R] P) (f : M →ₗ[R] N) :
+    (map R g).comp (map R f) = map R (g.comp f) := by
   apply algHom_ext
   ext a
   simp
@@ -91,24 +88,16 @@ theorem map_comp (g : N →ₗ[R] P) (f : M →ₗ[R] N) :
 /-- A left inverse of linear maps induces a left inverse of the corresponding symmetric-algebra
 maps. -/
 theorem map_leftInverse {f : M →ₗ[R] N} {g : N →ₗ[R] M}
-    (h : g.comp f = LinearMap.id) : Function.LeftInverse (map R g) (map R f) := by
+    (h : Function.LeftInverse g f) : Function.LeftInverse (map R g) (map R f) := by
   intro a
   have hmaps : (map R g).comp (map R f) = AlgHom.id R (SymmetricAlgebra R M) := by
-    rw [← map_comp, h, map_id]
-  exact AlgHom.congr_fun hmaps a
-
-/-- A right inverse of linear maps induces a right inverse of the corresponding symmetric-algebra
-maps. -/
-theorem map_rightInverse {f : M →ₗ[R] N} {g : N →ₗ[R] M}
-    (h : f.comp g = LinearMap.id) : Function.RightInverse (map R g) (map R f) := by
-  intro a
-  have hmaps : (map R f).comp (map R g) = AlgHom.id R (SymmetricAlgebra R N) := by
-    rw [← map_comp, h, map_id]
+    have hgf : g.comp f = LinearMap.id := LinearMap.ext fun x => h x
+    rw [map_comp_map, hgf, map_id]
   exact AlgHom.congr_fun hmaps a
 
 /-- A split monomorphism induces an injective map of symmetric algebras. -/
 theorem map_injective_of_leftInverse (f : M →ₗ[R] N) (g : N →ₗ[R] M)
-    (h : g.comp f = LinearMap.id) : Function.Injective (map R f) :=
+    (h : Function.LeftInverse g f) : Function.Injective (map R f) :=
   (map_leftInverse R h).injective
 
 /-- A surjective linear map induces a surjective map of symmetric algebras. -/
@@ -117,7 +106,7 @@ theorem map_surjective {f : M →ₗ[R] N} (hf : Function.Surjective f) :
   intro a
   induction a using SymmetricAlgebra.induction with
   | algebraMap r =>
-      exact ⟨algebraMap R (SymmetricAlgebra R M) r, by simp [map]⟩
+      exact ⟨algebraMap R (SymmetricAlgebra R M) r, by simp⟩
   | ι n =>
       obtain ⟨m, rfl⟩ := hf n
       exact ⟨ι R M m, by simp⟩
@@ -134,8 +123,8 @@ theorem map_surjective {f : M →ₗ[R] N} (hf : Function.Surjective f) :
 noncomputable def mapEquiv (e : M ≃ₗ[R] N) :
     SymmetricAlgebra R M ≃ₐ[R] SymmetricAlgebra R N :=
   AlgEquiv.ofAlgHom (map R e.toLinearMap) (map R e.symm.toLinearMap)
-    (by rw [← map_comp, e.comp_symm, map_id])
-    (by rw [← map_comp, e.symm_comp, map_id])
+    (by rw [map_comp_map, e.comp_symm, map_id])
+    (by rw [map_comp_map, e.symm_comp, map_id])
 
 /-- The algebra homomorphism underlying `mapEquiv` is induced by the underlying linear map. -/
 @[simp]
@@ -143,12 +132,11 @@ theorem mapEquiv_toAlgHom (e : M ≃ₗ[R] N) :
     (mapEquiv R e).toAlgHom = map R e.toLinearMap := by
   rw [mapEquiv, AlgEquiv.toAlgHom_ofAlgHom]
 
-/-- The induced algebra equivalence acts on canonical generators by the original linear
-equivalence. -/
+/-- The induced equivalence agrees with the induced algebra map on every element. -/
 @[simp]
-theorem mapEquiv_ι (e : M ≃ₗ[R] N) (a : M) :
-    mapEquiv R e (ι R M a) = ι R N (e a) := by
-  rw [← AlgEquiv.toAlgHom_apply, mapEquiv_toAlgHom, map_ι, LinearEquiv.coe_toLinearMap]
+theorem mapEquiv_apply (e : M ≃ₗ[R] N) (a : SymmetricAlgebra R M) :
+    mapEquiv R e a = map R e.toLinearMap a := by
+  rw [← AlgEquiv.toAlgHom_apply, mapEquiv_toAlgHom]
 
 /-- Passing the inverse linear equivalence to symmetric algebras gives the inverse algebra
 equivalence. -/
@@ -157,8 +145,12 @@ theorem mapEquiv_symm (e : M ≃ₗ[R] N) :
     (mapEquiv R e).symm = mapEquiv R e.symm := by
   apply AlgEquiv.ext
   intro a
-  rw [mapEquiv, AlgEquiv.ofAlgHom_symm]
-  simp only [AlgEquiv.ofAlgHom_apply, mapEquiv, LinearEquiv.symm_symm]
+  rw [AlgEquiv.symm_apply_eq, mapEquiv_apply, mapEquiv_apply]
+  have hcomp : (map R e.toLinearMap).comp (map R e.symm.toLinearMap) =
+      AlgHom.id R (SymmetricAlgebra R N) := by
+    rw [map_comp_map, e.comp_symm, map_id]
+  rw [← AlgHom.comp_apply, hcomp]
+  rfl
 
 /-- The identity linear equivalence induces the identity algebra equivalence. -/
 @[simp]
@@ -172,17 +164,12 @@ equivalences. -/
 @[simp]
 theorem mapEquiv_trans (e : M ≃ₗ[R] N) (d : N ≃ₗ[R] P) :
     (mapEquiv R e).trans (mapEquiv R d) = mapEquiv R (e.trans d) := by
-  apply AlgEquiv.coe_toAlgHom_injective
-  rw [mapEquiv_toAlgHom]
-  have htrans : ((mapEquiv R e).trans (mapEquiv R d)).toAlgHom =
-      (mapEquiv R d).toAlgHom.comp (mapEquiv R e).toAlgHom := by
-    apply AlgHom.ext
-    intro a
-    simp only [AlgEquiv.toAlgHom_apply, AlgEquiv.trans_apply, AlgHom.comp_apply]
-  rw [htrans, mapEquiv_toAlgHom, mapEquiv_toAlgHom]
-  have h : (e.trans d).toLinearMap = d.toLinearMap.comp e.toLinearMap := by
-    ext a
-    simp only [LinearMap.comp_apply, LinearEquiv.trans_apply, LinearEquiv.coe_toLinearMap]
-  rw [h, map_comp]
+  apply AlgEquiv.ext
+  intro a
+  simp only [AlgEquiv.trans_apply, mapEquiv_apply]
+  calc
+    _ = ((map R d.toLinearMap).comp (map R e.toLinearMap)) a := rfl
+    _ = map R (d.toLinearMap.comp e.toLinearMap) a := by rw [map_comp_map]
+    _ = _ := by rw [LinearEquiv.coe_trans]
 
 end SymmetricAlgebra

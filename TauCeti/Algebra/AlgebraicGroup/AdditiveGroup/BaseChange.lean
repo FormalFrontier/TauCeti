@@ -91,7 +91,7 @@ private noncomputable def symmetricAlgebraBialgEquiv {P N : Type*}
               (SymmetricAlgebra.mapEquiv K e (SymmetricAlgebra.ι K P m)) =
             (Bialgebra.counitAlgHom K (SymmetricAlgebra K P))
               (SymmetricAlgebra.ι K P m) := by
-        rw [SymmetricAlgebra.mapEquiv_ι]
+        rw [SymmetricAlgebra.mapEquiv_apply, SymmetricAlgebra.map_ι]
         exact (SymmetricAlgebra.algebraMapInv_ι _).trans
           (SymmetricAlgebra.algebraMapInv_ι _).symm
       exact h)
@@ -107,7 +107,12 @@ private theorem symmetricAlgebraBialgEquiv_ι {P N : Type*}
     (e : P ≃ₗ[K] N) (p : P) :
     symmetricAlgebraBialgEquiv (K := K) e (SymmetricAlgebra.ι K P p) =
       SymmetricAlgebra.ι K N (e p) :=
-  SymmetricAlgebra.mapEquiv_ι K e p
+  by
+    rw [symmetricAlgebraBialgEquiv, BialgEquiv.ofAlgEquiv_apply]
+    -- The bialgebra wrapper exposes the algebra equivalence through its `toFun` field.
+    change SymmetricAlgebra.mapEquiv K e (SymmetricAlgebra.ι K P p) = _
+    rw [SymmetricAlgebra.mapEquiv_apply, SymmetricAlgebra.map_ι]
+    rfl
 
 @[simp]
 private theorem symmetricAlgebraBialgEquiv_symm_ι {P N : Type*}
@@ -116,10 +121,11 @@ private theorem symmetricAlgebraBialgEquiv_symm_ι {P N : Type*}
     (symmetricAlgebraBialgEquiv (K := K) e).symm (SymmetricAlgebra.ι K N n) =
     SymmetricAlgebra.ι K P (e.symm n) :=
   by
-    -- `BialgEquiv.ofAlgEquiv` keeps the underlying inverse algebra equivalence definitionally.
-    -- Expose that wrapper before using the generator equation for `mapEquiv.symm`.
-    change (SymmetricAlgebra.mapEquiv K e).symm (SymmetricAlgebra.ι K N n) = _
-    simp
+    have h :
+        symmetricAlgebraBialgEquiv (K := K) e
+            (SymmetricAlgebra.ι K P (e.symm n)) = SymmetricAlgebra.ι K N n := by
+      rw [symmetricAlgebraBialgEquiv_ι, LinearEquiv.apply_symm_apply]
+    rw [← h, BialgEquiv.symm_apply_apply]
 
 section GaCoordinateBialgebra
 
