@@ -105,19 +105,27 @@ theorem residueFieldEquivAdicCompletion_apply_mk (a : R) :
     v.residueFieldEquivAdicCompletion (K := K) (Ideal.Quotient.mk v.asIdeal a) =
       IsLocalRing.residue _ (⟨algebraMap R (v.adicCompletion K) a,
         v.algebraMap_mem_integer_adicCompletion (K := K) a⟩ : 𝒪[v.adicCompletion K]) := by
-  -- `IsLocalRing.ResidueField.mapEquiv f` has `IsLocalRing.ResidueField.map f` as its forward map
-  -- and `.map f.symm` as its inverse, both by construction, so this step is definitional.
-  have hmap : v.residueFieldEquivAdicCompletion (K := K) (Ideal.Quotient.mk v.asIdeal a) =
-      IsLocalRing.ResidueField.map
-        (((RingEquiv.subringCongr (integer_eq_adicCompletionIntegers v)).symm :
-          v.adicCompletionIntegers K ≃+* 𝒪[v.adicCompletion K]) :
-            v.adicCompletionIntegers K →+* 𝒪[v.adicCompletion K])
-        (v.residueFieldEquivAdicCompletionIntegers (K := K) (Ideal.Quotient.mk v.asIdeal a)) :=
-    (rfl)
-  rw [hmap, v.residueFieldEquivAdicCompletionIntegers_apply_mk (K := K) a]
-  -- `IsLocalRing.ResidueField.map_residue` and `RingEquiv.coe_subringCongr_apply` are both `rfl`,
-  -- and so is the description of `algebraMap R (v.adicCompletionIntegers K)`; no rewrite is needed
-  exact (rfl)
+  let e : v.adicCompletionIntegers K ≃+* 𝒪[v.adicCompletion K] :=
+    (RingEquiv.subringCongr (integer_eq_adicCompletionIntegers v)).symm
+  let x : IsLocalRing.ResidueField (v.adicCompletionIntegers K) := by
+    change v.adicCompletionIntegers K ⧸ IsLocalRing.maximalIdeal _
+    exact v.residueFieldEquivAdicCompletionIntegers (K := K)
+      (Ideal.Quotient.mk v.asIdeal a)
+  have hx : x = IsLocalRing.residue _ (algebraMap R (v.adicCompletionIntegers K) a) := by
+    change v.residueFieldEquivAdicCompletionIntegers (K := K)
+      (Ideal.Quotient.mk v.asIdeal a) = _
+    exact v.residueFieldEquivAdicCompletionIntegers_apply_mk (K := K) a
+  change IsLocalRing.ResidueField.mapEquiv e x = _
+  rw [IsLocalRing.ResidueField.mapEquiv_apply, hx, IsLocalRing.ResidueField.map_residue]
+  apply congrArg (IsLocalRing.residue _)
+  apply Subtype.ext
+  dsimp only [e]
+  calc
+    _ = ↑(algebraMap R (v.adicCompletionIntegers K) a) :=
+      RingEquiv.coe_subringCongr_apply
+        (integer_eq_adicCompletionIntegers v).symm _
+    _ = _ := IsScalarTower.algebraMap_apply R (v.adicCompletionIntegers K)
+      (v.adicCompletion K) a
 
 /-- The residue field of `K_v` has cardinality the absolute norm of `v`. -/
 theorem natCard_residueField_adicCompletion_eq_absNorm [Infinite R] :
