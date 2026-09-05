@@ -50,9 +50,9 @@ namespace TauCeti
 variable {G : Type*} [Group G] [TopologicalSpace G] [IsTopologicalGroup G] [CompactSpace G]
   [TotallyDisconnectedSpace G]
 
-omit [TotallyDisconnectedSpace G] in
-/-- Taking the topological closure of a subgroup does not change its image in a finite
-continuous quotient. -/
+omit [CompactSpace G] [TotallyDisconnectedSpace G] in
+/-- Taking the topological closure of a subgroup does not change its image in the quotient by
+an open normal subgroup: that quotient is discrete, so the image is already closed. -/
 @[simp]
 theorem _root_.Subgroup.map_topologicalClosure_quotient_eq (H : Subgroup G)
     (N : OpenNormalSubgroup G) :
@@ -62,10 +62,9 @@ theorem _root_.Subgroup.map_topologicalClosure_quotient_eq (H : Subgroup G)
   · rw [Subgroup.map_le_iff_le_comap]
     apply H.topologicalClosure_minimal
       (Subgroup.le_comap_map (QuotientGroup.mk' N.toSubgroup) H)
-    exact
-      (Set.toFinite
-        (H.map (QuotientGroup.mk' N.toSubgroup) : Set (G ⧸ N.toSubgroup))).isClosed.preimage
-          (QuotientGroup.continuous_mk (N := N.toSubgroup))
+    exact (isClosed_discrete
+      (H.map (QuotientGroup.mk' N.toSubgroup) : Set (G ⧸ N.toSubgroup))).preimage
+        (QuotientGroup.continuous_mk (N := N.toSubgroup))
   · exact Subgroup.map_mono H.le_topologicalClosure
 
 /-- A closed subgroup of a profinite group is the infimum of the subgroups `N ⊔ U`, over the
