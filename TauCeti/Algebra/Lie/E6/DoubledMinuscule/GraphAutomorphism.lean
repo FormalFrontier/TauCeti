@@ -54,12 +54,6 @@ is asserted here.
 * N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Plate V.
 * R. W. Carter, *Finite Groups of Lie Type: Conjugacy Classes and Complex Characters*, §1.15.
 * R. W. Carter, *Simple Groups of Lie Type*, §12.2.
-
-This supplies an explicit representation-level input to the pinnings and pinned-isomorphism
-targets in Layer 9 of `TauCetiRoadmap/ReductiveGroups/README.md`. After milestone L0 identifies the
-carrier with the pinned simply connected `E₆` group, this symmetry supplies the graph part `γ₂`
-required by milestone L1 of `TauCetiRoadmap/CFSGStatement/README.md` for the twisted family
-`²E₆(q)`.
 -/
 
 public section
@@ -439,7 +433,9 @@ theorem graphModuleEquiv_matrixBasis (i : Fin 54) :
   rw [matrixBasis_apply, graphModuleEquiv_latticeBasis]
   rw [matrixBasis_apply, matrixIndexEquiv_symm_graphMatrixPerm, graphMatrixScale]
 
-private theorem matrixWeight_graphMatrixPerm (i : Fin 54) (k : Fin 6) :
+/-- The coordinate permutation of the signed graph symmetry relabels the matrix weights by the
+type-`E₆` diagram involution. -/
+theorem matrixWeight_graphMatrixPerm (i : Fin 54) (k : Fin 6) :
     matrixWeight (graphMatrixPerm i) (graphPermE6 k) = matrixWeight i k := by
   rw [matrixWeight_apply, matrixWeight_apply]
   rw [matrixIndexEquiv_symm_graphMatrixPerm]
