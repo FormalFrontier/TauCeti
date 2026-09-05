@@ -53,16 +53,11 @@ vanishing statement concerns irreducibles that need not occur in `rho` at all. I
 the only datum visible in the answer: the range is Mathlib's sum of the simple `k[G]`-submodules of
 `rho.toRepresentation.asModule` isomorphic to `sigma.toRepresentation.asModule`.
 
-The carrier of `sigma` is only asked to be a finite-dimensional normed space: everything visible
-in the statements reads `sigma` through its dimension, its character and its isomorphism type.
-Unitarity of `sigma`, which the vanishing on the non-matching blocks is proved from, is arranged
-inside the proof by transporting `sigma` to a standard inner-product model of the same dimension
-and replacing it there by a unitary equivalent representation.
-
-The bridge from the blockwise character identities to the ambient representation is
-`ContRepresentation.comp_integratedOperator`: integration is natural with respect to the inclusion
-of an invariant subspace. Complete reducibility is supplied by the invariant orthogonal complement
-of a unitary representation.
+The carrier of `sigma` is only asked to be a finite-dimensional normed space; no inner product on
+it is required, since everything visible in the statements reads `sigma` through its dimension, its
+character and its isomorphism type. The results that see the whole of `rho` — the identity on a
+matching block, the range identification, the fixed-point characterization and idempotence — ask in
+addition that `rho` be unitary; the vanishing on a non-matching block does not.
 
 ## References
 
