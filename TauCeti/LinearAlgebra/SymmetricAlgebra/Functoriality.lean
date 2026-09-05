@@ -117,7 +117,6 @@ theorem mapEquiv_apply (e : M ≃ₗ[R] N) (a : SymmetricAlgebra R M) :
   rw [← AlgEquiv.toAlgHom_apply, mapEquiv_toAlgHom]
 
 /-- The bundled equivalence acts on canonical generators by the underlying linear equivalence. -/
-@[simp]
 theorem mapEquiv_apply_ι (e : M ≃ₗ[R] N) (a : M) :
     mapEquiv R e (ι R M a) = ι R N (e a) := by
   simp [mapEquiv_apply]
