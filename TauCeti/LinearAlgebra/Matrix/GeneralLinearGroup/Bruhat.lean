@@ -17,6 +17,9 @@ public import Mathlib.GroupTheory.Solvable
 -- Non-public: the general double-coset identities — when two classes agree, and that the identity
 -- double coset of a subgroup is the subgroup itself — are used only inside the proofs of the
 -- double-coset results below, which are their specializations to the Borel subgroup of `GL₂`.
+import TauCeti.GroupTheory.DoubleCoset.Identity
+-- Non-public: the generic two-cell generation and maximal-solvability arguments are used only to
+-- derive their `GL₂` specializations below.
 import TauCeti.GroupTheory.DoubleCoset.Generation
 -- Non-public: `SL₂` over an infinite field is nonsolvable, which proves the corresponding result
 -- for `GL₂`.

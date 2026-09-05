@@ -13,8 +13,7 @@ import Mathlib.GroupTheory.IsPerfect
 # Nonsolvability of `SL₂`
 
 If a field contains an element `a` with `a ≠ 0` and `a² ≠ 1`, then `SL₂` is nonsolvable.
-In particular, this holds over every infinite field. The proof uses Mathlib's computation that
-the commutator subgroup is the whole group.
+In particular, this holds over every infinite field.
 
 ## Main declarations
 

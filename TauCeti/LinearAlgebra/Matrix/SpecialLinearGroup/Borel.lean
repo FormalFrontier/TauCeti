@@ -40,8 +40,6 @@ field.
 
 * J. E. Humphreys, *Linear Algebraic Groups*, §28.3.
 * R. Steinberg, *Lectures on Chevalley Groups*, §3.
-* The proofs of `closure_insert_modularGroup_S_eq_top` and `le_of_isSolvable` use the same generic
-  two-double-coset lemmas as their `GL₂` counterparts.
 -/
 
 public section
@@ -55,7 +53,7 @@ universe u
 
 /-- The standard upper-triangular subgroup of `SL₂(R)`, obtained by pulling the
 upper-triangular subgroup of `GL₂(R)` back along the canonical inclusion. -/
-abbrev SL2Borel (R : Type u) [CommRing R] : Subgroup SL(2, R) :=
+def SL2Borel (R : Type u) [CommRing R] : Subgroup SL(2, R) :=
   (GL2Borel R).comap Matrix.SpecialLinearGroup.toGL
 
 namespace SL2Borel
@@ -73,9 +71,11 @@ private theorem coe_modularGroup_S :
 
 /-- An element of `SL₂(R)` belongs to the standard Borel exactly when its lower-left entry
 vanishes. -/
+@[simp]
 theorem mem_iff {g : SL(2, R)} :
     g ∈ SL2Borel R ↔ (g : Matrix (Fin 2) (Fin 2) R) 1 0 = 0 := by
-  exact GL2Borel.mem_iff
+  change Matrix.SpecialLinearGroup.toGL g ∈ GL2Borel R ↔ _
+  rw [GL2Borel.mem_iff, Matrix.SpecialLinearGroup.coe_GL_coe_matrix]
 
 /-- The lower-left entry of an element of the standard Borel subgroup vanishes. -/
 @[simp]
@@ -85,7 +85,8 @@ theorem apply_one_zero (g : SL2Borel R) :
 
 /-- The canonical inclusion from the `SL₂` Borel to the `GL₂` Borel. -/
 def toGL2Borel : SL2Borel R →* GL2Borel R :=
-  Matrix.SpecialLinearGroup.toGL.restrict fun _ hg ↦ hg
+  Matrix.SpecialLinearGroup.toGL.restrict fun _ hg ↦ by
+    exact GL2Borel.mem_iff.mpr (mem_iff.mp hg)
 
 /-- The inclusion of the `SL₂` Borel into the `GL₂` Borel does not change the underlying
 general linear matrix. -/

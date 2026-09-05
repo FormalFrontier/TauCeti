@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.GroupTheory.Solvable
-public import TauCeti.GroupTheory.DoubleCoset.Identity
+public import Mathlib.GroupTheory.DoubleCoset
 
 /-!
 # Generation from two double cosets
