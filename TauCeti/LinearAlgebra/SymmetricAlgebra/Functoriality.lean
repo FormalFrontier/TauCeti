@@ -69,6 +69,7 @@ theorem map_unique (f : M →ₗ[R] N) (g : SymmetricAlgebra R M →ₐ[R] Symme
   · intro h
     apply algHom_ext
     ext a
+    -- `algHom_ext` and `ext` leave the generator equality under bundled maps.
     change g (ι R M a) = map R f (ι R M a)
     rw [h, map_apply_ι]
   · intro h a
@@ -96,6 +97,36 @@ theorem map_comp_map (f : M →ₗ[R] N) (g : N →ₗ[R] P) :
   apply algHom_ext
   ext a
   simp
+
+/-- A left inverse of linear maps induces a left inverse of the corresponding symmetric-algebra
+maps. -/
+theorem map_leftInverse {f : M →ₗ[R] N} {g : N →ₗ[R] M}
+    (h : Function.LeftInverse g f) : Function.LeftInverse (map R g) (map R f) := by
+  intro a
+  have hmaps : (map R g).comp (map R f) = AlgHom.id R (SymmetricAlgebra R M) := by
+    have hgf : g.comp f = LinearMap.id := LinearMap.ext fun x => h x
+    rw [map_comp_map, hgf, map_id]
+  exact AlgHom.congr_fun hmaps a
+
+/-- A right inverse of linear maps induces a right inverse of the corresponding symmetric-algebra
+maps. -/
+theorem map_rightInverse {f : M →ₗ[R] N} {g : N →ₗ[R] M}
+    (h : Function.RightInverse g f) : Function.RightInverse (map R g) (map R f) := by
+  intro a
+  have hmaps : (map R f).comp (map R g) = AlgHom.id R (SymmetricAlgebra R N) := by
+    have hfg : f.comp g = LinearMap.id := LinearMap.ext fun x => h x
+    rw [map_comp_map, hfg, map_id]
+  exact AlgHom.congr_fun hmaps a
+
+/-- A split monomorphism induces an injective map of symmetric algebras. -/
+theorem map_injective_of_leftInverse (f : M →ₗ[R] N) (g : N →ₗ[R] M)
+    (h : Function.LeftInverse g f) : Function.Injective (map R f) :=
+  (map_leftInverse R h).injective
+
+/-- A split epimorphism induces a surjective map of symmetric algebras. -/
+theorem map_surjective_of_rightInverse (f : M →ₗ[R] N) (g : N →ₗ[R] M)
+    (h : Function.RightInverse g f) : Function.Surjective (map R f) :=
+  (map_rightInverse R h).surjective
 
 /-- A linear equivalence induces an algebra equivalence of symmetric algebras. -/
 noncomputable def mapEquiv (e : M ≃ₗ[R] N) :
