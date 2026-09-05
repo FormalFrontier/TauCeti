@@ -31,11 +31,10 @@ the branch's Steinberg map, with the pinned equation `Frob_q (x_i(u)) = x_i(u ^ 
 simple-root subgroups and the description of the points it fixes as those all of whose `54 × 54`
 matrix entries lie in the field of definition `𝔽_q`.
 
-The Steinberg map itself is *not* here, and neither is the candidate group of milestone L3. It is
-the composite `γ₂ ∘ Frob_q`, and the factor still owed on this carrier is `γ₂`, the automorphism
-that the coordinate involution induces, whose construction consumes exactly the weight equivariance
-recorded below. Until it exists there is no Steinberg map to take fixed points of, and none is
-taken. In particular `TauCeti.TypeTwistedE6LieIndex.frobenius` is not that map: the twisted branch
+The Steinberg map itself is *not* here, and no fixed-point subgroup of it is formed. That map is
+the composite `γ₂ ∘ Frob_q`, whose other factor `γ₂` is the automorphism of the carrier that the
+coordinate involution induces; constructing it consumes exactly the weight equivariance recorded
+below. In particular `TauCeti.TypeTwistedE6LieIndex.frobenius` is not that map: the twisted branch
 is precisely the one on which the Steinberg map and its Frobenius factor differ.
 
 Nothing here asserts that the carrier is reductive, that its weight torus is maximal, that it is
@@ -57,7 +56,7 @@ mentioned is finite, perfect, or simple.
   subgroup is the corresponding simple root of
   `TauCeti.DynkinType.simplyConnectedRootDatum` at `E₆`.
 * `TauCeti.TypeTwistedE6LieIndex.frobenius_simpleRootSubgroup`: the pinned equation
-  `Frob_q (x_i(u)) = x_i(u ^ q)`, milestone L1's requirement on the Frobenius factor.
+  `Frob_q (x_i(u)) = x_i(u ^ q)` on the numbered simple-root subgroups.
 * `TauCeti.TypeTwistedE6LieIndex.mem_fixedSubgroup_frobenius_iff`: a point is fixed by `Frob_q`
   exactly when all entries of its `54 × 54` matrix lie in the field of definition.
 * `TauCeti.TypeTwistedE6LieIndex.e6DoubledMinusculeWeight_e6DoubledMinusculeGraphPerm_diagramPerm`:
@@ -92,14 +91,8 @@ imports. What this file supplies is the `²E₆` branch's explicit carrier, its 
 characters read in the `E₆` root datum, the diagram-symmetry data that milestone L1's
 `γ (x_α(t)) = x_{γ α}(t)` will be proved from, and milestone L1's other factor `Frob_q` together
 with its own pinned equation `Frob_q (x_α(t)) = x_α(t ^ q)`; they transfer to the L0 carrier along
-that Layer 9 identification, and not before. Milestone L0 names
-`TauCeti.ValidLieTypeIndex.AmbientGroup`, its `Group` instance, `TauCeti.ValidLieTypeIndex.Closure`
-and `TauCeti.ValidLieTypeIndex.simpleRootSubgroup` as its output; what this branch contributes to
-the first and the last of those is `TauCeti.TypeTwistedE6LieIndex.AmbientGroup` and
-`TauCeti.TypeTwistedE6LieIndex.simpleRootSubgroup` above, and the Frobenius below is an
-endomorphism of that ambient group whose milestone L1 equation is stated against those simple-root
-subgroups. The counterparts on the branches already assembled are
-`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeA.lean`,
+that Layer 9 identification, and not before. The counterparts on the branches already assembled
+are `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeA.lean`,
 `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeE6.lean` and
 `TauCeti/GroupTheory/SpecificGroups/CFSG/Unimodular.lean`, and the branch that likewise stops short
 of a Steinberg map is `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeB2.lean`.
@@ -206,18 +199,18 @@ theorem e6DoubledMinusculeGraphPerm_pow_twistOrder :
 /-- **The `q`-power Frobenius endomorphism of the ambient group of a validated `²E₆` index**, `q`
 being the field order the index records.
 
-It is *not* the Steinberg map of the family. Milestone L1 gives the graph-twisted families the
-Steinberg map `γ₂ ∘ Frob_q`, and on this branch the two genuinely differ: the composite acts on the
-simple-root subgroups through the diagram permutation the index carries, which is
-`TauCeti.graphPermE6` by `TauCeti.TypeTwistedE6LieIndex.diagramPerm_toGraphTwistedIndex` and has
-order two by `TauCeti.orderOf_graphPermE6`. This is the right-hand factor of that composite,
-and the subgroup of points it fixes, characterized below, is correspondingly the untwisted one,
-not the `H_d` that milestone L3 runs its recipe on for this branch. -/
+It is *not* the Steinberg map of the family, which for a graph-twisted family is `γ₂ ∘ Frob_q`.
+On this branch the two genuinely differ: the composite acts on the simple-root subgroups through
+the diagram permutation the index carries, which is `TauCeti.graphPermE6` by
+`TauCeti.TypeTwistedE6LieIndex.diagramPerm_toGraphTwistedIndex` and has order two by
+`TauCeti.orderOf_graphPermE6`. This is the right-hand factor of that composite, and the subgroup of
+points it fixes, characterized below, is correspondingly the untwisted one and not the fixed
+subgroup of the composite. -/
 def frobenius : d.AmbientGroup →* d.AmbientGroup :=
   E6DoubledMinuscule.frobenius d.1.characteristic d.1.fieldExponent d.1.Closure
 
-/-- The Frobenius of a `²E₆` index is the doubled minuscule carrier's Frobenius at the exponent the
-index records. This is its unfolding lemma; the definition itself stays sealed. -/
+/-- The Frobenius of a `²E₆` index is the doubled minuscule carrier's Frobenius at the
+characteristic and the exponent the index records. -/
 -- Not `@[simp]`: `frobenius_simpleRootSubgroup` and `coe_frobenius_apply` are the normal forms the
 -- pinned equations of this file are stated against, and unfolding to
 -- `TauCeti.E6DoubledMinuscule.frobenius` would keep them from firing, as it does on the branches
@@ -239,9 +232,9 @@ theorem coe_frobenius_apply (g : d.AmbientGroup) (r c : Fin 54) :
   exact E6DoubledMinuscule.coe_frobenius_apply _ _ _ g r c
 
 /-- **The Frobenius fixes the Bourbaki numbering of a simple-root subgroup and raises its parameter
-to the `q`-th power**, that is, `Frob_q (x_i(u)) = x_i(u ^ q)`. This is the equation milestone L1
-asks of an ordinary Frobenius factor; the diagram permutation of the twisted family enters through
-the other factor `γ₂` and not through this one. -/
+to the `q`-th power**, that is, `Frob_q (x_i(u)) = x_i(u ^ q)`. The diagram permutation of the
+twisted family enters through the other factor `γ₂` of the Steinberg map, and not through this
+one. -/
 @[simp]
 theorem frobenius_simpleRootSubgroup (i : Fin d.1.rank) (u : Multiplicative d.1.Closure) :
     d.frobenius (d.simpleRootSubgroup i u) =
@@ -254,8 +247,8 @@ theorem frobenius_simpleRootSubgroup (i : Fin d.1.rank) (u : Multiplicative d.1.
 `54 × 54` matrix lies in the field of definition.** Writing `𝔽_q` for
 `TauCeti.ValidLieTypeIndex.fixedField`, the copy of the field of `q` elements inside the algebraic
 closure, the Frobenius-fixed subgroup is therefore the group of points of the doubled minuscule
-carrier with coordinates in `𝔽_q`. It is not the group `H_d` that milestone L3 runs its recipe on
-for this branch, which is cut out by the twisted composite `γ₂ ∘ Frob_q` instead. -/
+carrier with coordinates in `𝔽_q`. It is not the group of points fixed by the twisted composite
+`γ₂ ∘ Frob_q`, which is the one the classification recipe for this branch is run inside. -/
 -- Not `@[simp]`, as for `TauCeti.ValidLieTypeIndex.mem_fixedSubgroup_geckFrobenius_iff`:
 -- `TauCeti.fixedSubgroup` is `MonoidHom.eqLocus` against the identity, so `simp` rewrites the
 -- left-hand side to `d.frobenius g = g` through `MonoidHom.mem_eqLocus`, and the `simpNF` linter
