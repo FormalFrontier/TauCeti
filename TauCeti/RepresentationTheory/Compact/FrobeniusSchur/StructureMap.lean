@@ -51,8 +51,8 @@ Haar integral enters only through the invariant-form criteria this file rewrites
 
 A structure map is an unbundled conjugate-linear `J : V →ₗ⋆[ℂ] V` with `J (J v) = v`, respectively
 `J (J v) = -v`, commuting with the action.  The `1` criterion spells those two conditions out, the
-shape in which the roadmap pins it and in which the reality applications consume it; the `-1` one
-names them, as `Representation.IsQuaternionicStructure` of
+shape in which the reality applications consume it; the `-1` one names them, as
+`Representation.IsQuaternionicStructure` of
 `TauCeti/RepresentationTheory/QuaternionicStructure.lean`.  The two readings are interchangeable:
 the conditions are exactly the fields of that predicate, and of
 `Representation.IsRealStructure` -- which `TauCeti/RepresentationTheory/RealForm.lean` defines and
