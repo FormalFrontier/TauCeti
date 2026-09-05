@@ -17,6 +17,11 @@ right derivative at every nonnegative time in the equivalent forms `A (S t x)` a
 It also proves that a generator-domain orbit has a derivative within the whole nonnegative
 half-line, hence a two-sided derivative at positive times.
 
+Finally, `StronglyContinuousSemigroup.hasDerivWithinAt_apply_realOperator_of_tendsto`
+differentiates an orbit inside an operator family: the right derivative of `u ↦ F u (S u x)` at
+`s` is the sum of the limit of the rebased orbit difference quotient pushed through `F u` and the
+right derivative of `u ↦ F u (S s x)`.
+
 ## References
 
 The argument follows Engel--Nagel, *One-Parameter Semigroups for Linear Evolution
@@ -96,6 +101,24 @@ theorem mem_domain_iff_differentiableWithinAt_realOperator_zero
 
 /-! ## Right derivatives at nonnegative times -/
 
+/-- **Differentiating an orbit inside an operator family.** At a nonnegative time `s`, if the
+difference quotient of the orbit of `S s x`, rebased at `s` and pushed through `F u`, converges to
+`b`, and `u ↦ F u (S s x)` has right derivative `c` at `s`, then `u ↦ F u (S u x)` has right
+derivative `b + c` at `s`.  With `F ≡ id` and `S s x` in the generator domain this specialises to
+`realOperator_hasDerivWithinAt`; generator uniqueness takes `F u = S' (t - u)` for a second
+semigroup `S'`. -/
+theorem hasDerivWithinAt_apply_realOperator_of_tendsto (S : StronglyContinuousSemigroup X)
+    (F : ℝ → X →L[ℝ] X) (x : X) {s : ℝ} (hs : 0 ≤ s) {b c : X}
+    (hquot : Filter.Tendsto (fun u : ℝ =>
+      F u ((u - s)⁻¹ • (S.realOperator (u - s) (S.realOperator s x) - S.realOperator s x)))
+      (𝓝[>] s) (𝓝 b))
+    (hslope : HasDerivWithinAt (fun v : ℝ => F v (S.realOperator s x)) c (Set.Ici s) s) :
+    HasDerivWithinAt (fun u : ℝ => F u (S.realOperator u x)) (b + c) (Set.Ici s) s := by
+  rw [hasDerivWithinAt_iff_tendsto_slope, Set.Ici_sdiff_left] at hslope ⊢
+  refine (hquot.add hslope).congr' ?_
+  filter_upwards [self_mem_nhdsWithin] with u hu
+  exact (S.slope_apply_realOperator_eq F x hs hu.le).symm
+
 /-- At every nonnegative time, if the evolved vector belongs to the generator domain, then the
 right derivative of the orbit is the generator evaluated on that evolved vector. -/
 theorem realOperator_hasDerivWithinAt (S : StronglyContinuousSemigroup X)
@@ -103,26 +126,11 @@ theorem realOperator_hasDerivWithinAt (S : StronglyContinuousSemigroup X)
     HasDerivWithinAt (fun s : ℝ => S.realOperator s x)
       (S.generator ⟨S.realOperator t x, by rw [S.generator_domain]; exact hxt⟩)
       (Set.Ici t) t := by
-  let y : S.domain := ⟨S.realOperator t x, hxt⟩
-  have htranslate : HasDerivWithinAt (fun s : ℝ => S.realOperator (s - t) (y : X))
-      (S.generator ⟨y, by rw [S.generator_domain]; exact y.property⟩) (Set.Ici t) t := by
-    have hinner : HasDerivWithinAt (fun s : ℝ => s - t) 1 (Set.Ici t) t := by
-      simpa using (hasDerivWithinAt_id t (Set.Ici t)).sub_const t
-    have hmaps : Set.MapsTo (fun s : ℝ => s - t) (Set.Ici t) (Set.Ici 0) := by
-      intro s hs
-      simpa only [Set.mem_Ici, sub_nonneg] using hs
-    have hcomp :=
-      (S.realOperator_hasDerivWithinAt_zero y).scomp_of_eq t hinner hmaps (by ring)
-    exact (hcomp.congr (fun _ _ => rfl) rfl).congr_deriv (one_smul ℝ _)
-  refine htranslate.congr (fun s hs => ?_) ?_
-  · have hst : 0 ≤ s - t := sub_nonneg.mpr hs
-    calc
-      S.realOperator s x = S.realOperator ((s - t) + t) x := by ring_nf
-      _ = S.realOperator (s - t) (S.realOperator t x) := by
-        rw [S.realOperator_add _ _ hst ht]
-        rfl
-      _ = S.realOperator (s - t) y := rfl
-  · simp only [sub_self, S.realOperator_zero_apply, y]
+  have h := S.hasDerivWithinAt_apply_realOperator_of_tendsto (fun _ => ContinuousLinearMap.id ℝ X)
+    x ht (by simpa only [ContinuousLinearMap.id_apply] using
+      S.generator_tendsto_comp_sub_const ⟨S.realOperator t x, hxt⟩ t)
+    (hasDerivWithinAt_const t (Set.Ici t) _)
+  simpa only [ContinuousLinearMap.id_apply, add_zero] using h
 
 /-- At every nonnegative time, the right derivative of the orbit is the semigroup operator
 applied to the generator. -/

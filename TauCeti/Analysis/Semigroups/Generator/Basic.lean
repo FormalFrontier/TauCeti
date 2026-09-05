@@ -157,6 +157,25 @@ theorem StronglyContinuousSemigroup.generator_tendsto
   exact Classical.choose_spec x.property
 
 omit [CompleteSpace X] in
+/-- The generator difference quotient, rebased at `s`: the defining quotient of `S.generator` at
+`x` (`generator_tendsto`), precomposed with `u ↦ u - s` so that it approaches `s` from the right
+rather than `0`. -/
+theorem StronglyContinuousSemigroup.generator_tendsto_comp_sub_const
+    (S : StronglyContinuousSemigroup X) (x : S.domain) (s : ℝ) :
+    Filter.Tendsto (fun u : ℝ => (u - s)⁻¹ • (S.realOperator (u - s) (x : X) - (x : X)))
+      (nhdsWithin s (Set.Ioi s))
+      (nhds (S.generator ⟨(x : X), by
+        rw [S.generator_domain]
+        exact x.property⟩)) := by
+  have hshift : Filter.Tendsto (fun u : ℝ => u - s) (nhdsWithin s (Set.Ioi s))
+      (nhdsWithin 0 (Set.Ioi 0)) :=
+    tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _
+      (((continuous_id.sub continuous_const).tendsto' s 0 (sub_self s)).mono_left
+        nhdsWithin_le_nhds)
+      (eventually_nhdsWithin_of_forall fun u hu => Set.mem_Ioi.mpr (sub_pos.mpr hu))
+  simpa [Function.comp_def, one_div] using (S.generator_tendsto x).comp hshift
+
+omit [CompleteSpace X] in
 /-- Eliminator for the generator: if the difference quotient `(S t x - x)/t` of an
 `x ∈ D(A)` converges to `y`, then `A x = y`. -/
 theorem StronglyContinuousSemigroup.generator_eq_of_tendsto
@@ -340,6 +359,12 @@ theorem StronglyContinuousSemigroup.dense_domain
   · simpa using S.tendsto_average_orbit_zero x
   · filter_upwards [self_mem_nhdsWithin] with t ht
     exact S.domain.smul_mem (1 / t) (S.integral_orbit_mem_domain x ht)
+
+/-- Two continuous linear maps that agree on the (dense) generator domain are equal. -/
+theorem StronglyContinuousSemigroup.eq_of_eqOn_domain (S : StronglyContinuousSemigroup X)
+    {f g : X →L[ℝ] X} (h : ∀ x ∈ S.domain, f x = g x) : f = g :=
+  ContinuousLinearMap.ext_on (R₁ := ℝ) (s := (S.domain : Set X))
+    (by rw [Submodule.span_eq]; exact S.dense_domain) h
 
 end TauCeti.Semigroups
 

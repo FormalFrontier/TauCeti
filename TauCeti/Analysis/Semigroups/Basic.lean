@@ -8,6 +8,7 @@ module
 public import Mathlib.Topology.Algebra.Module.Basic
 public import Mathlib.Analysis.Normed.Operator.ContinuousLinearMap
 public import Mathlib.Analysis.Normed.Operator.BanachSteinhaus
+public import Mathlib.LinearAlgebra.AffineSpace.Slope
 
 /-!
 # Strongly continuous semigroups
@@ -15,7 +16,8 @@ public import Mathlib.Analysis.Normed.Operator.BanachSteinhaus
 This file contains the foundational C₀-semigroup structures, the nonnegative-time API
 (`map_zero`, `map_add`, `continuousAt_zero`, and their pointwise/tendsto forms),
 the `realOperator` real-time shim,
-operator-norm local boundedness, and strong continuity within the nonnegative half-line.
+operator-norm local boundedness, strong continuity within the nonnegative half-line, and the
+semigroup-law algebra of rebasing an orbit inside a slope (`slope_apply_realOperator_eq`).
 
 ## References
 Ported and adapted (Apache 2.0) from `mrdouglasny/hille-yosida`; references include
@@ -189,6 +191,23 @@ theorem realOperator_add (S : StronglyContinuousSemigroup X) (s t : ℝ) (hs : 0
     S.realOperator (s + t) = (S.realOperator s).comp (S.realOperator t) := by
   rw [realOperator, realOperator, realOperator, Real.toNNReal_add hs ht]
   exact S.map_add' s.toNNReal t.toNNReal
+
+omit [CompleteSpace X] in
+/-- **Rebasing a semigroup orbit inside a slope.** For any family `F` of operators and nonnegative
+times `0 ≤ s ≤ u`, the slope at `s` of `u ↦ F u (S u x)` splits, by the semigroup law
+`S u x = S (u - s) (S s x)`, into the difference quotient of the orbit of `S s x` rebased at `s`
+and pushed through `F u`, plus the slope of `u ↦ F u (S s x)`.  Used by the generator-uniqueness
+argument with `F u = S' (t - u)` for a second semigroup `S'`. -/
+theorem slope_apply_realOperator_eq (S : StronglyContinuousSemigroup X) (F : ℝ → X →L[ℝ] X)
+    (x : X) {s u : ℝ} (hs : 0 ≤ s) (hu : s ≤ u) :
+    slope (fun v : ℝ => F v (S.realOperator v x)) s u =
+      F u ((u - s)⁻¹ • (S.realOperator (u - s) (S.realOperator s x) - S.realOperator s x)) +
+        slope (fun v : ℝ => F v (S.realOperator s x)) s u := by
+  have hus : 0 ≤ u - s := sub_nonneg.mpr hu
+  have hSu : S.realOperator u x = S.realOperator (u - s) (S.realOperator s x) := by
+    rw [← ContinuousLinearMap.comp_apply, ← S.realOperator_add (u - s) s hus hs, sub_add_cancel]
+  simp only [slope_def_module, hSu, map_smul, map_sub, smul_sub]
+  abel
 
 omit [CompleteSpace X] in
 /-- Submultiplicativity of the real-time operator norm at nonnegative times: the semigroup law
