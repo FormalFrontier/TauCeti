@@ -49,10 +49,15 @@ integral domain rationalizes to its ambient vector space over the fraction field
   extension to `ℝ` is a base change.
 * `AddMonoidHom.IsIntegralLattice.injective`, `span_range_eq_top`, `finrank_eq_finrank`,
   `isDiscrete_range`, and `isZLattice_range`: the main integral-lattice consequences.
+* `AddMonoidHom.IsIntegralLattice.comp_equiv_eq_equiv_comp_baseChange`: naturality of the
+  scalar-extension equivalence under compatible integral and real-linear maps.
 
 ## References
 
 * See N. Bourbaki, *Commutative Algebra*, Chapter VII, §4 for lattice theory over Dedekind domains.
+* The integral-lattice interface and its Layer 0 target are specified in
+  `TauCetiRoadmap/AnalyticToricGeometry/README.md`, item 1, with the pinned declarations in
+  `TauCetiRoadmap/AnalyticToricGeometry/Suggested.lean`.
 -/
 
 public section
@@ -484,8 +489,8 @@ theorem IsIntegralLattice.isZLattice_range (i : N →+ V₀)
   rw [hrange]
   exact (instIsZLatticeRealSpan b).span_top
 
-/-- A real-linear map carrying one integral lattice into another commutes with their lattice
-vectors, after applying the corresponding integral additive map. -/
+/-- Compatibility on lattice vectors induces a commuting square between the scalar-extension
+equivalences and the base change of the corresponding integral additive map. -/
 theorem IsIntegralLattice.comp_equiv_eq_equiv_comp_baseChange
     {N' : Type u'} {V' : Type v'} [AddCommGroup N']
     [AddCommGroup V'] [Module ℝ V']
