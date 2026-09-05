@@ -160,7 +160,7 @@ instance subsingleton_H_succ_of_isFlasque
   have := subsingleton_H'_succ_of_isFlasque F n (⊤ : Opens X)
   exact Function.Injective.subsingleton
     (f := ConcreteCategory.hom
-      (TauCeti.CategoryTheory.Sheaf.cohomologyPresheafObjIsoH (n + 1) isTerminalTop F).inv)
+      (F.cohomologyPresheafObjIsoH (n + 1) isTerminalTop).inv)
     ((ConcreteCategory.bijective_of_isIso _).injective)
 
 /-- A skyscraper sheaf of abelian groups is flasque. -/

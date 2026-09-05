@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Geometry.Manifold.MFDeriv.Atlas
 public import Mathlib.Geometry.Manifold.MFDeriv.NormedSpace
+public import Mathlib.Geometry.Manifold.VectorBundle.Basic
 
 /-!
 # Differentiating along a curve in a manifold
@@ -37,6 +38,8 @@ curve need not carry a `HasMFDerivWithinAt` witness for it.
   curve within a parameter set and its unrestricted case, computed by
   `TauCeti.Manifold.curveVelocityWithin_apply` and `TauCeti.Manifold.curveVelocity_apply` and
   related by `TauCeti.Manifold.curveVelocityWithin_univ`.
+* `TauCeti.Manifold.curveVelocityLiftWithin` and `TauCeti.Manifold.curveVelocityLift`: the
+  corresponding curves in the tangent bundle, together with their projection and fibre formulas.
 * `TauCeti.Manifold.hasMFDerivWithinAt_curveVelocityWithin` and
   `TauCeti.Manifold.curveVelocityWithin_eq_of_hasMFDerivWithinAt`: the two directions relating the
   named velocity to a `HasMFDerivWithinAt` witness.
@@ -56,6 +59,8 @@ open scoped Manifold Topology
 noncomputable section
 
 namespace TauCeti.Manifold
+
+open Bundle
 
 variable
   {𝕜 : Type*} [NontriviallyNormedField 𝕜]
@@ -203,6 +208,55 @@ would otherwise keep `simp` from reaching. -/
 @[simp]
 theorem curveVelocity_const (x : M) : curveVelocity I (fun _ : 𝕜 ↦ x) t = 0 := by
   rw [← curveVelocityWithin_univ, curveVelocityWithin_const]
+
+/-! ### The velocity lift of a curve -/
+
+variable (I) in
+/-- **The velocity lift** of a curve to the tangent bundle: the curve `t ↦ (γ t, γ' t)`, with the
+velocity taken within the parameter set `s`. It inherits the junk values of
+`TauCeti.Manifold.curveVelocityWithin` where `γ` is not differentiable within `s`. -/
+def curveVelocityLiftWithin (γ : 𝕜 → M) (s : Set 𝕜) (t : 𝕜) : TangentBundle I M :=
+  TotalSpace.mk' E (γ t) (curveVelocityWithin I γ s t)
+
+variable (I) in
+/-- The velocity lift of a curve, with unrestricted velocity. This is the `s = Set.univ` case of
+`TauCeti.Manifold.curveVelocityLiftWithin`. -/
+def curveVelocityLift (γ : 𝕜 → M) : 𝕜 → TangentBundle I M :=
+  curveVelocityLiftWithin I γ Set.univ
+
+/-- The defining formula for the velocity lift. -/
+theorem curveVelocityLiftWithin_apply (γ : 𝕜 → M) (s : Set 𝕜) (t : 𝕜) :
+    curveVelocityLiftWithin I γ s t =
+      TotalSpace.mk' E (γ t) (curveVelocityWithin I γ s t) := (rfl)
+
+/-- The defining formula for the unrestricted velocity lift. -/
+theorem curveVelocityLift_apply (γ : 𝕜 → M) (t : 𝕜) :
+    curveVelocityLift I γ t = TotalSpace.mk' E (γ t) (curveVelocity I γ t) := (rfl)
+
+/-- The velocity lift taken within the whole parameter space is the unrestricted lift. -/
+@[simp]
+theorem curveVelocityLiftWithin_univ (γ : 𝕜 → M) :
+    curveVelocityLiftWithin I γ Set.univ = curveVelocityLift I γ := (rfl)
+
+/-- The velocity lift lies over the curve. -/
+@[simp]
+theorem curveVelocityLiftWithin_proj (γ : 𝕜 → M) (s : Set 𝕜) (t : 𝕜) :
+    (curveVelocityLiftWithin I γ s t).proj = γ t := (rfl)
+
+/-- The fibre component of the velocity lift is the velocity of the curve. -/
+@[simp]
+theorem curveVelocityLiftWithin_snd (γ : 𝕜 → M) (s : Set 𝕜) (t : 𝕜) :
+    (curveVelocityLiftWithin I γ s t).2 = curveVelocityWithin I γ s t := (rfl)
+
+/-- The unrestricted velocity lift lies over the curve. -/
+@[simp]
+theorem curveVelocityLift_proj (γ : 𝕜 → M) (t : 𝕜) :
+    (curveVelocityLift I γ t).proj = γ t := (rfl)
+
+/-- The fibre component of the unrestricted velocity lift is the velocity of the curve. -/
+@[simp]
+theorem curveVelocityLift_snd (γ : 𝕜 → M) (t : 𝕜) :
+    (curveVelocityLift I γ t).2 = curveVelocity I γ t := (rfl)
 
 variable [IsManifold I 1 M]
 

@@ -29,6 +29,8 @@ operations of determinant one:
 * `Matrix.exists_smith_normal_form_of_det_pos`: for `A : Matrix (Fin n) (Fin n) ℤ` with
   `0 < A.det` there are `L R : SpecialLinearGroup (Fin n) ℤ` and a positive `d : Fin n → ℤ`,
   monotone under divisibility, with `L * A * R = diagonal d`.
+* `Matrix.exists_smith_normal_form_of_det_ne_zero`: without a sign assumption, the same positive
+  diagonal is obtained using general-linear transformations.
 * `Matrix.smith_normal_form_unique`: two nonnegative chained diagonals in the same
   `GL_n(ℤ)`-equivalence class are equal, so the invariant factors of `A` are well defined.
 * `Matrix.invariant_factor_zero_dvd_entries`: the first entry of a chained diagonal form
@@ -79,6 +81,22 @@ private lemma finrank_range_mulVecLin (A : Matrix (Fin n) (Fin n) ℤ) (hdet : A
     Module.finrank ℤ (LinearMap.range A.mulVecLin) = Module.finrank ℤ (Fin n → ℤ) :=
   LinearMap.finrank_range_of_inj (mulVecLin_injective_of_det_ne_zero A hdet)
 
+/-- The diagonal matrix flipping the sign of the zeroth coordinate. It is an involution of
+determinant `-1`, so multiplying by it reverses the sign of a determinant without disturbing the
+`SL`/`GL` bookkeeping elsewhere. -/
+private def coordFlip (n : ℕ) [NeZero n] : Matrix (Fin n) (Fin n) ℤ :=
+  Matrix.diagonal (Function.update 1 0 (-1))
+
+private lemma det_coordFlip (n : ℕ) [NeZero n] : (coordFlip n).det = -1 := by
+  rw [coordFlip, Matrix.det_diagonal, Finset.prod_update_of_mem (Finset.mem_univ 0)]; simp
+
+private lemma coordFlip_mul_self (n : ℕ) [NeZero n] : coordFlip n * coordFlip n = 1 := by
+  rw [coordFlip, Matrix.diagonal_mul_diagonal]; ext i j
+  simp only [Matrix.diagonal_apply, Matrix.one_apply]
+  by_cases h : i = j
+  · subst h; by_cases hi : i = 0 <;> simp [hi]
+  · simp [h]
+
 /-- Given `L * A * Q = diag(d)` with `d` positive and `det(L) * det(Q) = 1`, produce
 `SL_n(ℤ)` matrices `L', Q'` with `L' * A * Q' = diag(d)`. When both determinants are
 already `+1` the original matrices work; when both are `-1` a coordinate-flip corrects
@@ -102,25 +120,22 @@ private lemma sign_correct_unit_transform (A : Matrix (Fin n) (Fin n) ℤ) (d : 
       · simp [det_isEmpty] at hLd
       · exact hn
     have : NeZero n := ⟨by omega⟩
-    set flip : Matrix (Fin n) (Fin n) ℤ := Matrix.diagonal (Function.update 1 0 (-1))
-    have hflip_det : flip.det = -1 := by
-      rw [Matrix.det_diagonal, Finset.prod_update_of_mem (Finset.mem_univ 0)]; simp
-    have hflip_sq : flip * flip = 1 := by
-      rw [Matrix.diagonal_mul_diagonal]; ext i j
-      simp only [Matrix.diagonal_apply, Matrix.one_apply]
-      by_cases h : i = j
-      · subst h; by_cases hi : i = 0 <;> simp [hi]
-      · simp [h]
-    have hflip_diag : flip * Matrix.diagonal d * flip = Matrix.diagonal d := by
-      have hcomm : flip * Matrix.diagonal d = Matrix.diagonal d * flip := by
-        rw [Matrix.diagonal_mul_diagonal, Matrix.diagonal_mul_diagonal]; congr 1; ext i
+    have hflip_det : (coordFlip n).det = -1 := det_coordFlip n
+    have hflip_sq : coordFlip n * coordFlip n = 1 := coordFlip_mul_self n
+    have hflip_diag :
+        coordFlip n * Matrix.diagonal d * coordFlip n = Matrix.diagonal d := by
+      have hcomm : coordFlip n * Matrix.diagonal d = Matrix.diagonal d * coordFlip n := by
+        rw [coordFlip, Matrix.diagonal_mul_diagonal, Matrix.diagonal_mul_diagonal]; congr 1; ext i
         simp only [Function.update_apply]; by_cases hi : i = 0 <;> simp [hi, mul_comm]
       rw [hcomm, Matrix.mul_assoc, hflip_sq, Matrix.mul_one]
-    have hflip_L_det : (flip * L_mat).det = 1 := by rw [det_mul, hflip_det, hLd]; norm_num
-    have hflip_Q_det : (Q_mat * flip).det = 1 := by rw [det_mul, hQd, hflip_det]; norm_num
-    refine ⟨⟨flip * L_mat, hflip_L_det⟩, ⟨Q_mat * flip, hflip_Q_det⟩, ?_⟩
+    have hflip_L_det : (coordFlip n * L_mat).det = 1 := by
+      rw [det_mul, hflip_det, hLd]; norm_num
+    have hflip_Q_det : (Q_mat * coordFlip n).det = 1 := by
+      rw [det_mul, hQd, hflip_det]; norm_num
+    refine ⟨⟨coordFlip n * L_mat, hflip_L_det⟩, ⟨Q_mat * coordFlip n, hflip_Q_det⟩, ?_⟩
     -- reassociate so the flip conjugation surrounds the diagonalised core
-    rw [show flip * L_mat * A * (Q_mat * flip) = flip * (L_mat * A * Q_mat) * flip from by
+    rw [show coordFlip n * L_mat * A * (Q_mat * coordFlip n) =
+        coordFlip n * (L_mat * A * Q_mat) * coordFlip n from by
       simp only [Matrix.mul_assoc], hL_eq, hflip_diag]
 
 /-- **A diagonal matrix with nonzero entries in a strictly ordered commutative ring splits as a
@@ -715,6 +730,41 @@ theorem exists_smith_normal_form_of_det_pos (A : Matrix (Fin n) (Fin n) ℤ) (hA
       = ↑L₁ * (↑L₀ * A * ↑R₀) * ↑R₁ := by simp only [Matrix.mul_assoc]
     _ = ↑L₁ * Matrix.diagonal d₀ * ↑R₁ := by rw [hLR₀]
     _ = Matrix.diagonal d := hLR₁
+
+/-- **Smith normal form for every nonsingular integer matrix.** Every square integer matrix with
+nonzero determinant is equivalent under general-linear row and column operations to a positive
+diagonal whose entries form a divisibility chain.
+
+When the determinant is positive, the transformations can be chosen special linear by
+`exists_smith_normal_form_of_det_pos`. For a negative determinant, changing the sign of one row
+makes it positive; the resulting single-coordinate sign matrix is absorbed into the left
+general-linear factor. -/
+theorem exists_smith_normal_form_of_det_ne_zero (A : Matrix (Fin n) (Fin n) ℤ)
+    (hA : A.det ≠ 0) :
+    ∃ (L R : GeneralLinearGroup (Fin n) ℤ) (d : Fin n → ℤ), (∀ i, 0 < d i) ∧
+      (∀ ⦃i j : Fin n⦄, i ≤ j → d i ∣ d j) ∧
+      (L : Matrix (Fin n) (Fin n) ℤ) * A * (R : Matrix (Fin n) (Fin n) ℤ) =
+        Matrix.diagonal d := by
+  rcases lt_or_gt_of_ne hA with hneg | hpos
+  · have hn : 0 < n := by
+      rcases Nat.eq_zero_or_pos n with rfl | hn
+      · simp [Matrix.det_isEmpty] at hneg
+      · exact hn
+    let _ : NeZero n := ⟨Nat.ne_of_gt hn⟩
+    let S : Matrix (Fin n) (Fin n) ℤ := coordFlip n
+    have hS_det : S.det = -1 := det_coordFlip n
+    have hS_sq : S * S = 1 := coordFlip_mul_self n
+    let S' : GeneralLinearGroup (Fin n) ℤ := ⟨S, S, hS_sq, hS_sq⟩
+    have hSA : 0 < (S * A).det := by
+      rw [Matrix.det_mul, hS_det]
+      linarith
+    obtain ⟨L, R, d, hd_pos, hd_dvd, hLR⟩ :=
+      exists_smith_normal_form_of_det_pos (S * A) hSA
+    refine ⟨(L : GeneralLinearGroup (Fin n) ℤ) * S', R, d, hd_pos, hd_dvd, ?_⟩
+    simpa only [Units.val_mul, SpecialLinearGroup.coe_GL_coe_matrix, Matrix.mul_assoc] using hLR
+  · obtain ⟨L, R, d, hd_pos, hd_dvd, hLR⟩ :=
+      exists_smith_normal_form_of_det_pos A hpos
+    exact ⟨L, R, d, hd_pos, hd_dvd, hLR⟩
 
 /-! ## Uniqueness of the invariant factors
 
