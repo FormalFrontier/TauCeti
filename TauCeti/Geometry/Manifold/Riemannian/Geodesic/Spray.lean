@@ -276,11 +276,12 @@ theorem isMIntegralCurveOn_curveVelocityLiftWithin_iff
   exact (hasMFDerivWithinAt_curveVelocityLiftWithin_iff hs hγ hr).2
     (h.alongCurveWithin_curveVelocityWithin_eq_zero r hr)
 
-/-- **An integral curve of the spray is a velocity lift.**  On a parameter set with unique
-derivatives, an integral curve of the geodesic spray is the velocity lift of the curve it lies
-over. -/
+/-- **An integral curve of the spray is a velocity lift.**  At a parameter at which the parameter
+set has unique derivatives, an integral curve of the geodesic spray is the velocity lift of the
+curve it lies over. -/
 theorem eq_curveVelocityLiftWithin_of_isMIntegralCurveOn {z : ℝ → TangentBundle I M}
-    (hs : UniqueDiffOn ℝ s) (h : IsMIntegralCurveOn z (geodesicSpray I M) s) (ht : t ∈ s) :
+    (hs : UniqueDiffWithinAt ℝ s t) (h : IsMIntegralCurveOn z (geodesicSpray I M) s)
+    (ht : t ∈ s) :
     z t = curveVelocityLiftWithin I (fun r ↦ (z r).proj) s t := by
   have hproj : MDifferentiableWithinAt 𝓘(ℝ, ℝ) I (fun r ↦ (z r).proj) s t :=
     (Bundle.mdifferentiableAt_proj (fun x : M ↦ TangentSpace I x)).comp_mdifferentiableWithinAt t
@@ -293,7 +294,7 @@ theorem eq_curveVelocityLiftWithin_of_isMIntegralCurveOn {z : ℝ → TangentBun
         (s := (trivializationAt E (TangentSpace I) (z t).proj).baseSet)) (z t).proj
       (z t).2 (z t).2) (h t ht).continuousWithinAt).1 (h t ht)
   have hvel : curveVelocityWithin I (fun r ↦ (z r).proj) s t = (z t).2 :=
-    (derivWithin_extChartAt_comp_curve hproj (hs t ht)).symm.trans (hd.1.derivWithin (hs t ht))
+    (derivWithin_extChartAt_comp_curve hproj hs).symm.trans (hd.1.derivWithin hs)
   rw [curveVelocityLiftWithin_apply, hvel]
 
 /-- **The base curve of an integral curve of the spray is a geodesic**, as soon as it is `C²` on a
@@ -304,7 +305,7 @@ theorem isGeodesicCurveOn_proj_of_isMIntegralCurveOn {z : ℝ → TangentBundle 
     IsGeodesicCurveOn I (fun r ↦ (z r).proj) s :=
   (isMIntegralCurveOn_curveVelocityLiftWithin_iff hs hz).1
     (h.congr fun _r hr ↦
-      (eq_curveVelocityLiftWithin_of_isMIntegralCurveOn hs h hr).symm)
+      (eq_curveVelocityLiftWithin_of_isMIntegralCurveOn (hs _r hr) h hr).symm)
 
 /-! ### All-time geodesics and the spray -/
 
