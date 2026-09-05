@@ -5,12 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-import TauCeti.LinearAlgebra.CliffordAlgebra.Filtration
 import TauCeti.LinearAlgebra.CliffordAlgebra.Grading
 import TauCeti.LinearAlgebra.ExteriorPower
 import TauCeti.LinearAlgebra.Matrix.AdjugateFinTwo
 public import Mathlib.LinearAlgebra.Matrix.Adjugate
-public import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Reversal.Basic
 
 /-!
@@ -48,6 +46,8 @@ private theorem filtration_eq_top_of_finrank_eq_three
         let _ : Subsingleton (TauCeti.Algebra.wordFiltration.GradedPiece (ι Q) (n + 1)) :=
           (filtrationLeadingTerm_surjective Q n).subsingleton
         have hstep : filtration Q (n + 1) ≤ filtration Q n := by
+          -- Once the leading exterior power vanishes, its graded quotient is subsingleton;
+          -- the stable filtration API then identifies every degree-`n + 1` class with zero.
           intro x hx
           have hxzero :
               (TauCeti.Algebra.wordFiltration.previousRestricted (ι Q) (n + 1)).mkQ

@@ -25,6 +25,7 @@ namespace Matrix
 variable {K : Type*} [CommRing K]
 
 /-- The adjugate of a two-by-two matrix is its trace times the identity minus itself. -/
+@[simp]
 theorem adjugate_fin_two_eq_trace_smul_one_sub (A : Matrix (Fin 2) (Fin 2) K) :
     Matrix.adjugate A = Matrix.trace A • 1 - A := by
   rw [Matrix.adjugate_fin_two, Matrix.trace_fin_two]
@@ -82,6 +83,8 @@ private theorem map_single_eq_neg_of_ne
   rw [hEF, hfD, hfF, hf] at hp
   have hpji := congr_fun (congr_fun hp j) i
   have hr0 : r = 0 := by
+    -- The off-diagonal entry of the reversed product is the only surviving matrix-unit
+    -- coefficient; evaluating it isolates the scalar translate `r`.
     have hpji' : (0 : K) = -r := by
       simpa [E, F, sub_mul, mul_sub, hij, Ne.symm hij] using hpji
     exact neg_eq_zero.mp hpji'.symm
