@@ -180,27 +180,6 @@ theorem isotypicProjector_eq_of_equiv {sigma : ContRepresentation k G W}
   ext v
   simp only [toContinuousLinearMap_isotypicProjector, isotypicKernel_eq_of_equiv hsigma htau e]
 
-omit hrho in
-/-- The inclusion of an invariant subspace, packaged as a continuous intertwiner. -/
-private noncomputable def subrepresentationInclusion
-    (tau : Subrepresentation rho.toRepresentation) :
-    ContIntertwiningMap
-      (subrepresentation rho tau.toSubmodule
-        (fun g _ hv ↦ tau.apply_mem_toSubmodule g hv)) rho :=
-  { toContinuousLinearMap := tau.toSubmodule.subtypeL
-    isIntertwining' := fun g ↦ by
-      ext v
-      exact coe_subrepresentation_apply g v }
-
-omit hrho [IsAlgClosed k] [TopologicalSpace G] [IsTopologicalGroup G] [CompactSpace G]
-  [MeasurableSpace G] [BorelSpace G] [NormedSpace ℝ V] [SMulCommClass ℝ k V]
-  [FiniteDimensional k V] in
-@[simp]
-private theorem subrepresentationInclusion_apply
-    (tau : Subrepresentation rho.toRepresentation) (v : tau.toSubmodule) :
-    subrepresentationInclusion rho tau v = (v : V) :=
-  (rfl)
-
 omit [IsAlgClosed k] in
 /-- **The isotypic projector is computed blockwise.** On an invariant subspace `tau` of `rho` the
 projector is the integrated action of the same kernel on the restricted representation, read back
