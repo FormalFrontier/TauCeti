@@ -53,6 +53,8 @@ eigenfunction.
   the nonzero eigenvalues of `S` and the variational eigenvalues.
 * `IsCoercive.exists_ne_zero_forall_apply_eq_smul_inner`: existence of a variational
   eigenvalue.
+* `IsCoercive.exists_ne_zero_forall_apply_eq_inv_norm_smul_inner`: the reciprocal of the norm
+  of the solution operator is a variational eigenvalue.
 * `IsCoercive.pos_of_forall_apply_eq_smul_inner` and
   `IsCoercive.le_of_forall_apply_eq_smul_inner`: positivity of a variational eigenvalue, and
   the lower bound by the coercivity constant.
@@ -335,6 +337,43 @@ theorem hasEigenvalue_formSolutionOperator_iff (hB : IsCoercive B) (J : V →L[�
   · rintro ⟨u, hu, heq⟩
     exact hasEigenvalue_of_hasEigenvector
       (hB.hasEigenvector_formSolutionOperator J hkappa hu heq)
+
+/-- **The reciprocal of the norm of the solution operator is a variational eigenvalue.**
+Compactness of `J` is what makes `‖S‖` itself an eigenvalue of `S`, and positivity of `S` is what
+excludes `-‖S‖`. -/
+theorem exists_ne_zero_forall_apply_eq_inv_norm_smul_inner (hB : IsCoercive B)
+    {J : V →L[ℝ] H} (hJ : IsCompactOperator J) (hsymm : ∀ u v : V, B u v = B v u)
+    (hJne : J ≠ 0) :
+    ∃ u : V, u ≠ 0 ∧
+      ∀ v : V, B u v = ‖hB.formSolutionOperator J‖⁻¹ * ⟪J u, J v⟫_ℝ := by
+  obtain ⟨w, hw⟩ : ∃ w : V, J w ≠ 0 := by
+    simpa only [zero_apply] using DFunLike.ne_iff.mp hJne
+  have _ : Nontrivial H := nontrivial_of_ne (J w) 0 hw
+  set S := hB.formSolutionOperator J with hS
+  have hSne : S ≠ 0 := fun hzero =>
+    hw (inner_self_eq_zero.mp ((hB.formSolutionOperator_apply_eq_zero_iff J (J w)).mp
+      (by rw [← hS, hzero, zero_apply]) w))
+  have hnorm_pos : 0 < ‖S‖ := norm_pos_iff.mpr hSne
+  have hcompact : IsCompactOperator S := hB.isCompactOperator_formSolutionOperator hJ
+  have hsym : LinearMap.IsSymmetric (S : H →ₗ[ℝ] H) :=
+    hB.isSymmetric_formSolutionOperator J hsymm
+  have hnorm_or_neg : ‖S‖ ∈ spectrum ℝ S ∨ -‖S‖ ∈ spectrum ℝ S := by
+    simp_rw [spectrum, Set.mem_compl_iff]
+    by_contra! h
+    obtain ⟨d, hd, hle⟩ := S.abs_rayleighQuotient_le_of_norm_mem_resolventSet h.1 h.2
+    have hsup := ciSup_le hle
+    have heq := ContinuousLinearMap.norm_eq_iSup_rayleighQuotient S hsym
+    linarith
+  have hnorm_mem : ‖S‖ ∈ spectrum ℝ S := hnorm_or_neg.resolve_right fun hneg => by
+    have hneg_eigen : HasEigenvalue (S : H →ₗ[ℝ] H) (-‖S‖) :=
+      (hcompact.hasEigenvalue_iff_mem_spectrum (neg_ne_zero.mpr hnorm_pos.ne')).mpr hneg
+    have hnonneg : 0 ≤ -‖S‖ := eigenvalue_nonneg_of_nonneg hneg_eigen fun f => by
+      simpa [hS] using hB.inner_formSolutionOperator_self_nonneg J f
+    linarith
+  have hnorm_eigen : HasEigenvalue (S : H →ₗ[ℝ] H) ‖S‖ :=
+    (hcompact.hasEigenvalue_iff_mem_spectrum hnorm_pos.ne').mpr hnorm_mem
+  refine (hB.hasEigenvalue_formSolutionOperator_iff J (inv_ne_zero hnorm_pos.ne')).mp ?_
+  simpa using hnorm_eigen
 
 /-! ### The spectral theorem for the solution operator -/
 

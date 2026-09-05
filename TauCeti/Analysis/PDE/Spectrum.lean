@@ -452,11 +452,11 @@ theorem isLeast_rayleighQuotient_firstDirichletEigenvalue
 /-- **The first Dirichlet eigenvalue is the optimal Poincaré constant** of the energy form: it is
 the greatest `C` with `C ‖u‖²_{L²(Ω)} ≤ a(u, u)` for all `u ∈ H¹₀(Ω)`.  This is the Rayleigh
 principle read as an inequality, and it is what makes the lower bounds
-`TauCeti.PDE.le_firstDirichletEigenvalue` sharp. -/
+`TauCeti.PDE.le_firstDirichletEigenvalue` sharp.  Boundedness of `Ω` is not needed because this
+optimal-constant characterization does not assert attainment. -/
 theorem isGreatest_setOf_forall_mul_norm_value_sq_le
     (hcoeff : MemLp (fun x => energyIntegrand (a x) (b x) (c x)) ⊤ (mu.restrict Omega))
     (hcoercive : IsCoercive (energyFormH1L0 hcoeff))
-    (hOmega : IsBounded (Omega : Set (EuclideanSpace ℝ ι)))
     (hsymm : ∀ u v : W1p0 mu Omega 2,
       energyFormH1 a b c (u : W1p mu Omega 2) (v : W1p mu Omega 2) =
         energyFormH1 a b c (v : W1p mu Omega 2) (u : W1p mu Omega 2))
@@ -473,8 +473,7 @@ theorem isGreatest_setOf_forall_mul_norm_value_sq_le
     simp only [W1p0.valueL_apply, energyFormH1L0_apply]
   rw [hset, firstDirichletEigenvalue_def, dirichletSolutionOperator]
   exact hcoercive.isGreatest_setOf_forall_mul_norm_apply_sq_le
-    (W1p0.isCompactOperator_valueL (by simp) hOmega) (energyFormH1L0_comm hcoeff hsymm)
-    (W1p0.valueL_ne_zero hOmega_nonempty)
+    (energyFormH1L0_comm hcoeff hsymm) (W1p0.valueL_ne_zero hOmega_nonempty)
 
 /-- **The eigenspaces of the Dirichlet problem are finite dimensional** on a bounded domain. -/
 theorem finiteDimensional_eigenspace_dirichletSolutionOperator
