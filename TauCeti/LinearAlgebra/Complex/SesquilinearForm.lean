@@ -99,16 +99,12 @@ theorem isSymm_balance {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} (hH : H.IsSymm)
     rw [balance_apply, balance_apply, map_add, Complex.conj_conj, hH.eq x y,
       hH.eq (K y) (K x)]
 
-/-- A nonnegative complex number has vanishing imaginary part, so conjugation fixes it. -/
-private theorem conj_eq_self_of_nonneg {z : ℂ} (hz : 0 ≤ z) : (starRingEnd ℂ) z = z :=
-  Complex.conj_eq_iff_im.mpr (Complex.nonneg_iff.mp hz).2.symm
-
 /-- The balanced form is nonnegative if `H` is: both summands are, the second because conjugation
 fixes a nonnegative complex number. -/
 theorem isNonneg_balance {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} (hH : H.IsNonneg)
     (K : V →ₛₗ[starRingEnd ℂ] V) : (balance H K).IsNonneg where
   nonneg x := by
-    rw [balance_apply, conj_eq_self_of_nonneg (hH.nonneg (K x))]
+    rw [balance_apply, starRingEnd_apply, (hH.nonneg (K x)).star_eq]
     exact add_nonneg (hH.nonneg x) (hH.nonneg (K x))
 
 /-- The balanced form is definite off the origin if `H` is: the first summand is already nonzero
@@ -116,7 +112,7 @@ and the second is nonnegative. -/
 theorem balance_apply_self_ne_zero {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} (hH : H.IsNonneg)
     (hdef : ∀ x : V, x ≠ 0 → H x x ≠ 0) (K : V →ₛₗ[starRingEnd ℂ] V) {x : V} (hx : x ≠ 0) :
     balance H K x x ≠ 0 := by
-  rw [balance_apply, conj_eq_self_of_nonneg (hH.nonneg (K x))]
+  rw [balance_apply, starRingEnd_apply, (hH.nonneg (K x)).star_eq]
   exact (add_pos_of_pos_of_nonneg
     (lt_of_le_of_ne (hH.nonneg x) (Ne.symm (hdef x hx))) (hH.nonneg (K x))).ne'
 
