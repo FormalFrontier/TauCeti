@@ -39,7 +39,7 @@ their contribution is `o(x)`.
   difference is exactly the contribution from exponents at least two.
 * `NumberField.Chebotarev.frobeniusPsi_sub_frobeniusTheta_le`: that difference is bounded by
   the unrestricted higher-prime-power tail.
-* `NumberField.Chebotarev.isLittleO_frobeniusPsi_sub_frobeniusTheta`: this difference is `o(x)`.
+* `NumberField.Chebotarev.frobeniusPsi_sub_frobeniusTheta_isLittleO`: this difference is `o(x)`.
 
 The coefficient convention follows Neukirch, *Algebraic Number Theory*, Chapter VII. The
 construction reuses Tau Ceti's generic prime-power counting and removal estimates.
@@ -101,6 +101,7 @@ noncomputable def frobeniusPrimePowerWeight (C : ConjClasses (L ≃ₐ[K] L))
   (frobeniusPrimePowerSet K L C).indicator primePowerWeight A
 
 /-- A prime power in the `C`-fibre has weight `log N(𝔭)`. -/
+@[simp]
 theorem frobeniusPrimePowerWeight_of_mem {C : ConjClasses (L ≃ₐ[K] L)}
     {A : IdealPrimePower K} (hA : A ∈ frobeniusPrimePowerSet K L C) :
     frobeniusPrimePowerWeight K L C A = primePowerWeight A := by
@@ -117,6 +118,7 @@ theorem frobeniusPrimePowerWeight_of_artinSymbol_pow_eq {A : IdealPrimePower K}
     ((mem_frobeniusPrimePowerSet_iff_artinSymbol_pow_eq hur C).mpr hC)
 
 /-- A prime power outside the `C`-fibre has weight zero. -/
+@[simp]
 theorem frobeniusPrimePowerWeight_of_notMem {C : ConjClasses (L ≃ₐ[K] L)}
     {A : IdealPrimePower K} (hA : A ∉ frobeniusPrimePowerSet K L C) :
     frobeniusPrimePowerWeight K L C A = 0 :=
@@ -321,13 +323,9 @@ theorem frobeniusPsi_sub_frobeniusTheta_eq_primePowerSummatory (C : ConjClasses 
     frobeniusPsi K L C x - frobeniusTheta K L C x =
       primePowerSummatory K
         ((frobeniusPrimePowerSet K L C).indicator higherPrimePowerWeight) x := by
-  have hweight : frobeniusPrimePowerWeight K L C =
-      (frobeniusPrimePowerSet K L C).indicator primePowerWeight := by
-    funext A
-    by_cases hA : A ∈ frobeniusPrimePowerSet K L C
-    · rw [frobeniusPrimePowerWeight_of_mem hA, Set.indicator_of_mem hA]
-    · rw [frobeniusPrimePowerWeight_of_notMem hA, Set.indicator_of_notMem hA]
-  rw [frobeniusPsi, frobeniusTheta, hweight]
+  -- `frobeniusPrimePowerWeight K L C` unfolds to `(frobeniusPrimePowerSet K L C).indicator
+  -- primePowerWeight`, the restricted standard weight the generic splitting lemma expects.
+  rw [frobeniusPsi, frobeniusTheta]
   exact primePowerSummatory_indicator_sub_primeTheta _ _
     (fun 𝔭 ↦ ofPrime_mem_frobeniusPrimePowerSet_iff) x
 
@@ -354,7 +352,7 @@ theorem frobeniusPsi_sub_frobeniusTheta_le (C : ConjClasses (L ≃ₐ[K] L)) (x 
   exact Set.indicator_apply_le' (fun _ ↦ le_rfl) fun _ ↦ higherPrimePowerWeight_nonneg A
 
 /-- The higher-prime-power contribution to Frobenius `ψ` is `o(x)`. -/
-theorem isLittleO_frobeniusPsi_sub_frobeniusTheta (C : ConjClasses (L ≃ₐ[K] L)) :
+theorem frobeniusPsi_sub_frobeniusTheta_isLittleO (C : ConjClasses (L ≃ₐ[K] L)) :
     (fun x ↦ frobeniusPsi K L C x - frobeniusTheta K L C x) =o[atTop]
       fun x : ℝ ↦ x := by
   simpa only [frobeniusPsi_sub_frobeniusTheta_eq_primePowerSummatory] using
