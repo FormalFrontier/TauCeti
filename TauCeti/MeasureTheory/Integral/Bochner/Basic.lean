@@ -13,18 +13,21 @@ import Mathlib.Analysis.Convex.Mul
 /-!
 # Additional lemmas for the Bochner integral
 
-This file records general-purpose bridges between real-valued Bochner integrals and
-extended-nonnegative Lebesgue integrals.
+This file records general-purpose lemmas for Bochner integrals, including bridges between
+real-valued Bochner integrals and extended-nonnegative Lebesgue integrals, as well as inequalities
+for set and probability integrals.
 
 ## Positive parts
 
 * `ofReal_integral_le_lintegral_ofReal` bounds the positive part of a real-valued
   function's integral by the integral of its pointwise positive part.
 
-## Set integrals
+## Set and probability integrals
 
 * `sq_setIntegral_le_measureReal_mul_setIntegral_sq` is Cauchy--Schwarz for a real-valued set
   integral, in squared form.
+* The set-integral inequality specializes to the second-moment lower bound for a real-valued
+  function on a probability space.
 
 ## `L¹` convergence
 

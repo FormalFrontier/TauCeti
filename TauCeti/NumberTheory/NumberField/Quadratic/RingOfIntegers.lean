@@ -195,8 +195,8 @@ private theorem exists_half_int_coords (hmin : minpoly ℤ θ = X ^ 2 - C d)
   have hfr := finrank_rat_eq_two hmin hgen
   obtain ⟨bs, hbs, hb⟩ := Internal.exists_basis_eq_one_self_of_notMem_range_of_isIntegral
     hfr (gen_notMem_range hmin) θ.isIntegral_coe
-  set a := bs.repr (z : K) 0 with ha
-  set c := bs.repr (z : K) 1 with hc
+  set a := bs.repr (z : K) 0
+  set c := bs.repr (z : K) 1
   have hz : (z : K) = algebraMap ℚ K a + algebraMap ℚ K c * (θ : K) := by
     have hsum := bs.sum_repr (z : K)
     rw [Fin.sum_univ_two, hbs] at hsum

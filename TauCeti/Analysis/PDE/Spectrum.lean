@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.InnerProductSpace.Variational.Spectrum
+public import TauCeti.Analysis.InnerProductSpace.Variational.Rayleigh
 public import TauCeti.Analysis.PDE.FredholmAlternative
 
 /-!
@@ -62,6 +62,15 @@ familiar statement: if `κ` is *not* a Dirichlet eigenvalue, then `L u - κ u = 
 weak solution for every `f ∈ L²(Ω)`
 (`TauCeti.PDE.existsUnique_isWeakSolutionDirichletMassShift_of_not_isDirichletEigenvalue`).
 
+## The variational characterization
+
+The first Dirichlet eigenvalue is not only the least one: it is the minimum of the Rayleigh
+quotient `a(u, u) / ‖u‖²_{L²(Ω)}` over `H¹₀(Ω)`, equivalently the largest constant `C` for which
+the Poincaré-type inequality `C‖u‖²_{L²(Ω)} ≤ a(u, u)` holds.  The inequality itself needs
+neither boundedness nor nonemptiness of `Ω`; boundedness together with nonemptiness makes the
+minimum *attained*, through compactness of the solution operator and nonvanishing of the value
+map.
+
 ## Main declarations
 
 * `TauCeti.PDE.dirichletSolutionOperator`: the solution operator on `L²(Ω)`, with
@@ -77,6 +86,10 @@ weak solution for every `f ∈ L²(Ω)`
   Dirichlet eigenvalue and its attainment on a nonempty bounded domain.
 * `TauCeti.PDE.pos_of_isDirichletEigenvalue` and `TauCeti.PDE.le_of_isDirichletEigenvalue`:
   every Dirichlet eigenvalue is positive, and at least the coercivity constant.
+* `TauCeti.PDE.isLeast_rayleighQuotient_firstDirichletEigenvalue`: the Rayleigh principle, that
+  the first Dirichlet eigenvalue is the minimum of `a(u, u) / ‖u‖²_{L²(Ω)}`, with its inequality
+  half `TauCeti.PDE.firstDirichletEigenvalue_mul_norm_value_sq_le` and its reading as the optimal
+  Poincaré constant `TauCeti.PDE.isGreatest_firstDirichletEigenvalue`.
 * `TauCeti.PDE.isDirichletEigenvalue_iff_hasEigenvalue`: the reciprocal correspondence with the
   nonzero eigenvalues of the solution operator.
 * `TauCeti.PDE.finiteDimensional_eigenspace_dirichletSolutionOperator` and
@@ -293,12 +306,9 @@ theorem exists_isDirichletEigenvalue
         energyFormH1 a b c (v : W1p mu Omega 2) (u : W1p mu Omega 2))
     (hOmega_nonempty : (Omega : Set (EuclideanSpace ℝ ι)).Nonempty) :
     ∃ kappa : ℝ, IsDirichletEigenvalue mu Omega a b c kappa := by
-  obtain ⟨w, hw⟩ := W1p0.exists_value_ne_zero (mu := mu) (Omega := Omega) hOmega_nonempty
-  have hvalueL_ne : (W1p0.valueL (mu := mu) (Omega := Omega) (p := 2)) ≠ 0 := fun hzero =>
-    hw (by rw [← W1p0.valueL_apply, hzero, zero_apply])
   obtain ⟨kappa, -, u, hu, heq⟩ := hcoercive.exists_ne_zero_forall_apply_eq_smul_inner
     (W1p0.isCompactOperator_valueL (by simp) hOmega) (energyFormH1L0_comm hcoeff hsymm)
-    hvalueL_ne
+    (W1p0.valueL_ne_zero hOmega_nonempty)
   refine ⟨kappa, u, hu, fun v => ?_⟩
   have hv := heq v
   rwa [energyFormH1L0_apply, W1p0.valueL_apply, W1p0.valueL_apply] at hv
@@ -329,43 +339,13 @@ theorem isDirichletEigenvalue_first
     (hOmega_nonempty : (Omega : Set (EuclideanSpace ℝ ι)).Nonempty) :
     IsDirichletEigenvalue mu Omega a b c
       (firstDirichletEigenvalue hcoeff hcoercive) := by
-  set S := dirichletSolutionOperator hcoeff hcoercive with hS
-  obtain ⟨w, hw⟩ := W1p0.exists_value_ne_zero (mu := mu) (Omega := Omega) hOmega_nonempty
-  let _ : Nontrivial (Lp ℝ 2 (mu.restrict Omega)) := nontrivial_of_ne
-    (W1p.value (w : W1p mu Omega 2)) 0 hw
-  have hSne : S ≠ 0 := by
-    intro hzero
-    have happly : hcoercive.formSolutionOperator W1p0.valueL (W1p0.valueL w) = 0 := by
-      rw [← dirichletSolutionOperator, ← hS, hzero, zero_apply]
-    have horth := (hcoercive.formSolutionOperator_apply_eq_zero_iff W1p0.valueL _).mp happly w
-    rw [W1p0.valueL_apply] at horth
-    exact hw (inner_self_eq_zero.mp horth)
-  have hnorm_pos : 0 < ‖S‖ := (norm_pos_iff.mpr hSne)
-  have hcompact : IsCompactOperator S := isCompactOperator_dirichletSolutionOperator
-    hcoeff hcoercive hOmega
-  have hsym : LinearMap.IsSymmetric (S :
-      Lp ℝ 2 (mu.restrict Omega) →ₗ[ℝ] Lp ℝ 2 (mu.restrict Omega)) :=
-    isSymmetric_dirichletSolutionOperator hcoeff hcoercive hsymm
-  have hnorm_or_neg : ‖S‖ ∈ spectrum ℝ S ∨ -‖S‖ ∈ spectrum ℝ S := by
-    simp_rw [spectrum, Set.mem_compl_iff]
-    by_contra! h
-    obtain ⟨d, hd, hle⟩ := S.abs_rayleighQuotient_le_of_norm_mem_resolventSet h.1 h.2
-    have hsup := ciSup_le hle
-    have heq := ContinuousLinearMap.norm_eq_iSup_rayleighQuotient S hsym
-    linarith
-  have hnorm_mem : ‖S‖ ∈ spectrum ℝ S := hnorm_or_neg.resolve_right fun hneg => by
-    have hneg_eigen : HasEigenvalue (S :
-        Lp ℝ 2 (mu.restrict Omega) →ₗ[ℝ] Lp ℝ 2 (mu.restrict Omega)) (-‖S‖) :=
-      (hcompact.hasEigenvalue_iff_mem_spectrum (neg_ne_zero.mpr hnorm_pos.ne')).mpr hneg
-    have hnonneg : 0 ≤ -‖S‖ := eigenvalue_nonneg_of_nonneg hneg_eigen fun f => by
-      simpa [hS] using inner_dirichletSolutionOperator_self_nonneg hcoeff hcoercive f
-    linarith
-  have hnorm_eigen : HasEigenvalue (S :
-      Lp ℝ 2 (mu.restrict Omega) →ₗ[ℝ] Lp ℝ 2 (mu.restrict Omega)) ‖S‖ :=
-    (hcompact.hasEigenvalue_iff_mem_spectrum hnorm_pos.ne').mpr hnorm_mem
-  rw [firstDirichletEigenvalue_def,
-    isDirichletEigenvalue_iff_hasEigenvalue hcoeff hcoercive (inv_ne_zero hnorm_pos.ne')]
-  simpa using hnorm_eigen
+  rw [firstDirichletEigenvalue_def, dirichletSolutionOperator]
+  obtain ⟨u, hu, heq⟩ := hcoercive.exists_ne_zero_forall_apply_eq_inv_norm_smul_inner
+    (W1p0.isCompactOperator_valueL (by simp) hOmega) (energyFormH1L0_comm hcoeff hsymm)
+    (W1p0.valueL_ne_zero hOmega_nonempty)
+  refine ⟨u, hu, fun v => ?_⟩
+  have hv := heq v
+  rwa [energyFormH1L0_apply, W1p0.valueL_apply, W1p0.valueL_apply] at hv
 
 /-- The first Dirichlet eigenvalue is positive. -/
 theorem firstDirichletEigenvalue_pos
@@ -420,6 +400,86 @@ theorem le_firstDirichletEigenvalue
     C ≤ firstDirichletEigenvalue hcoeff hcoercive :=
   le_of_isDirichletEigenvalue hcoeff hcoercive hlower
     (isDirichletEigenvalue_first hcoeff hcoercive hOmega hsymm hOmega_nonempty)
+
+/-! ### The Rayleigh principle -/
+
+/-- **The quantity `firstDirichletEigenvalue` is a Poincaré constant for the energy form**:
+
+`κ₁ ‖u‖²_{L²(Ω)} ≤ a(u, u)` for every `u ∈ H¹₀(Ω)`,
+
+and by `TauCeti.PDE.isGreatest_firstDirichletEigenvalue` it is the largest constant for
+which this holds.  Neither boundedness nor nonemptiness of `Ω` is needed here: only coercivity,
+which makes the solution operator exist, and symmetry, which gives the energy form its
+Cauchy--Schwarz inequality. -/
+theorem firstDirichletEigenvalue_mul_norm_value_sq_le
+    (hcoeff : MemLp (fun x => energyIntegrand (a x) (b x) (c x)) ⊤ (mu.restrict Omega))
+    (hcoercive : IsCoercive (energyFormH1L0 hcoeff))
+    (hsymm : ∀ u v : W1p0 mu Omega 2,
+      energyFormH1 a b c (u : W1p mu Omega 2) (v : W1p mu Omega 2) =
+        energyFormH1 a b c (v : W1p mu Omega 2) (u : W1p mu Omega 2))
+    (u : W1p0 mu Omega 2) :
+    firstDirichletEigenvalue hcoeff hcoercive * ‖W1p.value (u : W1p mu Omega 2)‖ ^ 2 ≤
+      energyFormH1 a b c (u : W1p mu Omega 2) (u : W1p mu Omega 2) := by
+  rw [firstDirichletEigenvalue_def, dirichletSolutionOperator]
+  have h := hcoercive.inv_norm_formSolutionOperator_mul_norm_apply_sq_le
+    (W1p0.valueL (mu := mu) (Omega := Omega) (p := 2)) (energyFormH1L0_comm hcoeff hsymm) u
+  rwa [energyFormH1L0_apply, W1p0.valueL_apply] at h
+
+/-- **The Rayleigh principle for the Dirichlet problem.**  On a nonempty bounded domain with a
+symmetric energy form, the first Dirichlet eigenvalue is the *minimum* of the Rayleigh quotient
+
+`a(u, u) / ‖u‖²_{L²(Ω)}`
+
+over the `u ∈ H¹₀(Ω)` with nonzero `L²` value; the minimum is attained at an eigenfunction.
+Boundedness of `Ω` enters only through the attainment, by way of Rellich--Kondrachov: the
+inequality alone is `TauCeti.PDE.firstDirichletEigenvalue_mul_norm_value_sq_le`. -/
+theorem isLeast_rayleighQuotient_firstDirichletEigenvalue
+    (hcoeff : MemLp (fun x => energyIntegrand (a x) (b x) (c x)) ⊤ (mu.restrict Omega))
+    (hcoercive : IsCoercive (energyFormH1L0 hcoeff))
+    (hOmega : IsBounded (Omega : Set (EuclideanSpace ℝ ι)))
+    (hsymm : ∀ u v : W1p0 mu Omega 2,
+      energyFormH1 a b c (u : W1p mu Omega 2) (v : W1p mu Omega 2) =
+        energyFormH1 a b c (v : W1p mu Omega 2) (u : W1p mu Omega 2))
+    (hOmega_nonempty : (Omega : Set (EuclideanSpace ℝ ι)).Nonempty) :
+    IsLeast {r : ℝ | ∃ u : W1p0 mu Omega 2, W1p.value (u : W1p mu Omega 2) ≠ 0 ∧
+        energyFormH1 a b c (u : W1p mu Omega 2) (u : W1p mu Omega 2) /
+          ‖W1p.value (u : W1p mu Omega 2)‖ ^ 2 = r}
+      (firstDirichletEigenvalue hcoeff hcoercive) := by
+  have hset : {r : ℝ | ∃ u : W1p0 mu Omega 2, W1p.value (u : W1p mu Omega 2) ≠ 0 ∧
+      energyFormH1 a b c (u : W1p mu Omega 2) (u : W1p mu Omega 2) /
+        ‖W1p.value (u : W1p mu Omega 2)‖ ^ 2 = r} =
+      {r : ℝ | ∃ u : W1p0 mu Omega 2, W1p0.valueL u ≠ 0 ∧
+        energyFormH1L0 hcoeff u u / ‖W1p0.valueL u‖ ^ 2 = r} := by
+    simp only [W1p0.valueL_apply, energyFormH1L0_apply]
+  rw [hset, firstDirichletEigenvalue_def, dirichletSolutionOperator]
+  exact hcoercive.isLeast_rayleighQuotient (W1p0.isCompactOperator_valueL (by simp) hOmega)
+    (energyFormH1L0_comm hcoeff hsymm) (W1p0.valueL_ne_zero hOmega_nonempty)
+
+/-- **The quantity `firstDirichletEigenvalue` is the optimal Poincaré constant** of the energy
+form: it is the greatest `C` with `C ‖u‖²_{L²(Ω)} ≤ a(u, u)` for all `u ∈ H¹₀(Ω)`.  This is the
+Rayleigh principle read as an inequality, and it shows that the bound
+`TauCeti.PDE.firstDirichletEigenvalue_mul_norm_value_sq_le` is optimal.  Boundedness of `Ω` is
+not needed because this optimal-constant characterization does not assert attainment. -/
+theorem isGreatest_firstDirichletEigenvalue
+    (hcoeff : MemLp (fun x => energyIntegrand (a x) (b x) (c x)) ⊤ (mu.restrict Omega))
+    (hcoercive : IsCoercive (energyFormH1L0 hcoeff))
+    (hsymm : ∀ u v : W1p0 mu Omega 2,
+      energyFormH1 a b c (u : W1p mu Omega 2) (v : W1p mu Omega 2) =
+        energyFormH1 a b c (v : W1p mu Omega 2) (u : W1p mu Omega 2))
+    (hOmega_nonempty : (Omega : Set (EuclideanSpace ℝ ι)).Nonempty) :
+    IsGreatest {C : ℝ | ∀ u : W1p0 mu Omega 2,
+        C * ‖W1p.value (u : W1p mu Omega 2)‖ ^ 2 ≤
+          energyFormH1 a b c (u : W1p mu Omega 2) (u : W1p mu Omega 2)}
+      (firstDirichletEigenvalue hcoeff hcoercive) := by
+  have hset : {C : ℝ | ∀ u : W1p0 mu Omega 2,
+      C * ‖W1p.value (u : W1p mu Omega 2)‖ ^ 2 ≤
+        energyFormH1 a b c (u : W1p mu Omega 2) (u : W1p mu Omega 2)} =
+      {C : ℝ | ∀ u : W1p0 mu Omega 2,
+        C * ‖W1p0.valueL u‖ ^ 2 ≤ energyFormH1L0 hcoeff u u} := by
+    simp only [W1p0.valueL_apply, energyFormH1L0_apply]
+  rw [hset, firstDirichletEigenvalue_def, dirichletSolutionOperator]
+  exact hcoercive.isGreatest_inv_norm_formSolutionOperator
+    (energyFormH1L0_comm hcoeff hsymm) (W1p0.valueL_ne_zero hOmega_nonempty)
 
 /-- **The eigenspaces of the Dirichlet problem are finite dimensional** on a bounded domain. -/
 theorem finiteDimensional_eigenspace_dirichletSolutionOperator

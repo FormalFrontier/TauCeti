@@ -14,7 +14,6 @@ import TauCeti.Analysis.Contour.Crossing.Finiteness
 import TauCeti.Analysis.Contour.Crossing.PVAggregation
 import TauCeti.Analysis.Contour.Crossing.Windows
 import TauCeti.Analysis.Contour.PerWindow.HigherOrder
-import TauCeti.Analysis.Contour.PiecewiseC1On
 
 /-!
 # The principal value of a higher-order polar term along an immersed curve

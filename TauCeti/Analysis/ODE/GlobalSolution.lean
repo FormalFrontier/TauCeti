@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Analysis.ODE.Basic
 public import Mathlib.Analysis.ODE.ExistUnique
+public import Mathlib.Analysis.ODE.Transform
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 public import Mathlib.Topology.ContinuousMap.Bounded.Normed
@@ -41,6 +42,7 @@ Mathlib's `ODE_solution_unique_univ`, and the fixed point depends on the initial
 * `ODE.globalSolution_zero` and `ODE.hasDerivAt_globalSolution`: it is a solution.
 * `ODE.eq_globalSolution`: every global solution with the same initial value is equal to it.
 * `ODE.globalSolution_congr`: it does not depend on the chosen Lipschitz bound.
+* `ODE.globalSolution_add`: the flow law, following the solution for two successive times.
 * `ODE.globalSolution_neg`: reversing time solves the negated field.
 * `ODE.dist_globalSolution_le`: two solutions drift apart at most exponentially.
 * `ODE.continuous_globalSolution`: joint continuity in time and initial condition.
@@ -296,6 +298,15 @@ theorem globalSolution_congr (v : E → E) {K K' : ℝ≥0} (hv : LipschitzWith 
     (hv' : LipschitzWith K' v) (x : E) : globalSolution v hv x = globalSolution v hv' x := by
   have h := eq_globalSolution v hv' (γ := globalSolution v hv x) (hasDerivAt_globalSolution v hv x)
   rwa [globalSolution_zero] at h
+
+/-- **The flow law.** Following the global solution from `x` for the time `t + s` is the same as
+following it from `x` for the time `t` and then, from where it has arrived, for the time `s`: both
+curves solve the equation on the whole line and start at the same point. -/
+theorem globalSolution_add (v : E → E) {K : ℝ≥0} (hv : LipschitzWith K v) (x : E) (t s : ℝ) :
+    globalSolution v hv x (t + s) = globalSolution v hv (globalSolution v hv x t) s := by
+  have hγ : IsIntegralCurve (fun r : ℝ ↦ globalSolution v hv x (t + r)) fun _ y ↦ v y := by
+    simpa [Function.comp_def, add_comm] using (isIntegralCurve_globalSolution v hv x).comp_add t
+  simpa using congrFun (eq_globalSolution v hv hγ) s
 
 /-- The Picard fixed point depends on the initial condition `1`-Lipschitzly. -/
 private theorem dist_picardFixedPoint_le {v : E → E} (hvc : Continuous v) {k : ℝ} (hk : 0 < k)

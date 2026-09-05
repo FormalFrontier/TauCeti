@@ -312,9 +312,6 @@ private lemma mulSupport_pp_subset (k : ℕ)
       (((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ)) ((A.rep : GL (Fin 2) ℚ)) ≠ 0) :
     A = diagCoset ![1, p ^ (k + 1)] ∨ A = diagCoset ![p, p ^ k] := by
   classical
-  -- the matrix determinant of an `SL₂(ℤ)` element, used four times in stage 4's bookkeeping
-  have hdet : ∀ S : SpecialLinearGroup (Fin 2) ℤ, (mapGL ℚ S).val.det = 1 := fun S ↦
-    det_eq_one_of_mem_SLnZ 2 ((mem_SLnZ_iff 2).2 ⟨S, rfl⟩)
   -- Stage 1: positivity of the two input diagonals, and a diagonal representative `a` for `A`.
   have h1p_pos : ∀ i : Fin 2, 0 < (![1, p] : Fin 2 → ℕ) i := fun i ↦ by
     fin_cases i <;> simp [hp.pos]
@@ -358,18 +355,15 @@ private lemma mulSupport_pp_subset (k : ℕ)
     rw [hSL_La, hSL_Ra]
     exact h_prod_eq
   -- Stage 4: determinants. Both sides of the product have determinant `p^(k+1)`, which pins
-  -- `a 0 * a 1`; the four `hdet` uses discharge the `SL₂` factors' determinants.
+  -- `a 0 * a 1`; the two coset representatives' determinants come from `diagCoset_rep_det`, and
+  -- the two `SL₂` factors' from `det_eq_one_of_mem_SLnZ`.
   have h_det := diag_entries_mul_eq_pow_succ p k a ha_pos (q.1.out : GL (Fin 2) ℚ)
     ((diagCoset ![1, p]).rep : GL (Fin 2) ℚ) (q.2.out : GL (Fin 2) ℚ)
     ((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ)
-    (by rw [← hSL_i₀]; exact hdet SL_i₀)
-    (by rw [hD1, ← hSL_L₁, ← hSL_R₁, Units.val_mul, Units.val_mul, Matrix.det_mul,
-          Matrix.det_mul, hdet, hdet, natDiagGL_det 2 _ h1p_pos]
-        simp [Fin.prod_univ_two])
-    (by rw [← hSL_j₀]; exact hdet SL_j₀)
-    (by rw [hD2, ← hSL_L₂, ← hSL_R₂, Units.val_mul, Units.val_mul, Matrix.det_mul,
-          Matrix.det_mul, hdet, hdet, natDiagGL_det 2 _ h1pk_pos]
-        simp [Fin.prod_univ_two])
+    (det_eq_one_of_mem_SLnZ 2 q.1.out.2)
+    (by rw [diagCoset_rep_det _ h1p_pos]; simp [Fin.prod_univ_two])
+    (det_eq_one_of_mem_SLnZ 2 q.2.out.2)
+    (by rw [diagCoset_rep_det _ h1pk_pos]; simp [Fin.prod_univ_two])
     SL_La SL_Ra h_prod_eq'
   -- Stage 5: the first invariant factor divides `p`, because conjugating the middle matrix
   -- keeps it integral. With `a 0 * a 1 = p^(k+1)` that leaves only the two claimed cosets.

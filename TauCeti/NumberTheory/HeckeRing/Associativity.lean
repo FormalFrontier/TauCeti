@@ -61,20 +61,6 @@ private lemma nat_card_setOf_eq_sum {A : Type*} [Fintype A] (P : A → Prop) :
   rw [Nat.card_eq_fintype_card, Fintype.card_subtype, Finset.card_filter]
   simp [Set.mem_ofPred_eq]
 
-/-- Membership in a double coset is invariant under left multiplication by the left
-subgroup. -/
-private lemma mul_mem_doubleCoset_iff {β : G} (hβ : β ∈ Γ₂) {a z : G} :
-    β * z ∈ doubleCoset a Γ₂ Γ₃ ↔ z ∈ doubleCoset a Γ₂ Γ₃ := by
-  constructor
-  · intro hz
-    obtain ⟨x, hx, y, hy, hxy⟩ := mem_doubleCoset.mp hz
-    refine mem_doubleCoset.mpr ⟨β⁻¹ * x, Γ₂.mul_mem (Γ₂.inv_mem hβ) hx, y, hy, ?_⟩
-    rw [mul_assoc, mul_assoc, ← mul_assoc x, ← hxy, inv_mul_cancel_left]
-  · intro hz
-    obtain ⟨x, hx, y, hy, rfl⟩ := mem_doubleCoset.mp hz
-    exact mem_doubleCoset.mpr ⟨β * x, Γ₂.mul_mem hβ hx, y, hy, by
-      simp only [mul_assoc]⟩
-
 open Classical in
 /-- The fibre of the multiplicity over a fixed first representative: for fixed `w`, there is
 exactly one representative `τⱼ` with `w τⱼ h Γ₃ = d Γ₃` if `w⁻¹d ∈ Γ₂hΓ₃`, and none
@@ -218,9 +204,8 @@ private lemma sum_ite_mem_multiplicity [IsHeckeTriple Δ H₂ H₃] [IsHeckeTrip
       Δ.mul_mem (Δ.mul_mem (Δ.mul_mem (Δ.mul_mem (IsHeckeTriple.mem_of_mem_left H₃ hβ) g₂.2)
         (IsHeckeTriple.mem_of_mem_left H₄ hc)) g₃.2) (IsHeckeTriple.mem_of_mem_right H₃ hy)
     set xΔ : Δ := ⟨β * (g₂ : G) * c * (g₃ : G) * y, hxΔ⟩
-    have hrep : ((HeckeCoset.mk H₂ H₄ xΔ).rep : G) ∈ doubleCoset (xΔ : G) H₂ H₄ := by
-      have h1 := HeckeCoset.rep_mem (HeckeCoset.mk H₂ H₄ xΔ)
-      rwa [HeckeCoset.toSet_mk] at h1
+    have hrep : ((HeckeCoset.mk H₂ H₄ xΔ).rep : G) ∈ doubleCoset (xΔ : G) H₂ H₄ :=
+      HeckeCoset.rep_mk_mem_doubleCoset xΔ
     refine hx (HeckeCoset.mk H₂ H₄ xΔ) ?_ ?_
     · rw [HeckeCoset.mem_image_mulMap_iff, multiplicity_doubleCoset_congr _ _ hrep]
       exact hne
@@ -274,6 +259,39 @@ private lemma sum_multiplicity_eq_card [IsHeckeTriple Δ H₁ H₂] [IsHeckeTrip
     simp only [Set.mem_ofPred_eq, mul_inv_rev, mul_assoc]))
 
 open Classical in
+/-- **The product of two multiplicities as a doubly-indexed indicator sum**, over the left
+cosets `l` of `H₁ E H₃` and the pairs `p`, of the indicator of the two conditions holding
+together. -/
+private lemma multiplicity_mul_multiplicity_eq_sum_indicator [IsHeckeTriple Δ H₁ H₂]
+    [IsHeckeTriple Δ H₂ H₃] [IsHeckeTriple Δ H₃ H₄] (g₁ g₂ g₃ d : Δ)
+    (E : HeckeCoset Δ H₁ H₃) [Fintype (DecompQuotient H₁ H₃ (E.rep : G))] :
+    multiplicity H₁ H₂ H₃ (g₁ : G) (g₂ : G) (E.rep : G) *
+        multiplicity H₁ H₃ H₄ (E.rep : G) (g₃ : G) (d : G) =
+      ∑ l : DecompQuotient H₁ H₃ (E.rep : G),
+        ∑ p : DecompQuotient H₁ H₂ (g₁ : G) × DecompQuotient H₂ H₃ (g₂ : G),
+          if (((l.out : G) * E.rep)⁻¹ * d ∈ doubleCoset (g₃ : G) H₃ H₄) ∧
+              ((p.1.out : G) * g₁ * ((p.2.out : G) * g₂) : G ⧸ H₃) =
+                (((l.out : G) * E.rep : G) : G ⧸ H₃) then 1 else 0 := by
+  rw [multiplicity_eq_card_filter (Γ₁ := H₁) (E.rep : G) (g₃ : G) (d : G),
+    nat_card_setOf_eq_sum, Finset.mul_sum]
+  refine Finset.sum_congr rfl fun l _ ↦ ?_
+  rw [mul_ite, mul_one, mul_zero]
+  split_ifs with hcond
+  -- the `show` ascription pins down the implicit arguments of `multiplicity_mul_left`:
+  -- rewriting with the bare `.symm` leaves the translated target `↑l.out * ↑E.rep`
+  -- undetermined, since it does not occur in the goal before the rewrite
+  · rw [show multiplicity H₁ H₂ H₃ (g₁ : G) (g₂ : G) (E.rep : G) =
+        multiplicity H₁ H₂ H₃ (g₁ : G) (g₂ : G) ((l.out : G) * E.rep) from
+        (multiplicity_mul_left l.out.2 _ _ _).symm,
+      multiplicity_def, nat_card_setOf_eq_sum]
+    refine Finset.sum_congr rfl fun p _ ↦ ?_
+    by_cases hm : ((p.1.out : G) * g₁ * ((p.2.out : G) * g₂) : G ⧸ H₃) =
+        (((l.out : G) * E.rep : G) : G ⧸ H₃)
+    · rw [ite_eq_left hm, ite_eq_left ⟨hcond, hm⟩]
+    · rw [ite_eq_right hm, ite_eq_right fun hh ↦ hm hh.2]
+  · exact (Finset.sum_eq_zero fun p _ ↦ ite_eq_right fun hh ↦ hcond hh.1).symm
+
+open Classical in
 /-- The left-handed Fubini step: the left association also counts pairs of representatives
 whose product moves `d` into `H₃g₃H₄`, using the invariance of the multiplicity across the
 left cosets of a double coset. -/
@@ -285,52 +303,22 @@ private lemma sum_image_mulMap_multiplicity_left [IsHeckeTriple Δ H₁ H₂]
       Nat.card {p : DecompQuotient H₁ H₂ (g₁ : G) × DecompQuotient H₂ H₃ (g₂ : G) |
         ((p.1.out : G) * g₁ * ((p.2.out : G) * g₂))⁻¹ * d ∈ doubleCoset (g₃ : G) H₃ H₄} := by
   have h13 : IsHeckeTriple Δ H₁ H₃ := IsHeckeTriple.trans (H₂ := H₂)
-  have hA : ∀ E ∈ Finset.univ.image (mulMap H₁ H₂ H₃ g₁ g₂),
-      multiplicity H₁ H₂ H₃ (g₁ : G) (g₂ : G) (E.rep : G) *
-        multiplicity H₁ H₃ H₄ (E.rep : G) (g₃ : G) (d : G) =
-      ∑ l : DecompQuotient H₁ H₃ (E.rep : G),
-        ∑ p : DecompQuotient H₁ H₂ (g₁ : G) × DecompQuotient H₂ H₃ (g₂ : G),
-          if (((l.out : G) * E.rep)⁻¹ * d ∈ doubleCoset (g₃ : G) H₃ H₄) ∧
-              ((p.1.out : G) * g₁ * ((p.2.out : G) * g₂) : G ⧸ H₃) =
-                (((l.out : G) * E.rep : G) : G ⧸ H₃) then 1 else 0 := by
-    intro E _
-    rw [multiplicity_eq_card_filter (Γ₁ := H₁) (E.rep : G) (g₃ : G) (d : G),
-      nat_card_setOf_eq_sum, Finset.mul_sum]
-    refine Finset.sum_congr rfl fun l _ ↦ ?_
-    rw [mul_ite, mul_one, mul_zero]
-    split_ifs with hcond
-    -- the `show` ascription pins down the implicit arguments of `multiplicity_mul_left`:
-    -- rewriting with the bare `.symm` leaves the translated target `↑l.out * ↑E.rep`
-    -- undetermined, since it does not occur in the goal before the rewrite
-    · rw [show multiplicity H₁ H₂ H₃ (g₁ : G) (g₂ : G) (E.rep : G) =
-          multiplicity H₁ H₂ H₃ (g₁ : G) (g₂ : G) ((l.out : G) * E.rep) from
-          (multiplicity_mul_left l.out.2 _ _ _).symm,
-        multiplicity_def, nat_card_setOf_eq_sum]
-      refine Finset.sum_congr rfl fun p _ ↦ ?_
-      by_cases hm : ((p.1.out : G) * g₁ * ((p.2.out : G) * g₂) : G ⧸ H₃) =
-          (((l.out : G) * E.rep : G) : G ⧸ H₃)
-      · rw [ite_eq_left hm, ite_eq_left ⟨hcond, hm⟩]
-      · rw [ite_eq_right hm, ite_eq_right fun hh ↦ hm hh.2]
-    · exact (Finset.sum_eq_zero fun p _ ↦ ite_eq_right fun hh ↦ hcond hh.1).symm
-  rw [Finset.sum_congr rfl hA,
+  rw [Finset.sum_congr rfl fun E _ ↦
+      multiplicity_mul_multiplicity_eq_sum_indicator g₁ g₂ g₃ d E,
     Finset.sum_congr rfl fun (E : HeckeCoset Δ H₁ H₃) _ ↦ Finset.sum_comm, Finset.sum_comm,
     nat_card_setOf_eq_sum]
   refine Finset.sum_congr rfl fun p _ ↦ ?_
   -- Step E: for each pair `p` there is exactly one pair `(E, l)` matching the coset of the
   -- product of the representatives of `p`.
-  set wG : G := (p.1.out : G) * g₁ * ((p.2.out : G) * g₂) with hwG
+  set wG : G := (p.1.out : G) * g₁ * ((p.2.out : G) * g₂)
   have hwΔ : wG ∈ Δ :=
     Δ.mul_mem (Δ.mul_mem (IsHeckeTriple.mem_of_mem_left H₂ p.1.out.2) g₁.2)
       (Δ.mul_mem (IsHeckeTriple.mem_of_mem_left H₃ p.2.out.2) g₂.2)
   set E₀ : HeckeCoset Δ H₁ H₃ := HeckeCoset.mk H₁ H₃ ⟨wG, hwΔ⟩ with hE₀def
   have hE₀mem : E₀ ∈ Finset.univ.image (mulMap H₁ H₂ H₃ g₁ g₂) :=
     Finset.mem_image.mpr ⟨p, Finset.mem_univ p, HeckeCoset.mulMap_eq_mk _ _ _ _ _ _⟩
-  have hw_rep : wG ∈ doubleCoset ((E₀.rep : Δ) : G) H₁ H₃ := by
-    have h1 := HeckeCoset.rep_mem E₀
-    rw [hE₀def, HeckeCoset.toSet_mk] at h1
-    rw [doubleCoset_eq_of_mem h1]
-    exact mem_doubleCoset_self H₁ H₃ _
-  have hdec := hw_rep
+  have hdec : wG ∈ doubleCoset ((E₀.rep : Δ) : G) H₁ H₃ :=
+    HeckeCoset.mem_doubleCoset_rep_mk ⟨wG, hwΔ⟩
   rw [doubleCoset_eq_iUnion_leftCosets, Set.mem_iUnion] at hdec
   obtain ⟨l₀, hl₀⟩ := hdec
   rw [mem_leftCoset_iff] at hl₀
@@ -341,10 +329,8 @@ private lemma sum_image_mulMap_multiplicity_left [IsHeckeTriple Δ H₁ H₂]
     intro E hE hne
     refine Finset.sum_eq_zero fun l _ ↦ ite_eq_right ?_
     rintro ⟨-, hmatch⟩
-    have hwE : wG ∈ doubleCoset ((E.rep : Δ) : G) H₁ H₃ := by
-      have h2 := QuotientGroup.eq.mp hmatch
-      refine mem_doubleCoset.mpr ⟨(l.out : G), l.out.2, ((l.out : G) * E.rep)⁻¹ * wG,
-        by simpa [mul_inv_rev, mul_assoc] using H₃.inv_mem h2, (mul_inv_cancel_left _ _).symm⟩
+    have hwE : wG ∈ doubleCoset ((E.rep : Δ) : G) H₁ H₃ :=
+      mem_doubleCoset_of_quotient_eq l.out.2 hmatch
     refine hne (HeckeCoset.toSet_injective ?_)
     rw [HeckeCoset.toSet_eq_doubleCoset_rep, hE₀def, HeckeCoset.toSet_mk]
     exact (doubleCoset_eq_of_mem hwE).symm
@@ -356,19 +342,9 @@ private lemma sum_image_mulMap_multiplicity_left [IsHeckeTriple Δ H₁ H₂]
     exact hlne (mk_out_mul_injective H₁ H₃ ((E₀.rep : Δ) : G) (hmatch.symm.trans hmk))
   have hiff : ((((l₀.out : G) * (E₀.rep : G))⁻¹ * d ∈ doubleCoset (g₃ : G) H₃ H₄) ∧
       ((wG : G) : G ⧸ H₃) = (((l₀.out : G) * (E₀.rep : G) : G) : G ⧸ H₃)) ↔
-      (wG⁻¹ * (d : G) ∈ doubleCoset (g₃ : G) H₃ H₄) := by
-    have hw2 : wG⁻¹ * (d : G) =
-        (((l₀.out : G) * (E₀.rep : G))⁻¹ * wG)⁻¹ *
-          ((((l₀.out : G) * (E₀.rep : G)))⁻¹ * d) := by
-      simp only [mul_inv_rev, inv_inv, mul_assoc, mul_inv_cancel_left]
-    constructor
-    · intro hh
-      rw [hw2, mul_mem_doubleCoset_iff (H₃.inv_mem hl₀)]
-      exact hh.1
-    · intro hh
-      refine ⟨?_, hmk⟩
-      rw [hw2, mul_mem_doubleCoset_iff (H₃.inv_mem hl₀)] at hh
-      exact hh
+      (wG⁻¹ * (d : G) ∈ doubleCoset (g₃ : G) H₃ H₄) :=
+    ⟨fun hh ↦ (inv_mul_mem_doubleCoset_iff_of_mem hl₀).mp hh.1,
+      fun hh ↦ ⟨(inv_mul_mem_doubleCoset_iff_of_mem hl₀).mpr hh, hmk⟩⟩
   by_cases hd4 : wG⁻¹ * (d : G) ∈ doubleCoset (g₃ : G) H₃ H₄
   · rw [ite_eq_left (hiff.mpr hd4), ite_eq_left hd4]
   · rw [ite_eq_right fun hh ↦ hd4 (hiff.mp hh), ite_eq_right hd4]

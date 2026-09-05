@@ -57,6 +57,27 @@ namespace Probability
 
 variable {ι κ : Type*} [Fintype ι] [Fintype κ]
 
+/-- The real-valued probability of an event under a finite uniform sample is the ratio of its
+cardinality to the cardinality of the sampling set. -/
+theorem uniformOn_toReal {Ω : Type*} [Finite Ω] [MeasurableSpace Ω]
+    [MeasurableSingletonClass Ω] (S T : Set Ω) :
+    (uniformOn S T).toReal =
+      (Nat.card {x : Ω // x ∈ S ∩ T} : ℝ) /
+        (Nat.card {x : Ω // x ∈ S} : ℝ) := by
+  classical
+  let fintypeΩ : Fintype Ω := Fintype.ofFinite Ω
+  let _ := fintypeΩ
+  let s : Finset Ω := S.toFinite.toFinset
+  let t : Finset Ω := T.toFinite.toFinset
+  have hs : (s : Set Ω) = S := by simp [s]
+  have ht : (t : Set Ω) = T := by simp [t]
+  rw [← hs, ← ht, uniformOn_apply_finset, ENNReal.toReal_div]
+  have hcard (U : Set Ω) : Nat.card {x : Ω // x ∈ U} = U.ncard := by
+    rw [Nat.card_eq_fintype_card, Set.fintypeCard_eq_ncard]
+  rw [hcard, hcard, ← Finset.coe_inter, Set.ncard_coe_finset,
+    Set.ncard_coe_finset]
+  simp only [ENNReal.toReal_natCast]
+
 private noncomputable def eqAtEquiv (i j : ι) (hij : i ≠ j) :
     {x : ι → κ // x i = x j} ≃ ({a : ι // a ≠ j} → κ) := by
   classical

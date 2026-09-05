@@ -6,9 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Product.Properties
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.SmoothContainment
-import TauCeti.Algebra.AlgebraicGroup.Tangent.Dimension
-import TauCeti.Algebra.AlgebraicGroup.Tangent.FiniteType
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Smooth.Dimension
 
 /-!
 # Maximal-dimensional families of closed subgroups
@@ -19,9 +17,9 @@ maximal Lie dimension and the scheme-theoretic product of `I` with each member o
 `P`. Then `I` contains every other member.
 
 Indeed, multiplying a maximal-dimensional member `I` by another member `J` gives a member that
-contains `I`. Dimension maximality and monotonicity force the two tangent spaces to have the same
-dimension. The resulting closed immersion is an equality because both groups are smooth and
-connected. Since the product also contains `J`, the subgroup represented by `I` contains `J`.
+contains `I`. Dimension maximality then makes the resulting closed immersion an equality, by the
+comparison of `TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Smooth.Dimension`. Since the product also
+contains `J`, the subgroup represented by `I` contains `J`.
 
 This argument is independent of the additional property defining the family. It is used for the
 unipotent radical and is also the dimension-comparison step in the construction of the solvable
@@ -83,42 +81,10 @@ theorem le_of_product_of_finrank_maximal
   have hK : P K := product hJ
   have hKI : K ≤ I :=
     CommHopfAlgCat.ker_productMapOfNormal_le_left H.obj I J hI_normal
-  have hfinrank :
-      Module.finrank k
-          (Derivation k (H ⧸ K.toIdeal)
-            (Bialgebra.CounitAlgebra k (H ⧸ K.toIdeal) k)) =
-        Module.finrank k
-          (Derivation k (H ⧸ I.toIdeal)
-            (Bialgebra.CounitAlgebra k (H ⧸ I.toIdeal) k)) := by
-    apply le_antisymm
-    · exact hmax K hK
-    · exact finrank_quotientLie_antitone hKI
-  let q := FiniteTypeCommHopfAlgCat.toBialgHom
-    (FiniteTypeCommHopfAlgCat.quotientMapOfLe H hKI)
-  have hq_surjective : Function.Surjective q :=
-    FiniteTypeCommHopfAlgCat.quotientMapOfLe_surjective H hKI
-  have hq_bijective : Function.Bijective (derivationCompLieHom (B := k) q) :=
-    derivationCompLieHom_bijective_of_surjective_of_finrank_eq q hq_surjective hfinrank.symm
-  have hconormal : conormalSubspace (HopfIdeal.ker q) = ⊥ :=
-    conormalSubspace_ker_eq_bot_of_surjective_of_derivationCompLieHom_surjective
-      q hq_surjective hq_bijective.2
-  have hK_smooth : smoothCommHopfAlgProperty k
-      (_root_.CommHopfAlgCat.of k (H ⧸ K.toIdeal)) :=
-    (smoothCommHopfAlgProperty_iff _).mpr (smooth hK)
-  have hI_smooth : smoothCommHopfAlgProperty k
-      (_root_.CommHopfAlgCat.of k (H ⧸ I.toIdeal)) :=
-    (smoothCommHopfAlgProperty_iff _).mpr (smooth hI)
-  have hK_connected : ConnectedSpace (PrimeSpectrum (H ⧸ K.toIdeal)) := connected hK
-  have hI_connected : ConnectedSpace (PrimeSpectrum (H ⧸ I.toIdeal)) := connected hI
-  have hq_kernel : HopfIdeal.ker q = ⊥ :=
-    ker_eq_bot_of_smooth_of_connected_of_conormalSubspace_eq_bot q hq_surjective
-      hK_smooth hK_connected hI_smooth hI_connected hconormal
-  have hmap : I.map (Bialgebra.Quotient.mkBialgHom K.toIdeal) = ⊥ := by
-    rw [← CommHopfAlgCat.ker_quotientMapOfLe H.obj hKI]
-    exact hq_kernel
-  have hIK : I ≤ K := by
-    simpa using (HopfIdeal.map_eq_bot_iff_le_ker I _ Ideal.Quotient.mk_surjective).mp hmap
-  have hKI_eq : K = I := le_antisymm hKI hIK
+  have hKI_eq : K = I :=
+    eq_of_le_of_finrank_quotientLie_le hKI
+      ((smoothCommHopfAlgProperty_iff _).mpr (smooth hK)) (connected hK)
+      ((smoothCommHopfAlgProperty_iff _).mpr (smooth hI)) (connected hI) (hmax K hK)
   rw [← hKI_eq]
   exact CommHopfAlgCat.ker_productMapOfNormal_le_right H.obj I J hI_normal
 

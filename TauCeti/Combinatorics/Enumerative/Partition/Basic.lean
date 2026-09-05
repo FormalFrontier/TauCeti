@@ -8,11 +8,15 @@ module
 public import Mathlib.Combinatorics.Enumerative.Partition.Basic
 
 /-!
-# The finest and coarsest partitions
+# Named partitions
 
-This file records the partition `Nat.Partition.ones n = (1ⁿ)` into `n` parts equal to `1`, the
+This file records some partitions of `n` that are referred to by name.  Two of them are the
+extremes: `Nat.Partition.ones n = (1ⁿ)`, the finest partition, into `n` parts equal to `1`, is the
 opposite extreme to Mathlib's coarsest partition `Nat.Partition.indiscrete n = (n)`, whose parts
-are the single part `n` when `n ≠ 0`, and none when `n = 0`.
+are the single part `n` when `n ≠ 0`, and none when `n = 0`.  The third is
+`Nat.Partition.singletonSecondRow n = (n+1, 1)`, the partition of `n+2` with two parts whose
+second part is a single box; it is written at `n+2` so that both parts are positive with no
+hypothesis on `n`.
 -/
 
 public section
@@ -43,6 +47,27 @@ theorem prod_map_factorial_indiscrete (n : ℕ) :
   rcases Nat.eq_zero_or_pos n with rfl | hn
   · simp
   · simp [_root_.Nat.Partition.indiscrete_parts hn.ne']
+
+/-- The partition `(n+1, 1)` of `n+2`: two parts, the second a single box.
+
+This is the shape usually written `(n-1, 1)` at `n`; writing it at `n+2` keeps both parts positive
+with no hypothesis on `n`.  It is the unique shape with two rows whose second row is a single box,
+and the coarsest shape other than `Nat.Partition.indiscrete`.
+
+The parts are exposed only through `Nat.Partition.singletonSecondRow_parts`. -/
+def singletonSecondRow (n : ℕ) : (n + 2).Partition :=
+  _root_.Nat.Partition.ofSums (n + 2) {n + 1, 1} (by simp)
+
+/-- The parts of `(n+1, 1)`. -/
+@[simp]
+theorem singletonSecondRow_parts (n : ℕ) : (singletonSecondRow n).parts = {n + 1, 1} := by
+  simp [singletonSecondRow, Multiset.filter_eq_self]
+
+/-- The decreasingly sorted parts of `(n+1, 1)`. -/
+theorem sort_parts_singletonSecondRow (n : ℕ) :
+    (singletonSecondRow n).parts.sort (· ≥ ·) = [n + 1, 1] := by
+  rw [singletonSecondRow_parts, Multiset.insert_eq_cons,
+    Multiset.sort_cons _ _ _ (by simp), Multiset.sort_singleton]
 
 end Nat.Partition
 

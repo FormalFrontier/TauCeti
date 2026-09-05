@@ -92,4 +92,36 @@ lemma subgroupOf_conjAct_smul_mul_left_of_mem_normalizer (Γ₁ Γ₂ : Subgroup
   -- is then congruence along it, so no rewriting has to find a redex.
   exact iff_of_eq (congrArg (· ∈ Γ₂) (by group))
 
+/-- **Membership in a double coset is invariant under left multiplication by the left
+subgroup.** -/
+-- Not `@[simp]`: the `simpNF` linter rejects it, because the left-hand side
+-- `b * z ∈ doubleCoset a H K` is itself simplified by `simp` to a `MulAction.orbit`
+-- membership, so the rewrite could never fire.
+lemma mul_mem_doubleCoset_iff {H K : Subgroup G} {b : G} (hb : b ∈ H) {a z : G} :
+    b * z ∈ doubleCoset a (H : Set G) K ↔ z ∈ doubleCoset a (H : Set G) K := by
+  constructor
+  · intro hz
+    obtain ⟨x, hx, y, hy, hxy⟩ := mem_doubleCoset.mp hz
+    refine mem_doubleCoset.mpr ⟨b⁻¹ * x, H.mul_mem (H.inv_mem hb) hx, y, hy, ?_⟩
+    rw [mul_assoc, mul_assoc, ← mul_assoc x, ← hxy, inv_mul_cancel_left]
+  · intro hz
+    obtain ⟨x, hx, y, hy, rfl⟩ := mem_doubleCoset.mp hz
+    exact mem_doubleCoset.mpr ⟨b * x, H.mul_mem hb hx, y, hy, by simp only [mul_assoc]⟩
+
+/-- **Translating an inverse along a left coset.** If `w` and `x` lie in the same left coset of
+`H`, then `x⁻¹ d` and `w⁻¹ d` lie in the same double coset `H g K`. -/
+lemma inv_mul_mem_doubleCoset_iff_of_mem {H K : Subgroup G} {w x d g : G} (h : x⁻¹ * w ∈ H) :
+    x⁻¹ * d ∈ doubleCoset g (H : Set G) K ↔ w⁻¹ * d ∈ doubleCoset g (H : Set G) K := by
+  have hw : w⁻¹ * d = (x⁻¹ * w)⁻¹ * (x⁻¹ * d) := by
+    simp only [mul_inv_rev, inv_inv, mul_assoc, mul_inv_cancel_left]
+  rw [hw, mul_mem_doubleCoset_iff (H.inv_mem h)]
+
+/-- **Recognising a double coset from a quotient equation.** If `w` agrees with `l x` modulo `K`
+for some `l ∈ H`, then `w` lies in the double coset `H x K`. -/
+lemma mem_doubleCoset_of_quotient_eq {H K : Subgroup G} {w x l : G} (hl : l ∈ H)
+    (h : (w : G ⧸ K) = ((l * x : G) : G ⧸ K)) : w ∈ doubleCoset x (H : Set G) K :=
+  mem_doubleCoset.mpr ⟨l, hl, (l * x)⁻¹ * w,
+    by simpa [mul_inv_rev, mul_assoc] using K.inv_mem (QuotientGroup.eq.mp h),
+    (mul_inv_cancel_left _ _).symm⟩
+
 end DoubleCoset

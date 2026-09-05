@@ -121,7 +121,7 @@ public section
 
 open Matrix UpperHalfPlane DoubleCoset HeckeRing.GLn
 
-open scoped MatrixGroups ModularForm
+open scoped MatrixGroups ModularForm Pointwise
 
 namespace HeckeRing.GL2
 
@@ -148,6 +148,40 @@ noncomputable def rightCosetRep (v : DecompQuotient Γ₂ Γ₁ (D.out : GL (Fin
 downstream module rewrites with this instead of unfolding the body. -/
 lemma rightCosetRep_def (v : DecompQuotient Γ₂ Γ₁ (D.out : GL (Fin 2) ℚ)⁻¹) :
     rightCosetRep D v = (D.out : GL (Fin 2) ℚ) * ((v.out : GL (Fin 2) ℚ))⁻¹ := (rfl)
+
+/-- **Shimura's decomposition of the double coset**, in the `rightCosetRep` spelling:
+`Γ₁ δ Γ₂ = ⋃ᵥ Γ₁ (δ τᵥ⁻¹)`. Since `rightCosetRep` is not `@[expose]`, this is how a downstream
+module reads `DoubleCoset.doubleCoset_eq_iUnion_rightCosets` at the representatives the slash sum
+is defined with. -/
+lemma doubleCoset_eq_iUnion_rightCosetRep :
+    doubleCoset (D.out : GL (Fin 2) ℚ) Γ₁ Γ₂ =
+      ⋃ v, MulOpposite.op (rightCosetRep D v) • (Γ₁ : Set (GL (Fin 2) ℚ)) := by
+  simpa only [rightCosetRep_def] using
+    doubleCoset_eq_iUnion_rightCosets Γ₁ Γ₂ (D.out : GL (Fin 2) ℚ)
+
+/-- **The pieces of that decomposition are pairwise distinct**, in the same spelling:
+`DoubleCoset.op_mul_out_inv_smul_injective` read at `rightCosetRep`. -/
+lemma op_rightCosetRep_smul_injective :
+    Function.Injective fun v : DecompQuotient Γ₂ Γ₁ (D.out : GL (Fin 2) ℚ)⁻¹ ↦
+      MulOpposite.op (rightCosetRep D v) • (Γ₁ : Set (GL (Fin 2) ℚ)) := by
+  simpa only [rightCosetRep_def] using op_mul_out_inv_smul_injective Γ₁ Γ₂ (D.out : GL (Fin 2) ℚ)
+
+/-- Each representative lies in the double coset, being a member of its own piece. -/
+lemma rightCosetRep_mem_doubleCoset (v : DecompQuotient Γ₂ Γ₁ (D.out : GL (Fin 2) ℚ)⁻¹) :
+    rightCosetRep D v ∈ doubleCoset (D.out : GL (Fin 2) ℚ) Γ₁ Γ₂ := by
+  rw [doubleCoset_eq_iUnion_rightCosetRep D]
+  exact Set.mem_iUnion_of_mem v (mem_own_rightCoset Γ₁.toSubmonoid _)
+
+/-- Every member of the double coset shares its right coset with a chosen representative: it
+lies in one of the pieces, and two right cosets of `Γ₁` that meet are equal. -/
+lemma exists_rightCosetRep_smul_eq {x : GL (Fin 2) ℚ}
+    (hx : x ∈ doubleCoset (D.out : GL (Fin 2) ℚ) Γ₁ Γ₂) :
+    ∃ v : DecompQuotient Γ₂ Γ₁ (D.out : GL (Fin 2) ℚ)⁻¹,
+      MulOpposite.op x • (Γ₁ : Set (GL (Fin 2) ℚ)) =
+        MulOpposite.op (rightCosetRep D v) • (Γ₁ : Set (GL (Fin 2) ℚ)) := by
+  rw [doubleCoset_eq_iUnion_rightCosetRep D] at hx
+  obtain ⟨v, hv⟩ := Set.mem_iUnion.mp hx
+  exact ⟨v, (rightCoset_eq_iff Γ₁).mpr (by simpa using inv_mem ((mem_rightCoset_iff _).mp hv))⟩
 
 /-- Each representative lies in `posDetInt 2` when `δ` does and `Γ₂` does. Only `Γ₂` and the
 chosen `δ` are constrained: nothing is asked of `Γ₁`, and nothing of `Δ` beyond containing `δ`.

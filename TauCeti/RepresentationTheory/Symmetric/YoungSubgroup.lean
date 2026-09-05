@@ -22,6 +22,11 @@ labels lying in the first `k` blocks recovers the partial sums of the decreasing
 (`TauCeti.card_filter_youngBlock_lt`), which is the form in which the parts enter the dominance
 order.
 
+The Young subgroups of the shapes that have a name are computed here as well: the coarsest shape
+`(n)` gives the whole symmetric group, the finest shape `(1ⁿ)` the trivial subgroup, and the shape
+`(n+1, 1)` the stabilizer of the last label (`TauCeti.youngSubgroup_singletonSecondRow`), its two
+blocks being all the labels but the last one and the last one alone.
+
 The construction uses Mathlib's `finSigmaFinEquiv` to enumerate the consecutive blocks and
 `DomMulAct.stabilizerMulEquiv` to decompose their stabilizer.
 
@@ -290,5 +295,75 @@ theorem youngSubgroup_index {n : ℕ} (μ : n.Partition) :
       obtain ⟨x, _, hx⟩ := Multiset.mem_map.mp h
       exact Nat.factorial_ne_zero x hx)
     (by simpa only [mul_comm] using youngSubgroup_index_mul μ)
+
+/-! ### The shape `(n+1, 1)`
+
+The blocks of `Nat.Partition.singletonSecondRow n = (n+1, 1)` are the first `n+1` labels and the
+last one, so its Young subgroup is the stabilizer of `Fin.last (n+1)`. -/
+
+/-- Entries of the sorted parts of `(n+1, 1)`, in a form whose index is a bare natural number, so
+that rewriting the sorted list does not disturb the bound on the index. -/
+private theorem getElem_sort_parts_singletonSecondRow (n i : ℕ)
+    (h : i < ((Nat.Partition.singletonSecondRow n).parts.sort (· ≥ ·)).length) :
+    ((Nat.Partition.singletonSecondRow n).parts.sort (· ≥ ·))[i] = [n + 1, 1].getD i 0 := by
+  rw [← List.getD_eq_getElem _ (0 : ℕ) h, Nat.Partition.sort_parts_singletonSecondRow]
+
+/-- **The last label lies in the second block of the shape `(n+1, 1)`.**  The blocks are
+consecutive with sizes `n+1` and `1`, so the block-coordinate equivalence sends the single
+coordinate of the second block to `Fin.last (n+1)`. -/
+@[simp]
+theorem youngBlock_singletonSecondRow_last (n : ℕ) :
+    ((youngBlock (Nat.Partition.singletonSecondRow n) (Fin.last (n + 1))) : ℕ) = 1 := by
+  have hlen : ((Nat.Partition.singletonSecondRow n).parts.sort (· ≥ ·)).length = 2 := by
+    rw [Nat.Partition.sort_parts_singletonSecondRow]
+    rfl
+  have h1 : (1 : ℕ) < ((Nat.Partition.singletonSecondRow n).parts.sort (· ≥ ·)).length := by omega
+  have h0 : (0 : ℕ) < ((Nat.Partition.singletonSecondRow n).parts.sort (· ≥ ·)).get ⟨1, h1⟩ := by
+    rw [List.get_eq_getElem, getElem_sort_parts_singletonSecondRow]
+    simp
+  have hlast : youngBlocksEquiv (Nat.Partition.singletonSecondRow n) ⟨⟨1, h1⟩, ⟨0, h0⟩⟩ =
+      Fin.last (n + 1) := by
+    refine Fin.ext ?_
+    rw [youngBlocksEquiv_apply, Fin.sum_univ_one, List.get_eq_getElem,
+      getElem_sort_parts_singletonSecondRow]
+    simp
+  rw [← hlast, youngBlock_youngBlocksEquiv]
+
+/-- **Every other label lies in the first block of the shape `(n+1, 1)`.**  The first block has
+`n+1` of the `n+2` labels, so its complement is the single label already located by
+`TauCeti.youngBlock_singletonSecondRow_last`. -/
+@[simp]
+theorem youngBlock_singletonSecondRow_eq_zero (n : ℕ) {x : Fin (n + 2)}
+    (hx : x ≠ Fin.last (n + 1)) :
+    ((youngBlock (Nat.Partition.singletonSecondRow n) x) : ℕ) = 0 := by
+  classical
+  have hcard : (Finset.univ.filter fun y : Fin (n + 2) =>
+      ((youngBlock (Nat.Partition.singletonSecondRow n) y : ℕ) < 1)).card = n + 1 := by
+    rw [card_filter_youngBlock_lt, Nat.Partition.sort_parts_singletonSecondRow]
+    simp
+  have hsum := Finset.card_filter_add_card_filter_not
+    (s := (Finset.univ : Finset (Fin (n + 2))))
+    (p := fun y => ((youngBlock (Nat.Partition.singletonSecondRow n) y : ℕ) < 1))
+  rw [hcard, Finset.card_univ, Fintype.card_fin] at hsum
+  by_contra hne
+  have hx' : ¬ ((youngBlock (Nat.Partition.singletonSecondRow n) x : ℕ) < 1) := by omega
+  have hlt : 1 < (Finset.univ.filter fun y : Fin (n + 2) =>
+      ¬ ((youngBlock (Nat.Partition.singletonSecondRow n) y : ℕ) < 1)).card :=
+    Finset.one_lt_card.mpr ⟨x, by simpa using hx', Fin.last (n + 1), by simp, hx⟩
+  omega
+
+/-- **The Young subgroup of the shape `(n+1, 1)` is a point stabilizer.**  Its blocks are the last
+label alone and all the others, so a permutation preserves them exactly when it fixes the last
+label. -/
+@[simp]
+theorem youngSubgroup_singletonSecondRow (n : ℕ) :
+    youngSubgroup (Nat.Partition.singletonSecondRow n) =
+      MulAction.stabilizer (Equiv.Perm (Fin (n + 2))) (Fin.last (n + 1)) := by
+  rw [youngSubgroup_eq_fiberSubgroup]
+  refine fiberSubgroup_eq_stabilizer (fun x hx h => ?_) (fun x y hx hy => Fin.ext ?_)
+  · have hv := congrArg Fin.val h
+    rw [youngBlock_singletonSecondRow_eq_zero n hx, youngBlock_singletonSecondRow_last] at hv
+    exact absurd hv (by omega)
+  · rw [youngBlock_singletonSecondRow_eq_zero n hx, youngBlock_singletonSecondRow_eq_zero n hy]
 
 end TauCeti

@@ -466,7 +466,7 @@ theorem restrictToIdeal_ne_zero_of_isAdmissible (v : Valuation A Γ₀) (I : Ide
     (hu0 : v u ≠ 0) (hT : ∀ t ∈ T, v t ≤ v u) :
     v.restrictToIdeal I hfg u ≠ 0 := by
   intro hRu
-  set R := v.restrictToIdeal I hfg with hR
+  set R := v.restrictToIdeal I hfg
   have hsupp : insert u T ⊆ (Valuation.supp R : Set A) := by
     rintro t (rfl | ht)
     · exact hRu

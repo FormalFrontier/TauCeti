@@ -81,7 +81,7 @@ theorem narrowTwoRank_le_ncard_ramifiedPrimes_sub_one
     (hsf : Squarefree d) (hd : 1 < d.natAbs) :
     NumberField.NarrowClassGroup.twoRank K ≤ (ramifiedPrimes K).ncard - 1 := by
   classical
-  set s := (NumberField.finite_ramifiedPrimes (K := K)).toFinset with hsdef
+  set s := (NumberField.finite_ramifiedPrimes (K := K)).toFinset
   have hscoe : (s : Set ℕ) = ramifiedPrimes K := Set.Finite.coe_toFinset _
   have hcard : s.card = (ramifiedPrimes K).ncard := by
     rw [← Set.ncard_coe_finset, hscoe]

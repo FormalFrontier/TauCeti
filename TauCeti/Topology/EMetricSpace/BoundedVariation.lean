@@ -28,6 +28,11 @@ namespace TauCeti
 
 variable {α : Type*} [LinearOrder α] {X : Type*} [PseudoEMetricSpace X]
 
+/-- The metric variation of a path in a subtype is unchanged by applying its coercion. -/
+@[simp] theorem eVariationOn_subtypeVal_comp {s : Set X} {f : α → s} {t : Set α} :
+    eVariationOn f t = eVariationOn ((Subtype.val : s → X) ∘ f) t := by
+  rfl
+
 /-- If the total variations of the maps `F i` on `s` are eventually bounded by `u i`, then the
 total variation on `s` of a pointwise limit of the `F i` is at most `liminf u`. -/
 theorem eVariationOn_le_liminf_of_eventually_le {ι : Type*} {l : Filter ι} {s : Set α}

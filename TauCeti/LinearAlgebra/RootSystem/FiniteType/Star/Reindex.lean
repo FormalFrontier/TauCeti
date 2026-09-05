@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.Classification
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Star.Classification
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Star.Components
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.TypeA

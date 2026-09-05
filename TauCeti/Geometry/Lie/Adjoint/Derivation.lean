@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Geometry.Lie.Adjoint.Basic
-public import TauCeti.Geometry.Lie.Interior
 public import TauCeti.Geometry.Lie.Tangent.LieEquiv
 
 /-!

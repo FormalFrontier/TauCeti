@@ -218,8 +218,6 @@ private theorem geometricCharacterGroupSchemeMap_eq (T : MultiplicativeTypeCommH
             (geometricCharacterFGEquiv T x.toMul) := by
   let hG := DiagonalizableGroup.groupScheme_def (AlgebraicClosure k)
     (geometricCharacterFG T)
-  let hZ := DiagonalizableGroup.groupScheme_def (AlgebraicClosure k)
-    DiagonalizableGroup.multiplicativeCharacterGroup
   rw [DiagonalizableGroup.characterGroupSchemeMap_def,
     DiagonalizableGroup.groupSchemeMap_def]
   simp only [geometricCharacterGroupSchemeMap, geometricFiberGroupSchemeIso,

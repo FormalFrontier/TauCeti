@@ -6,7 +6,6 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.RationalSubset.Basic
-public import TauCeti.RingTheory.Valuation.ValuativeRel.Basic
 
 /-!
 # Pullbacks and quotient embeddings of sub-unit valuation loci

@@ -14,9 +14,8 @@ import Mathlib.MeasureTheory.Integral.Bochner.SumMeasure
 /-!
 # The negative-binomial distribution
 
-This file begins the negative-binomial family from the standard-distributions roadmap.  The law
-counts failures before the `r`th success, with real shape `r` and success probability `p`.  Its
-native mass is the Gamma-expression
+This file defines the negative-binomial family. The law counts failures before the `r`th success,
+with real shape `r` and success probability `p`. Its native mass is the Gamma-expression
 `Γ(k + r) / (k! Γ(r)) * p^r * (1 - p)^k`.
 
 The definition is totalized explicitly: the positive family is used for `0 < r` and `0 < p ≤ 1`,
@@ -35,10 +34,8 @@ additivity of the shape parameter under convolution.
 * `negativeBinomialMeasure_conv_negativeBinomialMeasure` proves that convolution adds shapes.
 
 The normalization uses Mathlib's real binomial power series, after identifying its coefficients
-with the Gamma quotient.  The distributional convention follows Johnson, Kemp, and Kotz,
-*Univariate Discrete Distributions*, 3rd ed., Chapter 6.
-
-Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 3, **Negative binomial**.
+with the Gamma quotient. The distributional convention follows Johnson, Kemp, and Kotz,
+*Univariate Discrete Distributions*, 3rd ed., Chapter 5.
 -/
 
 public section

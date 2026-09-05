@@ -138,7 +138,7 @@ orthonormal for the character pairing, so the coefficient of `χᵢ` is the pair
 theorem sum_characterPairing_smul_ofCharacter (f : ClassFunction k G) :
     ∑ i, characterPairing (ofCharacter (ρ i)) f • ofCharacter (ρ i) = f := by
   classical
-  set b := basisOfIrreducibleCharacters ρ hind hcard with hb
+  set b := basisOfIrreducibleCharacters ρ hind hcard
   have hbi : ∀ i, b i = ofCharacter (ρ i) := basisOfIrreducibleCharacters_apply ρ hind hcard
   have hrepr : ∀ j, characterPairing (ofCharacter (ρ j)) f = b.repr f j := by
     intro j
