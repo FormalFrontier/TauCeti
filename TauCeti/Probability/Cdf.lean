@@ -18,17 +18,15 @@ nonnegative point `x` it is the mass `μ` gives to the initial segment below the
 
 ## Main results
 
-* `TauCeti.Probability.cdf_map_natCast` evaluates the cdf at a nonnegative point;
-* `TauCeti.Probability.cdf_map_natCast_of_neg` evaluates it below the origin.
+* `MeasureTheory.Measure.cdf_map_natCast` evaluates the cdf at a nonnegative point;
+* `MeasureTheory.Measure.cdf_map_natCast_of_neg` evaluates it below the origin.
 -/
 
 public section
 
 open MeasureTheory ProbabilityTheory Set
 
-namespace TauCeti
-
-namespace Probability
+namespace MeasureTheory.Measure
 
 variable (μ : Measure ℕ) [IsProbabilityMeasure μ]
 
@@ -53,6 +51,4 @@ theorem cdf_map_natCast_of_neg {x : ℝ} (hx : x < 0) :
   rw [cdf_eq_real, map_measureReal_apply (by fun_prop) measurableSet_Iic, hpre,
     measureReal_empty]
 
-end Probability
-
-end TauCeti
+end MeasureTheory.Measure
