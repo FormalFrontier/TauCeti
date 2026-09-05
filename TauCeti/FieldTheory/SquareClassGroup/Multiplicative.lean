@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Algebra.Group.ElementaryTwoQuotient.Basic
 public import TauCeti.FieldTheory.SquareClassGroup.Basic
-public import Mathlib.GroupTheory.QuotientGroup.Finite
 
 /-!
 # Multiplicative square classes
@@ -29,27 +28,22 @@ may move between the two conventions without choosing representatives.
   `Multiplicative (SquareClassGroup K)`.
 * `TauCeti.elementaryTwoQuotientEquivSquareClassGroup`: the `ZMod 2`-linear comparison with the
   generic elementary-two quotient.
-* `TauCeti.multiplicativeSquareClassMap` and `TauCeti.squareClassMap`: pushforward of square
-  classes along a field homomorphism, in the two conventions.
 * `TauCeti.natCard_multiplicativeSquareClassGroup`: equality of the cardinalities of the two
   presentations.
+* `RingHom.multiplicativeSquareClassMap` and `RingHom.squareClassMap`: pushforward of square
+  classes along a field homomorphism, in the two conventions.
 -/
 
 public section
 
 namespace TauCeti
 
-variable {K L F : Type*} [Field K] [Field L] [Field F]
+variable {K : Type*} [Field K]
 
 /-- The multiplicative square-class group, as the literal quotient of the unit group by its
 subgroup of squares. -/
 abbrev MultiplicativeSquareClassGroup (K : Type*) [Field K] : Type _ :=
   Kˣ ⧸ Subgroup.square Kˣ
-
-private theorem square_le_comap_unitsMap (f : K →+* L) :
-    Subgroup.square Kˣ ≤ (Subgroup.square Lˣ).comap (Units.map f.toMonoidHom) := by
-  intro u hu
-  exact hu.map (Units.map f.toMonoidHom)
 
 private theorem squareClassHom_surjective :
     Function.Surjective (squareClassHom (K := K)) := by
@@ -100,95 +94,6 @@ theorem elementaryTwoQuotientEquivSquareClassGroup_mk (u : Kˣ) :
   simpa only [AddEquiv.coe_toAddMonoidHom, squareClass_def] using
     elementaryTwoQuotientEquivSquareQuotient_mk Kˣ u
 
-/-- Pushforward on multiplicative square classes along a field homomorphism. -/
-def multiplicativeSquareClassMap (f : K →+* L) :
-    MultiplicativeSquareClassGroup K →* MultiplicativeSquareClassGroup L :=
-  QuotientGroup.map (Subgroup.square Kˣ) (Subgroup.square Lˣ)
-    (Units.map f.toMonoidHom) (square_le_comap_unitsMap f)
-
-/-- Pushforward sends the class of a unit to the class of its image. -/
-@[simp]
-theorem multiplicativeSquareClassMap_mk (f : K →+* L) (u : Kˣ) :
-    multiplicativeSquareClassMap f (QuotientGroup.mk u) =
-      QuotientGroup.mk (Units.map f.toMonoidHom u) := by
-  rw [multiplicativeSquareClassMap, QuotientGroup.map_mk]
-
-/-- Pushforward on multiplicative square classes preserves identity field homomorphisms. -/
-@[simp]
-theorem multiplicativeSquareClassMap_id :
-    multiplicativeSquareClassMap (RingHom.id K) = MonoidHom.id _ := by
-  apply DFunLike.ext _ _
-  intro x
-  induction x using QuotientGroup.induction_on with
-  | _ u =>
-    rw [MonoidHom.id_apply, multiplicativeSquareClassMap_mk]
-    congr 1
-
-/-- Pushforward on multiplicative square classes preserves composition of field homomorphisms. -/
-@[simp]
-theorem multiplicativeSquareClassMap_comp (g : L →+* F) (f : K →+* L) :
-    multiplicativeSquareClassMap (g.comp f) =
-      (multiplicativeSquareClassMap g).comp (multiplicativeSquareClassMap f) := by
-  apply DFunLike.ext _ _
-  intro x
-  induction x using QuotientGroup.induction_on with
-  | _ u =>
-    rw [MonoidHom.comp_apply, multiplicativeSquareClassMap_mk,
-      multiplicativeSquareClassMap_mk, multiplicativeSquareClassMap_mk]
-    congr 1
-
-/-- Pushforward on the additive square-class groups along a field homomorphism, transported from
-the generic functorial map on elementary-two quotients. -/
-noncomputable def squareClassMap (f : K →+* L) : SquareClassGroup K →ₗ[ZMod 2] SquareClassGroup L :=
-  (elementaryTwoQuotientEquivSquareClassGroup (K := L)).toLinearMap.comp
-    ((elementaryTwoQuotientMap (Units.map f.toMonoidHom)).comp
-      (elementaryTwoQuotientEquivSquareClassGroup (K := K)).symm.toLinearMap)
-
-/-- Pushforward sends the additive square class of a unit to the class of its image. -/
-@[simp]
-theorem squareClassMap_apply (f : K →+* L) (u : Kˣ) :
-    squareClassMap f (squareClass u) = squareClass (Units.map f.toMonoidHom u) := by
-  have hu : (elementaryTwoQuotientEquivSquareClassGroup (K := K)).symm (squareClass u) =
-      elementaryTwoQuotientMk u := by
-    apply (elementaryTwoQuotientEquivSquareClassGroup (K := K)).injective
-    rw [LinearEquiv.apply_symm_apply, elementaryTwoQuotientEquivSquareClassGroup_mk]
-  rw [squareClassMap, LinearMap.comp_apply, LinearMap.comp_apply]
-  simp only [LinearEquiv.coe_coe, hu, elementaryTwoQuotientMap_mk,
-    elementaryTwoQuotientEquivSquareClassGroup_mk]
-
-/-- The canonical equivalence between the two square-class conventions commutes with pushforward
-along a field homomorphism. -/
-theorem multiplicativeSquareClassEquiv_map (f : K →+* L)
-    (x : MultiplicativeSquareClassGroup K) :
-    multiplicativeSquareClassEquiv (multiplicativeSquareClassMap f x) =
-      Multiplicative.ofAdd (squareClassMap f (multiplicativeSquareClassEquiv x).toAdd) := by
-  induction x using QuotientGroup.induction_on with
-  | _ u => simp
-
-/-- Pushforward on additive square classes preserves identity field homomorphisms. -/
-@[simp]
-theorem squareClassMap_id : squareClassMap (RingHom.id K) = LinearMap.id := by
-  ext x
-  induction x using QuotientAddGroup.induction_on with
-  | _ u =>
-    have hu : (↑u : SquareClassGroup K) = squareClass u.toMul := by
-      rw [squareClass_def, ofMul_toMul]
-    rw [LinearMap.id_apply, hu, squareClassMap_apply]
-    congr 1
-
-/-- Pushforward on additive square classes preserves composition of field homomorphisms. -/
-@[simp]
-theorem squareClassMap_comp (g : L →+* F) (f : K →+* L) :
-    squareClassMap (g.comp f) = (squareClassMap g).comp (squareClassMap f) := by
-  ext x
-  induction x using QuotientAddGroup.induction_on with
-  | _ u =>
-    have hu : (↑u : SquareClassGroup K) = squareClass u.toMul := by
-      rw [squareClass_def, ofMul_toMul]
-    rw [LinearMap.comp_apply, hu, squareClassMap_apply,
-      squareClassMap_apply, squareClassMap_apply]
-    congr 1
-
 /-- The multiplicative and additive presentations of the square-class group are finite
 simultaneously. -/
 theorem finite_multiplicativeSquareClassGroup_iff :
@@ -202,3 +107,94 @@ theorem natCard_multiplicativeSquareClassGroup :
   Nat.card_congr (multiplicativeSquareClassEquiv (K := K)).toEquiv
 
 end TauCeti
+
+namespace RingHom
+
+open TauCeti
+
+variable {K L F : Type*} [Field K] [Field L] [Field F]
+
+/-- Pushforward on multiplicative square classes along a field homomorphism. -/
+def multiplicativeSquareClassMap (f : K →+* L) :
+    MultiplicativeSquareClassGroup K →* MultiplicativeSquareClassGroup L :=
+  QuotientGroup.map (Subgroup.square Kˣ) (Subgroup.square Lˣ)
+    (Units.map f.toMonoidHom) (Subgroup.square_le_comap _)
+
+/-- Pushforward sends the class of a unit to the class of its image. -/
+@[simp]
+theorem multiplicativeSquareClassMap_mk (f : K →+* L) (u : Kˣ) :
+    f.multiplicativeSquareClassMap (QuotientGroup.mk u) =
+      QuotientGroup.mk (Units.map f.toMonoidHom u) := by
+  rw [multiplicativeSquareClassMap, QuotientGroup.map_mk]
+
+/-- Pushforward on multiplicative square classes preserves identity field homomorphisms. -/
+@[simp]
+theorem multiplicativeSquareClassMap_id :
+    (RingHom.id K).multiplicativeSquareClassMap = MonoidHom.id _ := by
+  rw [multiplicativeSquareClassMap]
+  exact QuotientGroup.map_id (Subgroup.square Kˣ) _
+
+/-- Pushforward on multiplicative square classes preserves composition of field homomorphisms. -/
+@[simp]
+theorem multiplicativeSquareClassMap_comp (g : L →+* F) (f : K →+* L) :
+    (g.comp f).multiplicativeSquareClassMap =
+      g.multiplicativeSquareClassMap.comp f.multiplicativeSquareClassMap := by
+  rw [multiplicativeSquareClassMap, multiplicativeSquareClassMap, multiplicativeSquareClassMap]
+  exact (QuotientGroup.map_comp_map (Subgroup.square Kˣ) (Subgroup.square Lˣ)
+    (Subgroup.square Fˣ) (Units.map f.toMonoidHom) (Units.map g.toMonoidHom) _ _ _).symm
+
+/-- Pushforward on the additive square-class groups along a field homomorphism, transported from
+the generic functorial map on elementary-two quotients. -/
+noncomputable def squareClassMap (f : K →+* L) :
+    SquareClassGroup K →ₗ[ZMod 2] SquareClassGroup L :=
+  (elementaryTwoQuotientEquivSquareClassGroup (K := L)).toLinearMap.comp
+    ((elementaryTwoQuotientMap (Units.map f.toMonoidHom)).comp
+      (elementaryTwoQuotientEquivSquareClassGroup (K := K)).symm.toLinearMap)
+
+/-- Pushforward sends the additive square class of a unit to the class of its image. -/
+@[simp]
+theorem squareClassMap_apply (f : K →+* L) (u : Kˣ) :
+    f.squareClassMap (squareClass u) = squareClass (Units.map f.toMonoidHom u) := by
+  have hu : (elementaryTwoQuotientEquivSquareClassGroup (K := K)).symm (squareClass u) =
+      elementaryTwoQuotientMk u := by
+    apply (elementaryTwoQuotientEquivSquareClassGroup (K := K)).injective
+    rw [LinearEquiv.apply_symm_apply, elementaryTwoQuotientEquivSquareClassGroup_mk]
+  rw [squareClassMap, LinearMap.comp_apply, LinearMap.comp_apply]
+  simp only [LinearEquiv.coe_coe, hu, elementaryTwoQuotientMap_mk,
+    elementaryTwoQuotientEquivSquareClassGroup_mk]
+
+/-- The canonical equivalence between the two square-class conventions commutes with pushforward
+along a field homomorphism. -/
+@[simp]
+theorem multiplicativeSquareClassEquiv_map (f : K →+* L)
+    (x : MultiplicativeSquareClassGroup K) :
+    multiplicativeSquareClassEquiv (f.multiplicativeSquareClassMap x) =
+      Multiplicative.ofAdd (f.squareClassMap (multiplicativeSquareClassEquiv x).toAdd) := by
+  induction x using QuotientGroup.induction_on with
+  | _ u => simp
+
+/-- Pushforward on additive square classes preserves identity field homomorphisms. -/
+@[simp]
+theorem squareClassMap_id : (RingHom.id K).squareClassMap = LinearMap.id := by
+  ext x
+  have h : elementaryTwoQuotientMap (Units.map (RingHom.id K).toMonoidHom)
+      ((elementaryTwoQuotientEquivSquareClassGroup (K := K)).symm x) =
+      (elementaryTwoQuotientEquivSquareClassGroup (K := K)).symm x :=
+    elementaryTwoQuotientMap_id_apply _
+  rw [squareClassMap]
+  simp only [LinearMap.comp_apply, LinearEquiv.coe_coe, h, LinearMap.id_apply,
+    LinearEquiv.apply_symm_apply]
+
+/-- Pushforward on additive square classes preserves composition of field homomorphisms. -/
+@[simp]
+theorem squareClassMap_comp (g : L →+* F) (f : K →+* L) :
+    (g.comp f).squareClassMap = g.squareClassMap.comp f.squareClassMap := by
+  have hmap : Units.map (g.comp f).toMonoidHom
+      = (Units.map g.toMonoidHom).comp (Units.map f.toMonoidHom) :=
+    Units.map_comp f.toMonoidHom g.toMonoidHom
+  ext x
+  rw [squareClassMap, squareClassMap, squareClassMap, hmap]
+  simp only [LinearMap.comp_apply, LinearEquiv.coe_coe, elementaryTwoQuotientMap_comp_apply,
+    LinearEquiv.symm_apply_apply]
+
+end RingHom

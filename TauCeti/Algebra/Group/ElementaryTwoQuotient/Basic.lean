@@ -188,6 +188,13 @@ theorem elementaryTwoQuotientMk_eq_iff (g h : G) :
 
 variable {H : Type*} [CommGroup H]
 
+/-- A monoid homomorphism of commutative groups carries squares to squares, so the subgroup of
+squares of the source lands inside the preimage of the subgroup of squares of the target. This is
+the side condition needed to descend `f` to a map of the quotients by squares. -/
+theorem _root_.Subgroup.square_le_comap (f : G →* H) :
+    Subgroup.square G ≤ (Subgroup.square H).comap f :=
+  fun _ hg => hg.map f
+
 /-- A homomorphism of commutative groups induces a `ZMod 2`-linear map on maximal elementary-2
 quotients. -/
 noncomputable def elementaryTwoQuotientMap (f : G →* H) :
@@ -323,16 +330,15 @@ private theorem range_lsmul_two_toAddSubgroup_eq_square_toAddSubgroup :
 additive form of the square subgroup. -/
 noncomputable def elementaryTwoQuotientEquivSquareQuotient :
     ElementaryTwoQuotient G ≃+ Additive G ⧸ (Subgroup.square G).toAddSubgroup :=
-  QuotientAddGroup.congr _ _ (AddEquiv.refl (Additive G)) <| by
-    simpa using range_lsmul_two_toAddSubgroup_eq_square_toAddSubgroup G
+  QuotientAddGroup.quotientAddEquivOfEq
+    (range_lsmul_two_toAddSubgroup_eq_square_toAddSubgroup G)
 
 /-- The comparison with the direct quotient by squares sends the `ModN` class of an element to
 its direct quotient class. -/
 @[simp] theorem elementaryTwoQuotientEquivSquareQuotient_mk (g : G) :
     elementaryTwoQuotientEquivSquareQuotient G (elementaryTwoQuotientMk g) =
-      QuotientAddGroup.mk (Additive.ofMul g) := by
-  rw [elementaryTwoQuotientMk_eq_mkQ, elementaryTwoQuotientEquivSquareQuotient]
-  rfl
+      QuotientAddGroup.mk (Additive.ofMul g) :=
+  QuotientAddGroup.quotientAddEquivOfEq_mk _ (Additive.ofMul g)
 
 /-- The cardinality of `G/G²` is the index of the subgroup of squares. -/
 theorem card_elementaryTwoQuotient_eq_index_square :
