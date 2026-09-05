@@ -81,8 +81,10 @@ theorem mem_frobeniusPrimePowerSet_iff_artinSymbol_pow_eq {A : IdealPrimePower K
       artinSymbol (primePowerBase A).asIdeal hur ^ primePowerExponent A = C :=
   ⟨fun ⟨_, h⟩ ↦ h, fun h ↦ ⟨hur, h⟩⟩
 
-/-- At exponent one, the powered Frobenius fibre is the ordinary Frobenius prime set. -/
-@[simp]
+/-- At exponent one, the powered Frobenius fibre is the ordinary Frobenius prime set.
+
+Not `@[simp]`: `mem_frobeniusPrimePowerSet_iff` together with `primePowerBase_ofPrime`,
+`primePowerExponent_ofPrime` and `ConjClasses.pow_one` already rewrites the left-hand side. -/
 theorem ofPrime_mem_frobeniusPrimePowerSet_iff {𝔭 : HeightOneSpectrum (𝓞 K)}
     {C : ConjClasses (L ≃ₐ[K] L)} :
     IdealPrimePower.ofPrime 𝔭 ∈ frobeniusPrimePowerSet K L C ↔
