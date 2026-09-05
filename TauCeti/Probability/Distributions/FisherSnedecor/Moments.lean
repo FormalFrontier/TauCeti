@@ -12,11 +12,13 @@ import TauCeti.Analysis.SpecialFunctions.Beta
 /-!
 # Moments of Fisher's F distribution
 
-This file establishes the sharp first- and second-moment theory of the Fisher--Snedecor law:
-the mean, the second raw moment, the variance, and the exact integrability thresholds `2 < n`
-and `4 < n` at which the first two moments diverge.  These all come from a file-internal
-computation of the natural moment of order `q`, which exists exactly when `2 * q < n` and is
-then a quotient of beta functions.
+This file establishes the sharp moment and exponential-integrability theory of the
+Fisher--Snedecor law: the mean, the second raw moment, the variance, the exact integrability
+thresholds `2 < n` and `4 < n` at which the first two moments diverge, and the exact
+exponential-integrability domain.  The moment results come from a file-internal computation of
+the natural moment of order `q`, which exists exactly when `2 * q < n` and is then a quotient of
+beta functions.  Since the law is positive and has only polynomial decay, its exponential
+moments exist exactly at nonpositive rates.
 
 ## Main results
 
@@ -25,6 +27,8 @@ then a quotient of beta functions.
 * `integral_id_fisherSnedecorMeasure` computes the mean.
 * `integral_sq_fisherSnedecorMeasure` computes the second raw moment.
 * `variance_id_fisherSnedecorMeasure` computes the variance.
+* `integrableExpSet_id_fisherSnedecorMeasure` identifies the exponential-integrability domain as
+  the nonpositive half-line.
 
 ## References
 
@@ -195,6 +199,46 @@ theorem integrable_sq_fisherSnedecorMeasure_iff (hm : 0 < m) (hn : 0 < n) :
   have h := integrable_pow_fisherSnedecorMeasure_iff hm hn 2
   norm_num at h
   exact h
+
+/-! ### Exponential moments -/
+
+/-- Every nonpositive exponential rate is integrable under a valid Fisher--Snedecor law. -/
+theorem integrable_exp_mul_id_fisherSnedecorMeasure_of_nonpos (hm : 0 < m) (hn : 0 < n)
+    {t : ℝ} (ht : t ≤ 0) :
+    Integrable (fun x : ℝ ↦ Real.exp (t * x)) (fisherSnedecorMeasure m n) := by
+  let _ := isProbabilityMeasure_fisherSnedecorMeasure hm hn
+  have h := integrable_exp_mul_of_le (μ := fisherSnedecorMeasure m n) (X := fun x : ℝ ↦ -x)
+    (-t) 0 (neg_nonneg.mpr ht) measurable_id.neg.aemeasurable
+    ((ae_mem_Ioi_fisherSnedecorMeasure m n).mono fun _ hx ↦ neg_nonpos.mpr hx.le)
+  simpa only [neg_mul_neg] using h
+
+/-- Positive exponential rates are not integrable under a valid Fisher--Snedecor law. -/
+theorem not_integrable_exp_mul_id_fisherSnedecorMeasure (hm : 0 < m) (hn : 0 < n)
+    {t : ℝ} (ht : 0 < t) :
+    ¬ Integrable (fun x : ℝ ↦ Real.exp (t * x)) (fisherSnedecorMeasure m n) := by
+  intro hint
+  have hpow := integrable_pow_of_integrable_exp_mul ht.ne' hint
+    (integrable_exp_mul_id_fisherSnedecorMeasure_of_nonpos hm hn
+      (by linarith : -t ≤ 0)) ⌈n⌉₊
+  have hlt := (integrable_pow_fisherSnedecorMeasure_iff hm hn ⌈n⌉₊).1 hpow
+  exact (not_lt_of_ge (by nlinarith [Nat.le_ceil n])) hlt
+
+/-- The exponential of a multiple of the identity is integrable under a valid
+Fisher--Snedecor law exactly when the rate is nonpositive. -/
+@[simp]
+theorem integrable_exp_mul_id_fisherSnedecorMeasure_iff (hm : 0 < m) (hn : 0 < n) (t : ℝ) :
+    Integrable (fun x : ℝ ↦ Real.exp (t * x)) (fisherSnedecorMeasure m n) ↔ t ≤ 0 := by
+  refine ⟨fun h ↦ ?_, integrable_exp_mul_id_fisherSnedecorMeasure_of_nonpos hm hn⟩
+  exact not_lt.mp fun ht ↦ not_integrable_exp_mul_id_fisherSnedecorMeasure hm hn ht h
+
+/-- The exact exponential-integrability domain of the identity under a valid
+Fisher--Snedecor law is the nonpositive half-line. -/
+@[simp]
+theorem integrableExpSet_id_fisherSnedecorMeasure (hm : 0 < m) (hn : 0 < n) :
+    integrableExpSet id (fisherSnedecorMeasure m n) = Iic 0 := by
+  ext t
+  simpa [integrableExpSet, id_eq] using
+    integrable_exp_mul_id_fisherSnedecorMeasure_iff hm hn t
 
 private lemma betaMomentIntegrand_eq (q : ℕ) {u : ℝ}
     (hu : u ∈ Ioo (0 : ℝ) 1) :
