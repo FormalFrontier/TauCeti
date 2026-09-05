@@ -405,6 +405,57 @@ private theorem basisPath_succ_eq_of_ne (d : ℕ) (h : d ≤ Fintype.card ι) (h
   · have hsucc : ¬l.val < k + 1 := by omega
     simp [basisPath, hlt, hsucc]
 
+private theorem lie_basisPath_step (d k : ℕ) (h : d ≤ Fintype.card ι) (hk : k < d)
+    (s : Set.powersetCard ι d) :
+    letI : LieRingModule (Matrix ι ι K) (⋀[K]^d (ι → K)) :=
+      glLieRingModule (K := K) (n := ι) d
+    (⁅Matrix.single
+          (Set.powersetCard.ofFinEmbEquiv.symm s ⟨k, hk⟩)
+          (firstBasisEmbedding d h ⟨k, hk⟩) (1 : K),
+        ιMulti K d (fun l ↦
+          (Pi.single (basisPath d h s (k + 1) l) (1 : K) : ι → K))⁆ =
+      ιMulti K d (fun l ↦
+        (Pi.single (basisPath d h s k l) (1 : K) : ι → K))) ∧
+    (⁅Matrix.single
+          (firstBasisEmbedding d h ⟨k, hk⟩)
+          (Set.powersetCard.ofFinEmbEquiv.symm s ⟨k, hk⟩) (1 : K),
+        ιMulti K d (fun l ↦
+          (Pi.single (basisPath d h s k l) (1 : K) : ι → K))⁆ =
+      ιMulti K d (fun l ↦
+        (Pi.single (basisPath d h s (k + 1) l) (1 : K) : ι → K))) := by
+  let a : Fin d := ⟨k, hk⟩
+  have hforward_source :
+      firstBasisEmbedding d h a = basisPath d h s (k + 1) a := by
+    simp [a, basisPath]
+  have hreverse_source :
+      Set.powersetCard.ofFinEmbEquiv.symm s a = basisPath d h s k a := by
+    simp [a, basisPath]
+  have hforward_update :
+      Function.update (basisPath d h s (k + 1)) a
+          (Set.powersetCard.ofFinEmbEquiv.symm s a) = basisPath d h s k := by
+    refine Function.update_eq_iff.2 ⟨?_, ?_⟩
+    · simp [basisPath, a]
+    · intro l hla
+      exact basisPath_succ_eq_of_ne d h hk s a l hla rfl
+  have hreverse_update :
+      Function.update (basisPath d h s k) a (firstBasisEmbedding d h a) =
+        basisPath d h s (k + 1) := by
+    refine Function.update_eq_iff.2 ⟨?_, ?_⟩
+    · simp [basisPath, a]
+    · intro l hla
+      exact (basisPath_succ_eq_of_ne d h hk s a l hla rfl).symm
+  constructor
+  · rw [hforward_source]
+    exact lie_single_basisPath_transition (K := K) d
+      (basisPath d h s (k + 1)) (basisPath d h s k)
+      (basisPath_strictMono d h s (k + 1)).injective a
+      (Set.powersetCard.ofFinEmbEquiv.symm s a) hforward_update
+  · rw [hreverse_source]
+    exact lie_single_basisPath_transition (K := K) d
+      (basisPath d h s k) (basisPath d h s (k + 1))
+      (basisPath_strictMono d h s k).injective a
+      (firstBasisEmbedding d h a) hreverse_update
+
 private theorem lie_basisPath_succ (d k : ℕ) (h : d ≤ Fintype.card ι) (hk : k < d)
     (s : Set.powersetCard ι d) :
     letI : LieRingModule (Matrix ι ι K) (⋀[K]^d (ι → K)) :=
@@ -414,19 +465,9 @@ private theorem lie_basisPath_succ (d k : ℕ) (h : d ≤ Fintype.card ι) (hk :
         (firstBasisEmbedding d h ⟨k, hk⟩) (1 : K),
       ιMulti K d (fun l ↦
         (Pi.single (basisPath d h s (k + 1) l) (1 : K) : ι → K))⁆ =
-        ιMulti K d (fun l ↦
-          (Pi.single (basisPath d h s k l) (1 : K) : ι → K)) := by
-  let a : Fin d := ⟨k, hk⟩
-  have hsource : firstBasisEmbedding d h ⟨k, hk⟩ = basisPath d h s (k + 1) a := by
-    simp [a, basisPath]
-  rw [hsource]
-  apply lie_single_basisPath_transition_of_update (K := K) d
-    (basisPath d h s (k + 1)) (basisPath d h s k)
-    (basisPath_strictMono d h s (k + 1)).injective a
-    (Set.powersetCard.ofFinEmbEquiv.symm s ⟨k, hk⟩)
-  · simp [basisPath, a]
-  · intro l hla
-    exact basisPath_succ_eq_of_ne d h hk s a l hla rfl
+      ιMulti K d (fun l ↦
+        (Pi.single (basisPath d h s k l) (1 : K) : ι → K)) := by
+  exact (lie_basisPath_step (K := K) d k h hk s).1
 
 private theorem mem_of_lie_succ_path (d : ℕ)
     (N : LieSubmodule K (Matrix ι ι K) (⋀[K]^d (ι → K)))
@@ -494,18 +535,7 @@ private theorem lie_basisPath_reverse (d k : ℕ) (h : d ≤ Fintype.card ι) (h
         (Pi.single (basisPath d h s k l) (1 : K) : ι → K))⁆ =
       ιMulti K d (fun l ↦
         (Pi.single (basisPath d h s (k + 1) l) (1 : K) : ι → K)) := by
-  let a : Fin d := ⟨k, hk⟩
-  have hsource : Set.powersetCard.ofFinEmbEquiv.symm s ⟨k, hk⟩ =
-      basisPath d h s k a := by
-    simp [a, basisPath]
-  rw [hsource]
-  apply lie_single_basisPath_transition_of_update (K := K) d
-    (basisPath d h s k) (basisPath d h s (k + 1))
-    (basisPath_strictMono d h s k).injective a
-    (firstBasisEmbedding d h ⟨k, hk⟩)
-  · simp [basisPath, a]
-  · intro l hla
-    exact (basisPath_succ_eq_of_ne d h hk s a l hla rfl).symm
+  exact (lie_basisPath_step (K := K) d k h hk s).2
 
 private theorem first_mem_of_basisWedge_mem (d : ℕ) (h : d ≤ Fintype.card ι)
     (N : LieSubmodule K (Matrix ι ι K) (⋀[K]^d (ι → K)))
