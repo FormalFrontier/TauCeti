@@ -8,9 +8,7 @@ module
 public import Mathlib.Basic.Real.Basic
 public import Mathlib.Geometry.Convex.Cone.Face.Lattice
 public import Mathlib.LinearAlgebra.Prod
-public import Mathlib.NumberTheory.Real.Irrational
 public import Mathlib.RingTheory.Finiteness.Basic
-public import Mathlib.RingTheory.Finiteness.Prod
 
 /-!
 # Toric cones in a real vector space with a lattice map
@@ -40,35 +38,17 @@ toric.
   to an equivalence along an isomorphism of lattices.
 * `TauCeti.Toric.IsToricCone.prod`: a product of toric cones is a toric cone for the product
   lattice map.
-* `TauCeti.Toric.not_isToricCone_sqrtTwoCone_inf`: two toric cones whose intersection is not
-  toric, for an injective lattice map with dense image. Toricity is therefore *not* preserved by
-  arbitrary intersections at this generality.
 
 ## Implementation notes
 
 `IsToricCone` records finite generation as a field even though `IsLatticeRational.fg` derives it
-from lattice rationality: the three conditions are those pinned by the analytic toric geometry
-roadmap, and downstream files consume `IsToricCone.fg` directly.
+from lattice rationality, making each of the three defining conditions directly accessible.
 
 Only `AddCommGroup N` is required of the lattice: freeness and finiteness of `N`, and finite
-dimensionality of `V`, play no role in any statement of this file. They enter with the primitive
-generators of rays, which are the next step of the algebraic supplier.
-
-Intersections are handled through faces, and `not_isToricCone_sqrtTwoCone_inf` shows why: for a
-lattice map that is injective, of finite rank and with full real span, but whose image is not
-discrete, the intersection of two toric cones need not even be lattice rational. An unconditional
-`IsToricCone i σ → IsToricCone i τ → IsToricCone i (σ ⊓ τ)` is thus false, and the corrected
-statement carries a hypothesis saying that `i` is a genuine integral lattice; even then its
-content is the rational Minkowski--Weyl theorem, which the pinned Mathlib does not have
-(`Mathlib/Geometry/Convex/Cone/DualFinite.lean` supplies `PointedCone.DualFG.inf` and mentions
-Minkowski--Weyl only in its module docstring). What the fan axiom needs is available:
-the pairwise intersections of the cones of a fan are faces of both cones, so
-`IsToricCone.of_isFaceOf` already makes them toric.
+dimensionality of `V`, play no role in the definitions or preservation results here.
 
 ## References
 
-The signatures follow the definitions pinned in
-[`AnalyticToricGeometry/Suggested.lean`](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/AnalyticToricGeometry/Suggested.lean).
 The mathematics is Chapter 1 of D. Cox, J. Little and H. Schenck, *Toric Varieties*, and §1.2 of
 W. Fulton, *Introduction to Toric Varieties*.
 -/
@@ -81,58 +61,37 @@ variable {N N' V V' : Type*} [AddCommGroup N] [AddCommGroup N'] [AddCommGroup V]
   [AddCommGroup V'] [Module ℝ V] [Module ℝ V']
   {i : N →+ V} {i' : N' →+ V'} {σ τ : PointedCone ℝ V}
 
-/-- Taking cone hulls commutes with real-linear images. This is `Submodule.map_span` transported
-to the nonnegative scalars. -/
-private lemma map_hull (g : V →ₗ[ℝ] V') (t : Set V) :
-    PointedCone.map g (PointedCone.hull ℝ t) = PointedCone.hull ℝ (g '' t) :=
-  Submodule.map_span _ t
-
-/-- A real-linear functional that is nonnegative on a generating set is nonnegative on the whole
-cone hull. -/
-private lemma nonneg_of_mem_hull {t : Set V} (f : V →ₗ[ℝ] ℝ) (ht : ∀ x ∈ t, 0 ≤ f x) {x : V}
-    (hx : x ∈ PointedCone.hull ℝ t) : 0 ≤ f x := by
-  induction hx using Submodule.span_induction with
-  | mem y hy => exact ht y hy
-  | zero => simp
-  | add y z _ _ hy hz => simpa using add_nonneg hy hz
-  | smul c y _ hy => simpa [← Nonneg.coe_smul] using mul_nonneg c.2 hy
-
-/-- A real-linear functional that vanishes on a generating set vanishes on the whole cone hull. -/
-private lemma eq_zero_of_mem_hull {t : Set V} (f : V →ₗ[ℝ] ℝ) (ht : ∀ x ∈ t, f x = 0) {x : V}
-    (hx : x ∈ PointedCone.hull ℝ t) : f x = 0 :=
-  le_antisymm (by simpa using nonneg_of_mem_hull (-f) (fun y hy ↦ by simp [ht y hy]) hx)
-    (nonneg_of_mem_hull f (fun y hy ↦ (ht y hy).ge) hx)
-
 /-! ### Lattice rationality -/
 
 /-- A pointed cone `σ` in `V` is *lattice rational* for the lattice map `i : N →+ V` when it is
 the cone hull of the images of finitely many lattice vectors. -/
-@[expose]
 def IsLatticeRational (i : N →+ V) (σ : PointedCone ℝ V) : Prop :=
   ∃ s : Finset N, σ = PointedCone.hull ℝ (i '' (s : Set N))
 
 theorem isLatticeRational_iff :
-    IsLatticeRational i σ ↔ ∃ s : Finset N, σ = PointedCone.hull ℝ (i '' (s : Set N)) := Iff.rfl
+    IsLatticeRational i σ ↔ ∃ s : Finset N, σ = PointedCone.hull ℝ (i '' (s : Set N)) := (Iff.rfl)
 
 /-- The cone hull of the images of a finite set of lattice vectors is lattice rational. -/
+@[simp]
 theorem isLatticeRational_hull_image (i : N →+ V) (s : Finset N) :
     IsLatticeRational i (PointedCone.hull ℝ (i '' (s : Set N))) := ⟨s, rfl⟩
 
 /-- The zero cone is lattice rational. -/
+@[simp]
 theorem isLatticeRational_bot (i : N →+ V) : IsLatticeRational i (⊥ : PointedCone ℝ V) :=
   ⟨∅, by simp⟩
 
 /-- A lattice-rational cone is finitely generated: its finitely many lattice generators already
 generate it over the nonnegative reals. -/
 theorem IsLatticeRational.fg (h : IsLatticeRational i σ) : σ.FG := by
-  obtain ⟨s, rfl⟩ := h
+  obtain ⟨s, rfl⟩ := isLatticeRational_iff.mp h
   exact Submodule.fg_span ((s : Set N).toFinite.image i)
 
 /-- A lattice-rational cone other than the zero cone contains a nonzero lattice vector: at least
 one of its finitely many lattice generators is nonzero. -/
 theorem IsLatticeRational.exists_mem_ne_zero (h : IsLatticeRational i σ) (hσ : σ ≠ ⊥) :
     ∃ v : N, i v ∈ σ ∧ i v ≠ 0 := by
-  obtain ⟨s, rfl⟩ := h
+  obtain ⟨s, rfl⟩ := isLatticeRational_iff.mp h
   by_contra hcon
   refine hσ (le_antisymm (Submodule.span_le.2 ?_) bot_le)
   rintro _ ⟨v, hv, rfl⟩
@@ -145,8 +104,8 @@ generating families. Salience is not preserved, so this is not a statement about
 theorem IsLatticeRational.sup (hσ : IsLatticeRational i σ) (hτ : IsLatticeRational i τ) :
     IsLatticeRational i (σ ⊔ τ) := by
   classical
-  obtain ⟨s, rfl⟩ := hσ
-  obtain ⟨t, rfl⟩ := hτ
+  obtain ⟨s, rfl⟩ := isLatticeRational_iff.mp hσ
+  obtain ⟨t, rfl⟩ := isLatticeRational_iff.mp hτ
   refine ⟨s ∪ t, ?_⟩
   rw [Finset.coe_union, Set.image_union]
   exact (Submodule.span_union _ _).symm
@@ -170,10 +129,12 @@ theorem IsToricCone.of_isLatticeRational (hrat : IsLatticeRational i σ)
   ⟨hrat.fg, hrat, hsal⟩
 
 /-- The zero cone is a toric cone; it is the cone whose affine chart is the dense torus. -/
+@[simp]
 theorem isToricCone_bot (i : N →+ V) : IsToricCone i (⊥ : PointedCone ℝ V) :=
   .of_isLatticeRational (isLatticeRational_bot i) fun _ hx hx0 _ ↦ hx0 hx
 
 /-- The ray spanned by a single lattice vector is a toric cone. -/
+@[simp]
 theorem isToricCone_hull_singleton (i : N →+ V) (v : N) :
     IsToricCone i (PointedCone.hull ℝ {i v}) := by
   refine .of_isLatticeRational ⟨{v}, by simp⟩ ?_
@@ -192,7 +153,7 @@ lattice generators of the ambient cone that already lie on the face. -/
 theorem IsLatticeRational.of_isFaceOf (hσ : IsLatticeRational i σ) (hτ : τ.IsFaceOf σ) :
     IsLatticeRational i τ := by
   classical
-  obtain ⟨s, rfl⟩ := hσ
+  obtain ⟨s, rfl⟩ := isLatticeRational_iff.mp hσ
   refine ⟨s.filter fun v ↦ i v ∈ τ, le_antisymm ?_ ?_⟩
   · intro x hx
     obtain ⟨c, hcs, hc0, hcx⟩ := PointedCone.mem_hull_set.1 (hτ.le hx)
@@ -224,6 +185,39 @@ theorem IsToricCone.face (hσ : IsToricCone i σ) (F : σ.Face) :
     IsToricCone i F.toPointedCone :=
   hσ.of_isFaceOf F.isFaceOf
 
+end TauCeti.Toric
+
+namespace TauCeti.ConvexCone.Salient
+
+variable {V V' : Type*} [AddCommGroup V] [AddCommGroup V'] [Module ℝ V] [Module ℝ V']
+  {σ : PointedCone ℝ V}
+
+/-- The image of a salient pointed cone under an injective linear map is salient. -/
+theorem map {g : V →ₗ[ℝ] V'} (hσ : (σ : _root_.ConvexCone ℝ V).Salient)
+    (hg : Function.Injective g) :
+    ((PointedCone.map g σ : PointedCone ℝ V') : _root_.ConvexCone ℝ V').Salient := by
+  rintro _ ⟨x, hx, rfl⟩ hne hneg
+  obtain ⟨y, hy, hgy⟩ := hneg
+  have hyx : y = -x := hg (by rw [map_neg]; exact hgy)
+  exact hσ x hx (fun h ↦ hne (by simp [h])) (hyx ▸ hy)
+
+/-- A product of salient pointed cones is salient. -/
+theorem prod {τ : PointedCone ℝ V'} (hσ : (σ : _root_.ConvexCone ℝ V).Salient)
+    (hτ : (τ : _root_.ConvexCone ℝ V').Salient) :
+    ((σ.prod τ : PointedCone ℝ (V × V')) : _root_.ConvexCone ℝ (V × V')).Salient := by
+  rintro ⟨x, y⟩ ⟨hx, hy⟩ hne ⟨hnx, hny⟩
+  rcases eq_or_ne x 0 with rfl | hx0
+  · exact hτ y hy (fun h ↦ hne (by simp [h])) hny
+  · exact hσ x hx hx0 hnx
+
+end TauCeti.ConvexCone.Salient
+
+namespace TauCeti.Toric
+
+variable {N N' V V' : Type*} [AddCommGroup N] [AddCommGroup N'] [AddCommGroup V]
+  [AddCommGroup V'] [Module ℝ V] [Module ℝ V']
+  {i : N →+ V} {i' : N' →+ V'} {σ τ : PointedCone ℝ V}
+
 /-! ### Maps of lattices -/
 
 section Map
@@ -235,9 +229,10 @@ is lattice rational: the images of the lattice generators are again lattice vect
 theorem IsLatticeRational.map (hfg : ∀ n, g (i n) = i' (f n)) (hσ : IsLatticeRational i σ) :
     IsLatticeRational i' (PointedCone.map g σ) := by
   classical
-  obtain ⟨s, rfl⟩ := hσ
+  obtain ⟨s, rfl⟩ := isLatticeRational_iff.mp hσ
   refine ⟨s.image f, ?_⟩
-  rw [map_hull, ← Set.image_comp]
+  rw [show PointedCone.map g (PointedCone.hull ℝ (i '' (s : Set N))) =
+    PointedCone.hull ℝ (g '' (i '' (s : Set N))) from Submodule.map_span _ _, ← Set.image_comp]
   congr 1
   ext x
   simp only [Finset.coe_image, Set.mem_image, Function.comp_apply, Set.mem_image]
@@ -247,19 +242,11 @@ theorem IsLatticeRational.map (hfg : ∀ n, g (i n) = i' (f n)) (hσ : IsLattice
   · rintro ⟨_, ⟨v, hv, rfl⟩, rfl⟩
     exact ⟨v, hv, hfg v⟩
 
-/-- The image of a salient cone under an injective linear map is salient. -/
-theorem salient_map (hg : Function.Injective g) (hσ : (σ : ConvexCone ℝ V).Salient) :
-    ((PointedCone.map g σ : PointedCone ℝ V') : ConvexCone ℝ V').Salient := by
-  rintro _ ⟨x, hx, rfl⟩ hne hneg
-  obtain ⟨y, hy, hgy⟩ := hneg
-  have hyx : y = -x := hg (by rw [map_neg]; exact hgy)
-  exact hσ x hx (fun h ↦ hne (by simp [h])) (hyx ▸ hy)
-
 /-- An injective real-linear map compatible with a map of lattices carries toric cones to toric
 cones. Injectivity is what preserves salience. -/
 theorem IsToricCone.map (hfg : ∀ n, g (i n) = i' (f n)) (hg : Function.Injective g)
     (hσ : IsToricCone i σ) : IsToricCone i' (PointedCone.map g σ) :=
-  .of_isLatticeRational (hσ.rational.map hfg) (salient_map hg hσ.salient)
+  .of_isLatticeRational (hσ.rational.map hfg) (TauCeti.ConvexCone.Salient.map hσ.salient hg)
 
 end Map
 
@@ -271,8 +258,7 @@ theorem isToricCone_map_equiv_iff {f : N ≃+ N'} {e : V ≃ₗ[ℝ] V'}
     IsToricCone i' (PointedCone.map (e : V →ₗ[ℝ] V') σ) ↔ IsToricCone i σ := by
   refine ⟨fun h ↦ ?_, fun h ↦ h.map (f := (f : N →+ N')) hfe (by exact e.injective)⟩
   have hsymm : ∀ n', (e.symm : V' →ₗ[ℝ] V) (i' n') = i (f.symm n') := fun n' ↦ by
-    rw [← f.apply_symm_apply n', ← hfe, LinearEquiv.coe_coe, LinearEquiv.symm_apply_apply,
-      f.symm_apply_apply]
+    simpa using (congrArg e.symm (hfe (f.symm n'))).symm
   have hmap := h.map (f := (f.symm : N' →+ N)) hsymm (by exact e.symm.injective)
   have hcomp : (e.symm : V' →ₗ[ℝ] V).comp (e : V →ₗ[ℝ] V') = LinearMap.id := by ext x; simp
   rwa [PointedCone.map_map, hcomp, PointedCone.map_id] at hmap
@@ -284,48 +270,34 @@ theorem IsLatticeRational.prod {τ' : PointedCone ℝ V'} (hσ : IsLatticeRation
     (hτ' : IsLatticeRational i' τ') :
     IsLatticeRational (i.prodMap i') (σ.prod τ') := by
   classical
-  obtain ⟨s, rfl⟩ := hσ
-  obtain ⟨t, rfl⟩ := hτ'
-  refine ⟨s ×ˢ ({0} : Finset N') ∪ ({0} : Finset N) ×ˢ t, le_antisymm ?_ ?_⟩
-  · have hinl : PointedCone.map (LinearMap.inl ℝ V V') (PointedCone.hull ℝ (i '' (s : Set N))) ≤
-        PointedCone.hull ℝ ((i.prodMap i') ''
-          ((s ×ˢ ({0} : Finset N') ∪ ({0} : Finset N) ×ˢ t : Finset (N × N')) : Set (N × N'))) := by
-      rw [map_hull, ← Set.image_comp]
-      refine Submodule.span_mono ?_
-      rintro _ ⟨v, hv, rfl⟩
-      exact ⟨(v, 0), by simp [Finset.mem_coe.1 hv], by simp⟩
-    have hinr : PointedCone.map (LinearMap.inr ℝ V V') (PointedCone.hull ℝ (i' '' (t : Set N'))) ≤
-        PointedCone.hull ℝ ((i.prodMap i') ''
-          ((s ×ˢ ({0} : Finset N') ∪ ({0} : Finset N) ×ˢ t : Finset (N × N')) : Set (N × N'))) := by
-      rw [map_hull, ← Set.image_comp]
-      refine Submodule.span_mono ?_
-      rintro _ ⟨w, hw, rfl⟩
-      exact ⟨(0, w), by simp [Finset.mem_coe.1 hw], by simp⟩
-    rintro ⟨x, y⟩ ⟨hx, hy⟩
-    have hxy : (x, y) = (LinearMap.inl ℝ V V' x) + (LinearMap.inr ℝ V V' y) := by simp
-    rw [hxy]
-    exact add_mem (hinl ⟨x, hx, rfl⟩) (hinr ⟨y, hy, rfl⟩)
-  · refine Submodule.span_le.2 ?_
-    rintro _ ⟨⟨v, w⟩, hvw, rfl⟩
-    simp only [Finset.coe_union, Finset.coe_product, Finset.coe_singleton, Set.mem_union,
-      Set.mem_prod, Set.mem_singleton_iff] at hvw
-    rcases hvw with ⟨hv, rfl⟩ | ⟨rfl, hw⟩
-    · exact ⟨PointedCone.subset_hull ⟨v, hv, rfl⟩, by simp⟩
-    · exact ⟨by simp, PointedCone.subset_hull ⟨w, hw, rfl⟩⟩
-
-/-- A product of salient cones is salient. -/
-theorem salient_prod {τ' : PointedCone ℝ V'} (hσ : (σ : ConvexCone ℝ V).Salient)
-    (hτ' : (τ' : ConvexCone ℝ V').Salient) :
-    ((σ.prod τ' : PointedCone ℝ (V × V')) : ConvexCone ℝ (V × V')).Salient := by
-  rintro ⟨x, y⟩ ⟨hx, hy⟩ hne ⟨hnx, hny⟩
-  rcases eq_or_ne x 0 with rfl | hx0
-  · exact hτ' y hy (fun h ↦ hne (by simp [h])) hny
-  · exact hσ x hx hx0 hnx
+  obtain ⟨s, rfl⟩ := isLatticeRational_iff.mp hσ
+  obtain ⟨t, rfl⟩ := isLatticeRational_iff.mp hτ'
+  refine ⟨s ×ˢ ({0} : Finset N') ∪ ({0} : Finset N) ×ˢ t, ?_⟩
+  rw [show (i.prodMap i') ''
+      ((s ×ˢ ({0} : Finset N') ∪ ({0} : Finset N) ×ˢ t : Finset (N × N')) : Set (N × N')) =
+      LinearMap.inl ℝ V V' '' (i '' (s : Set N)) ∪
+        LinearMap.inr ℝ V V' '' (i' '' (t : Set N')) by
+    ext ⟨x, y⟩
+    simp only [AddMonoidHom.coe_prodMap, Finset.product_singleton, Finset.singleton_product,
+      Finset.coe_union, Finset.coe_map, Function.Embedding.sectL_apply,
+      Function.Embedding.sectR_apply, Set.mem_image, Set.mem_union, SetLike.mem_coe, Prod.exists,
+      Prod.mk.injEq, existsAndEq, true_and, exists_eq_right_right, Prod.map_apply,
+      LinearMap.coe_inl, LinearMap.coe_inr, exists_exists_and_eq_and]
+    constructor
+    · rintro ⟨a, b, hab, hxa, hyb⟩
+      rcases hab with ⟨ha, rfl⟩ | ⟨hb, rfl⟩
+      · exact Or.inl ⟨a, ha, hxa, by simpa using hyb⟩
+      · exact Or.inr ⟨⟨b, hb, hyb⟩, by simpa using hxa⟩
+    · rintro (⟨a, ha, hxa, hy⟩ | ⟨⟨b, hb, hyb⟩, hx⟩)
+      · exact ⟨a, 0, Or.inl ⟨ha, rfl⟩, hxa, by simpa using hy⟩
+      · exact ⟨0, b, Or.inr ⟨hb, rfl⟩, by simpa using hx, hyb⟩]
+  exact LinearMap.span_inl_union_inr.symm
 
 /-- A product of toric cones is a toric cone for the product lattice map. -/
 theorem IsToricCone.prod {τ' : PointedCone ℝ V'} (hσ : IsToricCone i σ)
     (hτ' : IsToricCone i' τ') : IsToricCone (i.prodMap i') (σ.prod τ') :=
-  .of_isLatticeRational (hσ.rational.prod hτ'.rational) (salient_prod hσ.salient hτ'.salient)
+  .of_isLatticeRational (hσ.rational.prod hτ'.rational)
+    (TauCeti.ConvexCone.Salient.prod hσ.salient hτ'.salient)
 
 /-! ### Acceptance examples -/
 
@@ -350,170 +322,5 @@ never a line. -/
 theorem not_isToricCone_top_intCast :
     ¬ IsToricCone (Int.castAddHom ℝ) (⊤ : PointedCone ℝ ℝ) := fun h ↦
   h.salient 1 trivial one_ne_zero trivial
-
-/-! ### Intersections are not preserved -/
-
-/-- The real-linear functional `x ↦ a * x.1 + b * x.2.1 + c * x.2.2` on `ℝ × ℝ × ℝ`. -/
-private def coords (a b c : ℝ) : (ℝ × ℝ × ℝ) →ₗ[ℝ] ℝ where
-  toFun x := a * x.1 + b * x.2.1 + c * x.2.2
-  map_add' x y := by simp only [Prod.fst_add, Prod.snd_add]; ring
-  map_smul' r x := by simp only [Prod.smul_fst, Prod.smul_snd, smul_eq_mul, RingHom.id_apply]; ring
-
-@[simp]
-private lemma coords_apply (a b c : ℝ) (x : ℝ × ℝ × ℝ) :
-    coords a b c x = a * x.1 + b * x.2.1 + c * x.2.2 := (rfl)
-
-/-- The lattice map `ℤ⁴ →+ ℝ³`, `(a, b, c, k) ↦ (a, b, c + √2 * k)`. It is injective, its source
-is free of finite rank and its image spans `ℝ³`, but the image is not discrete, so it is not an
-integral lattice in the sense of the analytic toric geometry roadmap. -/
-noncomputable def sqrtTwoMap : (ℤ × ℤ × ℤ × ℤ) →+ (ℝ × ℝ × ℝ) where
-  toFun v := ((v.1 : ℝ), (v.2.1 : ℝ), (v.2.2.1 : ℝ) + Real.sqrt 2 * (v.2.2.2 : ℝ))
-  map_zero' := by simp
-  map_add' x y := by
-    simp only [Prod.fst_add, Prod.snd_add, Prod.mk_add_mk, Int.cast_add]
-    refine Prod.ext rfl (Prod.ext rfl ?_)
-    push_cast
-    ring
-
-@[simp]
-theorem sqrtTwoMap_apply (v : ℤ × ℤ × ℤ × ℤ) :
-    sqrtTwoMap v = ((v.1 : ℝ), (v.2.1 : ℝ), (v.2.2.1 : ℝ) + Real.sqrt 2 * (v.2.2.2 : ℝ)) := (rfl)
-
-/-- Two integers with `a + √2 * b = 0` both vanish. -/
-private lemma eq_zero_of_add_sqrtTwo_mul (a b : ℤ) (h : (a : ℝ) + Real.sqrt 2 * (b : ℝ) = 0) :
-    a = 0 ∧ b = 0 := by
-  have hb : b = 0 := by
-    by_contra hb
-    refine irrational_sqrt_two.ne_rational (-a) b ?_
-    have hbne : (b : ℝ) ≠ 0 := Int.cast_ne_zero.2 hb
-    field_simp
-    push_cast
-    linarith
-  subst hb
-  simpa using h
-
-/-- The quadrant of the plane `z = 0` spanned by `(1, 0, 0)` and `(0, -1, 0)`. -/
-def sqrtTwoCone₁ : PointedCone ℝ (ℝ × ℝ × ℝ) := PointedCone.hull ℝ {(1, 0, 0), (0, -1, 0)}
-
-/-- The quadrant of the plane `z = x + √2 * y` spanned by `(1, 0, 1)` and `(0, -1, -√2)`. -/
-noncomputable def sqrtTwoCone₂ : PointedCone ℝ (ℝ × ℝ × ℝ) :=
-  PointedCone.hull ℝ {(1, 0, 1), (0, -1, -Real.sqrt 2)}
-
-/-- `sqrtTwoCone₁` is generated by the lattice vectors `(1, 0, 0, 0)` and `(0, -1, 0, 0)`. -/
-private lemma isLatticeRational_sqrtTwoCone₁ : IsLatticeRational sqrtTwoMap sqrtTwoCone₁ := by
-  refine ⟨{(1, 0, 0, 0), (0, -1, 0, 0)}, ?_⟩
-  rw [sqrtTwoCone₁]
-  congr 1
-  simp [Set.image_insert_eq]
-
-/-- `sqrtTwoCone₂` is generated by the lattice vectors `(1, 0, 1, 0)` and `(0, -1, 0, -1)`. -/
-private lemma isLatticeRational_sqrtTwoCone₂ : IsLatticeRational sqrtTwoMap sqrtTwoCone₂ := by
-  refine ⟨{(1, 0, 1, 0), (0, -1, 0, -1)}, ?_⟩
-  rw [sqrtTwoCone₂]
-  congr 1
-  simp [Set.image_insert_eq]
-
-/-- The first coordinate is nonnegative on `sqrtTwoCone₁`. -/
-private lemma fst_nonneg_of_mem_sqrtTwoCone₁ {x : ℝ × ℝ × ℝ} (hx : x ∈ sqrtTwoCone₁) : 0 ≤ x.1 := by
-  simpa using nonneg_of_mem_hull (coords 1 0 0) (by rintro y (rfl | rfl) <;> norm_num) hx
-
-/-- The second coordinate is nonpositive on `sqrtTwoCone₁`. -/
-private lemma snd_nonpos_of_mem_sqrtTwoCone₁ {x : ℝ × ℝ × ℝ} (hx : x ∈ sqrtTwoCone₁) :
-    x.2.1 ≤ 0 := by
-  have := nonneg_of_mem_hull (coords 0 (-1) 0) (by rintro y (rfl | rfl) <;> norm_num) hx
-  simp only [coords_apply] at this
-  linarith
-
-/-- `sqrtTwoCone₁` lies in the plane `z = 0`. -/
-private lemma thd_eq_zero_of_mem_sqrtTwoCone₁ {x : ℝ × ℝ × ℝ} (hx : x ∈ sqrtTwoCone₁) :
-    x.2.2 = 0 := by
-  have := eq_zero_of_mem_hull (coords 0 0 1) (by rintro y (rfl | rfl) <;> norm_num) hx
-  simp only [coords_apply] at this
-  linarith
-
-/-- The first coordinate is nonnegative on `sqrtTwoCone₂`. -/
-private lemma fst_nonneg_of_mem_sqrtTwoCone₂ {x : ℝ × ℝ × ℝ} (hx : x ∈ sqrtTwoCone₂) : 0 ≤ x.1 := by
-  simpa using nonneg_of_mem_hull (coords 1 0 0) (by rintro y (rfl | rfl) <;> norm_num) hx
-
-/-- The second coordinate is nonpositive on `sqrtTwoCone₂`. -/
-private lemma snd_nonpos_of_mem_sqrtTwoCone₂ {x : ℝ × ℝ × ℝ} (hx : x ∈ sqrtTwoCone₂) :
-    x.2.1 ≤ 0 := by
-  have := nonneg_of_mem_hull (coords 0 (-1) 0) (by rintro y (rfl | rfl) <;> norm_num) hx
-  simp only [coords_apply] at this
-  linarith
-
-/-- `sqrtTwoCone₂` lies in the plane `z = x + √2 * y`. -/
-private lemma thd_of_mem_sqrtTwoCone₂ {x : ℝ × ℝ × ℝ} (hx : x ∈ sqrtTwoCone₂) :
-    x.2.2 = x.1 + Real.sqrt 2 * x.2.1 := by
-  have := eq_zero_of_mem_hull (coords (-1) (-Real.sqrt 2) 1)
-    (by rintro y (rfl | rfl) <;> simp) hx
-  simp only [coords_apply] at this
-  linarith
-
-/-- The first cone of the counterexample is a toric cone. -/
-theorem isToricCone_sqrtTwoCone₁ : IsToricCone sqrtTwoMap sqrtTwoCone₁ := by
-  refine .of_isLatticeRational isLatticeRational_sqrtTwoCone₁ fun x hx hne hnx ↦ hne ?_
-  refine Prod.ext ?_ (Prod.ext ?_ (thd_eq_zero_of_mem_sqrtTwoCone₁ hx))
-  · exact le_antisymm
-      (by simpa using neg_nonneg.1 (by simpa using fst_nonneg_of_mem_sqrtTwoCone₁ hnx))
-      (fst_nonneg_of_mem_sqrtTwoCone₁ hx)
-  · exact le_antisymm (snd_nonpos_of_mem_sqrtTwoCone₁ hx)
-      (by simpa using neg_nonpos.1 (by simpa using snd_nonpos_of_mem_sqrtTwoCone₁ hnx))
-
-/-- The second cone of the counterexample is a toric cone. -/
-theorem isToricCone_sqrtTwoCone₂ : IsToricCone sqrtTwoMap sqrtTwoCone₂ := by
-  refine .of_isLatticeRational isLatticeRational_sqrtTwoCone₂ fun x hx hne hnx ↦ hne ?_
-  have h1 : x.1 = 0 :=
-    le_antisymm (by simpa using neg_nonneg.1 (by simpa using fst_nonneg_of_mem_sqrtTwoCone₂ hnx))
-      (fst_nonneg_of_mem_sqrtTwoCone₂ hx)
-  have h2 : x.2.1 = 0 :=
-    le_antisymm (snd_nonpos_of_mem_sqrtTwoCone₂ hx)
-      (by simpa using neg_nonpos.1 (by simpa using snd_nonpos_of_mem_sqrtTwoCone₂ hnx))
-  refine Prod.ext h1 (Prod.ext h2 ?_)
-  rw [thd_of_mem_sqrtTwoCone₂ hx, h1, h2]
-  simp
-
-/-- The vector `(√2, -1, 0)` lies in both cones of the counterexample. -/
-private lemma mem_inf_sqrtTwoCone : ((Real.sqrt 2, -1, 0) : ℝ × ℝ × ℝ) ∈
-    sqrtTwoCone₁ ⊓ sqrtTwoCone₂ := by
-  constructor
-  · have h1 : ((1 : ℝ), (0 : ℝ), (0 : ℝ)) ∈ sqrtTwoCone₁ := PointedCone.subset_hull (by simp)
-    have h2 : ((0 : ℝ), (-1 : ℝ), (0 : ℝ)) ∈ sqrtTwoCone₁ := PointedCone.subset_hull (by simp)
-    simpa using add_mem (PointedCone.smul_mem _ (Real.sqrt_nonneg 2) h1) h2
-  · have h1 : ((1 : ℝ), (0 : ℝ), (1 : ℝ)) ∈ sqrtTwoCone₂ := PointedCone.subset_hull (by simp)
-    have h2 : ((0 : ℝ), (-1 : ℝ), -Real.sqrt 2) ∈ sqrtTwoCone₂ := PointedCone.subset_hull (by simp)
-    simpa using add_mem (PointedCone.smul_mem _ (Real.sqrt_nonneg 2) h1) h2
-
-/-- The only lattice vector landing in the intersection of the two cones is `0`: on the
-intersection the third coordinate vanishes and `x + √2 * y = 0`, which for integers forces
-`x = y = 0`. -/
-private lemma sqrtTwoMap_eq_zero_of_mem_inf {v : ℤ × ℤ × ℤ × ℤ}
-    (hv : sqrtTwoMap v ∈ sqrtTwoCone₁ ⊓ sqrtTwoCone₂) : sqrtTwoMap v = 0 := by
-  obtain ⟨hv₁, hv₂⟩ := hv
-  have h₃ : (v.2.2.1 : ℝ) + Real.sqrt 2 * (v.2.2.2 : ℝ) = 0 := thd_eq_zero_of_mem_sqrtTwoCone₁ hv₁
-  obtain ⟨hc, hk⟩ := eq_zero_of_add_sqrtTwo_mul _ _ h₃
-  have hplane : (0 : ℝ) = (v.1 : ℝ) + Real.sqrt 2 * (v.2.1 : ℝ) := by
-    simpa [h₃] using thd_of_mem_sqrtTwoCone₂ hv₂
-  obtain ⟨ha, hb⟩ := eq_zero_of_add_sqrtTwo_mul _ _ hplane.symm
-  simp [ha, hb, hc, hk]
-
-/-- **Toricity is not preserved by arbitrary intersections.** For the injective, finite-rank,
-full-span lattice map `sqrtTwoMap`, whose image is dense in the plane `z = 0`, the two toric cones
-`sqrtTwoCone₁` and `sqrtTwoCone₂` meet in the ray spanned by `(√2, -1, 0)`, which contains no
-nonzero lattice vector at all; so the intersection is not lattice rational, let alone toric. Any
-correct intersection theorem must therefore assume that `i` is an integral lattice, and its
-content is then the rational Minkowski--Weyl theorem. What a fan needs is instead supplied by
-`IsToricCone.of_isFaceOf`. -/
-theorem not_isToricCone_sqrtTwoCone_inf :
-    ¬ IsToricCone sqrtTwoMap (sqrtTwoCone₁ ⊓ sqrtTwoCone₂) := by
-  intro h
-  have hne : sqrtTwoCone₁ ⊓ sqrtTwoCone₂ ≠ ⊥ := by
-    intro hbot
-    have hmem := mem_inf_sqrtTwoCone
-    rw [hbot] at hmem
-    have hzero : ((Real.sqrt 2, -1, 0) : ℝ × ℝ × ℝ) = 0 := hmem
-    exact Real.sqrt_ne_zero'.2 (by norm_num) (congrArg Prod.fst hzero)
-  obtain ⟨v, hv, hv0⟩ := h.rational.exists_mem_ne_zero hne
-  exact hv0 (sqrtTwoMap_eq_zero_of_mem_inf hv)
 
 end TauCeti.Toric
