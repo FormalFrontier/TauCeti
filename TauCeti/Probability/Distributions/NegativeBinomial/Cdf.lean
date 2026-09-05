@@ -15,11 +15,13 @@ import TauCeti.Probability.Distributions.Dirac
 
 For a positive real shape `r` and a success probability `p` in `(0, 1]`, the cumulative mass of
 the negative-binomial law through `k` is the regularized incomplete beta value `I_p(r, k + 1)`.
-This file proves that identity by matching the atom added at each successive natural number with
-the unit-step recurrence of the incomplete beta function.
+This is the discrete counterpart of the beta integral: it identifies the lower tail of a
+negative-binomial law with a beta probability, so that questions about how much mass sits below a
+cutoff become questions about the incomplete beta function.
 
-The result also gives the cdf of the real-valued pushforward.  It is zero below the origin and,
-at a nonnegative point `x`, is `I_p(r, ⌊x⌋₊ + 1)`.
+Everything else here is read off from that identity.  The cdf of the real-valued pushforward is
+zero below the origin and, at a nonnegative point `x`, is `I_p(r, ⌊x⌋₊ + 1)`, and the same
+statement in `HasLaw` form measures the event `{X ≤ k}` for a negative-binomial random variable.
 
 ## Main results
 
@@ -32,6 +34,8 @@ at a nonnegative point `x`, is `I_p(r, ⌊x⌋₊ + 1)`.
 
 * N. L. Johnson, A. W. Kemp, S. Kotz, *Univariate Discrete Distributions*, 3rd ed., Wiley,
   2005, Chapter 5.
+* `TauCeti.Probability.Distributions.Poisson.Tail`, the in-repository formalization the cast-law
+  cdf statements and their proofs here are adapted from.
 -/
 
 public section
@@ -55,8 +59,8 @@ theorem negativeBinomialMeasure_real_Iic (hr : 0 < r) (hp : 0 < p) (hp1 : p ≤ 
   let _ := isProbabilityMeasure_negativeBinomialMeasure hr.le hp hp1
   induction k with
   | zero =>
-      rw [show Iic (0 : ℕ) = {0} from Iic_bot,
-        negativeBinomialMeasure_real_singleton hr.le hp hp1,
+      have hIic : (Iic 0 : Set ℕ) = {0} := Iic_bot
+      rw [hIic, negativeBinomialMeasure_real_singleton hr.le hp hp1,
         negativeBinomialWeightReal_eq_coeff hr]
       norm_num
       exact regularizedIncompleteBeta_one_right hr hp.le hp1 |>.symm
@@ -73,18 +77,17 @@ theorem negativeBinomialMeasure_real_Iic (hr : 0 < r) (hp : 0 < p) (hp1 : p ≤ 
         omega
       have hstep := regularizedIncompleteBeta_add_one_right (a := r)
         (b := ((k + 1 : ℕ) : ℝ)) (x := p) hr (by positivity) hp.le hp1
+      have hgammaFactorial : Real.Gamma ((k + 1 : ℕ) : ℝ) = (k.factorial : ℝ) := by
+        simpa using Real.Gamma_nat_eq_factorial k
+      have hgammaComm :
+          Real.Gamma (((k + 1 : ℕ) : ℝ) + r) = Real.Gamma (r + ((k + 1 : ℕ) : ℝ)) := by
+        rw [add_comm]
       have hcoeff :
           negativeBinomialWeightReal r p (k + 1) =
             p ^ r * (1 - p) ^ (((k + 1 : ℕ) : ℝ)) /
               (((k + 1 : ℕ) : ℝ) * beta r ((k + 1 : ℕ) : ℝ)) := by
-        -- Normalize the real-power notation in the beta recurrence to the explicit `Real.rpow`
-        -- used by the negative-binomial weight before doing the Gamma-function arithmetic.
-        rw [negativeBinomialWeightReal_eq_gamma hr.ne', ProbabilityTheory.beta,
-          show p ^ r = Real.rpow p r by rfl, Real.rpow_natCast]
-        rw [show Real.Gamma (((k + 1 : ℕ) : ℝ)) = (k.factorial : ℝ) by
-          simpa using Real.Gamma_nat_eq_factorial k]
-        rw [show Real.Gamma (((k + 1 : ℕ) : ℝ) + r) =
-            Real.Gamma (r + ((k + 1 : ℕ) : ℝ)) by congr 1; ac_rfl]
+        rw [negativeBinomialWeightReal_eq_gamma hr.ne', Real.rpow_eq_pow, ProbabilityTheory.beta,
+          Real.rpow_natCast, hgammaFactorial, hgammaComm]
         have hgamma : Real.Gamma (r + ((k + 1 : ℕ) : ℝ)) ≠ 0 :=
           (Real.Gamma_pos_of_pos (by positivity)).ne'
         have hfac : (k.factorial : ℝ) ≠ 0 := by positivity
@@ -119,11 +122,12 @@ theorem cdf_map_cast_negativeBinomialMeasure (hr : 0 < r) (hp : 0 < p) (hp1 : p 
   rw [cdf_eq_real, map_measureReal_apply (by fun_prop) measurableSet_Iic, hpre,
     negativeBinomialMeasure_real_Iic hr hp hp1]
 
-/-- Below the origin, the cdf of the real-valued negative-binomial law vanishes. -/
-theorem cdf_map_cast_negativeBinomialMeasure_of_neg (hr : 0 < r) (hp : 0 < p) (hp1 : p ≤ 1)
+/-- Below the origin, the cdf of the real-valued negative-binomial law vanishes, at the shape-zero
+boundary as well: the law is carried by the natural numbers. -/
+theorem cdf_map_cast_negativeBinomialMeasure_of_neg (hr : 0 ≤ r) (hp : 0 < p) (hp1 : p ≤ 1)
     {x : ℝ} (hx : x < 0) :
     cdf ((negativeBinomialMeasure r p).map (Nat.cast : ℕ → ℝ)) x = 0 := by
-  let _ := isProbabilityMeasure_negativeBinomialMeasure hr.le hp hp1
+  let _ := isProbabilityMeasure_negativeBinomialMeasure hr hp hp1
   have hpre : (Nat.cast : ℕ → ℝ) ⁻¹' Iic x = ∅ := by
     ext k
     simp only [mem_preimage, mem_Iic, mem_empty_iff_false, iff_false, not_le]
