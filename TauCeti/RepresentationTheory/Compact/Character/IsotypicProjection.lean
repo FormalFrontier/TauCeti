@@ -325,7 +325,7 @@ private theorem equivLinearMapAsModule_isotypicProjector_apply
     Representation.IntertwiningMap.equivLinearMapAsModule _ _
         (isotypicProjector rho hrho sigma hsigma).toIntertwiningMap x =
       isotypicProjector rho hrho sigma hsigma (x : V) :=
-  (Representation.equivLinearMapAsModule_apply
+  (Representation.IntertwiningMap.equivLinearMapAsModule_apply
       (isotypicProjector rho hrho sigma hsigma).toIntertwiningMap x).trans
     (ContIntertwiningMap.toIntertwiningMap_apply (isotypicProjector rho hrho sigma hsigma)
       (x : V))
