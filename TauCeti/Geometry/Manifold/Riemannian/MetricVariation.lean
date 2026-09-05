@@ -34,11 +34,6 @@ paths in any open submanifold of an inner-product space.
 
 * M. P. do Carmo, *Riemannian Geometry*, Chapter 7, Section 2.
 
-## Roadmap alignment
-
-This module advances the `Regular reparametrization and limits` target under `Layer 0: the
-reconciled Riemannian distance` in `roadmap/HopfRinow/README.md`. It supplies the open-submanifold
-lower-semicontinuity form of that target.
 -/
 
 public section
