@@ -41,8 +41,8 @@ on the ring.
 
 ## Main results
 
-* `LinearMap.IsPerfPair.moduleBaer_self` and `LinearMap.IsPerfPair.moduleInjective_self`: an
-  algebra over a field carrying an associative perfect bilinear form is self-injective.
+* `Function.Bijective.moduleBaer_self` and `Function.Bijective.moduleInjective_self`: an algebra
+  over a field carrying an associative bilinear form whose flip is bijective is self-injective.
 * `Module.Baer.of_leftInverse`: a retract of a Baer module is Baer.
 * `Module.Baer.of_isIdempotentElem`: over a self-injective ring, a left ideal consisting of the
   elements fixed by right multiplication by an idempotent is Baer.
@@ -102,13 +102,13 @@ section Frobenius
 variable {k : Type w} [Field k] {A : Type u} [Ring A] [Algebra k A]
   {B : A →ₗ[k] A →ₗ[k] k}
 
-/-- **An algebra over a field carrying an associative perfect bilinear form is self-injective**, in
-Baer's form: every linear map from a left ideal to the regular module extends to the algebra. -/
-theorem _root_.LinearMap.IsPerfPair.moduleBaer_self (hB : B.IsPerfPair)
+/-- **An algebra over a field carrying an associative bilinear form whose flip is bijective is
+self-injective**, in Baer's form: every linear map from a left ideal to the regular module extends
+to the algebra. -/
+theorem _root_.Function.Bijective.moduleBaer_self (hB : Function.Bijective B.flip)
     (hassoc : ∀ x y z : A, B (x * y) z = B x (y * z)) : Module.Baer A A := by
   -- The form is multiplication followed by the trace `B 1`.
   have hone : ∀ x y : A, B x y = B 1 (x * y) := fun x y => by rw [← hassoc, one_mul]
-  have hbij := LinearMap.IsPerfPair.bijective_right B (self := hB)
   intro I f
   -- The trace turns `f` into a `k`-linear functional on `I`, which extends to all of `A`.
   obtain ⟨ψ, hψ⟩ : ∃ ψ : A →ₗ[k] k, ∀ (x : A) (hx : x ∈ I), ψ x = B 1 (f ⟨x, hx⟩) := by
@@ -119,13 +119,13 @@ theorem _root_.LinearMap.IsPerfPair.moduleBaer_self (hB : B.IsPerfPair)
     obtain ⟨ψ, hψ⟩ := LinearMap.exists_extend
       ((B 1).comp ((f.restrictScalars k).comp e))
     exact ⟨ψ, fun x hx => congr($hψ ⟨x, hx⟩)⟩
-  -- Perfectness writes that functional as the pairing against a fixed element `a`.
-  obtain ⟨a, ha⟩ := hbij.surjective ψ
+  -- Bijectivity of the flip writes that functional as the pairing against a fixed element `a`.
+  obtain ⟨a, ha⟩ := hB.surjective ψ
   have hax : ∀ x : A, B x a = ψ x := fun x => congr($ha x)
   refine ⟨LinearMap.mulRight A a, fun x hx => ?_⟩
   rw [LinearMap.mulRight_apply]
   -- The two candidates pair identically against every element, since `f` is `A`-linear.
-  refine hbij.injective (LinearMap.ext fun y => ?_)
+  refine hB.injective (LinearMap.ext fun y => ?_)
   have hyx : y * x ∈ I := I.mul_mem_left y hx
   have hf : f ⟨y * x, hyx⟩ = y * f ⟨x, hx⟩ := by
     calc
@@ -136,9 +136,9 @@ theorem _root_.LinearMap.IsPerfPair.moduleBaer_self (hB : B.IsPerfPair)
   simp only [LinearMap.flip_apply]
   rw [← hassoc, hax, hψ _ hyx, hf, ← hone]
 
-/-- **An algebra over a field carrying an associative perfect bilinear form is self-injective**:
-its regular left module is an injective module. -/
-theorem _root_.LinearMap.IsPerfPair.moduleInjective_self (hB : B.IsPerfPair)
+/-- **An algebra over a field carrying an associative bilinear form whose flip is bijective is
+self-injective**: its regular left module is an injective module. -/
+theorem _root_.Function.Bijective.moduleInjective_self (hB : Function.Bijective B.flip)
     (hassoc : ∀ x y z : A, B (x * y) z = B x (y * z)) : Module.Injective A A :=
   Module.Baer.injective (hB.moduleBaer_self hassoc)
 

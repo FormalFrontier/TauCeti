@@ -22,7 +22,7 @@ pairing given by the infinitesimal coefficient of a product. Summing these pairi
 connected components proves the result for `TauCeti.zigzagAlgebra`, including disconnected graphs
 and isolated vertices.
 
-The argument is the general criterion `LinearMap.IsPerfPair.moduleBaer_self`: the trace turns a map
+The argument is the general criterion `Function.Bijective.moduleBaer_self`: the trace turns a map
 out of a left ideal into a linear functional, which extends to the whole algebra as a vector space
 and is then written as pairing against a fixed element, giving the extension Baer's criterion asks
 for.
@@ -34,6 +34,8 @@ projectivity is `TauCeti.zigzagProjective_projective`, and their indecomposabili
 
 ## Main results
 
+* `TauCeti.zigzagAlgebraPairing`: the symmetric perfect associative pairing on the public zigzag
+  algebra.
 * `TauCeti.moduleBaer_zigzagAlgebra` and `TauCeti.moduleInjective_zigzagAlgebra`: the public
   componentwise zigzag algebra of every finite simple graph is self-injective.
 * `TauCeti.moduleInjective_nonisolatedZigzagQuotient`: the relation-quotient presentation for a
@@ -116,8 +118,32 @@ private theorem zigzagComponentPairing_mul_assoc (C : G.ConnectedComponent)
       show e (y * z) = e y * e z from e.map_mul y z]
     exact dualNumberTracePairing_mul_assoc k _ _ _
 
+private theorem zigzagComponentPairing_isSymm (C : G.ConnectedComponent) :
+    (zigzagComponentPairing k G C).IsSymm := by
+  classical
+  constructor
+  intro x y
+  by_cases hC : Nontrivial C
+  · let _ : Nontrivial C := hC
+    let hns : ∀ i : C, ∃ j, C.toSimpleGraph.Adj i j := fun i =>
+      exists_adj_iff_not_isIsolated.mpr
+        (C.connected_toSimpleGraph.preconnected.not_isIsolated i)
+    let e := zigzagComponentAlgebraEquivNonisolated k G C
+    simp only [zigzagComponentPairing, hC]
+    -- Selecting this dependent branch leaves evaluation of the transported pairing definitional.
+    change zigzagTracePairing k C.toSimpleGraph hns (e x) (e y) =
+      zigzagTracePairing k C.toSimpleGraph hns (e y) (e x)
+    exact (zigzagTracePairing_isSymm k C.toSimpleGraph hns).eq _ _
+  · let _ : Subsingleton C := not_nontrivial_iff_subsingleton.mp hC
+    let e := (zigzagComponentAlgebraEquivULiftDualNumber k G C).trans
+      (ULift.algEquiv (R := k) (A := DualNumber k))
+    simp only [zigzagComponentPairing, hC]
+    -- The singleton branch likewise reduces the transported pairing only by definitional equality.
+    change dualNumberTracePairing k (e x) (e y) = dualNumberTracePairing k (e y) (e x)
+    exact (dualNumberTracePairing_isSymm k).eq _ _
+
 /-- The direct-sum Frobenius pairing on the public componentwise zigzag algebra. -/
-private noncomputable def zigzagAlgebraPairing :
+noncomputable def zigzagAlgebraPairing :
     LinearMap.BilinForm k (zigzagAlgebra k G) := by
   classical
   exact
@@ -138,7 +164,7 @@ private noncomputable def zigzagAlgebraPairing :
         simp only [LinearMap.smul_apply]
         rw [Finset.smul_sum] }
 
-private theorem zigzagAlgebraPairing_apply (x y : zigzagAlgebra k G) :
+private theorem zigzagAlgebraPairing_apply_components (x y : zigzagAlgebra k G) :
     zigzagAlgebraPairing k G x y = ∑ C, zigzagComponentPairing k G C
       (zigzagComponentProjection k G C x) (zigzagComponentProjection k G C y) := by
   classical
@@ -152,7 +178,7 @@ private theorem zigzagAlgebraPairing_single_right (x : zigzagAlgebra k G)
     zigzagAlgebraPairing k G x (zigzagAlgebraMk k G (Pi.single C z)) =
       zigzagComponentPairing k G C (zigzagComponentProjection k G C x) z := by
   classical
-  rw [zigzagAlgebraPairing_apply]
+  rw [zigzagAlgebraPairing_apply_components]
   simp_rw [zigzagComponentProjection_zigzagAlgebraMk]
   simpa only [LinearMap.lsum_apply, LinearMap.sum_apply, LinearMap.comp_apply,
     LinearMap.proj_apply] using
@@ -166,7 +192,7 @@ private theorem zigzagAlgebraPairing_single_left (x : zigzagAlgebra k G)
     zigzagAlgebraPairing k G (zigzagAlgebraMk k G (Pi.single C z)) x =
       zigzagComponentPairing k G C z (zigzagComponentProjection k G C x) := by
   classical
-  rw [zigzagAlgebraPairing_apply]
+  rw [zigzagAlgebraPairing_apply_components]
   simp_rw [zigzagComponentProjection_zigzagAlgebraMk]
   have hsum := LinearMap.lsum_piSingle k (fun D : G.ConnectedComponent =>
     zigzagComponentAlgebra k G D) k
@@ -182,7 +208,21 @@ private theorem zigzagAlgebraPairing_single_left (x : zigzagAlgebra k G)
       zigzagComponentPairing k G C z (zigzagComponentProjection k G C x) at hsum
   exact hsum
 
-private instance zigzagAlgebraPairing_isPerfPair : (zigzagAlgebraPairing k G).IsPerfPair := by
+open Classical in
+/-- The direct-sum pairing is the sum of its restrictions to the embedded component factors. -/
+theorem zigzagAlgebraPairing_apply (x y : zigzagAlgebra k G) :
+    zigzagAlgebraPairing k G x y = ∑ C, zigzagAlgebraPairing k G
+      (zigzagAlgebraMk k G (Pi.single C (zigzagComponentProjection k G C x)))
+      (zigzagAlgebraMk k G (Pi.single C (zigzagComponentProjection k G C y))) := by
+  classical
+  rw [zigzagAlgebraPairing_apply_components]
+  apply Finset.sum_congr rfl
+  intro C _
+  rw [zigzagAlgebraPairing_single_left, zigzagComponentProjection_zigzagAlgebraMk]
+  simp
+
+/-- The direct-sum Frobenius pairing on the public zigzag algebra is perfect. -/
+instance zigzagAlgebraPairing_isPerfPair : (zigzagAlgebraPairing k G).IsPerfPair := by
   classical
   apply LinearMap.IsPerfPair.of_injective
   · intro x y h
@@ -207,18 +247,27 @@ private instance zigzagAlgebraPairing_isPerfPair : (zigzagAlgebraPairing k G).Is
     rw [zigzagAlgebraPairing_single_left, zigzagAlgebraPairing_single_left] at hz
     exact hz
 
-private theorem zigzagAlgebraPairing_mul_assoc (x y z : zigzagAlgebra k G) :
+/-- The direct-sum Frobenius pairing on the public zigzag algebra is associative with
+multiplication. -/
+theorem zigzagAlgebraPairing_mul_assoc (x y z : zigzagAlgebra k G) :
     zigzagAlgebraPairing k G (x * y) z = zigzagAlgebraPairing k G x (y * z) := by
   classical
-  rw [zigzagAlgebraPairing_apply, zigzagAlgebraPairing_apply]
+  rw [zigzagAlgebraPairing_apply_components, zigzagAlgebraPairing_apply_components]
   simp_rw [map_mul]
   exact Finset.sum_congr rfl fun C _ => zigzagComponentPairing_mul_assoc k G C _ _ _
+
+/-- The direct-sum Frobenius pairing on the public zigzag algebra is symmetric. -/
+theorem zigzagAlgebraPairing_isSymm : (zigzagAlgebraPairing k G).IsSymm :=
+  ⟨fun x y => by
+    rw [zigzagAlgebraPairing_apply_components, zigzagAlgebraPairing_apply_components]
+    exact Finset.sum_congr rfl fun C _ => (zigzagComponentPairing_isSymm k G C).eq _ _⟩
 
 /-- **The public zigzag algebra of every finite simple graph satisfies Baer's criterion.**
 Singleton components contribute dual-number factors, while every nontrivial component uses its
 zigzag trace pairing; the sum of these component pairings is perfect and associative. -/
 theorem moduleBaer_zigzagAlgebra : Module.Baer (zigzagAlgebra k G) (zigzagAlgebra k G) :=
-  (zigzagAlgebraPairing_isPerfPair k G).moduleBaer_self (zigzagAlgebraPairing_mul_assoc k G)
+  (LinearMap.IsPerfPair.bijective_right (zigzagAlgebraPairing k G)).moduleBaer_self
+    (zigzagAlgebraPairing_mul_assoc k G)
 
 /-- **The public zigzag algebra of every finite simple graph is self-injective.** -/
 theorem moduleInjective_zigzagAlgebra :
@@ -235,7 +284,8 @@ include hns
 the regular module is right multiplication by an element of the algebra. -/
 theorem moduleBaer_nonisolatedZigzagQuotient :
     Module.Baer (nonisolatedZigzagQuotient k G) (nonisolatedZigzagQuotient k G) :=
-  (zigzagTracePairing_isPerfPair k G hns).moduleBaer_self (zigzagTracePairing_mul_assoc k G hns)
+  (LinearMap.IsPerfPair.bijective_right (zigzagTracePairing k G hns)).moduleBaer_self
+    (zigzagTracePairing_mul_assoc k G hns)
 
 /-- **The zigzag algebra of a finite simple graph without isolated vertices is self-injective**: its
 regular left module is an injective module. This is the module-theoretic content of the symmetric
