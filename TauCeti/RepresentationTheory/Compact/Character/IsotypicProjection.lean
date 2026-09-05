@@ -53,11 +53,11 @@ vanishing statement concerns irreducibles that need not occur in `rho` at all. I
 the only datum visible in the answer: the range is Mathlib's sum of the simple `k[G]`-submodules of
 `rho.toRepresentation.asModule` isomorphic to `sigma.toRepresentation.asModule`.
 
-The carrier of `sigma` is only asked to be a finite-dimensional normed space for everything that
-reads `sigma` through its dimension and its character, which is the kernel, the projector and the
-identity on the matching blocks. An inner product on it is asked for exactly where unitarity of
-`sigma` itself is used, namely from the vanishing on the non-matching blocks onwards, where the
-selected irreducible is replaced by a unitary equivalent one.
+The carrier of `sigma` is only asked to be a finite-dimensional normed space: everything visible
+in the statements reads `sigma` through its dimension, its character and its isomorphism type.
+Unitarity of `sigma`, which the vanishing on the non-matching blocks is proved from, is arranged
+inside the proof by transporting `sigma` to a standard inner-product model of the same dimension
+and replacing it there by a unitary equivalent representation.
 
 The bridge from the blockwise character identities to the ambient representation is
 `ContRepresentation.comp_integratedOperator`: integration is natural with respect to the inclusion
@@ -336,14 +336,16 @@ end AmbientInnerProduct
 
 section InnerProduct
 
-variable {W : Type*} [NormedAddCommGroup W] [InnerProductSpace k W] [NormedSpace ℝ W]
-  [SMulCommClass ℝ k W] [FiniteDimensional k W]
 variable [InnerProductSpace k V] [NormedSpace ℝ V] [SMulCommClass ℝ k V]
   [FiniteDimensional k V]
 
 local instance instCompleteSpaceIsotypicProjectionInner : CompleteSpace V :=
   FiniteDimensional.complete k V
 
+section UnitarySelected
+
+variable {W : Type*} [NormedAddCommGroup W] [InnerProductSpace k W] [NormedSpace ℝ W]
+  [SMulCommClass ℝ k W] [FiniteDimensional k W]
 variable (rho : ContRepresentation k G V) (hrho : Continuous rho)
 
 include hrho
@@ -385,6 +387,15 @@ private theorem isotypicProjector_apply_subtype_of_not_equiv_of_isUnitary
   rw [isotypicProjector_apply_coe rho hrho sigma hsigma hblock, zero_apply,
     ZeroMemClass.coe_zero]
 
+end UnitarySelected
+
+section NormedSelected
+
+variable {W : Type*} [NormedAddCommGroup W] [NormedSpace k W] [FiniteDimensional k W]
+variable (rho : ContRepresentation k G V) (hrho : Continuous rho)
+
+include hrho
+
 /-- **The isotypic projector vanishes on every inequivalent irreducible block.** -/
 theorem isotypicProjector_apply_subtype_of_not_equiv
     (sigma : ContRepresentation k G W) (hsigma : Continuous sigma)
@@ -393,14 +404,22 @@ theorem isotypicProjector_apply_subtype_of_not_equiv
     (hne : IsEmpty (tau.asSubmodule ≃ₗ[k[G]] sigma.toRepresentation.asModule))
     (v : tau.toSubmodule) :
     isotypicProjector rho hrho sigma hsigma (v : V) = 0 := by
-  obtain ⟨e, hunitary⟩ := TauCeti.ContRepresentation.exists_isUnitary_congr sigma hsigma
-  let sigma' := TauCeti.ContRepresentation.congr e sigma
-  let hsigma' : Continuous sigma' := TauCeti.ContRepresentation.continuous_congr e hsigma
+  obtain ⟨estd⟩ := FiniteDimensional.nonempty_continuousLinearEquiv_of_finrank_eq
+    (𝕜 := k) (E := W) (F := EuclideanSpace k (Fin (Module.finrank k W)))
+    finrank_euclideanSpace_fin.symm
+  let sigmaStd := TauCeti.ContRepresentation.congr estd sigma
+  let hsigmaStd : Continuous sigmaStd := TauCeti.ContRepresentation.continuous_congr estd hsigma
+  obtain ⟨e, hunitary⟩ := TauCeti.ContRepresentation.exists_isUnitary_congr sigmaStd hsigmaStd
+  let sigma' := TauCeti.ContRepresentation.congr e sigmaStd
+  let hsigma' : Continuous sigma' := TauCeti.ContRepresentation.continuous_congr e hsigmaStd
   have hirr' : Representation.IsIrreducible sigma'.toRepresentation :=
-    TauCeti.ContRepresentation.isIrreducible_congr e hirr
+    TauCeti.ContRepresentation.isIrreducible_congr e
+      (TauCeti.ContRepresentation.isIrreducible_congr estd hirr)
   have hequiv : sigma.toRepresentation.Equiv sigma'.toRepresentation :=
-    (ContRepresentation.nonempty_equiv_iff.mp
-      ⟨_root_.ContRepresentation.congrEquiv sigma e⟩).some
+    ((ContRepresentation.nonempty_equiv_iff.mp
+        ⟨_root_.ContRepresentation.congrEquiv sigma estd⟩).some).trans
+      (ContRepresentation.nonempty_equiv_iff.mp
+        ⟨_root_.ContRepresentation.congrEquiv sigmaStd e⟩).some
   let hne' : IsEmpty (tau.asSubmodule ≃ₗ[k[G]] sigma'.toRepresentation.asModule) :=
     ⟨fun f ↦ hne.false
       (f.trans (Representation.asModuleLinearEquivOfEquiv hequiv).symm)⟩
@@ -489,6 +508,8 @@ theorem isotypicProjector_idempotent (hunitary : IsUnitary rho)
     (Subrepresentation.mem_asSubmodule_iff
       (σ := (isotypicProjector rho hrho sigma hsigma).toIntertwiningMap.range)).mpr hmem
   rwa [range_isotypicProjector rho hrho hunitary sigma hsigma hirr] at hrange
+
+end NormedSelected
 
 end InnerProduct
 
