@@ -36,6 +36,8 @@ the polar pairing is therefore `B(x, y)` modulo `ℤ`.
 * `TauCeti.FiniteQuadraticModule.Hom`: a quadratic-map-preserving additive homomorphism.
 * `TauCeti.FiniteQuadraticModule.Isometry`: a quadratic-map isometric equivalence.
 * `TauCeti.FiniteQuadraticModule.IsIsotropic`: quadratic isotropy of an additive subgroup.
+* `TauCeti.FiniteQuadraticModule.isIsotropic_prod_iff`: quadratic isotropy of a product subgroup
+  in an orthogonal direct sum is quadratic isotropy of each factor subgroup.
 * `TauCeti.FiniteQuadraticModule.IsLagrangian`: a quadratic-isotropic subgroup equal to its
   bilinear orthogonal complement.
 * `TauCeti.FiniteQuadraticModule.orthogonalQuotient`: the quadratic module induced on
@@ -425,20 +427,22 @@ theorem neg_toFiniteBilinearModule :
 theorem isNondegenerate_neg : A.neg.IsNondegenerate ↔ A.IsNondegenerate := by
   exact A.toFiniteBilinearModule.isNondegenerate_neg
 
-/-- The orthogonal product of two finite quadratic modules. -/
-@[expose] def prod (B : FiniteQuadraticModule) : FiniteQuadraticModule where
+/-- The orthogonal product of two finite quadratic modules.
+
+Reducible, exactly as `TauCeti.FiniteBilinearModule.prod` is, so that the carrier of an orthogonal
+product reduces to the product of the carriers and a subgroup of that product is a subgroup of the
+orthogonal product without further coercion. -/
+abbrev prod (B : FiniteQuadraticModule) : FiniteQuadraticModule where
   toFiniteBilinearModule := A.toFiniteBilinearModule.prod B.toFiniteBilinearModule
   quadratic := A.quadratic.prod B.quadratic
   polar_eq_pairing' x y := by
     rw [FiniteBilinearModule.prod_pairing, ← A.polar_eq_pairing, ← B.polar_eq_pairing]
     exact QuadraticMap.polar_prod A.quadratic B.quadratic x y
 
-@[simp]
 theorem prod_quadratic (B : FiniteQuadraticModule) (x : A) (y : B) :
     (A.prod B).quadratic (x, y) = A.quadratic x + B.quadratic y := by
   rfl
 
-@[simp]
 theorem prod_pairing (B : FiniteQuadraticModule) (x y : A.carrier × B.carrier) :
     (A.prod B).toFiniteBilinearModule.pairing x y =
       A.toFiniteBilinearModule.pairing x.1 y.1 +
@@ -527,6 +531,23 @@ theorem IsIsotropic.mono {H K : AddSubgroup A} (hK : A.IsIsotropic K) (h : H ≤
 theorem isIsotropic_bot : A.IsIsotropic ⊥ := by
   simp [IsIsotropic]
 
+/-- **Quadratic isotropy of a product subgroup is componentwise.** -/
+@[simp]
+theorem isIsotropic_prod_iff (B : FiniteQuadraticModule) (H : AddSubgroup A)
+    (K : AddSubgroup B) :
+    (A.prod B).IsIsotropic (H.prod K) ↔ A.IsIsotropic H ∧ B.IsIsotropic K := by
+  simp only [isIsotropic_def]
+  constructor
+  · intro h
+    refine ⟨fun x hx ↦ ?_, fun y hy ↦ ?_⟩
+    · have hx' := h (x, 0) (AddSubgroup.mem_prod.mpr ⟨hx, K.zero_mem⟩)
+      rwa [A.prod_quadratic B, B.quadratic.map_zero, add_zero] at hx'
+    · have hy' := h (0, y) (AddSubgroup.mem_prod.mpr ⟨H.zero_mem, hy⟩)
+      rwa [A.prod_quadratic B, A.quadratic.map_zero, zero_add] at hy'
+  · rintro ⟨hH, hK⟩ ⟨x, y⟩ hxy
+    rw [AddSubgroup.mem_prod] at hxy
+    rw [A.prod_quadratic B, hH x hxy.1, hK y hxy.2, add_zero]
+
 /-- A subgroup is quadratically isotropic exactly when the restricted quadratic map is zero. -/
 theorem isIsotropic_iff_restrict_eq_zero (H : AddSubgroup A) :
     A.IsIsotropic H ↔ (A.restrict H).quadratic = 0 := by
@@ -559,6 +580,11 @@ theorem IsIsotropic.le_orthogonalComplement {H : AddSubgroup A} (hH : A.IsIsotro
 polar bilinear pairing. -/
 def IsLagrangian (H : AddSubgroup A) : Prop :=
   A.IsIsotropic H ∧ A.toFiniteBilinearModule.IsLagrangian H
+
+/-- The quadratic Lagrangian condition, unfolded to its two defining properties. -/
+theorem isLagrangian_def (H : AddSubgroup A) :
+    A.IsLagrangian H ↔
+      A.IsIsotropic H ∧ A.toFiniteBilinearModule.IsLagrangian H := Iff.rfl
 
 /-- A quadratic isometry transports quadratic Lagrangian subgroups. -/
 @[simp]
@@ -647,6 +673,12 @@ noncomputable def quotientOfLeQuadraticRadicalMk (K : AddSubgroup A)
     (hK : K.toIntSubmodule ≤ A.quadratic.radical) :
     A →+ A.quotientOfLeQuadraticRadical K hK :=
   K.toIntSubmodule.mkQ.toAddMonoidHom
+
+/-- The quotient map sends an element to its quotient class. -/
+theorem quotientOfLeQuadraticRadicalMk_apply (K : AddSubgroup A)
+    (hK : K.toIntSubmodule ≤ A.quadratic.radical) (x : A) :
+    A.quotientOfLeQuadraticRadicalMk K hK x = Submodule.Quotient.mk x :=
+  Submodule.mkQ_apply K.toIntSubmodule x
 
 /-- The quotient quadratic map is represented by the original quadratic map. -/
 @[simp]
@@ -789,6 +821,13 @@ theorem orthogonalQuotient_toFiniteBilinearModule (H : AddSubgroup A) (hH : A.Is
     (A.orthogonalQuotient H hH).toFiniteBilinearModule =
       A.toFiniteBilinearModule.orthogonalQuotient H := (rfl)
 
+/-- The additive equivalence from a quadratic orthogonal quotient to its underlying bilinear
+orthogonal quotient. -/
+noncomputable def orthogonalQuotientUnderlyingEquiv (A : FiniteQuadraticModule.{u})
+    (H : AddSubgroup A) (hH : A.IsIsotropic H) :
+    A.orthogonalQuotient H hH ≃+ A.toFiniteBilinearModule.orthogonalQuotient H := by
+  rw [A.orthogonalQuotient_toFiniteBilinearModule H hH]
+
 /-- The quotient map from `H^⊥` onto its induced quadratic quotient. -/
 noncomputable def orthogonalQuotientMk (H : AddSubgroup A) (hH : A.IsIsotropic H) :
     A.toFiniteBilinearModule.orthogonalComplement H →+
@@ -797,6 +836,40 @@ noncomputable def orthogonalQuotientMk (H : AddSubgroup A) (hH : A.IsIsotropic H
     (A.restrict (A.toFiniteBilinearModule.orthogonalComplement H))
     (A.subgroupInOrthogonalComplement H)
     (A.subgroupInOrthogonalComplement_le_quadraticRadical hH)
+
+/-- The orthogonal-quotient map sends an element of `H^⊥` to its quotient class. -/
+theorem orthogonalQuotientMk_apply (H : AddSubgroup A) (hH : A.IsIsotropic H)
+    (x : A.toFiniteBilinearModule.orthogonalComplement H) :
+    A.orthogonalQuotientMk H hH x = Submodule.Quotient.mk x := by
+  unfold orthogonalQuotientMk
+  exact quotientOfLeQuadraticRadicalMk_apply
+    (A.restrict (A.toFiniteBilinearModule.orthogonalComplement H))
+    (A.subgroupInOrthogonalComplement H)
+    (A.subgroupInOrthogonalComplement_le_quadraticRadical hH) x
+
+/-- The equivalence with the underlying bilinear orthogonal quotient commutes with the quotient
+maps. -/
+@[simp]
+theorem orthogonalQuotientUnderlyingEquiv_orthogonalQuotientMk (H : AddSubgroup A)
+    (hH : A.IsIsotropic H) (x : A.toFiniteBilinearModule.orthogonalComplement H) :
+    A.orthogonalQuotientUnderlyingEquiv H hH (A.orthogonalQuotientMk H hH x) =
+      A.toFiniteBilinearModule.orthogonalQuotientMk H x := by
+  unfold orthogonalQuotientUnderlyingEquiv FiniteQuadraticModule.orthogonalQuotientMk
+  unfold subgroupInOrthogonalComplement quotientOfLeQuadraticRadicalMk
+  rw [A.toFiniteBilinearModule.orthogonalQuotientMk_apply]
+  exact Submodule.mkQ_apply _ _
+
+/-- The inverse equivalence from the underlying bilinear orthogonal quotient commutes with the
+quotient maps. -/
+@[simp]
+theorem orthogonalQuotientUnderlyingEquiv_symm_orthogonalQuotientMk (H : AddSubgroup A)
+    (hH : A.IsIsotropic H) (x : A.toFiniteBilinearModule.orthogonalComplement H) :
+    (A.orthogonalQuotientUnderlyingEquiv H hH).symm
+        (A.toFiniteBilinearModule.orthogonalQuotientMk H x) =
+      A.orthogonalQuotientMk H hH x := by
+  apply (A.orthogonalQuotientUnderlyingEquiv H hH).injective
+  rw [AddEquiv.apply_symm_apply,
+    A.orthogonalQuotientUnderlyingEquiv_orthogonalQuotientMk]
 
 /-- The quadratic form on `H^⊥ / H` is represented by the original quadratic form. -/
 @[simp]
@@ -908,27 +981,6 @@ theorem isIsotropic_of_map_eq (f : Isometry A B) {H : AddSubgroup A} {K : AddSub
   rw [← h, f.isIsotropic_map_iff]
   exact hH
 
-/-- The additive equivalence from a quadratic orthogonal quotient to its underlying bilinear
-orthogonal quotient. -/
-private noncomputable def orthogonalQuotientUnderlyingEquiv (A : FiniteQuadraticModule.{w})
-    (H : AddSubgroup A) (hH : A.IsIsotropic H) :
-    A.orthogonalQuotient H hH ≃+ A.toFiniteBilinearModule.orthogonalQuotient H := by
-  unfold FiniteQuadraticModule.orthogonalQuotient
-  unfold subgroupInOrthogonalComplement quotientOfLeQuadraticRadical
-  unfold FiniteBilinearModule.orthogonalQuotient
-  exact AddEquiv.refl _
-
-@[simp]
-private theorem orthogonalQuotientUnderlyingEquiv_orthogonalQuotientMk
-    (A : FiniteQuadraticModule.{w}) (H : AddSubgroup A) (hH : A.IsIsotropic H)
-    (x : A.toFiniteBilinearModule.orthogonalComplement H) :
-    orthogonalQuotientUnderlyingEquiv A H hH (A.orthogonalQuotientMk H hH x) =
-      A.toFiniteBilinearModule.orthogonalQuotientMk H x := by
-  unfold orthogonalQuotientUnderlyingEquiv FiniteQuadraticModule.orthogonalQuotientMk
-  unfold subgroupInOrthogonalComplement quotientOfLeQuadraticRadicalMk
-  rw [A.toFiniteBilinearModule.orthogonalQuotientMk_apply]
-  exact Submodule.mkQ_apply _ _
-
 /-- The bilinear transport induced by a quadratic isometry. -/
 private noncomputable def orthogonalQuotientBilinearMapAddEquiv (f : Isometry A B)
     (H : AddSubgroup A) :
@@ -973,7 +1025,7 @@ private noncomputable def orthogonalQuotientMapAddEquiv (f : Isometry A B)
       B.orthogonalQuotient (H.map f.toAddEquiv) hK := by
   let eA : A.orthogonalQuotient H hH ≃+
       A.toFiniteBilinearModule.orthogonalQuotient H :=
-    orthogonalQuotientUnderlyingEquiv A H hH
+    A.orthogonalQuotientUnderlyingEquiv H hH
   let e : A.toFiniteBilinearModule.orthogonalQuotient H ≃+
       B.toFiniteBilinearModule.orthogonalQuotient (H.map f.toAddEquiv) :=
     orthogonalQuotientBilinearMapAddEquiv f H
@@ -996,7 +1048,7 @@ private theorem orthogonalQuotientMapAddEquiv_orthogonalQuotientMk (f : Isometry
           A.toFiniteBilinearModule f.toFiniteBilinearModule
           (by rw [f.toFiniteBilinearModule_toAddEquiv]) x.2⟩ := by
   rw [orthogonalQuotientMapAddEquiv, AddEquiv.trans_apply, AddEquiv.trans_apply,
-    orthogonalQuotientUnderlyingEquiv_orthogonalQuotientMk,
+    A.orthogonalQuotientUnderlyingEquiv_orthogonalQuotientMk,
     orthogonalQuotientBilinearMapAddEquiv_orthogonalQuotientMk]
   unfold FiniteQuadraticModule.orthogonalQuotientMk
   unfold subgroupInOrthogonalComplement quotientOfLeQuadraticRadicalMk

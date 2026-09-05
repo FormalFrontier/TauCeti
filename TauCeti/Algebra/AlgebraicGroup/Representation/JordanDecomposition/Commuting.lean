@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Representation.JordanDecomposition.Basic
 public import TauCeti.LinearAlgebra.JordanChevalley.Commuting
-import TauCeti.LinearAlgebra.GeneralLinearGroup.Intertwining
 
 /-!
 # Jordan decomposition of commuting algebraic-group points

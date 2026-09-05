@@ -9,7 +9,6 @@ public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.StandardComodule
 public import TauCeti.Algebra.Lie.E7.Minuscule.BaseChange
 import TauCeti.Algebra.Coalgebra.Comodule.GroupLike
 import TauCeti.Algebra.Coalgebra.Subcomodule.Corestrict
-import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.HopfIdealPoints.BaseChange
 import TauCeti.Algebra.Lie.E7.Minuscule.PointsFunctor
 
 /-!
@@ -75,11 +74,9 @@ theorem standardComodule_coact :
     Comodule.corestrictCoact
         (R := R) (C := GeneralLinear.coordinateHopfAlgebra R 56)
         (D := coordinateHopfAlgebra R) (M := Fin 56 → R)
-        (Bialgebra.Quotient.mkBialgHom (R := R)
-          (baseChangeDefiningIdeal R).toIdeal).toCoalgHom =
+        (coordinateMap R).hom.toCoalgHom =
       TensorProduct.map LinearMap.id
-          (Bialgebra.Quotient.mkBialgHom (R := R)
-            (baseChangeDefiningIdeal R).toIdeal).toLinearMap ∘ₗ
+          (coordinateMap R).hom.toCoalgHom.toLinearMap ∘ₗ
         GeneralLinear.standardCoact R 56 := by
   apply LinearMap.ext
   intro v
@@ -90,7 +87,7 @@ theorem standardComodule_coact :
 theorem isFaithful_standardComodule :
     Comodule.IsFaithful (k := R) (H := coordinateHopfAlgebra R) (V := Fin 56 → R) := by
   exact Comodule.isFaithful_corestrict_of_surjective (coordinateMap R).hom
-    (CommHopfAlgCat.mkQuotient_surjective _ _)
+    (coordinateMap_surjective R)
     (GeneralLinear.isFaithful_standardComodule R 56)
 
 section PointAction
@@ -117,7 +114,7 @@ theorem piScalarRight_comp_endOfPoint
         (CommHopfAlgCat.quotientPointsHom
           (GeneralLinear.coordinateHopfAlgebra R 56) (baseChangeDefiningIdeal R)
           (CommAlgCat.of R A) g).ofConv := by
-    rw [CommHopfAlgCat.quotientPointsHom_apply]
+    exact congrArg WithConv.ofConv (mapPointsFunctor_coordinateMap_app R g)
   rw [hpoint]
   exact GeneralLinear.piScalarRight_comp_endOfPoint R 56 _
 
@@ -140,7 +137,7 @@ theorem mulVec_mem
         CommHopfAlgCat.quotientPointsHom
           (GeneralLinear.coordinateHopfAlgebra R 56) (baseChangeDefiningIdeal R)
           (CommAlgCat.of R R) g := by
-    rw [AlgHom.mapDomain_apply, CommHopfAlgCat.quotientPointsHom_apply]
+    exact mapPointsFunctor_coordinateMap_app R g
   rw [hpoint] at h
   exact h
 
@@ -212,7 +209,7 @@ private theorem weightTorusToBaseChangeCoordinateMap_coordinate (i a : Fin 56) :
             (GeneralLinear.coordinateRingMap k 56 (MvPolynomial.X (i, a))))) =
       if i = a then MonoidAlgebra.single (minusculeCharacter a) (1 : k) else 0 := by
   rw [← _root_.BialgHom.comp_apply, ← _root_.CommHopfAlgCat.hom_comp]
-  rw [mkQuotient_comp_weightTorusToBaseChangeCoordinateMap]
+  rw [coordinateMap_comp_weightTorusToBaseChangeCoordinateMap]
   rw [GeneralLinear.hom_weightTorusBaseChangeCoordinateMap,
     GeneralLinear.weightTorusCoordinateBialgHom_X]
   split_ifs with h
@@ -236,7 +233,6 @@ private theorem torusCorestrict_eq_ofWeights :
   rw [Comodule.corestrict_coact_apply
     (weightTorusToBaseChangeCoordinateMap k).hom.toCoalgHom]
   rw [Comodule.corestrict_coact]
-  simp only [coordinateMap, CategoryTheory.ConcreteCategory.hom_ofHom]
   rw [standardComodule_coact, LinearMap.comp_apply,
     GeneralLinear.standardCoact_apply_basisFun, map_sum]
   simp only [TensorProduct.map_tmul, LinearMap.id_coe, id_eq]
@@ -246,13 +242,10 @@ private theorem torusCorestrict_eq_ofWeights :
     (_root_.BialgHom.toAlgHom_toLinearMap
       (weightTorusToBaseChangeCoordinateMap k).hom).symm
   have hcoordinateLinear :
-      (Bialgebra.Quotient.mkBialgHom (R := k)
-          (baseChangeDefiningIdeal k).toIdeal).toLinearMap =
-        (Bialgebra.Quotient.mkBialgHom (R := k)
-          (baseChangeDefiningIdeal k).toIdeal).toAlgHom.toLinearMap :=
+      (coordinateMap k).hom.toCoalgHom.toLinearMap =
+        (coordinateMap k).hom.toAlgHom.toLinearMap :=
     (_root_.BialgHom.toAlgHom_toLinearMap
-      (Bialgebra.Quotient.mkBialgHom (R := k)
-        (baseChangeDefiningIdeal k).toIdeal)).symm
+      (coordinateMap k).hom).symm
   rw [hweightLinear, hcoordinateLinear]
   simp only [map_sum, TensorProduct.map_tmul, LinearMap.id_coe, id_eq,
     AlgHom.toLinearMap_apply]

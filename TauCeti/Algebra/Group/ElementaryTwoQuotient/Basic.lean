@@ -21,7 +21,7 @@ of order dividing `2`, so it is a vector space over `𝔽₂ = ZMod 2`. When `G`
 is the **2-rank** of `G`. This file develops that construction at the level of an arbitrary
 commutative group; the genus-theory specialization to a class group lives in
 `TauCeti.NumberTheory.ClassGroup.ElementaryTwoQuotient`, and the square-class group `Kˣ ⧸ (Kˣ)²` of
-`TauCeti.FieldTheory.SquareClassGroup` is the same construction for `G = Kˣ`.
+`TauCeti.FieldTheory.SquareClassGroup.Basic` is the same construction for `G = Kˣ`.
 
 ⚠ This quotient is the **maximal elementary-2 quotient** of `G`, *not* its 2-torsion subgroup
 `{g | g² = 1}`. The two are different objects — a quotient and a subgroup — but for a finite group
@@ -46,7 +46,8 @@ names around it. The cardinality identity is still expressed through the squarin
 * `TauCeti.elementaryTwoQuotientMk_surjective` and `TauCeti.elementaryTwoQuotientMk_eq_iff`: the
   class map is surjective, and two elements have the same class iff they differ by a square.
 * `TauCeti.elementaryTwoQuotientLiftEquiv` and `TauCeti.elementaryTwoQuotientLinearLiftEquiv`: the
-  universal property for maps out of `G/G²`, inherited from `ModN.liftEquiv`.
+  universal property for maps out of `G/G²`, inherited from `ModN.liftEquiv`, with
+  `TauCeti.elementaryTwoQuotientLinearLiftEquiv_symm_mk` as its computation rule.
 * `TauCeti.elementaryTwoQuotientMap` and `TauCeti.elementaryTwoQuotientCongr`: transport along
   homomorphisms and equivalences of commutative groups.
 * `TauCeti.elementaryTwoQuotientMap_apply_eq_self_of_isSquare_div`,
@@ -143,6 +144,14 @@ additive homomorphisms from `Additive G` whose values are killed by `2`. -/
 protected def elementaryTwoQuotientLinearLiftEquiv [AddCommGroup H] [Module (ZMod 2) H] :
     (ElementaryTwoQuotient G →ₗ[ZMod 2] H) ≃ {φ : Additive G →+ H // ∀ g, 2 • φ g = 0} :=
   ModN.liftEquiv'
+
+/-- The linear map obtained from the universal property of `G/G²` evaluates on the class of `g`
+as the original additive homomorphism evaluates on `Additive.ofMul g`. -/
+@[simp] theorem elementaryTwoQuotientLinearLiftEquiv_symm_mk [AddCommGroup H]
+    [Module (ZMod 2) H] (φ : Additive G →+ H) (hφ : ∀ g, 2 • φ g = 0) (g : G) :
+    (TauCeti.elementaryTwoQuotientLinearLiftEquiv.symm ⟨φ, hφ⟩)
+        (elementaryTwoQuotientMk g) = φ (Additive.ofMul g) := by
+  rfl
 
 /-- The class map to `G / G²` sends a product to the sum of the classes. -/
 @[simp] theorem elementaryTwoQuotientMk_mul (g h : G) :
@@ -323,8 +332,15 @@ private theorem range_lsmul_two_toAddSubgroup_eq_square_toAddSubgroup :
 additive form of the square subgroup. -/
 noncomputable def elementaryTwoQuotientEquivSquareQuotient :
     ElementaryTwoQuotient G ≃+ Additive G ⧸ (Subgroup.square G).toAddSubgroup :=
-  QuotientAddGroup.congr _ _ (AddEquiv.refl (Additive G)) <| by
-    simpa using range_lsmul_two_toAddSubgroup_eq_square_toAddSubgroup G
+  QuotientAddGroup.quotientAddEquivOfEq
+    (range_lsmul_two_toAddSubgroup_eq_square_toAddSubgroup G)
+
+/-- The comparison with the direct quotient by squares sends the `ModN` class of an element to
+its direct quotient class. -/
+@[simp] theorem elementaryTwoQuotientEquivSquareQuotient_mk (g : G) :
+    elementaryTwoQuotientEquivSquareQuotient G (elementaryTwoQuotientMk g) =
+      QuotientAddGroup.mk (Additive.ofMul g) :=
+  QuotientAddGroup.quotientAddEquivOfEq_mk _ (Additive.ofMul g)
 
 /-- The cardinality of `G/G²` is the index of the subgroup of squares. -/
 theorem card_elementaryTwoQuotient_eq_index_square :

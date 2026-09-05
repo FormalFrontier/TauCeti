@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.FieldTheory.FunctionField.Divisor.Principal
-public import TauCeti.FieldTheory.FunctionField.Place.Approximation
 
 /-!
 # Moving a divisor within its class to avoid finitely many places

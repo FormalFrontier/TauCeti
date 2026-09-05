@@ -11,7 +11,6 @@ public import TauCeti.AlgebraicGeometry.EllipticCurve.FormalGroup.Inverse
 public import TauCeti.AlgebraicGeometry.EllipticCurve.FormalGroup.WExpansion
 public import TauCeti.RingTheory.MvPowerSeries.Evaluation
 public import TauCeti.RingTheory.MvPowerSeries.Substitution
-public import TauCeti.Topology.Algebra.Nonarchimedean.AdicTopology
 public import TauCeti.Topology.Algebra.Nonarchimedean.GeometricSeries
 
 /-!

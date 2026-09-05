@@ -174,7 +174,7 @@ private theorem circleIntegral_logDeriv_toMeromorphicNFOn {f : ℂ → ℂ} {c :
     (hf : MeromorphicOn f (Metric.closedBall c R)) :
     circleIntegral (logDeriv f) c R
       = circleIntegral (logDeriv (toMeromorphicNFOn f (Metric.closedBall c R))) c R := by
-  set F := toMeromorphicNFOn f (Metric.closedBall c R) with hF_def
+  set F := toMeromorphicNFOn f (Metric.closedBall c R)
   refine circleIntegral.circleIntegral_congr_codiscreteWithin ?_ hR.ne'
   have hspU : Metric.sphere c |R| ⊆ Metric.closedBall c R := by
     rw [abs_of_pos hR]; exact Metric.sphere_subset_closedBall

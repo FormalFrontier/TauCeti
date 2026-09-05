@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Semigroups.Generation.Yosida.Basic
-import TauCeti.Analysis.Normed.Operator.Basic
 import TauCeti.Analysis.Normed.Operator.Exponential
 import Mathlib.Topology.UniformSpace.UniformApproximation
 

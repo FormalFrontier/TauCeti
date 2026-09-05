@@ -9,8 +9,6 @@ public import Mathlib.Analysis.Analytic.Order
 public import Mathlib.Analysis.Meromorphic.Divisor
 public import TauCeti.Analysis.Complex.ZeroCount
 public import TauCeti.Analysis.Contour.Argument.Cycle
-public import TauCeti.Analysis.Contour.Argument.Divisor
-import TauCeti.Analysis.Contour.LogDerivFTC
 import Mathlib.Analysis.Calculus.LogDeriv
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.MeasureTheory.Integral.CircleIntegral

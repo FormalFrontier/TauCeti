@@ -186,7 +186,7 @@ private theorem checkerboardCarrier_le_intSpan :
 /-- The checkerboard carrier is finitely generated: it is a submodule of the finitely generated
 module `ℤⁿ` over the Noetherian ring `ℤ`. -/
 private theorem checkerboardCarrier_fg : (checkerboardCarrier n).FG := by
-  set M := Submodule.span ℤ (Set.range (Pi.basisFun ℚ (Fin n))) with hM
+  set M := Submodule.span ℤ (Set.range (Pi.basisFun ℚ (Fin n)))
   have : IsNoetherian ℤ M := isNoetherian_span_of_finite ℤ (Set.finite_range _)
   have hfg : ((checkerboardCarrier n).comap M.subtype).FG := IsNoetherian.noetherian _
   have hmap : ((checkerboardCarrier n).comap M.subtype).map M.subtype = checkerboardCarrier n := by

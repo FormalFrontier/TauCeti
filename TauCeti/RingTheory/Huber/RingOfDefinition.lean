@@ -438,7 +438,7 @@ theorem isTopologicallyNilpotent_iff_exists_mem_idealOfDefinition {a : A} :
     obtain ⟨P, hmem⟩ := isPowerBounded_iff_exists_mem_ringOfDefinition.mp
       (IsPowerBounded.of_isTopologicallyNilpotent ha)
     -- `y` is the element itself, viewed in the ring of definition it was just placed in
-    set y : P.ringOfDefinition := ⟨a, hmem⟩ with hy
+    set y : P.ringOfDefinition := ⟨a, hmem⟩
     have hnil : IsTopologicallyNilpotent y := isTopologicallyNilpotent_mk hmem ha
     -- enlarging by `y` puts it in the ideal of definition, leaving the ring of definition alone
     exact ⟨P.enlargeIdeal hnil, hmem, P.mem_enlargeIdeal_idealOfDefinition hnil hmem⟩

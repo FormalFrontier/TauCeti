@@ -272,7 +272,7 @@ theorem setIntegral_pi_eq_zero_of_forall_inner {h : Lp 𝕜 2 (Measure.pi μ)}
     (hz : ∀ F : ∀ i, Lp 𝕜 2 (μ i), inner 𝕜 (L2piMul F) h = 0)
     (s : ∀ i, Set (α i)) (hs : ∀ i, MeasurableSet (s i)) (hfin : ∀ i, μ i (s i) ≠ ⊤) :
     ∫ x in Set.univ.pi s, h x ∂(Measure.pi μ) = 0 := by
-  set F : ∀ i, Lp 𝕜 2 (μ i) := fun i => indicatorConstLp 2 (hs i) (hfin i) (1 : 𝕜) with hFdef
+  set F : ∀ i, Lp 𝕜 2 (μ i) := fun i => indicatorConstLp 2 (hs i) (hfin i) (1 : 𝕜)
   have hFc : ∀ᵐ x : ∀ i, α i ∂(Measure.pi μ),
       ∀ i, F i (x i) = (s i).indicator (fun _ => (1 : 𝕜)) (x i) := by
     rw [ae_all_iff]

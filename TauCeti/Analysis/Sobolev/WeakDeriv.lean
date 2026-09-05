@@ -628,7 +628,7 @@ The directional statement `TauCeti.HasWeakLineDerivOn.ae_eq` is applied along th
 vectors of a basis of `E`, and the resulting almost-everywhere statements are intersected. -/
 theorem HasWeakFDerivOn.ae_eq {U₁ U₂ : E → E →L[ℝ] F} (h₁ : HasWeakFDerivOn μ Ω u U₁)
     (h₂ : HasWeakFDerivOn μ Ω u U₂) : U₁ =ᵐ[μ.restrict Ω] U₂ := by
-  set b := Module.finBasis ℝ E with hb
+  set b := Module.finBasis ℝ E
   have hcoord : ∀ i, (fun x => U₁ x (b i)) =ᵐ[μ.restrict Ω] fun x => U₂ x (b i) :=
     fun i => (h₁ (b i)).ae_eq (h₂ (b i))
   filter_upwards [Filter.eventually_all.2 hcoord] with x hx

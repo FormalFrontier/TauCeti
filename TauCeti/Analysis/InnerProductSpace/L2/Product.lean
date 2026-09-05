@@ -255,8 +255,8 @@ theorem setIntegral_prod_eq_zero_of_forall_inner [SFinite μ] [SFinite ν] {h : 
     {A : Set α} (hA : MeasurableSet A) (hμA : μ A ≠ ⊤)
     {B : Set β} (hB : MeasurableSet B) (hνB : ν B ≠ ⊤) :
     ∫ p in A ×ˢ B, h p ∂(μ.prod ν) = 0 := by
-  set F : Lp 𝕜 2 μ := indicatorConstLp 2 hA hμA (1 : 𝕜) with hFdef
-  set G : Lp 𝕜 2 ν := indicatorConstLp 2 hB hνB (1 : 𝕜) with hGdef
+  set F : Lp 𝕜 2 μ := indicatorConstLp 2 hA hμA (1 : 𝕜)
+  set G : Lp 𝕜 2 ν := indicatorConstLp 2 hB hνB (1 : 𝕜)
   have hFc : ⇑F =ᵐ[μ] A.indicator fun _ => (1 : 𝕜) := indicatorConstLp_coeFn
   have hGc : ⇑G =ᵐ[ν] B.indicator fun _ => (1 : 𝕜) := indicatorConstLp_coeFn
   calc ∫ p in A ×ˢ B, h p ∂(μ.prod ν)

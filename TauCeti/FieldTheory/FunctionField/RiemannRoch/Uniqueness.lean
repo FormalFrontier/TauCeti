@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.FieldTheory.FunctionField.RiemannRoch.DegreeZero
 public import TauCeti.FieldTheory.FunctionField.RiemannRoch.RatFunc
 
 /-!

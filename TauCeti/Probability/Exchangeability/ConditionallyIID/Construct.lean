@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Basic
 public import TauCeti.Probability.Exchangeability.FiniteMarginals
-public import TauCeti.MeasureTheory.Measure.ProductKernel
 -- Public: `iIndepFun` appears in the hypothesis of the degeneracy theorem.
 public import Mathlib.Probability.Independence.Basic
 -- Non-public: the mixture representation and its uniqueness are used only inside the

@@ -26,7 +26,7 @@ for a finite abelian group they have the same cardinality (see
 The construction itself is the general `TauCeti.ElementaryTwoQuotient` of a commutative group,
 specialized here to `G = ClassGroup R` under the genus-theory names Layer 2 of the multiquadratic
 roadmap targets (`TauCetiRoadmap/Multiquadratic/README.md`). The same general construction is the
-square-class group `Kˣ ⧸ (Kˣ)²` of `TauCeti.FieldTheory.SquareClassGroup` for `G = Kˣ`.
+square-class group `Kˣ ⧸ (Kˣ)²` of `TauCeti.FieldTheory.SquareClassGroup.Basic` for `G = Kˣ`.
 
 ## Main definitions and results
 

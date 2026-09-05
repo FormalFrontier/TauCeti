@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Combinatorics.Quiver.BoundedPaths
 public import TauCeti.RepresentationTheory.Quiver.Radical
 public import Mathlib.RingTheory.Ideal.Quotient.Operations
 

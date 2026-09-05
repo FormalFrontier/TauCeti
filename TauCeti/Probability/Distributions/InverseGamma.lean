@@ -474,8 +474,6 @@ theorem cdf_inverseGammaMeasure_eq (ha : 0 < a) (hr : 0 < r) (x : ℝ) :
         · exact (inv_nonpos.mpr hy).trans hxpos.le
         · have hypos : 0 < y := (inv_pos.mpr hxpos).trans_le hy
           exact (inv_le_comm₀ hypos hxpos).mpr hy
-    have hsubset : Ici x⁻¹ ⊆ Ioi (0 : ℝ) := fun y hy ↦
-      (inv_pos.mpr hxpos).trans_le hy
     have hdisj : Disjoint (Iic (0 : ℝ)) (Ici x⁻¹) := Set.disjoint_left.2 fun y hy0 hy ↦
       (not_lt_of_ge hy0) ((inv_pos.mpr hxpos).trans_le hy)
     have hzero : gammaMeasure a r (Iic 0) = 0 := by
