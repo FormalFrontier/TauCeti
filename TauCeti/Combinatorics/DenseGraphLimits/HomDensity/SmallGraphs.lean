@@ -46,7 +46,8 @@ coordinate matching in the proofs is an explicit rewrite rather than a silent un
 * `homDensity_top_fin_two` and `homDensity_top_fin_two_eq_integral_integral` — the edge density;
 * `homDensity_top_fin_three` and `homDensity_top_fin_three_eq_integral_integral_integral` — the
   triangle density;
-* `homDensity_cycle_four`, `integrable_cycle_four` — the 4-cycle density and its integrability;
+* `homDensity_cycleGraph_four`, `integrable_cycleGraph_four` — the 4-cycle density and its
+  integrability;
 * `integrable_prod_edgeFactor_fin_two`, `integrable_prod_edgeFactor_fin_three` — integrability of
   the transported integrand, again for an arbitrary graph;
 * `integrable_edge_integrand`, `integrable_triangle_integrand` — the same for the two expanded
@@ -236,7 +237,7 @@ theorem homDensity_fin_four (F : SimpleGraph (Fin 4)) [DecidableRel F.Adj] (W : 
   simp only [finFourArrowPairPair_apply]
   exact integral_congr_ae (ae_of_all _ fun x => key x)
 
-private theorem prod_edgeFactor_cycle_four (W : Graphon Ω μ)
+private theorem prod_edgeFactor_cycleGraph_four (W : Graphon Ω μ)
     (p : (Ω × Ω) × (Ω × Ω)) :
     ∏ e ∈ (SimpleGraph.cycleGraph 4).edgeFinset,
         edgeFactor W ![p.1.1, p.2.1, p.1.2, p.2.2] e =
@@ -251,7 +252,7 @@ private theorem prod_edgeFactor_cycle_four (W : Graphon Ω μ)
   ring
 
 /-- The four-cycle integrand is integrable on the paired product space. -/
-theorem integrable_cycle_four (W : Graphon Ω μ) :
+theorem integrable_cycleGraph_four (W : Graphon Ω μ) :
     Integrable (fun p : (Ω × Ω) × (Ω × Ω) =>
       W p.1.1 p.2.1 * W p.2.1 p.1.2 * W p.1.2 p.2.2 * W p.2.2 p.1.1)
       ((μ.prod μ).prod (μ.prod μ)) := by
@@ -260,7 +261,7 @@ theorem integrable_cycle_four (W : Graphon Ω μ) :
   refine ((measurePreserving_finFourArrowPairPair μ).integrable_comp_emb
     (finFourArrowPairPair Ω).measurableEmbedding).mp ?_
   refine h.congr (ae_of_all _ fun x => ?_)
-  have hp := prod_edgeFactor_cycle_four W (finFourArrowPairPair Ω x)
+  have hp := prod_edgeFactor_cycleGraph_four W (finFourArrowPairPair Ω x)
   simp only [finFourArrowPairPair_apply] at hp
   simp only [Function.comp_apply, finFourArrowPairPair_apply]
   rw [← FinVec.etaExpand_eq x]
@@ -268,13 +269,13 @@ theorem integrable_cycle_four (W : Graphon Ω μ) :
 
 /-- **The four-cycle density.**  The homomorphism density of `C₄` is the integral of its four edge
 product over the paired product space. -/
-theorem homDensity_cycle_four (W : Graphon Ω μ) :
+theorem homDensity_cycleGraph_four (W : Graphon Ω μ) :
     homDensity (SimpleGraph.cycleGraph 4) W =
       ∫ p : (Ω × Ω) × (Ω × Ω),
         W p.1.1 p.2.1 * W p.2.1 p.1.2 * W p.1.2 p.2.2 * W p.2.2 p.1.1
           ∂((μ.prod μ).prod (μ.prod μ)) := by
   rw [homDensity_fin_four]
-  exact integral_congr_ae (ae_of_all _ fun p => prod_edgeFactor_cycle_four W p)
+  exact integral_congr_ae (ae_of_all _ fun p => prod_edgeFactor_cycleGraph_four W p)
 
 /-- The edge factor product of `K₂`, expanded.  Shared by the density value and its
 integrability. -/

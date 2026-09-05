@@ -30,7 +30,7 @@ They use only the strict graphon carrier and its edge, triangle, and product-int
 
 * `goodman_triangle_density` — Goodman's lower bound for triangle density;
 * `mantel_triangle_free` — a triangle-free graphon has edge density at most `1 / 2`.
-* `sidorenko_cycle_four` — the 4-cycle density is at least the fourth power of edge density.
+* `sidorenko_cycleGraph_four` — the 4-cycle density is at least the fourth power of edge density.
 
 ## References
 
@@ -377,18 +377,18 @@ private theorem integral_twoStep_eq_degree_sq (W : Graphon Ω μ) :
       simp only [prodAssoc_prodComm_apply]
     _ = ∫ x, graphonDegree W x ^ 2 ∂μ := integral_triple_graphon_two_edges_right W
 
-private theorem homDensity_cycle_four_eq_twoStep_sq (W : Graphon Ω μ) :
+private theorem homDensity_cycleGraph_four_eq_twoStep_sq (W : Graphon Ω μ) :
     homDensity (SimpleGraph.cycleGraph 4) W =
       ∫ p : Ω × Ω, twoStepIntegral W p.1 p.2 ^ 2 ∂(μ.prod μ) := by
   calc
     homDensity (SimpleGraph.cycleGraph 4) W =
         ∫ p : (Ω × Ω) × (Ω × Ω),
           W p.1.1 p.2.1 * W p.2.1 p.1.2 * W p.1.2 p.2.2 * W p.2.2 p.1.1
-            ∂((μ.prod μ).prod (μ.prod μ)) := homDensity_cycle_four W
+            ∂((μ.prod μ).prod (μ.prod μ)) := homDensity_cycleGraph_four W
     _ = ∫ q : Ω × Ω, ∫ r : Ω × Ω,
           (W q.1 r.1 * W r.1 q.2) *
             (W q.2 r.2 * W r.2 q.1) ∂(μ.prod μ) ∂(μ.prod μ) := by
-      simpa only [mul_assoc] using integral_prod _ (integrable_cycle_four W)
+      simpa only [mul_assoc] using integral_prod _ (integrable_cycleGraph_four W)
     _ = ∫ q : Ω × Ω,
           (∫ y, W q.1 y * W y q.2 ∂μ) *
             (∫ y, W q.2 y * W y q.1 ∂μ) ∂(μ.prod μ) := by
@@ -456,7 +456,7 @@ theorem mantel_triangle_free (W : Graphon Ω μ)
 /-- **Sidorenko's inequality for the 4-cycle.**  The 4-cycle homomorphism density is at least the
 fourth power of the edge density, on every probability carrier. This is the graphon form of the
 `K_{2,2}` case in Y. Zhao, *Graph Theory and Additive Combinatorics*, Theorem 5.2.1. -/
-theorem sidorenko_cycle_four (W : Graphon Ω μ) :
+theorem sidorenko_cycleGraph_four (W : Graphon Ω μ) :
     homDensity (SimpleGraph.cycleGraph 4) W ≥
       homDensity (⊤ : SimpleGraph (Fin 2)) W ^ 4 := by
   have hmean := TauCeti.MeasureTheory.sq_setIntegral_le_measureReal_mul_setIntegral_sq
@@ -469,7 +469,7 @@ theorem sidorenko_cycle_four (W : Graphon Ω μ) :
         ∫ p : Ω × Ω, twoStepIntegral W p.1 p.2 ^ 2 ∂(μ.prod μ) := by
     simpa [measureReal_def, IsProbabilityMeasure.measure_univ] using hmean
   rw [integral_twoStep_eq_degree_sq W] at hmean'
-  rw [← homDensity_cycle_four_eq_twoStep_sq W] at hmean'
+  rw [← homDensity_cycleGraph_four_eq_twoStep_sq W] at hmean'
   have hdegree := integral_graphonDegree_sq_ge W
   rw [integral_graphonDegree_eq_edge_density] at hdegree
   calc
