@@ -9,11 +9,9 @@ module
 -- the principal series `TauCeti.GL2PrincipalSeries` the identity below is about.
 public import TauCeti.RepresentationTheory.CharacterTable.GL2.Linear
 -- Non-public: the projection formula `TauCeti.indClassFun_comp_subtype_mul` for induced class
--- functions is the whole proof.
+-- functions is the whole proof, and this module re-exports `TauCeti.ClassFunction.mem_iff`, which
+-- supplies the class-function hypothesis that formula takes.
 import TauCeti.RepresentationTheory.Induction.ClassFunction
--- Non-public: `TauCeti.ClassFunction.mem_iff` supplies the class-function hypothesis that formula
--- takes, inside the proof only.
-import TauCeti.RepresentationTheory.CharacterTable.ClassFunction
 
 /-!
 # Twisting the principal series of `GL₂(𝔽_q)` by a determinant character
