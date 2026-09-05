@@ -84,7 +84,9 @@ The formal inputs are Tau Ceti's own coordinate base-change isomorphisms
 `DiagonalizableGroup.baseChangeCoordinateHopfAlgebraIso`, together with the Hopf-ideal quotient
 API of `CommHopfAlgCat` and the sibling
 `Kostant/RootSubgroup/Scheme/ToralClosure/BaseChange.lean`, whose declaration structure this file
-mirrors. Mathlib supplies the lower-level inputs those isomorphisms rest on
+mirrors. The generic point-transport lemmas generalize the arguments in
+`TauCeti.Algebra.Lie.Orthogonal.TypeD.SpinCarrier.BaseChange`. Mathlib supplies the lower-level
+inputs those isomorphisms rest on
 (`MvPolynomial.algebraTensorAlgEquiv`, `IsLocalization.Away.tensorProductEquivTMulRight`,
 `MonoidAlgebra.scalarTensorEquiv`) and the category `CommHopfAlgCat` itself.
 -/
