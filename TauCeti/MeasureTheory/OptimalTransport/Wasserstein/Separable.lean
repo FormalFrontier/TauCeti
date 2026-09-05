@@ -18,43 +18,29 @@ receiving a rational share of the total mass. Concretely it is the range of a ma
 sequence and the resulting weights being normalised to total mass `1`.
 
 Three approximations take an arbitrary law to a member of that family, each costing a quarter of
-the prescribed accuracy. The first is
-`TauCeti.exists_ae_mem_finset_wassersteinEDist_le`, already available: a finite-moment law is
-close to a law carried by a finite set. The second, `TauCeti.exists_map_range_wassersteinEDist_le`,
-pushes that law onto terms of the dense sequence, by the measurable map sending a point to the
-first term of the sequence within the accuracy of it. The third,
-`TauCeti.exists_nat_weights_wassersteinEDist_le`, rounds the finitely many weights to multiples of
-a common unit `1 / M`.
-
-The rounding rests on an elementary transport estimate of independent interest,
-`TauCeti.wassersteinEDist_add_smul_dirac_le`: keeping the part `σ` of a measure `σ + τ` in place
-and collapsing the rest onto a single point `x₀` is a coupling, so it costs at most the `L^p (τ)`
-seminorm of the distance to `x₀`. Rounding each weight of a finitely supported law *down* to a
-multiple of `1 / M`, except at one atom `x₀` of its carrier which absorbs everything the others
-give up, is exactly of that shape, and the mass moved is below `1 / M` at each of the finitely
-many atoms.
+the prescribed accuracy. The finite-support approximation
+`TauCeti.exists_ae_mem_finset_wassersteinEDist_le` and rational-weight approximation
+`TauCeti.exists_nat_weights_wassersteinEDist_le` are supplied by the imported finite-support
+module. Between them, `TauCeti.exists_map_range_wassersteinEDist_le` pushes the finitely supported
+law onto terms of the dense sequence, by the measurable map sending a point to the first term of
+the sequence within the accuracy of it.
 
 The exponent must be finite. Finitely supported laws are not `W_∞`-dense on a general separable
 metric space, and indeed `P_∞ (X)` need not be separable.
 
 ## Main statements
 
-* `TauCeti.wassersteinEDist_add_smul_dirac_le` — collapsing a part of a measure onto one point;
-* `TauCeti.wassersteinEDist_sum_smul_dirac_le` — its reading for the weights of a finitely
-  supported law;
 * `TauCeti.exists_map_range_wassersteinEDist_le` — quantization onto a dense sequence;
-* `TauCeti.exists_nat_weights_wassersteinEDist_le` — rounding the weights to a common denominator;
 * `TauCeti.WassersteinSpace.separableSpace` — separability of `P_p (X)` for `1 ≤ p < ∞`, with
   `TauCeti.WassersteinSpace.instSeparableSpace` its instance form.
 
 ## Implementation notes
 
-The ground distance enters as an explicit `Measurable fun z : X × X ↦ edist z.1 z.2` hypothesis
-wherever the coupling estimates are stated, as elsewhere in this directory, and the separability
-theorem reads it off the Borel structure. Finiteness of the exponent cannot be an instance
-argument, so `TauCeti.WassersteinSpace.separableSpace` takes it explicitly and the instance reads
-it off a `Fact`, exactly as the metric structure of `TauCeti.WassersteinSpace` reads `1 ≤ p` off
-`Fact (1 ≤ p)`.
+The dense-range estimate takes the measurability of the ground distance explicitly, and the
+separability theorem reads it off the Borel structure. Finiteness of the exponent cannot be an
+instance argument, so `TauCeti.WassersteinSpace.separableSpace` takes it explicitly and the
+instance reads it off a `Fact`, exactly as the metric structure of `TauCeti.WassersteinSpace`
+reads `1 ≤ p` off `Fact (1 ≤ p)`.
 
 ## References
 
@@ -76,252 +62,6 @@ namespace TauCeti
 universe u
 
 variable {X : Type u} [MeasurableSpace X] {p : ℝ≥0∞}
-
-section Perturbation
-
-variable [PseudoEMetricSpace X]
-
-/-- **Moving a piece of mass to a single point.** Replacing the part `τ` of the measure `σ + τ`
-by the Dirac mass at `x₀` carrying the same total mass costs at most the `L^p (τ)` seminorm of
-the distance to `x₀`: the plan that leaves `σ` where it is and sends every point of `τ` to `x₀`
-is a coupling of the two measures, and its objective is exactly that seminorm. -/
-theorem wassersteinEDist_add_smul_dirac_le
-    (hd : Measurable fun z : X × X ↦ edist z.1 z.2) (p : ℝ≥0∞) (σ τ : Measure X) (x₀ : X) :
-    wassersteinEDist p (σ + τ) (σ + τ univ • Measure.dirac x₀) ≤
-      eLpNorm (fun x ↦ edist x x₀) p τ := by
-  set f : X × X → ℝ≥0∞ := fun z ↦ edist z.1 z.2 with hf_def
-  have hdiag : Measurable fun x : X ↦ (x, x) := measurable_id.prodMk measurable_id
-  have hpair : Measurable fun x : X ↦ (x, x₀) := measurable_id.prodMk measurable_const
-  have hcoupling : IsCoupling (σ.map (fun x ↦ (x, x)) + τ.map (fun x ↦ (x, x₀)))
-      (σ + τ) (σ + τ univ • Measure.dirac x₀) := by
-    constructor
-    · rw [Measure.fst_add, Measure.fst, Measure.fst, Measure.map_map measurable_fst hdiag,
-        Measure.map_map measurable_fst hpair]
-      simp [Function.comp_def]
-    · rw [Measure.snd_add, Measure.snd, Measure.snd, Measure.map_map measurable_snd hdiag,
-        Measure.map_map measurable_snd hpair]
-      simp [Function.comp_def, Measure.map_const]
-  refine (wassersteinEDist_le hcoupling p).trans_eq ?_
-  set E : Set (X × X) := {z | f z ≠ 0} with hE_def
-  have hE : MeasurableSet E := hd (measurableSet_singleton (0 : ℝ≥0∞)).compl
-  have hAE : σ.map (fun x ↦ (x, x)) E = 0 := by
-    have hpre : (fun x : X ↦ (x, x)) ⁻¹' E = ∅ := by
-      ext x
-      simp [hE_def, hf_def]
-    rw [Measure.map_apply hdiag hE, hpre, measure_empty]
-  have hind : E.indicator f = f := by
-    funext z
-    by_cases hz : f z = 0
-    · rw [Set.indicator_of_notMem (by simpa [hE_def] using hz), hz]
-    · exact Set.indicator_of_mem hz f
-  calc eLpNorm f p (σ.map (fun x ↦ (x, x)) + τ.map (fun x ↦ (x, x₀)))
-      = eLpNorm (E.indicator f) p (σ.map (fun x ↦ (x, x)) + τ.map (fun x ↦ (x, x₀))) := by
-        rw [hind]
-    _ = eLpNorm f p ((σ.map (fun x ↦ (x, x)) + τ.map (fun x ↦ (x, x₀))).restrict E) :=
-        eLpNorm_indicator_eq_eLpNorm_restrict hE
-    _ = eLpNorm f p ((τ.map (fun x ↦ (x, x₀))).restrict E) := by
-        rw [Measure.restrict_add, Measure.restrict_eq_zero.2 hAE, zero_add]
-    _ = eLpNorm (E.indicator f) p (τ.map (fun x ↦ (x, x₀))) :=
-        (eLpNorm_indicator_eq_eLpNorm_restrict hE).symm
-    _ = eLpNorm f p (τ.map (fun x ↦ (x, x₀))) := by rw [hind]
-    _ = eLpNorm (fun x ↦ edist x x₀) p τ :=
-        eLpNorm_map_measure hd.aestronglyMeasurable hpair.aemeasurable
-
-/-- **Perturbing the weights of a finitely supported law.** If the weights `b` are below the
-weights `a` away from a distinguished point `x₀` of the carrier and the two total masses agree,
-then all the excess mass travels to `x₀`, so the transport cost is at most the `L^p` seminorm of
-the distance to `x₀` against the excess measure. -/
-theorem wassersteinEDist_sum_smul_dirac_le
-    (hd : Measurable fun z : X × X ↦ edist z.1 z.2) (p : ℝ≥0∞) {s : Finset X} {x₀ : X}
-    (hx₀ : x₀ ∈ s) {a b : X → ℝ≥0∞} (hab : ∀ y ∈ s, y ≠ x₀ → b y ≤ a y)
-    (hfin : ∀ y ∈ s, a y ≠ ∞) (hsum : ∑ x ∈ s, b x = ∑ x ∈ s, a x) :
-    wassersteinEDist p (∑ x ∈ s, a x • Measure.dirac x) (∑ x ∈ s, b x • Measure.dirac x) ≤
-      eLpNorm (fun x ↦ edist x x₀) p (∑ y ∈ s, (a y - b y) • Measure.dirac y) := by
-  classical
-  have hab' : ∀ y ∈ s.erase x₀, b y ≤ a y := fun y hy ↦
-    hab y (Finset.mem_of_mem_erase hy) (Finset.ne_of_mem_erase hy)
-  have hsplit : ∀ c : X → ℝ≥0∞,
-      ∑ x ∈ s, c x • Measure.dirac x =
-        c x₀ • Measure.dirac x₀ + ∑ y ∈ s.erase x₀, c y • Measure.dirac y := fun c ↦
-    (Finset.add_sum_erase _ (fun x ↦ c x • Measure.dirac x) hx₀).symm
-  have hbx₀ : b x₀ = a x₀ + ∑ y ∈ s.erase x₀, (a y - b y) := by
-    have hfin' : ∑ y ∈ s.erase x₀, b y ≠ ∞ :=
-      ne_top_of_le_ne_top (ENNReal.sum_ne_top.2 fun y hy ↦ hfin y (Finset.mem_of_mem_erase hy))
-        (Finset.sum_le_sum hab')
-    have hsplit' : ∑ y ∈ s.erase x₀, a y
-        = ∑ y ∈ s.erase x₀, b y + ∑ y ∈ s.erase x₀, (a y - b y) := by
-      rw [← Finset.sum_add_distrib]
-      exact Finset.sum_congr rfl fun y hy ↦ (add_tsub_cancel_of_le (hab' y hy)).symm
-    have hs' : ∑ y ∈ s.erase x₀, b y + b x₀
-        = ∑ y ∈ s.erase x₀, b y + (a x₀ + ∑ y ∈ s.erase x₀, (a y - b y)) := by
-      rw [← Finset.add_sum_erase _ b hx₀, ← Finset.add_sum_erase _ a hx₀] at hsum
-      rw [hsplit'] at hsum
-      calc ∑ y ∈ s.erase x₀, b y + b x₀ = b x₀ + ∑ x ∈ s.erase x₀, b x := by ring
-        _ = a x₀ + (∑ y ∈ s.erase x₀, b y + ∑ y ∈ s.erase x₀, (a y - b y)) := hsum
-        _ = ∑ y ∈ s.erase x₀, b y + (a x₀ + ∑ y ∈ s.erase x₀, (a y - b y)) := by ring
-    exact (ENNReal.add_right_inj hfin').1 hs'
-  have hzero : a x₀ - b x₀ = 0 := tsub_eq_zero_of_le (hbx₀ ▸ le_self_add)
-  have hexcess : ∑ y ∈ s, (a y - b y) • Measure.dirac y
-      = ∑ y ∈ s.erase x₀, (a y - b y) • Measure.dirac y := by
-    rw [hsplit (fun y ↦ a y - b y), hzero, zero_smul, zero_add]
-  set σ : Measure X :=
-    a x₀ • Measure.dirac x₀ + ∑ y ∈ s.erase x₀, b y • Measure.dirac y with hσ_def
-  set τ : Measure X := ∑ y ∈ s.erase x₀, (a y - b y) • Measure.dirac y with hτ_def
-  have hτuniv : τ univ = ∑ y ∈ s.erase x₀, (a y - b y) := by simp [hτ_def]
-  have hsrc : ∑ x ∈ s, a x • Measure.dirac x = σ + τ := by
-    rw [hsplit a, hσ_def, hτ_def, add_assoc, ← Finset.sum_add_distrib]
-    refine congrArg _ (Finset.sum_congr rfl fun y hy ↦ ?_)
-    rw [← add_smul, add_tsub_cancel_of_le (hab' y hy)]
-  have htgt : ∑ x ∈ s, b x • Measure.dirac x = σ + τ univ • Measure.dirac x₀ := by
-    rw [hsplit b, hσ_def, hτuniv, hbx₀, add_smul]
-    abel
-  rw [hsrc, htgt, hexcess]
-  exact wassersteinEDist_add_smul_dirac_le hd p σ τ x₀
-
-end Perturbation
-
-section NatWeights
-
-variable [PseudoMetricSpace X] [MeasurableSingletonClass X]
-
-/-- **Rounding the weights to a common denominator.** A probability measure carried by a finite
-set is approximated, in `p`-Wasserstein distance and for a finite exponent `p ≠ 0`, by measures
-whose weights are the multiples of a common unit: those of the shape
-`(∑ m)⁻¹ • ∑ m x • δ_x` for natural multiplicities `m`. -/
-theorem exists_nat_weights_wassersteinEDist_le
-    (hd : Measurable fun z : X × X ↦ edist z.1 z.2) (hp0 : p ≠ 0) (hp : p ≠ ∞)
-    {ν : Measure X} [IsProbabilityMeasure ν] {s : Finset X} (hν : ν ((s : Set X)ᶜ) = 0)
-    {ε : ℝ≥0∞} (hε : ε ≠ 0) :
-    ∃ m : X → ℕ, 0 < ∑ x ∈ s, m x ∧
-      wassersteinEDist p ν
-        ((∑ x ∈ s, (m x : ℝ≥0∞))⁻¹ • ∑ x ∈ s, (m x : ℝ≥0∞) • Measure.dirac x) ≤ ε := by
-  classical
-  have ht : 0 < p.toReal := ENNReal.toReal_pos hp0 hp
-  obtain ⟨x₀, hx₀⟩ : s.Nonempty := by
-    rw [Finset.nonempty_iff_ne_empty]
-    rintro rfl
-    simp only [Finset.coe_empty, compl_empty] at hν
-    exact absurd hν (by simp)
-  set a : X → ℝ≥0∞ := fun x ↦ ν {x}
-  have hν_eq : ν = ∑ x ∈ s, a x • Measure.dirac x :=
-    Measure.ae_mem_finset_iff.1 (mem_ae_iff.2 hν)
-  have ha_sum : ∑ x ∈ s, a x = 1 := by
-    have h : (∑ x ∈ s, a x • Measure.dirac x) univ = 1 := by rw [← hν_eq]; simp
-    simpa using h
-  have ha_fin : ∀ x, a x ≠ ∞ := fun x ↦ measure_ne_top ν _
-  -- the total `p`-th power of the distances to the base point of the carrier
-  set C : ℝ≥0∞ := ∑ y ∈ s, edist y x₀ ^ p.toReal with hC_def
-  have hC : C ≠ ∞ :=
-    ENNReal.sum_ne_top.2 fun y _ ↦ ENNReal.rpow_ne_top_of_nonneg ht.le (edist_ne_top y x₀)
-  rcases eq_or_ne ε ∞ with rfl | hεtop
-  · exact ⟨fun x ↦ if x = x₀ then 1 else 0, by simp [Finset.sum_ite_eq' s x₀, hx₀], le_top⟩
-  -- a denominator large enough that the rounding error is below `ε`
-  have hεt : ε ^ p.toReal ≠ 0 := (ENNReal.rpow_pos (pos_iff_ne_zero.2 hε) hεtop).ne'
-  obtain ⟨M, hM⟩ : ∃ M : ℕ, C / ε ^ p.toReal < M :=
-    ENNReal.exists_nat_gt (by simp [ENNReal.div_eq_top, hC, hεt])
-  have hMpos : 0 < M := by
-    rcases Nat.eq_zero_or_pos M with rfl | h
-    · simp at hM
-    · exact h
-  have hM0 : (M : ℝ≥0∞) ≠ 0 := Nat.cast_ne_zero.2 hMpos.ne'
-  have hMtop : (M : ℝ≥0∞) ≠ ∞ := ENNReal.natCast_ne_top M
-  have hCM : C ≤ M * ε ^ p.toReal := by
-    rw [← ENNReal.div_le_iff hεt (by simp [hεtop])]
-    exact hM.le
-  -- the rounded multiplicities
-  set m : X → ℕ := fun x ↦
-    if x = x₀ then M - ∑ y ∈ s.erase x₀, ⌊(M : ℝ) * (a y).toReal⌋₊
-    else ⌊(M : ℝ) * (a x).toReal⌋₊ with hm_def
-  have hfloor_le : ∀ y : X, ((⌊(M : ℝ) * (a y).toReal⌋₊ : ℕ) : ℝ≥0∞) ≤ M * a y := by
-    intro y
-    calc ((⌊(M : ℝ) * (a y).toReal⌋₊ : ℕ) : ℝ≥0∞)
-        = ENNReal.ofReal (⌊(M : ℝ) * (a y).toReal⌋₊ : ℝ) := by
-          rw [ENNReal.ofReal_natCast]
-      _ ≤ ENNReal.ofReal ((M : ℝ) * (a y).toReal) :=
-          ENNReal.ofReal_le_ofReal (Nat.floor_le (by positivity))
-      _ = M * a y := by
-          rw [ENNReal.ofReal_mul (by positivity), ENNReal.ofReal_natCast,
-            ENNReal.ofReal_toReal (ha_fin y)]
-  have hlt_floor : ∀ y : X, (M : ℝ≥0∞) * a y ≤ (⌊(M : ℝ) * (a y).toReal⌋₊ : ℕ) + 1 := by
-    intro y
-    calc (M : ℝ≥0∞) * a y = ENNReal.ofReal ((M : ℝ) * (a y).toReal) := by
-          rw [ENNReal.ofReal_mul (by positivity), ENNReal.ofReal_natCast,
-            ENNReal.ofReal_toReal (ha_fin y)]
-      _ ≤ ENNReal.ofReal ((⌊(M : ℝ) * (a y).toReal⌋₊ : ℝ) + 1) :=
-          ENNReal.ofReal_le_ofReal (Nat.lt_floor_add_one _).le
-      _ = (⌊(M : ℝ) * (a y).toReal⌋₊ : ℕ) + 1 := by
-          rw [ENNReal.ofReal_add (by positivity) zero_le_one, ENNReal.ofReal_natCast,
-            ENNReal.ofReal_one]
-  have herase : ∑ y ∈ s.erase x₀, ⌊(M : ℝ) * (a y).toReal⌋₊ ≤ M := by
-    have hcast : ((∑ y ∈ s.erase x₀, ⌊(M : ℝ) * (a y).toReal⌋₊ : ℕ) : ℝ≥0∞) ≤ (M : ℝ≥0∞) := by
-      push_cast
-      calc ∑ y ∈ s.erase x₀, ((⌊(M : ℝ) * (a y).toReal⌋₊ : ℕ) : ℝ≥0∞)
-          ≤ ∑ y ∈ s.erase x₀, (M : ℝ≥0∞) * a y := Finset.sum_le_sum fun y _ ↦ hfloor_le y
-        _ = (M : ℝ≥0∞) * ∑ y ∈ s.erase x₀, a y := by rw [Finset.mul_sum]
-        _ ≤ (M : ℝ≥0∞) * 1 := by
-            gcongr
-            rw [← ha_sum]
-            exact Finset.sum_le_sum_of_subset (Finset.erase_subset _ _)
-        _ = M := mul_one _
-    exact_mod_cast hcast
-  have hm_sum : ∑ x ∈ s, m x = M := by
-    rw [← Finset.add_sum_erase _ m hx₀]
-    have h₁ : m x₀ = M - ∑ y ∈ s.erase x₀, ⌊(M : ℝ) * (a y).toReal⌋₊ := by simp [hm_def]
-    have h₂ : ∑ y ∈ s.erase x₀, m y = ∑ y ∈ s.erase x₀, ⌊(M : ℝ) * (a y).toReal⌋₊ :=
-      Finset.sum_congr rfl fun y hy ↦ by simp [hm_def, Finset.ne_of_mem_erase hy]
-    rw [h₁, h₂]
-    omega
-  refine ⟨m, by rw [hm_sum]; exact hMpos, ?_⟩
-  -- the rounded weights, and the comparison with the original ones
-  set b : X → ℝ≥0∞ := fun x ↦ (M : ℝ≥0∞)⁻¹ * m x with hb_def
-  have hb_sum : ∑ x ∈ s, b x = 1 := by
-    have hcast : ∑ x ∈ s, ((m x : ℕ) : ℝ≥0∞) = (M : ℝ≥0∞) := by rw [← Nat.cast_sum, hm_sum]
-    rw [hb_def, ← Finset.mul_sum, hcast, ENNReal.inv_mul_cancel hM0 hMtop]
-  have hab : ∀ y ∈ s, y ≠ x₀ → b y ≤ a y := by
-    intro y _ hy
-    have hmy : ((m y : ℕ) : ℝ≥0∞) ≤ (M : ℝ≥0∞) * a y := by
-      simpa [hm_def, hy] using hfloor_le y
-    calc b y = (M : ℝ≥0∞)⁻¹ * m y := rfl
-      _ ≤ (M : ℝ≥0∞)⁻¹ * ((M : ℝ≥0∞) * a y) := by gcongr
-      _ = a y := by rw [← mul_assoc, ENNReal.inv_mul_cancel hM0 hMtop, one_mul]
-  have hexc : ∀ y ∈ s, y ≠ x₀ → a y - b y ≤ (M : ℝ≥0∞)⁻¹ := by
-    intro y _ hy
-    rw [tsub_le_iff_left]
-    have hmy : ((m y : ℕ) : ℝ≥0∞) = (⌊(M : ℝ) * (a y).toReal⌋₊ : ℕ) := by simp [hm_def, hy]
-    have h := hlt_floor y
-    rw [← hmy] at h
-    calc a y = (M : ℝ≥0∞)⁻¹ * ((M : ℝ≥0∞) * a y) := by
-          rw [← mul_assoc, ENNReal.inv_mul_cancel hM0 hMtop, one_mul]
-      _ ≤ (M : ℝ≥0∞)⁻¹ * ((m y : ℕ) + 1) := by gcongr
-      _ = b y + (M : ℝ≥0∞)⁻¹ := by rw [mul_add, mul_one]
-  -- the target measure, rewritten with the normalised weights
-  have htarget : (∑ x ∈ s, (m x : ℝ≥0∞))⁻¹ • ∑ x ∈ s, (m x : ℝ≥0∞) • Measure.dirac x
-      = ∑ x ∈ s, b x • Measure.dirac x := by
-    have hsm : ∑ x ∈ s, ((m x : ℕ) : ℝ≥0∞) = (M : ℝ≥0∞) := by rw [← Nat.cast_sum, hm_sum]
-    rw [hsm, Finset.smul_sum]
-    exact Finset.sum_congr rfl fun x _ ↦ (smul_smul _ _ _)
-  rw [hν_eq, htarget]
-  refine (wassersteinEDist_sum_smul_dirac_le hd p hx₀ hab (fun y _ ↦ ha_fin y)
-    (hb_sum.trans ha_sum.symm)).trans ?_
-  -- the excess mass is at most `1 / M` at each atom, so its `L^p` seminorm is below `ε`
-  refine (ENNReal.rpow_le_rpow_iff ht).1 ?_
-  rw [eLpNorm_rpow_eq_lintegral hp0 hp]
-  have hint : ∫⁻ x, edist x x₀ ^ p.toReal ∂(∑ y ∈ s, (a y - b y) • Measure.dirac y)
-      = ∑ y ∈ s, (a y - b y) * edist y x₀ ^ p.toReal := by
-    simp [lintegral_smul_measure]
-  rw [hint]
-  calc ∑ y ∈ s, (a y - b y) * edist y x₀ ^ p.toReal
-      ≤ ∑ y ∈ s, (M : ℝ≥0∞)⁻¹ * edist y x₀ ^ p.toReal := by
-        refine Finset.sum_le_sum fun y hy ↦ ?_
-        rcases eq_or_ne y x₀ with rfl | hyx
-        · simp [ENNReal.zero_rpow_of_pos ht]
-        · gcongr
-          exact hexc y hy hyx
-    _ = (M : ℝ≥0∞)⁻¹ * C := by rw [hC_def, Finset.mul_sum]
-    _ ≤ (M : ℝ≥0∞)⁻¹ * ((M : ℝ≥0∞) * ε ^ p.toReal) := by gcongr
-    _ = ε ^ p.toReal := by rw [← mul_assoc, ENNReal.inv_mul_cancel hM0 hMtop, one_mul]
-
-end NatWeights
 
 section DenseRange
 
