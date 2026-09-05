@@ -166,22 +166,22 @@ theorem coe_map (f : X → Y) (hdY : ∀ y : Y, Measurable fun z : Y ↦ edist y
 /-- Pushforward by the identity map is the identity on finite-moment Wasserstein spaces. -/
 @[simp]
 theorem map_id (hdX : ∀ x : X, Measurable fun z : X ↦ edist x z)
-    (hf : Measurable (id : X → X)) (hLip : LipschitzWith K (id : X → X))
-    (mu : WassersteinSpace p X) : map id hdX hf hLip mu = mu := by
+    (mu : WassersteinSpace p X) :
+    map id hdX measurable_id LipschitzWith.id mu = mu := by
   apply ext
   rw [coe_map]
   apply ProbabilityMeasure.toMeasure_injective
   simp only [ProbabilityMeasure.toMeasure_map, Measure.map_id]
 
 /-- Pushforward along a composition is the composition of the pushforwards. -/
-theorem map_comp {Z : Type w} [MeasurableSpace Z] [PseudoEMetricSpace Z] {g : Y → Z} {K' L : ℝ≥0}
+theorem map_comp {Z : Type w} [MeasurableSpace Z] [PseudoEMetricSpace Z] {g : Y → Z} {K' : ℝ≥0}
     (hdY : ∀ y : Y, Measurable fun z : Y ↦ edist y z)
     (hdZ : ∀ z : Z, Measurable fun w : Z ↦ edist z w)
     (hf : Measurable f) (hLip : LipschitzWith K f)
     (hg : Measurable g) (hgLip : LipschitzWith K' g)
-    (hgf : Measurable (g ∘ f)) (hgfLip : LipschitzWith L (g ∘ f))
     (mu : WassersteinSpace p X) :
-    map (g ∘ f) hdZ hgf hgfLip mu = map g hdZ hg hgLip (map f hdY hf hLip mu) := by
+    map (g ∘ f) hdZ (hg.comp hf) (hgLip.comp hLip) mu =
+      map g hdZ hg hgLip (map f hdY hf hLip mu) := by
   apply ext
   rw [coe_map, coe_map, coe_map]
   apply ProbabilityMeasure.toMeasure_injective
