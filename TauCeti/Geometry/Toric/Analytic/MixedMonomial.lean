@@ -194,8 +194,9 @@ private theorem map_natCast_mul {m p q : ℕ} (L : Matrix (Fin m) (Fin p) ℕ)
     (L * M).map (Nat.cast : ℕ → ℤ) = L.map Nat.cast * M.map Nat.cast :=
   Matrix.map_mul (f := Nat.castRingHom ℤ)
 
-theorem comp_assoc (C : MixedExponent k'' l'' k l) (B : MixedExponent k' l' k'' l'')
-    (A : MixedExponent k l k' l') : (C.comp B).comp A = C.comp (B.comp A) :=
+theorem comp_assoc {k''' l''' : ℕ} (C : MixedExponent k'' l'' k''' l''')
+    (B : MixedExponent k' l' k'' l'') (A : MixedExponent k l k' l') :
+    (C.comp B).comp A = C.comp (B.comp A) :=
   MixedExponent.ext (Matrix.mul_assoc _ _ _)
     (by simp [map_natCast_mul, Matrix.add_mul, Matrix.mul_add, Matrix.mul_assoc, add_assoc])
     (Matrix.mul_assoc _ _ _)
