@@ -12,13 +12,11 @@ public import Mathlib.LinearAlgebra.SymmetricAlgebra.Basic
 
 A linear map induces an algebra homomorphism between symmetric algebras. This file constructs the
 map from the universal property, proves its identity and composition laws, and packages linear
-equivalences as algebra equivalences. Chosen one-sided inverses remain one-sided inverses after
-passing to symmetric algebras.
+equivalences as algebra equivalences.
 
 The construction and its lemma set follow Mathlib's `CliffordAlgebra.map` and `ExteriorAlgebra.map`
 functoriality APIs (`Mathlib/LinearAlgebra/CliffordAlgebra/Basic.lean` and
-`Mathlib/LinearAlgebra/ExteriorAlgebra/Basic.lean`); `map_surjective` adapts the corresponding
-Clifford-algebra induction.
+`Mathlib/LinearAlgebra/ExteriorAlgebra/Basic.lean`).
 
 The declaration order, API naming, and proof organization also adapt the prior
 Tau Ceti formalization in `TauCeti/Algebra/Lie/UniversalEnveloping/Functoriality.lean`.
