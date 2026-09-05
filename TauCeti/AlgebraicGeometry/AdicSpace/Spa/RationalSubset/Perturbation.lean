@@ -8,6 +8,7 @@ module
 public import TauCeti.AlgebraicGeometry.AdicSpace.Spa.RationalSubset.Basic
 public import TauCeti.RingTheory.Huber.Basic
 import TauCeti.RingTheory.Huber.OpenIdeal
+import TauCeti.RingTheory.Valuation.Basic
 import TauCeti.RingTheory.Valuation.Continuous.TopologicallyNilpotent
 
 /-!
@@ -54,7 +55,7 @@ variable {A : Type*} [CommRing A] [TopologicalSpace A]
 
 /-- Membership in a rational subset, phrased with the canonical valuation of the point rather
 than with its valuative relation. -/
-private theorem mem_rationalSubset_iff_valuation (Aplus : Subring A) (T : Finset A) (s : A)
+theorem mem_rationalSubset_iff_valuation (Aplus : Subring A) (T : Finset A) (s : A)
     (v : Spv A) :
     v ∈ rationalSubset Aplus T s ↔
       v ∈ spa Aplus ∧ (∀ t ∈ T, v.valuation t ≤ v.valuation s) ∧ v.valuation s ≠ 0 := by
@@ -63,15 +64,6 @@ private theorem mem_rationalSubset_iff_valuation (Aplus : Subring A) (T : Finset
   · exact forall₂_congr fun t _ ↦ (valuation_le_iff v t s).symm
   · exact ⟨fun h h0 ↦ h ((valuation_le_iff v s 0).mp (by simp [h0])),
       fun h h' ↦ h (by simpa using (valuation_le_iff v s 0).mpr h')⟩
-
-omit [TopologicalSpace A] in
-/-- The ultrametric triangle inequality, in the form used to compare a numerator with a
-perturbed partner: `v x` is at most the larger of `v y` and the displacement `v (x - y)`. -/
-private theorem valuation_le_max_sub (v : Spv A) (x y : A) :
-    v.valuation x ≤ max (v.valuation y) (v.valuation (x - y)) := by
-  have he : y + (x - y) = x := by ring
-  calc v.valuation x = v.valuation (y + (x - y)) := by rw [he]
-    _ ≤ max (v.valuation y) (v.valuation (x - y)) := Valuation.map_add _ _ _
 
 /-- **A neighbourhood of zero is strictly dominated by the denominator of a rational subset.**
 If the numerator ideal `T · A` supplies the decomposition of
@@ -134,11 +126,11 @@ theorem exists_forall_rationalSubset_eq_of_sub_mem_idealImage (P : PairOfDefinit
       have hge₀ : v.valuation s' ≤ v.valuation (t₀ - u t₀) := hge.trans (hmax t₁ ht₁)
       have hγ0 : v.valuation (t₀ - u t₀) ≠ 0 := fun h ↦ hs' (le_antisymm (h ▸ hge₀) zero_le)
       have hTγ : ∀ t ∈ T, v.valuation t ≤ v.valuation (t₀ - u t₀) := fun t ht ↦
-        (valuation_le_max_sub v t (u t)).trans
+        (TauCeti.Valuation.le_max_sub v.valuation t (u t)).trans
           (max_le ((hT'le (u t) (hu t ht)).trans hge₀) (hmax t ht))
       exact absurd (valuation_lt_of_mem_idealImage P hn hv hγ0 hTγ (hδ t₀ ht₀)) (lt_irrefl _)
     have hTle : ∀ t ∈ T, v.valuation t ≤ v.valuation s' := fun t ht ↦
-      (valuation_le_max_sub v t (u t)).trans
+      (TauCeti.Valuation.le_max_sub v.valuation t (u t)).trans
         (max_le (hT'le (u t) (hu t ht)) (hsmall t ht).le)
     have hss : v.valuation s = v.valuation s' := by
       have he : s' + (s - s') = s := by ring
@@ -156,7 +148,8 @@ theorem exists_forall_rationalSubset_eq_of_sub_mem_idealImage (P : PairOfDefinit
       exact Valuation.map_sub_eq_of_lt_left _ (hlt _ hss')
     refine ⟨hspa, fun y hy ↦ ?_, hss ▸ hs⟩
     obtain ⟨t, ht, hyt⟩ := hT'T y hy
-    exact hss ▸ (valuation_le_max_sub v y t).trans (max_le (hTle t ht) (hlt _ hyt).le)
+    exact hss ▸ (TauCeti.Valuation.le_max_sub v.valuation y t).trans
+      (max_le (hTle t ht) (hlt _ hyt).le)
 
 /-- **Wedhorn Proposition 7.34, as stated.** Over a Huber ring, a rational subset with open
 numerator ideal is unchanged by perturbing its defining data inside a suitable neighbourhood of

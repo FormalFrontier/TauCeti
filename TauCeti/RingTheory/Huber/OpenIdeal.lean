@@ -99,8 +99,8 @@ This sharpens `TauCeti.Huber.PairOfDefinition.isOpen_iff_exists_pow_le`, which o
 inside the ideal `T · A` and so offers coefficients in `A` about which nothing is known. The
 sharpening is what a valuation-theoretic estimate needs: over a point of the adic spectrum a
 coefficient in `A` carries no bound at all, whereas one in `I` has value `< 1` (an element of `I`
-is topologically nilpotent), so the whole combination is *strictly* dominated by the largest
-`v t`. -/
+is topologically nilpotent). Thus the resulting combination is strictly dominated by any chosen
+nonzero common upper bound for the values `v t`, such as a rational subset's denominator. -/
 theorem exists_forall_mem_idealImage_exists_sum_eq (P : PairOfDefinition A) (T : Finset A)
     (hT : IsOpen (Ideal.span (T : Set A) : Set A)) :
     ∃ n : ℕ, ∀ a ∈ P.idealImage n, ∃ w : A → A,
