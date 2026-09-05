@@ -36,7 +36,6 @@ variable {R M N : Type*} [CommSemiring R] [AddCommMonoid M] [Module R M]
 def _root_.QuadraticMap.Represents (Q : QuadraticMap R M N) (a : N) : Prop := ∃ v, Q v = a
 
 /-- Every quadratic map represents zero. -/
-@[simp]
 theorem _root_.QuadraticMap.represents_zero (Q : QuadraticMap R M N) : Represents Q 0 :=
   ⟨0, Q.map_zero⟩
 
@@ -84,7 +83,6 @@ theorem _root_.QuadraticMap.represents_of_nondegenerate_of_isotropic (Q : Quadra
   ring
 
 /-- Multiplying a represented scalar by a square preserves representation, in both directions. -/
-@[simp]
 theorem _root_.QuadraticMap.represents_mul_square_iff (Q : QuadraticMap R M R) (a : R)
     (b : Rˣ) :
     Represents Q (a * (b : R) ^ 2) ↔ Represents Q a := by
@@ -107,7 +105,6 @@ theorem _root_.QuadraticMap.represents_mul_square_iff (Q : QuadraticMap R M R) (
     ac_rfl
 
 /-- Multiplying a represented unit by a square preserves membership in `unitValueSet`. -/
-@[simp]
 theorem _root_.QuadraticMap.mem_unitValueSet_mul_square_iff (Q : QuadraticMap R M R) (a b : Rˣ) :
     (a * b ^ 2) ∈ unitValueSet Q ↔ a ∈ unitValueSet Q := by
   simpa only [mem_unitValueSet, Units.val_mul, Units.val_pow_eq_pow_val] using
