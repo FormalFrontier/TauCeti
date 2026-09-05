@@ -40,8 +40,9 @@ separable.
   roots and multiplies `δ` by the sign of that permutation.
 * `Polynomial.Monic.discr_eq_prod_roots_sub_sq`: the same formula for a monic polynomial,
   written against a numbering `r : Fin f.natDegree → L` of its root multiset over an extension.
-* `TauCeti.discrSqrt`, `TauCeti.discrSqrt_sq`: the product of the differences of a numbering of
-  the distinct roots of a separable polynomial, and the fact that its square is the discriminant.
+* `TauCeti.discrSqrt`, `Polynomial.Monic.discrSqrt_sq`: the product of the differences of a
+  numbering of the distinct roots of a separable polynomial, and the fact that its square is the
+  discriminant.
 * `Polynomial.Monic.prod_roots_eval_derivative`: the product of the derivative over the root
   multiset, which is the discriminant up to the same sign. This is the shape in which the
   discriminant of a minimal polynomial is a norm.
@@ -390,41 +391,45 @@ theorem _root_.Polynomial.Monic.discr_eq_prod_roots_sub_sq {L : Type*} [CommRing
 
 section DiscrSqrt
 
-variable {F : Type*} [Field F] {E : Type*} [Field E] [Algebra F E] {f : F[X]}
+section Domain
 
-/-- Membership in the roots of a polynomial mapped to an extension field is membership in its
-root set over that extension. -/
-theorem mem_roots_map_iff_mem_rootSet {a : E} :
-    a ∈ (f.map (algebraMap F E)).roots ↔ a ∈ f.rootSet E :=
-  Polynomial.mem_aroots'.trans Polynomial.mem_rootSet'.symm
+variable {F : Type*} [CommRing F] {E : Type*} [CommRing E] [IsDomain E] [Algebra F E] {f : F[X]}
 
 /-- A numbering of the root set of a separable polynomial enumerates the whole root multiset:
 separability makes the roots simple, so the multiset is the image of the numbering. This is the
 hypothesis that the root-product formula for the discriminant takes. -/
-theorem roots_map_eq_map_numbering (hsep : f.Separable) (e : Fin f.natDegree ≃ f.rootSet E) :
+theorem _root_.Polynomial.Separable.roots_map_eq_map_numbering (hsep : f.Separable)
+    (e : Fin f.natDegree ≃ f.rootSet E) :
     (f.map (algebraMap F E)).roots = Multiset.map (fun i ↦ ((e i : E))) univ.val := by
+  have hmem : ∀ {a : E}, a ∈ (f.map (algebraMap F E)).roots ↔ a ∈ f.rootSet E := fun {_} ↦
+    Polynomial.mem_aroots'.trans Polynomial.mem_rootSet'.symm
   refine (Multiset.Nodup.ext (nodup_roots hsep.map) ?_).mpr ?_
   · exact univ.nodup.map fun i j h ↦ e.injective (Subtype.ext h)
   · intro a
     simp only [Multiset.mem_map, Finset.mem_val, mem_univ, true_and]
-    exact ⟨fun ha ↦ ⟨e.symm ⟨a, mem_roots_map_iff_mem_rootSet.mp ha⟩, by simp⟩,
-      fun ⟨i, hi⟩ ↦ hi ▸ mem_roots_map_iff_mem_rootSet.mpr (e i).2⟩
+    exact ⟨fun ha ↦ ⟨e.symm ⟨a, hmem.mp ha⟩, by simp⟩, fun ⟨i, hi⟩ ↦ hi ▸ hmem.mpr (e i).2⟩
 
 /-- The product `∏_{i < j} (rᵢ - rⱼ)` of the differences of the roots of `f` in `E`, taken along a
 numbering `e` of the root set.
 
-For monic separable `f` this is a square root of the discriminant, by `TauCeti.discrSqrt_sq`. It
-is only *a* square root: `TauCeti.discrSqrt_trans` shows that changing the numbering by an odd
-permutation changes the sign. The root set carries no order, so the numbering is an explicit
-argument and is never fixed globally. -/
-@[expose] def discrSqrt (e : Fin f.natDegree ≃ f.rootSet E) : E :=
+For monic separable `f` this is a square root of the discriminant, by
+`Polynomial.Monic.discrSqrt_sq`. It is only *a* square root: `TauCeti.discrSqrt_trans` shows that
+changing the numbering by an odd permutation changes the sign. The root set carries no order, so
+the numbering is an explicit argument and is never fixed globally. -/
+def discrSqrt (e : Fin f.natDegree ≃ f.rootSet E) : E :=
   ∏ i, ∏ j ∈ Ioi i, ((e i : E) - (e j : E))
+
+/-- The product formula that defines the square root of the discriminant. This is the only way the
+body of `TauCeti.discrSqrt` is read outside its own module. -/
+theorem discrSqrt_def (e : Fin f.natDegree ≃ f.rootSet E) :
+    discrSqrt e = ∏ i, ∏ j ∈ Ioi i, ((e i : E) - (e j : E)) := (rfl)
 
 /-- The defining property: the square of the product of the root differences is the discriminant.
 -/
-theorem discrSqrt_sq (hf : f.Monic) (hsep : f.Separable) (e : Fin f.natDegree ≃ f.rootSet E) :
+theorem _root_.Polynomial.Monic.discrSqrt_sq (hf : f.Monic) (hsep : f.Separable)
+    (e : Fin f.natDegree ≃ f.rootSet E) :
     discrSqrt e ^ 2 = algebraMap F E f.discr := by
-  rw [hf.discr_eq_prod_roots_sub_sq (roots_map_eq_map_numbering hsep e), discrSqrt,
+  rw [hf.discr_eq_prod_roots_sub_sq (hsep.roots_map_eq_map_numbering e), discrSqrt_def,
     ← Finset.prod_pow]
   exact Finset.prod_congr rfl fun i _ ↦ (Finset.prod_pow _ _ _).symm
 
@@ -434,25 +439,33 @@ theorem discrSqrt_trans (e : Fin f.natDegree ≃ f.rootSet E) (π : Equiv.Perm (
     discrSqrt (π.trans e) = Equiv.Perm.sign π • discrSqrt e := by
   have h := π.prod_Ioi_comp_eq_sign_mul_prod
     (f := fun i j ↦ ((e i : E) - (e j : E))) fun i j ↦ (neg_sub _ _).symm
-  simp only [discrSqrt, Equiv.trans_apply, h, Units.smul_def, zsmul_eq_mul]
+  simp only [discrSqrt_def, Equiv.trans_apply, h, Units.smul_def, zsmul_eq_mul]
+
+end Domain
+
+section Field
+
+variable {F : Type*} [Field F] {E : Type*} [Field E] [Algebra F E] {f : F[X]}
 
 /-- The discriminant is a square in the base field exactly when the product of the root
 differences already comes from the base field. No Galois hypothesis is involved: this is the
-elementary half of the discriminant test, and it is the reading of `TauCeti.discrSqrt_sq` in both
-directions. -/
-theorem isSquare_discr_iff_mem_range (hf : f.Monic) (hsep : f.Separable)
+elementary half of the discriminant test, and it is the reading of
+`Polynomial.Monic.discrSqrt_sq` in both directions. -/
+theorem _root_.Polynomial.Monic.isSquare_discr_iff_mem_range (hf : f.Monic) (hsep : f.Separable)
     (e : Fin f.natDegree ≃ f.rootSet E) :
     IsSquare f.discr ↔ discrSqrt e ∈ Set.range (algebraMap F E) := by
   constructor
   · rintro ⟨c, hc⟩
     have hsq : discrSqrt e * discrSqrt e = algebraMap F E c * algebraMap F E c := by
-      rw [← map_mul, ← hc, ← sq, discrSqrt_sq hf hsep]
+      rw [← map_mul, ← hc, ← sq, hf.discrSqrt_sq hsep]
     rcases mul_self_eq_mul_self_iff.mp hsq with h | h
     · exact ⟨c, h.symm⟩
     · exact ⟨-c, by rw [map_neg, ← h]⟩
   · rintro ⟨c, hc⟩
     refine ⟨c, (algebraMap F E).injective ?_⟩
-    rw [map_mul, hc, ← sq, discrSqrt_sq hf hsep]
+    rw [map_mul, hc, ← sq, hf.discrSqrt_sq hsep]
+
+end Field
 
 end DiscrSqrt
 
@@ -483,11 +496,12 @@ theorem _root_.Polynomial.Monic.discr_ne_zero_iff {K : Type*} [Field K] {f : K[X
 
 /-- A separable monic polynomial has nonzero discriminant, so the product of its root differences
 is nonzero. -/
-theorem discrSqrt_ne_zero {F E : Type*} [Field F] [Field E] [Algebra F E] {f : F[X]}
-    (hf : f.Monic) (hsep : f.Separable) (e : Fin f.natDegree ≃ f.rootSet E) :
+theorem _root_.Polynomial.Monic.discrSqrt_ne_zero {F E : Type*} [Field F] [Field E] [Algebra F E]
+    {f : F[X]} (hf : f.Monic) (hsep : f.Separable) (e : Fin f.natDegree ≃ f.rootSet E) :
     discrSqrt e ≠ 0 := by
   intro h
-  have h0 : algebraMap F E f.discr = 0 := by rw [← discrSqrt_sq hf hsep e, h, zero_pow two_ne_zero]
+  have h0 : algebraMap F E f.discr = 0 := by
+    rw [← hf.discrSqrt_sq hsep e, h, zero_pow two_ne_zero]
   exact (hf.discr_ne_zero_iff.mpr hsep)
     ((map_eq_zero_iff _ (algebraMap F E).injective).mp h0)
 
