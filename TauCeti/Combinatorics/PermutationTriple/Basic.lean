@@ -59,7 +59,14 @@ theorem σinf_eq (t : PermutationTriple n) : t.σinf = (t.σ1 * t.σ0)⁻¹ := b
   apply eq_inv_of_mul_eq_one_left
   simpa [mul_assoc] using t.product_eq_one
 
-@[simp] theorem σ1_mul_σ0_eq_σinf_inv (t : PermutationTriple n) :
+/-- The infinity monodromy is the product of the inverses of the first two monodromies, in
+the order fixed by the product convention. -/
+@[simp] theorem σinf_eq_inv_mul_inv (t : PermutationTriple n) :
+    t.σinf = t.σ0⁻¹ * t.σ1⁻¹ := by
+  rw [t.σinf_eq, mul_inv_rev]
+
+/-- The product of the first two monodromies is the inverse of the monodromy around `∞`. -/
+theorem σ1_mul_σ0_eq_σinf_inv (t : PermutationTriple n) :
     t.σ1 * t.σ0 = t.σinf⁻¹ := by
   rw [t.σinf_eq]
   simp only [inv_inv]
