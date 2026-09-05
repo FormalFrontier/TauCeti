@@ -9,7 +9,6 @@ public import Mathlib.Algebra.EuclideanDomain.Int
 public import Mathlib.Algebra.Module.Lattice
 public import Mathlib.Algebra.Module.ZLattice.Basic
 public import Mathlib.LinearAlgebra.FreeModule.StrongRankCondition
-public import Mathlib.LinearAlgebra.Dimension.Constructions
 public import Mathlib.RingTheory.Flat.Basic
 public import Mathlib.RingTheory.IsTensorProduct
 public import TauCeti.LinearAlgebra.Dimension.BaseChange
@@ -380,12 +379,17 @@ theorem IsIntegralLattice.of_equiv [Module.Free ℤ N] [Module.Finite ℤ N]
   ⟨inferInstance, inferInstance, IsBaseChange.of_equiv e fun n ↦ by
     simpa only [AddMonoidHom.coe_toIntLinearMap] using he n⟩
 
+/-- A finite module whose scalar extension is a base change is finite-dimensional. -/
+theorem finiteDimensional_of_baseChange [Module.Finite ℤ N] (i : N →+ V)
+    (h : IsBaseChange ℝ i.toIntLinearMap) : FiniteDimensional ℝ V := by
+  let _ : Module.Finite ℝ V := TauCeti.finite_of_isBaseChange h
+  infer_instance
+
 /-- An integral lattice has finite-dimensional real span. -/
 theorem IsIntegralLattice.finiteDimensional (i : N →+ V) (h : IsIntegralLattice i) :
     FiniteDimensional ℝ V := by
   let _ : Module.Finite ℤ N := h.finite
-  let _ : Module.Finite ℝ V := TauCeti.finite_of_isBaseChange h.baseChange
-  infer_instance
+  exact finiteDimensional_of_baseChange i h.baseChange
 
 /-- An integral lattice map is injective. -/
 theorem IsIntegralLattice.injective (i : N →+ V) (h : IsIntegralLattice i) :
@@ -431,12 +435,24 @@ theorem IsIntegralLattice.range_eq_span_realBasis (i : N →+ V) (h : IsIntegral
   exact congrArg (fun p : Submodule ℤ V => (p : Set V)) hrange'
 
 /-- The real span of the image of an integral lattice is the whole ambient space. -/
+theorem span_range_eq_top_of_baseChange (i : N →+ V)
+    (h : IsBaseChange ℝ i.toIntLinearMap) :
+    Submodule.span ℝ (Set.range i) = ⊤ := by
+  refine le_antisymm le_top ?_
+  rintro x -
+  obtain ⟨x, rfl⟩ := h.equiv.surjective x
+  induction x using TensorProduct.induction_on with
+  | zero => exact zero_mem _
+  | add x y hx hy => rw [map_add]; exact add_mem hx hy
+  | tmul r n =>
+      rw [h.equiv_tmul]
+      exact Submodule.smul_mem _ r (Submodule.subset_span ⟨n, rfl⟩)
+
+/-- The real span of the image of an integral lattice is the whole ambient space. -/
 @[simp]
 theorem IsIntegralLattice.span_range_eq_top (i : N →+ V) (h : IsIntegralLattice i) :
     Submodule.span ℝ (Set.range i) = ⊤ := by
-  rw [IsIntegralLattice.range_eq_span_realBasis i h]
-  rw [Submodule.span_span_of_tower]
-  exact (IsIntegralLattice.realBasis i h).span_eq
+  exact span_range_eq_top_of_baseChange i h.baseChange
 
 /-- The rank of a full integral lattice equals the real dimension of its ambient space. -/
 theorem IsIntegralLattice.finrank_eq_finrank (i : N →+ V) (h : IsIntegralLattice i) :
@@ -475,16 +491,35 @@ theorem IsIntegralLattice.isZLattice_range (i : N →+ V₀)
     (h : IsIntegralLattice i) :
     @IsZLattice ℝ _ V₀ _ _ (LinearMap.range i.toIntLinearMap)
       (IsIntegralLattice.discreteTopology_range i h) := by
-  let _ : Module.Finite ℤ N := h.finite
-  let b := IsIntegralLattice.realBasis i h
-  have hrange : (LinearMap.range i.toIntLinearMap : Set V₀) =
-      (Submodule.span ℤ (Set.range b) : Set V₀) := by
-    simpa only [LinearMap.coe_range, AddMonoidHom.coe_toIntLinearMap] using
-      IsIntegralLattice.range_eq_span_realBasis i h
   refine @IsZLattice.mk ℝ _ V₀ _ _ (LinearMap.range i.toIntLinearMap)
     (IsIntegralLattice.discreteTopology_range i h) ?_
-  rw [hrange]
-  exact (instIsZLatticeRealSpan b).span_top
+  simpa only [LinearMap.coe_range, AddMonoidHom.coe_toIntLinearMap] using
+    IsIntegralLattice.span_range_eq_top i h
+
+/-- Compatibility on additive maps induces a commuting square between their base-change
+equivalences. -/
+theorem comp_equiv_eq_equiv_comp_baseChange_of_baseChange
+    {N' : Type u'} {V' : Type v'} [AddCommGroup N']
+    [AddCommGroup V'] [Module ℝ V']
+    {i : N →+ V} {i' : N' →+ V'} (h : IsBaseChange ℝ i.toIntLinearMap)
+    (h' : IsBaseChange ℝ i'.toIntLinearMap)
+    (f : N →+ N') (g : V →ₗ[ℝ] V')
+    (hf : ∀ n, g (i n) = i' (f n)) :
+    g.comp h.equiv.toLinearMap =
+    h'.equiv.toLinearMap.comp (f.toIntLinearMap.baseChange ℝ) := by
+  refine (TensorProduct.isBaseChange ℤ N ℝ).algHom_ext'
+    (g.comp h.equiv.toLinearMap)
+    (h'.equiv.toLinearMap.comp (f.toIntLinearMap.baseChange ℝ)) ?_
+  ext n
+  simp only [LinearMap.comp_apply, LinearMap.restrictScalars_apply, TensorProduct.mk_apply,
+    LinearMap.baseChange_tmul, AddMonoidHom.coe_toIntLinearMap]
+  -- The preceding simplification unfolds the composition and base-change wrappers, but the
+  -- coercions from `LinearEquiv.toLinearMap` and `AddMonoidHom.toIntLinearMap` still hide the
+  -- tensor expressions from `equiv_tmul`; `change` exposes those definitional wrappers.
+  change g (h.equiv (1 ⊗ₜ[ℤ] n)) =
+    h'.equiv (1 ⊗ₜ[ℤ] f.toIntLinearMap n)
+  rw [h.equiv_tmul, h'.equiv_tmul]
+  simpa only [one_smul, AddMonoidHom.coe_toIntLinearMap] using hf n
 
 /-- Compatibility on lattice vectors induces a commuting square between the scalar-extension
 equivalences and the base change of the corresponding integral additive map. -/
@@ -495,19 +530,7 @@ theorem IsIntegralLattice.comp_equiv_eq_equiv_comp_baseChange
     (f : N →+ N') (g : V →ₗ[ℝ] V')
     (hf : ∀ n, g (i n) = i' (f n)) :
     g.comp h.baseChange.equiv.toLinearMap =
-      h'.baseChange.equiv.toLinearMap.comp (f.toIntLinearMap.baseChange ℝ) := by
-  refine (TensorProduct.isBaseChange ℤ N ℝ).algHom_ext'
-    (g.comp h.baseChange.equiv.toLinearMap)
-    (h'.baseChange.equiv.toLinearMap.comp (f.toIntLinearMap.baseChange ℝ)) ?_
-  ext n
-  simp only [LinearMap.comp_apply, LinearMap.restrictScalars_apply, TensorProduct.mk_apply,
-    LinearMap.baseChange_tmul, AddMonoidHom.coe_toIntLinearMap]
-  -- The preceding simplification unfolds the composition and base-change wrappers, but the
-  -- coercions from `LinearEquiv.toLinearMap` and `AddMonoidHom.toIntLinearMap` still hide the
-  -- tensor expressions from `equiv_tmul`; `change` exposes those definitional wrappers.
-  change g (h.baseChange.equiv (1 ⊗ₜ[ℤ] n)) =
-    h'.baseChange.equiv (1 ⊗ₜ[ℤ] f.toIntLinearMap n)
-  rw [h.baseChange.equiv_tmul, h'.baseChange.equiv_tmul]
-  simpa only [one_smul, AddMonoidHom.coe_toIntLinearMap] using hf n
+      h'.baseChange.equiv.toLinearMap.comp (f.toIntLinearMap.baseChange ℝ) :=
+  comp_equiv_eq_equiv_comp_baseChange_of_baseChange h.baseChange h'.baseChange f g hf
 
 end AddMonoidHom
