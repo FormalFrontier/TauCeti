@@ -18,9 +18,9 @@ public import Mathlib.GroupTheory.Solvable
 -- double coset of a subgroup is the subgroup itself — are used only inside the proofs of the
 -- double-coset results below, which are their specializations to the Borel subgroup of `GL₂`.
 import TauCeti.GroupTheory.DoubleCoset.Identity
--- Non-public: perfect groups are nonsolvable, which proves that `GL₂` over an infinite field is
--- nonsolvable.
-import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Borel
+-- Non-public: `SL₂` over an infinite field is nonsolvable, which proves the corresponding result
+-- for `GL₂`.
+import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Solvable
 -- Non-public: the order of `GL₂` over a finite field is used only inside the proof of the size of
 -- the big cell.
 import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Card
