@@ -115,6 +115,11 @@ theorem isotypicKernel_apply (sigma : ContRepresentation k G W) (hsigma : Contin
   simp only [isotypicKernel, ContinuousMap.smul_apply, ContinuousMap.star_apply, smul_eq_mul]
 
 omit [IsAlgClosed k] [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G] in
+-- Not `@[simp]`: `isotypicKernel_apply` above already rewrites the left-hand side to
+-- `↑(Module.finrank k W) * star (character sigma hsigma (h * g * h⁻¹))`, and the character is then
+-- unfolded further, so the attribute would be a `simpNF` violation ("Left-hand side simplifies …
+-- using `ContRepresentation.isotypicKernel_apply`"). This is the `rw`-usable class-function form,
+-- which is what `isotypicProjector` needs.
 /-- The isotypic kernel is constant on conjugacy classes. -/
 theorem isotypicKernel_conj (sigma : ContRepresentation k G W) (hsigma : Continuous sigma)
     (g h : G) :
@@ -260,11 +265,8 @@ theorem isotypicProjector_apply_subtype_of_equiv (hunitary : IsUnitary rho)
     fun g _ hv ↦ tau.apply_mem_toSubmodule g hv
   let rhoTau := subrepresentation rho tau.toSubmodule hTauInv
   let hTau : Continuous rhoTau := continuous_subrepresentation hrho
-  have hTauRep : rhoTau.toRepresentation = tau.toRepresentation := by
-    dsimp only [rhoTau]
-    rw [toRepresentation_subrepresentation]
-    ext g v
-    rfl
+  have hTauRep : rhoTau.toRepresentation = tau.toRepresentation :=
+    toRepresentation_subrepresentation_toSubmodule tau hTauInv
   have hirrTau : Representation.IsIrreducible rhoTau.toRepresentation := by
     rw [hTauRep]
     exact TauCeti.Representation.isIrreducible_toRepresentation_of_isAtom htau
@@ -316,20 +318,6 @@ theorem isotypicProjector_apply_of_mem_isotypicComponent (hunitary : IsUnitary r
   have h := hfix (rho.toRepresentation.asModuleEquiv.symm v) hv
   simpa only [LinearEquiv.apply_symm_apply] using h
 
-omit [IsAlgClosed k] in
-/-- The `k[G]`-linear endomorphism of `rho.toRepresentation.asModule` attached to the isotypic
-projector acts as the projector does on the carrier of `rho`. -/
-private theorem equivLinearMapAsModule_isotypicProjector_apply
-    (sigma : ContRepresentation k G W) (hsigma : Continuous sigma)
-    (x : rho.toRepresentation.asModule) :
-    Representation.IntertwiningMap.equivLinearMapAsModule _ _
-        (isotypicProjector rho hrho sigma hsigma).toIntertwiningMap x =
-      isotypicProjector rho hrho sigma hsigma (x : V) :=
-  (Representation.IntertwiningMap.equivLinearMapAsModule_apply
-      (isotypicProjector rho hrho sigma hsigma).toIntertwiningMap x).trans
-    (ContIntertwiningMap.toIntertwiningMap_apply (isotypicProjector rho hrho sigma hsigma)
-      (x : V))
-
 end AmbientInnerProduct
 
 /-! ### The non-matching blocks, the range and idempotence -/
@@ -361,11 +349,8 @@ private theorem isotypicProjector_apply_subtype_of_not_equiv_of_isUnitary
     fun g _ hv ↦ tau.apply_mem_toSubmodule g hv
   let rhoTau := subrepresentation rho tau.toSubmodule hTauInv
   let hTau : Continuous rhoTau := continuous_subrepresentation hrho
-  have hTauRep : rhoTau.toRepresentation = tau.toRepresentation := by
-    dsimp only [rhoTau]
-    rw [toRepresentation_subrepresentation]
-    ext g v
-    rfl
+  have hTauRep : rhoTau.toRepresentation = tau.toRepresentation :=
+    toRepresentation_subrepresentation_toSubmodule tau hTauInv
   have hirrTau : Representation.IsIrreducible rhoTau.toRepresentation := by
     rw [hTauRep]
     exact TauCeti.Representation.isIrreducible_toRepresentation_of_isAtom htau
@@ -429,6 +414,7 @@ theorem isotypicProjector_apply_subtype_of_not_equiv
 
 /-- **The character projector cuts out the isotypic component.** Its range is exactly Mathlib's
 sum of the simple `k[G]`-submodules isomorphic to the selected irreducible. -/
+@[simp]
 theorem range_isotypicProjector (hunitary : IsUnitary rho)
     (sigma : ContRepresentation k G W) (hsigma : Continuous sigma)
     (hirr : Representation.IsIrreducible sigma.toRepresentation) :
@@ -446,7 +432,10 @@ theorem range_isotypicProjector (hunitary : IsUnitary rho)
   let _ := hsemisimple
   have hp_apply (x : rho.toRepresentation.asModule) :
       p x = isotypicProjector rho hrho sigma hsigma (x : V) :=
-    equivLinearMapAsModule_isotypicProjector_apply rho hrho sigma hsigma x
+    (Representation.IntertwiningMap.equivLinearMapAsModule_apply
+        (isotypicProjector rho hrho sigma hsigma).toIntertwiningMap x).trans
+      (ContIntertwiningMap.toIntertwiningMap_apply (isotypicProjector rho hrho sigma hsigma)
+        (x : V))
   have hmaps : ∀ m : Submodule k[G] rho.toRepresentation.asModule,
       IsSimpleModule k[G] m → m ≤ C.comap p := by
     intro m hm x hx

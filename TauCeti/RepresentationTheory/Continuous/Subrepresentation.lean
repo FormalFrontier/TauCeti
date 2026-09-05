@@ -25,6 +25,8 @@ action operator, the continuous counterpart of Mathlib's `Representation.subrepr
   invariant for the restricted representation exactly when it is invariant for the ambient one.
 * `TauCeti.ContRepresentation.toRepresentation_subrepresentation`: the underlying representation of
   a restricted continuous representation is the restriction of the underlying representation.
+* `TauCeti.ContRepresentation.toRepresentation_subrepresentation_toSubmodule`: restricting to the
+  submodule a subrepresentation carries has that subrepresentation's own representation underneath.
 * `TauCeti.ContRepresentation.continuous_subrepresentation`: the restriction of a continuous
   representation to an invariant submodule is again continuous.
 -/
@@ -73,6 +75,20 @@ the underlying representation. -/
 @[simp]
 theorem toRepresentation_subrepresentation : (subrepresentation π W hW).toRepresentation
       = π.toRepresentation.subrepresentation W fun g _ hv => hW g _ hv := by
+  rfl
+
+-- Not `@[simp]`: `toRepresentation_subrepresentation` already rewrites the left-hand side to
+-- `π.toRepresentation.subrepresentation σ.toSubmodule _`, so the attribute would be a `simpNF`
+-- violation. This is the one-step form, which is what an argument about a subrepresentation of
+-- `π.toRepresentation` needs.
+/-- Restricting `π` to the submodule a subrepresentation `σ` of `π.toRepresentation` carries has
+`σ.toRepresentation` as its underlying representation: both restrict the ambient action to the
+same submodule. -/
+theorem toRepresentation_subrepresentation_toSubmodule (σ : Subrepresentation π.toRepresentation)
+    (hσ : ∀ g, ∀ v ∈ σ.toSubmodule, π g v ∈ σ.toSubmodule) :
+    (subrepresentation π σ.toSubmodule hσ).toRepresentation = σ.toRepresentation := by
+  rw [toRepresentation_subrepresentation]
+  ext g v
   rfl
 
 end Restriction
