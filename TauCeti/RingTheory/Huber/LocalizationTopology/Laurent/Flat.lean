@@ -10,6 +10,8 @@ public import Mathlib.RingTheory.RingHom.Flat
 public import TauCeti.RingTheory.Huber.Restricted.Laurent
 public import TauCeti.RingTheory.Huber.StronglyNoetherian
 
+import TauCeti.RingTheory.Huber.LocalizationTopology.Laurent.Identification
+
 /-!
 # Flatness of the Laurent quotient, and of a numerator enlargement
 
