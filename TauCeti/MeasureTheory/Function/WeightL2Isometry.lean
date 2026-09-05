@@ -20,7 +20,7 @@ almost everywhere: the inverse is multiplication by `(√w)⁻¹`.
 This is the Part 0 primitive `weightL2Isometry` from the `OrthogonalL2Bases` roadmap, the single
 map converting a weight-in-the-measure normalization to a weight-in-the-function normalization. Once
 combined with `HilbertBasis.mapₗᵢ` (transport of a Hilbert basis across a `≃ₗᵢ`, already in
-`TauCeti.Analysis.InnerProductSpace.HilbertBasisMap`), it moves an orthogonal-polynomial basis of a
+`TauCeti.Analysis.InnerProductSpace.HilbertBasis.Map`), it moves an orthogonal-polynomial basis of a
 weighted measure to the `√w`-envelope basis of the reference measure and back.
 
 The construction is purely measure-theoretic, so it is stated over an arbitrary `MeasurableSpace`;

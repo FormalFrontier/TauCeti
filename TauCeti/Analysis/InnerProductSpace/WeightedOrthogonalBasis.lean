@@ -9,7 +9,7 @@ public import Mathlib.Analysis.InnerProductSpace.l2Space
 public import Mathlib.MeasureTheory.Function.L2Space
 public import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
 public import TauCeti.MeasureTheory.Function.WeightL2Isometry
-import TauCeti.Analysis.InnerProductSpace.HilbertBasisMap
+import TauCeti.Analysis.InnerProductSpace.HilbertBasis.Map
 
 /-!
 # From an orthogonality relation to a Hilbert basis of a weighted measure
