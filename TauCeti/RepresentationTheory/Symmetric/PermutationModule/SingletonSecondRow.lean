@@ -169,11 +169,12 @@ tabloids with the labels.**  The two components of a vector are therefore comput
 `TauCeti.coe_ofMulActionEquivProdAugmentation_apply_snd` at the vector of `ℚ[Fin (n+2)]` that
 `TauCeti.permutationModuleSingletonSecondRowIso` transports it to, which for the tabloid named by
 `g` is the standard basis vector of `g (Fin.last (n+1))`. -/
+@[simp]
 theorem permutationModuleSingletonSecondRowEquivProd_apply (n : ℕ)
-    (h : (Fintype.card (Fin (n + 2)) : ℚ) ≠ 0)
     (v : (permutationModule (Nat.Partition.singletonSecondRow n)).V) :
     permutationModuleSingletonSecondRowEquivProd n v =
-      ofMulActionEquivProdAugmentation ℚ (Equiv.Perm (Fin (n + 2))) (Fin (n + 2)) h
+      ofMulActionEquivProdAugmentation ℚ (Equiv.Perm (Fin (n + 2))) (Fin (n + 2))
+        (by rw [Fintype.card_fin]; positivity)
         ((permutationModuleSingletonSecondRowIso n).hom.hom v) :=
   -- `(rfl)`, not `rfl`: the body of `permutationModuleSingletonSecondRowEquivProd` is not
   -- `@[expose]`d, so this must not be inferred `@[defeq]`.
