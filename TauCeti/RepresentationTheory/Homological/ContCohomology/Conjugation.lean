@@ -26,7 +26,7 @@ public section
 
 namespace TauCeti.ContCohomology
 
-open TauCeti.Subgroup
+open _root_.Subgroup
 
 universe uG uM uK uA
 

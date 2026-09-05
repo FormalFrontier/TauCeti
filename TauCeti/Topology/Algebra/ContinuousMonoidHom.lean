@@ -45,7 +45,8 @@ end ContinuousMonoidHom
 namespace Subgroup
 
 /-- The inverse conjugation homomorphism of a normal subgroup, with the subspace topology. -/
-def inverseConjugationHom [IsTopologicalGroup G] (N : Subgroup G) [N.Normal] (g : G) : N →ₜ* N where
+def _root_.Subgroup.inverseConjugationHom [IsTopologicalGroup G] (N : Subgroup G) [N.Normal]
+    (g : G) : N →ₜ* N where
   toMonoidHom := (MulAut.conjNormal g⁻¹ : MulAut N).toMonoidHom
   continuous_toFun := by
     have hf : Continuous (fun n : N =>
@@ -66,9 +67,9 @@ def inverseConjugationHom [IsTopologicalGroup G] (N : Subgroup G) [N.Normal] (g 
       simp
 
 @[simp]
-theorem inverseConjugationHom_apply [IsTopologicalGroup G] (N : Subgroup G) [N.Normal] (g : G)
-    (n : N) :
-    inverseConjugationHom N g n =
+theorem _root_.Subgroup.inverseConjugationHom_apply [IsTopologicalGroup G] (N : Subgroup G)
+    [N.Normal] (g : G) (n : N) :
+    _root_.Subgroup.inverseConjugationHom N g n =
       ⟨g⁻¹ * (n : G) * g, by
         simpa only [inv_inv] using
           (inferInstance : N.Normal).conj_mem (n : G) n.property g⁻¹⟩ := by
@@ -78,17 +79,20 @@ theorem inverseConjugationHom_apply [IsTopologicalGroup G] (N : Subgroup G) [N.N
   simp
 
 @[simp]
-theorem inverseConjugationHom_one [IsTopologicalGroup G] (N : Subgroup G) [N.Normal] :
-    inverseConjugationHom N 1 = ContinuousMonoidHom.id N := by
+theorem _root_.Subgroup.inverseConjugationHom_one [IsTopologicalGroup G] (N : Subgroup G)
+    [N.Normal] :
+    _root_.Subgroup.inverseConjugationHom N 1 = ContinuousMonoidHom.id N := by
   ext n
-  simp [inverseConjugationHom_apply]
+  simp [_root_.Subgroup.inverseConjugationHom_apply]
 
 @[simp]
-theorem inverseConjugationHom_mul [IsTopologicalGroup G] (N : Subgroup G) [N.Normal] (g h : G) :
-    inverseConjugationHom N (g * h) =
-      (inverseConjugationHom N h).comp (inverseConjugationHom N g) := by
+theorem _root_.Subgroup.inverseConjugationHom_mul [IsTopologicalGroup G] (N : Subgroup G)
+    [N.Normal] (g h : G) :
+    _root_.Subgroup.inverseConjugationHom N (g * h) =
+      (_root_.Subgroup.inverseConjugationHom N h).comp
+        (_root_.Subgroup.inverseConjugationHom N g) := by
   ext n
-  simp [inverseConjugationHom_apply, mul_assoc]
+  simp [_root_.Subgroup.inverseConjugationHom_apply, mul_assoc]
 
 end Subgroup
 
