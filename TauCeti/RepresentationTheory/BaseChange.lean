@@ -327,9 +327,11 @@ private theorem finrank_ker_intertwiningDefect_baseChange [Finite G]
 /-- **Base change preserves the dimension of an intertwiner space.** An intertwiner is a linear
 map annihilated by the finite family of linear conditions `σ g ∘ₗ f = f ∘ₗ ρ g`, so the intertwiner
 space is the kernel of a single linear map; `L` is flat over `K`, so extending the scalars commutes
-with taking that kernel (`LinearMap.tensorKerEquiv`). So the extension can neither create nor
-destroy intertwiners, which is what makes an absolutely irreducible representation stay irreducible
-after extending the scalars. -/
+with taking that kernel (`LinearMap.tensorKerEquiv`). So the intertwiner space over `L` is the
+scalar extension of the one over `K`: extending the scalars destroys no intertwiners and adds no
+linearly independent new ones — individual intertwiners over `L` are `L`-combinations of the ones
+already defined over `K` — which is what makes an absolutely irreducible representation stay
+irreducible after extending the scalars. -/
 theorem _root_.Representation.finrank_intertwiningMap_baseChange [Finite G]
     (ρ : _root_.Representation K G V) (σ : _root_.Representation K G W) :
     Module.finrank L (_root_.Representation.IntertwiningMap

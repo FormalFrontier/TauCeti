@@ -38,9 +38,10 @@ the partitions of `n` are as many as the conjugacy classes of `Sₙ`, which boun
 isomorphism classes of simple objects over any field, so distinctness already forces exhaustion.
 
 Because the character of `S^μ` is integer-valued (`TauCeti.spechtChar`), the complex characters are
-the same integers read in `ℂ`, and the character table of `Sₙ` computed over `ℚ`
-(`TauCeti.symmetricCharacterTable`) is therefore also its complex character table: the irreducible
-complex characters of `Sₙ` are exactly the `χ^μ`.
+the same integers read in `ℂ`, and the integer-valued character table of `Sₙ`
+(`TauCeti.symmetricCharacterTable`, a `Matrix (Nat.Partition n) (Nat.Partition n) ℤ`), whose casts
+recover the rational character values, therefore records the complex ones just as well: the
+irreducible complex characters of `Sₙ` are exactly the `χ^μ`.
 
 ## Main definitions
 
@@ -104,8 +105,9 @@ theorem character_spechtModuleℂ (μ : n.Partition) (σ : Equiv.Perm (Fin n)) :
   exact Representation.character_baseChange _ σ
 
 /-- **The complex character is the integer character `χ^μ` read in `ℂ`.** Combined with
-`TauCeti.spechtChar_eq_value` this says that the character table of `Sₙ` computed over `ℚ`,
-`TauCeti.symmetricCharacterTable`, is also its complex character table. -/
+`TauCeti.spechtChar_eq_value` this says that the integer-valued character table of `Sₙ`,
+`TauCeti.symmetricCharacterTable`, whose casts recover the rational character values, records the
+complex ones too. -/
 @[simp]
 theorem character_spechtModuleℂ_intCast (μ : n.Partition) (σ : Equiv.Perm (Fin n)) :
     (spechtModuleℂ μ).character σ = (spechtChar μ σ : ℂ) := by
@@ -255,8 +257,9 @@ theorem existsUnique_nonempty_iso_spechtModuleℂ (X : FDRep ℂ (Equiv.Perm (Fi
 /-- **The `ℂ`-corollary: the irreducible complex characters of `Sₙ` are exactly the `χ^μ`.** Every
 simple object of `FDRep ℂ Sₙ` has, for exactly one partition `μ` of `n`, the integer character
 `TauCeti.spechtChar` of the Specht module `S^μ` read in `ℂ`. With
-`TauCeti.spechtChar_eq_value` this identifies `TauCeti.symmetricCharacterTable n`, computed over
-`ℚ`, as the complex character table of `Sₙ`. -/
+`TauCeti.spechtChar_eq_value` this identifies the integer-valued
+`TauCeti.symmetricCharacterTable n`, whose casts recover the rational character values, as
+recording the complex character table of `Sₙ` as well. -/
 theorem existsUnique_character_eq_spechtChar (X : FDRep ℂ (Equiv.Perm (Fin n))) [Simple X] :
     ∃! μ : n.Partition, X.character = fun σ => (spechtChar μ σ : ℂ) := by
   obtain ⟨μ, ⟨e⟩, -⟩ := existsUnique_nonempty_iso_spechtModuleℂ X
