@@ -19,19 +19,22 @@ internal graded algebra therefore induces an internal graded algebra on its oppo
 homogeneous factors reverses, but their total degree is unchanged because the grading group is
 `ℤ`.
 
-The Koszul twist commutes with passage to the opposite. This is the compatibility needed to form
-opposite DG and `A∞` objects without changing their sign convention.
+The Koszul twist commutes with passage to the opposite.  Precomposing a degree-one differential
+with that twist gives the differential on the ordinary multiplicative opposite used by DG and
+`A∞` objects without changing their sign convention.
 
 ## Main definitions
 
 * `InternalGrading.map`: transport an internal grading across a linear equivalence.
 * `InternalGrading.opposite`: the induced grading on the multiplicative opposite.
+* `InternalGrading.oppositeDifferential`: the Koszul-twisted differential on the opposite.
 
 ## Main results
 
 * `InternalGrading.op_mem_opposite_piece_iff`: `op` preserves each degree.
 * `InternalGrading.oppositeGradedAlgebra`: a graded algebra induces one on its opposite.
 * `InternalGrading.op_koszulTwist`: the Koszul twist commutes with `op`.
+* `InternalGrading.oppositeDifferential_op_of_mem`: its value on a homogeneous element.
 
 This supplies the opposite compatibility in Layer 0 of the `DGAInfinity` roadmap. The conventions
 follow B. Keller, *Introduction to A-infinity algebras and modules*, Sections 3 and 7.
@@ -258,6 +261,43 @@ theorem unop_koszulTwist (G : InternalGrading R M) (q : ℤ) (x : Mᵐᵒᵖ) :
   simpa only [op_unop, unop_op] using h.symm
 
 end KoszulTwist
+
+section OppositeDifferential
+
+variable {R : Type u} {M : Type v}
+  [CommRing R] [AddCommMonoid M] [Module R M]
+
+/-- The differential on the ordinary multiplicative opposite.  The Koszul twist compensates for
+reversing multiplication without inserting a sign into the product itself. -/
+noncomputable def oppositeDifferential (G : InternalGrading R M) (d : M →ₗ[R] M) :
+    Mᵐᵒᵖ →ₗ[R] Mᵐᵒᵖ :=
+  (opLinearEquiv R).toLinearMap ∘ₗ d ∘ₗ G.koszulTwist 1 ∘ₗ
+    (opLinearEquiv R).symm.toLinearMap
+
+/-- The opposite differential applied to `op a`, before evaluating the Koszul twist on the
+homogeneous components of `a`. -/
+@[simp]
+theorem oppositeDifferential_op (G : InternalGrading R M) (d : M →ₗ[R] M) (a : M) :
+    G.oppositeDifferential d (op a) = op (d (G.koszulTwist 1 a)) :=
+  (rfl)
+
+/-- After applying `unop`, the opposite differential is the original differential preceded by the
+Koszul twist. -/
+@[simp]
+theorem unop_oppositeDifferential (G : InternalGrading R M) (d : M →ₗ[R] M) (x : Mᵐᵒᵖ) :
+    unop (G.oppositeDifferential d x) = d (G.koszulTwist 1 x.unop) :=
+  (rfl)
+
+/-- On an element of degree `p`, the opposite differential is `(-1) ^ p` times the opposite of
+the original differential. -/
+@[simp]
+theorem oppositeDifferential_op_of_mem (G : InternalGrading R M) (d : M →ₗ[R] M)
+    {p : ℤ} {a : M} (ha : a ∈ G.piece p) :
+    G.oppositeDifferential d (op a) = (((p.negOnePow : ℤ) : R) • op (d a)) := by
+  rw [G.oppositeDifferential_op, G.koszulTwist_apply_of_mem ha]
+  simp only [one_mul, map_smul, op_smul]
+
+end OppositeDifferential
 
 section GradedAlgebra
 
