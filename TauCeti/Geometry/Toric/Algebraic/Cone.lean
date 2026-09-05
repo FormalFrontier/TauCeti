@@ -82,12 +82,12 @@ theorem isLatticeRational_iff :
     IsLatticeRational i σ ↔ ∃ s : Finset N, σ = PointedCone.hull ℝ (i '' (s : Set N)) := (Iff.rfl)
 
 /-- The cone hull of the images of a finite set of lattice vectors is lattice rational. -/
-@[simp]
+@[simp high]
 theorem isLatticeRational_hull_image (i : N →+ V) (s : Finset N) :
     IsLatticeRational i (PointedCone.hull ℝ (i '' (s : Set N))) := ⟨s, rfl⟩
 
 /-- The zero cone is lattice rational. -/
-@[simp]
+@[simp high]
 theorem isLatticeRational_bot (i : N →+ V) : IsLatticeRational i (⊥ : PointedCone ℝ V) :=
   ⟨∅, by simp⟩
 
