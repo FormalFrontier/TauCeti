@@ -14,11 +14,12 @@ import TauCeti.RingTheory.Valuation.Continuous.TopologicallyNilpotent
 /-!
 # Rational subsets do not move under small perturbations
 
-**Wedhorn, *Adic Spaces* (arXiv:1910.05934v1), Proposition 7.34.** Fix a Huber ring `A` with a
-pair of definition `(A₀, I)`, a ring of integral elements `A⁺`, a finite numerator set `T` whose
-ideal `T · A` is open, and a denominator `s`. There is a basic neighbourhood `Iⁿ` of zero such
-that replacing each numerator and the denominator by anything within `Iⁿ` of it leaves the
-rational subset unchanged:
+**A strengthening of Wedhorn, *Adic Spaces* (arXiv:1910.05934v1), Proposition 7.34.** Wedhorn
+assumes a complete Hausdorff affinoid ring; the results here need only a Huber ring `A`. Fix a pair
+of definition `(A₀, I)`, a ring of integral elements `A⁺`, a finite numerator set `T` whose ideal
+`T · A` is open, and a denominator `s`. There is a basic neighbourhood `Iⁿ` of zero such that
+replacing each numerator and the denominator by anything within `Iⁿ` of it leaves the rational
+subset unchanged:
 
 ```text
 R(T'/s') = R(T/s).
@@ -92,9 +93,10 @@ theorem valuation_lt_of_mem_idealImage (P : PairOfDefinition A) {T : Finset A} {
 
 variable [IsTopologicalRing A]
 
-/-- **Wedhorn Proposition 7.34.** For a numerator set `T` with `T · A` open there is an exponent
-`n` such that perturbing the numerators and the denominator inside the basic neighbourhood `Iⁿ`
-of zero does not change the rational subset.
+/-- **A strengthening of Wedhorn Proposition 7.34.** Wedhorn assumes a complete Hausdorff
+affinoid ring; here, for a numerator set `T` in a Huber ring with `T · A` open, there is an
+exponent `n` such that perturbing the numerators and the denominator inside the basic
+neighbourhood `Iⁿ` of zero does not change the rational subset.
 
 The two matching hypotheses say that `T'` and `T` are `Iⁿ`-close as *sets*: every perturbed
 numerator is near an original one and conversely. No hypothesis is placed on `T' · A`, and `A` is
@@ -151,7 +153,8 @@ theorem exists_forall_rationalSubset_eq_of_sub_mem_idealImage (P : PairOfDefinit
     exact hss ▸ (Valuation.le_max_sub v.valuation y t).trans
       (max_le (hTle t ht) (hlt _ hyt).le)
 
-/-- **Wedhorn Proposition 7.34, as stated.** Over a Huber ring, a rational subset with open
+/-- **A generalization of Wedhorn Proposition 7.34.** The source assumes a complete Hausdorff
+affinoid ring; this theorem shows that, already over a Huber ring, a rational subset with open
 numerator ideal is unchanged by perturbing its defining data inside a suitable neighbourhood of
 zero.
 
