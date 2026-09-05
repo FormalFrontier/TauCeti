@@ -17,13 +17,13 @@ import Mathlib.Probability.Independence.CharacteristicFunction
 
 This file identifies three laws obtained from independent scalar random variables. The difference
 of two exponential variables with common rate `b⁻¹` has the centered Laplace law of scale `b`.
-A finite sum of geometric variables has a negative-binomial law, including the empty sum and the
-success-probability-one boundary. A nonempty finite sum of exponential variables with common rate
-has the corresponding Erlang law.
+A finite sum of geometric variables with nonzero success probability has a negative-binomial law,
+including the empty sum and the success-probability-one boundary. A nonempty finite sum of
+exponential variables with common rate has the corresponding Erlang law.
 
-The finite-sum proofs use the convolution laws of the target families. The Laplace identity is
-proved from characteristic functions, so it does not duplicate the density calculations defining
-either family.
+These closure laws identify independent sums and differences directly with members of the standard
+distribution families, so consumers can transfer the established APIs of those families to the
+resulting random variables.
 
 ## Main results
 
@@ -55,8 +55,8 @@ variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω}
 
 /-- The difference of independent exponential variables with common rate `b⁻¹` has the centered
 Laplace law of scale `b`. -/
-theorem IndepFun.hasLaw_sub_expMeasure {X Y : Ω → ℝ} {b : ℝ} (hb : 0 < b)
-    (hindep : IndepFun X Y P) (hX : HasLaw X (expMeasure b⁻¹) P)
+theorem IndepFun.hasLaw_sub_expMeasure {X Y : Ω → ℝ} {b : ℝ} (hindep : IndepFun X Y P)
+    (hb : 0 < b) (hX : HasLaw X (expMeasure b⁻¹) P)
     (hY : HasLaw Y (expMeasure b⁻¹) P) :
     HasLaw (fun ω => X ω - Y ω) (laplaceMeasure 0 b) P := by
   have hr : 0 < b⁻¹ := inv_pos.mpr hb
@@ -71,16 +71,15 @@ theorem IndepFun.hasLaw_sub_expMeasure {X Y : Ω → ℝ} {b : ℝ} (hb : 0 < b)
   apply Measure.ext_of_charFun
   funext t
   have hneg :
-      charFun (P.map fun ω => -Y ω) t = charFun (expMeasure b⁻¹) (-t) := by
-    rw [show (fun ω => -Y ω) = fun ω => (-1 : ℝ) * Y ω by funext ω; ring,
+      charFun (P.map (-Y)) t = charFun (expMeasure b⁻¹) (-t) := by
+    rw [show (-Y) = fun ω => (-1 : ℝ) * Y ω by funext ω; simp,
       charFun_map_mul_comp hY.aemeasurable, hY.map_eq]
     congr 1
     ring
-  change charFun (P.map fun ω => X ω + -Y ω) t = charFun (laplaceMeasure 0 b) t
+  simp only [sub_eq_add_neg]
   have hsum := congrFun
     (hindepNeg.charFun_map_fun_add_eq_mul hX.aemeasurable hY.aemeasurable.neg) t
-  change charFun (P.map fun ω => X ω + -Y ω) t =
-    charFun (P.map X) t * charFun (P.map fun ω => -Y ω) t at hsum
+  simp only [Pi.mul_apply, Pi.neg_apply] at hsum
   rw [hsum, hX.map_eq, hneg, charFun_expMeasure hr, charFun_expMeasure hr,
     charFun_laplaceMeasure hb]
   push_cast
@@ -104,7 +103,8 @@ theorem IndepFun.hasLaw_sub_expMeasure {X Y : Ω → ℝ} {b : ℝ} (hb : 0 < b)
 
 /-! ### Sums of geometric variables -/
 
-/-- The geometric law is the negative-binomial law of shape one. -/
+/-- For nonzero success probability, the geometric law is the negative-binomial law of shape
+one. -/
 theorem geometricMeasure_eq_negativeBinomialMeasure_one (p : unitInterval) (hp : p ≠ 0) :
     geometricMeasure p = negativeBinomialMeasure 1 p := by
   have hpR : (0 : ℝ) < p := by grind
@@ -122,7 +122,7 @@ theorem geometricMeasure_eq_negativeBinomialMeasure_one (p : unitInterval) (hp :
 negative-binomial law whose shape is the cardinality of the family. This includes the empty family
 and the boundary `p = 1`, when both laws are point masses at zero. -/
 theorem iIndepFun.hasLaw_sum_geometricMeasure {ι : Type*} [Fintype ι]
-    {X : ι → Ω → ℕ} {p : unitInterval} (hp : p ≠ 0) (hindep : iIndepFun X P)
+    {X : ι → Ω → ℕ} {p : unitInterval} (hindep : iIndepFun X P) (hp : p ≠ 0)
     (hlaw : ∀ i, HasLaw (X i) (geometricMeasure p) P) :
     HasLaw (fun ω => ∑ i, X i ω)
       (negativeBinomialMeasure (Fintype.card ι) p) P := by
@@ -162,7 +162,7 @@ theorem iIndepFun.hasLaw_sum_geometricMeasure {ι : Type*} [Fintype ι]
 /-- A nonempty finite sum of independent exponential variables with common positive rate `r` has
 the Gamma (Erlang) law whose shape is the cardinality of the family. -/
 theorem iIndepFun.hasLaw_sum_expMeasure {ι : Type*} [Fintype ι] [Nonempty ι]
-    {X : ι → Ω → ℝ} {r : ℝ} (hr : 0 < r) (hindep : iIndepFun X P)
+    {X : ι → Ω → ℝ} {r : ℝ} (hindep : iIndepFun X P) (hr : 0 < r)
     (hlaw : ∀ i, HasLaw (X i) (expMeasure r) P) :
     HasLaw (fun ω => ∑ i, X i ω) (gammaMeasure (Fintype.card ι) r) P := by
   classical
