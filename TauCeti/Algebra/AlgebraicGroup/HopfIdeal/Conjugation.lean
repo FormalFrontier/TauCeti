@@ -144,9 +144,10 @@ noncomputable def conjugateOrderIso
 theorem conjugateOrderIso_apply
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) (I : HopfIdeal R H) :
     conjugateOrderIso g I = I.conjugate g := by
-  rw [conjugateOrderIso, comapOrderIso_apply]
-  unfold conjugate
-  rfl
+  exact comapOrderIso_ofBijective_apply
+    (CommHopfAlgCat.innerConjugationIso H g).hom.hom
+    (ConcreteCategory.bijective_of_isIso
+      (CommHopfAlgCat.innerConjugationIso H g).hom) I
 
 /-- Applying the inverse conjugation order isomorphism conjugates by the inverse point. -/
 @[simp]
