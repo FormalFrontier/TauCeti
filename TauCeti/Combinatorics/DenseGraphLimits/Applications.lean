@@ -24,9 +24,8 @@ density with the square of a two-step integral and applies two second-moment ine
 statements are for arbitrary probability carriers; no atomlessness or standard Borel assumption
 is involved.
 
-The inequalities are Layer 7 validation targets of the dense graph limits roadmap.  They consume
-only the strict graphon carrier and the explicit edge and triangle integral API; the later quotient,
-compactness, and sampling layers are not needed.
+They consume only the strict graphon carrier and the explicit edge and triangle integral API; the
+later quotient, compactness, and sampling layers are not needed.
 
 ## Main results
 
@@ -36,7 +35,6 @@ compactness, and sampling layers are not needed.
 
 ## References
 
-* Roadmap: `TauCetiRoadmap/DenseGraphLimits/README.md`, Layer 7 and its worked-example gates.
 * A. Goodman, "On sets of acquaintances and strangers at a party", *American Mathematical Monthly*
   66 (1959), 778--783; see also L. Lovász, *Large Networks and Graph Limits*, §7.2.
 * Y. Zhao, *Graph Theory and Additive Combinatorics*, Cambridge University Press (2023),
