@@ -10,6 +10,7 @@ public import Mathlib.GroupTheory.Solvable
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel
 import TauCeti.GroupTheory.DoubleCoset.Generation
 import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.UpperTriangular.Solvable
+import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.ModularGroup
 import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Solvable
 
 /-!
@@ -62,20 +63,13 @@ section CommRing
 
 variable {R : Type u} [CommRing R]
 
-private theorem coe_modularGroup_S :
-    ((((ModularGroup.S : SL(2, ℤ)) : SL(2, R)) : SL(2, R)) :
-        Matrix (Fin 2) (Fin 2) R) = !![0, -1; 1, 0] := by
-  rw [Matrix.SpecialLinearGroup.coe_matrix_coe, ModularGroup.coe_S]
-  ext i j
-  fin_cases i <;> fin_cases j <;> simp
-
 /-- An element of `SL₂(R)` belongs to the standard Borel exactly when its lower-left entry
 vanishes. -/
 @[simp]
 theorem mem_iff {g : SL(2, R)} :
     g ∈ SL2Borel R ↔ (g : Matrix (Fin 2) (Fin 2) R) 1 0 = 0 := by
-  change Matrix.SpecialLinearGroup.toGL g ∈ GL2Borel R ↔ _
-  rw [GL2Borel.mem_iff, Matrix.SpecialLinearGroup.coe_GL_coe_matrix]
+  rw [SL2Borel, Subgroup.mem_comap, GL2Borel.mem_iff,
+    Matrix.SpecialLinearGroup.coe_GL_coe_matrix]
 
 /-- The lower-left entry of an element of the standard Borel subgroup vanishes. -/
 @[simp]
@@ -130,7 +124,8 @@ theorem mem_doubleCoset_modularGroup_S_of_notMem {g : SL(2, F)} (hg : g ∉ SL2B
     rfl
   refine DoubleCoset.mem_doubleCoset.mpr ⟨x, hx, y, hy, ?_⟩
   apply Subtype.ext
-  rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.SpecialLinearGroup.coe_mul, coe_modularGroup_S]
+  rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.SpecialLinearGroup.coe_mul,
+    TauCeti.Matrix.SpecialLinearGroup.coe_modularGroup_S]
   dsimp only [x, y]
   rw [Matrix.mul_fin_two, Matrix.mul_fin_two]
   ext i j
@@ -169,7 +164,8 @@ theorem mem_doubleCoset_modularGroup_S_iff {g : SL(2, F)} :
       intro h
       rw [h, zero_mul] at hydet
       exact zero_ne_one hydet
-    rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.SpecialLinearGroup.coe_mul, coe_modularGroup_S]
+    rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.SpecialLinearGroup.coe_mul,
+      TauCeti.Matrix.SpecialLinearGroup.coe_modularGroup_S]
     simpa only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply, Matrix.cons_val_one,
       Matrix.cons_val_zero, Matrix.head_cons, neg_mul, one_mul, zero_mul, add_zero, hx10, hy10,
       mul_zero, mul_one, zero_add] using mul_ne_zero hx11 hy00
