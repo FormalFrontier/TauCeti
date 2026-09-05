@@ -8,7 +8,7 @@ module
 public import Mathlib.GroupTheory.DoubleCoset
 public import Mathlib.GroupTheory.Solvable
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel
-import TauCeti.GroupTheory.DoubleCoset.Identity
+import TauCeti.GroupTheory.DoubleCoset.Generation
 import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.UpperTriangular.Solvable
 import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Solvable
 
@@ -18,11 +18,12 @@ import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Solvable
 The standard Borel subgroup of `SL₂(R)` consists of the determinant-one upper-triangular
 matrices. Over a field, its two Bruhat cells are represented by the identity and by
 `ModularGroup.S = !![0, -1; 1, 0]`. Thus the Borel together with `ModularGroup.S` generates
-`SL₂`, and over an infinite field no larger solvable subgroup can contain it.
+`SL₂`, and no larger solvable subgroup can contain it whenever the field has a nonzero
+element whose square is not one. In particular, this holds over every infinite field.
 
 The maximal-solvability theorem is the abstract-group input for proving that the
-upper-triangular closed subgroup scheme of `SL₂` is a Borel subgroup. The infinitude assumption
-is used only to rule out solvability of `SL₂`; the Bruhat decomposition itself holds over every
+upper-triangular closed subgroup scheme of `SL₂` is a Borel subgroup. The field hypothesis is
+used only to rule out solvability of `SL₂`; the Bruhat decomposition itself holds over every
 field.
 
 ## Main declarations
@@ -32,7 +33,8 @@ field.
   decomposition is detected by the lower-left entry.
 * `TauCeti.SL2Borel.closure_insert_modularGroup_S_eq_top`: the Borel and the Weyl element generate
   `SL₂`.
-* `TauCeti.SL2Borel.le_of_isSolvable`: a solvable subgroup containing the Borel is contained in it.
+* `TauCeti.SL2Borel.le_of_isSolvable`: a solvable subgroup containing the Borel is contained in it
+  when the field contains a nonzero element whose square is not one.
 
 ## References
 
@@ -181,13 +183,24 @@ theorem closure_insert_modularGroup_S_eq_top :
   exact closure_insert_eq_top_of_notMem_imp_mem_doubleCoset (SL2Borel F)
     ((ModularGroup.S : SL(2, ℤ)) : SL(2, F)) mem_doubleCoset_modularGroup_S_of_notMem
 
-/-- Every solvable subgroup of `SL₂` over an infinite field that contains the standard Borel
-is contained in it. -/
-theorem le_of_isSolvable [Infinite F] (P : Subgroup SL(2, F)) [Group.IsSolvable P]
+/-- Every solvable subgroup of `SL₂(F)` that contains the standard Borel is contained in it if
+`F` has a nonzero element whose square is not one. -/
+theorem le_of_isSolvable (hF : ∃ a : F, a ≠ 0 ∧ a ^ 2 ≠ 1)
+    (P : Subgroup SL(2, F)) [Group.IsSolvable P]
     (hBP : SL2Borel F ≤ P) : P ≤ SL2Borel F := by
   exact le_of_isSolvable_of_not_isSolvable_of_notMem_imp_mem_doubleCoset
     (SL2Borel F) P ((ModularGroup.S : SL(2, ℤ)) : SL(2, F))
-    (Matrix.SpecialLinearGroup.not_isSolvable_fin_two F)
+    (Matrix.SpecialLinearGroup.not_isSolvable_fin_two F hF)
+    mem_doubleCoset_modularGroup_S_of_notMem hBP
+
+/-- Every solvable subgroup of `SL₂` over an infinite field that contains the standard Borel
+is contained in it. -/
+theorem le_of_isSolvable_of_infinite [Infinite F]
+    (P : Subgroup SL(2, F)) [Group.IsSolvable P]
+    (hBP : SL2Borel F ≤ P) : P ≤ SL2Borel F := by
+  exact le_of_isSolvable_of_not_isSolvable_of_notMem_imp_mem_doubleCoset
+    (SL2Borel F) P ((ModularGroup.S : SL(2, ℤ)) : SL(2, F))
+    (Matrix.SpecialLinearGroup.not_isSolvable_fin_two_of_infinite F)
     mem_doubleCoset_modularGroup_S_of_notMem hBP
 
 end Field

@@ -17,7 +17,7 @@ public import Mathlib.GroupTheory.Solvable
 -- Non-public: the general double-coset identities — when two classes agree, and that the identity
 -- double coset of a subgroup is the subgroup itself — are used only inside the proofs of the
 -- double-coset results below, which are their specializations to the Borel subgroup of `GL₂`.
-import TauCeti.GroupTheory.DoubleCoset.Identity
+import TauCeti.GroupTheory.DoubleCoset.Generation
 -- Non-public: `SL₂` over an infinite field is nonsolvable, which proves the corresponding result
 -- for `GL₂`.
 import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Solvable
@@ -73,9 +73,10 @@ the Weyl element.
 * `TauCeti.GL2Borel.card_doubleCosetQuotient_eq_two`: `B` has exactly two double cosets in `GL₂`.
 * `TauCeti.GL2Borel.closure_insert_gl2WeylElement_eq_top`: the Borel subgroup and the Weyl element
   generate `GL₂`.
-* `TauCeti.Matrix.GeneralLinearGroup.not_isSolvable_fin_two`: `GL₂` over an infinite field is not
-  solvable, and `TauCeti.GL2Borel.le_of_isSolvable`: every solvable subgroup containing the Borel
-  subgroup equals it.
+* `TauCeti.Matrix.GeneralLinearGroup.not_isSolvable_fin_two`: `GL₂` is not solvable when the
+  field contains a nonzero element whose square is not one, and
+  `TauCeti.GL2Borel.le_of_isSolvable`: every solvable subgroup containing the Borel subgroup
+  equals it under the same hypothesis.
 * `TauCeti.GL2Borel.ncard_doubleCoset_weyl`: the big cell of `GL₂(𝔽_q)` has `q² (q - 1)²`
   elements.
 
@@ -336,11 +337,22 @@ end GL2Borel
 
 namespace Matrix.GeneralLinearGroup
 
-/-- The general linear group `GL₂` over an infinite field is not solvable. -/
-theorem not_isSolvable_fin_two [Infinite F] : ¬ Group.IsSolvable (GL (Fin 2) F) := by
+/-- The general linear group `GL₂(F)` is not solvable if `F` contains a nonzero element whose
+square is not one. -/
+theorem not_isSolvable_fin_two (hF : ∃ a : F, a ≠ 0 ∧ a ^ 2 ≠ 1) :
+    ¬ Group.IsSolvable (GL (Fin 2) F) := by
   intro hGL
   let _ : Group.IsSolvable (GL (Fin 2) F) := hGL
-  exact Matrix.SpecialLinearGroup.not_isSolvable_fin_two F <|
+  exact Matrix.SpecialLinearGroup.not_isSolvable_fin_two F hF <|
+    Group.isSolvable_of_isSolvable_injective
+      (f := Matrix.SpecialLinearGroup.toGL) Matrix.SpecialLinearGroup.toGL_injective
+
+/-- The general linear group `GL₂` over an infinite field is not solvable. -/
+theorem not_isSolvable_fin_two_of_infinite [Infinite F] :
+    ¬ Group.IsSolvable (GL (Fin 2) F) := by
+  intro hGL
+  let _ : Group.IsSolvable (GL (Fin 2) F) := hGL
+  exact Matrix.SpecialLinearGroup.not_isSolvable_fin_two_of_infinite F <|
     Group.isSolvable_of_isSolvable_injective
       (f := Matrix.SpecialLinearGroup.toGL) Matrix.SpecialLinearGroup.toGL_injective
 
@@ -348,12 +360,23 @@ end Matrix.GeneralLinearGroup
 
 namespace GL2Borel
 
-/-- Every solvable subgroup of `GL₂` over an infinite field that contains the upper-triangular
-subgroup is contained in it. -/
-theorem le_of_isSolvable [Infinite F] (P : Subgroup (GL (Fin 2) F)) [Group.IsSolvable P]
+/-- Every solvable subgroup of `GL₂(F)` that contains the upper-triangular subgroup is contained
+in it if `F` has a nonzero element whose square is not one. -/
+theorem le_of_isSolvable (hF : ∃ a : F, a ≠ 0 ∧ a ^ 2 ≠ 1)
+    (P : Subgroup (GL (Fin 2) F)) [Group.IsSolvable P]
     (hBP : GL2Borel F ≤ P) : P ≤ GL2Borel F := by
   exact le_of_isSolvable_of_not_isSolvable_of_notMem_imp_mem_doubleCoset
-    (GL2Borel F) P (GL2WeylElement F) (Matrix.GeneralLinearGroup.not_isSolvable_fin_two F)
+    (GL2Borel F) P (GL2WeylElement F) (Matrix.GeneralLinearGroup.not_isSolvable_fin_two F hF)
+    mem_doubleCoset_weyl_of_notMem hBP
+
+/-- Every solvable subgroup of `GL₂` over an infinite field that contains the upper-triangular
+subgroup is contained in it. -/
+theorem le_of_isSolvable_of_infinite [Infinite F]
+    (P : Subgroup (GL (Fin 2) F)) [Group.IsSolvable P]
+    (hBP : GL2Borel F ≤ P) : P ≤ GL2Borel F := by
+  exact le_of_isSolvable_of_not_isSolvable_of_notMem_imp_mem_doubleCoset
+    (GL2Borel F) P (GL2WeylElement F)
+    (Matrix.GeneralLinearGroup.not_isSolvable_fin_two_of_infinite F)
     mem_doubleCoset_weyl_of_notMem hBP
 
 end GL2Borel
