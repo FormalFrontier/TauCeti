@@ -377,6 +377,18 @@ private lemma mulSupport_pp_subset (k : ℕ)
   exact mulSupport_pp_case_split p hp k a h_det h_dvd
 
 include hp in
+/-- **A coset outside the two possible support cosets has multiplicity zero.** If `A` is
+neither `T(1, p^(k+1))` nor `T(p, pᵏ)`, its multiplicity in `T(1,p) · T(1,pᵏ)` vanishes. -/
+private lemma multiplicity_eq_zero_of_ne_diagCoset (k : ℕ)
+    (A : HeckeCoset (posDetInt 2) (SLnZ 2) (SLnZ 2))
+    (h1 : A ≠ diagCoset ![1, p ^ (k + 1)]) (h2 : A ≠ diagCoset ![p, p ^ k]) :
+    multiplicity (SLnZ 2) (SLnZ 2) (SLnZ 2)
+      (((diagCoset ![1, p]).rep : GL (Fin 2) ℚ))
+      (((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ)) ((A.rep : GL (Fin 2) ℚ)) = 0 := by
+  by_contra h0
+  exact ((mulSupport_pp_subset p hp k A h0).elim h1 h2)
+
+include hp in
 /-- The two support cosets are distinct: their invariant factors differ at the top. -/
 private lemma diagCoset_one_prime_pow_succ_ne (k : ℕ) (hk : 0 < k) :
     diagCoset (![1, p ^ (k + 1)] : Fin 2 → ℕ) ≠ diagCoset (![p, p ^ k] : Fin 2 → ℕ) := by
@@ -481,16 +493,9 @@ private lemma multiplicity_values (k : ℕ) (hk : 0 < k) :
     (((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ))
     (((diagCoset ![p, p ^ k]).rep : GL (Fin 2) ℚ)) with hm2_def
   have h_ne := diagCoset_one_prime_pow_succ_ne p hp k hk
-  have h_zero : ∀ A : HeckeCoset (posDetInt 2) (SLnZ 2) (SLnZ 2),
-      A ≠ diagCoset ![1, p ^ (k + 1)] → A ≠ diagCoset ![p, p ^ k] →
-      multiplicity (SLnZ 2) (SLnZ 2) (SLnZ 2)
-        (((diagCoset ![1, p]).rep : GL (Fin 2) ℚ))
-        (((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ)) ((A.rep : GL (Fin 2) ℚ)) = 0 := by
-    intro A h1 h2
-    by_contra h0
-    exact ((mulSupport_pp_subset p hp k A h0).elim h1 h2)
   have h_deg := multiplicity_degree_sum_eq (diagCoset ![1, p]) (diagCoset ![1, p ^ k])
-    (diagCoset ![1, p ^ (k + 1)]) (diagCoset ![p, p ^ k]) h_ne h_zero
+    (diagCoset ![1, p ^ (k + 1)]) (diagCoset ![p, p ^ k]) h_ne
+    (multiplicity_eq_zero_of_ne_diagCoset p hp k)
   rw [← hm1_def, ← hm2_def] at h_deg
   -- All three degrees are the `i = 0` case of `degree_diagCoset_prime_pow`; `simpa` absorbs
   -- the `p ^ 0 = 1` and `0 + j = j` normalisations.
@@ -550,14 +555,6 @@ theorem heckeT_prime_mul_heckeTDiag_one_prime_pow (k : ℕ) :
   classical
   obtain ⟨hm1, hm2⟩ := multiplicity_values p hp k hk
   have hne := diagCoset_one_prime_pow_succ_ne p hp k hk
-  have hzero : ∀ A : HeckeCoset (posDetInt 2) (SLnZ 2) (SLnZ 2),
-      A ≠ diagCoset ![1, p ^ (k + 1)] → A ≠ diagCoset ![p, p ^ k] →
-      multiplicity (SLnZ 2) (SLnZ 2) (SLnZ 2)
-        (((diagCoset ![1, p]).rep : GL (Fin 2) ℚ))
-        (((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ)) ((A.rep : GL (Fin 2) ℚ)) = 0 := by
-    intro A h1 h2
-    by_contra h0
-    exact ((mulSupport_pp_subset p hp k A h0).elim h1 h2)
   rw [heckeT_prime p hp,
     heckeTDiag_eq_diagElem one_pos hp.pos (one_dvd _),
     heckeTDiag_eq_diagElem one_pos (pow_pos hp.pos k) (one_dvd _),
@@ -593,7 +590,8 @@ theorem heckeT_prime_mul_heckeTDiag_one_prime_pow (k : ℕ) :
     · rw [ite_eq_left h2, mul_one, zero_add, ← h2, hm2]
       split_ifs <;> push_cast <;> ring
     · rw [ite_eq_right h2, mul_zero, add_zero,
-        hzero A (fun h ↦ h1 h.symm) (fun h ↦ h2 h.symm), Nat.cast_zero]
+        multiplicity_eq_zero_of_ne_diagCoset p hp k A (fun h ↦ h1 h.symm)
+          (fun h ↦ h2 h.symm), Nat.cast_zero]
 
 end SupportSubset
 
