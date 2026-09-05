@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Geometry.Manifold.Riemannian.Geodesic.Basic
 public import TauCeti.Geometry.Manifold.IntegralCurve.Basic
-public import TauCeti.Geometry.Manifold.MFDeriv.Curve
 public import TauCeti.Geometry.Manifold.VectorBundle.CurveInTotalSpace
 import TauCeti.Geometry.Manifold.VectorBundle.CovariantDerivative.CoordinateChange
 
@@ -118,6 +117,19 @@ theorem geodesicSpray_apply (z : TangentBundle I M) :
         ((leviCivita I M).isCovariantDerivativeOn
           (s := (trivializationAt E (TangentSpace I) z.proj).baseSet)) z.proj z.2 z.2) :=
   (rfl)
+
+/-- The geodesic spray vanishes on the zero section of the tangent bundle. -/
+@[simp]
+theorem geodesicSpray_zero (x : M) :
+    geodesicSpray I M (TotalSpace.mk' E x 0) = 0 := by
+  rw [geodesicSpray_apply]
+  -- Reduce the projections of the displayed total-space point; they have no rewriting lemma.
+  change (0, -christoffelMap (finBasis ℝ E)
+    ((leviCivita I M).isCovariantDerivativeOn
+      (s := (trivializationAt E (TangentSpace I) x).baseSet)) x 0 0) = (0, 0)
+  rw [map_zero]
+  rw [neg_zero]
+  rfl
 
 /- **Chart independence of the spray formula.**  On the overlap of the preferred charts at `x`
 and `x₀`, the tangent lift of the coordinate change sends the second-order vector
