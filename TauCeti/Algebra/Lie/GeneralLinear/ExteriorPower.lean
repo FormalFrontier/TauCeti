@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Algebra.Lie.ExteriorPower
 public import TauCeti.Algebra.Lie.GeneralLinear.HighestWeight
-import TauCeti.LinearAlgebra.Projection
 public import Mathlib.Algebra.Lie.Semisimple.Defs
 import Mathlib.Algebra.Lie.Matrix
 import Mathlib.LinearAlgebra.ExteriorPower.Basis
@@ -369,7 +368,7 @@ private theorem lie_single_basis_family (d : ℕ) (v : Fin d → ι)
   · simp
 
 private theorem lie_single_basisPath_transition (d : ℕ) (v w : Fin d → ι)
-    (hv : StrictMono v) (a : Fin d) (i : ι)
+    (hv : Function.Injective v) (a : Fin d) (i : ι)
     (hupdate : Function.update v a i = w) :
     letI : LieRingModule (Matrix ι ι K) (⋀[K]^d (ι → K)) :=
       glLieRingModule (K := K) (n := ι) d
@@ -378,12 +377,12 @@ private theorem lie_single_basisPath_transition (d : ℕ) (v w : Fin d → ι)
         (Pi.single (v l) (1 : K) : ι → K))⁆ =
         ιMulti K d (fun l ↦
           (Pi.single (w l) (1 : K) : ι → K)) := by
-  rw [lie_single_basis_family (K := K) d v hv.injective a]
+  rw [lie_single_basis_family (K := K) d v hv a]
   exact congrArg (ιMulti K d) (congrArg (fun f ↦
     fun l ↦ (Pi.single (f l) (1 : K) : ι → K)) hupdate)
 
 private theorem lie_single_basisPath_transition_of_update (d : ℕ) (v w : Fin d → ι)
-    (hv : StrictMono v) (a : Fin d) (i : ι)
+    (hv : Function.Injective v) (a : Fin d) (i : ι)
     (hxa : i = w a) (hvw : ∀ l, l ≠ a → v l = w l) :
     letI : LieRingModule (Matrix ι ι K) (⋀[K]^d (ι → K)) :=
       glLieRingModule (K := K) (n := ι) d
@@ -423,11 +422,39 @@ private theorem lie_basisPath_succ (d k : ℕ) (h : d ≤ Fintype.card ι) (hk :
   rw [hsource]
   apply lie_single_basisPath_transition_of_update (K := K) d
     (basisPath d h s (k + 1)) (basisPath d h s k)
-    (basisPath_strictMono d h s (k + 1)) a
+    (basisPath_strictMono d h s (k + 1)).injective a
     (Set.powersetCard.ofFinEmbEquiv.symm s ⟨k, hk⟩)
   · simp [basisPath, a]
   · intro l hla
     exact basisPath_succ_eq_of_ne d h hk s a l hla rfl
+
+private theorem mem_of_lie_succ_path (d : ℕ)
+    (N : LieSubmodule K (Matrix ι ι K) (⋀[K]^d (ι → K)))
+    (x : ℕ → (⋀[K]^d (ι → K)))
+    (hstep : ∀ k, k < d → ∃ a : Matrix ι ι K, ⁅a, x (k + 1)⁆ = x k)
+    (hd : x d ∈ N) : x 0 ∈ N := by
+  exact Nat.decreasingInduction' (m := 0) (n := d) (P := fun k ↦ x k ∈ N)
+    (fun k hk _ ih ↦ by
+      obtain ⟨a, ha⟩ := hstep k hk
+      rw [← ha]
+      exact N.lie_mem ih)
+    (Nat.zero_le d) hd
+
+private theorem mem_of_lie_reverse_path (d : ℕ)
+    (N : LieSubmodule K (Matrix ι ι K) (⋀[K]^d (ι → K)))
+    (x : ℕ → (⋀[K]^d (ι → K)))
+    (hstep : ∀ k, k < d → ∃ a : Matrix ι ι K, ⁅a, x k⁆ = x (k + 1))
+    (h0 : x 0 ∈ N) : x d ∈ N := by
+  have hmem : ∀ k, k ≤ d → x k ∈ N := by
+    intro k hk
+    induction k with
+    | zero => exact h0
+    | succ k ih =>
+        obtain ⟨a, ha⟩ := hstep k (by omega)
+        have hnext : ⁅a, x k⁆ ∈ N := N.lie_mem (ih (by omega))
+        rw [ha] at hnext
+        exact hnext
+  exact hmem d le_rfl
 
 private theorem basisWedge_mem_of_first_mem (d : ℕ) (h : d ≤ Fintype.card ι)
     (N : LieSubmodule K (Matrix ι ι K) (⋀[K]^d (ι → K)))
@@ -444,13 +471,14 @@ private theorem basisWedge_mem_of_first_mem (d : ℕ) (h : d ≤ Fintype.card ι
     exact hfirst
   have hzero : ιMulti K d (fun l ↦
       (Pi.single (basisPath d h s 0 l) (1 : K) : ι → K)) ∈ N :=
-    Nat.decreasingInduction' (m := 0) (n := d) (P := fun k ↦
-      ιMulti K d (fun l ↦
-        (Pi.single (basisPath d h s k l) (1 : K) : ι → K)) ∈ N)
-      (fun k hk _ ih ↦ by
-        rw [← lie_basisPath_succ (K := K) d k h hk s]
-        exact N.lie_mem ih)
-      (Nat.zero_le d) hd
+    mem_of_lie_succ_path (K := K) d N
+      (fun k ↦ ιMulti K d (fun l ↦
+        (Pi.single (basisPath d h s k l) (1 : K) : ι → K)))
+      (fun k hk ↦ by
+        refine ⟨Matrix.single
+          (Set.powersetCard.ofFinEmbEquiv.symm s ⟨k, hk⟩)
+          (firstBasisEmbedding d h ⟨k, hk⟩) (1 : K), ?_⟩
+        rw [← lie_basisPath_succ (K := K) d k h hk s]) hd
   rw [basisPath_zero] at hzero
   rw [basisWedge_eq_ιMulti]
   simpa only [Set.powersetCard.ofFinEmbEquiv_symm_apply] using hzero
@@ -473,7 +501,7 @@ private theorem lie_basisPath_reverse (d k : ℕ) (h : d ≤ Fintype.card ι) (h
   rw [hsource]
   apply lie_single_basisPath_transition_of_update (K := K) d
     (basisPath d h s k) (basisPath d h s (k + 1))
-    (basisPath_strictMono d h s k) a
+    (basisPath_strictMono d h s k).injective a
     (firstBasisEmbedding d h ⟨k, hk⟩)
   · simp [basisPath, a]
   · intro l hla
@@ -493,16 +521,14 @@ private theorem first_mem_of_basisWedge_mem (d : ℕ) (h : d ≤ Fintype.card ι
     rw [basisPath_zero]
     rw [basisWedge_eq_ιMulti] at hs
     simpa only [Set.powersetCard.ofFinEmbEquiv_symm_apply] using hs
-  have hmem : ∀ k, k ≤ d →
-      ιMulti K d (fun l ↦
-        (Pi.single (basisPath d h s k l) (1 : K) : ι → K)) ∈ N := by
-    intro k hk
-    induction k with
-    | zero => exact hzero
-    | succ k ih =>
-      rw [← lie_basisPath_reverse (K := K) d k h (by omega) s]
-      exact N.lie_mem (ih (by omega))
-  have htop := hmem d le_rfl
+  have htop := mem_of_lie_reverse_path (K := K) d N
+    (fun k ↦ ιMulti K d (fun l ↦
+      (Pi.single (basisPath d h s k l) (1 : K) : ι → K)))
+    (fun k hk ↦ by
+      refine ⟨Matrix.single
+        (firstBasisEmbedding d h ⟨k, hk⟩)
+        (Set.powersetCard.ofFinEmbEquiv.symm s ⟨k, hk⟩) (1 : K), ?_⟩
+      rw [← lie_basisPath_reverse (K := K) d k h hk s]) hzero
   rw [basisPath_top] at htop
   exact htop
 
@@ -691,7 +717,7 @@ private theorem exists_basisWedge_mem_of_nonzero_mem (d : ℕ)
 
 /-- The standard general-linear action on an exterior power is irreducible when `d` does not exceed
 the coordinate cardinality. -/
-theorem isIrreducible_glLieModule (d : ℕ) (h : d ≤ Fintype.card ι) :
+private theorem isIrreducible_glLieModule_ordered (d : ℕ) (h : d ≤ Fintype.card ι) :
     letI : LieRingModule (Matrix ι ι K) (⋀[K]^d (ι → K)) :=
       glLieRingModule (K := K) (n := ι) d
     LieModule.IsIrreducible K (Matrix ι ι K) (⋀[K]^d (ι → K)) := by
@@ -711,6 +737,25 @@ theorem isIrreducible_glLieModule (d : ℕ) (h : d ≤ Fintype.card ι) :
 
 
 end Irreducibility
+
+section IrreducibilityUnordered
+
+variable {K : Type*} [Field K]
+variable {ι : Type*} [Fintype ι] [DecidableEq ι]
+
+/-- Over a field, the standard general-linear action on the `d`-th exterior power is
+irreducible for a finite index type `ι` when `d ≤ Fintype.card ι`; an auxiliary order is
+chosen internally for the path argument. -/
+theorem isIrreducible_glLieModule (d : ℕ) (h : d ≤ Fintype.card ι) :
+    letI : LieRingModule (Matrix ι ι K) (⋀[K]^d (ι → K)) :=
+      glLieRingModule (K := K) (n := ι) d
+    LieModule.IsIrreducible K (Matrix ι ι K) (⋀[K]^d (ι → K)) := by
+  classical
+  let order : LinearOrder ι := LinearOrder.lift' (Fintype.equivFin ι)
+    (Fintype.equivFin ι).injective
+  exact @isIrreducible_glLieModule_ordered K _ ι _ order d h
+
+end IrreducibilityUnordered
 
 
 
