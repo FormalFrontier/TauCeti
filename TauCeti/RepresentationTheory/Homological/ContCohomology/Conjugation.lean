@@ -26,7 +26,7 @@ public section
 
 namespace TauCeti.ContCohomology
 
-open TauCeti.ContinuousMonoidHom
+open TauCeti.Subgroup
 
 universe uG uM uK uA
 
@@ -40,12 +40,12 @@ omit [TopologicalSpace M] [IsTopologicalAddGroup M] [ContinuousSMul G M] in
 /-- The conjugation compatible-pair identity on coefficients. -/
 theorem inverseConjugationHom_smul (N : Subgroup G) [N.Normal] (g : G) (n : N) (m : M) :
     (DistribSMul.toAddMonoidHom M g)
-        (ContinuousMonoidHom.inverseConjugationHom N g n • m) =
+        (Subgroup.inverseConjugationHom N g n • m) =
       n • (DistribSMul.toAddMonoidHom M g) m := by
   -- Unfold the subgroup action so the compatible-pair identity is an identity for the ambient
   -- `G`-action, where `mul_smul` applies directly.
   simp only [DistribSMul.toAddMonoidHom_apply,
-    ContinuousMonoidHom.inverseConjugationHom_apply]
+    Subgroup.inverseConjugationHom_apply]
   change g • ((g⁻¹ * (n : G) * g) • m) = (n : G) • (g • m)
   simp [smul_smul, mul_assoc]
 
@@ -85,7 +85,7 @@ def inverseConjugationHomotopy2 {K : Type uK} [Group K] {A : Type uA} [AddCommGr
     (g : K) (c : K × K → A) : K → A :=
   fun n => c (g, g⁻¹ * n * g) - c (n, g)
 
-/-! The following identity is algebraic; the topological subgroup specialization is stated below. -/
+/-- The degree-one algebraic cochain-homotopy identity for inverse conjugation. -/
 theorem inverseConjugationCochainHomotopy1 {K : Type uK} [Group K]
     {A : Type uA} [AddCommGroup A] [DistribMulAction K A] (g : K) (c : K → A) :
     cochainsMap1 (MulAut.conj g⁻¹ : K →* K) (DistribSMul.toAddMonoidHom A g) c - c =
@@ -301,6 +301,14 @@ theorem explicitConj1_eq_id_of_mem (N : Subgroup G) [N.Normal] (g : N) :
       intro n
       simpa [d0_apply, inverseConjugationHomotopy1] using
         congrFun (inverseConjugationHomotopy1_spec N g c) n
+
+/-- An element of the subgroup acts trivially on explicit first cohomology. -/
+@[simp]
+theorem explicitConj1_smul_of_mem (N : Subgroup G) [N.Normal] (g : N) (x : H1 N M) :
+    (g : G) • x = x := by
+  change explicitConj1 (M := M) N (g : G) x = x
+  rw [explicitConj1_eq_id_of_mem]
+  rfl
 
 end
 

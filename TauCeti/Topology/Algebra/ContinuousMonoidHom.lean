@@ -21,9 +21,9 @@ public section
 
 namespace TauCeti
 
-namespace ContinuousMonoidHom
-
 variable {G : Type*} [Group G] [TopologicalSpace G]
+
+namespace ContinuousMonoidHom
 
 -- Both definitions below are exposed: downstream, `TopRep.res` objects taken along them have to
 -- be definitionally the ones taken along the bare `Subgroup.subtype` and `QuotientGroup.mk'`.
@@ -39,6 +39,10 @@ theorem coe_subgroupSubtype (S : Subgroup G) : (subgroupSubtype S : S →* G) = 
 @[simp]
 theorem subgroupSubtype_apply (S : Subgroup G) (s : S) : subgroupSubtype S s = (s : G) :=
   (rfl)
+
+end ContinuousMonoidHom
+
+namespace Subgroup
 
 /-- The inverse conjugation homomorphism of a normal subgroup, with the subspace topology. -/
 def inverseConjugationHom [IsTopologicalGroup G] (N : Subgroup G) [N.Normal] (g : G) : N →ₜ* N where
@@ -85,6 +89,10 @@ theorem inverseConjugationHom_mul [IsTopologicalGroup G] (N : Subgroup G) [N.Nor
       (inverseConjugationHom N h).comp (inverseConjugationHom N g) := by
   ext n
   simp [inverseConjugationHom_apply, mul_assoc]
+
+end Subgroup
+
+namespace ContinuousMonoidHom
 
 /-- The projection onto the quotient by a normal subgroup, carrying the quotient topology, as a
 continuous homomorphism. -/
