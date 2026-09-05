@@ -56,6 +56,7 @@ open IsDedekindDomain (HeightOneSpectrum)
 variable {K L : Type*} [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L]
   [IsGalois K L]
 
+-- The powered-class convention follows `TauCetiRoadmap/Chebotarev/Suggested.lean`.
 variable (K L) in
 /-- The prime powers whose powered Artin class is `C`. A prime power `𝔭 ^ j` is included when
 `𝔭` is unramified in `L` and `(artinSymbol 𝔭) ^ j = C`. -/
@@ -231,6 +232,47 @@ theorem frobeniusVonMangoldtCoeff_nonneg (C : ConjClasses (L ≃ₐ[K] L)) (n : 
     0 ≤ frobeniusVonMangoldtCoeff K L C n := by
   rw [frobeniusVonMangoldtCoeff_apply]
   exact Finset.sum_nonneg fun I _ ↦ frobeniusVonMangoldtWeight_nonneg C I
+
+/-- **The order-four powered-class regression.** If a prime power has exponent two and its
+unpowered Artin class is represented by an element `g` of order four, its positive weight occurs
+in the coefficient for the class of `g ^ 2`, even though that class differs from the unpowered
+class. -/
+private theorem primePowerWeight_le_frobeniusVonMangoldtCoeff_of_artinSymbol_order_four
+    {A : IdealPrimePower K}
+    (hur : ∀ (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver (primePowerBase A).asIdeal],
+      Algebra.IsUnramifiedAt (𝓞 K) Q) (g : L ≃ₐ[K] L)
+    (hA : primePowerExponent A = 2)
+    (hartin : artinSymbol (primePowerBase A).asIdeal hur = ConjClasses.mk g)
+    (hg : orderOf g = 4) :
+    0 < primePowerWeight A ∧
+      primePowerWeight A ≤ frobeniusVonMangoldtCoeff K L (ConjClasses.mk (g ^ 2))
+        (Ideal.absNorm (A : Ideal (𝓞 K))) ∧
+      artinSymbol (primePowerBase A).asIdeal hur ≠ ConjClasses.mk (g ^ 2) := by
+  have hpowered :
+      artinSymbol (primePowerBase A).asIdeal hur ^ primePowerExponent A =
+        ConjClasses.mk (g ^ 2) := by
+    rw [hA, hartin, ConjClasses.mk_pow]
+  refine ⟨primePowerWeight_pos A, ?_, ?_⟩
+  · rw [frobeniusVonMangoldtCoeff_apply]
+    calc
+      primePowerWeight A =
+          frobeniusVonMangoldtWeight K L (ConjClasses.mk (g ^ 2))
+            (A : (Ideal (𝓞 K))⁰) := by
+        rw [frobeniusVonMangoldtWeight_idealPrimePower,
+          frobeniusPrimePowerWeight_of_artinSymbol_pow_eq hur hpowered]
+      _ ≤ ∑ I ∈ normFiber K (Ideal.absNorm (A : Ideal (𝓞 K))),
+          frobeniusVonMangoldtWeight K L (ConjClasses.mk (g ^ 2)) I :=
+        Finset.single_le_sum
+          (fun I _ ↦ frobeniusVonMangoldtWeight_nonneg (ConjClasses.mk (g ^ 2)) I)
+          ((mem_normFiber K).mpr rfl)
+  · rw [hartin]
+    intro hclasses
+    obtain ⟨c, hc⟩ := ConjClasses.mk_eq_mk_iff_isConj.mp hclasses
+    have horders : orderOf g = orderOf (g ^ 2) :=
+      SemiconjBy.orderOf_eq (c : L ≃ₐ[K] L) hc
+    have hsquare : orderOf (g ^ 2) = 2 := by
+      rw [orderOf_pow_of_dvd (by norm_num) (hg ▸ by norm_num), hg]
+    omega
 
 /-- The Frobenius von Mangoldt coefficient vanishes unless its index is a prime power. -/
 theorem frobeniusVonMangoldtCoeff_eq_zero_of_not_isPrimePow
