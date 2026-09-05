@@ -9,6 +9,7 @@ public import TauCeti.Analysis.Semigroups.Group.Basic
 public import TauCeti.Analysis.Semigroups.BoundedGenerator.Basic
 -- Non-public: the exponential norm bound supplies the growth bound of `ofBounded`.
 import TauCeti.Analysis.Normed.Operator.Exponential
+import TauCeti.Analysis.Semigroups.Generator.Invariance
 
 /-!
 # The generator of a strongly continuous group
@@ -113,10 +114,11 @@ at `x`. -/
 private theorem tendsto_genQuot_map (U : StronglyContinuousGroup X) (r : ℝ) {x y : X}
     (h : Tendsto (fun t : ℝ => (1 / t) • (U t x - x)) (𝓝[>] (0 : ℝ)) (𝓝 y)) :
     Tendsto (fun t : ℝ => (1 / t) • (U t (U r x) - U r x))
-      (𝓝[>] (0 : ℝ)) (𝓝 (U r y)) := by
-  refine ((U r).continuous.continuousAt.tendsto.comp h).congr' ?_
-  filter_upwards with t
-  simp only [Function.comp_apply, U.map_comm t r x, map_smul, map_sub]
+      (𝓝[>] (0 : ℝ)) (𝓝 (U r y)) :=
+  (tendsto_congr' (U.genQuot_eventuallyEq (U r x))).mp
+    (U.toSemigroup.tendsto_genQuot_map_of_commute (U r)
+      (fun s w => by rw [U.toSemigroup_apply, U.map_comm])
+      ((tendsto_congr' (U.genQuot_eventuallyEq x)).mpr h))
 
 /-- **The generator domain is invariant under the whole group**, at negative times as well as
 positive ones. -/

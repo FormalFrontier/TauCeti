@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Analysis.Semigroups.Dissipative.Perturbation
 public import TauCeti.Analysis.Semigroups.Generator.ExponentialShift
+public import TauCeti.Analysis.Semigroups.Generator.Similarity
 public import TauCeti.Analysis.Semigroups.Generation.LumerPhillips
 public import Mathlib.Topology.ContinuousMap.Bounded.Normed
 
@@ -220,74 +221,37 @@ private noncomputable instance instCompleteSpace : CompleteSpace (GrowthRenorm S
     have h := e.symm.continuous.continuousAt.tendsto.comp hx
     exact h.congr' (Filter.Eventually.of_forall fun n => e.symm_apply_apply (u n))
 
-private noncomputable def shiftedLinearMap (t : ℝ≥0) :
-    GrowthRenorm S hb →ₗ[ℝ] GrowthRenorm S hb :=
-  (linearEquiv S hb).symm.toLinearMap.comp
-    ((Real.exp (-(omega * (t : ℝ))) • (S t).toLinearMap).comp
-      (linearEquiv S hb).toLinearMap)
-
-omit [CompleteSpace X] in
-@[simp] private theorem shiftedLinearMap_apply (t : ℝ≥0) (x : GrowthRenorm S hb) :
-    (shiftedLinearMap S hb t x).val = Real.exp (-(omega * (t : ℝ))) • S t x.val := rfl
-
-private theorem weightedOrbit_shiftedLinearMap (t s : ℝ≥0) (x : GrowthRenorm S hb) :
-    weightedOrbit S hb (shiftedLinearMap S hb t x) s = weightedOrbit S hb x (s + t) := by
-  simp only [weightedOrbit_apply, shiftedLinearMap_apply]
+private theorem weightedOrbit_shifted (t s : ℝ≥0) (x : GrowthRenorm S hb) :
+    weightedOrbit S hb (⟨Real.exp (-(omega * (t : ℝ))) • S t x.val⟩ : GrowthRenorm S hb) s =
+      weightedOrbit S hb x (s + t) := by
+  simp only [weightedOrbit_apply]
   rw [map_smul, smul_smul, S.map_add_apply, ← Real.exp_add]
   congr 2
   push_cast
   ring
 
-private theorem norm_shiftedLinearMap_le (t : ℝ≥0) (x : GrowthRenorm S hb) :
-    ‖shiftedLinearMap S hb t x‖ ≤ ‖x‖ := by
+private theorem norm_shifted_le (t : ℝ≥0) (x : GrowthRenorm S hb) :
+    ‖(⟨Real.exp (-(omega * (t : ℝ))) • S t x.val⟩ : GrowthRenorm S hb)‖ ≤ ‖x‖ := by
   rw [norm_eq S hb]
   apply (BoundedContinuousFunction.norm_le (norm_nonneg x)).2
   intro s
-  rw [weightedOrbit_shiftedLinearMap S hb]
+  rw [weightedOrbit_shifted S hb]
   exact BoundedContinuousFunction.norm_coe_le_norm (weightedOrbit S hb x) (s + t)
 
-private noncomputable def shiftedOperator (t : ℝ≥0) :
-    GrowthRenorm S hb →L[ℝ] GrowthRenorm S hb :=
-  (shiftedLinearMap S hb t).mkContinuous 1 fun x => by
-    simpa using norm_shiftedLinearMap_le S hb t x
-
-@[simp] private theorem shiftedOperator_apply (t : ℝ≥0) (x : GrowthRenorm S hb) :
-    shiftedOperator S hb t x = shiftedLinearMap S hb t x := rfl
-
+/-- The exponentially shifted semigroup `e^{-ω t} S t`, transported to the renormed space, where
+it is a contraction semigroup. -/
 private noncomputable def shiftedContractionSemigroup :
     ContractionSemigroup (GrowthRenorm S hb) where
-  toStronglyContinuousSemigroup :=
-    { toFun := shiftedOperator S hb
-      map_zero' := by
-        ext x
-        apply (equiv S hb).injective
-        simp [shiftedOperator_apply]
-      map_add' s t := by
-        ext x
-        rw [ContinuousLinearMap.comp_apply]
-        apply (equiv S hb).injective
-        simp only [equiv_apply, shiftedOperator_apply, shiftedLinearMap_apply]
-        rw [map_smul, smul_smul, S.map_add_apply, ← Real.exp_add]
-        congr 2
-        push_cast
-        ring
-      continuousAt_zero' := fun x => by
-        let e := toOriginal S hb
-        have h := (S.expShift omega).continuousAt_zero_tendsto x.val
-        have h' := e.symm.continuous.continuousAt.tendsto.comp h
-        rw [ContinuousAt]
-        convert h' using 1
-        · funext t
-          rw [Function.comp_apply, StronglyContinuousSemigroup.expShift_apply_apply,
-            toOriginal_symm_apply]
-          rfl
-        · rw [toOriginal_symm_apply]
-          congr 1
-          apply (equiv S hb).injective
-          simp [shiftedOperator_apply] }
+  toStronglyContinuousSemigroup := (S.expShift omega).similar (toOriginal S hb).symm
   contracting t := by
-    refine ContinuousLinearMap.opNorm_le_bound _ zero_le_one fun x => ?_
-    simpa using norm_shiftedLinearMap_le S hb t x
+    -- The field is stated with `toFun`; the coercion of the transported semigroup is the same map.
+    have h : ‖((S.expShift omega).similar (toOriginal S hb).symm) t‖ ≤ 1 := by
+      refine ContinuousLinearMap.opNorm_le_bound _ zero_le_one fun x => ?_
+      rw [one_mul, StronglyContinuousSemigroup.similar_apply_apply,
+        ContinuousLinearEquiv.symm_symm, StronglyContinuousSemigroup.expShift_apply_apply,
+        toOriginal_apply, toOriginal_symm_apply]
+      exact norm_shifted_le S hb t x
+    exact h
 
 private def liftPMap (A : X →ₗ.[ℝ] X) :
     GrowthRenorm S hb →ₗ.[ℝ] GrowthRenorm S hb where
@@ -352,84 +316,29 @@ private theorem unliftPMap_liftPMap (A : X →ₗ.[ℝ] X) :
   · intro x hx hy
     simp only [unliftPMap_apply, liftPMap_apply, linearEquiv_symm_apply]
 
+/-- The semigroup on the renormed space, read back on `X`: the transport of `T` along
+`toOriginal S hb`. -/
 private noncomputable def unliftSemigroup
-    (T : StronglyContinuousSemigroup (GrowthRenorm S hb)) : StronglyContinuousSemigroup X where
-  toFun t := (toOriginal S hb).toContinuousLinearMap.comp
-    ((T t).comp (toOriginal S hb).symm.toContinuousLinearMap)
-  map_zero' := by ext x; simp
-  map_add' s t := by ext x; simp
-  continuousAt_zero' x := by
-    have h := T.continuousAt_zero_tendsto ((toOriginal S hb).symm x)
-    have h' := (toOriginal S hb).continuous.continuousAt.tendsto.comp h
-    rw [ContinuousAt]
-    convert h' using 1
-    · funext t
-      simp [Function.comp_apply]
-    · simp
+    (T : StronglyContinuousSemigroup (GrowthRenorm S hb)) : StronglyContinuousSemigroup X :=
+  T.similar (toOriginal S hb)
 
 @[simp] private theorem unliftSemigroup_apply_apply
     (T : StronglyContinuousSemigroup (GrowthRenorm S hb)) (t : ℝ≥0) (x : X) :
-    unliftSemigroup S hb T t x = (T t ((toOriginal S hb).symm x)).val := rfl
-
-private theorem unliftSemigroup_realOperator_apply
-    (T : StronglyContinuousSemigroup (GrowthRenorm S hb)) (t : ℝ) (x : X) :
-    (unliftSemigroup S hb T).realOperator t x =
-      (T.realOperator t ((toOriginal S hb).symm x)).val := by
-  rw [StronglyContinuousSemigroup.realOperator_def,
-    StronglyContinuousSemigroup.realOperator_def]
-  exact unliftSemigroup_apply_apply S hb T t.toNNReal x
-
-private theorem toOriginal_symm_generatorQuotient
-    (T : StronglyContinuousSemigroup (GrowthRenorm S hb)) (t : ℝ) (x : X) :
-    (toOriginal S hb).symm
-        ((1 / t) • ((unliftSemigroup S hb T).realOperator t x - x)) =
-      (1 / t) • (T.realOperator t ((toOriginal S hb).symm x) -
-        (toOriginal S hb).symm x) := by
-  apply (toOriginal S hb).injective
-  simp only [toOriginal_apply, toOriginal_symm_apply, unliftSemigroup_realOperator_apply,
-    val_smul, val_sub]
+    unliftSemigroup S hb T t x = (T t ((toOriginal S hb).symm x)).val := by
+  rw [unliftSemigroup, StronglyContinuousSemigroup.similar_apply_apply, toOriginal_apply]
 
 private theorem unliftSemigroup_generator
     (T : StronglyContinuousSemigroup (GrowthRenorm S hb)) :
     (unliftSemigroup S hb T).generator = unliftPMap S hb T.generator := by
-  let e := toOriginal S hb
-  let U := unliftSemigroup S hb T
-  refine LinearPMap.ext ?_ ?_
-  · rw [U.generator_domain]
-    ext x
-    rw [mem_unliftPMap_domain]
-    rw [T.generator_domain, U.mem_domain_iff_tendsto, T.mem_domain_iff_tendsto]
-    constructor
-    · rintro ⟨y, hy⟩
-      refine ⟨e.symm y, ?_⟩
-      have h := e.symm.continuous.continuousAt.tendsto.comp hy
-      convert h using 1
-      funext t
-      exact (toOriginal_symm_generatorQuotient S hb T t x).symm
-    · rintro ⟨y, hy⟩
-      refine ⟨e y, ?_⟩
-      have h := e.continuous.continuousAt.tendsto.comp hy
-      convert h using 1
-      funext t
-      apply e.symm.injective
-      rw [Function.comp_apply, e.symm_apply_apply]
-      exact toOriginal_symm_generatorQuotient S hb T t x
-  · intro x hxU hxA
-    have hxT : e.symm x ∈ T.domain := by
-      rw [← T.generator_domain]
-      exact hxA
-    have hT := T.generator_tendsto ⟨e.symm x, hxT⟩
-    have h := e.continuous.continuousAt.tendsto.comp hT
-    have hU : Filter.Tendsto (fun t => (1 / t) • (U.realOperator t x - x))
-        (nhdsWithin 0 (Set.Ioi 0))
-        (nhds (e (T.generator ⟨e.symm x, by simpa [T.generator_domain] using hxT⟩))) := by
-      convert h using 1
-      funext t
-      apply e.symm.injective
-      rw [Function.comp_apply, e.symm_apply_apply]
-      exact toOriginal_symm_generatorQuotient S hb T t x
-    rw [U.generator_eq_of_tendsto (by simpa [U.generator_domain] using hxU) hU]
-    rfl
+  rw [unliftSemigroup]
+  refine LinearPMap.ext ?_ fun x hx hx' => ?_
+  · ext x
+    rw [(T.similar (toOriginal S hb)).generator_domain, T.mem_similar_domain_iff,
+      mem_unliftPMap_domain, T.generator_domain, toOriginal_symm_apply, linearEquiv_symm_apply]
+  · have hx₂ : x ∈ (T.similar (toOriginal S hb)).domain := by
+      rwa [(T.similar (toOriginal S hb)).generator_domain] at hx
+    rw [T.similar_generator_apply (toOriginal S hb) hx₂, unliftPMap_apply, toOriginal_apply]
+    simp only [toOriginal_symm_apply, linearEquiv_symm_apply]
 
 private theorem shiftedContractionSemigroup_generator :
     (shiftedContractionSemigroup S hb).toStronglyContinuousSemigroup.generator =
@@ -437,8 +346,11 @@ private theorem shiftedContractionSemigroup_generator :
   let C := (shiftedContractionSemigroup S hb).toStronglyContinuousSemigroup
   have hsem : unliftSemigroup S hb C = S.expShift omega := by
     ext t x
-    rw [unliftSemigroup_apply_apply, StronglyContinuousSemigroup.expShift_apply_apply]
-    exact shiftedLinearMap_apply S hb t ⟨x⟩
+    simp only [C, shiftedContractionSemigroup]
+    rw [unliftSemigroup_apply_apply, StronglyContinuousSemigroup.similar_apply_apply,
+      ContinuousLinearEquiv.symm_symm, StronglyContinuousSemigroup.expShift_apply_apply,
+      StronglyContinuousSemigroup.expShift_apply_apply, toOriginal_apply, toOriginal_symm_apply,
+      toOriginal_symm_apply]
   have hgen := unliftSemigroup_generator S hb C
   have hunlift : unliftPMap S hb C.generator = (S.expShift omega).generator := by
     rw [← hgen, hsem]
@@ -498,7 +410,8 @@ private theorem unliftSemigroup_hasGrowthBound
   calc
     ‖(unliftSemigroup S hb T).realOperator t x‖
         = ‖(T.realOperator t ((toOriginal S hb).symm x)).val‖ := by
-          rw [unliftSemigroup_realOperator_apply]
+          rw [unliftSemigroup, StronglyContinuousSemigroup.similar_realOperator_apply,
+            toOriginal_apply]
     _ ≤ ‖T.realOperator t ((toOriginal S hb).symm x)‖ :=
       norm_val_le S hb _
     _ ≤ ‖T.realOperator t‖ * ‖(toOriginal S hb).symm x‖ :=
