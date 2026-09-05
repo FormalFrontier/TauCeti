@@ -67,12 +67,14 @@ theorem explicitConj1_apply_eq_smul (N : Subgroup G) [N.Normal] (g : G) (x : H1 
 
 /-- The representative formula for `explicitConj1`. -/
 @[simp]
-theorem explicitConj1_mk (N : Subgroup G) [N.Normal] (g : G) (c : Z1 N M) :
+theorem smul_explicitConj1_mk (N : Subgroup G) [N.Normal] (g : G) (c : Z1 N M) :
     g • (c : H1 N M) =
       (cocyclesMap1 N M N M (inverseConjugationHom N g)
         (DistribSMul.toAddMonoidHom M g) ((continuous_const_smul g).congr fun _ => rfl)
         (inverseConjugationHom_smul N g) c : H1 N M) :=
   by
+    -- The installed scalar action is definitionally `explicitConj1`; expose that map before
+    -- applying the generic representative theorem.
     change explicitConj1 N g (c : H1 N M) = _
     exact explicitMap1_mk N M N M _ _ _ _ c
 
@@ -165,6 +167,8 @@ theorem inverseConjugationHomotopy1_spec (N : Subgroup G) [N.Normal] (g : N) (c 
     simp [inverseConjugationHom_apply]
   have h := inverseConjugationCochainHomotopy1 (K := N) (A := M) g (c : N → M)
   rw [← hconj] at h
+  -- Rewriting the bundled automorphism equality leaves the specialized cochain map only
+  -- definitionally equal to the continuous compatible-pair expression in the goal.
   change cochainsMap1 (inverseConjugationHom N (g : G) : N →* N)
       (DistribSMul.toAddMonoidHom M (g : G)) (c : N → M) - c = _ at h
   rw [hc] at h
@@ -193,27 +197,11 @@ theorem inverseConjugationHomotopy2_spec (N : Subgroup G) [N.Normal] (g : N) (c 
   have h := inverseConjugationCochainHomotopy2 (K := N) (A := M) g (c : N × N → M)
       (mem_Z2_iff.1 c.property).2
   rw [← hconj] at h
+  -- As in degree one, the bundled continuous hom and the algebraic monoid hom have the same
+  -- underlying cochain map only definitionally, so expose the specialized form explicitly.
   change cochainsMap2 (inverseConjugationHom N (g : G) : N →* N)
       (DistribSMul.toAddMonoidHom M (g : G)) (c : N × N → M) - c = _ at h
   exact h
-
-omit [IsTopologicalGroup G] in
-private theorem explicitMap1_congr_of_eq (N : Subgroup G)
-    {φ ψ : N →ₜ* N} {f q : M →+ M}
-    {hf : Continuous f} {hq : Continuous q}
-    {hφ : ∀ (n : N) (m : M), f (φ n • m) = n • f m}
-    {hψ : ∀ (n : N) (m : M), q (ψ n • m) = n • q m}
-    (hφeq : φ = ψ) (hfeq : f = q) :
-    explicitMap1 N M N M φ f hf hφ = explicitMap1 N M N M ψ q hq hψ := by
-  apply AddMonoidHom.ext
-  intro x
-  induction x using QuotientAddGroup.induction_on with
-  | _ c =>
-      rw [explicitMap1_mk, explicitMap1_mk]
-      apply congrArg (fun z : Z1 N M => (z : H1 N M))
-      ext n
-      simp only [cocyclesMap1_coe, cochainsMap1_apply, MonoidHom.coe_coe]
-      rw [hφeq, hfeq]
 
 /-- Conjugation by the identity gives the identity map on explicit `H¹`. -/
 @[simp]
@@ -227,7 +215,7 @@ theorem explicitConj1_one (N : Subgroup G) [N.Normal] :
     simp
   have hcont : Continuous (DistribSMul.toAddMonoidHom M (1 : G)) := by
     exact (continuous_const_smul 1).congr fun _ => rfl
-  have hmap := explicitMap1_congr_of_eq (M := M) N
+  have hmap := explicitMap1_congr_of_eq (G := N) (M := M) (H := N) (N := M)
     (φ := inverseConjugationHom N (1 : G)) (ψ := ContinuousMonoidHom.id N)
     (f := DistribSMul.toAddMonoidHom M (1 : G)) (q := AddMonoidHom.id M)
     (hf := hcont) (hq := continuous_id) (hφ := inverseConjugationHom_smul N 1)
@@ -257,7 +245,7 @@ theorem explicitConj1_mul (N : Subgroup G) [N.Normal] (g h : G) :
     exact (continuous_const_smul h).congr fun _ => rfl
   have hcontgh : Continuous (DistribSMul.toAddMonoidHom M (g * h)) := by
     exact (continuous_const_smul (g * h)).congr fun _ => rfl
-  have hmap := explicitMap1_congr_of_eq (M := M) N
+  have hmap := explicitMap1_congr_of_eq (G := N) (M := M) (H := N) (N := M)
     (φ := inverseConjugationHom N (g * h))
     (ψ := (inverseConjugationHom N h).comp (inverseConjugationHom N g))
     (f := DistribSMul.toAddMonoidHom M (g * h))
@@ -296,7 +284,7 @@ theorem explicitConj1_eq_id_of_mem (N : Subgroup G) [N.Normal] (g : N) :
   intro x
   induction x using QuotientAddGroup.induction_on with
   | _ c =>
-      rw [explicitConj1_apply_eq_smul, explicitConj1_mk, AddMonoidHom.id_apply, H1pi_eq_iff]
+      rw [explicitConj1_apply_eq_smul, smul_explicitConj1_mk, AddMonoidHom.id_apply, H1pi_eq_iff]
       refine mem_B1_iff.2 ⟨(c : N → M) g, ?_⟩
       intro n
       simpa [d0_apply, inverseConjugationHomotopy1] using
@@ -306,6 +294,8 @@ theorem explicitConj1_eq_id_of_mem (N : Subgroup G) [N.Normal] (g : N) :
 @[simp]
 theorem explicitConj1_smul_of_mem (N : Subgroup G) [N.Normal] (g : N) (x : H1 N M) :
     (g : G) • x = x := by
+  -- The installed scalar action is definitionally `explicitConj1`; expose it to use the map-level
+  -- inner-triviality theorem.
   change explicitConj1 (M := M) N (g : G) x = x
   rw [explicitConj1_eq_id_of_mem]
   rfl
