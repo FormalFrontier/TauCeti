@@ -21,6 +21,11 @@ range.
 
 * `TauCeti.Probability.measurable_negativeBinomialMeasure` — joint parameter measurability of the
   totalized negative-binomial family.
+
+## References
+
+* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, shared requirement 4, **Parameter
+  measurability**, for the Layer 3 **Negative binomial** milestone.
 -/
 
 public section
