@@ -35,7 +35,8 @@ So the complex endomorphism algebra is one-dimensional too, which over `ℂ` is 
 (`FDRep.simple_iff_char_is_norm_one`). The same dimension count with two different partitions is
 `0` on the rational side by Schur's lemma, hence `0` on the complex side, which is distinctness; and
 the partitions of `n` are as many as the conjugacy classes of `Sₙ`, which bounds the number of
-isomorphism classes of simple objects over any field, so distinctness already forces exhaustion.
+isomorphism classes of simple objects over a field whose group algebra is semisimple, as
+`ℂ[Sₙ]` is, so distinctness already forces exhaustion.
 
 Because the character of `S^μ` is integer-valued (`TauCeti.spechtChar`), the complex characters are
 the same integers read in `ℂ`, and the integer-valued character table of `Sₙ`
@@ -66,8 +67,6 @@ irreducible complex characters of `Sₙ` are exactly the `χ^μ`.
 
 * [G. D. James, *The Representation Theory of the Symmetric Groups*][james1978], Chapter 4.
 * B. E. Sagan, *The Symmetric Group*, 2nd ed. (2001), Section 2.4.
-* [Schur--Weyl roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SchurWeyl/README.md),
-  Layer 4, "Absolute irreducibility" and "Distinctness and completeness".
 -/
 
 public section
@@ -212,8 +211,10 @@ theorem spechtModuleℂFDRepClass_def (μ : n.Partition) :
   (rfl)
 
 /-- **The complex Specht modules exhaust the simple objects of `FDRep ℂ Sₙ`.** They are pairwise
-non-isomorphic and as many as the conjugacy classes of `Sₙ`, and no field admits more isomorphism
-classes of simple objects than the group has conjugacy classes. -/
+non-isomorphic and as many as the conjugacy classes of `Sₙ`, and over a field whose group algebra
+is semisimple, as `ℂ[Sₙ]` is, the conjugacy classes bound the isomorphism classes of simple objects
+(`TauCeti.SimpleFDRepClasses.bijective_of_injective_of_card_conjClasses_le`), so there is no room
+for any other. -/
 theorem spechtModuleℂFDRepClass_bijective :
     Function.Bijective (spechtModuleℂFDRepClass (n := n)) := by
   refine SimpleFDRepClasses.bijective_of_injective_of_card_conjClasses_le ?_
