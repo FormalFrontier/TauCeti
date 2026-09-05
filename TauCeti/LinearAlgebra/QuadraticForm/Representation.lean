@@ -7,7 +7,7 @@ module
 
 public import Mathlib.LinearAlgebra.QuadraticForm.Prod
 import Mathlib.Tactic.LinearCombination
-public import TauCeti.LinearAlgebra.QuadraticForm.Radical
+public import Mathlib.LinearAlgebra.QuadraticForm.Radical
 
 /-!
 # Values represented by quadratic forms
@@ -29,8 +29,6 @@ open _root_.QuadraticMap
 
 namespace TauCeti
 
-namespace QuadraticMap
-
 variable {R M N : Type*} [CommSemiring R] [AddCommMonoid M] [Module R M]
   [AddCommMonoid N] [Module R N]
 
@@ -38,35 +36,35 @@ variable {R M N : Type*} [CommSemiring R] [AddCommMonoid M] [Module R M]
 def _root_.QuadraticMap.Represents (Q : QuadraticMap R M N) (a : N) : Prop := ∃ v, Q v = a
 
 /-- Every quadratic map represents zero, using the zero vector. -/
+@[simp]
 theorem _root_.QuadraticMap.represents_zero (Q : QuadraticMap R M N) : Represents Q 0 :=
   ⟨0, Q.map_zero⟩
 
-variable {K V : Type*} [Field K] [AddCommGroup V] [Module K V]
+@[simp]
+theorem _root_.QuadraticMap.represents_iff (Q : QuadraticMap R M N) (a : N) :
+    Represents Q a ↔ ∃ v, Q v = a :=
+  Iff.rfl
 
-/-- The set of nonzero scalars represented by a quadratic form.
+/-- The set of nonzero scalars represented by a scalar-valued quadratic map.
 
 This is the classical value set `D(Q)`, so it is a set of units rather than the full value set;
 the latter always contains zero by `represents_zero`. -/
-def unitValueSet (Q : QuadraticForm K V) : Set Kˣ :=
-  {a | Represents Q (a : K)}
+def _root_.QuadraticMap.unitValueSet (Q : QuadraticMap R M R) : Set Rˣ :=
+  {a | Represents Q (a : R)}
 
 /-- Membership in `unitValueSet` is representation of the underlying field element. -/
 @[simp]
-theorem mem_unitValueSet {Q : QuadraticForm K V} {a : Kˣ} :
-    a ∈ unitValueSet Q ↔ Represents Q (a : K) :=
+theorem _root_.QuadraticMap.mem_unitValueSet {Q : QuadraticMap R M R} {a : Rˣ} :
+    a ∈ unitValueSet Q ↔ Represents Q (a : R) :=
   Iff.rfl
 
-/-- A regular isotropic quadratic form represents every scalar.
+variable {K V : Type*} [Field K] [AddCommGroup V] [Module K V]
 
-The proof chooses a vector not orthogonal to a nonzero isotropic vector and varies the latter
-along it. This is the elementary hyperbolic-plane argument in a form useful to the representation
-criterion below. -/
-theorem represents_of_isotropic_of_nondegenerate (Q : QuadraticForm K V)
-    [Invertible (2 : K)] (hQ : Q.Nondegenerate) (hiso : ¬Q.Anisotropic) (a : K) :
+/-- A regular isotropic quadratic form represents every scalar. -/
+theorem _root_.QuadraticMap.represents_of_nondegenerate_of_isotropic (Q : QuadraticForm K V)
+    (hB : Q.polarBilin.Nondegenerate) (hiso : ¬Q.Anisotropic) (a : K) :
     Represents Q a := by
   obtain ⟨v, hv, hvQ⟩ := (not_anisotropic_iff_exists Q).mp hiso
-  have hB : Q.polarBilin.Nondegenerate :=
-    (nondegenerate_polar_iff (Q := Q)).mpr hQ
   obtain ⟨w, hw⟩ : ∃ w, Q.polarBilin v w ≠ 0 := by
     by_contra h
     apply hv
@@ -86,26 +84,37 @@ theorem represents_of_isotropic_of_nondegenerate (Q : QuadraticForm K V)
   ring
 
 /-- Multiplying a represented unit by a square preserves representation, in both directions. -/
-theorem mem_unitValueSet_mul_square_iff (Q : QuadraticForm K V) (a b : Kˣ) :
+@[simp]
+theorem _root_.QuadraticMap.mem_unitValueSet_mul_square_iff (Q : QuadraticMap R M R) (a b : Rˣ) :
     a * b ^ 2 ∈ unitValueSet Q ↔ a ∈ unitValueSet Q := by
   constructor
   · rintro ⟨v, hv⟩
-    refine ⟨(b : K)⁻¹ • v, ?_⟩
+    refine ⟨(↑(b⁻¹ : Rˣ) : R) • v, ?_⟩
     rw [Q.map_smul, smul_eq_mul, hv]
     rw [Units.val_mul, Units.val_pow_eq_pow_val]
-    field_simp
+    rw [pow_two]
+    calc
+      ((↑(b⁻¹ : Rˣ) : R) * ↑(b⁻¹ : Rˣ)) *
+          ((a : R) * ((b : R) * (b : R))) =
+        (a : R) * ((↑(b⁻¹ : Rˣ) : R) * (b : R) *
+          (↑(b⁻¹ : Rˣ) : R) * (b : R)) := by ac_rfl
+      _ = (a : R) * (1 * 1) := by simp only [Units.inv_mul, one_mul, mul_one]
+      _ = (a : R) := by simp
   · rintro ⟨v, hv⟩
-    refine ⟨(b : K) • v, ?_⟩
+    refine ⟨(b : R) • v, ?_⟩
     rw [Q.map_smul, smul_eq_mul, hv]
     rw [Units.val_mul, Units.val_pow_eq_pow_val]
-    ring
+    rw [pow_two]
+    ac_rfl
+
+variable {K V : Type*} [Field K] [AddCommGroup V] [Module K V]
 
 /-- A unit is represented exactly when adjoining its negative line makes the form isotropic.
 
 The added line is the one-dimensional form `x ↦ -a * x²`, written as a scalar multiple of
 `QuadraticMap.sq`. -/
-theorem mem_unitValueSet_iff_isotropic_prod [Invertible (2 : K)]
-    (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) (a : Kˣ) :
+theorem _root_.QuadraticMap.mem_unitValueSet_iff_isotropic_prod
+    [Invertible (2 : K)] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) (a : Kˣ) :
     a ∈ unitValueSet Q ↔
       ¬(Q.prod ((-(a : K)) • (QuadraticMap.sq : QuadraticForm K K))).Anisotropic := by
   constructor
@@ -123,14 +132,13 @@ theorem mem_unitValueSet_iff_isotropic_prod [Invertible (2 : K)]
         apply hvt
         simp [hv, ht]
       have hvQ : Q v = 0 := by simpa [ht] using hzero
-      exact represents_of_isotropic_of_nondegenerate Q hQ
+      exact represents_of_nondegenerate_of_isotropic Q
+        ((nondegenerate_polar_iff (Q := Q)).mpr hQ)
         ((not_anisotropic_iff_exists Q).mpr ⟨v, hv, hvQ⟩) (a : K)
     · have hvQ : Q v = (a : K) * (t * t) := by
         linear_combination hzero
       refine ⟨t⁻¹ • v, ?_⟩
       rw [Q.map_smul, smul_eq_mul, hvQ]
       field_simp
-
-end QuadraticMap
 
 end TauCeti
