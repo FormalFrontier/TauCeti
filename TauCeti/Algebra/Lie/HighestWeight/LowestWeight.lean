@@ -39,10 +39,6 @@ computation with the opposition involution of the base and no module is involved
 
 ## References
 
-This is the lowest-weight input to the "self-duality of `L(λ)`" coverage target
-`exists_invariantForm_iff_neg_longest_smul_eq` of
-`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/Suggested.lean`.
-
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §21.6.
 -/
 

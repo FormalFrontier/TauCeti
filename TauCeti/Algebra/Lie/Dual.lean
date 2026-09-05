@@ -14,7 +14,8 @@ public import TauCeti.Algebra.Lie.Schur
 
 The dual `M* = Module.Dual R M` of a Lie module carries the contragredient action
 `⁅x, f⁆ m = - f ⁅x, m⁆` (Mathlib's `Module.Dual.instLieRingModule`). This file records the two
-facts about it that a self-duality statement needs.
+facts about it that a self-duality statement needs. Nothing here mentions weights, so both are
+stated for an arbitrary Lie algebra acting on an arbitrary module.
 
 The first is that irreducibility passes to the dual in finite dimensions. If `N ≤ M*` is stable
 under the action then so is the set of vectors every functional in `N` kills, because `⁅x, f⁆`
@@ -32,6 +33,8 @@ invariant form and being self-dual are the same condition.
 
 ## Main results
 
+* `TauCeti.LieModule.lieInvariant_coe_lieModuleHom`: a morphism `M → M*`, read as a bilinear form
+  on `M`, is invariant.
 * `TauCeti.LieModule.exists_ne_zero_lieInvariant_iff_exists_ne_zero_lieModuleHom`: a nonzero
   invariant bilinear form on `M` is a nonzero morphism `M → M*`, over any commutative ring.
 * `TauCeti.LieModule.isIrreducible_dual`: **the dual of a finite-dimensional irreducible Lie module
@@ -41,11 +44,6 @@ invariant form and being self-dual are the same condition.
   it is equivalent to its dual.**
 
 ## References
-
-Duality of highest weight modules is the setting in which the highest-weight roadmap states
-self-duality of `L(λ)`, as the Layer 6 target `exists_invariantForm_iff_neg_longest_smul_eq` of
-`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/Suggested.lean`; nothing in this file
-mentions weights, so it is stated for an arbitrary Lie algebra.
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §6.1.
 * N. Bourbaki, *Groupes et algèbres de Lie*, Chapitre I, §3.3.
@@ -101,6 +99,17 @@ private theorem eq_bot_of_dualCoannihilator_eq_top {N : LieSubmodule R L (Dual R
 
 /-! ### Invariant bilinear forms as morphisms to the dual -/
 
+/-- **A morphism `M → M*` is an invariant bilinear form.** A morphism of Lie modules lies in the
+maximal trivial submodule of the space of linear maps
+(`LieModule.maxTrivLinearMapEquivLieModuleHom`), and for a linear map `M → M*`, that is a bilinear
+form on `M`, membership of the maximal trivial submodule is invariance
+(`LinearMap.BilinForm.lieInvariant_iff`). -/
+theorem lieInvariant_coe_lieModuleHom (f : M →ₗ⁅R,L⁆ Dual R M) :
+    LinearMap.BilinForm.lieInvariant L (f : LinearMap.BilinForm R M) := by
+  rw [LinearMap.BilinForm.lieInvariant_iff,
+    ← _root_.LieModule.toLinearMap_maxTrivLinearMapEquivLieModuleHom_symm f]
+  exact (_root_.LieModule.maxTrivLinearMapEquivLieModuleHom.symm f).2
+
 /-- **A nonzero invariant bilinear form is a nonzero morphism to the dual.** A bilinear form on `M`
 is a linear map `M → M*`, invariance of the form is membership of the maximal trivial submodule
 (`LinearMap.BilinForm.lieInvariant_iff`), and `LieModule.maxTrivLinearMapEquivLieModuleHom` is the
@@ -115,10 +124,8 @@ theorem exists_ne_zero_lieInvariant_iff_exists_ne_zero_lieModuleHom :
       ⟨Φ, (LinearMap.BilinForm.lieInvariant_iff Φ).mp hΦ⟩, ?_⟩
     simpa [Submodule.mk_eq_zero] using hΦ0
   · rintro ⟨f, hf0⟩
-    refine ⟨(_root_.LieModule.maxTrivLinearMapEquivLieModuleHom.symm f :
-      LinearMap.BilinForm R M), fun h => hf0 (LieModuleHom.ext fun m => ?_),
-      (LinearMap.BilinForm.lieInvariant_iff _).mpr
-        (_root_.LieModule.maxTrivLinearMapEquivLieModuleHom.symm f).2⟩
+    refine ⟨(f : LinearMap.BilinForm R M), fun h => hf0 (LieModuleHom.ext fun m => ?_),
+      lieInvariant_coe_lieModuleHom f⟩
     simpa using congrArg (fun Φ : LinearMap.BilinForm R M => Φ m) h
 
 end CommRing

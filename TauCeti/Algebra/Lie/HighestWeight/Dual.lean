@@ -32,9 +32,9 @@ with `w₀` the longest element of the Weyl group.
 (`TauCeti.genWeightSpace_longestElement_smul_sub_root_eq_bot`).
 
 A functional that vanishes on every weight space except the lowest one is then a highest weight
-vector of `M*` of weight `-(w₀ • lam)`. Its weight is read off the honest weight-space
-decomposition of Layer 2, and a positive root space kills it because raising a weight into
-`w₀ • lam` would have to start below `w₀ • lam`, where `M` is zero.
+vector of `M*` of weight `-(w₀ • lam)`. Its weight is read off the decomposition of `M` into
+weight spaces, and a positive root space kills it because raising a weight into `w₀ • lam` would
+have to start below `w₀ • lam`, where `M` is zero.
 
 ## The criterion
 
@@ -42,6 +42,15 @@ decomposition of Layer 2, and a positive root space kills it because raising a w
 highest weight modules by their weight turns the existence of an equivalence `M ≃ M*` into the
 equation `-(w₀ • lam) = lam`; and a nonzero invariant bilinear form on `M` is exactly a nonzero
 morphism `M → M*`, which by Schur's lemma is an equivalence.
+
+## The criterion at `L(lam)`
+
+The criterion is not available at the named carrier `L(lam)` from dominance of `lam` alone. That
+form would entail `M(lam) ≠ 0` for every dominant integral `lam` with `-(w₀ • lam) = lam`, since
+for such a `lam` it produces a nonzero bilinear form on `L(lam)`, and the zero module carries none.
+That nonvanishing is the freeness half of Poincaré--Birkhoff--Witt, isolated as the hypothesis
+`vermaGenerator b lam ≠ 0` in `TauCeti/Algebra/Lie/HighestWeight/Verma.lean`, so the specialization
+below carries it explicitly.
 
 ## Main results
 
@@ -55,21 +64,6 @@ morphism `M → M*`, which by Schur's lemma is an equivalence.
   nonvanishing input.
 
 ## References
-
-This file supplies the carrier-independent self-duality theorem required by the "self-duality of
-`L(λ)`" coverage target `exists_invariantForm_iff_neg_longest_smul_eq` of
-`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/Suggested.lean`. The roadmap's Layer 6
-records that target as the interface the Frobenius-Schur indicator of Layer 6b of
-`TauCetiRoadmap/RepresentationTheory/CompactGroups/Suggested.lean` consumes. The pinned statement
-phrases `w₀` as "a Weyl element carrying the dominant cone to its negative" so as not to import a
-length function; `TauCeti.longestElement` is that element, so it is used directly here.
-
-This does not close the pinned target, which asks for the criterion at `L(lam)` from dominance
-alone. That form entails `M(lam) ≠ 0` for every dominant integral `lam` with `-(w₀ • lam) = lam`,
-since for such a `lam` it produces a nonzero bilinear form on `L(lam)`, and the zero module carries
-none. The nonvanishing is the freeness half of Poincaré--Birkhoff--Witt, isolated as a hypothesis in
-`TauCeti/Algebra/Lie/HighestWeight/Verma.lean` and assigned to the roadmap's separate Layer 3 PBW
-work. The conditional named-carrier specialization below makes that missing input explicit.
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §21.6.
 * N. Bourbaki, *Groupes et algèbres de Lie*, Chapitre VIII, §7.5.
@@ -170,10 +164,9 @@ theorem nonempty_lieModuleEquiv_dual_iff (hv : IsHighestWeightVector b lam v) :
 module with highest weight `lam` carries a nonzero invariant bilinear form exactly when
 `-(w₀ • lam) = lam`.
 
-The roadmap pins the criterion against "a Weyl element carrying the dominant cone to its negative".
-`TauCeti.IsDominantIntegral.neg_longestElement_smul` is the pointwise form of that reading for `w₀`:
-whenever `lam` is dominant integral, so is `-(w₀ • lam)`, that is, `w₀ • lam` lands in the negative
-of the dominant integral weights. -/
+`TauCeti.IsDominantIntegral.neg_longestElement_smul` records the pointwise reading of `w₀` behind
+this: whenever `lam` is dominant integral, so is `-(w₀ • lam)`, that is, `w₀ • lam` lands in the
+negative of the dominant integral weights. -/
 theorem exists_ne_zero_lieInvariant_iff_neg_longestElement_smul_eq
     (hv : IsHighestWeightVector b lam v) :
     (∃ Φ : LinearMap.BilinForm K M, Φ ≠ 0 ∧ Φ.lieInvariant L) ↔
