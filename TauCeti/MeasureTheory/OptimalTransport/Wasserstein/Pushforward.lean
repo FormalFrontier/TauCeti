@@ -148,8 +148,11 @@ theorem wassersteinEDist_map_eq
     wassersteinEDist p (μ.map e) (ν.map e) = wassersteinEDist p μ ν := by
   let ei : X ≃ᵢ Y := { e.toEquiv with isometry_toFun := he }
   have hdX : Measurable fun z : X × X ↦ edist z.1 z.2 := by
-    rw [← show (fun z : Y × Y ↦ edist z.1 z.2) ∘ Prod.map e e =
-      (fun z : X × X ↦ edist z.1 z.2) by funext z; exact he.edist_eq z.1 z.2]
+    have hdist_comp : (fun z : Y × Y ↦ edist z.1 z.2) ∘ Prod.map e e =
+        fun z : X × X ↦ edist z.1 z.2 := by
+      funext z
+      exact he.edist_eq z.1 z.2
+    rw [← hdist_comp]
     exact hdY.comp (e.measurable.prodMap e.measurable)
   have hforward : wassersteinEDist p (μ.map e) (ν.map e) ≤ wassersteinEDist p μ ν := by
     have h := wassersteinEDist_map_le_mul_of_ne_zero (p := p) hdY e.measurable
@@ -173,8 +176,11 @@ theorem hasFiniteMoment_map_iff
     HasFiniteMoment p (μ.map e) ↔ HasFiniteMoment p μ := by
   let ei : X ≃ᵢ Y := { e.toEquiv with isometry_toFun := he }
   have hdX : ∀ x : X, Measurable fun z : X ↦ edist x z := fun x ↦ by
-    rw [← show (fun y : Y ↦ edist (e x) y) ∘ e =
-      (fun z : X ↦ edist x z) by funext z; exact he.edist_eq x z]
+    have hdist_comp : (fun y : Y ↦ edist (e x) y) ∘ e =
+        fun z : X ↦ edist x z := by
+      funext z
+      exact he.edist_eq x z
+    rw [← hdist_comp]
     exact (hdY (e x)).comp e.measurable
   refine ⟨fun h ↦ ?_, fun h ↦ h.map hdY e.measurable ei.isometry.lipschitzWith⟩
   have hm : (μ.map e).map e.symm = μ := e.map_symm_map
