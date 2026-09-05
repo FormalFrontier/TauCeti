@@ -7,6 +7,7 @@ module
 
 public import TauCeti.RingTheory.Huber.PowerBounded
 public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Basic
+public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.PairOfDefinition
 
 /-!
 # Power-bounded elements of `A⟨X₁, …, Xₖ⟩_T`
@@ -19,6 +20,11 @@ exhibit elements of that plus ring rather than determining it.
 Neither result needs the trivial weight family. The constant result holds for every weight family;
 the variable result needs only `1 ∈ T i`, which the trivial family satisfies.
 
+Both carry over to the separated completion, where the generators of `A⟨X₁,…,Xₖ⟩` are what
+Wedhorn's Proposition 5.50 asks to be power-bounded when the completed algebra is the target of a
+continuous ring homomorphism. That step needs `A` to be Huber, which the uncompleted statements do
+not.
+
 ## Main results
 
 * `TauCeti.Huber.isPowerBounded_weightedX`: the variable `Xᵢ` is power-bounded whenever `1 ∈ T i`,
@@ -28,6 +34,11 @@ the variable result needs only `1 ∈ T i`, which the trivial family satisfies.
   `A⟨X⟩_T`, for every weight family.
 * `TauCeti.Huber.closure_weightedC_weightedX_le_powerBoundedSubring`: the inclusion itself, as a
   containment of subrings.
+* `TauCeti.Huber.isPowerBounded_coe_weightedC` and `TauCeti.Huber.isPowerBounded_coe_weightedX`:
+  the same two statements about the images of the generators in the separated completion of
+  `A⟨X⟩_T`, over a Huber base, with
+  `TauCeti.Huber.isPowerBounded_coe_weightedX_one_weight` the unconditional trivial-weight case in
+  `A⟨X₁,…,Xₖ⟩`.
 
 ## References
 
@@ -143,6 +154,40 @@ theorem closure_weightedC_weightedX_le_powerBoundedSubring {T : Fin k → Set A}
   · exact mem_powerBoundedSubring.mpr
       (isPowerBounded_weightedC hT (mem_powerBoundedSubring.mp ha))
   · exact mem_powerBoundedSubring.mpr (isPowerBounded_weightedX hT (hi i))
+
+/-! ### In the completion -/
+
+section Completion
+
+variable [IsHuberRing A]
+
+/-- **A power-bounded constant stays power-bounded in the completion of `A⟨X⟩_T`.** -/
+theorem isPowerBounded_coe_weightedC {T : Fin k → Set A} (hT : IsWeightFamily T) {a : A}
+    (ha : IsPowerBounded a) :
+    IsPowerBounded ((weightedC T hT a : weightedRestrictedSubring T hT) :
+      UniformSpace.Completion (weightedRestrictedSubring T hT)) :=
+  isPowerBounded_completion_coe_of_isPowerBounded (isPowerBounded_weightedC hT ha)
+
+/-- **The variable `Xᵢ` is power-bounded in the completion of `A⟨X⟩_T`** whenever `1 ∈ T i`. -/
+theorem isPowerBounded_coe_weightedX {T : Fin k → Set A} (hT : IsWeightFamily T) {i : Fin k}
+    (hi : (1 : A) ∈ T i) :
+    IsPowerBounded ((weightedX T hT i : weightedRestrictedSubring T hT) :
+      UniformSpace.Completion (weightedRestrictedSubring T hT)) :=
+  isPowerBounded_completion_coe_of_isPowerBounded (isPowerBounded_weightedX hT hi)
+
+/-- **The variable `Xᵢ` is power-bounded in `A⟨X₁,…,Xₖ⟩`**, the trivial-weight case, which is the
+one the universal property of the completed algebra is applied at.
+
+`@[simp]` because it is unconditional, matching
+`TauCeti.Huber.isPowerBounded_weightedX_one_weight` on the uncompleted ring. -/
+@[simp]
+theorem isPowerBounded_coe_weightedX_one_weight (i : Fin k) :
+    IsPowerBounded ((weightedX (fun _ : Fin k ↦ ({1} : Set A)) isWeightFamily_one_weight i :
+        weightedRestrictedSubring (fun _ : Fin k ↦ ({1} : Set A)) isWeightFamily_one_weight) :
+      restrictedMvPowerSeriesCompletion k A) :=
+  isPowerBounded_coe_weightedX isWeightFamily_one_weight rfl
+
+end Completion
 
 end TauCeti.Huber
 
