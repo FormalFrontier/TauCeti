@@ -100,15 +100,7 @@ inside the ideal `T · A` and so offers coefficients in `A` about which nothing 
 sharpening is what a valuation-theoretic estimate needs: over a point of the adic spectrum a
 coefficient in `A` carries no bound at all, whereas one in `I` has value `< 1` (an element of `I`
 is topologically nilpotent), so the whole combination is *strictly* dominated by the largest
-`v t`.
-
-The proof pushes the loss of control into the exponent. Fix `m` with `(I · A)ᵐ ≤ T · A` and a
-finite generating set `G` of `Iᵐ`; each `z ∈ G` is a combination `∑ t ∈ T, t * d z t` with
-coefficients `d z t` in `A`. Multiplication by `d z t` is continuous and the images of the powers
-of `I` are a neighbourhood basis of zero, so a high enough power `I^(N z t)` is carried by `d z t`
-into `I`. Taking `n = m + K` for `K` the maximum of those finitely many exponents, an element of
-`Iⁿ` is `∑ z ∈ G, z * c z` with each `c z ∈ I^K`, and regrouping over `T` gives coefficients
-`∑ z ∈ G, d z t * c z` in `I`. -/
+`v t`. -/
 theorem exists_forall_mem_idealImage_exists_sum_eq (P : PairOfDefinition A) (T : Finset A)
     (hT : IsOpen (Ideal.span (T : Set A) : Set A)) :
     ∃ n : ℕ, ∀ a ∈ P.idealImage n, ∃ w : A → A,
