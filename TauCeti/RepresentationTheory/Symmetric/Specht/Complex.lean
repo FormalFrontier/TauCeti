@@ -65,6 +65,8 @@ complex characters of `Sₙ` are exactly the `χ^μ`.
 
 * [G. D. James, *The Representation Theory of the Symmetric Groups*][james1978], Chapter 4.
 * B. E. Sagan, *The Symmetric Group*, 2nd ed. (2001), Section 2.4.
+* [Schur--Weyl roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SchurWeyl/README.md),
+  Layer 4, "Absolute irreducibility" and "Distinctness and completeness".
 -/
 
 public section
