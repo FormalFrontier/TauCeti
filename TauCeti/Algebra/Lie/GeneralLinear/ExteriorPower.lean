@@ -401,12 +401,11 @@ private theorem lie_basisPath_succ (d n k : ℕ) (h : d ≤ n) (hk : k < d)
     (basisPath d n h s (k + 1)) (basisPath d n h s k)
     (basisPath_strictMono d n h s (k + 1)) a
     (Set.powersetCard.ofFinEmbEquiv.symm s ⟨k, hk⟩)
-  funext l
-  by_cases hla : l = a
-  · subst l
-    simp [Function.update, basisPath, a]
-  · have hlk : l.val ≠ k := fun hlk ↦ hla (Fin.ext hlk)
-    rw [Function.update_of_ne hla, basisPath_succ_eq_of_ne d n k h hk s a l hla rfl]
+  refine Function.update_eq_iff.2 ⟨?_, ?_⟩
+  · simp [basisPath, a]
+  · intro l hla
+    have hlk : l.val ≠ k := fun hlk ↦ hla (Fin.ext hlk)
+    exact basisPath_succ_eq_of_ne d n k h hk s a l hla rfl
 
 private theorem basisWedge_mem_of_first_mem (d n : ℕ) (h : d ≤ n)
     (N : LieSubmodule K (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)))
@@ -453,12 +452,11 @@ private theorem lie_basisPath_reverse (d n k : ℕ) (h : d ≤ n) (hk : k < d)
     (basisPath d n h s k) (basisPath d n h s (k + 1))
     (basisPath_strictMono d n h s k) a
     (Fin.castLE h ⟨k, hk⟩)
-  funext l
-  by_cases hla : l = a
-  · subst l
-    simp [Function.update, basisPath, a]
-  · have hlk : l.val ≠ k := fun hlk ↦ hla (Fin.ext hlk)
-    rw [Function.update_of_ne hla, (basisPath_succ_eq_of_ne d n k h hk s a l hla rfl).symm]
+  refine Function.update_eq_iff.2 ⟨?_, ?_⟩
+  · simp [basisPath, a]
+  · intro l hla
+    have hlk : l.val ≠ k := fun hlk ↦ hla (Fin.ext hlk)
+    exact (basisPath_succ_eq_of_ne d n k h hk s a l hla rfl).symm
 
 private theorem first_mem_of_basisWedge_mem (d n : ℕ) (h : d ≤ n)
     (N : LieSubmodule K (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)))
@@ -562,6 +560,12 @@ private noncomputable def diagonalProjector (d n : ℕ)
     (s : Set.powersetCard (Fin n) d) : Module.End K (⋀[K]^d (Fin n → K)) :=
   ((List.ofFn id).map fun i : Fin n ↦ diagonalFactor (K := K) d n s i).prod
 
+private theorem diagonalProjector_coeff_eq_one (d n : ℕ)
+    (s : Set.powersetCard (Fin n) d) :
+    ((List.ofFn id).map fun j : Fin n ↦
+      if (j ∈ s.1) = (j ∈ s.1) then (1 : K) else 0).prod = 1 := by
+  simp
+
 private theorem diagonalProjector_apply (d n : ℕ)
     (s t : Set.powersetCard (Fin n) d) :
     diagonalProjector (K := K) d n s
@@ -585,6 +589,7 @@ private theorem diagonalProjector_apply (d n : ℕ)
   rw [diagonalProjector, hprod]
   by_cases hst : s = t
   · subst t
+    rw [diagonalProjector_coeff_eq_one]
     simp
   · obtain ⟨i, his, hit⟩ :=
       (Set.powersetCard.exists_mem_notMem_iff_ne s t).mp hst
