@@ -143,8 +143,10 @@ variable (rho : ContRepresentation k G V) (hrho : Continuous rho)
 
 include hrho
 
-/-- **The character isotypic projector.** This is the action on `rho` of
-`dim(sigma) · conj(character sigma)`, packaged as a continuous self-intertwiner. -/
+/-- **The normalized character operator.** This is the action on `rho` of
+`dim(sigma) · conj(character sigma)`, packaged as a continuous self-intertwiner. When `sigma` is
+irreducible and the finite-dimensional representation `rho` is unitary, this operator is the
+isotypic projector onto the component of type `sigma`. -/
 noncomputable def isotypicProjector (sigma : ContRepresentation k G W)
     (hsigma : Continuous sigma) : ContIntertwiningMap rho rho where
   __ := integratedOperator rho hrho (isotypicKernel sigma hsigma)
@@ -476,6 +478,26 @@ theorem range_isotypicProjector (hunitary : IsUnitary rho)
     have happly := isotypicProjector_apply_subtype_of_equiv rho hrho hunitary sigma hsigma htau he
       (⟨x, hx⟩ : tau.toSubmodule)
     exact ⟨x, happly⟩
+
+/-- A vector belongs to the selected isotypic component exactly when the character projector fixes
+it. -/
+@[simp]
+theorem mem_isotypicComponent_iff_isotypicProjector_apply (hunitary : IsUnitary rho)
+    (sigma : ContRepresentation k G W) (hsigma : Continuous sigma)
+    (hirr : Representation.IsIrreducible sigma.toRepresentation) (v : V) :
+    rho.toRepresentation.asModuleEquiv.symm v ∈
+        isotypicComponent k[G] rho.toRepresentation.asModule sigma.toRepresentation.asModule ↔
+      isotypicProjector rho hrho sigma hsigma v = v := by
+  constructor
+  · exact isotypicProjector_apply_of_mem_isotypicComponent rho hrho hunitary sigma hsigma hirr v
+  · intro hfix
+    have hmem : v ∈ (isotypicProjector rho hrho sigma hsigma).toIntertwiningMap.range :=
+      (Representation.IntertwiningMap.mem_range _ _ _ _).mpr ⟨v, hfix⟩
+    have hrange : rho.toRepresentation.asModuleEquiv.symm v ∈
+        (isotypicProjector rho hrho sigma hsigma).toIntertwiningMap.range.asSubmodule :=
+      (Subrepresentation.mem_asSubmodule_iff
+        (σ := (isotypicProjector rho hrho sigma hsigma).toIntertwiningMap.range)).mpr hmem
+    rwa [range_isotypicProjector rho hrho hunitary sigma hsigma hirr] at hrange
 
 /-- The character isotypic projector is idempotent. -/
 @[simp]
