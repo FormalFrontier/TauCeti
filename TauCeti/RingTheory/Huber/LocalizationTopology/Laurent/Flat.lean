@@ -18,8 +18,8 @@ the elementary case of **Wedhorn's Proposition 8.30** at the ring level — is `
 adjoins the single numerator `t`.
 
 The enlargement `T ⊆ T'` is then reached one numerator at a time. That chain result carries the
-hypotheses its induction needs: `s` topologically nilpotent, and every *proper* intermediate
-`A⟨U/s⟩` strongly noetherian. It is therefore **not** Wedhorn's Proposition 8.30, which assumes
+hypotheses its induction needs: `s` topologically nilpotent, and `A⟨U/s⟩` strongly noetherian for
+every `U` with `T ⊆ U ⊂ T'`. It is therefore **not** Wedhorn's Proposition 8.30, which assumes
 strong noetherianity of `A` alone; see *What this is not*.
 
 The argument runs in three steps. Over a complete noetherian Tate ring `B` the quotient
@@ -43,16 +43,17 @@ tower.
   form.
 * `TauCeti.Huber.PairOfDefinition.flat_restrictionRingHomOfSubset_of_forall_isStronglyNoetherian`
   : the chain form — the restriction map of an arbitrary enlargement `T ⊆ T'` is flat, **assuming
-  strong noetherianity of every intermediate `A⟨U/s⟩`**. That family hypothesis is what separates
-  this from Wedhorn's Proposition 8.30, which assumes it of `A` alone; see *What this is not*.
+  `A⟨U/s⟩` strongly noetherian for every `U` with `T ⊆ U ⊂ T'`**. That family hypothesis is what
+  separates this from Wedhorn's Proposition 8.30, which assumes it of `A` alone; see *What this is
+  not*.
 
 ## What this is not
 
 The chain result is **not** Wedhorn's Proposition 8.30 as he states it. His standing hypothesis is
-that `A` is strongly noetherian; ours is that every intermediate `A⟨U/s⟩` is. The two coincide once
-rational localisations of a strongly noetherian ring are known to be strongly noetherian again —
-the standing hypothesis of his §8.2, which this repository has not formalised. Until then the
-family hypothesis is carried rather than derived, and the theorem is named for what it assumes.
+that `A` is strongly noetherian; the hypothesis here is that `A⟨U/s⟩` is, for every `U` with
+`T ⊆ U ⊂ T'`. What separates the two is the standing hypothesis of Wedhorn's §8.2 — that rational
+localisations of a strongly noetherian ring are again strongly noetherian. The family hypothesis
+is carried rather than derived from that, and the theorem is named for what it assumes.
 
 The elementary case is unaffected: it needs strong noetherianity only at its own base, which is
 where Lemma 8.31 needs it too.
@@ -256,7 +257,9 @@ three presentations does not fit inside it. The mathematical content is Mathlib'
 `TauCeti.Huber.PairOfDefinition.restrictionRingHomOfSubset_comp_restrictionRingHomOfSubset`. -/
 private theorem flat_comp_restrictionRingHomOfSubset (P : PairOfDefinition A) (T : Finset A)
     (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
-    (hden : HasDenominatorPower P T s S) (U V : Finset A) (hTU : T ⊆ U) (hUV : U ⊆ V)
+    (hden : HasDenominatorPower P T s S) (U : Finset A) (hTU : T ⊆ U) (V : Finset A)
+    (SV : Type*) [CommRing SV] [Algebra A SV] [IsLocalization.Away s SV]
+    (hdenV : HasDenominatorPower P V s SV) (hUV : U ⊆ V)
     (h₁ : letI := locUniformSpace P T s S hden
       letI := isUniformAddGroup_locUniformSpace P T s S hden
       letI := isTopologicalRing_locUniformSpace P T s S hden
@@ -267,31 +270,62 @@ private theorem flat_comp_restrictionRingHomOfSubset (P : PairOfDefinition A) (T
     (h₂ : letI := locUniformSpace P U s S (hden.mono hTU)
       letI := isUniformAddGroup_locUniformSpace P U s S (hden.mono hTU)
       letI := isTopologicalRing_locUniformSpace P U s S (hden.mono hTU)
-      letI := locUniformSpace P V s S (hden.mono (hTU.trans hUV))
-      letI := isUniformAddGroup_locUniformSpace P V s S (hden.mono (hTU.trans hUV))
-      letI := isTopologicalRing_locUniformSpace P V s S (hden.mono (hTU.trans hUV))
-      (restrictionRingHomOfSubset P U s S (hden.mono hTU) V S
-        (hden.mono (hTU.trans hUV)) hUV).Flat) :
+      letI := locUniformSpace P V s SV hdenV
+      letI := isUniformAddGroup_locUniformSpace P V s SV hdenV
+      letI := isTopologicalRing_locUniformSpace P V s SV hdenV
+      (restrictionRingHomOfSubset P U s S (hden.mono hTU) V SV hdenV hUV).Flat) :
     letI := locUniformSpace P T s S hden
     letI := isUniformAddGroup_locUniformSpace P T s S hden
     letI := isTopologicalRing_locUniformSpace P T s S hden
-    letI := locUniformSpace P V s S (hden.mono (hTU.trans hUV))
-    letI := isUniformAddGroup_locUniformSpace P V s S (hden.mono (hTU.trans hUV))
-    letI := isTopologicalRing_locUniformSpace P V s S (hden.mono (hTU.trans hUV))
-    (restrictionRingHomOfSubset P T s S hden V S
-      (hden.mono (hTU.trans hUV)) (hTU.trans hUV)).Flat := by
+    letI := locUniformSpace P V s SV hdenV
+    letI := isUniformAddGroup_locUniformSpace P V s SV hdenV
+    letI := isTopologicalRing_locUniformSpace P V s SV hdenV
+    (restrictionRingHomOfSubset P T s S hden V SV hdenV (hTU.trans hUV)).Flat := by
   let _ := locUniformSpace P T s S hden
   have _ := isUniformAddGroup_locUniformSpace P T s S hden
   have _ := isTopologicalRing_locUniformSpace P T s S hden
   let _ := locUniformSpace P U s S (hden.mono hTU)
   have _ := isUniformAddGroup_locUniformSpace P U s S (hden.mono hTU)
   have _ := isTopologicalRing_locUniformSpace P U s S (hden.mono hTU)
-  let _ := locUniformSpace P V s S (hden.mono (hTU.trans hUV))
-  have _ := isUniformAddGroup_locUniformSpace P V s S (hden.mono (hTU.trans hUV))
-  have _ := isTopologicalRing_locUniformSpace P V s S (hden.mono (hTU.trans hUV))
+  let _ := locUniformSpace P V s SV hdenV
+  have _ := isUniformAddGroup_locUniformSpace P V s SV hdenV
+  have _ := isTopologicalRing_locUniformSpace P V s SV hdenV
   have hcomp := RingHom.Flat.comp h₁ h₂
   rwa [restrictionRingHomOfSubset_comp_restrictionRingHomOfSubset P T s S hden U S
-    (hden.mono hTU) hTU V S (hden.mono (hTU.trans hUV)) hUV] at hcomp
+    (hden.mono hTU) hTU V SV hdenV hUV] at hcomp
+
+/-- **Changing the localization that carries a presentation.** Two presentations with the same
+numerators are compared by restriction maps that are mutually inverse, so each is bijective and
+therefore flat. This is what lets the chain below end at an arbitrary localization of `T'` instead
+of the one its induction runs on. -/
+private theorem flat_restrictionRingHomOfSubset_self' (P : PairOfDefinition A) (T : Finset A)
+    (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
+    (hden : HasDenominatorPower P T s S)
+    (S' : Type*) [CommRing S'] [Algebra A S'] [IsLocalization.Away s S']
+    (hden' : HasDenominatorPower P T s S') :
+    letI := locUniformSpace P T s S hden
+    letI := isUniformAddGroup_locUniformSpace P T s S hden
+    letI := isTopologicalRing_locUniformSpace P T s S hden
+    letI := locUniformSpace P T s S' hden'
+    letI := isUniformAddGroup_locUniformSpace P T s S' hden'
+    letI := isTopologicalRing_locUniformSpace P T s S' hden'
+    (restrictionRingHomOfSubset P T s S hden T S' hden' fun _ hu ↦ hu).Flat := by
+  let _ := locUniformSpace P T s S hden
+  have _ := isUniformAddGroup_locUniformSpace P T s S hden
+  have _ := isTopologicalRing_locUniformSpace P T s S hden
+  let _ := locUniformSpace P T s S' hden'
+  have _ := isUniformAddGroup_locUniformSpace P T s S' hden'
+  have _ := isTopologicalRing_locUniformSpace P T s S' hden'
+  have h : (restrictionRingHomOfSubset P T s S' hden' T S hden fun _ hu ↦ hu).comp
+      (restrictionRingHomOfSubset P T s S hden T S' hden' fun _ hu ↦ hu) = RingHom.id _ := by
+    simp
+  have h' : (restrictionRingHomOfSubset P T s S hden T S' hden' fun _ hu ↦ hu).comp
+      (restrictionRingHomOfSubset P T s S' hden' T S hden fun _ hu ↦ hu) = RingHom.id _ := by
+    simp
+  refine RingHom.Flat.of_bijective (Function.bijective_iff_has_inverse.mpr
+    ⟨restrictionRingHomOfSubset P T s S' hden' T S hden fun _ hu ↦ hu, fun x ↦ ?_, fun x ↦ ?_⟩)
+  · simpa only [RingHom.comp_apply, RingHom.id_apply] using DFunLike.congr_fun h x
+  · simpa only [RingHom.comp_apply, RingHom.id_apply] using DFunLike.congr_fun h' x
 
 /-- The induction behind Proposition 8.30: every numerator set reached from `T` by adjoining
 elements of `T' \ T` gives a coordinate ring flat over `A⟨T/s⟩`. The base case is the
@@ -344,31 +378,33 @@ private theorem flat_restrictionRingHomOfSubset_union [DecidableEq A]
         fun h ↦ (Finset.mem_sdiff.mp (hWsub h)).1,
         fun hall ↦ (Finset.mem_union.mp (hall ha.1)).elim ha.2 haW⟩
     -- the previous step, then the elementary step onto it; flat ring maps compose
-    exact flat_comp_restrictionRingHomOfSubset P T s S hden (T ∪ W) (insert a (T ∪ W)) hTU hUV
-      (ih (T ∪ W) rfl hWsub hTU)
+    exact flat_comp_restrictionRingHomOfSubset P T s S hden (T ∪ W) hTU (insert a (T ∪ W)) S
+      (hden.mono hV) hUV (ih (T ∪ W) rfl hWsub hTU)
       (flat_restrictionRingHomOfSubset_of_isStronglyNoetherian P (T ∪ W) s a S
         (hden.mono hTU) (insert a (T ∪ W)) S (hden.mono hV) hUV (Finset.mem_insert_self _ _)
         (fun u hu ↦ (Finset.mem_insert.mp hu).symm.imp id id) hnil (hSN (T ∪ W) hTU hlt))
 
-/-- **The chain form of Proposition 8.30, with strong noetherianity assumed at every intermediate
-presentation**: the restriction map `A⟨T/s⟩ → A⟨T'/s⟩` of an arbitrary enlargement is flat.
+/-- **The chain form of Proposition 8.30, with strong noetherianity assumed at every proper
+intermediate presentation**: the restriction map `A⟨T/s⟩ → A⟨T'/s⟩` of an arbitrary enlargement is
+flat.
 
-**This is not yet Wedhorn's Proposition 8.30, and should not be cited as it.** He assumes strong
-noetherianity of `A` alone; the hypothesis `hSN` here asks it of every intermediate `A⟨U/s⟩`. The
-gap between them is exactly the standing hypothesis of his §8.2 — that rational localisations of a
-strongly noetherian ring are again strongly noetherian — which is **not formalised here**. Once it
-is, each `hSN` follows from the single assumption on `A` and this becomes his statement verbatim.
+**This is not Wedhorn's Proposition 8.30, and should not be cited as it.** He assumes strong
+noetherianity of `A` alone; `hSN` here asks it of `A⟨U/s⟩` for every `U` with `T ⊆ U ⊂ T'`. What
+separates the two is the standing hypothesis of his §8.2 — that rational localisations of a
+strongly noetherian ring are again strongly noetherian — which `hSN` assumes case by case rather
+than deriving.
 
 Any `T ⊆ T'` is reached from `T` by adjoining the elements of `T' \ T` one at a time, each step is
 `TauCeti.Huber.PairOfDefinition.flat_restrictionRingHomOfSubset_of_isStronglyNoetherian`, and
 flatness composes. The intermediate presentations all live on the one localisation `S`, at the
 uniformity their own numerator set determines; `TauCeti.Huber.HasDenominatorPower.mono` supplies
-each of their standing hypotheses from the one at `T`.
+each of their standing hypotheses from the one at `T`. The target `S'` is arbitrary: the chain is
+run on `S` and then compared with `S'` by the restriction map between two presentations of `T'`,
+which is bijective.
 
-Strong noetherianity is asked of every intermediate `A⟨U/s⟩`, not only of `A⟨T/s⟩`: the elementary
-step needs it at its own base, and it does not descend along an enlargement. Wedhorn has it from
-the standing hypothesis of his §8.2 — that rational localisations of a strongly noetherian ring
-are again strongly noetherian — which is not formalised here. -/
+The range `T ⊆ U ⊂ T'` is exactly what the induction consumes. Strong noetherianity is needed at
+each `U` because the elementary step needs it at its own base and it does not descend along an
+enlargement; the endpoint `T'` is excluded because the identity enlargement assumes nothing. -/
 theorem flat_restrictionRingHomOfSubset_of_forall_isStronglyNoetherian
     (hnil : IsTopologicallyNilpotent s)
     (hSN : ∀ (U : Finset A) (hU : T ⊆ U), U ⊂ T' →
@@ -380,16 +416,18 @@ theorem flat_restrictionRingHomOfSubset_of_forall_isStronglyNoetherian
     letI := locUniformSpace P T s S hden
     letI := isUniformAddGroup_locUniformSpace P T s S hden
     letI := isTopologicalRing_locUniformSpace P T s S hden
-    letI := locUniformSpace P T' s S (hden.mono hTT')
-    letI := isUniformAddGroup_locUniformSpace P T' s S (hden.mono hTT')
-    letI := isTopologicalRing_locUniformSpace P T' s S (hden.mono hTT')
-    (restrictionRingHomOfSubset P T s S hden T' S (hden.mono hTT') hTT').Flat := by
+    letI := locUniformSpace P T' s S' hden'
+    letI := isUniformAddGroup_locUniformSpace P T' s S' hden'
+    letI := isTopologicalRing_locUniformSpace P T' s S' hden'
+    (restrictionRingHomOfSubset P T s S hden T' S' hden' hTT').Flat := by
   classical
   let _ := locUniformSpace P T s S hden
   have _ := isUniformAddGroup_locUniformSpace P T s S hden
   have _ := isTopologicalRing_locUniformSpace P T s S hden
-  exact flat_restrictionRingHomOfSubset_union P T s S hden T' hTT' hnil hSN (T' \ T) T'
-    (Finset.union_sdiff_of_subset hTT').symm le_rfl hTT'
+  exact flat_comp_restrictionRingHomOfSubset P T s S hden T' hTT' T' S' hden' le_rfl
+    (flat_restrictionRingHomOfSubset_union P T s S hden T' hTT' hnil hSN (T' \ T) T'
+      (Finset.union_sdiff_of_subset hTT').symm le_rfl hTT')
+    (flat_restrictionRingHomOfSubset_self' P T' s S (hden.mono hTT') S' hden')
 
 
 end PairOfDefinition
