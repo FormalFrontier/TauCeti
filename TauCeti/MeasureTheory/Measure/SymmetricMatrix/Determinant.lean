@@ -15,19 +15,14 @@ The determinant is a polynomial in the upper-triangular coordinates, and it is n
 the identity matrix has determinant one. The zero locus of a nonzero polynomial is
 Lebesgue-null, so the singular symmetric matrices are `TauCeti.symmetricLebesgue`-null.
 
-The standard-distributions roadmap uses this for the singularity of the degenerate
-Gaussian-Gram Wishart laws with respect to `symmetricLebesgue`.
+This is what makes the degenerate Gaussian-Gram Wishart laws singular with respect to
+`symmetricLebesgue`.
 
 ## Main declarations
 
 * `TauCeti.measurableSet_setOfPred_det_eq_zero` — the singular matrices are measurable.
 * `TauCeti.symmetricLebesgue_setOf_det_eq_zero` — the singular matrices are
   `symmetricLebesgue`-null.
-
-## References
-
-* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 6, item 1,
-  **Symmetric matrices and their Lebesgue measure**.
 -/
 
 public section
@@ -40,7 +35,6 @@ namespace TauCeti
 
 /-- The determinant of a symmetric matrix, read through the upper-triangular coordinates as a
 polynomial. -/
-@[expose]
 def symmetricDetPolynomial (p : ℕ) : MvPolynomial (upperTriangle p) ℝ :=
   (Matrix.of fun i j : Fin p =>
     if h : i ≤ j then MvPolynomial.X ⟨(i, j), h⟩

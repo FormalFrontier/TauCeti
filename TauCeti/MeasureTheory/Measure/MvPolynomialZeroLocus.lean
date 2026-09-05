@@ -15,22 +15,14 @@ public import Mathlib.Topology.Algebra.MvPolynomial
 /-!
 # The zero locus of a nonzero multivariate polynomial is Lebesgue-null
 
-A nonzero polynomial in finitely many real variables vanishes on a Lebesgue-null set. The proof
-peels off one variable: after separating a variable with `MvPolynomial.finSuccEquiv`, some
-coefficient polynomial is nonzero, so by induction almost every choice of the remaining
-variables leaves a nonzero one-variable polynomial, whose finitely many roots are null; Fubini
-for the product measure combines the two.
+A nonzero polynomial in finitely many real variables vanishes on a Lebesgue-null set.
+Determinants and minors are polynomials in the entries of a matrix, so this shows that generic
+polynomial conditions, such as nonsingularity, hold almost everywhere.
 
 ## Main declarations
 
 * `TauCeti.MvPolynomial.volume_setOfPred_eval_eq_zero` — the zero locus of a nonzero
   `MvPolynomial ι ℝ` is `volume`-null in `ι → ℝ`.
-
-## References
-
-* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 6, item 1,
-  **Symmetric matrices and their Lebesgue measure** (the polynomial-zero-locus infrastructure
-  for the singularity of degenerate Wishart laws).
 -/
 
 public section
@@ -83,10 +75,14 @@ private theorem volume_setOfPred_eval_eq_zero_fin :
         {y : ℝ | Polynomial.eval y (Polynomial.map (MvPolynomial.eval s) Q) = 0} := by
       intro s
       ext y
+      -- Rewriting with `MvPolynomial.eval_eq_eval_mv_eval'` needs the evaluation point in
+      -- `Fin.cons` form, which `simp` does not produce inside the `MvPolynomial.eval`
+      -- application, so the equivalence is evaluated separately first.
+      have happ : ((MeasurableEquiv.piFinSuccAbove (fun _ : Fin (n + 1) => ℝ) 0).symm (y, s)
+          : Fin (n + 1) → ℝ) = Fin.cons y s := by
+        simp [Fin.consEquiv]
       simp only [hTdef, Set.mem_preimage, Set.mem_ofPred_eq]
-      rw [show ((MeasurableEquiv.piFinSuccAbove (fun _ : Fin (n + 1) => ℝ) 0).symm (y, s)
-            : Fin (n + 1) → ℝ) = Fin.cons y s by simp [Fin.consEquiv],
-        MvPolynomial.eval_eq_eval_mv_eval' s y P, hQdef]
+      rw [happ, MvPolynomial.eval_eq_eval_mv_eval' s y P, hQdef]
     have hae : (fun s : Fin n → ℝ => volume ((fun y : ℝ => (y, s)) ⁻¹' T)) =ᵐ[volume] 0 := by
       filter_upwards [compl_mem_ae_iff.2 (ih (Q.coeff Q.natDegree) hk)] with s hs
       have hs' : MvPolynomial.eval s (Q.coeff Q.natDegree) ≠ 0 := hs

@@ -20,7 +20,7 @@ public import Mathlib.Topology.UniformSpace.Matrix
 /-!
 # The carrier of symmetric-matrix distributions
 
-The symmetric-matrix distributions of the standard-distributions roadmap live on Mathlib's
+The Wishart and related symmetric-matrix distributions live on Mathlib's
 self-adjoint subspace `selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)`. Over `ℝ`, `star` is
 transpose, so this is exactly the subspace of symmetric matrices, and
 `Matrix.isHermitian_iff_isSelfAdjoint` connects membership to the spectral API.
@@ -46,11 +46,6 @@ subspace: `TauCeti.symmetricCoordinates` reads off the entries above the diagona
 * `TauCeti.symmetricBasis` — the basis dual to the upper-triangular coordinates.
 * `TauCeti.finrank_symmetricMatrix` — the dimension is `p * (p + 1) / 2`.
 * `TauCeti.inner_symmetricMatrix_eq_trace_mul` — the Frobenius pairing is the trace pairing.
-
-## References
-
-* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 6, item 1,
-  **Symmetric matrices and their Lebesgue measure**.
 -/
 
 public section
@@ -67,6 +62,7 @@ namespace TauCeti
 matrix is determined by these entries, and `TauCeti.symmetricCoordinates` reads them off. -/
 abbrev upperTriangle (p : ℕ) := {ij : Fin p × Fin p // ij.1 ≤ ij.2}
 
+/-- There are `p * (p + 1) / 2` on-or-above-diagonal positions in a `p × p` matrix. -/
 theorem card_upperTriangle (p : ℕ) : Fintype.card (upperTriangle p) = p * (p + 1) / 2 := by
   rw [← Fintype.card_congr (Sym2.sortEquiv (α := Fin p)), Sym2.card, Fintype.card_fin,
     Nat.choose_two_right, Nat.add_sub_cancel, mul_comm]
@@ -111,12 +107,8 @@ instance symmetricMatrixCompleteSpace :
   FiniteDimensional.complete ℝ _
 
 instance symmetricMatrixContinuousENorm :
-    ContinuousENorm (selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)) where
-  continuous_enorm := by
-    let _ : NormedAddCommGroup (Matrix (Fin p) (Fin p) ℝ) := Matrix.frobeniusNormedAddCommGroup
-    change Continuous fun A : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) =>
-      ((‖(A : Matrix (Fin p) (Fin p) ℝ)‖₊ : NNReal) : ENNReal)
-    fun_prop
+    ContinuousENorm (selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)) :=
+  SeminormedAddGroup.toContinuousENorm
 
 /-- The measurable structure is the Borel structure of the subtype topology. Declared explicitly
 so that instance search finds it regardless of which (definitionally equal) route it takes to
@@ -178,6 +170,9 @@ variable (p : ℕ)
 symmetric matrix. Its inverse reconstructs the matrix by reflecting them across the diagonal.
 
 This coordinate system fixes the normalization of `TauCeti.symmetricLebesgue`. -/
+-- `@[expose]` is required by the module system: the defining equation
+-- `TauCeti.symmetricCoordinates_apply` is a public `rfl` theorem, which can only be exported
+-- when the body it unfolds is exposed.
 @[expose]
 def symmetricCoordinates :
     (selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)) ≃L[ℝ] (upperTriangle p → ℝ) :=
@@ -216,11 +211,13 @@ theorem symmetricCoordinates_apply (A : selfAdjoint.submodule ℝ (Matrix (Fin p
     symmetricCoordinates p A ij = (A : Matrix (Fin p) (Fin p) ℝ) ij.1.1 ij.1.2 :=
   rfl
 
+@[simp]
 theorem coe_symmetricCoordinates_symm_apply_of_le (x : upperTriangle p → ℝ) {i j : Fin p}
     (h : i ≤ j) :
     ((symmetricCoordinates p).symm x : Matrix (Fin p) (Fin p) ℝ) i j = x ⟨(i, j), h⟩ :=
   dite_eq_left h
 
+@[simp]
 theorem coe_symmetricCoordinates_symm_apply_of_ge (x : upperTriangle p → ℝ) {i j : Fin p}
     (h : j ≤ i) :
     ((symmetricCoordinates p).symm x : Matrix (Fin p) (Fin p) ℝ) i j = x ⟨(j, i), h⟩ := by
@@ -230,6 +227,8 @@ theorem coe_symmetricCoordinates_symm_apply_of_ge (x : upperTriangle p → ℝ) 
   · exact dite_eq_right h'
 
 /-- The measurable equivalence induced by `TauCeti.symmetricCoordinates`. -/
+-- `@[expose]` is required by the module system, for the public `rfl` theorem
+-- `TauCeti.symmetricCoordinatesMeasurableEquiv_coe`.
 @[expose]
 def symmetricCoordinatesMeasurableEquiv :
     (selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)) ≃ᵐ (upperTriangle p → ℝ) :=
@@ -241,6 +240,7 @@ theorem symmetricCoordinatesMeasurableEquiv_coe :
       symmetricCoordinates p :=
   rfl
 
+/-- The symmetric subspace has dimension `p * (p + 1) / 2`. -/
 theorem finrank_symmetricMatrix :
     Module.finrank ℝ (selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)) =
       p * (p + 1) / 2 := by
@@ -250,13 +250,20 @@ theorem finrank_symmetricMatrix :
 /-- The basis of the symmetric subspace dual to the upper-triangular coordinates: its vector at
 an on-or-above-diagonal position is the symmetric matrix carrying a one at that position and at
 its mirror image, and nothing else. -/
-@[expose]
 def symmetricBasis :
     Basis (upperTriangle p) ℝ (selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)) :=
   (Pi.basisFun ℝ (upperTriangle p)).map (symmetricCoordinates p).symm.toLinearEquiv
 
 theorem symmetricBasis_apply (ij : upperTriangle p) :
     symmetricBasis p ij = (symmetricCoordinates p).symm (Pi.single ij 1) := by
+  simp [symmetricBasis]
+
+/-- The coordinates of a symmetric matrix in `TauCeti.symmetricBasis` are its
+on-or-above-diagonal entries. -/
+@[simp]
+theorem symmetricBasis_repr (x : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ))
+    (ij : upperTriangle p) :
+    (symmetricBasis p).repr x ij = (x : Matrix (Fin p) (Fin p) ℝ) ij.1.1 ij.1.2 := by
   simp [symmetricBasis]
 
 theorem coe_symmetricBasis_apply_of_le (ij : upperTriangle p) {k l : Fin p} (h : k ≤ l) :

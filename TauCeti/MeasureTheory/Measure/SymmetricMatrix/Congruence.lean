@@ -19,41 +19,39 @@ automorphism of the symmetric subspace. In the upper-triangular coordinates its 
 `(|det C| ^ (p + 1))⁻¹ • symmetricLebesgue`. This change of variables supplies the
 general-scale Wishart formulas.
 
-The determinant is computed for an arbitrary square matrix `M`, not only invertible ones: the
-map `M ↦ det (A ↦ M * A * Mᵀ)` is multiplicative, so by the transvection decomposition it
-suffices to treat triangular `M`, covering both transvections and diagonal matrices. For
-triangular `M`, the coordinate matrix is triangular for the ranking `p * i + j` of the
-on-or-above-diagonal positions, with diagonal entries `M i i * M j j` over `i ≤ j`, whose
-product is `(det M) ^ (p + 1)`.
+The determinant is computed for an arbitrary square matrix `M`, not only invertible ones, with
+the invertible case as a corollary.
 
 ## Main declarations
 
-* `TauCeti.symmetricCongruenceLinearMap` — congruence by an arbitrary square matrix, as a
+* `Matrix.symmetricCongruenceLinearMap` — congruence by an arbitrary square matrix, as a
   linear endomorphism of the symmetric subspace.
-* `TauCeti.det_symmetricCongruenceLinearMap` — its determinant is `(det M) ^ (p + 1)`.
-* `TauCeti.symmetricCongruence` — congruence by an invertible matrix, as a continuous linear
-  automorphism.
-* `TauCeti.map_symmetricCongruence_symmetricLebesgue` — the induced change of variables for
-  `symmetricLebesgue`.
+* `Matrix.det_symmetricCongruenceLinearMap` — its determinant is `(det M) ^ (p + 1)`.
+* `Matrix.GeneralLinearGroup.symmetricCongruence` — congruence by an invertible matrix, as a
+  continuous linear automorphism.
+* `Matrix.GeneralLinearGroup.map_symmetricCongruence_symmetricLebesgue` — the induced change of
+  variables for `symmetricLebesgue`.
 
 ## References
 
-* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 6, item 1,
-  **Symmetric matrices and their Lebesgue measure**.
+* R. J. Muirhead, *Aspects of Multivariate Statistical Theory*, Wiley, 1982, chapter 2
+  (the congruence Jacobian for symmetric matrices and the induced change of variables).
 -/
 
 public section
 
 noncomputable section
 
-open MeasureTheory Matrix Module
+open MeasureTheory Module TauCeti
 
-namespace TauCeti
+namespace Matrix
 
 variable {p : ℕ}
 
 /-- Congruence `A ↦ M * A * Mᵀ` by an arbitrary square matrix, as a linear endomorphism of the
 symmetric subspace. -/
+-- `@[expose]` is required by the module system, for the public `rfl` theorem
+-- `Matrix.coe_symmetricCongruenceLinearMap_apply`.
 @[expose]
 def symmetricCongruenceLinearMap (M : Matrix (Fin p) (Fin p) ℝ) :
     selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) →ₗ[ℝ]
@@ -128,11 +126,6 @@ private theorem prod_upperTriangle_mul (d : Fin p → ℝ) :
   have := i.isLt
   congr 1
   omega
-
-private theorem symmetricBasis_repr (p : ℕ)
-    (x : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)) (r : upperTriangle p) :
-    (symmetricBasis p).repr x r = (x : Matrix (Fin p) (Fin p) ℝ) r.1.1 r.1.2 := by
-  simp [symmetricBasis]
 
 /-- The coordinate basis vector at an on-or-above-diagonal pair is the matrix with a single one
 there, symmetrized off the diagonal. -/
@@ -267,20 +260,24 @@ private theorem det_symmetricCongruenceLinearMap_mul {A B : Matrix (Fin p) (Fin 
     LinearMap.det (symmetricCongruenceLinearMap (A * B)) = (A * B).det ^ (p + 1) := by
   rw [symmetricCongruenceLinearMap_mul, LinearMap.det_comp, hA, hB, Matrix.det_mul, mul_pow]
 
+/-- A transvection matrix vanishes away from the diagonal and from its defining position. -/
+private theorem transvection_apply_of_ne {i j a b : Fin p} {c : ℝ} (hab : a ≠ b)
+    (hne : ¬(i = a ∧ j = b)) : Matrix.transvection i j c a b = 0 := by
+  simp only [Matrix.transvection, Matrix.add_apply, Matrix.one_apply_ne hab,
+    Matrix.single_apply, ite_eq_right hne, add_zero]
+
 private theorem det_symmetricCongruenceLinearMap_transvection
     (t : Matrix.TransvectionStruct (Fin p) ℝ) :
     LinearMap.det (symmetricCongruenceLinearMap t.toMatrix) = t.toMatrix.det ^ (p + 1) := by
-  have hentry : ∀ a b : Fin p, a ≠ b → ¬(t.i = a ∧ t.j = b) → t.toMatrix a b = 0 := by
-    intro a b hab hne
-    change ((1 : Matrix (Fin p) (Fin p) ℝ) + Matrix.single t.i t.j t.c) a b = 0
-    rw [Matrix.add_apply, Matrix.one_apply_ne hab, Matrix.single_apply, ite_eq_right hne, add_zero]
-  rcases lt_or_gt_of_ne t.hij with h | h
+  obtain ⟨i, j, hij, c⟩ := t
+  rw [Matrix.TransvectionStruct.toMatrix_mk]
+  rcases lt_or_gt_of_ne hij with h | h
   · refine det_symmetricCongruenceLinearMap_of_isUpperTriangular _ fun a b hab => ?_
-    refine hentry a b (ne_of_gt hab) ?_
+    refine transvection_apply_of_ne (ne_of_gt hab) ?_
     rintro ⟨rfl, rfl⟩
     exact absurd h (not_lt.2 hab.le)
   · refine det_symmetricCongruenceLinearMap_of_isLowerTriangular _ fun a b hab => ?_
-    refine hentry a b (ne_of_lt hab) ?_
+    refine transvection_apply_of_ne (ne_of_lt hab) ?_
     rintro ⟨rfl, rfl⟩
     exact absurd h (not_lt.2 hab.le)
 
@@ -308,8 +305,13 @@ theorem det_symmetricCongruenceLinearMap (M : Matrix (Fin p) (Fin p) ℝ) :
 
 /-! ### Congruence by an invertible matrix -/
 
+namespace GeneralLinearGroup
+
 /-- Congruence `A ↦ C * A * Cᵀ` by an invertible matrix, as a continuous linear automorphism
 of the symmetric subspace. -/
+-- `@[expose]` is required by the module system, for the public `rfl` theorems
+-- `Matrix.GeneralLinearGroup.coe_symmetricCongruence_apply` and
+-- `Matrix.GeneralLinearGroup.symmetricCongruence_toLinearMap`.
 @[expose]
 def symmetricCongruence (C : Matrix.GeneralLinearGroup (Fin p) ℝ) :
     selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) ≃L[ℝ]
@@ -367,4 +369,6 @@ theorem map_symmetricCongruence_symmetricLebesgue (C : Matrix.GeneralLinearGroup
   rw [h, hdet, abs_inv, abs_pow, ENNReal.ofReal_inv_of_pos (pow_pos hC _),
     ENNReal.ofReal_pow hC.le]
 
-end TauCeti
+end GeneralLinearGroup
+
+end Matrix

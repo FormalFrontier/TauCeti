@@ -14,8 +14,8 @@ public import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
 
 `TauCeti.symmetricLebesgue p` is the pushforward of product Lebesgue measure on the
 upper-triangular coordinates along `(TauCeti.symmetricCoordinates p).symm`. This is the
-normalization used by the Wishart densities and the multivariate-Gamma integral of the
-standard-distributions roadmap: the coordinate unit cube has measure one.
+normalization used by the Wishart densities and the multivariate-Gamma integral: the
+coordinate unit cube has measure one.
 
 The Frobenius volume of `measureSpaceOfInnerProductSpace` is a Haar measure for the same
 topology, but a different normalization: the off-diagonal coordinate directions `Eᵢⱼ + Eⱼᵢ`
@@ -34,11 +34,6 @@ have Frobenius norm `√2`, so Frobenius volume is `2 ^ (p * (p - 1) / 4)` times
   volume.
 * `TauCeti.symmetricLebesgue_zero` — in dimension zero, `symmetricLebesgue` is the Dirac
   measure on the unique symmetric matrix.
-
-## References
-
-* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 6, item 1,
-  **Symmetric matrices and their Lebesgue measure**.
 -/
 
 public section
@@ -54,19 +49,21 @@ namespace TauCeti
 /-- Lebesgue measure on the symmetric subspace: the pushforward of product Lebesgue measure on
 the upper-triangular coordinates along the coordinate reconstruction. The coordinate unit cube
 has measure one; this is the normalization used by the Wishart densities. -/
-@[expose]
 def symmetricLebesgue (p : ℕ) :
     Measure (selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)) :=
   (volume : Measure (upperTriangle p → ℝ)).map (symmetricCoordinates p).symm
 
+/-- The coordinate reconstruction maps product Lebesgue measure to `symmetricLebesgue`. -/
 theorem measurePreserving_symmetricCoordinates_symm (p : ℕ) :
     MeasurePreserving (symmetricCoordinates p).symm volume (symmetricLebesgue p) :=
   ⟨(symmetricCoordinates p).symm.continuous.measurable, rfl⟩
 
+/-- The upper-triangular coordinates map `symmetricLebesgue` to product Lebesgue measure. -/
 theorem measurePreserving_symmetricCoordinates (p : ℕ) :
     MeasurePreserving (symmetricCoordinates p) (symmetricLebesgue p) volume :=
   (measurePreserving_symmetricCoordinates_symm p).symm (symmetricCoordinatesMeasurableEquiv p).symm
 
+/-- `symmetricLebesgue` is an additive Haar measure, as required by Mathlib's Jacobian API. -/
 instance isAddHaarMeasure_symmetricLebesgue (p : ℕ) :
     (symmetricLebesgue p).IsAddHaarMeasure :=
   ContinuousLinearEquiv.isAddHaarMeasure_map (symmetricCoordinates p).symm volume
@@ -86,13 +83,10 @@ private theorem addHaar_basisFun (ι : Type*) [Fintype ι] :
 
 private theorem symmetricLebesgue_eq_addHaar (p : ℕ) :
     symmetricLebesgue p = (symmetricBasis p).addHaar := by
-  rw [symmetricLebesgue, ← addHaar_basisFun, Basis.map_addHaar]
-  rfl
-
-private theorem inner_symmetricMatrix_eq_sum (p : ℕ)
-    (A C : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)) :
-    ⟪A, C⟫ = ∑ a, ∑ b, (A : Matrix (Fin p) (Fin p) ℝ) a b *
-      (C : Matrix (Fin p) (Fin p) ℝ) a b := rfl
+  have hb : (Pi.basisFun ℝ (upperTriangle p)).map
+      (symmetricCoordinates p).symm.toLinearEquiv = symmetricBasis p :=
+    Basis.eq_of_apply_eq fun ij => by simp [symmetricBasis_apply]
+  rw [symmetricLebesgue, ← addHaar_basisFun, Basis.map_addHaar, hb]
 
 private theorem sum_mul_single (p : ℕ) (A : Matrix (Fin p) (Fin p) ℝ) (k l : Fin p) :
     ∑ a, ∑ b, A a b * Matrix.single k l (1 : ℝ) a b = A k l := by
@@ -104,8 +98,10 @@ private theorem inner_symmetricBasis (p : ℕ)
     (A : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)) (kl : upperTriangle p) :
     ⟪A, symmetricBasis p kl⟫ =
       (if kl.1.1 = kl.1.2 then 1 else 2) * (A : Matrix (Fin p) (Fin p) ℝ) kl.1.1 kl.1.2 := by
+  let _ : NormedAddCommGroup (Matrix (Fin p) (Fin p) ℝ) := Matrix.frobeniusNormedAddCommGroup
+  let _ : InnerProductSpace ℝ (Matrix (Fin p) (Fin p) ℝ) := Matrix.frobeniusInnerProductSpace
   obtain ⟨⟨k, l⟩, hkl⟩ := kl
-  rw [inner_symmetricMatrix_eq_sum]
+  rw [Submodule.coe_inner, Matrix.frobenius_inner_def]
   by_cases h : k = l
   · subst h
     rw [coe_symmetricBasis_diag, sum_mul_single]

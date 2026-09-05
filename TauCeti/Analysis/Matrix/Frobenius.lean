@@ -27,11 +27,6 @@ and the inner product together.
   `Matrix.frobeniusNormedAddCommGroup`.
 * `Matrix.frobenius_inner_def` — the inner product is the sum of entrywise products.
 * `Matrix.frobenius_inner_eq_trace_transpose_mul` — the inner product is `(Aᵀ * B).trace`.
-
-## References
-
-* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 6, item 1,
-  **Symmetric matrices and their Lebesgue measure**.
 -/
 
 public section
@@ -48,6 +43,9 @@ variable {m n : Type*} [Fintype m] [Fintype n]
 compatible with the Frobenius norm of `Matrix.frobeniusNormedAddCommGroup`. Not declared as a
 global instance because there are several natural choices of norm on matrices; it is available
 through `open scoped Matrix.Norms.Frobenius`. -/
+-- `@[expose]` is required by the module system: the defining equation
+-- `Matrix.frobenius_inner_def` is a public `rfl` theorem, which can only be exported when the
+-- body it unfolds is exposed.
 @[expose, instance_reducible]
 def frobeniusInnerProductSpace :
     letI : NormedAddCommGroup (Matrix m n ℝ) := Matrix.frobeniusNormedAddCommGroup
@@ -77,9 +75,11 @@ section lemmas
 
 open scoped Matrix.Norms.Frobenius
 
+/-- The Frobenius inner product is the sum of the entrywise products. -/
 theorem frobenius_inner_def (A B : Matrix m n ℝ) : ⟪A, B⟫ = ∑ i, ∑ j, A i j * B i j :=
   rfl
 
+/-- The Frobenius inner product is the trace of `Aᵀ * B`. -/
 theorem frobenius_inner_eq_trace_transpose_mul (A B : Matrix m n ℝ) :
     ⟪A, B⟫ = (Aᵀ * B).trace := by
   rw [frobenius_inner_def, Matrix.trace]

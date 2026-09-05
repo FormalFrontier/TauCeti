@@ -16,19 +16,14 @@ On the symmetric subspace, positive definiteness cuts out an open subset: the He
 condition holds identically there, so the cone is the preimage of the open set of matrices with
 positive quadratic form, `TauCeti.isOpen_setOfPred_dotProduct_mulVec_pos`.
 
-The Wishart densities of the standard-distributions roadmap are supported on this cone, so its
-measurability is part of the carrier API.
+The Wishart densities are supported on this cone, so its measurability is part of the
+carrier API.
 
 ## Main declarations
 
 * `TauCeti.isOpen_setOfPred_posDefMatrix` — the positive-definite cone is open in the symmetric
   subspace.
 * `TauCeti.measurableSet_posDefMatrix` — the positive-definite cone is measurable.
-
-## References
-
-* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 6, item 1,
-  **Symmetric matrices and their Lebesgue measure**.
 -/
 
 public section
@@ -52,7 +47,7 @@ theorem isOpen_setOfPred_posDefMatrix (p : ℕ) :
     exact ⟨fun h x hx => by simpa using h.2 hx,
       fun h => ⟨isHermitian_coe A, fun x hx => by simpa using h x hx⟩⟩
   rw [hpre]
-  exact (isOpen_setOfPred_dotProduct_mulVec_pos p).preimage continuous_subtype_val
+  exact isOpen_setOfPred_dotProduct_mulVec_pos.preimage continuous_subtype_val
 
 /-- The positive-definite cone is measurable in the symmetric subspace. -/
 theorem measurableSet_posDefMatrix (p : ℕ) :
