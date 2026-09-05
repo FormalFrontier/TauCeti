@@ -27,7 +27,8 @@ then a quotient of beta functions.
 * `variance_id_fisherSnedecorMeasure` computes the variance.
 
 The proof uses Euler's second beta integral for integrability and the beta pushforward
-representation for the exact value.
+representation for the exact value, following the formal proof pattern in
+`TauCeti.Probability.Distributions.StudentT.Moments`.
 
 ## References
 
@@ -39,7 +40,7 @@ public section
 
 noncomputable section
 
-open MeasureTheory ProbabilityTheory Real Set Filter
+open MeasureTheory ProbabilityTheory Real Set
 open scoped ENNReal Topology
 
 namespace TauCeti
@@ -51,97 +52,17 @@ variable {m n : ℝ}
 private def fisherMomentKernel (m n q x : ℝ) : ℝ :=
   x ^ (m / 2 + q - 1) * (1 + x) ^ (-((m + n) / 2))
 
-private lemma eventually_const_mul_rpow_le_fisherMomentKernel (hm : 0 < m) (hn : 0 < n)
-    (q : ℝ) :
-    ∀ᶠ x in atTop,
-      (2 : ℝ) ^ (-((m + n) / 2)) * x ^ (q - n / 2 - 1) ≤
-        fisherMomentKernel m n q x := by
-  set s := (m + n) / 2
-  set e := q - n / 2 - 1 with he
-  filter_upwards [eventually_ge_atTop (1 : ℝ)] with x hx
-  have hx0 : 0 < x := by linarith
-  have hle : 1 + x ≤ 2 * x := by linarith
-  have hpos1 : 0 < 1 + x := by linarith
-  have hpos2 : 0 < 2 * x := by linarith
-  have hs : 0 < s := by
-    dsimp only [s]
-    linarith
-  have hpow : (2 * x) ^ (-s) ≤ (1 + x) ^ (-s) := by
-    rw [Real.rpow_neg hpos2.le, Real.rpow_neg hpos1.le]
-    simpa only [one_div] using one_div_le_one_div_of_le (Real.rpow_pos_of_pos hpos1 s)
-      (Real.rpow_le_rpow hpos1.le hle hs.le)
-  have hmul : (2 * x) ^ (-s) = (2 : ℝ) ^ (-s) * x ^ (-s) := by
-    rw [Real.mul_rpow (by positivity) hx0.le]
-  have hexponent : m / 2 + q - 1 + (-s) = e := by
-    dsimp only [s, e]
-    ring
-  have hxpow : x ^ (m / 2 + q - 1) * x ^ (-s) = x ^ e := by
-    rw [← Real.rpow_add hx0, hexponent]
-  calc
-    (2 : ℝ) ^ (-((m + n) / 2)) * x ^ (q - n / 2 - 1) =
-        x ^ (m / 2 + q - 1) * ((2 : ℝ) ^ (-s) * x ^ (-s)) := by
-          rw [← hxpow]
-          dsimp only [s, e]
-          ring
-    _ = x ^ (m / 2 + q - 1) * (2 * x) ^ (-s) := by rw [hmul]
-    _ ≤ x ^ (m / 2 + q - 1) * (1 + x) ^ (-s) :=
-      mul_le_mul_of_nonneg_left hpow (Real.rpow_nonneg hx0.le _)
-    _ = fisherMomentKernel m n q x := by simp [fisherMomentKernel, s]
-
-private lemma not_integrableOn_fisherMomentKernel_of_le (hm : 0 < m) (hn : 0 < n)
-    {q : ℝ} (hnq : n / 2 ≤ q) :
-    ¬ IntegrableOn (fisherMomentKernel m n q) (Ioi (0 : ℝ)) := by
-  intro h
-  set s := (m + n) / 2
-  set e := q - n / 2 - 1 with he
-  have he1 : -1 ≤ e := by linarith
-  have hbound := eventually_const_mul_rpow_le_fisherMomentKernel hm hn q
-  have hIoi1 : IntegrableOn (fisherMomentKernel m n q) (Ioi (1 : ℝ)) :=
-    h.mono_set fun x hx ↦ by simpa only [mem_Ioi] using lt_trans zero_lt_one hx
-  obtain ⟨a0, ha0⟩ := eventually_atTop.mp hbound
-  set a := max a0 1 with ha_def
-  let f : ℝ → ℝ := fun x ↦ (2 : ℝ) ^ (-s) * x ^ e
-  have ha : ∀ x : ℝ, a ≤ x → f x ≤ fisherMomentKernel m n q x := by
-    intro x hx
-    exact ha0 x (le_trans (le_max_left a0 1) hx)
-  have hbounded : IntegrableOn f (Ioc (1 : ℝ) a) := by
-    refine (ContinuousOn.mul continuousOn_const ?_).integrableOn_compact isCompact_Icc |>.mono_set
-      Ioc_subset_Icc_self
-    intro x hx
-    exact (Real.continuousAt_rpow_const x e
-      (Or.inl (ne_of_gt (lt_of_lt_of_le zero_lt_one hx.1)))).continuousWithinAt
-  have htail : IntegrableOn f (Ioi a) := by
-    refine (hIoi1.mono_set fun x hx ↦ by
-      have ha1 : 1 ≤ a := le_max_right _ _
-      exact by simpa only [mem_Ioi] using lt_of_le_of_lt ha1 hx).mono' (by fun_prop) ?_
-    filter_upwards [ae_restrict_mem measurableSet_Ioi] with x hx
-    have hx0 : 0 < x := lt_of_lt_of_le zero_lt_one
-      (le_trans (le_max_right a0 1) hx.le)
-    rw [Real.norm_eq_abs, abs_of_nonneg]
-    · exact ha x hx.le
-    · exact mul_nonneg (Real.rpow_nonneg (by positivity) _) (Real.rpow_nonneg hx0.le _)
-  have hpow : IntegrableOn (fun x : ℝ ↦ x ^ e) (Ioi (1 : ℝ)) := by
-    have hf : IntegrableOn f (Ioi (1 : ℝ)) := by
-      rw [← Ioc_union_Ioi_eq_Ioi (le_max_right a0 1)]
-      exact hbounded.union htail
-    have hc : IsUnit ((2 : ℝ) ^ (-s)) :=
-      isUnit_iff_ne_zero.mpr (Real.rpow_pos_of_pos (by positivity) _).ne'
-    simpa [f, IntegrableOn, integrable_const_mul_iff hc] using hf
-  rw [integrableOn_Ioi_rpow_iff one_pos] at hpow
-  linarith
-
 private lemma integrableOn_fisherMomentKernel_iff (hm : 0 < m) (hn : 0 < n) (q : ℝ)
     (hq : 0 ≤ q) :
     IntegrableOn (fisherMomentKernel m n q) (Ioi (0 : ℝ)) ↔ q < n / 2 := by
-  constructor
-  · intro h
-    exact lt_of_not_ge fun hnq ↦ not_integrableOn_fisherMomentKernel_of_le hm hn hnq h
-  · intro hqn
-    have ha : 0 < m / 2 + q := by linarith
-    have hb : 0 < n / 2 - q := by linarith
-    unfold fisherMomentKernel
-    convert integrableOn_rpow_mul_one_add_rpow ha hb using 1
-    ring_nf
+  have h := integrableOn_rpow_mul_one_add_rpow_iff
+    (a := m / 2 + q) (b := n / 2 - q) (by linarith) (by linarith)
+  have hsum : m / 2 + q + (n / 2 - q) = (m + n) / 2 := by ring
+  have htail : 0 < n / 2 - q ↔ q < n / 2 := by
+    constructor <;> intro hh <;> linarith
+  change IntegrableOn (fun x : ℝ ↦ x ^ (m / 2 + q - 1) *
+    (1 + x) ^ (-((m + n) / 2))) (Ioi 0) ↔ q < n / 2
+  simpa only [hsum, htail] using h
 
 private lemma integrable_fisherSnedecorMeasure_iff (f : ℝ → ℝ) :
     Integrable f (fisherSnedecorMeasure m n) ↔
@@ -335,82 +256,86 @@ private theorem integral_pow_fisherSnedecorMeasure (hm : 0 < m) (hn : 0 < n) (q 
   · intro u hu
     rw [betaPDFReal, ite_eq_right (by simpa only [mem_Ioo] using hu), zero_mul]
 
+private lemma beta_add_one_sub_one_div {a b : ℝ} (ha : 0 < a) (hb : 1 < b) :
+    beta (a + 1) (b - 1) / beta a b = a / (b - 1) := by
+  have hab : a + (b - 1) ≠ 0 := by linarith
+  have hb1 : b - 1 ≠ 0 := by linarith
+  have hbase : beta a (b - 1) ≠ 0 := (beta_pos ha (by linarith)).ne'
+  have hleft : beta (a + 1) (b - 1) =
+      a / (a + (b - 1)) * beta a (b - 1) :=
+    beta_add_one_left ha.ne' hab
+  have hright : beta a b =
+      (b - 1) / (a + (b - 1)) * beta a (b - 1) := by
+    calc
+      beta a b = beta b a := beta_comm a b
+      _ = beta ((b - 1) + 1) a := by ring_nf
+      _ = (b - 1) / ((b - 1) + a) * beta (b - 1) a :=
+        beta_add_one_left hb1 (by linarith)
+      _ = (b - 1) / (a + (b - 1)) * beta a (b - 1) := by
+        rw [beta_comm (b - 1) a, add_comm (b - 1) a]
+  rw [hleft, hright]
+  field_simp
+
+private lemma beta_add_two_sub_two_div {a b : ℝ} (ha : 0 < a) (hb : 2 < b) :
+    beta (a + 2) (b - 2) / beta a b =
+      a * (a + 1) / ((b - 1) * (b - 2)) := by
+  have hstep1 := beta_add_one_sub_one_div ha (by linarith : 1 < b)
+  have hstep2 := beta_add_one_sub_one_div (a := a + 1) (b := b - 1)
+    (by linarith) (by linarith)
+  have hsub : (b - 1) - 1 = b - 2 := by ring
+  rw [hsub] at hstep2
+  have hbeta : beta (a + 1) (b - 1) ≠ 0 :=
+    (beta_pos (by linarith) (by linarith)).ne'
+  have hb1 : b - 1 ≠ 0 := by linarith
+  have hb2 : b - 2 ≠ 0 := by linarith
+  rw [show a + 2 = (a + 1) + 1 by ring]
+  calc
+    beta ((a + 1) + 1) (b - 2) / beta a b =
+        (beta ((a + 1) + 1) (b - 2) / beta (a + 1) (b - 1)) *
+          (beta (a + 1) (b - 1) / beta a b) := by field_simp
+    _ = ((a + 1) / (b - 2)) * (a / (b - 1)) := by rw [hstep1, hstep2]
+    _ = a * (a + 1) / ((b - 1) * (b - 2)) := by
+      field_simp [hb1, hb2]
+
 /-- The mean of a Fisher--Snedecor law is `n / (n - 2)` when `2 < n`. -/
 @[simp]
 theorem integral_id_fisherSnedecorMeasure (hm : 0 < m) (hn : 2 < n) :
     ∫ x, x ∂fisherSnedecorMeasure m n = n / (n - 2) := by
   have h := integral_pow_fisherSnedecorMeasure hm (lt_trans zero_lt_two hn) 1 (by simpa)
   simp only [pow_one, Nat.cast_one] at h
-  rw [h, ProbabilityTheory.beta, ProbabilityTheory.beta]
-  have hm2 : 0 < m / 2 := by linarith
-  have hn2 : 0 < n / 2 - 1 := by linarith
-  have hsum1 : m / 2 + 1 + (n / 2 - 1) = (m + n) / 2 := by ring
-  have hsum0 : m / 2 + n / 2 = (m + n) / 2 := by ring
-  rw [hsum1, hsum0, Real.Gamma_add_one (ne_of_gt hm2)]
-  have hgamma : Real.Gamma (n / 2) = (n / 2 - 1) * Real.Gamma (n / 2 - 1) := by
-    simpa using Real.Gamma_add_one (ne_of_gt hn2)
-  rw [hgamma]
-  have hG : Real.Gamma (n / 2 - 1) ≠ 0 := (Real.Gamma_pos_of_pos hn2).ne'
-  have hfactor : n * Real.Gamma (n / 2 - 1) - Real.Gamma (n / 2 - 1) * 2 =
-      (n - 2) * Real.Gamma (n / 2 - 1) := by ring
-  have hden : n * Real.Gamma (n / 2 - 1) - Real.Gamma (n / 2 - 1) * 2 ≠ 0 := by
-    rw [hfactor]
-    exact mul_ne_zero (by linarith) hG
-  have harg : (n - 2) / 2 = n / 2 - 1 := by ring
-  have hG' : Real.Gamma ((n - 2) / 2) ≠ 0 := by
-    rw [harg]
-    exact hG
-  field_simp [(Real.Gamma_pos_of_pos hm2).ne', (Real.Gamma_pos_of_pos hn2).ne',
-    (Real.Gamma_pos_of_pos (by linarith : 0 < (m + n) / 2)).ne', hm.ne',
-    (by linarith : n - 2 ≠ 0), hden, hG']
+  rw [h]
+  calc
+    n / m * beta (m / 2 + 1) (n / 2 - 1) / beta (m / 2) (n / 2) =
+        n / m * (beta (m / 2 + 1) (n / 2 - 1) / beta (m / 2) (n / 2)) := by ring
+    _ = n / m * ((m / 2) / (n / 2 - 1)) := by
+      rw [beta_add_one_sub_one_div (by linarith) (by linarith)]
+    _ = n / (n - 2) := by
+      field_simp [hm.ne', (by linarith : n - 2 ≠ 0)]
 
-/-- The second raw moment of a Fisher--Snedecor law when `4 < n`. -/
+/-- The second raw moment of a Fisher--Snedecor law is
+`n ^ 2 * (m + 2) / (m * (n - 2) * (n - 4))` when `4 < n`. -/
 @[simp]
 theorem integral_sq_fisherSnedecorMeasure (hm : 0 < m) (hn : 4 < n) :
     ∫ x, x ^ 2 ∂fisherSnedecorMeasure m n =
       n ^ 2 * (m + 2) / (m * (n - 2) * (n - 4)) := by
   have h := integral_pow_fisherSnedecorMeasure hm (by linarith) 2 (by norm_num; linarith)
   norm_num only [Nat.cast_ofNat] at h
-  rw [h, ProbabilityTheory.beta, ProbabilityTheory.beta]
-  have hm2 : 0 < m / 2 := by linarith
-  have hn2 : 0 < n / 2 - 2 := by linarith
-  have hsum1 : m / 2 + 2 + (n / 2 - 2) = (m + n) / 2 := by ring
-  have hsum0 : m / 2 + n / 2 = (m + n) / 2 := by ring
-  rw [hsum1, hsum0]
-  have hmarg : m / 2 + 2 = m / 2 + 1 + 1 := by ring
-  have hgm : Real.Gamma (m / 2 + 2) =
-      (m / 2 + 1) * (m / 2) * Real.Gamma (m / 2) := by
-    rw [hmarg,
-      Real.Gamma_add_one (by linarith : m / 2 + 1 ≠ 0),
-      Real.Gamma_add_one hm2.ne']
-    ring_nf
-  have hnarg : n / 2 = (n / 2 - 2) + 1 + 1 := by ring
-  have hgn : Real.Gamma (n / 2) =
-      (n / 2 - 1) * (n / 2 - 2) * Real.Gamma (n / 2 - 2) := by
-    rw [hnarg,
-      Real.Gamma_add_one (by linarith : n / 2 - 2 + 1 ≠ 0),
-      Real.Gamma_add_one hn2.ne']
-    ring_nf
-  rw [hgm, hgn]
-  have hG : Real.Gamma (n / 2 - 2) ≠ 0 := (Real.Gamma_pos_of_pos hn2).ne'
-  have hfactor : n * Real.Gamma (n / 2 - 2) - Real.Gamma (n / 2 - 2) * 4 =
-      (n - 4) * Real.Gamma (n / 2 - 2) := by ring
-  have hden : n * Real.Gamma (n / 2 - 2) - Real.Gamma (n / 2 - 2) * 4 ≠ 0 := by
-    rw [hfactor]
-    exact mul_ne_zero (by linarith) hG
-  have harg : -2 + n * (1 / 2) = n / 2 - 2 := by ring
-  have hden' : n * Real.Gamma (-2 + n * (1 / 2)) -
-      Real.Gamma (-2 + n * (1 / 2)) * 4 ≠ 0 := by
-    rw [harg]
-    exact hden
-  field_simp [(Real.Gamma_pos_of_pos hm2).ne', (Real.Gamma_pos_of_pos hn2).ne',
-    (Real.Gamma_pos_of_pos (by linarith : 0 < (m + n) / 2)).ne', hm.ne',
-    (by linarith : n - 2 ≠ 0), (by linarith : n - 4 ≠ 0), hden, hden']
-  field_simp [(by norm_num; linarith : n - 2 ^ 2 ≠ 0),
-    (Real.Gamma_pos_of_pos (by norm_num; linarith : 0 < (n - 2 ^ 2) / 2)).ne']
-  norm_num
+  rw [h]
+  calc
+    (n / m) ^ 2 * beta (m / 2 + 2) (n / 2 - 2) / beta (m / 2) (n / 2) =
+        (n / m) ^ 2 *
+          (beta (m / 2 + 2) (n / 2 - 2) / beta (m / 2) (n / 2)) := by ring
+    _ = (n / m) ^ 2 *
+        ((m / 2) * (m / 2 + 1) / ((n / 2 - 1) * (n / 2 - 2))) := by
+      rw [beta_add_two_sub_two_div (by linarith) (by linarith)]
+    _ = n ^ 2 * (m + 2) / (m * (n - 2) * (n - 4)) := by
+      rw [show m / 2 + 1 = (m + 2) / 2 by ring,
+        show n / 2 - 1 = (n - 2) / 2 by ring,
+        show n / 2 - 2 = (n - 4) / 2 by ring]
+      field_simp [hm.ne', (by linarith : n - 2 ≠ 0), (by linarith : n - 4 ≠ 0)]
 
-/-- The variance of a Fisher--Snedecor law when `4 < n`. -/
+/-- The variance of a Fisher--Snedecor law is
+`2 * n ^ 2 * (m + n - 2) / (m * (n - 2) ^ 2 * (n - 4))` when `4 < n`. -/
 @[simp]
 theorem variance_id_fisherSnedecorMeasure (hm : 0 < m) (hn : 4 < n) :
     variance id (fisherSnedecorMeasure m n) =

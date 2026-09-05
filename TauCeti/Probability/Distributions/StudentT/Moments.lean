@@ -420,158 +420,17 @@ theorem variance_id_studentTMeasure (hν : 2 < ν) :
   rw [integral_sq_studentTMeasure hν, integral_id_studentTMeasure]
   ring
 
-/-- On the right tail the Student-t beta kernel dominates a constant multiple of the
-corresponding pure power. This is the comparison that carries the non-integrability at infinity. -/
-private lemma eventually_const_mul_rpow_le_studentTBetaKernel (hν : 0 < ν) {q : ℝ} :
-    ∀ᶠ w in atTop,
-      (2 : ℝ) ^ (-((ν + 1) / 2)) * w ^ ((q - ν - 2) / 2) ≤ studentTBetaKernel ν q w := by
-  set s := (ν + 1) / 2
-  set e := (q - ν - 2) / 2 with he
-  filter_upwards [eventually_ge_atTop (1 : ℝ)] with w hw
-  -- For large `w`, compare `(1 + w) ^ (-s)` with `(2w) ^ (-s)`.
-  have hw0 : 0 < w := by linarith
-  have hle : 1 + w ≤ 2 * w := by
-    have h : 1 ≤ w := hw
-    linarith
-  have hpos1 : 0 < 1 + w := by linarith
-  have hpos2 : 0 < 2 * w := by linarith
-  have hs_pos : 0 < s := by
-    dsimp only [s]
-    linarith [hν]
-  have hp : (1 + w) ^ s ≤ (2 * w) ^ s :=
-    Real.rpow_le_rpow hpos1.le hle hs_pos.le
-  have hneg1 : (1 + w) ^ (-s) = ((1 + w) ^ s)⁻¹ :=
-    Real.rpow_neg hpos1.le s
-  have hneg2 : (2 * w) ^ (-s) = ((2 * w) ^ s)⁻¹ :=
-    Real.rpow_neg hpos2.le s
-  have h : (2 * w) ^ (-s) ≤ (1 + w) ^ (-s) := by
-    rw [hneg2, hneg1]
-    have hpos : 0 < (1 + w) ^ s := Real.rpow_pos_of_pos hpos1 s
-    have h9 : 1 / (2 * w) ^ s ≤ 1 / (1 + w) ^ s :=
-      one_div_le_one_div_of_le hpos hp
-    simpa [div_eq_mul_inv] using h9
-  have h9' : (2 * w) ^ (-s) = (2 : ℝ) ^ (-s) * w ^ (-s) := by
-    rw [Real.mul_rpow (by positivity) hw0.le]
-  have h12 : w ^ e = w ^ ((q - 1) / 2) * w ^ (-s) := by
-    have heq' : (q - 1) / 2 + (-s) = e := by
-      dsimp only [e, s]; ring_nf
-    have h12' : w ^ ((q - 1) / 2) * w ^ (-s) = w ^ e := by
-      rw [← Real.rpow_add hw0 ((q - 1) / 2) (-s), heq']
-    exact h12'.symm
-  have hgoal :
-      (2 : ℝ) ^ (-s) * w ^ e ≤ w ^ ((q - 1) / 2) * (1 + w) ^ (-s) := by
-    calc
-      (2 : ℝ) ^ (-s) * w ^ e
-        = (2 : ℝ) ^ (-s) * (w ^ ((q - 1) / 2) * w ^ (-s)) := by rw [h12]
-      _ = w ^ ((q - 1) / 2) * ((2 : ℝ) ^ (-s) * w ^ (-s)) := by ring
-      _ = w ^ ((q - 1) / 2) * (2 * w) ^ (-s) := by rw [h9']
-      _ ≤ w ^ ((q - 1) / 2) * (1 + w) ^ (-s) :=
-        mul_le_mul_of_nonneg_left h (Real.rpow_nonneg hw0.le _)
-  simpa [studentTBetaKernel, s, e] using hgoal
-
-/-- If the tail exponent is at least `-1`, the beta-kernel tail comparison forces divergence. -/
-private lemma not_integrableOn_studentTBetaKernel_Ioi_of_le (hν : 0 < ν)
-    (hνq : ν ≤ q) : ¬ IntegrableOn (studentTBetaKernel ν q) (Ioi (0 : ℝ)) := by
-  intro h
-  set s := (ν + 1) / 2
-  set e := (q - ν - 2) / 2 with he
-  -- The tail comparison transfers integrability to a nonintegrable pure power.
-  have he1 : -1 ≤ e := by linarith
-  have hbound := eventually_const_mul_rpow_le_studentTBetaKernel (q := q) hν
-  have hIoi1 : IntegrableOn (studentTBetaKernel ν q) (Ioi (1 : ℝ)) :=
-    h.mono_set fun x hx => mem_Ioi.mpr (by linarith [mem_Ioi.mp hx])
-  obtain ⟨a0, ha0⟩ := eventually_atTop.mp hbound
-  set a := max a0 1 with ha_def
-  have ha : ∀ w : ℝ, a ≤ w → (2 : ℝ) ^ (-s) * w ^ e ≤ studentTBetaKernel ν q w := by
-    intro w hw
-    exact ha0 w (le_trans (le_max_left a0 1) hw)
-  let f : ℝ → ℝ := fun w => (2 : ℝ) ^ (-s) * w ^ e
-  have hf_contOn : ContinuousOn f (Icc (1 : ℝ) a) := by
-    apply ContinuousOn.mul
-    · exact continuous_const.continuousOn
-    · intro x hx
-      have hx1 : x ≠ 0 := by
-        have h2 : 1 ≤ x := hx.1
-        linarith
-      exact Real.continuousAt_rpow_const x e (Or.inl hx1) |>.continuousWithinAt
-  have hbounded : IntegrableOn f (Icc (1 : ℝ) a) :=
-    hf_contOn.integrableOn_Icc
-  have hbounded' : IntegrableOn f (Ioc (1 : ℝ) a) :=
-    hbounded.mono_set Ioc_subset_Icc_self
-  have hae : ∀ᵐ w ∂volume.restrict (Ioi a), |f w| ≤ studentTBetaKernel ν q w := by
-    filter_upwards [ae_restrict_mem measurableSet_Ioi] with w hw
-    have hwa : a ≤ w := le_of_lt hw
-    have hwpos : 0 < w := by
-      have h1 : 1 ≤ a := by simp [ha_def]
-      linarith
-    have hnonneg : 0 ≤ f w := by
-      dsimp only [f]
-      exact mul_nonneg (Real.rpow_nonneg (by positivity) _) (Real.rpow_nonneg hwpos.le _)
-    have habs : |f w| = f w := abs_of_nonneg hnonneg
-    rw [habs]
-    exact ha w hwa
-  have ha1 : 1 ≤ a := by
-    simp [ha_def]
-  have hIoi_a : IntegrableOn (studentTBetaKernel ν q) (Ioi a) :=
-    hIoi1.mono_set fun x hx => by
-      have hxa : a < x := hx
-      have h : 1 < x := by linarith [ha1, hxa]
-      exact h
-  have htail : IntegrableOn f (Ioi a) :=
-    hIoi_a.mono' (by fun_prop) hae
-  have hconst : IntegrableOn f (Ioi (1 : ℝ)) := by
-    have hdisj : Disjoint (Ioc (1 : ℝ) a) (Ioi a) := by
-      simp [Set.disjoint_left]
-    have hunion : Ioc (1 : ℝ) a ∪ Ioi a = Ioi (1 : ℝ) := by
-      ext x; simp [ha_def]
-    have : IntegrableOn f (Ioc (1 : ℝ) a ∪ Ioi a) :=
-      hbounded'.union htail
-    rwa [hunion] at this
-  have hc : IsUnit ((2 : ℝ) ^ (-s)) :=
-    isUnit_iff_ne_zero.mpr (Real.rpow_pos_of_pos (by positivity) _).ne'
-  have hpow : IntegrableOn (fun w : ℝ => w ^ e) (Ioi (1 : ℝ)) := by
-    have h : IntegrableOn (fun w : ℝ => (2 : ℝ) ^ (-s) * w ^ e) (Ioi (1 : ℝ)) := hconst
-    have h' : IntegrableOn (fun w : ℝ => w ^ e) (Ioi (1 : ℝ)) := by
-      simpa [IntegrableOn, integrable_const_mul_iff hc] using h
-    exact h'
-  rw [integrableOn_Ioi_rpow_iff one_pos] at hpow
-  linarith
-
 /-- The beta kernel is integrable on the positive half-line precisely for `-1 < q < ν`: the
 exponent at `0` is `(q - 1) / 2` and the tail exponent is `(q - ν - 2) / 2`. -/
 private lemma integrableOn_studentTBetaKernel_Ioi_iff (hν : 0 < ν) (hq : -1 < q) :
     IntegrableOn (studentTBetaKernel ν q) (Ioi (0 : ℝ)) ↔ q < ν := by
-  set s := (ν + 1) / 2
-  constructor
-  · intro h
-    by_contra hqν
-    exact not_integrableOn_studentTBetaKernel_Ioi_of_le hν (not_lt.mp hqν) h
-  · intro hqν
-    set ha := (q + 1) / 2
-    set hb := (ν - q) / 2 with hb_def
-    have ha_pos : 0 < ha := by
-      dsimp only [ha]; linarith
-    have hb_pos : 0 < hb := by
-      dsimp only [hb]; linarith
-    have hsum : ha + hb = s := by
-      dsimp only [ha, hb, s]; ring
-    have h := integrableOn_rpow_mul_one_add_rpow ha_pos hb_pos
-    have hkernel : ∀ w : ℝ, studentTBetaKernel ν q w =
-        w ^ (ha - 1) * (1 + w) ^ (-(ha + hb)) := by
-      intro w
-      dsimp only [studentTBetaKernel]
-      have h1 : (q - 1) / 2 = ha - 1 := by
-        dsimp only [ha]; ring
-      have h2 : -((ν + 1) / 2) = -(ha + hb) := by
-        dsimp only [ha, hb]; ring
-      rw [h1, h2]
-    have h3 : IntegrableOn (studentTBetaKernel ν q) (Ioi (0 : ℝ)) := by
-      have h4 : EqOn (fun w : ℝ => w ^ (ha - 1) * (1 + w) ^ (-(ha + hb)))
-          (studentTBetaKernel ν q) (Ioi (0 : ℝ)) := by
-        intro w hw
-        exact (hkernel w).symm
-      exact h.congr_fun h4 measurableSet_Ioi
-    exact h3
+  have h := integrableOn_rpow_mul_one_add_rpow_iff
+    (a := (q + 1) / 2) (b := (ν - q) / 2) (by linarith) (by linarith)
+  have hleft : (q + 1) / 2 - 1 = (q - 1) / 2 := by ring
+  have hsum : (q + 1) / 2 + (ν - q) / 2 = (ν + 1) / 2 := by ring
+  have htail : 0 < (ν - q) / 2 ↔ q < ν := by
+    constructor <;> intro hh <;> linarith
+  simpa only [studentTBetaKernel, hleft, hsum, htail] using h
 
 /-- The weighted Student t density `studentTPDFReal ν x * x ^ q` is integrable on the positive
 half-line exactly for `-1 < q < ν`. -/
