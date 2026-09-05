@@ -39,6 +39,8 @@ discriminant `D ∈ {-4, 8, -8}`, the radicand is `D / 4`, so the three even cas
 * `TauCeti.Multiquadratic.primeDiscriminantPrime`: the single rational prime lying under a prime
   discriminant, with `TauCeti.Multiquadratic.natCast_dvd_primeDiscriminant_iff` saying that it is
   the only prime divisor.
+* `TauCeti.Multiquadratic.natAbs_coprime_natAbs_of_ne`: distinct prime discriminants (not two
+  distinct even ones) have coprime absolute values.
 -/
 
 public section
@@ -465,5 +467,19 @@ theorem injOn_primeDiscriminantPrime {s : Set ℤ} (hs : ∀ D ∈ s, IsPrimeDis
     (heven : ∀ D ∈ s, ∀ E ∈ s, IsEvenPrimeDiscriminant D → IsEvenPrimeDiscriminant E → D = E) :
     Set.InjOn primeDiscriminantPrime s :=
   fun D hD E hE h => eq_of_primeDiscriminantPrime_eq (hs D hD) (hs E hE) (heven D hD E hE) h
+
+/-- **Distinct prime discriminants have coprime moduli.** If `P ≠ Q` are prime discriminants that
+are not two distinct even ones, then `|P|` and `|Q|` are coprime. The proviso is necessary: the
+even prime discriminants `-4`, `8` and `-8` all lie over `2`. -/
+theorem natAbs_coprime_natAbs_of_ne {P Q : ℤ} (hP : IsPrimeDiscriminant P)
+    (hQ : IsPrimeDiscriminant Q)
+    (heven : IsEvenPrimeDiscriminant P → IsEvenPrimeDiscriminant Q → P = Q) (hne : P ≠ Q) :
+    Nat.Coprime P.natAbs Q.natAbs := by
+  refine Nat.coprime_of_dvd' fun k hk hkP hkQ => absurd ?_ hne
+  have hkP' : (k : ℤ) ∣ P := Int.natCast_dvd.mpr hkP
+  have hkQ' : (k : ℤ) ∣ Q := Int.natCast_dvd.mpr hkQ
+  rw [natCast_dvd_primeDiscriminant_iff hP hk] at hkP'
+  rw [natCast_dvd_primeDiscriminant_iff hQ hk] at hkQ'
+  exact eq_of_primeDiscriminantPrime_eq hP hQ heven (hkP'.symm.trans hkQ')
 
 end TauCeti.Multiquadratic

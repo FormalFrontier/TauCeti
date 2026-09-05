@@ -8,7 +8,6 @@ module
 public import TauCeti.NumberTheory.Multiquadratic.Legendre.PrimeDiscriminant.Character
 import TauCeti.NumberTheory.Multiquadratic.FundamentalDiscriminant.Basic
 import Mathlib.Data.Nat.ChineseRemainder
-import Mathlib.FieldTheory.Finite.Basic
 import Mathlib.NumberTheory.LSeries.PrimesInAP
 
 /-!
@@ -31,13 +30,13 @@ larger than any given bound, in that class.
 The statement is classical; see D. A. Cox, *Primes of the Form x² + ny²*, §3.B (the proof of
 Theorem 3.15), and F. Lemmermeyer, *Reciprocity Laws: From Euler to Eisenstein*, §2.2.
 
+The nontriviality of a single character (`exists_primeDiscriminantCharFun_eq`) and the coprimality
+of the moduli of distinct prime discriminants (`natAbs_coprime_natAbs_of_ne`) are supplied by
+`TauCeti.NumberTheory.Multiquadratic.Legendre.PrimeDiscriminant.Character` and
+`TauCeti.NumberTheory.Multiquadratic.Prime.Discriminants`.
+
 ## Main results
 
-* `TauCeti.Multiquadratic.exists_primeDiscriminantCharFun_eq_neg_one` and
-  `TauCeti.Multiquadratic.exists_primeDiscriminantCharFun_eq`: the character attached to a prime
-  discriminant is nontrivial, so it takes each of the values `±1` at some natural number.
-* `TauCeti.Multiquadratic.natAbs_coprime_natAbs_of_ne`: the moduli of two distinct prime
-  discriminants are coprime, provided they are not two distinct even prime discriminants.
 * `TauCeti.Multiquadratic.exists_forall_primeDiscriminantCharFun_eq`: a natural number at which
   finitely many prime-discriminant characters take prescribed values.
 * `TauCeti.Multiquadratic.exists_prime_gt_forall_primeDiscriminantCharFun_eq`: an odd prime,
@@ -48,51 +47,7 @@ public section
 
 namespace TauCeti.Multiquadratic
 
-/-! ### Nontriviality of a single character -/
-
-/-- **The character of a prime discriminant is nontrivial.** For every prime discriminant `P`,
-some natural number has character `-1` at `P`: the residue `3` for the even prime discriminants
-`-4` and `8`, the residue `5` for `-8`, and any quadratic non-residue modulo `p` for `p* = ±p`. -/
-theorem exists_primeDiscriminantCharFun_eq_neg_one {P : ℤ} (hP : IsPrimeDiscriminant P) :
-    ∃ a : ℕ, primeDiscriminantCharFun P a = -1 := by
-  rcases isPrimeDiscriminant_iff.mp hP with hev | ⟨p, hp, hodd, rfl⟩
-  · rcases hev with rfl | rfl | rfl
-    · exact ⟨3, by rw [primeDiscriminantCharFun_neg_four]; exact ZMod.χ₄_int_three_mod_four rfl⟩
-    · exact ⟨3, by rw [primeDiscriminantCharFun_eight, ZMod.χ₈_int_eq_if_mod_eight]; norm_num⟩
-    · exact ⟨5, by
-        rw [primeDiscriminantCharFun_neg_eight, ZMod.χ₈'_int_eq_if_mod_eight]; norm_num⟩
-  · have : Fact p.Prime := ⟨hp⟩
-    have hp2 : p ≠ 2 := by have := Nat.odd_iff.mp hodd; omega
-    have hchar : ringChar (ZMod p) ≠ 2 := by rw [ZMod.ringChar_zmod_n]; exact hp2
-    obtain ⟨x, hx⟩ := FiniteField.exists_nonsquare hchar
-    refine ⟨x.val, ?_⟩
-    rw [primeDiscriminantCharFun_oddPrimeDiscriminant hodd, ← jacobiSym.legendreSym.to_jacobiSym,
-      legendreSym.eq_neg_one_iff]
-    rwa [Int.cast_natCast, ZMod.natCast_zmod_val]
-
-/-- The character attached to a prime discriminant takes each of the values `±1` at some natural
-number. -/
-theorem exists_primeDiscriminantCharFun_eq {P : ℤ} (hP : IsPrimeDiscriminant P) (ε : ℤˣ) :
-    ∃ a : ℕ, primeDiscriminantCharFun P a = ε := by
-  rcases Int.units_eq_one_or ε with rfl | rfl
-  · exact ⟨1, by simp⟩
-  · simpa using exists_primeDiscriminantCharFun_eq_neg_one hP
-
 /-! ### Prescribing several characters at once -/
-
-/-- **Distinct prime discriminants have coprime moduli.** If `P ≠ Q` are prime discriminants that
-are not two distinct even ones, then `|P|` and `|Q|` are coprime. The proviso is necessary: the
-even prime discriminants `-4`, `8` and `-8` all lie over `2`. -/
-theorem natAbs_coprime_natAbs_of_ne {P Q : ℤ} (hP : IsPrimeDiscriminant P)
-    (hQ : IsPrimeDiscriminant Q)
-    (heven : IsEvenPrimeDiscriminant P → IsEvenPrimeDiscriminant Q → P = Q) (hne : P ≠ Q) :
-    Nat.Coprime P.natAbs Q.natAbs := by
-  refine Nat.coprime_of_dvd' fun k hk hkP hkQ => absurd ?_ hne
-  have hkP' : (k : ℤ) ∣ P := Int.natCast_dvd.mpr hkP
-  have hkQ' : (k : ℤ) ∣ Q := Int.natCast_dvd.mpr hkQ
-  rw [natCast_dvd_primeDiscriminant_iff hP hk] at hkP'
-  rw [natCast_dvd_primeDiscriminant_iff hQ hk] at hkQ'
-  exact eq_of_primeDiscriminantPrime_eq hP hQ heven (hkP'.symm.trans hkQ')
 
 /-- **Prescribing the characters of finitely many prime discriminants.** Let `s` be a finite set
 of prime discriminants, at most one of them even, and let `ε` assign a sign to each. Then some
