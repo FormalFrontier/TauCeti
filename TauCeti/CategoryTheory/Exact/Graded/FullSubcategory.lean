@@ -8,7 +8,6 @@ module
 public import TauCeti.CategoryTheory.Exact.ExtensionClosed
 public import TauCeti.CategoryTheory.Exact.Graded.Basic
 public import Mathlib.CategoryTheory.ObjectProperty.Equivalence
-public import Mathlib.CategoryTheory.Preadditive.AdditiveFunctor
 
 /-!
 # Graded exact structures on full subcategories
@@ -39,7 +38,7 @@ Ext-Euler characteristic descend to the graded Grothendieck groups of selected s
   the induced exact structure.
 * `TauCeti.GradedExactStructure.fullSubcategory_shift`: the shift of the induced structure is the
   restricted ambient shift.
-* `TauCeti.GradedExactStructure.gradedConflationExactInclusion`: the inclusion is graded
+* `TauCeti.GradedExactStructure.gradedConflationExactι`: the inclusion is graded
   conflation-exact.
 
 ## References
@@ -72,19 +71,9 @@ variable [P.IsClosedUnderIsomorphisms]
 The equation `P.inverseImage E.shift.functor = P` states exactly that an object belongs to `P`
 if and only if its shift does.  Mathlib's full-subcategory restriction of an equivalence then
 uses the ambient inverse shift as its inverse. -/
-abbrev fullSubcategoryShift (hshift : P.inverseImage E.shift.functor = P) :
+noncomputable def fullSubcategoryShift (hshift : P.inverseImage E.shift.functor = P) :
     P.FullSubcategory ≌ P.FullSubcategory :=
-  { E.shift.congrFullSubcategory hshift with
-    functor := P.lift (P.ι ⋙ E.shift.functor) (fun X ↦ by
-      have hX : P.inverseImage E.shift.functor X.obj := by
-        rw [hshift]
-        exact X.property
-      exact hX)
-    inverse := P.lift (P.ι ⋙ E.shift.inverse) (fun X ↦ by
-      have hX : P.inverseImage E.shift.functor (E.shift.inverse.obj X.obj) :=
-        P.prop_of_iso (E.shift.counitIso.app X.obj).symm X.property
-      rw [hshift] at hX
-      exact hX) }
+  E.shift.congrFullSubcategory hshift
 
 /-- The inclusion of the full subcategory intertwines its restricted shift with the ambient
 shift. -/
@@ -92,11 +81,7 @@ def fullSubcategoryShiftFunctorCompιIso
     (hshift : P.inverseImage E.shift.functor = P) :
     (fullSubcategoryShift E P hshift).functor ⋙ P.ι ≅ P.ι ⋙ E.shift.functor := by
   rw [fullSubcategoryShift]
-  exact P.liftCompιIso (P.ι ⋙ E.shift.functor) (fun X => by
-    have hX : P.inverseImage E.shift.functor X.obj := by
-      rw [hshift]
-      exact X.property
-    exact hX)
+  exact P.liftCompιIso _ _
 
 /-- The inclusion of the full subcategory also intertwines the inverse restricted shift with the
 ambient inverse shift. -/
@@ -104,11 +89,7 @@ def fullSubcategoryShiftInverseCompιIso
     (hshift : P.inverseImage E.shift.functor = P) :
     (fullSubcategoryShift E P hshift).inverse ⋙ P.ι ≅ P.ι ⋙ E.shift.inverse := by
   rw [fullSubcategoryShift]
-  exact P.liftCompιIso (P.ι ⋙ E.shift.inverse) (fun X => by
-    have hX : P.inverseImage E.shift.functor (E.shift.inverse.obj X.obj) :=
-      P.prop_of_iso (E.shift.counitIso.app X.obj).symm X.property
-    rw [hshift] at hX
-    exact hX)
+  exact P.liftCompιIso _ _
 
 end Shift
 
@@ -119,6 +100,13 @@ variable [P.ContainsZero] [P.IsClosedUnderBinaryProducts]
 local instance : P.IsClosedUnderIsomorphisms :=
   ObjectProperty.isClosedUnderIsomorphisms_of_containsZero P
 
+private noncomputable instance fullSubcategoryShiftFunctorAdditive
+    (hshift : P.inverseImage E.shift.functor = P) :
+    (fullSubcategoryShift E P hshift).functor.Additive := by
+  have : ((fullSubcategoryShift E P hshift).functor ⋙ P.ι).Additive :=
+    Functor.additive_of_iso (fullSubcategoryShiftFunctorCompιIso E P hshift).symm
+  exact Functor.additive_of_comp_faithful _ P.ι
+
 private theorem fullSubcategoryShift_exact
     (hP : E.toExactStructure.IsExtensionClosed P)
     (hshift : P.inverseImage E.shift.functor = P) :
@@ -126,7 +114,10 @@ private theorem fullSubcategoryShift_exact
       (E.toExactStructure.fullSubcategory P hP) (fullSubcategoryShift E P hshift).functor where
   map_conflation {S} hS := by
     rw [ExactStructure.fullSubcategory_conflation_iff] at hS ⊢
-    exact E.shift_exact.map_conflation hS
+    rw [← ShortComplex.map_comp] at ⊢
+    exact E.toExactStructure.conflation_of_iso
+      (S.mapNatIso (fullSubcategoryShiftFunctorCompιIso E P hshift))
+      (E.shift_exact.map_conflation hS)
 
 private theorem fullSubcategoryShift_inverse_exact
     (hP : E.toExactStructure.IsExtensionClosed P)
@@ -135,7 +126,10 @@ private theorem fullSubcategoryShift_inverse_exact
       (E.toExactStructure.fullSubcategory P hP) (fullSubcategoryShift E P hshift).inverse where
   map_conflation {S} hS := by
     rw [ExactStructure.fullSubcategory_conflation_iff] at hS ⊢
-    exact E.shift_inverse_exact.map_conflation hS
+    rw [← ShortComplex.map_comp] at ⊢
+    exact E.toExactStructure.conflation_of_iso
+      (S.mapNatIso (fullSubcategoryShiftInverseCompιIso E P hshift))
+      (E.shift_inverse_exact.map_conflation hS)
 
 /-- The graded exact structure induced on a shift-stable, extension-closed full subcategory.
 
@@ -150,6 +144,8 @@ noncomputable def fullSubcategory
   shift_exact := fullSubcategoryShift_exact E P hP hshift
   shift_inverse_exact := fullSubcategoryShift_inverse_exact E P hP hshift
 
+/-- The underlying exact structure on the induced graded exact structure is the full-subcategory
+exact structure. -/
 @[simp]
 theorem fullSubcategory_toExactStructure
     (hP : E.toExactStructure.IsExtensionClosed P)
@@ -158,6 +154,7 @@ theorem fullSubcategory_toExactStructure
       E.toExactStructure.fullSubcategory P hP :=
   by rw [fullSubcategory]
 
+/-- The shift on the induced graded exact structure is the restricted ambient shift. -/
 @[simp]
 theorem fullSubcategory_shift
     (hP : E.toExactStructure.IsExtensionClosed P)
@@ -168,12 +165,22 @@ theorem fullSubcategory_shift
 /-- The inclusion of a shift-stable, extension-closed full subcategory is graded
 conflation-exact.  Its commutation isomorphism is the canonical comparison between the restricted
 shift followed by inclusion and the ambient shift. -/
-def gradedConflationExactInclusion
+def gradedConflationExactι
     (hP : E.toExactStructure.IsExtensionClosed P)
     (hshift : P.inverseImage E.shift.functor = P) :
-    GradedConflationExact (fullSubcategory E P hP hshift) E P.ι where
+  GradedConflationExact (fullSubcategory E P hP hshift) E P.ι where
   isConflationExact := ExactStructure.isConflationExact_ι hP
-  commShift := fullSubcategoryShiftFunctorCompιIso E P hshift
+  commShift := by
+    unfold fullSubcategory
+    exact fullSubcategoryShiftFunctorCompιIso E P hshift
+
+@[simp]
+theorem gradedConflationExactι_commShift
+    (hP : E.toExactStructure.IsExtensionClosed P)
+    (hshift : P.inverseImage E.shift.functor = P) :
+    HEq (gradedConflationExactι E P hP hshift).commShift
+      (fullSubcategoryShiftFunctorCompιIso E P hshift) :=
+  (HEq.rfl)
 
 end FullSubcategory
 
