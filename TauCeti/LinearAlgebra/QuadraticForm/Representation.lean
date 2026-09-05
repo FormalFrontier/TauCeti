@@ -37,7 +37,7 @@ def _root_.QuadraticMap.Represents (Q : QuadraticMap R M N) (a : N) : Prop := �
 
 /-- Every quadratic map represents zero. -/
 @[simp]
-theorem _root_.QuadraticMap.represents_zero (Q : QuadraticMap R M N) : ∃ v, Q v = 0 :=
+theorem _root_.QuadraticMap.represents_zero (Q : QuadraticMap R M N) : Represents Q 0 :=
   ⟨0, Q.map_zero⟩
 
 @[simp]
@@ -87,7 +87,7 @@ theorem _root_.QuadraticMap.represents_of_nondegenerate_of_isotropic (Q : Quadra
 @[simp]
 theorem _root_.QuadraticMap.represents_mul_square_iff (Q : QuadraticMap R M R) (a : R)
     (b : Rˣ) :
-    (∃ v, Q v = a * (b : R) ^ 2) ↔ ∃ v, Q v = a := by
+    Represents Q (a * (b : R) ^ 2) ↔ Represents Q a := by
   constructor
   · rintro ⟨v, hv⟩
     refine ⟨(↑(b⁻¹ : Rˣ) : R) • v, ?_⟩
@@ -107,8 +107,9 @@ theorem _root_.QuadraticMap.represents_mul_square_iff (Q : QuadraticMap R M R) (
     ac_rfl
 
 /-- Multiplying a represented unit by a square preserves membership in `unitValueSet`. -/
+@[simp]
 theorem _root_.QuadraticMap.mem_unitValueSet_mul_square_iff (Q : QuadraticMap R M R) (a b : Rˣ) :
-    (∃ v, Q v = (a : R) * (b : R) ^ 2) ↔ ∃ v, Q v = (a : R) := by
+    (a * b ^ 2) ∈ unitValueSet Q ↔ a ∈ unitValueSet Q := by
   simpa only [mem_unitValueSet, Units.val_mul, Units.val_pow_eq_pow_val] using
     (represents_mul_square_iff Q (a : R) b)
 
