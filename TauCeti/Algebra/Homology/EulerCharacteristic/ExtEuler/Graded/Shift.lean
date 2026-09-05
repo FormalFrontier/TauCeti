@@ -37,6 +37,8 @@ witness it needs is the one this file constructs from it.
 
 ## Main definitions
 
+* `TauCeti.shiftSourceObjIso`: the comparison `(Y{j-1}){1} ≅ Y{j}` through which a source shift
+  is moved into the internal degree.
 * `TauCeti.gradedExtShiftTargetEquiv`: `Ext^{n,j}(X, Y{1}) ≃ₗ[k] Ext^{n,j+1}(X, Y)`.
 * `TauCeti.gradedExtShiftTargetInverseEquiv`: `Ext^{n,j}(X, Y{-1}) ≃ₗ[k] Ext^{n,j-1}(X, Y)`.
 * `TauCeti.gradedExtShiftSourceEquiv`: `Ext^{n,j}(X{1}, Y) ≃ₗ[k] Ext^{n,j-1}(X, Y)`.
@@ -87,11 +89,29 @@ noncomputable def gradedExtShiftTargetEquiv (X Y : C) (n : ℕ) (j : ℤ) :
     GradedExt.{w} e X (e.functor.obj Y) n j ≃ₗ[k] GradedExt.{w} e X Y n (j + 1) :=
   extLinearEquivOfIso k (Iso.refl X) ((e.powSuccIso j).app Y).symm n
 
+/-- `TauCeti.gradedExtShiftTargetEquiv` composes with the comparison isomorphism
+`(Y{1}){j} ≅ Y{j+1}`. -/
+@[simp]
+theorem gradedExtShiftTargetEquiv_apply (X Y : C) (n : ℕ) (j : ℤ)
+    (x : GradedExt.{w} e X (e.functor.obj Y) n j) :
+    gradedExtShiftTargetEquiv k e X Y n j x =
+      x.comp (Ext.mk₀ ((e.powSuccIso j).app Y).inv) (add_zero n) := by
+  simp [gradedExtShiftTargetEquiv]
+
 /-- Shifting the target by the inverse shift lowers the internal degree by one:
 `Ext^{n,j}(X, Y{-1}) ≅ Ext^{n,j-1}(X, Y)`. -/
 noncomputable def gradedExtShiftTargetInverseEquiv (X Y : C) (n : ℕ) (j : ℤ) :
     GradedExt.{w} e X (e.inverse.obj Y) n j ≃ₗ[k] GradedExt.{w} e X Y n (j - 1) :=
   extLinearEquivOfIso k (Iso.refl X) ((e.powPredIso j).app Y) n
+
+/-- `TauCeti.gradedExtShiftTargetInverseEquiv` composes with the comparison isomorphism
+`(Y{-1}){j} ≅ Y{j-1}`. -/
+@[simp]
+theorem gradedExtShiftTargetInverseEquiv_apply (X Y : C) (n : ℕ) (j : ℤ)
+    (x : GradedExt.{w} e X (e.inverse.obj Y) n j) :
+    gradedExtShiftTargetInverseEquiv k e X Y n j x =
+      x.comp (Ext.mk₀ ((e.powPredIso j).app Y).hom) (add_zero n) := by
+  simp [gradedExtShiftTargetInverseEquiv]
 
 end CommRing
 
@@ -205,7 +225,7 @@ merely additive.  As for the target, the two reindexing equivalences need only a
 of scalars. -/
 
 /-- The comparison `(Y{j-1}){1} ≅ Y{j}`, which moves a source shift into the internal degree. -/
-private noncomputable def shiftSourceObjIso (Y : C) (j : ℤ) :
+noncomputable def shiftSourceObjIso (Y : C) (j : ℤ) :
     e.functor.obj ((e ^ (j - 1)).functor.obj Y) ≅ (e ^ j).functor.obj Y :=
   ((e.powSuccRightIso (j - 1)).app Y).symm ≪≫
     eqToIso (congrArg (fun i : ℤ => (e ^ i).functor.obj Y) (by ring : j - 1 + 1 = j))
@@ -221,12 +241,34 @@ noncomputable def gradedExtShiftSourceEquiv (X Y : C) (n : ℕ) (j : ℤ) :
   ((extLinearEquivOfEquivalence k e X ((e ^ (j - 1)).functor.obj Y) n).trans
     (extLinearEquivOfIso k (Iso.refl (e.functor.obj X)) (shiftSourceObjIso e Y j) n)).symm
 
+/-- The inverse of `TauCeti.gradedExtShiftSourceEquiv` transports along `e` and then composes with
+the comparison isomorphism `(Y{j-1}){1} ≅ Y{j}`; this is the direction in which the equivalence is
+built. -/
+@[simp]
+theorem gradedExtShiftSourceEquiv_symm_apply (X Y : C) (n : ℕ) (j : ℤ)
+    (x : GradedExt.{w} e X Y n (j - 1)) :
+    (gradedExtShiftSourceEquiv k e X Y n j).symm x =
+      (x.mapExactFunctor e.functor).comp
+        (Ext.mk₀ (shiftSourceObjIso e Y j).hom) (add_zero n) := by
+  simp [gradedExtShiftSourceEquiv]
+
 /-- Shifting the source by the inverse shift raises the internal degree by one:
 `Ext^{n,j}(X{-1}, Y) ≅ Ext^{n,j+1}(X, Y)`. -/
 noncomputable def gradedExtShiftSourceInverseEquiv (X Y : C) (n : ℕ) (j : ℤ) :
     GradedExt.{w} e (e.inverse.obj X) Y n j ≃ₗ[k] GradedExt.{w} e X Y n (j + 1) :=
   (extLinearEquivOfEquivalence k e (e.inverse.obj X) ((e ^ j).functor.obj Y) n).trans
     (extLinearEquivOfIso k (e.counitIso.app X) ((e.powSuccRightIso j).app Y).symm n)
+
+/-- `TauCeti.gradedExtShiftSourceInverseEquiv` transports along `e` and then composes with the
+counit and the comparison isomorphism `(Y{j}){1} ≅ Y{j+1}`. -/
+@[simp]
+theorem gradedExtShiftSourceInverseEquiv_apply (X Y : C) (n : ℕ) (j : ℤ)
+    (x : GradedExt.{w} e (e.inverse.obj X) Y n j) :
+    gradedExtShiftSourceInverseEquiv k e X Y n j x =
+      (Ext.mk₀ (e.counitIso.app X).inv).comp
+        ((x.mapExactFunctor e.functor).comp
+          (Ext.mk₀ ((e.powSuccRightIso j).app Y).inv) (add_zero n)) (zero_add n) := by
+  simp [gradedExtShiftSourceInverseEquiv]
 
 end CommRingSource
 
