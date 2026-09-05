@@ -279,22 +279,8 @@ private theorem baseChangeIsoPointsMulEquiv_mapPointsFunctor
         ((CommHopfAlgCat.baseChangePointsMulEquiv (K := A) B K
           (WithConv.toConv (q.ofConv.comp gK.hom.toAlgHom))).ofConv.comp
             f.hom.toAlgHom) := by
-  apply WithConv.ofConv_injective
-  apply AlgHom.ext
-  intro x
-  rw [CommHopfAlgCat.baseChangeIsoPointsMulEquiv_apply_apply]
-  simp only [AlgHom.comp_apply]
-  rw [CommHopfAlgCat.baseChangePointsMulEquiv_apply_apply]
-  simp only [AlgHom.comp_apply]
-  rw [← hcompat, _root_.CommHopfAlgCat.hom_comp, _root_.CommHopfAlgCat.hom_comp]
-  -- Category composition is stored as nested `BialgHom.comp`, while the isomorphism cancellation
-  -- and pure-tensor rules are stated for applications. This conversion exposes exactly those two
-  -- public interfaces and keeps the representation-dependent proofs below independent of wrappers.
-  change q.ofConv (gK.hom ((CommHopfAlgCat.baseChangeMap f).hom
-      ((baseChangeCoordinateIso n hn A).hom.hom
-        ((baseChangeCoordinateIso n hn A).inv (1 ⊗ₜ[ℤ] x))))) =
-    q.ofConv (gK.hom (1 ⊗ₜ[ℤ] f.hom x))
-  rw [Iso.inv_hom_id_apply, CommHopfAlgCat.baseChangeMap_apply_tmul]
+  exact CommHopfAlgCat.baseChangeIsoPointsMulEquiv_mapPointsFunctor
+    (baseChangeCoordinateIso n hn A) gK f fA hcompat B q
 
 /-! ## The transported root subgroups -/
 
