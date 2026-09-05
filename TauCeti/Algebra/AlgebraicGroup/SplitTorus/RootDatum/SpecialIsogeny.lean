@@ -31,8 +31,8 @@ isogenies of pinned reductive groups.
   `TauCeti.DynkinType.g2SpecialTorusEnd_comp_self`, and
   `TauCeti.DynkinType.f4SpecialTorusEnd_comp_self`: the special torus maps square to the
   characteristic power maps.
-* `TauCeti.DynkinType.mapValue_frobenius_two_eq_comp_b2SpecialTorusEnd_sq` and its `G₂` and
-  `F₄` counterparts: on points in the defining characteristic, these squares are Frobenius.
+* `TauCeti.DynkinType.mapValue_frobenius_two_eq_comp_b2SpecialTorusEnd_comp_self` and its `G₂`
+  and `F₄` counterparts: on points in the defining characteristic, these squares are Frobenius.
 
 ## References
 
@@ -146,7 +146,7 @@ theorem f4SpecialTorusEnd_comp_self :
 
 /-- **On points in characteristic two, the square of the `B₂` special torus endomorphism is
 Frobenius.** -/
-theorem mapValue_frobenius_two_eq_comp_b2SpecialTorusEnd_sq
+theorem mapValue_frobenius_two_eq_comp_b2SpecialTorusEnd_comp_self
     {A : Type} [CommRing A] [ExpChar A 2]
     (q : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
       (SplitTorus.groupScheme ℤ (Fin 2)).X) :
@@ -158,7 +158,7 @@ theorem mapValue_frobenius_two_eq_comp_b2SpecialTorusEnd_sq
 
 /-- **On points in characteristic three, the square of the `G₂` special torus endomorphism is
 Frobenius.** -/
-theorem mapValue_frobenius_three_eq_comp_g2SpecialTorusEnd_sq
+theorem mapValue_frobenius_three_eq_comp_g2SpecialTorusEnd_comp_self
     {A : Type} [CommRing A] [ExpChar A 3]
     (q : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
       (SplitTorus.groupScheme ℤ (Fin 2)).X) :
@@ -170,7 +170,7 @@ theorem mapValue_frobenius_three_eq_comp_g2SpecialTorusEnd_sq
 
 /-- **On points in characteristic two, the square of the `F₄` special torus endomorphism is
 Frobenius.** -/
-theorem mapValue_frobenius_two_eq_comp_f4SpecialTorusEnd_sq
+theorem mapValue_frobenius_two_eq_comp_f4SpecialTorusEnd_comp_self
     {A : Type} [CommRing A] [ExpChar A 2]
     (q : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
       (SplitTorus.groupScheme ℤ (Fin 4)).X) :

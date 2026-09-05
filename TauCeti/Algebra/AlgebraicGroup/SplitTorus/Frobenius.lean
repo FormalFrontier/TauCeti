@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.Frobenius.Points
+public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Frobenius
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.LinearMap
 
 /-!
@@ -22,7 +22,7 @@ torus as Frobenius rather than merely as an abstract power map.
 
 ## Main results
 
-* `TauCeti.SplitTorus.groupSchemePointsMulEquiv_mapValue_iterateFrobenius`: under the
+* `TauCeti.DiagonalizableGroup.groupSchemePointsMulEquiv_mapValue_iterateFrobenius`: under the
   coordinate-algebra comparison, functoriality along Frobenius is the existing convolution-point
   Frobenius.
 * `TauCeti.SplitTorus.mapValue_iterateFrobenius_eq_comp_powEnd`: on scheme-valued points, the
@@ -47,21 +47,6 @@ namespace TauCeti.SplitTorus
 variable {A sigma : Type} [CommRing A] [Finite sigma]
 variable (p n : ℕ) [ExpChar A p]
 
-/-- Under the coordinate-algebra comparison for an integral split torus, applying the iterated
-Frobenius of the value ring is the existing Frobenius endomorphism on convolution points. -/
-theorem groupSchemePointsMulEquiv_mapValue_iterateFrobenius
-    (q : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
-      (groupScheme ℤ sigma).X) :
-    DiagonalizableGroup.groupSchemePointsMulEquiv
-        (R := ℤ) (A := A) (characterGroup sigma)
-        ((Spec.map (CommRingCat.ofHom (iterateFrobenius A p n).toIntAlgHom.toRingHom)).asOver
-          (Spec (CommRingCat.of ℤ)) ≫ q) =
-      Bialgebra.iterateFrobeniusPoints p n
-        (DiagonalizableGroup.groupSchemePointsMulEquiv
-          (R := ℤ) (A := A) (characterGroup sigma) q) := by
-  rw [DiagonalizableGroup.groupSchemePointsMulEquiv_mapValue,
-    Bialgebra.iterateFrobeniusPoints_apply, AlgHom.mapValue_apply]
-
 /-- **The iterated Frobenius on the points of an integral split torus is its power
 endomorphism.** Precomposing an `A`-valued point by the `n`-fold Frobenius of `A` agrees with
 postcomposing it by the split-torus power map of exponent `p ^ n`. -/
@@ -75,12 +60,16 @@ theorem mapValue_iterateFrobenius_eq_comp_powEnd
   funext i
   apply Units.ext
   rw [schemePointsMulEquiv_mapValue, schemePointsMulEquiv_powEnd]
-  change iterateFrobenius A p n
-      (schemePointsMulEquiv (R := ℤ) (A := A) q i : A) =
-    ((schemePointsMulEquiv (R := ℤ) (A := A) q i) ^ ((p ^ n : ℕ) : ℤ) : Aˣ)
-  rw [iterateFrobenius_def]
-  exact congrArg (fun x : Aˣ => (x : A))
-    (zpow_natCast (schemePointsMulEquiv (R := ℤ) (A := A) q i) (p ^ n)).symm
+  simp only [Units.coe_map]
+  calc
+    _ = (iterateFrobenius A p n).toIntAlgHom
+        (schemePointsMulEquiv (R := ℤ) (A := A) q i : A) :=
+      congrFun (AlgHom.coe_toRingHom (iterateFrobenius A p n).toIntAlgHom)
+        (schemePointsMulEquiv (R := ℤ) (A := A) q i : A)
+    _ = (schemePointsMulEquiv (R := ℤ) (A := A) q i : A) ^ p ^ n := by
+      rw [RingHom.toIntAlgHom_apply, iterateFrobenius_def]
+    _ = _ := congrArg (fun x : Aˣ => (x : A))
+      (zpow_natCast (schemePointsMulEquiv (R := ℤ) (A := A) q i) (p ^ n)).symm
 
 /-- The ordinary Frobenius on the points of an integral split torus is its power endomorphism
 of exponent `p`. -/
