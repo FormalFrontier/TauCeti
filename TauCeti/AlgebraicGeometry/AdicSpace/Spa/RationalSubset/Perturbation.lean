@@ -126,11 +126,11 @@ theorem exists_forall_rationalSubset_eq_of_sub_mem_idealImage (P : PairOfDefinit
       have hge₀ : v.valuation s' ≤ v.valuation (t₀ - u t₀) := hge.trans (hmax t₁ ht₁)
       have hγ0 : v.valuation (t₀ - u t₀) ≠ 0 := fun h ↦ hs' (le_antisymm (h ▸ hge₀) zero_le)
       have hTγ : ∀ t ∈ T, v.valuation t ≤ v.valuation (t₀ - u t₀) := fun t ht ↦
-        (TauCeti.Valuation.le_max_sub v.valuation t (u t)).trans
+        (Valuation.le_max_sub v.valuation t (u t)).trans
           (max_le ((hT'le (u t) (hu t ht)).trans hge₀) (hmax t ht))
       exact absurd (valuation_lt_of_mem_idealImage P hn hv hγ0 hTγ (hδ t₀ ht₀)) (lt_irrefl _)
     have hTle : ∀ t ∈ T, v.valuation t ≤ v.valuation s' := fun t ht ↦
-      (TauCeti.Valuation.le_max_sub v.valuation t (u t)).trans
+      (Valuation.le_max_sub v.valuation t (u t)).trans
         (max_le (hT'le (u t) (hu t ht)) (hsmall t ht).le)
     have hss : v.valuation s = v.valuation s' := by
       have he : s' + (s - s') = s := by ring
@@ -148,7 +148,7 @@ theorem exists_forall_rationalSubset_eq_of_sub_mem_idealImage (P : PairOfDefinit
       exact Valuation.map_sub_eq_of_lt_left _ (hlt _ hss')
     refine ⟨hspa, fun y hy ↦ ?_, hss ▸ hs⟩
     obtain ⟨t, ht, hyt⟩ := hT'T y hy
-    exact hss ▸ (TauCeti.Valuation.le_max_sub v.valuation y t).trans
+    exact hss ▸ (Valuation.le_max_sub v.valuation y t).trans
       (max_le (hTle t ht) (hlt _ hyt).le)
 
 /-- **Wedhorn Proposition 7.34, as stated.** Over a Huber ring, a rational subset with open

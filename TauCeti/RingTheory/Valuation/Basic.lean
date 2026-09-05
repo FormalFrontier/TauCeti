@@ -15,18 +15,18 @@ This file records general-purpose variants of the ultrametric triangle inequalit
 
 public section
 
-namespace TauCeti.Valuation
+namespace Valuation
 
 variable {R : Type*} [Ring R] {Γ₀ : Type*} [LinearOrderedCommMonoidWithZero Γ₀]
 
 /-- The ultrametric triangle inequality in comparison form: `v x` is at most the larger of
 `v y` and the displacement `v (x - y)`. -/
-theorem le_max_sub (v : _root_.Valuation R Γ₀) (x y : R) :
+theorem le_max_sub (v : Valuation R Γ₀) (x y : R) :
     v x ≤ max (v y) (v (x - y)) := by
   have he : y + (x - y) = x := by simp [sub_eq_add_neg]
   calc v x = v (y + (x - y)) := by rw [he]
     _ ≤ max (v y) (v (x - y)) := v.map_add _ _
 
-end TauCeti.Valuation
+end Valuation
 
 end
