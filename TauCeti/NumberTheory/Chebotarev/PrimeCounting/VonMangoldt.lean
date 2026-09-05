@@ -35,9 +35,11 @@ their contribution is `o(x)`.
 
 * `NumberField.Chebotarev.frobeniusPsi_eq_sum_range`: `frobeniusPsi` is the inclusive partial sum
   of `frobeniusVonMangoldtCoeff`.
-* `NumberField.Chebotarev.frobeniusPsi_sub_frobeniusTheta`: their difference is exactly the
-  contribution from exponents at least two.
-* `NumberField.Chebotarev.frobeniusHigherPrimePowers_isLittleO`: this difference is `o(x)`.
+* `NumberField.Chebotarev.frobeniusPsi_sub_frobeniusTheta_eq_primePowerSummatory`: their
+  difference is exactly the contribution from exponents at least two.
+* `NumberField.Chebotarev.frobeniusPsi_sub_frobeniusTheta_le`: that difference is bounded
+  termwise by the unrestricted higher-prime-power tail.
+* `NumberField.Chebotarev.isLittleO_frobeniusPsi_sub_frobeniusTheta`: this difference is `o(x)`.
 
 The coefficient convention follows Neukirch, *Algebraic Number Theory*, Chapter VII. The
 construction reuses Tau Ceti's generic prime-power counting and removal estimates.
@@ -251,69 +253,69 @@ theorem frobeniusPsi_eq_sum_range (C : ConjClasses (L ≃ₐ[K] L)) (x : ℝ) :
     idealSummatory_eq_sum_range_normFiber]
   exact Finset.sum_congr rfl fun n _ ↦ (frobeniusVonMangoldtCoeff_apply C n).symm
 
-variable (K L) in
-/-- The contribution to the Frobenius von Mangoldt weight from exponents at least two. -/
-noncomputable def frobeniusHigherPrimePowerWeight (C : ConjClasses (L ≃ₐ[K] L))
-    (A : IdealPrimePower K) : ℝ := by
-  classical
-  exact if Prime (A : Ideal (𝓞 K)) then 0 else frobeniusPrimePowerWeight K L C A
-
-/-- The higher-prime-power Frobenius weight is nonnegative. -/
-theorem frobeniusHigherPrimePowerWeight_nonneg (C : ConjClasses (L ≃ₐ[K] L))
-    (A : IdealPrimePower K) : 0 ≤ frobeniusHigherPrimePowerWeight K L C A := by
-  classical
-  by_cases hA : Prime (A : Ideal (𝓞 K))
-  · simp [frobeniusHigherPrimePowerWeight, hA]
-  · simpa [frobeniusHigherPrimePowerWeight, hA] using
-      frobeniusPrimePowerWeight_nonneg (K := K) (L := L) C A
-
-/-- The higher-power Frobenius weight is bounded by the unrestricted higher-power weight. -/
-theorem frobeniusHigherPrimePowerWeight_le (C : ConjClasses (L ≃ₐ[K] L))
-    (A : IdealPrimePower K) :
-    frobeniusHigherPrimePowerWeight K L C A ≤ higherPrimePowerWeight A := by
-  classical
-  by_cases hA : Prime (A : Ideal (𝓞 K))
-  · simp [frobeniusHigherPrimePowerWeight, hA]
-  · simpa [frobeniusHigherPrimePowerWeight, hA, higherPrimePowerWeight_of_not_prime hA] using
-      frobeniusPrimePowerWeight_le (K := K) (L := L) C A
-
-/-- The gap between the Frobenius `ψ` and `ϑ` functions is exactly the sum over exponents at
-least two. -/
-theorem frobeniusPsi_sub_frobeniusTheta (C : ConjClasses (L ≃ₐ[K] L)) (x : ℝ) :
+/-- The gap between the Frobenius `ψ` and `ϑ` functions is exactly the sum of the higher
+prime-power weight over the `C`-fibre. -/
+theorem frobeniusPsi_sub_frobeniusTheta_eq_primePowerSummatory (C : ConjClasses (L ≃ₐ[K] L))
+    (x : ℝ) :
     frobeniusPsi K L C x - frobeniusTheta K L C x =
-      primePowerSummatory K (frobeniusHigherPrimePowerWeight K L C) x := by
+      primePowerSummatory K
+        ((frobeniusPrimePowerSet K L C).indicator higherPrimePowerWeight) x := by
   have hsplit : frobeniusPrimePowerWeight K L C =
-      (frobeniusPrimePowerWeight K L C - frobeniusHigherPrimePowerWeight K L C) +
-        frobeniusHigherPrimePowerWeight K L C := by
+      (frobeniusPrimePowerWeight K L C -
+          (frobeniusPrimePowerSet K L C).indicator higherPrimePowerWeight) +
+        (frobeniusPrimePowerSet K L C).indicator higherPrimePowerWeight := by
     rw [sub_add_cancel]
   have hzero : ∀ A : IdealPrimePower K, ¬ Prime (A : Ideal (𝓞 K)) →
-      (frobeniusPrimePowerWeight K L C - frobeniusHigherPrimePowerWeight K L C) A = 0 :=
-    fun A hA ↦ by simp [frobeniusHigherPrimePowerWeight, hA]
+      (frobeniusPrimePowerWeight K L C -
+        (frobeniusPrimePowerSet K L C).indicator higherPrimePowerWeight) A = 0 := fun A hA ↦ by
+    by_cases hA' : A ∈ frobeniusPrimePowerSet K L C
+    · rw [Pi.sub_apply, frobeniusPrimePowerWeight_of_mem hA', Set.indicator_of_mem hA',
+        higherPrimePowerWeight_of_not_prime hA, sub_self]
+    · rw [Pi.sub_apply, frobeniusPrimePowerWeight_of_notMem hA', Set.indicator_of_notMem hA',
+        sub_self]
   have hprime : primePowerSummatory K
-      (frobeniusPrimePowerWeight K L C - frobeniusHigherPrimePowerWeight K L C) x =
+      (frobeniusPrimePowerWeight K L C -
+        (frobeniusPrimePowerSet K L C).indicator higherPrimePowerWeight) x =
         frobeniusTheta K L C x := by
     rw [primePowerSummatory_eq_primeSummatory K _ hzero, primeSummatory_apply,
       frobeniusTheta_apply]
-    exact Finset.sum_congr rfl fun 𝔭 _ ↦ by
-      rw [Pi.sub_apply, frobeniusHigherPrimePowerWeight]
-      have hp : Prime ((IdealPrimePower.ofPrime 𝔭 : IdealPrimePower K) : Ideal (𝓞 K)) :=
-        IdealPrimePower.prime_ofPrime 𝔭
-      simp only [hp, ↓reduceIte, sub_zero, frobeniusPrimePowerWeight_ofPrime]
+    refine Finset.sum_congr rfl fun 𝔭 _ ↦ ?_
+    have hp : Prime ((IdealPrimePower.ofPrime 𝔭 : IdealPrimePower K) : Ideal (𝓞 K)) :=
+      IdealPrimePower.prime_ofPrime 𝔭
+    rw [Pi.sub_apply, frobeniusPrimePowerWeight_ofPrime,
+      Set.indicator_apply_eq_zero.mpr fun _ ↦ higherPrimePowerWeight_of_prime hp, sub_zero]
   rw [frobeniusPsi, hsplit, primePowerSummatory_add, hprime, add_sub_cancel_left]
 
 /-- The higher prime powers make a nonnegative contribution to Frobenius `ψ`. -/
 theorem frobeniusTheta_le_frobeniusPsi (C : ConjClasses (L ≃ₐ[K] L)) (x : ℝ) :
     frobeniusTheta K L C x ≤ frobeniusPsi K L C x := by
-  rw [← sub_nonneg, frobeniusPsi_sub_frobeniusTheta]
-  exact primePowerSummatory_nonneg K _ (frobeniusHigherPrimePowerWeight_nonneg C) x
+  rw [← sub_nonneg, frobeniusPsi_sub_frobeniusTheta_eq_primePowerSummatory]
+  exact primePowerSummatory_nonneg K _
+    (fun A ↦ Set.indicator_nonneg (fun A _ ↦ higherPrimePowerWeight_nonneg A) A) x
+
+/-- **The Frobenius higher-prime-power tail is dominated termwise by the unrestricted one.**
+Nothing about `C` is used: the `C`-fibre is discarded term by term. -/
+theorem frobeniusPsi_sub_frobeniusTheta_le (C : ConjClasses (L ≃ₐ[K] L)) (x : ℝ) :
+    frobeniusPsi K L C x - frobeniusTheta K L C x ≤
+      primePsi K (Set.univ : Set (HeightOneSpectrum (𝓞 K))) x -
+        primeTheta K (Set.univ : Set (HeightOneSpectrum (𝓞 K))) x := by
+  rw [frobeniusPsi_sub_frobeniusTheta_eq_primePowerSummatory, primePsi_sub_primeTheta,
+    primePowerSummatory_apply, primePowerSummatory_apply]
+  refine Finset.sum_le_sum fun A _ ↦ ?_
+  have huniv : {A : IdealPrimePower K | primePowerBase A ∈ Set.univ}.indicator
+      higherPrimePowerWeight A = higherPrimePowerWeight A :=
+    Set.indicator_of_mem (Set.mem_univ _) _
+  rw [huniv]
+  exact Set.indicator_apply_le' (fun _ ↦ le_rfl) fun _ ↦ higherPrimePowerWeight_nonneg A
 
 /-- The higher-prime-power contribution to Frobenius `ψ` is `o(x)`. -/
-theorem frobeniusHigherPrimePowers_isLittleO (C : ConjClasses (L ≃ₐ[K] L)) :
+theorem isLittleO_frobeniusPsi_sub_frobeniusTheta (C : ConjClasses (L ≃ₐ[K] L)) :
     (fun x ↦ frobeniusPsi K L C x - frobeniusTheta K L C x) =o[atTop]
       fun x : ℝ ↦ x := by
-  simpa only [frobeniusPsi_sub_frobeniusTheta] using
+  simpa only [frobeniusPsi_sub_frobeniusTheta_eq_primePowerSummatory] using
     primePowerSummatory_isLittleO_of_le_higherPrimePowerWeight K zero_le_one fun A ↦ by
-      rw [Real.norm_of_nonneg (frobeniusHigherPrimePowerWeight_nonneg C A), one_mul]
-      exact frobeniusHigherPrimePowerWeight_le C A
+      rw [Real.norm_of_nonneg (Set.indicator_nonneg
+        (fun A _ ↦ higherPrimePowerWeight_nonneg A) A), one_mul]
+      exact Set.indicator_apply_le' (fun _ ↦ le_rfl) fun _ ↦ higherPrimePowerWeight_nonneg A
 
 end NumberField.Chebotarev
