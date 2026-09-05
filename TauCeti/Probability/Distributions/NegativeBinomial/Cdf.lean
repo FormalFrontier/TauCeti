@@ -66,9 +66,7 @@ theorem negativeBinomialMeasure_real_Iic (hr : 0 < r) (hp : 0 < p) (hp1 : p ≤ 
       exact regularizedIncompleteBeta_one_right hr hp.le hp1 |>.symm
   | succ k ih =>
       have hsplit : (Iic (k + 1) : Set ℕ) = Iic k ∪ {k + 1} := by
-        ext j
-        simp only [mem_Iic, mem_union, mem_singleton_iff]
-        omega
+        rw [← Order.succ_eq_add_one, Order.Iic_succ, Set.insert_eq, Set.union_comm]
       have hdisj : Disjoint (Iic k : Set ℕ) {k + 1} := by
         rw [Set.disjoint_left]
         intro j hj hj'
