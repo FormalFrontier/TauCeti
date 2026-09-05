@@ -432,7 +432,7 @@ end Domain
 
 section Field
 
-variable {F : Type*} [Field F] {E : Type*} [Field E] [Algebra F E] {f : F[X]}
+variable {F : Type*} [Field F] {E : Type*} [CommRing E] [IsDomain E] [Algebra F E] {f : F[X]}
 
 /-- The discriminant is a square in the base field exactly when the product of the root
 differences already comes from the base field. No Galois hypothesis is involved: this is the
@@ -483,8 +483,9 @@ theorem _root_.Polynomial.Monic.discr_ne_zero_iff {K : Type*} [Field K] {f : K[X
 
 /-- A separable monic polynomial has nonzero discriminant, so the product of its root differences
 is nonzero. -/
-theorem _root_.Polynomial.Monic.discrSqrt_ne_zero {F E : Type*} [Field F] [Field E] [Algebra F E]
-    {f : F[X]} (hf : f.Monic) (hsep : f.Separable) (e : Fin f.natDegree ≃ f.rootSet E) :
+theorem _root_.Polynomial.Monic.discrSqrt_ne_zero {F E : Type*} [Field F] [CommRing E] [IsDomain E]
+    [Algebra F E] {f : F[X]} (hf : f.Monic) (hsep : f.Separable)
+    (e : Fin f.natDegree ≃ f.rootSet E) :
     discrSqrt e ≠ 0 := by
   intro h
   have h0 : algebraMap F E f.discr = 0 := by
