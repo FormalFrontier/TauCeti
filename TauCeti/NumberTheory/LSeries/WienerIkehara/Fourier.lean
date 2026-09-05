@@ -17,7 +17,7 @@ function on a vertical line. This file records the two exact identities used in 
 first exchanges the Dirichlet series with the integral. The second computes the contribution of
 the simple pole at `s = 1`. Their combination expresses the difference as the integral of the
 pole-subtracted remainder, a function agreeing with `LSeries a - A / (s - 1)` on the open
-half-plane `1 < Re s`; nothing about its boundary behaviour is asserted or used here.
+vertical line `Re s = sigma`; nothing about its boundary behaviour is asserted or used here.
 
 ## Main results
 
@@ -25,7 +25,7 @@ half-plane `1 < Re s`; nothing about its boundary behaviour is asserted or used 
   convergent Dirichlet series.
 * `TauCeti.LSeries.integral_exp_mul_fourier_eq` computes the pole term.
 * `TauCeti.LSeries.tsum_term_mul_fourier_sub_pole_eq_integral` combines the two when a named
-  function agrees with the pole-subtracted remainder on the open half-plane.
+  function agrees with the pole-subtracted remainder on the vertical line.
 
 ## Provenance
 
@@ -237,11 +237,13 @@ theorem integral_exp_mul_fourier_eq (hpsi : Integrable psi) (hx : 0 < x) (hsigma
 /-! ### Subtracting the pole -/
 
 /-- Subtracting the simple-pole Fourier identity from the Dirichlet-series identity leaves exactly
-the integral of the pole-subtracted remainder `G`. Only the values of `G` on the open half-plane
-`1 < Re s` enter, so no continuity or limiting behaviour of `G` on the boundary line is assumed
-here. This is the form used before sending `sigma` to `1` in the Wiener--Ikehara argument. -/
+the integral of the pole-subtracted remainder `G`. Only the values of `G` on the vertical line
+`Re s = sigma` enter, so no continuity or limiting behaviour of `G` on the boundary line is
+assumed here. This is the form used before sending `sigma` to `1` in the Wiener--Ikehara
+argument. -/
 theorem tsum_term_mul_fourier_sub_pole_eq_integral {G : ℂ → ℂ} {A : ℂ}
-    (hG : Set.EqOn G (fun s ↦ LSeries a s - A / (s - 1)) {s : ℂ | 1 < s.re})
+    (hG : ∀ t : ℝ, G (sigma + t * I) = LSeries a (sigma + t * I) -
+      A / (sigma + t * I - 1))
     (hpsi : Integrable psi) (hx : 0 < x)
     (hsigma : 1 < sigma) (hsigmaSum : LSeriesSummable a (sigma : ℂ)) :
     (∑' n : ℕ, _root_.LSeries.term a sigma n *
@@ -307,8 +309,7 @@ theorem tsum_term_mul_fourier_sub_pole_eq_integral {G : ℂ → ℂ} {A : ℂ}
   rw [hseries, hpole, hpoleConst, ← integral_sub hseriesI hpoleI]
   apply integral_congr_ae
   filter_upwards [] with t
-  have ht : 1 < ((sigma : ℂ) + t * I).re := by simpa using hsigma
-  rw [hG ht, sub_mul]
+  rw [hG t, sub_mul]
   have hxpowOne :
       ((x ^ (1 - sigma) : ℝ) : ℂ) * ((x ^ (sigma - 1) : ℝ) : ℂ) = 1 := by
     norm_cast
