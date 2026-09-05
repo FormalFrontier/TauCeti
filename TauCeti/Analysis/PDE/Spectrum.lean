@@ -452,9 +452,9 @@ theorem isLeast_rayleighQuotient_firstDirichletEigenvalue
 
 /-- **The quantity `firstDirichletEigenvalue` is the optimal Poincaré constant** of the energy
 form: it is the greatest `C` with `C ‖u‖²_{L²(Ω)} ≤ a(u, u)` for all `u ∈ H¹₀(Ω)`.  This is the
-Rayleigh principle read as an inequality, and it is what makes the lower bounds
-`TauCeti.PDE.le_firstDirichletEigenvalue` sharp.  Boundedness of `Ω` is not needed because this
-optimal-constant characterization does not assert attainment. -/
+Rayleigh principle read as an inequality, and it shows that the bound
+`TauCeti.PDE.firstDirichletEigenvalue_mul_norm_value_sq_le` is optimal.  Boundedness of `Ω` is
+not needed because this optimal-constant characterization does not assert attainment. -/
 theorem isGreatest_firstDirichletEigenvalue
     (hcoeff : MemLp (fun x => energyIntegrand (a x) (b x) (c x)) ⊤ (mu.restrict Omega))
     (hcoercive : IsCoercive (energyFormH1L0 hcoeff))
