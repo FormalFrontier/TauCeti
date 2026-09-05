@@ -16,6 +16,7 @@ General lemmas on `LinearPMap` that Mathlib does not provide.
 
 * `LinearPMap.congr_fun`: the value-level part of `LinearPMap.ext_iff`, with the two domain
   memberships as explicit arguments.
+* `LinearPMap.neg_smul` and `LinearPMap.smul_neg`: a negation moves through a scalar multiple.
 -/
 
 public section
@@ -30,6 +31,19 @@ with the two domain memberships as explicit arguments. -/
 protected theorem congr_fun {f g : E →ₛₗ.[σ] F} (h : f = g) {x : E} (hf : x ∈ f.domain)
     (hg : x ∈ g.domain) : f ⟨x, hf⟩ = g ⟨x, hg⟩ :=
   (LinearPMap.ext_iff.mp h).2 (x := x) (hf := hf) (hg := hg)
+
+/-- Negating the scalar negates the scalar multiple of a partial linear map (`LinearPMap` is not a
+module, so this is not an instance of `neg_smul`). -/
+@[simp]
+theorem neg_smul {M : Type*} [Ring M] [Module M F] [SMulCommClass S M F] (c : M)
+    (A : E →ₛₗ.[σ] F) : (-c) • A = -(c • A) :=
+  LinearPMap.ext rfl fun _ _ _ => _root_.neg_smul _ _
+
+/-- Negating the map negates the scalar multiple of a partial linear map. -/
+@[simp]
+theorem smul_neg {M : Type*} [Monoid M] [DistribMulAction M F] [SMulCommClass S M F] (c : M)
+    (A : E →ₛₗ.[σ] F) : c • (-A) = -(c • A) :=
+  LinearPMap.ext rfl fun _ _ _ => _root_.smul_neg _ _
 
 end LinearPMap
 

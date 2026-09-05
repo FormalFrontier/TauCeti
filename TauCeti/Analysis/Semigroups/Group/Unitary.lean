@@ -48,6 +48,12 @@ from a self-adjoint operator is not claimed here.
   submodule.
 * `TauCeti.Semigroups.StronglyContinuousGroup.complexGenerator`: the generator as a complex
   `LinearPMap`.
+* `TauCeti.Semigroups.StronglyContinuousGroup.isUnitary_of_isComplexLinear_of_forall_norm_le_one`:
+  a contractive C₀-group with complex-linear operators is unitary.
+* `TauCeti.Semigroups.StronglyContinuousGroup.complexGenerator_restrictScalars`,
+  `complexGenerator_eq_of_generator_eq_restrictScalars` and `eq_of_complexGenerator_eq`: the
+  real generator is the real restriction of the complex one, which is therefore determined by
+  the real generator and determines the unitary group.
 * `TauCeti.Semigroups.StronglyContinuousGroup.IsUnitary.complexGenerator_isFormalAdjoint_neg`:
   the generator is skew-symmetric.
 * `TauCeti.Semigroups.StronglyContinuousGroup.IsUnitary.complexGenerator_adjoint_eq_neg`:
@@ -148,6 +154,19 @@ theorem isComplexLinear (hU : U.IsUnitary) : U.toSemigroup.IsComplexLinear :=
 
 end IsUnitary
 
+/-- A contractive C₀-group whose operators are complex linear is unitary. -/
+theorem isUnitary_of_isComplexLinear_of_forall_norm_le_one (U : StronglyContinuousGroup H)
+    (hlin : ∀ (t : ℝ) (z : ℂ) (x : H), U t (z • x) = z • U t x)
+    (h : ∀ t : ℝ, ‖U t‖ ≤ 1) : U.IsUnitary := by
+  refine IsUnitary.intro fun t x y => ?_
+  let L : H →ₗᵢ[ℂ] H :=
+    { toLinearMap :=
+        { toFun := U t
+          map_add' := (U t).map_add
+          map_smul' := hlin t }
+      norm_map' := U.norm_map_apply_eq_of_norm_le_one t (h t) (h (-t)) }
+  exact L.inner_map_map x y
+
 /-- The generator domain of a unitary strongly continuous group, regarded as a complex submodule:
 the complex generator domain of its forward semigroup. Its carrier is the real generator domain. -/
 def complexDomain (U : StronglyContinuousGroup H) (hU : U.IsUnitary) : Submodule ℂ H :=
@@ -209,6 +228,28 @@ theorem complexGenerator_apply (U : StronglyContinuousGroup H) (hU : U.IsUnitary
   rw [LinearPMap.congr_fun (U.complexGenerator_def hU) hx hx',
     U.toSemigroup.complexGenerator_apply hU.isComplexLinear ⟨x, hx'⟩,
     LinearPMap.congr_fun U.generator_def _ hxr]
+
+/-- The real generator of a unitary C₀-group is the real restriction of its complex generator. -/
+@[simp]
+theorem complexGenerator_restrictScalars (U : StronglyContinuousGroup H) (hU : U.IsUnitary) :
+    (U.complexGenerator hU).restrictScalars ℝ = U.generator := by
+  rw [U.complexGenerator_def hU, U.toSemigroup.complexGenerator_restrictScalars, U.generator_def]
+
+/-- The complex generator of a unitary C₀-group whose real generator is the real restriction of
+the complex-linear partial map `A` is `A` itself. -/
+theorem complexGenerator_eq_of_generator_eq_restrictScalars (U : StronglyContinuousGroup H)
+    (hU : U.IsUnitary) {A : H →ₗ.[ℂ] H} (hA : U.generator = A.restrictScalars ℝ) :
+    U.complexGenerator hU = A := by
+  rw [U.complexGenerator_def hU]
+  exact U.toSemigroup.complexGenerator_eq_of_generator_eq_restrictScalars hU.isComplexLinear
+    (by rw [← U.generator_def, hA])
+
+/-- A unitary C₀-group is determined by its complex generator. -/
+theorem eq_of_complexGenerator_eq [CompleteSpace H] {U V : StronglyContinuousGroup H}
+    (hU : U.IsUnitary) (hV : V.IsUnitary) (h : U.complexGenerator hU = V.complexGenerator hV) :
+    U = V :=
+  eq_of_generator_eq (by
+    rw [← U.complexGenerator_restrictScalars hU, ← V.complexGenerator_restrictScalars hV, h])
 
 /-- Membership in the complex generator domain implies membership in the original real generator
 domain; the two domains have the same carrier. -/
@@ -356,9 +397,7 @@ theorem complexGenerator_adjoint_eq_neg (hU : U.IsUnitary) :
           rw [inner_sub_left]
     rw [LinearPMap.neg_domain]
     simpa only [hyx] using x.property
-  apply LinearPMap.ext (le_antisymm hdom_le hle.1)
-  intro y hy hy'
-  exact (hle.2 (x := ⟨y, hy'⟩) (y := ⟨y, hy⟩) rfl).symm
+  exact (LinearPMap.eq_of_le_of_domain_eq hle (le_antisymm hle.1 hdom_le)).symm
 
 end IsUnitary
 

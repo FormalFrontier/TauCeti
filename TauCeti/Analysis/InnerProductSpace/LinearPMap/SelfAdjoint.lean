@@ -8,6 +8,7 @@ module
 public import Mathlib.Analysis.InnerProductSpace.LinearPMap
 public import TauCeti.LinearAlgebra.LinearPMap.SmulSub
 public import TauCeti.Analysis.Normed.Operator.LinearPMap.SmulSub
+import TauCeti.LinearAlgebra.LinearPMap.Basic
 
 /-!
 # Formally self-adjoint partial linear maps and their shifts
@@ -49,6 +50,9 @@ linear maps used by the semigroup development.
   operator), dense and the whole space (self-adjoint operator).
 * `LinearPMap.IsFormalAdjoint.smul_sub_injective` and `IsSelfAdjoint.smul_sub_bijective`: a
   nonreal shift is injective, and bijective for a self-adjoint operator.
+* `LinearPMap.adjoint_smul`: the adjoint of a nonzero scalar multiple is the conjugate multiple of
+  the adjoint; `isSelfAdjoint_neg_I_smul_of_adjoint_eq_neg` (over `ℂ`) says that `-i` times a
+  densely defined skew-adjoint partial linear map is self-adjoint.
 
 ## References
 
@@ -245,6 +249,46 @@ theorem _root_.IsSelfAdjoint.smul_sub_bijective [CompleteSpace E] {A : E →ₗ.
     (hA : IsSelfAdjoint A) {c : 𝕜} (hc : RCLike.im c ≠ 0) :
     Function.Bijective (fun x : A.domain => c • (x : E) - A x) :=
   ⟨hA.isFormalAdjoint.smul_sub_injective hc, hA.smul_sub_surjective hc⟩
+
+
+/-- **The adjoint of a scalar multiple.** For a densely defined partial linear map `T` and a nonzero
+scalar `c`, `(c • T)† = conj c • T†`; in particular the two adjoints have the same domain. -/
+theorem adjoint_smul {F : Type*} [NormedAddCommGroup F] [InnerProductSpace 𝕜 F] [CompleteSpace E]
+    {T : E →ₗ.[𝕜] F} (hT : Dense (T.domain : Set E)) {c : 𝕜} (hc : c ≠ 0) :
+    (c • T)† = (starRingEnd 𝕜) c • T† := by
+  have hT' : Dense ((c • T).domain : Set E) := by
+    rw [LinearPMap.smul_domain]
+    exact hT
+  have hdom : (c • T)†.domain = T†.domain := by
+    ext y
+    rw [mem_adjoint_domain_iff, mem_adjoint_domain_iff]
+    -- `(c • T).domain` is definitionally `T.domain` (`LinearPMap.smul_domain` is `rfl`), which is
+    -- why the two sides can be compared as functions on the same type.
+    have h : ⇑((innerₛₗ 𝕜 y).comp (c • T).toFun) =
+        fun x => c • ((innerₛₗ 𝕜 y).comp T.toFun) x := by
+      funext x
+      simp [inner_smul_right]
+    rw [h]
+    exact continuous_const_smul_iff₀ hc
+  refine LinearPMap.ext hdom fun y hy hy' => ?_
+  rw [LinearPMap.smul_apply]
+  refine adjoint_apply_eq hT' ⟨y, hy⟩ fun x => ?_
+  rw [inner_smul_left, RCLike.conj_conj, LinearPMap.smul_apply, inner_smul_right,
+    adjoint_isFormalAdjoint hT ⟨y, hy'⟩ x]
+
+section Complex
+
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E] [CompleteSpace E]
+
+/-- `-i` times a densely defined skew-adjoint partial linear map is self-adjoint. -/
+theorem isSelfAdjoint_neg_I_smul_of_adjoint_eq_neg {G : E →ₗ.[ℂ] E}
+    (hdense : Dense (G.domain : Set E)) (hG : G† = -G) :
+    IsSelfAdjoint (-Complex.I • G) := by
+  rw [LinearPMap.isSelfAdjoint_def, adjoint_smul hdense (neg_ne_zero.mpr Complex.I_ne_zero), hG,
+    Complex.conj_neg_I]
+  rw [LinearPMap.smul_neg, LinearPMap.neg_smul]
+
+end Complex
 
 end LinearPMap
 
