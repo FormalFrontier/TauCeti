@@ -60,13 +60,7 @@ any finiteness or simplicity statement.
   `TauCeti.Algebra.Lie.E6.Minuscule.Frobenius`,
   `TauCeti.Algebra.Lie.E6.DoubledMinuscule.Frobenius`,
   `TauCeti.Algebra.Lie.SpecialLinear.StandardCarrier.Frobenius` and
-  `TauCeti.Algebra.Lie.Symplectic.StandardCarrier.Frobenius`. Every general fact used about
-  entrywise Frobenius is consumed rather than reproved: the carrier's functorial points API, the
-  facts about the points cut out by a Hopf ideal from
-  `TauCeti.Algebra.AlgebraicGroup.Frobenius.GeneralLinear`, the entrywise Frobenius of a
-  weight-torus matrix from
-  `TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Frobenius`,
-  and the power law of an additive character from Mathlib's `AddChar.map_nsmul_eq_pow`.
+  `TauCeti.Algebra.Lie.Symplectic.StandardCarrier.Frobenius`.
 -/
 
 public section
