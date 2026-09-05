@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.ODE.Transform
 public import Mathlib.Dynamics.Flow
 public import TauCeti.Analysis.ODE.GlobalSolution
 
