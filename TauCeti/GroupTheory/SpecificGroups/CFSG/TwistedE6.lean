@@ -86,7 +86,7 @@ identification, and not before. The counterparts on the other branches already a
 `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeA.lean`,
 `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeE6.lean` and
 `TauCeti/GroupTheory/SpecificGroups/CFSG/Unimodular.lean`, and the branch that likewise stops short
-of a Steinberg map is `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeB2.lean`.
+of a Steinberg map is `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeB/Two.lean`.
 -/
 
 public section
