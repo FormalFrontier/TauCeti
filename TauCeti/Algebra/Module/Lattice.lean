@@ -55,9 +55,6 @@ integral domain rationalizes to its ambient vector space over the fraction field
 ## References
 
 * See N. Bourbaki, *Commutative Algebra*, Chapter VII, §4 for lattice theory over Dedekind domains.
-* The integral-lattice interface and its Layer 0 target are specified in
-  `TauCetiRoadmap/AnalyticToricGeometry/README.md`, item 1, with the pinned declarations in
-  `TauCetiRoadmap/AnalyticToricGeometry/Suggested.lean`.
 -/
 
 public section
