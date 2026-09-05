@@ -57,7 +57,8 @@ bound by `finrank k (X ⟶ Y)`, and its positivity exactly when an irreducible m
   morphisms, a `k`-module.
 * `TauCeti.irreducibleMorphismMk`: the class of a radical morphism, as a `k`-linear map.
 * `TauCeti.irreducibleMorphismLift`: the universal property, a `k`-linear map out of the space
-  from one on radical morphisms that kills the square of the radical.
+  from one on radical morphisms that kills the square of the radical, unique with its values by
+  `TauCeti.irreducibleMorphismSpace_linearMap_ext`.
 * `TauCeti.irreducibleMorphismSpaceCongr`: the `k`-linear equivalence induced by a pair of
   isomorphisms of the source and the target.
 
@@ -66,6 +67,9 @@ bound by `finrank k (X ⟶ Y)`, and its positivity exactly when an irreducible m
 * `TauCeti.irreducibleMorphismMk_eq_zero_iff`: a class vanishes exactly when its representative
   lies in the square of the radical, and `TauCeti.irreducibleMorphismMk_eq_iff` the corresponding
   criterion for two classes to agree.
+* `TauCeti.irreducibleMorphismSpace_linearMap_ext`: the uniqueness half of the universal
+  property — a `k`-linear map out of the space is determined by its values on classes of radical
+  morphisms.
 * `TauCeti.irreducibleMorphismMk_ne_zero_iff`: **the detection statement** — between objects with
   local endomorphism rings a class is nonzero exactly when its representative is an irreducible
   morphism.
@@ -96,8 +100,9 @@ and `k`-module structures transported by `inferInstanceAs`, so that the quotient
 `simp` in goals that mention it.  Its body is not exposed, and the submodule it divides by is
 private, so that no caller depends on the subtype-quotient representation: the API below stands in
 for Mathlib's quotient operations, with `TauCeti.irreducibleMorphismMk` for
-`Submodule.Quotient.mk`, `TauCeti.irreducibleMorphismMk_surjective` for quotient induction, and
-`TauCeti.irreducibleMorphismLift` for `Submodule.liftQ`.
+`Submodule.Quotient.mk`, `TauCeti.irreducibleMorphismMk_surjective` for quotient induction,
+`TauCeti.irreducibleMorphismLift` for `Submodule.liftQ` and
+`TauCeti.irreducibleMorphismSpace_linearMap_ext` for `Submodule.linearMap_qext`.
 
 Conjugation by a pair of isomorphisms needs no quotient theory, so the equivalence of radicals it
 induces, `TauCeti.jacobsonRadicalSubmoduleCongr`, lives with the radical itself in
@@ -214,6 +219,20 @@ theorem irreducibleMorphismLift_irreducibleMorphismMk {M : Type*} [AddCommGroup 
     irreducibleMorphismLift g hg (irreducibleMorphismMk k X Y f) = g f :=
   LinearMap.congr_fun ((jacobsonRadicalSqSubmoduleIn k X Y).liftQ_mkQ g
     fun x hx => hg x (mem_jacobsonRadicalSqSubmoduleIn.1 hx)) f
+
+/-- **A `k`-linear map out of the space of irreducible morphisms is determined by its values on
+classes of radical morphisms.**  This is the uniqueness half of the universal property, so that
+`TauCeti.irreducibleMorphismLift` is the *only* map with the values
+`TauCeti.irreducibleMorphismLift_irreducibleMorphismMk` gives it. -/
+@[ext high]
+theorem irreducibleMorphismSpace_linearMap_ext {M : Type*} [AddCommGroup M] [Module k M]
+    ⦃g₁ g₂ : irreducibleMorphismSpace k X Y →ₗ[k] M⦄
+    (h : ∀ f : jacobsonRadicalSubmodule k X Y,
+      g₁ (irreducibleMorphismMk k X Y f) = g₂ (irreducibleMorphismMk k X Y f)) :
+    g₁ = g₂ :=
+  LinearMap.ext fun x => by
+    obtain ⟨f, rfl⟩ := irreducibleMorphismMk_surjective x
+    exact h f
 
 end Defs
 
