@@ -16,15 +16,9 @@ and a rank-seven weight torus. This file proves that their transported coordinat
 surjective after base change from `ℤ` to an arbitrary commutative ring. Contravariantly, the
 transported root subgroups and weight torus are closed immersions into the specialized carrier.
 
-The proof uses the explicit unit-coefficient root steps and spanning minuscule weights already
-established for the integral carrier. Surjectivity is preserved by scalar extension, and the
-canonical coordinate identifications on the carrier, additive group, and split torus are
-isomorphisms. The resulting morphisms are therefore the scheme-theoretic base changes of the
-integral pinning generators, not newly chosen subgroups in each fibre.
-
-This supplies the closed-generator part of the base-changed pinning interface required by
-Layer 9 of `TauCetiRoadmap/ReductiveGroups/README.md`. It does not assert that the carrier is
-smooth, reductive, or geometrically connected, nor that its weight torus is maximal.
+The resulting morphisms are the scheme-theoretic base changes of the integral pinning generators,
+not newly chosen subgroups in each fibre. No assertion is made that the carrier is smooth,
+reductive, or geometrically connected, nor that its weight torus is maximal.
 
 ## Main declarations
 
@@ -175,59 +169,21 @@ noncomputable def baseChangeRootSubgroup (k : Fin 7 ⊕ Fin 7) :
     (AlgebraicGeometry.hopfSpec (CommRingCat.of A)).map
       (rootSubgroupToBaseChangeCoordinateMap A k).op
 
-/-- The transported root-subgroup morphism is the spectrum map of its transported coordinate
-map, after the canonical presentation of the additive group. -/
-theorem baseChangeRootSubgroup_def (k : Fin 7 ⊕ Fin 7) :
-    baseChangeRootSubgroup A k =
-      eqToHom (AdditiveGroup.groupScheme_def A) ≫
-        (AlgebraicGeometry.hopfSpec (CommRingCat.of A)).map
-          (rootSubgroupToBaseChangeCoordinateMap A k).op := by
-  rw [baseChangeRootSubgroup]
-
 /-- Every transported numbered simple root subgroup is a closed immersion into the specialized
 type-`E₇` minuscule carrier. -/
 instance isClosedImmersion_baseChangeRootSubgroup (k : Fin 7 ⊕ Fin 7) :
     IsClosedImmersion (baseChangeRootSubgroup A k).hom.hom.left := by
-  rw [baseChangeRootSubgroup_def]
+  rw [baseChangeRootSubgroup]
   exact (CommHopfAlgCat.isClosedImmersion_eqToHom_comp_hopfSpec_map_iff
     (AdditiveGroup.groupScheme_def A)
     (rootSubgroupToBaseChangeCoordinateMap A k)).2
       (rootSubgroupToBaseChangeCoordinateMap_surjective A k)
-
-/-- Every transported numbered simple root-subgroup morphism is a monomorphism. -/
-theorem mono_baseChangeRootSubgroup (k : Fin 7 ⊕ Fin 7) :
-    Mono (baseChangeRootSubgroup A k) :=
-  mono_of_isClosedImmersion_underlying (baseChangeRootSubgroup A k)
 
 /-- A transported numbered simple root subgroup as a closed subgroup scheme of the specialized
 type-`E₇` minuscule carrier. -/
 noncomputable def baseChangeRootSubgroupClosedSubgroup (k : Fin 7 ⊕ Fin 7) :
     ClosedSubgroupScheme (baseChangeGroupScheme A) :=
   ClosedSubgroupScheme.mk (baseChangeRootSubgroup A k)
-
-/-- The bundled transported root subgroup is represented by the named base-change morphism. -/
-@[simp]
-theorem coe_baseChangeRootSubgroupClosedSubgroup (k : Fin 7 ⊕ Fin 7) :
-    (baseChangeRootSubgroupClosedSubgroup A k).1 =
-      letI := mono_baseChangeRootSubgroup A k
-      Subobject.mk (baseChangeRootSubgroup A k) := by
-  exact ClosedSubgroupScheme.coe_mk _
-
-/-- The bundled transported root subgroup is canonically isomorphic to the additive group
-scheme over `A`. -/
-noncomputable def baseChangeRootSubgroupClosedSubgroupIso (k : Fin 7 ⊕ Fin 7) :
-    ((baseChangeRootSubgroupClosedSubgroup A k).1 :
-      Grp (Over (Spec (CommRingCat.of A)))) ≅ AdditiveGroup.groupScheme A :=
-  ClosedSubgroupScheme.mkIso (baseChangeRootSubgroup A k)
-
-/-- The canonical parametrization of the bundled transported root subgroup followed by its
-inclusion is the named base-change root-subgroup morphism. -/
-@[simp]
-theorem baseChangeRootSubgroupClosedSubgroupIso_inv_comp_arrow (k : Fin 7 ⊕ Fin 7) :
-    (baseChangeRootSubgroupClosedSubgroupIso A k).inv ≫
-        (baseChangeRootSubgroupClosedSubgroup A k).1.arrow =
-      baseChangeRootSubgroup A k :=
-  ClosedSubgroupScheme.mkIso_inv_comp_arrow (baseChangeRootSubgroup A k)
 
 /-- The transported rank-seven weight torus of the specialized type-`E₇` minuscule carrier. -/
 noncomputable def baseChangeWeightTorus :
