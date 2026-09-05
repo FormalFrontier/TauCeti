@@ -247,8 +247,9 @@ theorem frobeniusVonMangoldtCoeff_nonneg (C : ConjClasses (L ≃ₐ[K] L)) (n : 
 
 -- The powered filter is exercised here: this is the term a definition filtering on
 -- `artinSymbol 𝔭 = C` alone would lose. The order-four configuration is not vacuous —
--- `ConjClasses.mk_ne_mk_pow_two_of_orderOf_eq_four` separates the two classes for *every* element
--- of order four, and the cyclic group of order four realises such an element concretely.
+-- `ConjClasses.mk_ne_mk_of_orderOf_ne` separates the two classes for *every* element of order
+-- four, its square having order two, and the cyclic group of order four realises such an element
+-- concretely.
 /-- **An exponent-two prime power whose Artin class has order four.** Let `A = 𝔭 ^ 2` be
 unramified with `artinSymbol 𝔭 = ConjClasses.mk g` for an element `g` of order four. Then `A` has
 positive weight, that weight is at most the Frobenius von Mangoldt coefficient of
@@ -271,8 +272,10 @@ private theorem primePowerWeight_le_frobeniusVonMangoldtCoeff_of_artinSymbol_ord
       artinSymbol (primePowerBase A).asIdeal hur ^ primePowerExponent A =
         ConjClasses.mk (g ^ 2) := by
     rw [hA, hartin, ConjClasses.mk_pow]
+  have hsquare : orderOf (g ^ 2) = 2 := by
+    rw [orderOf_pow_of_dvd (by decide) (by rw [hg]; decide), hg]
   have hne : ConjClasses.mk g ≠ ConjClasses.mk (g ^ 2) :=
-    ConjClasses.mk_ne_mk_pow_two_of_orderOf_eq_four hg
+    ConjClasses.mk_ne_mk_of_orderOf_ne (by rw [hg, hsquare]; decide)
   refine ⟨primePowerWeight_pos A, ?_, by rw [hartin]; exact hne, ?_⟩
   · rw [frobeniusVonMangoldtCoeff_apply]
     calc
