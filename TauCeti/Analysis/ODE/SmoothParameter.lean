@@ -219,16 +219,21 @@ theorem exists_contDiffAt_picard_solution_of_contDiff
   let R := picardResidual gc x₀
   let basePath : C(Set.Icc (0 : ℝ) 1, F) := ContinuousMap.const _ x₀
   let u : E × C(Set.Icc (0 : ℝ) 1, F) := (p₀, basePath)
+  have hgc : ContDiff ℝ (n + 1) gc := by
+    change ContDiff ℝ (n + 1) f
+    exact hf
   have hR : ContDiffAt ℝ (n + 1) R u :=
-    (contDiff_picardResidual (n + 1) gc hf x₀).contDiffAt
+    (contDiff_picardResidual (n + 1) gc hgc x₀).contDiffAt
   have hzeroBase : f (p₀, x₀) = 0 := hzero.self_of_nhds
-  have hgzero : ∀ᶠ y in nhds x₀, gc (p₀, y) = 0 := hzero
+  have hgzero : ∀ᶠ y in nhds x₀, gc (p₀, y) = 0 := by
+    change ∀ᶠ y in nhds x₀, f (p₀, y) = 0
+    exact hzero
   -- At the constant base solution the path derivative of the residual is the identity, so the
   -- implicit function theorem produces a smooth parameter-to-path germ.
   have hinvertible :
       (fderiv ℝ R u ∘L
         ContinuousLinearMap.inr ℝ E C(Set.Icc (0 : ℝ) 1, F)).IsInvertible :=
-    isInvertible_fderiv_picardResidual_comp_inr gc (hf.of_le (by norm_num)) p₀ x₀ hgzero
+    isInvertible_fderiv_picardResidual_comp_inr gc (hgc.of_le (by norm_num)) p₀ x₀ hgzero
   let γ : E → C(Set.Icc (0 : ℝ) 1, F) :=
     hR.implicitFunction (by norm_num) hinvertible
   have hγsmooth : ContDiffAt ℝ (n + 1) γ p₀ :=
