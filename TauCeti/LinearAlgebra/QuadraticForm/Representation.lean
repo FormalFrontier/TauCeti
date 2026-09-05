@@ -12,8 +12,8 @@ public import Mathlib.LinearAlgebra.QuadraticForm.Radical
 /-!
 # Values represented by quadratic forms
 
-This file defines representation of a scalar by a quadratic map and the nonzero value set of a
-quadratic form. It proves the elementary square-class invariance of the latter and the criterion
+This file defines scalar representation by a quadratic map and its represented-unit value set. It
+proves the elementary square-class invariance of the latter and the criterion
 that, for a regular form, representing a unit is equivalent to isotropy after adjoining the
 one-dimensional form with that unit as its negative coefficient.
 
@@ -35,9 +35,9 @@ variable {R M N : Type*} [CommSemiring R] [AddCommMonoid M] [Module R M]
 /-- A scalar is represented by a quadratic map if it is the value of the map at some vector. -/
 def _root_.QuadraticMap.Represents (Q : QuadraticMap R M N) (a : N) : Prop := ∃ v, Q v = a
 
-/-- Every quadratic map represents zero, using the zero vector. -/
+/-- Every quadratic map represents zero. -/
 @[simp]
-theorem _root_.QuadraticMap.represents_zero (Q : QuadraticMap R M N) : ∃ v, Q v = 0 :=
+theorem _root_.QuadraticMap.represents_zero (Q : QuadraticMap R M N) : Represents Q 0 :=
   ⟨0, Q.map_zero⟩
 
 @[simp]
@@ -45,14 +45,14 @@ theorem _root_.QuadraticMap.represents_iff (Q : QuadraticMap R M N) (a : N) :
     Represents Q a ↔ ∃ v, Q v = a :=
   Iff.rfl
 
-/-- The set of nonzero scalars represented by a scalar-valued quadratic map.
+/-- The set of represented units of a scalar-valued quadratic map.
 
-This is the classical value set `D(Q)`, so it is a set of units rather than the full value set;
-the latter always contains zero by `represents_zero`. -/
+This is the classical value set `D(Q)` over a field; over a general commutative semiring it is
+the set of units represented by `Q`, rather than the full value set. -/
 def _root_.QuadraticMap.unitValueSet (Q : QuadraticMap R M R) : Set Rˣ :=
   {a | Represents Q (a : R)}
 
-/-- Membership in `unitValueSet` is representation of the underlying field element. -/
+/-- Membership in `unitValueSet` is representation of the underlying scalar. -/
 @[simp]
 theorem _root_.QuadraticMap.mem_unitValueSet {Q : QuadraticMap R M R} {a : Rˣ} :
     a ∈ unitValueSet Q ↔ Represents Q (a : R) :=
@@ -83,10 +83,11 @@ theorem _root_.QuadraticMap.represents_of_nondegenerate_of_isotropic (Q : Quadra
   field_simp [hw'']
   ring
 
-/-- Multiplying a represented unit by a square preserves representation, in both directions. -/
+/-- Multiplying a represented scalar by a square preserves representation, in both directions. -/
 @[simp]
-theorem _root_.QuadraticMap.mem_unitValueSet_mul_square_iff (Q : QuadraticMap R M R) (a b : Rˣ) :
-    (∃ v, Q v = (a : R) * (b : R) ^ 2) ↔ ∃ v, Q v = (a : R) := by
+theorem _root_.QuadraticMap.represents_mul_square_iff (Q : QuadraticMap R M R) (a : R)
+    (b : Rˣ) :
+    Represents Q (a * (b : R) ^ 2) ↔ Represents Q a := by
   constructor
   · rintro ⟨v, hv⟩
     refine ⟨(↑(b⁻¹ : Rˣ) : R) • v, ?_⟩
@@ -105,6 +106,13 @@ theorem _root_.QuadraticMap.mem_unitValueSet_mul_square_iff (Q : QuadraticMap R 
     rw [pow_two]
     ac_rfl
 
+/-- Multiplying a represented unit by a square preserves membership in `unitValueSet`. -/
+@[simp]
+theorem _root_.QuadraticMap.mem_unitValueSet_mul_square_iff (Q : QuadraticMap R M R) (a b : Rˣ) :
+    (a * b ^ 2) ∈ unitValueSet Q ↔ a ∈ unitValueSet Q := by
+  simpa only [mem_unitValueSet, Units.val_mul, Units.val_pow_eq_pow_val] using
+    (represents_mul_square_iff Q (a : R) b)
+
 variable {K V : Type*} [Field K] [AddCommGroup V] [Module K V]
 
 /-- A unit is represented exactly when adjoining its negative line makes the form isotropic.
@@ -112,7 +120,7 @@ variable {K V : Type*} [Field K] [AddCommGroup V] [Module K V]
 The added line is the one-dimensional form `x ↦ -a * x²`, written as a scalar multiple of
 `QuadraticMap.sq`. -/
 theorem _root_.QuadraticMap.mem_unitValueSet_iff_isotropic_prod
-    [Invertible (2 : K)] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) (a : Kˣ) :
+    (Q : QuadraticForm K V) (hQ : Q.polarBilin.Nondegenerate) (a : Kˣ) :
     a ∈ unitValueSet Q ↔
       ¬(Q.prod ((-(a : K)) • (QuadraticMap.sq : QuadraticForm K K))).Anisotropic := by
   constructor
@@ -131,7 +139,7 @@ theorem _root_.QuadraticMap.mem_unitValueSet_iff_isotropic_prod
         simp [hv, ht]
       have hvQ : Q v = 0 := by simpa [ht] using hzero
       exact represents_of_nondegenerate_of_isotropic Q
-        ((nondegenerate_polar_iff (Q := Q)).mpr hQ)
+        hQ
         ((not_anisotropic_iff_exists Q).mpr ⟨v, hv, hvQ⟩) (a : K)
     · have hvQ : Q v = (a : K) * (t * t) := by
         linear_combination hzero
