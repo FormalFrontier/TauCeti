@@ -34,6 +34,11 @@ tower.
   elementary case** — the restriction map `A⟨T/s⟩ → A⟨T'/s⟩` is flat when `T'` adds the single
   numerator `t`; the `..._of_isStronglyNoetherian` variant takes the hypotheses in their usual
   form.
+* `TauCeti.Huber.PairOfDefinition.isScalarTower_restrictionRingHomOfSubset` : for `T ⊆ U ⊆ V` the
+  three coordinate rings form a scalar tower, because restriction maps compose.
+* `TauCeti.Huber.PairOfDefinition.flat_restrictionRingHomOfSubset_trans` : flatness composes along
+  such a chain. This is the step the induction below repeats, and it carries that argument's
+  instance bookkeeping.
 * `TauCeti.Huber.PairOfDefinition.flat_restrictionRingHomOfSubset_of_subset` : **Proposition 8.30**
   — the restriction map of an arbitrary enlargement `T ⊆ T'` is flat. Strong noetherianity is
   asked of every intermediate `A⟨U/s⟩`, since the elementary step needs it at its own base and it
@@ -327,6 +332,67 @@ theorem flat_restrictionRingHomOfSubset_trans (U V : Finset A) (hTU : T ⊆ U) (
   exact Module.Flat.trans (@UniformSpace.Completion S iT) (@UniformSpace.Completion S iU)
     (@UniformSpace.Completion S iV)
 
+/-- The induction behind Proposition 8.30: every numerator set reached from `T` by adjoining
+elements of `T' \ T` gives a coordinate ring flat over `A⟨T/s⟩`. The base case is the
+self-restriction, which induces the canonical algebra structure; each step composes the previous
+one with an elementary enlargement through
+`TauCeti.Huber.PairOfDefinition.flat_restrictionRingHomOfSubset_trans`. -/
+private theorem flat_restrictionRingHomOfSubset_union [DecidableEq A]
+    (P : PairOfDefinition A) (T : Finset A)
+    (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
+    (hden : HasDenominatorPower P T s S) (T' : Finset A) (hTT' : T ⊆ T')
+    (hnil : IsTopologicallyNilpotent s)
+    (hSN : ∀ (U : Finset A) (hU : T ⊆ U), U ⊆ T' →
+      letI := locUniformSpace P U s S (hden.mono hU)
+      letI := isUniformAddGroup_locUniformSpace P U s S (hden.mono hU)
+      letI := isTopologicalRing_locUniformSpace P U s S (hden.mono hU)
+      letI := isHuberRing_locUniformSpace P U s S (hden.mono hU)
+      IsStronglyNoetherian (UniformSpace.Completion S)) :
+    ∀ (W V : Finset A), V = T ∪ W → W ⊆ T' \ T → ∀ hV : T ⊆ V,
+    letI iT := locUniformSpace P T s S hden
+    letI := isUniformAddGroup_locUniformSpace P T s S hden
+    letI := isTopologicalRing_locUniformSpace P T s S hden
+    letI iV := locUniformSpace P V s S (hden.mono hV)
+    letI := isUniformAddGroup_locUniformSpace P V s S (hden.mono hV)
+    letI := isTopologicalRing_locUniformSpace P V s S (hden.mono hV)
+    letI := (restrictionRingHomOfSubset P T s S hden V S (hden.mono hV) hV).toAlgebra
+    Module.Flat (@UniformSpace.Completion S iT) (@UniformSpace.Completion S iV) := by
+  classical
+  let _ := locUniformSpace P T s S hden
+  have _ := isUniformAddGroup_locUniformSpace P T s S hden
+  have _ := isTopologicalRing_locUniformSpace P T s S hden
+  intro W
+  induction W using Finset.induction_on with
+  | empty =>
+    intro V hVdef _ hV
+    rw [Finset.union_empty] at hVdef
+    subst hVdef
+    -- the restriction of a presentation to itself is the identity, so the algebra structure
+    -- it induces is the canonical one and the goal is flatness of a ring over itself
+    have hid := restrictionRingHomOfSubset_self P _ s S hden
+    have halg : (restrictionRingHomOfSubset P _ s S hden _ S (hden.mono hV) hV).toAlgebra
+        = Algebra.id (UniformSpace.Completion S) :=
+      Algebra.algebra_ext _ _ fun r ↦ by
+        rw [RingHom.algebraMap_toAlgebra, hid]
+        rfl
+    rw [halg]
+    exact Module.Flat.self
+  | @insert a W haW ih =>
+    intro V hVdef hW hV
+    rw [Finset.union_insert] at hVdef
+    subst hVdef
+    have hTU : T ⊆ T ∪ W := Finset.subset_union_left
+    have hUV : T ∪ W ⊆ insert a (T ∪ W) := Finset.subset_insert _ _
+    have hWsub : W ⊆ T' \ T := fun x hx ↦ hW (Finset.mem_insert_of_mem hx)
+    -- the previous step, then the elementary step onto it, composed
+    exact flat_restrictionRingHomOfSubset_trans P T s S hden (T ∪ W) (insert a (T ∪ W)) hTU hUV
+      (ih (T ∪ W) rfl hWsub hTU)
+      (flat_restrictionRingHomOfSubset_of_isStronglyNoetherian P (T ∪ W) s a S
+        (hden.mono hTU) (insert a (T ∪ W)) S (hden.mono hV) hUV (Finset.mem_insert_self _ _)
+        (fun u hu ↦ (Finset.mem_insert.mp hu).symm.imp id id) hnil
+        (hSN (T ∪ W) hTU fun x hx ↦ (Finset.mem_union.mp hx).elim (@hTT' x)
+          fun h ↦ (Finset.mem_sdiff.mp (hWsub h)).1))
+
 /-- **Proposition 8.30 at the ring level**: the restriction map `A⟨T/s⟩ → A⟨T'/s⟩` of an arbitrary
 enlargement of the numerators is flat.
 
@@ -359,48 +425,8 @@ theorem flat_restrictionRingHomOfSubset_of_subset (hnil : IsTopologicallyNilpote
   let _ := locUniformSpace P T s S hden
   have _ := isUniformAddGroup_locUniformSpace P T s S hden
   have _ := isTopologicalRing_locUniformSpace P T s S hden
-  -- every set reached from `T` by adjoining elements of `T' \ T` is flat over `A⟨T/s⟩`
-  have key : ∀ (W V : Finset A), V = T ∪ W → W ⊆ T' \ T → ∀ hV : T ⊆ V,
-      letI iT := locUniformSpace P T s S hden
-      letI := isUniformAddGroup_locUniformSpace P T s S hden
-      letI := isTopologicalRing_locUniformSpace P T s S hden
-      letI iV := locUniformSpace P V s S (hden.mono hV)
-      letI := isUniformAddGroup_locUniformSpace P V s S (hden.mono hV)
-      letI := isTopologicalRing_locUniformSpace P V s S (hden.mono hV)
-      letI := (restrictionRingHomOfSubset P T s S hden V S (hden.mono hV) hV).toAlgebra
-      Module.Flat (@UniformSpace.Completion S iT) (@UniformSpace.Completion S iV) := by
-    intro W
-    induction W using Finset.induction_on with
-    | empty =>
-      intro V hVdef _ hV
-      rw [Finset.union_empty] at hVdef
-      subst hVdef
-      -- the restriction of a presentation to itself is the identity, so the algebra structure
-      -- it induces is the canonical one and the goal is flatness of a ring over itself
-      have hid := restrictionRingHomOfSubset_self P _ s S hden
-      have halg : (restrictionRingHomOfSubset P _ s S hden _ S (hden.mono hV) hV).toAlgebra
-          = Algebra.id (UniformSpace.Completion S) :=
-        Algebra.algebra_ext _ _ fun r ↦ by
-          rw [RingHom.algebraMap_toAlgebra, hid]
-          rfl
-      rw [halg]
-      exact Module.Flat.self
-    | @insert a W haW ih =>
-      intro V hVdef hW hV
-      rw [Finset.union_insert] at hVdef
-      subst hVdef
-      have hTU : T ⊆ T ∪ W := Finset.subset_union_left
-      have hUV : T ∪ W ⊆ insert a (T ∪ W) := Finset.subset_insert _ _
-      have hWsub : W ⊆ T' \ T := fun x hx ↦ hW (Finset.mem_insert_of_mem hx)
-      -- the previous step, then the elementary step onto it, composed
-      exact flat_restrictionRingHomOfSubset_trans P T s S hden (T ∪ W) (insert a (T ∪ W)) hTU hUV
-        (ih (T ∪ W) rfl hWsub hTU)
-        (flat_restrictionRingHomOfSubset_of_isStronglyNoetherian P (T ∪ W) s a S
-          (hden.mono hTU) (insert a (T ∪ W)) S (hden.mono hV) hUV (Finset.mem_insert_self _ _)
-          (fun u hu ↦ (Finset.mem_insert.mp hu).symm.imp id id) hnil
-          (hSN (T ∪ W) hTU fun x hx ↦ (Finset.mem_union.mp hx).elim (hTT' x)
-            fun h ↦ (Finset.mem_sdiff.mp (hWsub h)).1))
-  exact key (T' \ T) T' (Finset.union_sdiff_of_subset hTT').symm le_rfl hTT'
+  exact flat_restrictionRingHomOfSubset_union P T s S hden T' hTT' hnil hSN (T' \ T) T'
+    (Finset.union_sdiff_of_subset hTT').symm le_rfl hTT'
 
 
 end PairOfDefinition
