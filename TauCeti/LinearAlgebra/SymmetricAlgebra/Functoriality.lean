@@ -105,7 +105,7 @@ theorem map_leftInverse {f : M →ₗ[R] N} {g : N →ₗ[R] M}
   have hmaps : (map R g).comp (map R f) = AlgHom.id R (SymmetricAlgebra R M) := by
     have hgf : g.comp f = LinearMap.id := LinearMap.ext fun x => h x
     rw [map_comp_map, hgf, map_id]
-  exact AlgHom.congr_fun hmaps a
+  simpa only [AlgHom.comp_apply, AlgHom.id_apply] using AlgHom.congr_fun hmaps a
 
 /-- A right inverse of linear maps induces a right inverse of the corresponding symmetric-algebra
 maps. -/
