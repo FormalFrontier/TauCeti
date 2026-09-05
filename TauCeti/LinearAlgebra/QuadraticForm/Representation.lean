@@ -35,10 +35,10 @@ variable {R M N : Type*} [CommSemiring R] [AddCommMonoid M] [Module R M]
   [AddCommMonoid N] [Module R N]
 
 /-- A scalar is represented by a quadratic map if it is the value of the map at some vector. -/
-def Represents (Q : QuadraticMap R M N) (a : N) : Prop := ∃ v, Q v = a
+def _root_.QuadraticMap.Represents (Q : QuadraticMap R M N) (a : N) : Prop := ∃ v, Q v = a
 
 /-- Every quadratic map represents zero, using the zero vector. -/
-theorem represents_zero (Q : QuadraticMap R M N) : Represents Q 0 :=
+theorem _root_.QuadraticMap.represents_zero (Q : QuadraticMap R M N) : Represents Q 0 :=
   ⟨0, Q.map_zero⟩
 
 variable {K V : Type*} [Field K] [AddCommGroup V] [Module K V]
