@@ -19,7 +19,7 @@ the algebra in `k`. This file constructs the two comparison maps
 A⟨X₁,…,X_{k+m}⟩ ⟶ A⟨X₁,…,Xₖ⟩⟨Y₁,…,Y_m⟩    and    A⟨X₁,…,Xₖ⟩⟨Y₁,…,Y_m⟩ ⟶ A⟨X₁,…,X_{k+m}⟩
 ```
 
-and records their values on the generators. That they are mutually inverse is not proved here.
+and proves them mutually inverse, so that `A⟨X⟩⟨Y⟩ ≅ A⟨X,Y⟩`.
 
 Each is Wedhorn's Proposition 5.50 for the completed algebra — `weightedEvalHomCompletion` —
 applied to a tuple of generators. The first carries `Xᵢ` to the `i`-th variable of the inner
@@ -42,6 +42,7 @@ a nonarchimedean group being nonarchimedean; and each tuple must be power-bounde
 * `TauCeti.Huber.iterateFirstBlockHom`: the inclusion `A⟨X₁,…,Xₖ⟩ → A⟨X₁,…,X_{k+m}⟩` of the first
   block, which the map below is taken over.
 * `TauCeti.Huber.iterateJoinHom`: the comparison map that joins them.
+* `TauCeti.Huber.iterateRingEquiv`: the isomorphism the two assemble into.
 
 ## Main results
 
@@ -52,12 +53,22 @@ a nonarchimedean group being nonarchimedean; and each tuple must be power-bounde
 * `TauCeti.Huber.iterateSplitHom_coe_weightedC`, `…_coe_weightedX` and their `iterateJoinHom` and
   `iterateFirstBlockHom` counterparts: the values on the generators. The bodies of the definitions
   are not exported, so these are how a consumer computes with the maps.
+* `TauCeti.Huber.iterateJoinHom_comp_iterateSplitHom` and
+  `TauCeti.Huber.iterateSplitHom_comp_iterateJoinHom`: the two maps are mutually inverse. Each is
+  the uniqueness half of Proposition 5.50 — two continuous homomorphisms out of the completion
+  agreeing on the constants and the variables are equal — applied to the composite and the
+  identity.
+* `TauCeti.Huber.continuous_iterateRingEquiv` and its `symm`, with the `_coe` and `_apply` `@[simp]`
+  lemmas: the isomorphism is one of *topological* rings, and it is `iterateSplitHom` with inverse
+  `iterateJoinHom`.
 
-## What is not here
+## The shape of the argument
 
-That the two maps are mutually inverse. The roadmap asks for the isomorphism
-`A⟨X⟩⟨Y⟩ ≅ A⟨X,Y⟩`; this file is its two halves, in the shape the identification of Wedhorn's
-Remark 7.55 was built in — the two comparison maps first, then the equivalence.
+Joining after splitting is checked on the generators of `A⟨X₁,…,X_{k+m}⟩` directly. Splitting after
+joining needs one step more: its source is an algebra over `A⟨X₁,…,Xₖ⟩`, so agreement on constants
+is agreement of two maps out of `A⟨X₁,…,Xₖ⟩`, which is
+`TauCeti.Huber.iterateSplitHom_comp_iterateFirstBlockHom` — itself a uniqueness argument, one level
+down.
 
 ## References
 
@@ -218,6 +229,120 @@ theorem iterateFirstBlockHom_coe_weightedC (a : A) :
           weightedRestrictedSubring _ _) : restrictedMvPowerSeriesCompletion k A)
       = algebraMap A (restrictedMvPowerSeriesCompletion (k + m) A) a := by
   rw [iterateFirstBlockHom, weightedEvalHomCompletion_coe, weightedEvalHom_weightedC]
+
+/-! ### The two maps are mutually inverse -/
+
+omit [IsHuberRing A] in
+/-- The structure map of the iterated algebra is the constant series of a constant series. -/
+theorem iterateStructureHom_eq (a : A) :
+    iterateStructureHom k m A a
+      = ((weightedC (fun _ : Fin m ↦ ({1} : Set (restrictedMvPowerSeriesCompletion k A)))
+          isWeightFamily_one_weight
+          ((weightedC (fun _ : Fin k ↦ ({1} : Set A)) isWeightFamily_one_weight a :
+            weightedRestrictedSubring _ _) : restrictedMvPowerSeriesCompletion k A) :
+          weightedRestrictedSubring _ _) :
+        restrictedMvPowerSeriesCompletion m (restrictedMvPowerSeriesCompletion k A)) := by
+  rw [iterateStructureHom, RingHom.comp_apply,
+    algebraMap_completion_weightedRestrictedSubring _ _ isWeightFamily_one_weight,
+    algebraMap_completion_weightedRestrictedSubring _ _ isWeightFamily_one_weight]
+
+/-- **Joining after splitting is the identity on `A⟨X₁,…,X_{k+m}⟩`.** -/
+theorem iterateJoinHom_comp_iterateSplitHom :
+    (iterateJoinHom k m A).comp (iterateSplitHom k m A)
+      = RingHom.id (restrictedMvPowerSeriesCompletion (k + m) A) := by
+  refine completion_weightedRestrictedSubring_ringHom_ext_of_continuous isWeightFamily_one_weight
+    ((continuous_iterateJoinHom k m A).comp (continuous_iterateSplitHom k m A)) continuous_id
+    (fun a ↦ ?_) fun i ↦ ?_
+  · simp only [RingHom.coe_comp, Function.comp_apply, RingHom.id_apply,
+      iterateSplitHom_coe_weightedC, iterateStructureHom_eq, iterateJoinHom_coe_weightedC,
+      iterateFirstBlockHom_coe_weightedC,
+      algebraMap_completion_weightedRestrictedSubring _ _ isWeightFamily_one_weight]
+  · simp only [RingHom.coe_comp, Function.comp_apply, RingHom.id_apply,
+      iterateSplitHom_coe_weightedX, iterateVar]
+    refine Fin.addCases (fun i ↦ ?_) (fun j ↦ ?_) i
+    · rw [Fin.addCases_left, iterateJoinHom_coe_weightedC, iterateFirstBlockHom_coe_weightedX]
+    · rw [Fin.addCases_right, iterateJoinHom_coe_weightedX]
+
+/-- Splitting after including the first block is the structure map of the iterated algebra over
+`A⟨X₁,…,Xₖ⟩`: the two agree on the constants and on the variables of `A⟨X₁,…,Xₖ⟩`. -/
+theorem iterateSplitHom_comp_iterateFirstBlockHom :
+    (iterateSplitHom k m A).comp (iterateFirstBlockHom k m A)
+      = algebraMap (restrictedMvPowerSeriesCompletion k A)
+        (restrictedMvPowerSeriesCompletion m (restrictedMvPowerSeriesCompletion k A)) := by
+  refine completion_weightedRestrictedSubring_ringHom_ext_of_continuous isWeightFamily_one_weight
+    ((continuous_iterateSplitHom k m A).comp (continuous_iterateFirstBlockHom k m A))
+    (continuous_algebraMap_restrictedMvPowerSeriesCompletion m
+      (restrictedMvPowerSeriesCompletion k A)) (fun a ↦ ?_) fun i ↦ ?_
+  · simp only [RingHom.coe_comp, Function.comp_apply, iterateFirstBlockHom_coe_weightedC,
+      algebraMap_completion_weightedRestrictedSubring _ _ isWeightFamily_one_weight,
+      iterateSplitHom_coe_weightedC, iterateStructureHom_eq]
+  · simp only [RingHom.coe_comp, Function.comp_apply, iterateFirstBlockHom_coe_weightedX,
+      iterateSplitHom_coe_weightedX, iterateVar, Fin.addCases_left,
+      algebraMap_completion_weightedRestrictedSubring _ _ isWeightFamily_one_weight]
+
+/-- **Splitting after joining is the identity on `A⟨X₁,…,Xₖ⟩⟨Y₁,…,Y_m⟩`.** -/
+theorem iterateSplitHom_comp_iterateJoinHom :
+    (iterateSplitHom k m A).comp (iterateJoinHom k m A)
+      = RingHom.id
+        (restrictedMvPowerSeriesCompletion m (restrictedMvPowerSeriesCompletion k A)) := by
+  refine completion_weightedRestrictedSubring_ringHom_ext_of_continuous isWeightFamily_one_weight
+    ((continuous_iterateSplitHom k m A).comp (continuous_iterateJoinHom k m A)) continuous_id
+    (fun c ↦ ?_) fun j ↦ ?_
+  · simp only [RingHom.coe_comp, Function.comp_apply, RingHom.id_apply,
+      iterateJoinHom_coe_weightedC]
+    rw [← RingHom.comp_apply, iterateSplitHom_comp_iterateFirstBlockHom,
+      algebraMap_completion_weightedRestrictedSubring _ _ isWeightFamily_one_weight]
+  · simp only [RingHom.coe_comp, Function.comp_apply, RingHom.id_apply,
+      iterateJoinHom_coe_weightedX, iterateSplitHom_coe_weightedX, iterateVar, Fin.addCases_right]
+
+/-- **The iteration isomorphism** `A⟨X₁,…,X_{k+m}⟩ ≃+* A⟨X₁,…,Xₖ⟩⟨Y₁,…,Y_m⟩`. -/
+noncomputable def iterateRingEquiv :
+    restrictedMvPowerSeriesCompletion (k + m) A ≃+*
+      restrictedMvPowerSeriesCompletion m (restrictedMvPowerSeriesCompletion k A) :=
+  RingEquiv.ofRingHom (iterateSplitHom k m A) (iterateJoinHom k m A)
+    (iterateSplitHom_comp_iterateJoinHom k m A) (iterateJoinHom_comp_iterateSplitHom k m A)
+
+/-- The iteration isomorphism is `TauCeti.Huber.iterateSplitHom`. -/
+@[simp]
+theorem iterateRingEquiv_coe :
+    ((iterateRingEquiv k m A : restrictedMvPowerSeriesCompletion (k + m) A ≃+*
+        restrictedMvPowerSeriesCompletion m (restrictedMvPowerSeriesCompletion k A)) :
+      restrictedMvPowerSeriesCompletion (k + m) A →+*
+        restrictedMvPowerSeriesCompletion m (restrictedMvPowerSeriesCompletion k A))
+      = iterateSplitHom k m A := by
+  simp only [iterateRingEquiv, RingEquiv.coe_ringHom_ofRingHom]
+
+/-- The pointwise form of `TauCeti.Huber.iterateRingEquiv_coe`. -/
+@[simp]
+theorem iterateRingEquiv_apply (x : restrictedMvPowerSeriesCompletion (k + m) A) :
+    iterateRingEquiv k m A x = iterateSplitHom k m A x :=
+  DFunLike.congr_fun (iterateRingEquiv_coe k m A) x
+
+/-- The inverse of the iteration isomorphism is `TauCeti.Huber.iterateJoinHom`. -/
+@[simp]
+theorem iterateRingEquiv_symm_coe :
+    (((iterateRingEquiv k m A).symm : restrictedMvPowerSeriesCompletion m
+        (restrictedMvPowerSeriesCompletion k A) ≃+*
+          restrictedMvPowerSeriesCompletion (k + m) A) :
+      restrictedMvPowerSeriesCompletion m (restrictedMvPowerSeriesCompletion k A) →+*
+        restrictedMvPowerSeriesCompletion (k + m) A)
+      = iterateJoinHom k m A := by
+  simp only [iterateRingEquiv, RingEquiv.ofRingHom_symm, RingEquiv.coe_ringHom_ofRingHom]
+
+/-- The pointwise form of `TauCeti.Huber.iterateRingEquiv_symm_coe`. -/
+@[simp]
+theorem iterateRingEquiv_symm_apply
+    (x : restrictedMvPowerSeriesCompletion m (restrictedMvPowerSeriesCompletion k A)) :
+    (iterateRingEquiv k m A).symm x = iterateJoinHom k m A x :=
+  DFunLike.congr_fun (iterateRingEquiv_symm_coe k m A) x
+
+/-- The iteration isomorphism is an isomorphism of *topological* rings. -/
+theorem continuous_iterateRingEquiv : Continuous (iterateRingEquiv k m A) :=
+  (continuous_iterateSplitHom k m A).congr fun x ↦ (iterateRingEquiv_apply k m A x).symm
+
+/-- Its inverse is continuous too. -/
+theorem continuous_iterateRingEquiv_symm : Continuous (iterateRingEquiv k m A).symm :=
+  (continuous_iterateJoinHom k m A).congr fun x ↦ (iterateRingEquiv_symm_apply k m A x).symm
 
 end TauCeti.Huber
 
