@@ -9,6 +9,7 @@ public import TauCeti.Algebra.AlgebraicGroup.Connected.CommHopfAlgCat
 public import TauCeti.Algebra.AlgebraicGroup.Symplectic.Basic
 import TauCeti.Algebra.AlgebraicGroup.BaseChange.Naturality
 import TauCeti.Algebra.AlgebraicGroup.Connected.AlgebraicallyClosed
+import TauCeti.Algebra.AlgebraicGroup.Symplectic.RootSubgroup
 import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Symplectic.TorusGeneration
 
 /-!
@@ -65,27 +66,14 @@ private def baseChangeSymplecticPointsMulEquiv
     (A := coordinateHopfAlgebra k m) (R := A)).symm.trans
       (pointsMulEquiv (R := k) (A := A) m)
 
-private theorem baseChangeSymplecticPointsMulEquiv_mapValue
-    (m : ℕ) {A B : Type u} [CommRing A] [CommRing B]
-    [Algebra k A] [Algebra K A] [IsScalarTower k K A]
-    [Algebra k B] [Algebra K B] [IsScalarTower k K B]
-    (f : WithConv (K ⊗[k] coordinateHopfAlgebra k m →ₐ[K] A))
-    (phi : A →ₐ[K] B) :
-    baseChangeSymplecticPointsMulEquiv m B
-        (AlgHom.mapValue (H := K ⊗[k] coordinateHopfAlgebra k m) phi f) =
-      GLSymplecticFin.map m A phi.toRingHom
-        (baseChangeSymplecticPointsMulEquiv m A f) := by
-  rw [baseChangeSymplecticPointsMulEquiv, MulEquiv.trans_apply,
-    AlgHom.baseChangePointsMulEquiv_symm_mapValue,
-    baseChangeSymplecticPointsMulEquiv, MulEquiv.trans_apply]
-  exact pointsMulEquiv_mapValue (R := k) (A := A) (B := B) m
-    (phi.restrictScalars k) _
-
 /-- The polynomial path through a standard symplectic root subgroup. -/
 private def rootPath (m : ℕ) (root : GLSymplecticFin.RootSubgroupIndex m) :
     WithConv (K ⊗[k] coordinateHopfAlgebra k m →ₐ[K] Polynomial K) :=
-  (baseChangeSymplecticPointsMulEquiv (k := k) (K := K) m (Polynomial K)).symm
-    (root.hom (Multiplicative.ofAdd Polynomial.X))
+  AlgHom.baseChangePointsMulEquiv (k := k) (K := K)
+    (A := coordinateHopfAlgebra k m) (R := Polynomial K)
+      (rootSubgroupPoints root
+        ((AdditiveGroup.gaPointsMulEquiv (R := k) (A := Polynomial K)).symm
+          (Multiplicative.ofAdd Polynomial.X)))
 
 private theorem mapValue_rootPath
     (m : ℕ) (root : GLSymplecticFin.RootSubgroupIndex m) (c : K) :
@@ -93,15 +81,13 @@ private theorem mapValue_rootPath
         (Polynomial.aevalTower (AlgHom.id K K) c) (rootPath (k := k) (K := K) m root) =
       (baseChangeSymplecticPointsMulEquiv (k := k) (K := K) m K).symm
         (root.hom (Multiplicative.ofAdd c)) := by
+  rw [rootPath, AlgHom.mapValue_baseChangePointsMulEquiv,
+    mapValue_rootSubgroupPoints, AdditiveGroup.mapValue_gaPointsMulEquiv_symm_apply]
   apply (baseChangeSymplecticPointsMulEquiv (k := k) (K := K) m K).injective
-  rw [baseChangeSymplecticPointsMulEquiv_mapValue (k := k) (K := K)]
-  simp [rootPath]
-
-private theorem mapValue_rootPath_zero
-    (m : ℕ) (root : GLSymplecticFin.RootSubgroupIndex m) :
-    AlgHom.mapValue (H := K ⊗[k] coordinateHopfAlgebra k m)
-        (Polynomial.aevalTower (AlgHom.id K K) 0) (rootPath (k := k) (K := K) m root) = 1 := by
-  simpa using mapValue_rootPath (k := k) (K := K) m root 0
+  simp [baseChangeSymplecticPointsMulEquiv]
+  simpa using pointsMulEquiv_rootSubgroupPoints (R := k) (A := K) (m := m) root
+    ((AdditiveGroup.gaPointsMulEquiv (R := k) (A := K)).symm
+      (Multiplicative.ofAdd c))
 
 private theorem rightTranslationAlgHom_eq_self_of_root
     (m : ℕ) [IsAlgClosed K] (e : K ⊗[k] coordinateHopfAlgebra k m)
@@ -114,7 +100,7 @@ private theorem rightTranslationAlgHom_eq_self_of_root
   apply HopfAlgebra.rightTranslationAlgHom_eq_self_of_path e he _
     (rootPath (k := k) (K := K) m root) (eval c) (eval 0)
   · exact mapValue_rootPath (k := k) (K := K) m root c
-  · exact mapValue_rootPath_zero (k := k) (K := K) m root
+  · simpa [eval] using mapValue_rootPath (k := k) (K := K) m root 0
 
 private theorem rightTranslationAlgHom_eq_self
     (m : ℕ) [IsAlgClosed K] (e : K ⊗[k] coordinateHopfAlgebra k m)
