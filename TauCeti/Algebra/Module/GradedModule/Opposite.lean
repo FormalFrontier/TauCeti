@@ -288,14 +288,23 @@ theorem unop_oppositeDifferential (G : InternalGrading R M) (d : M →ₗ[R] M) 
     unop (G.oppositeDifferential d x) = d (G.koszulTwist 1 x.unop) :=
   (rfl)
 
+/-- On an element of degree `p`, applying a linear map after the Koszul twist and then passing to
+the opposite multiplies its value by `(-1) ^ p`.  Together with
+`oppositeDifferential_op`, this is the simp-normal form of the opposite differential on a
+homogeneous element. -/
+@[simp]
+theorem op_map_koszulTwist_of_mem (G : InternalGrading R M) (d : M →ₗ[R] M)
+    {p : ℤ} {a : M} (ha : a ∈ G.piece p) :
+    op (d (G.koszulTwist 1 a)) = (((p.negOnePow : ℤ) : R) • op (d a)) := by
+  rw [G.koszulTwist_apply_of_mem ha]
+  simp only [one_mul, map_smul, op_smul]
+
 /-- On an element of degree `p`, the opposite differential is `(-1) ^ p` times the opposite of
 the original differential. -/
-@[simp]
 theorem oppositeDifferential_op_of_mem (G : InternalGrading R M) (d : M →ₗ[R] M)
     {p : ℤ} {a : M} (ha : a ∈ G.piece p) :
     G.oppositeDifferential d (op a) = (((p.negOnePow : ℤ) : R) • op (d a)) := by
-  rw [G.oppositeDifferential_op, G.koszulTwist_apply_of_mem ha]
-  simp only [one_mul, map_smul, op_smul]
+  rw [G.oppositeDifferential_op, G.op_map_koszulTwist_of_mem d ha]
 
 end OppositeDifferential
 
