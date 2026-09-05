@@ -25,10 +25,9 @@ result gives closure of invertible sheaves under tensor product.
 
 These declarations provide the site-level closure result used to define tensor products of line
 bundles and, subsequently, the tensor operation in the Picard group.
-
-This implements the invertible-sheaf tensor-product step in Layer A of
-`TauCetiRoadmap/JacobianChallenge/README.md`.
 -/
+
+-- This implementation follows `TauCetiRoadmap/JacobianChallenge/README.md`, Layer A.
 
 public section
 
