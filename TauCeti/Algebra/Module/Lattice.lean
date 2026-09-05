@@ -410,17 +410,6 @@ theorem IsIntegralLattice.realBasis_apply (i : N →+ V) (h : IsIntegralLattice 
   simp only [IsIntegralLattice.realBasis, Module.Basis.map_apply, Module.Basis.baseChange_apply]
   simp only [IsBaseChange.equiv_tmul, one_smul, AddMonoidHom.coe_toIntLinearMap] at ⊢
 
-/-- The real span of the image of an integral lattice is the whole ambient space. -/
-@[simp]
-theorem IsIntegralLattice.span_range_eq_top (i : N →+ V) (h : IsIntegralLattice i) :
-    Submodule.span ℝ (Set.range i) = ⊤ := by
-  let b := IsIntegralLattice.realBasis i h
-  apply top_unique
-  rw [← b.span_eq]
-  apply Submodule.span_mono
-  rintro _ ⟨j, rfl⟩
-  exact ⟨_, (IsIntegralLattice.realBasis_apply i h j).symm⟩
-
 /-- The image of an integral lattice is the `ℤ`-span of the induced real basis. -/
 theorem IsIntegralLattice.range_eq_span_realBasis (i : N →+ V) (h : IsIntegralLattice i) :
     Set.range i =
@@ -438,6 +427,14 @@ theorem IsIntegralLattice.range_eq_span_realBasis (i : N →+ V) (h : IsIntegral
       simp only [Function.comp_apply, IsIntegralLattice.realBasis_apply,
         AddMonoidHom.coe_toIntLinearMap]
   exact congrArg (fun p : Submodule ℤ V => (p : Set V)) hrange'
+
+/-- The real span of the image of an integral lattice is the whole ambient space. -/
+@[simp]
+theorem IsIntegralLattice.span_range_eq_top (i : N →+ V) (h : IsIntegralLattice i) :
+    Submodule.span ℝ (Set.range i) = ⊤ := by
+  rw [IsIntegralLattice.range_eq_span_realBasis i h]
+  rw [Submodule.span_span_of_tower]
+  exact (IsIntegralLattice.realBasis i h).span_eq
 
 /-- The rank of a full integral lattice equals the real dimension of its ambient space. -/
 theorem IsIntegralLattice.finrank_eq_finrank (i : N →+ V) (h : IsIntegralLattice i) :
@@ -476,10 +473,16 @@ theorem IsIntegralLattice.isZLattice_range (i : N →+ V₀)
     (h : IsIntegralLattice i) :
     @IsZLattice ℝ _ V₀ _ _ (LinearMap.range i.toIntLinearMap)
       (IsIntegralLattice.discreteTopology_range i h) := by
-  exact @IsZLattice.mk ℝ _ V₀ _ _ (LinearMap.range i.toIntLinearMap)
-    (IsIntegralLattice.discreteTopology_range i h) (by
-      simpa only [LinearMap.coe_range, AddMonoidHom.coe_toIntLinearMap] using
-        IsIntegralLattice.span_range_eq_top i h)
+  let _ : Module.Finite ℤ N := h.finite
+  let b := IsIntegralLattice.realBasis i h
+  have hrange : (LinearMap.range i.toIntLinearMap : Set V₀) =
+      (Submodule.span ℤ (Set.range b) : Set V₀) := by
+    simpa only [LinearMap.coe_range, AddMonoidHom.coe_toIntLinearMap] using
+      IsIntegralLattice.range_eq_span_realBasis i h
+  refine @IsZLattice.mk ℝ _ V₀ _ _ (LinearMap.range i.toIntLinearMap)
+    (IsIntegralLattice.discreteTopology_range i h) ?_
+  rw [hrange]
+  exact (instIsZLatticeRealSpan b).span_top
 
 /-- A real-linear map carrying one integral lattice into another commutes with their lattice
 vectors, after applying the corresponding integral additive map. -/
@@ -497,6 +500,9 @@ theorem IsIntegralLattice.comp_equiv_eq_equiv_comp_baseChange
   ext n
   simp only [LinearMap.comp_apply, LinearMap.restrictScalars_apply, TensorProduct.mk_apply,
     LinearMap.baseChange_tmul, AddMonoidHom.coe_toIntLinearMap]
+  -- The preceding simplification unfolds the composition and base-change wrappers, but the
+  -- coercions from `LinearEquiv.toLinearMap` and `AddMonoidHom.toIntLinearMap` still hide the
+  -- tensor expressions from `equiv_tmul`; `change` exposes those definitional wrappers.
   change g (h.baseChange.equiv (1 ⊗ₜ[ℤ] n)) =
     h'.baseChange.equiv (1 ⊗ₜ[ℤ] f.toIntLinearMap n)
   rw [h.baseChange.equiv_tmul, h'.baseChange.equiv_tmul]
