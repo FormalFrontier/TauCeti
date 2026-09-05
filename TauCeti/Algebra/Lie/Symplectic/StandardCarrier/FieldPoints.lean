@@ -93,7 +93,6 @@ theorem points_eq_GLSymplecticFin {K : Type u} [Field K] :
     have : (⟨g, hg⟩ : GLSymplecticFin (n + 1) K) ∈ H := by
       rw [hH]
       exact Subgroup.mem_top _
-    change (GLSymplecticFin (n + 1) K).subtype ⟨g, hg⟩ ∈ points n K at this
-    simpa only [Subgroup.subtype_apply] using this
+    simpa only [H, Subgroup.mem_comap, Subgroup.subtype_apply] using this
 
 end TauCeti.SpStd
