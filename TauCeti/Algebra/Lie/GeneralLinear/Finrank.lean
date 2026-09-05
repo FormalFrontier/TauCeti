@@ -26,9 +26,10 @@ nonemptiness hypothesis, and `TauCeti.finrank_sl_add_one` records the untruncate
 
 No field, characteristic or algebraic closure hypothesis is used: the strong rank condition is all
 that `finrank` needs in order to count the basis vectors, and over a commutative ring it is implied
-by nontriviality. The rank-two case is counted separately, in
-`TauCeti/Algebra/Lie/Sl2/Basic.lean`: there the rank is read off the named basis
-`e`, `f`, `h` (`TauCeti.slFinTwoBasis`) that the `sl₂`-triple calculus of that file needs anyway.
+by nontriviality. This is the only rank statement for `sl n R` in the repository: the rank-two case
+is the instance `n = Fin 2`, and `TauCeti/Algebra/Lie/Sl2/Basic.lean` takes its rank `3` and its
+`Module.Free`/`Module.Finite` instances from here rather than from its own named basis
+`e`, `f`, `h` (`TauCeti.slFinTwoBasis`).
 
 ## Main results
 
@@ -180,6 +181,7 @@ variable (R n) [CommRing R] [StrongRankCondition R]
 
 For an empty index type the matrix algebra is trivial and both sides are `0`, the truncated
 subtraction `0 - 1` doing the work. -/
+@[simp]
 theorem finrank_sl :
     finrank R (SpecialLinear.sl n R) = Fintype.card n ^ 2 - 1 := by
   rcases isEmpty_or_nonempty n with hn | ⟨⟨i₀⟩⟩
