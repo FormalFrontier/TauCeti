@@ -6,8 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Grading
-public import Mathlib.LinearAlgebra.CliffordAlgebra.Even
-public import Mathlib.LinearAlgebra.CliffordAlgebra.Conjugation
 
 /-!
 # Reading the `ℤ/2`-grading: base cases and ordered products
@@ -71,36 +69,5 @@ theorem prod_map_ι_mem_evenOdd_one_of_odd_length {l : List M} (hlen : Odd l.len
   have h : (l.length : ZMod 2) = 1 := by
     rw [← ZMod.natCast_mod l.length 2, Nat.odd_iff.mp hlen, Nat.cast_one]
   exact h ▸ prod_map_ι_mem_evenOdd l
-
-/-! ### Reversal on the even subalgebra -/
-
-/-- Reversal restricted to the even Clifford subalgebra. -/
-def reverseEven (Q : QuadraticForm R M) : ↥(even Q) →ₗ[R] ↥(even Q) :=
-  (reverse (Q := Q)).restrict (p := (even Q).toSubmodule) (q := (even Q).toSubmodule)
-    (fun _x hx => (reverse_mem_evenOdd_iff Q).2 hx)
-
-/-- Coercing the restricted reversal agrees with Clifford reversal. -/
-@[simp] theorem reverseEven_coe (x : ↥(even Q)) :
-    (reverseEven Q x : CliffordAlgebra Q) = reverse x := by
-  exact LinearMap.coe_restrict_apply
-    (f := reverse (Q := Q))
-    (fun _x hx => (reverse_mem_evenOdd_iff Q).2 hx) x
-
-/-- Reversal restricted to the even subalgebra fixes its unit. -/
-@[simp] theorem reverseEven_map_one : reverseEven Q 1 = 1 := by
-  apply Subtype.ext
-  simp [reverseEven_coe]
-
-/-- Reversal restricted to the even subalgebra reverses products. -/
-@[simp] theorem reverseEven_mul (x y : ↥(even Q)) :
-    reverseEven Q (x * y) = reverseEven Q y * reverseEven Q x := by
-  apply Subtype.ext
-  simp only [reverseEven_coe, Subalgebra.coe_mul, reverse.map_mul]
-
-/-- Reversal restricted to the even subalgebra is an involution. -/
-@[simp] theorem reverseEven_reverseEven (x : ↥(even Q)) :
-    reverseEven Q (reverseEven Q x) = x := by
-  apply Subtype.ext
-  simpa only [reverseEven_coe] using (reverse_reverse (Q := Q) (x : CliffordAlgebra Q))
 
 end CliffordAlgebra
