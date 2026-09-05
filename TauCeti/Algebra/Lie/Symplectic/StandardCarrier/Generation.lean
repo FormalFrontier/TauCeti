@@ -127,6 +127,10 @@ private theorem val_rootSubgroupPoints_eq_one_add_smul
       ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm
         (Multiplicative.ofAdd c)))
 
+private theorem map_intCast_eq_mapMatrix {m : Type*} [Fintype m] [DecidableEq m]
+    (M : Matrix m m ℤ) :
+    M.map (Int.cast : ℤ → A) = (Int.castRingHom A).mapMatrix M := rfl
+
 /-- The final raising root subgroup of the carrier is the positive long-root subgroup of the
 standard symplectic group. -/
 theorem coe_rootSubgroupPoints_inl_last (c : A) :
@@ -136,7 +140,7 @@ theorem coe_rootSubgroupPoints_inl_last (c : A) :
   apply Units.ext
   rw [val_rootSubgroupPoints_eq_one_add_smul, rootIntMatrix_inl_last,
     GLSymplecticFin.coe_positiveLongRootTransvectionUnit, TauCeti.coe_transvectionUnit]
-  change 1 + c • (Int.castRingHom A).mapMatrix _ = _
+  rw [map_intCast_eq_mapMatrix]
   rw [RingHom.mapMatrix_apply, Matrix.map_single, map_one, Matrix.smul_single,
     smul_eq_mul, mul_one, Matrix.transvection]
 
@@ -149,7 +153,7 @@ theorem coe_rootSubgroupPoints_inr_last (c : A) :
   apply Units.ext
   rw [val_rootSubgroupPoints_eq_one_add_smul, rootIntMatrix_inr_last,
     GLSymplecticFin.coe_negativeLongRootTransvectionUnit, TauCeti.coe_transvectionUnit]
-  change 1 + c • (Int.castRingHom A).mapMatrix _ = _
+  rw [map_intCast_eq_mapMatrix]
   rw [RingHom.mapMatrix_apply, Matrix.map_single, map_one, Matrix.smul_single,
     smul_eq_mul, mul_one, Matrix.transvection]
 
@@ -164,7 +168,7 @@ theorem coe_rootSubgroupPoints_inl_of_ne_last (i : Fin (n + 1)) (hi : i ≠ Fin.
   rw [val_rootSubgroupPoints_eq_one_add_smul, rootIntMatrix_inl_of_ne_last n i hi,
     GLSymplecticFin.coe_differenceShortRootUnit, Units.val_mul,
     TauCeti.coe_transvectionUnit, TauCeti.coe_transvectionUnit]
-  change 1 + c • (Int.castRingHom A).mapMatrix _ = _
+  rw [map_intCast_eq_mapMatrix]
   rw [map_sub, RingHom.mapMatrix_apply, RingHom.mapMatrix_apply, Matrix.map_single,
     Matrix.map_single, map_one]
   simp only [smul_sub, Matrix.smul_single, smul_eq_mul, mul_one, Matrix.transvection,
@@ -185,7 +189,7 @@ theorem coe_rootSubgroupPoints_inr_of_ne_last (i : Fin (n + 1)) (hi : i ≠ Fin.
   rw [val_rootSubgroupPoints_eq_one_add_smul, rootIntMatrix_inr_of_ne_last n i hi,
     GLSymplecticFin.coe_differenceShortRootUnit, Units.val_mul,
     TauCeti.coe_transvectionUnit, TauCeti.coe_transvectionUnit]
-  change 1 + c • (Int.castRingHom A).mapMatrix _ = _
+  rw [map_intCast_eq_mapMatrix]
   rw [map_sub, RingHom.mapMatrix_apply, RingHom.mapMatrix_apply, Matrix.map_single,
     Matrix.map_single, map_one]
   simp only [smul_sub, Matrix.smul_single, smul_eq_mul, mul_one, Matrix.transvection,
