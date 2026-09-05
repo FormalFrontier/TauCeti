@@ -13,6 +13,8 @@ import Mathlib.Data.Fintype.CardEmbedding
 # Counting graph homomorphisms
 
 Cardinality bounds for homomorphisms and injective homomorphisms between finite simple graphs.
+These compare graph homomorphism counts with all vertex maps and embeddings, enabling the
+normalization and estimates used for finite homomorphism densities.
 
 ## Main results
 
