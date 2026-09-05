@@ -98,7 +98,6 @@ theorem negativeBinomialMeasure_real_Iic (hr : 0 < r) (hp : 0 < p) (hp1 : p ≤ 
 
 /-- At shape zero, every native cumulative mass is one because the valid negative-binomial law is
 the Dirac measure at zero. -/
-@[simp]
 theorem negativeBinomialMeasure_real_Iic_zero (hp : 0 < p) (hp1 : p ≤ 1) (k : ℕ) :
     (negativeBinomialMeasure 0 p).real (Iic k) = 1 := by
   rw [negativeBinomialMeasure_zero hp hp1, measureReal_def]
@@ -134,7 +133,6 @@ theorem cdf_map_cast_negativeBinomialMeasure_of_neg (hr : 0 < r) (hp : 0 < p) (h
 
 /-- At shape zero, the cdf of the real-valued negative-binomial law is the step function at the
 origin. -/
-@[simp]
 theorem cdf_map_cast_negativeBinomialMeasure_zero (hp : 0 < p) (hp1 : p ≤ 1) (x : ℝ) :
     cdf ((negativeBinomialMeasure 0 p).map (Nat.cast : ℕ → ℝ)) x =
       if 0 ≤ x then 1 else 0 := by
