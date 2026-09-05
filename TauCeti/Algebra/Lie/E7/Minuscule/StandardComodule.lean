@@ -115,7 +115,7 @@ theorem piScalarRight_comp_endOfPoint
         (CommHopfAlgCat.quotientPointsHom
           (GeneralLinear.coordinateHopfAlgebra R 56) (baseChangeDefiningIdeal R)
           (CommAlgCat.of R A) g).ofConv := by
-    rw [coordinateMap_def, CommHopfAlgCat.quotientPointsHom_apply]
+    exact congrArg WithConv.ofConv (mapPointsFunctor_coordinateMap_app R g)
   rw [hpoint]
   exact GeneralLinear.piScalarRight_comp_endOfPoint R 56 _
 
@@ -138,7 +138,7 @@ theorem mulVec_mem
         CommHopfAlgCat.quotientPointsHom
           (GeneralLinear.coordinateHopfAlgebra R 56) (baseChangeDefiningIdeal R)
           (CommAlgCat.of R R) g := by
-    rw [AlgHom.mapDomain_apply, coordinateMap_def, CommHopfAlgCat.quotientPointsHom_apply]
+    exact mapPointsFunctor_coordinateMap_app R g
   rw [hpoint] at h
   exact h
 
@@ -210,8 +210,7 @@ private theorem weightTorusToBaseChangeCoordinateMap_coordinate (i a : Fin 56) :
             (GeneralLinear.coordinateRingMap k 56 (MvPolynomial.X (i, a))))) =
       if i = a then MonoidAlgebra.single (minusculeCharacter a) (1 : k) else 0 := by
   rw [← _root_.BialgHom.comp_apply, ← _root_.CommHopfAlgCat.hom_comp]
-  rw [coordinateMap_def]
-  rw [mkQuotient_comp_weightTorusToBaseChangeCoordinateMap]
+  rw [coordinateMap_comp_weightTorusToBaseChangeCoordinateMap]
   rw [GeneralLinear.hom_weightTorusBaseChangeCoordinateMap,
     GeneralLinear.weightTorusCoordinateBialgHom_X]
   split_ifs with h
