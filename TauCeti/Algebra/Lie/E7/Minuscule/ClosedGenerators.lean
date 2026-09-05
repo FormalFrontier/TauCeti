@@ -68,17 +68,35 @@ private theorem rootSubgroupIntegralCoordinateMap_surjective (k : Fin 7 ⊕ Fin 
       (TauCeti.serreH ℚ (CartanMatrix.E 7)) rep lattice.toAddSubgroup
       rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator latticeBasis
       e7MinusculeWeight k]
-    intro y
-    obtain ⟨q, hq⟩ := rootSubgroupCoordinateMap_surjective k y
-    obtain ⟨x, hx⟩ := CommHopfAlgCat.mkQuotient_surjective _ _ q
-    refine ⟨x, ?_⟩
-    simpa only [_root_.CommHopfAlgCat.hom_comp, BialgHom.comp_apply, hx] using hq
-  rw [← mkQuotient_comp_rootSubgroupIntegralCoordinateMap] at hrepresented
+    exact (rootSubgroupCoordinateMap_surjective k).comp
+      (CommHopfAlgCat.mkQuotient_surjective _ _)
+  apply Function.Surjective.of_comp
+    (g := (CommHopfAlgCat.mkQuotient
+      (GeneralLinear.coordinateHopfAlgebra ℤ 56) definingIdeal).hom)
+  have hcomp : Function.Surjective
+      (CommHopfAlgCat.mkQuotient
+          (GeneralLinear.coordinateHopfAlgebra ℤ 56) definingIdeal ≫
+        rootSubgroupIntegralCoordinateMap k).hom := by
+    rw [mkQuotient_comp_rootSubgroupIntegralCoordinateMap]
+    exact hrepresented
+  simpa only [_root_.CommHopfAlgCat.hom_comp, BialgHom.coe_comp] using hcomp
+
+/-- Composing a surjective integral coordinate map with the canonical source and target
+identifications preserves surjectivity after base change. -/
+private theorem baseChangeCoordinateMap_surjective
+    {H L : _root_.CommHopfAlgCat.{0} ℤ}
+    {H' L' : _root_.CommHopfAlgCat.{u} A}
+    (eH : H' ≅ CommHopfAlgCat.baseChange (K := A) H)
+    (eL : CommHopfAlgCat.baseChange (K := A) L ≅ L')
+    (f : H ⟶ L) (hf : Function.Surjective f.hom) :
+    Function.Surjective
+      (eH.hom ≫ CommHopfAlgCat.baseChangeMap (K := A) f ≫ eL.hom).hom := by
   intro y
-  obtain ⟨x, hx⟩ := hrepresented y
-  refine ⟨(CommHopfAlgCat.mkQuotient
-    (GeneralLinear.coordinateHopfAlgebra ℤ 56) definingIdeal).hom x, ?_⟩
-  simpa only [_root_.CommHopfAlgCat.hom_comp, BialgHom.comp_apply] using hx
+  obtain ⟨x, rfl⟩ := (ConcreteCategory.bijective_of_isIso eL.hom).2 y
+  obtain ⟨z, rfl⟩ := CommHopfAlgCat.baseChangeMap_surjective (K := A) f hf x
+  obtain ⟨w, rfl⟩ := (ConcreteCategory.bijective_of_isIso eH.hom).2 z
+  refine ⟨w, ?_⟩
+  simp only [_root_.CommHopfAlgCat.hom_comp, BialgHom.comp_apply]
 
 /-- **Every transported numbered type-`E₇` root-subgroup coordinate map is surjective.**
 Thus the simple-root copy of `𝔾ₐ` remains scheme-theoretically closed after arbitrary base
@@ -87,32 +105,26 @@ theorem rootSubgroupToBaseChangeCoordinateMap_surjective (k : Fin 7 ⊕ Fin 7) :
     Function.Surjective (rootSubgroupToBaseChangeCoordinateMap A k).hom := by
   rw [← baseChangeCoordinateIso_hom_comp_rootSubgroupBaseChangeMap A k]
   let e := AdditiveGroup.coordinateHopfAlgebraBaseChangeIso ℤ A
-  have he : Function.Surjective e.hom.hom :=
-    (ConcreteCategory.bijective_of_isIso e.hom).2
-  have hbase := CommHopfAlgCat.baseChangeMap_surjective
-    (K := A) (rootSubgroupIntegralCoordinateMap k)
-    (rootSubgroupIntegralCoordinateMap_surjective k)
-  have hcarrier : Function.Surjective (baseChangeCoordinateIso A).hom.hom :=
-    (ConcreteCategory.bijective_of_isIso (baseChangeCoordinateIso A).hom).2
-  intro y
-  obtain ⟨x, rfl⟩ := he y
-  obtain ⟨z, rfl⟩ := hbase x
-  obtain ⟨w, rfl⟩ := hcarrier z
-  refine ⟨w, ?_⟩
-  simp only [_root_.CommHopfAlgCat.hom_comp, BialgHom.comp_apply]
-  rfl
+  exact baseChangeCoordinateMap_surjective A
+    (H := CommHopfAlgCat.quotient
+      (GeneralLinear.coordinateHopfAlgebra ℤ 56) definingIdeal)
+    (L := AdditiveGroup.coordinateHopfAlgebra ℤ)
+    (H' := CommHopfAlgCat.quotient
+      (GeneralLinear.coordinateHopfAlgebra A 56) (baseChangeDefiningIdeal A))
+    (L' := AdditiveGroup.coordinateHopfAlgebra A)
+    (baseChangeCoordinateIso A) e (rootSubgroupIntegralCoordinateMap k)
+      (rootSubgroupIntegralCoordinateMap_surjective k)
 
 /-- The named integral weight-torus coordinate map is surjective. -/
 private theorem weightTorusIntegralCoordinateMap_surjective :
     Function.Surjective weightTorusIntegralCoordinateMap.hom := by
+  apply Function.Surjective.of_comp
+    (g := (CommHopfAlgCat.mkQuotient
+      (GeneralLinear.coordinateHopfAlgebra ℤ 56) definingIdeal).hom)
   have h := GeneralLinear.weightTorusCoordinateMap_surjective (R := ℤ) e7MinusculeWeight
     span_range_e7MinusculeWeight_eq_top
   rw [← mkQuotient_comp_weightTorusIntegralCoordinateMap] at h
-  intro y
-  obtain ⟨x, hx⟩ := h y
-  refine ⟨(CommHopfAlgCat.mkQuotient
-    (GeneralLinear.coordinateHopfAlgebra ℤ 56) definingIdeal).hom x, ?_⟩
-  simpa only [_root_.CommHopfAlgCat.hom_comp, BialgHom.comp_apply] using hx
+  simpa only [_root_.CommHopfAlgCat.hom_comp, BialgHom.coe_comp] using h
 
 /-- **The transported rank-seven weight-torus coordinate map is surjective.** Thus the weight
 torus remains a closed split torus in every specialized carrier. -/
@@ -127,20 +139,17 @@ theorem weightTorusToBaseChangeCoordinateMap_surjective :
     _root_.CommHopfAlgCat.isoMk
       (TauCeti.MonoidAlgebra.scalarTensorBialgEquiv ℤ A
         (G := SplitTorus.characterGroup (Fin 7)))
-  have he : Function.Surjective e.hom.hom :=
-    (ConcreteCategory.bijective_of_isIso e.hom).2
-  have hbase := CommHopfAlgCat.baseChangeMap_surjective
-    (K := A) weightTorusIntegralCoordinateMap
-    weightTorusIntegralCoordinateMap_surjective
-  have hcarrier : Function.Surjective (baseChangeCoordinateIso A).hom.hom :=
-    (ConcreteCategory.bijective_of_isIso (baseChangeCoordinateIso A).hom).2
-  intro y
-  obtain ⟨x, rfl⟩ := he y
-  obtain ⟨z, rfl⟩ := hbase x
-  obtain ⟨w, rfl⟩ := hcarrier z
-  refine ⟨w, ?_⟩
-  simp only [_root_.CommHopfAlgCat.hom_comp, BialgHom.comp_apply]
-  rfl
+  exact baseChangeCoordinateMap_surjective A
+    (H := CommHopfAlgCat.quotient
+      (GeneralLinear.coordinateHopfAlgebra ℤ 56) definingIdeal)
+    (L := (DiagonalizableGroup.coordinateRing ℤ
+      (SplitTorus.characterGroup (Fin 7))).obj)
+    (H' := CommHopfAlgCat.quotient
+      (GeneralLinear.coordinateHopfAlgebra A 56) (baseChangeDefiningIdeal A))
+    (L' := (DiagonalizableGroup.coordinateRing A
+      (SplitTorus.characterGroup (Fin 7))).obj)
+    (baseChangeCoordinateIso A) e weightTorusIntegralCoordinateMap
+      weightTorusIntegralCoordinateMap_surjective
 
 /-! ## Scheme-theoretic closed generators
 
@@ -184,6 +193,30 @@ type-`E₇` minuscule carrier. -/
 noncomputable def baseChangeRootSubgroupClosedSubgroup (k : Fin 7 ⊕ Fin 7) :
     ClosedSubgroupScheme (baseChangeGroupScheme A) :=
   ClosedSubgroupScheme.mk (baseChangeRootSubgroup A k)
+
+/-- The bundled closed root subgroup is represented by the transported root-subgroup morphism. -/
+@[simp]
+theorem coe_baseChangeRootSubgroupClosedSubgroup (k : Fin 7 ⊕ Fin 7) :
+    (baseChangeRootSubgroupClosedSubgroup A k).1 =
+      letI := mono_of_isClosedImmersion_underlying (baseChangeRootSubgroup A k)
+      Subobject.mk (baseChangeRootSubgroup A k) :=
+  ClosedSubgroupScheme.coe_mk _
+
+/-- The bundled transported root subgroup is canonically isomorphic to the additive group
+scheme. -/
+noncomputable def baseChangeRootSubgroupClosedSubgroupIso (k : Fin 7 ⊕ Fin 7) :
+    ((baseChangeRootSubgroupClosedSubgroup A k).1 :
+      Grp (Over (Spec (CommRingCat.of A)))) ≅ AdditiveGroup.groupScheme A :=
+  ClosedSubgroupScheme.mkIso (baseChangeRootSubgroup A k)
+
+/-- The canonical parametrization of the bundled closed subgroup followed by its inclusion is
+the transported root-subgroup map. -/
+@[simp]
+theorem baseChangeRootSubgroupClosedSubgroupIso_inv_comp_arrow (k : Fin 7 ⊕ Fin 7) :
+    (baseChangeRootSubgroupClosedSubgroupIso A k).inv ≫
+        (baseChangeRootSubgroupClosedSubgroup A k).1.arrow =
+      baseChangeRootSubgroup A k :=
+  ClosedSubgroupScheme.mkIso_inv_comp_arrow (baseChangeRootSubgroup A k)
 
 /-- The transported rank-seven weight torus of the specialized type-`E₇` minuscule carrier. -/
 noncomputable def baseChangeWeightTorus :
