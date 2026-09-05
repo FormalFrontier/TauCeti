@@ -17,10 +17,12 @@ right derivative at every nonnegative time in the equivalent forms `A (S t x)` a
 It also proves that a generator-domain orbit has a derivative within the whole nonnegative
 half-line, hence a two-sided derivative at positive times.
 
-Finally, `StronglyContinuousSemigroup.hasDerivWithinAt_apply_realOperator_of_tendsto`
-differentiates an orbit inside an operator family: the right derivative of `u ↦ F u (S u x)` at
-`s` is the sum of the limit of the rebased orbit difference quotient pushed through `F u` and the
-right derivative of `u ↦ F u (S s x)`.
+Finally, `StronglyContinuousSemigroup.slope_apply_realOperator_eq` rebases an orbit inside a
+slope by the semigroup law, and
+`StronglyContinuousSemigroup.hasDerivWithinAt_apply_realOperator_of_tendsto` differentiates an
+orbit inside an operator family: the right derivative of `u ↦ F u (S u x)` at `s` is the sum of
+the limit of the rebased orbit difference quotient pushed through `F u` and the right derivative
+of `u ↦ F u (S s x)`.
 
 ## References
 
@@ -100,6 +102,20 @@ theorem mem_domain_iff_differentiableWithinAt_realOperator_zero
     simpa [S.realOperator_zero_apply] using hy'
 
 /-! ## Right derivatives at nonnegative times -/
+
+/-- **Rebasing a semigroup orbit inside a slope.** For any family `F` of operators and nonnegative
+times `0 ≤ s ≤ u`, the slope at `s` of `u ↦ F u (S u x)` splits, by the semigroup law
+`S u x = S (u - s) (S s x)`, into the difference quotient of the orbit of `S s x` rebased at `s`
+and pushed through `F u`, plus the slope of `u ↦ F u (S s x)`. -/
+theorem slope_apply_realOperator_eq (S : StronglyContinuousSemigroup X) (F : ℝ → X →L[ℝ] X)
+    (x : X) {s u : ℝ} (hs : 0 ≤ s) (hu : s ≤ u) :
+    slope (fun v : ℝ => F v (S.realOperator v x)) s u =
+      F u ((u - s)⁻¹ • (S.realOperator (u - s) (S.realOperator s x) - S.realOperator s x)) +
+        slope (fun v : ℝ => F v (S.realOperator s x)) s u := by
+  have hSu : S.realOperator u x = S.realOperator (u - s) (S.realOperator s x) := by
+    rw [← S.realOperator_add_apply (u - s) s (sub_nonneg.mpr hu) hs, sub_add_cancel]
+  simp only [slope_def_module, hSu, map_smul, map_sub, smul_sub]
+  abel
 
 /-- **Differentiating an orbit inside an operator family.** At a nonnegative time `s`, if the
 difference quotient of the orbit of `S s x`, rebased at `s` and pushed through `F u`, converges to

@@ -9,6 +9,7 @@ public import TauCeti.Analysis.Semigroups.Basic
 public import Mathlib.LinearAlgebra.LinearPMap
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
+import Mathlib.Topology.Algebra.Group.Order
 
 /-!
 # Generators of strongly continuous semigroups
@@ -169,10 +170,7 @@ theorem StronglyContinuousSemigroup.generator_tendsto_comp_sub_const
         exact x.property⟩)) := by
   have hshift : Filter.Tendsto (fun u : ℝ => u - s) (nhdsWithin s (Set.Ioi s))
       (nhdsWithin 0 (Set.Ioi 0)) :=
-    tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _
-      (((continuous_id.sub continuous_const).tendsto' s 0 (sub_self s)).mono_left
-        nhdsWithin_le_nhds)
-      (eventually_nhdsWithin_of_forall fun u hu => Set.mem_Ioi.mpr (sub_pos.mpr hu))
+    le_of_eq (by rw [Filter.map_subRight_nhdsGT, sub_self])
   simpa [Function.comp_def, one_div] using (S.generator_tendsto x).comp hshift
 
 omit [CompleteSpace X] in
@@ -272,7 +270,7 @@ private theorem StronglyContinuousSemigroup.local_integral_shift_identity
         exact hu.1
       have h_semigroup_apply :
           S.realOperator h (S.realOperator u x) = S.realOperator (u + h) x := by
-        rw [← ContinuousLinearMap.comp_apply, ← S.realOperator_add h u hh.le hu_nonneg, add_comm]
+        rw [← S.realOperator_add_apply h u hh.le hu_nonneg, add_comm]
       simpa [f] using h_semigroup_apply
   have h_sub :
       (∫ u in h..t + h, f u) - ∫ u in (0 : ℝ)..t, f u =
@@ -361,7 +359,8 @@ theorem StronglyContinuousSemigroup.dense_domain
     exact S.domain.smul_mem (1 / t) (S.integral_orbit_mem_domain x ht)
 
 /-- Two continuous linear maps that agree on the (dense) generator domain are equal. -/
-theorem StronglyContinuousSemigroup.eq_of_eqOn_domain (S : StronglyContinuousSemigroup X)
+theorem StronglyContinuousSemigroup.continuousLinearMap_ext_of_eqOn_domain
+    (S : StronglyContinuousSemigroup X)
     {f g : X →L[ℝ] X} (h : ∀ x ∈ S.domain, f x = g x) : f = g :=
   ContinuousLinearMap.ext_on (R₁ := ℝ) (s := (S.domain : Set X))
     (by rw [Submodule.span_eq]; exact S.dense_domain) h
