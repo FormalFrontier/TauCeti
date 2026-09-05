@@ -37,8 +37,8 @@ their contribution is `o(x)`.
   of `frobeniusVonMangoldtCoeff`.
 * `NumberField.Chebotarev.frobeniusPsi_sub_frobeniusTheta_eq_primePowerSummatory`: their
   difference is exactly the contribution from exponents at least two.
-* `NumberField.Chebotarev.frobeniusPsi_sub_frobeniusTheta_le`: that difference is bounded
-  termwise by the unrestricted higher-prime-power tail.
+* `NumberField.Chebotarev.frobeniusPsi_sub_frobeniusTheta_le`: that difference is bounded by
+  the unrestricted higher-prime-power tail.
 * `NumberField.Chebotarev.isLittleO_frobeniusPsi_sub_frobeniusTheta`: this difference is `o(x)`.
 
 The coefficient convention follows Neukirch, *Algebraic Number Theory*, Chapter VII. The
@@ -294,6 +294,12 @@ theorem frobeniusVonMangoldtCoeff_eq_zero_of_not_isPrimePow
   rw [← (mem_normFiber K).mp hI]
   exact isPrimePow_absNorm ⟨I, h⟩
 
+/-- The Frobenius von Mangoldt coefficient vanishes at `1`. -/
+@[simp]
+theorem frobeniusVonMangoldtCoeff_apply_one (C : ConjClasses (L ≃ₐ[K] L)) :
+    frobeniusVonMangoldtCoeff K L C 1 = 0 :=
+  frobeniusVonMangoldtCoeff_eq_zero_of_not_isPrimePow C not_isPrimePow_one
+
 /-- Frobenius `ψ` is the inclusive partial sum of the Frobenius von Mangoldt coefficients. -/
 theorem frobeniusPsi_eq_sum_range (C : ConjClasses (L ≃ₐ[K] L)) (x : ℝ) :
     frobeniusPsi K L C x =
@@ -345,8 +351,8 @@ theorem frobeniusTheta_le_frobeniusPsi (C : ConjClasses (L ≃ₐ[K] L)) (x : �
   exact primePowerSummatory_nonneg K _
     (fun A ↦ Set.indicator_nonneg (fun A _ ↦ higherPrimePowerWeight_nonneg A) A) x
 
-/-- **The Frobenius higher-prime-power tail is dominated termwise by the unrestricted one.**
-Nothing about `C` is used: the `C`-fibre is discarded term by term. -/
+/-- **The Frobenius higher-prime-power tail is bounded by the unrestricted one.** The gap
+between Frobenius `ψ` and `ϑ` is at most the corresponding gap for all primes. -/
 theorem frobeniusPsi_sub_frobeniusTheta_le (C : ConjClasses (L ≃ₐ[K] L)) (x : ℝ) :
     frobeniusPsi K L C x - frobeniusTheta K L C x ≤
       primePsi K (Set.univ : Set (HeightOneSpectrum (𝓞 K))) x -
