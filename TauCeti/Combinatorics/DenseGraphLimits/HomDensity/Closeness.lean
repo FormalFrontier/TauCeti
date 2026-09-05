@@ -35,10 +35,11 @@ homomorphism density under random sampling.
 
 ## References
 
-* `TauCetiRoadmap/DenseGraphLimits/Suggested.lean`, Layer 9a — this generalizes the roadmap's
-  finite host signature from `SimpleGraph (Fin m)` to an arbitrary finite host graph.
 * L. Lovász, *Large Networks and Graph Limits*, §5.2.
 -/
+
+/- The formal statement follows `TauCetiRoadmap/DenseGraphLimits/Suggested.lean`, generalized
+   from a `SimpleGraph (Fin m)` host to an arbitrary finite host graph. -/
 
 public section
 
