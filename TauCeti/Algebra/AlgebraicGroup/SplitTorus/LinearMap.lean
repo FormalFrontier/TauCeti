@@ -70,7 +70,7 @@ theorem characterMapOfLinearMap_comp (g : (tau → ℤ) →ₗ[ℤ] (upsilon →
       characterMapOfLinearMap (g ∘ₗ f) := by
   apply MonoidHom.ext
   intro x
-  rw [show x = Multiplicative.ofAdd x.toAdd by rfl, MonoidHom.comp_apply,
+  rw [← ofAdd_toAdd x, MonoidHom.comp_apply,
     characterMapOfLinearMap_ofAdd, characterMapOfLinearMap_ofAdd,
     characterMapOfLinearMap_ofAdd, LinearEquiv.apply_symm_apply]
   rfl
@@ -191,6 +191,14 @@ theorem powEnd_comp (m n : ℤ) :
 theorem powEnd_one : powEnd R sigma 1 = 𝟙 _ := by
   simp [powEnd]
 
+private theorem smul_linearMap_id_apply_single [DecidableEq sigma] (n : ℤ) (i : sigma) :
+    (n • (LinearMap.id : (sigma → ℤ) →ₗ[ℤ] (sigma → ℤ)))
+        (Finsupp.linearEquivFunOnFinite ℤ ℤ sigma (Finsupp.single i 1)) =
+      Pi.single i n := by
+  classical
+  ext j
+  simp [Pi.single_apply]
+
 /-- On scheme-valued points, `powEnd n` raises every coordinate to the integer power `n`. -/
 @[simp]
 theorem schemePointsMulEquiv_powEnd (n : ℤ)
@@ -201,12 +209,7 @@ theorem schemePointsMulEquiv_powEnd (n : ℤ)
       schemePointsMulEquiv (R := R) (A := A) p i ^ n := by
   rw [powEnd, schemePointsMulEquiv_ofLinearMap]
   classical
-  rw [show
-      (n • (LinearMap.id : (sigma → ℤ) →ₗ[ℤ] (sigma → ℤ)))
-          (Finsupp.linearEquivFunOnFinite ℤ ℤ sigma (Finsupp.single i 1)) =
-        Pi.single i n by
-      ext j
-      simp [Pi.single_apply],
+  rw [smul_linearMap_id_apply_single,
     Finsupp.linearEquivFunOnFinite_symm_single]
   simp
 
