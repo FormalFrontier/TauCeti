@@ -70,8 +70,7 @@ theorem map_unique (f : M →ₗ[R] N) (g : SymmetricAlgebra R M →ₐ[R] Symme
     apply algHom_ext
     ext a
     -- `algHom_ext` and `ext` leave the generator equality under bundled maps.
-    change g (ι R M a) = map R f (ι R M a)
-    rw [h, map_apply_ι]
+    simpa [LinearMap.comp_apply, map_apply_ι] using h a
   · intro h a
     rw [h, map_apply_ι]
 
@@ -125,7 +124,7 @@ theorem map_surjective_of_rightInverse (f : M →ₗ[R] N) (g : N →ₗ[R] M)
   (map_rightInverse R h).surjective
 
 /-- A surjective linear map induces a surjective map of symmetric algebras. -/
-theorem map_surjective_of_surjective (f : M →ₗ[R] N)
+theorem map_surjective (f : M →ₗ[R] N)
     (h : Function.Surjective f) : Function.Surjective (map R f) := by
   intro b
   induction b using SymmetricAlgebra.induction with
