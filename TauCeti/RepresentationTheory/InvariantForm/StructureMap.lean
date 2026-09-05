@@ -80,6 +80,9 @@ available -- by Haar averaging for a compact group as much as by summation for a
   invariant symmetric form.**
 * `Representation.exists_isInvariantForm_isAlt_nondegenerate_of_isQuaternionicStructure`: **a
   quaternionic structure produces a nondegenerate invariant alternating form the same way.**
+* `Representation.isInvariantSesqForm_balance`: **balancing an invariant sesquilinear form
+  against an equivariant map leaves it invariant**, which is what makes the balanced form of
+  `TauCeti/LinearAlgebra/Complex/SesquilinearForm.lean` usable on a representation.
 * `Representation.exists_isRealStructure_iff` and
   `Representation.exists_isQuaternionicStructure_iff`: against a positive definite invariant
   Hermitian form, an irreducible finite-dimensional representation has a real, respectively a
@@ -234,21 +237,6 @@ section Equivariance
 variable {G V : Type*} [Monoid G] [AddCommGroup V] [Module ℂ V] {ρ : Representation ℂ G V}
   {B : BilinForm ℂ V} {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} [FiniteDimensional ℂ V]
 
-/-- **A definite invariant Hermitian form makes the action surjective.**  Invariance carries the
-self-pairing of `ρ g x` back to that of `x`, so definiteness makes `ρ g` injective, and on a
-finite-dimensional space an injective endomorphism is surjective.  This is what replaces the
-inverse of a group element below, so that nothing here needs more than a monoid acting. -/
-private theorem surjective_rep (hHinv : IsInvariantSesqForm ρ H)
-    (hdef : ∀ x : V, x ≠ 0 → H x x ≠ 0) (g : G) : Function.Surjective (ρ g) := by
-  refine LinearMap.injective_iff_surjective.mp ?_
-  rw [injective_iff_map_eq_zero]
-  intro x hx
-  by_contra hne
-  refine hdef x hne ?_
-  have h := hHinv.apply g x x
-  rw [hx] at h
-  simpa using h.symm
-
 /-- The comparison map of two invariant forms commutes with the action: both sides pair identically
 against every vector, and a positive definite form separates vectors.  The second argument is
 written as `ρ g z`, which is no loss because the action is surjective. -/
@@ -256,7 +244,7 @@ private theorem compareForms_apply_rep (hBinv : IsInvariantForm ρ B)
     (hHinv : IsInvariantSesqForm ρ H) (hdef : ∀ x : V, x ≠ 0 → H x x ≠ 0) (g : G) (x : V) :
     compareForms B H hdef (ρ g x) = ρ g (compareForms B H hdef x) := by
   refine eq_of_forall_sesq_eq H hdef fun y => ?_
-  obtain ⟨z, rfl⟩ := surjective_rep hHinv hdef g y
+  obtain ⟨z, rfl⟩ := hHinv.surjective_of_apply_self_ne_zero hdef g y
   calc H (compareForms B H hdef (ρ g x)) (ρ g z)
       = B (ρ g x) (ρ g z) := sesq_compareForms B H hdef (ρ g x) (ρ g z)
     _ = B x z := hBinv.apply g x z
@@ -406,8 +394,11 @@ section OfStructureMap
 
 variable {G V : Type*} [Monoid G] [AddCommGroup V] [Module ℂ V] {ρ : Representation ℂ G V}
 
-/-- The balanced form of an invariant form against an equivariant map is invariant. -/
-private theorem isInvariantSesqForm_balance {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ}
+/-- **The balanced form of an invariant sesquilinear form against an equivariant map is
+invariant.**  Both summands of `LinearMap.balance H K` are, the second because `K` commutes with
+the action.  This is the only interaction between balancing and invariance that the passage from a
+structure map to an invariant bilinear form uses. -/
+theorem isInvariantSesqForm_balance {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ}
     {K : V →ₛₗ[starRingEnd ℂ] V} (hHinv : IsInvariantSesqForm ρ H)
     (hK : ∀ (g : G) (v : V), K (ρ g v) = ρ g (K v)) : IsInvariantSesqForm ρ (balance H K) :=
   isInvariantSesqForm_iff.mpr fun g x y => by
