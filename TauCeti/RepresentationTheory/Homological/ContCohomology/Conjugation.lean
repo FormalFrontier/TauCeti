@@ -17,14 +17,18 @@ map on the explicit quotient `H¹(N, M)`.  The map is written with the inverse c
 
 The construction is functorial in `g`, hence gives the expected `G`-action.  When `g` belongs to
 `N`, the induced map is the identity: the difference of a cocycle and its conjugate is the
-principal cocycle attached to `c g`.
+principal cocycle attached to `c g`.  The file also records the degree-one and degree-two
+components of the corresponding bar homotopy, including the degree-two cocycle identity that
+expresses the conjugation difference as a coboundary.
 -/
 
 public section
 
 namespace TauCeti.ContCohomology
 
-universe uG uM
+open TauCeti.ContinuousMonoidHom
+
+universe uG uM uK uA
 
 section
 
@@ -32,42 +36,16 @@ variable {G : Type uG} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
   {M : Type uM} [AddCommGroup M] [TopologicalSpace M] [IsTopologicalAddGroup M]
   [DistribMulAction G M] [ContinuousSMul G M]
 
-/-- The inverse conjugation homomorphism of a normal subgroup. -/
-def inverseConjugationHom (N : Subgroup G) [N.Normal] (g : G) : N →ₜ* N where
-  toMonoidHom := (MulAut.conjNormal g⁻¹ : MulAut N).toMonoidHom
-  continuous_toFun := by
-    let f : N → N := fun n =>
-      ⟨g⁻¹ * (n : G) * g, by
-        simpa only [inv_inv] using
-          (inferInstance : N.Normal).conj_mem (n : G) n.property g⁻¹⟩
-    have hf : Continuous f := by
-      dsimp [f]
-      exact ((continuous_mul_const g).comp
-        ((continuous_const_mul g⁻¹).comp continuous_subtype_val)).subtype_mk _
-    change Continuous ((MulAut.conjNormal g⁻¹ : MulAut N) : N → N)
-    exact hf.congr fun n => by
-      apply Subtype.ext
-      simp [f]
-
-@[simp]
-theorem inverseConjugationHom_apply (N : Subgroup G) [N.Normal] (g : G) (n : N) :
-    inverseConjugationHom N g n =
-      ⟨g⁻¹ * (n : G) * g, by
-        simpa only [inv_inv] using
-          (inferInstance : N.Normal).conj_mem (n : G) n.property g⁻¹⟩ :=
-  by
-    apply Subtype.ext
-    change ((MulAut.conjNormal g⁻¹ : MulAut N) n : G) = _
-    simp
-
 omit [TopologicalSpace M] [IsTopologicalAddGroup M] [ContinuousSMul G M] in
 /-- The conjugation compatible-pair identity on coefficients. -/
 theorem inverseConjugationHom_smul (N : Subgroup G) [N.Normal] (g : G) (n : N) (m : M) :
-    (DistribSMul.toAddMonoidHom M g) (inverseConjugationHom N g n • m) =
+    (DistribSMul.toAddMonoidHom M g)
+        (ContinuousMonoidHom.inverseConjugationHom N g n • m) =
       n • (DistribSMul.toAddMonoidHom M g) m := by
   -- Unfold the subgroup action so the compatible-pair identity is an identity for the ambient
   -- `G`-action, where `mul_smul` applies directly.
-  simp only [DistribSMul.toAddMonoidHom_apply, inverseConjugationHom_apply]
+  simp only [DistribSMul.toAddMonoidHom_apply,
+    ContinuousMonoidHom.inverseConjugationHom_apply]
   change g • ((g⁻¹ * (n : G) * g) • m) = (n : G) • (g • m)
   simp [smul_smul, mul_assoc]
 
@@ -90,48 +68,85 @@ theorem explicitConj1_apply_eq_smul (N : Subgroup G) [N.Normal] (g : G) (x : H1 
 /-- The representative formula for `explicitConj1`. -/
 @[simp]
 theorem explicitConj1_mk (N : Subgroup G) [N.Normal] (g : G) (c : Z1 N M) :
-    g • (c : H1 N M) =
+    explicitConj1 N g (c : H1 N M) =
       (cocyclesMap1 N M N M (inverseConjugationHom N g)
         (DistribSMul.toAddMonoidHom M g) ((continuous_const_smul g).congr fun _ => rfl)
         (inverseConjugationHom_smul N g) c : H1 N M) :=
   explicitMap1_mk N M N M _ _ _ _ c
 
 /-- The degree-one component of the bar homotopy for inverse conjugation. -/
-def inverseConjugationHomotopy1 (N : Subgroup G) (g : N) (c : N → M) : M :=
+def inverseConjugationHomotopy1 {K : Type uK} [Group K] {A : Type uA} [AddCommGroup A]
+    (g : K) (c : K → A) : A :=
   c g
 
 /-- The degree-two component of the bar homotopy for inverse conjugation. -/
-def inverseConjugationHomotopy2 (N : Subgroup G) (g : N) (c : N × N → M) : N → M :=
-  fun n => c (g, (g : N)⁻¹ * n * g) - c (n, g)
+def inverseConjugationHomotopy2 {K : Type uK} [Group K] {A : Type uA} [AddCommGroup A]
+    (g : K) (c : K × K → A) : K → A :=
+  fun n => c (g, g⁻¹ * n * g) - c (n, g)
 
-omit [TopologicalSpace M] [IsTopologicalAddGroup M] [ContinuousSMul G M] in
-/-- The compatible-pair bar homotopy in degree one. -/
-theorem inverseConjugationCochainHomotopy1 (N : Subgroup G) [N.Normal] (g : N) (c : N → M) :
-    cochainsMap1 (inverseConjugationHom N (g : G) : N →* N)
-        (DistribSMul.toAddMonoidHom M (g : G)) c - c =
-      d0 N M (inverseConjugationHomotopy1 N g c) +
-        inverseConjugationHomotopy2 N g (d1 N M c) := by
+/-! The following identity is algebraic; the topological subgroup specialization is stated below. -/
+theorem inverseConjugationCochainHomotopy1 {K : Type uK} [Group K]
+    {A : Type uA} [AddCommGroup A] [DistribMulAction K A] (g : K) (c : K → A) :
+    cochainsMap1 (MulAut.conj g⁻¹ : K →* K) (DistribSMul.toAddMonoidHom A g) c - c =
+      d0 K A (inverseConjugationHomotopy1 g c) +
+        inverseConjugationHomotopy2 g (d1 K A c) := by
   ext n
   simp only [Pi.sub_apply, Pi.add_apply, cochainsMap1_apply, d0_apply, d1_apply,
     inverseConjugationHomotopy1, inverseConjugationHomotopy2,
     DistribSMul.toAddMonoidHom_apply]
-  change (g : G) • c (inverseConjugationHom N (g : G) n) - c n = _
-  have hgn : inverseConjugationHom N (g : G) n =
-      ((g : N)⁻¹ * n * g : N) := by
-    apply Subtype.ext
-    simp
-  rw [hgn]
-  have hmul : (g : N) * ((g : N)⁻¹ * n * g) = n * g := by
+  -- The bundled additive hom and the scalar action have the same underlying function here.
+  change g • c ((MulAut.conj g⁻¹ : MulAut K) n) - c n = _
+  simp only [MulAut.conj_apply, inv_inv]
+  have hmul : g * (g⁻¹ * n * g) = n * g := by
     simp [mul_assoc]
   rw [hmul]
   simp only [sub_eq_add_neg]
   abel_nf
-  simp only [Int.reduceNeg, neg_smul, one_smul]
-  exact add_comm _ _
+
+/-- The degree-two component of the bar homotopy for an algebraic inverse conjugation. -/
+theorem inverseConjugationCochainHomotopy2 {K : Type uK} [Group K]
+    {A : Type uA} [AddCommGroup A] [DistribMulAction K A] (g : K) (c : K × K → A)
+    (hc : groupCohomology.IsCocycle₂ c) :
+    cochainsMap2 (MulAut.conj g⁻¹ : K →* K) (DistribSMul.toAddMonoidHom A g) c - c =
+      d1 K A (inverseConjugationHomotopy2 g c) := by
+  apply funext
+  rintro ⟨n, k⟩
+  simp only [Pi.sub_apply, cochainsMap2_apply, d1_apply, inverseConjugationHomotopy2,
+    DistribSMul.toAddMonoidHom_apply]
+  -- The cochain map is bundled, so expose its underlying conjugation before using `hc`.
+  change g • c ((MulAut.conj g⁻¹ : MulAut K) n, (MulAut.conj g⁻¹ : MulAut K) k) - c (n, k) = _
+  simp only [MulAut.conj_apply, inv_inv]
+  have hmul : g * (g⁻¹ * n * g) = n * g := by
+    simp [mul_assoc]
+  have hmul' : g * (g⁻¹ * k * g) = k * g := by
+    simp [mul_assoc]
+  have hconjmul : (g⁻¹ * n * g) * (g⁻¹ * k * g) = g⁻¹ * (n * k) * g := by
+    simp [mul_assoc]
+  have h₁ := hc g (g⁻¹ * n * g) (g⁻¹ * k * g)
+  have h₂ := hc n g (g⁻¹ * k * g)
+  have h₃ := hc n k g
+  simp only [hmul, hmul', hconjmul] at h₁ h₂ h₃
+  have h₁' : g • c (g⁻¹ * n * g, g⁻¹ * k * g) =
+      c (n * g, g⁻¹ * k * g) + c (g, g⁻¹ * n * g) - c (g, g⁻¹ * (n * k) * g) := by
+    apply (eq_sub_iff_add_eq).2
+    simpa [add_comm] using h₁.symm
+  have h₂' : n • c (g, g⁻¹ * k * g) =
+      c (n * g, g⁻¹ * k * g) + c (n, g) - c (n, k * g) := by
+    apply (eq_sub_iff_add_eq).2
+    simpa [add_comm] using h₂.symm
+  have h₃' : n • c (k, g) =
+      c (n * k, g) + c (n, k) - c (n, k * g) := by
+    apply (eq_sub_iff_add_eq).2
+    simpa [add_comm] using h₃.symm
+  rw [h₁']
+  simp only [smul_add, smul_neg, sub_eq_add_neg]
+  rw [h₂', h₃']
+  simp only [sub_eq_add_neg, add_assoc]
+  abel
 
 /-- The degree-one bar-homotopy identity for inverse conjugation on continuous cocycles. -/
 theorem inverseConjugationHomotopy1_spec (N : Subgroup G) [N.Normal] (g : N) (c : Z1 N M) :
-    d0 N M (inverseConjugationHomotopy1 N g c) =
+    d0 N M (inverseConjugationHomotopy1 g c) =
       (cocyclesMap1 N M N M (inverseConjugationHom N (g : G))
         (DistribSMul.toAddMonoidHom M (g : G))
         ((continuous_const_smul (g : G)).congr fun _ => by
@@ -142,9 +157,17 @@ theorem inverseConjugationHomotopy1_spec (N : Subgroup G) [N.Normal] (g : N) (c 
     intro p
     obtain ⟨n, k⟩ := p
     exact congrFun (d1_apply_eq_zero_iff.2 ((mem_Z1_iff.1 c.property).2)) (n, k)
-  have h := inverseConjugationCochainHomotopy1 N g (c : N → M)
+  have hconj :
+      (inverseConjugationHom N (g : G) : N →* N) =
+        (MulAut.conj (g⁻¹) : MulAut N) := by
+    ext n
+    simp [inverseConjugationHom_apply]
+  have h := inverseConjugationCochainHomotopy1 (K := N) (A := M) g (c : N → M)
+  rw [← hconj] at h
+  change cochainsMap1 (inverseConjugationHom N (g : G) : N →* N)
+      (DistribSMul.toAddMonoidHom M (g : G)) (c : N → M) - c = _ at h
   rw [hc] at h
-  have hz : inverseConjugationHomotopy2 N g (0 : N × N → M) = 0 := by
+  have hz : inverseConjugationHomotopy2 g (0 : N × N → M) = 0 := by
     funext n
     simp [inverseConjugationHomotopy2]
   rw [hz, add_zero] at h
@@ -160,57 +183,18 @@ omit [ContinuousSMul G M] in
 theorem inverseConjugationHomotopy2_spec (N : Subgroup G) [N.Normal] (g : N) (c : Z2 N M) :
     cochainsMap2 (inverseConjugationHom N (g : G) : N →* N)
         (DistribSMul.toAddMonoidHom M (g : G)) c - c =
-      d1 N M (inverseConjugationHomotopy2 N g c) := by
-  apply funext
-  rintro ⟨n, k⟩
-  simp only [Pi.sub_apply, cochainsMap2_apply, d1_apply, inverseConjugationHomotopy2,
-    DistribSMul.toAddMonoidHom_apply]
-  change (g : G) • (c : N × N → M)
-      (inverseConjugationHom N (g : G) n, inverseConjugationHom N (g : G) k) -
-        (c : N × N → M) (n, k) = _
-  have hgn : inverseConjugationHom N (g : G) n =
-      ((g : N)⁻¹ * n * g : N) := by
-    apply Subtype.ext
-    simp
-  have hgk : inverseConjugationHom N (g : G) k =
-      ((g : N)⁻¹ * k * g : N) := by
-    apply Subtype.ext
-    simp
-  rw [hgn, hgk]
-  have hmul : (g : N) * ((g : N)⁻¹ * n * g) = n * g := by
-    simp [mul_assoc]
-  have hmul' : (g : N) * ((g : N)⁻¹ * k * g) = k * g := by
-    simp [mul_assoc]
-  have hconjmul : ((g : N)⁻¹ * n * g) * ((g : N)⁻¹ * k * g) =
-      (g : N)⁻¹ * (n * k) * g := by
-    simp [mul_assoc]
-  have h₁ := (mem_Z2_iff.1 c.property).2 g ((g : N)⁻¹ * n * g) ((g : N)⁻¹ * k * g)
-  have h₂ := (mem_Z2_iff.1 c.property).2 n g ((g : N)⁻¹ * k * g)
-  have h₃ := (mem_Z2_iff.1 c.property).2 n k g
-  simp only [hmul, hmul', hconjmul] at h₁ h₂ h₃
-  simp only [Subgroup.smul_def] at h₁ h₂ h₃ ⊢
-  have h₁' : (g : G) • (c : N × N → M)
-        ((g : N)⁻¹ * n * g, (g : N)⁻¹ * k * g) =
-      (c : N × N → M) (n * g, (g : N)⁻¹ * k * g) +
-        (c : N × N → M) (g, (g : N)⁻¹ * n * g) -
-        (c : N × N → M) (g, (g : N)⁻¹ * (n * k) * g) := by
-    apply (eq_sub_iff_add_eq).2
-    simpa [add_comm] using h₁.symm
-  have h₂' : (n : G) • (c : N × N → M) (g, (g : N)⁻¹ * k * g) =
-      (c : N × N → M) (n * g, (g : N)⁻¹ * k * g) + (c : N × N → M) (n, g) -
-        (c : N × N → M) (n, k * g) := by
-    apply (eq_sub_iff_add_eq).2
-    simpa [add_comm] using h₂.symm
-  have h₃' : (n : G) • (c : N × N → M) (k, g) =
-      (c : N × N → M) (n * k, g) + (c : N × N → M) (n, k) -
-        (c : N × N → M) (n, k * g) := by
-    apply (eq_sub_iff_add_eq).2
-    simpa [add_comm] using h₃.symm
-  rw [h₁']
-  simp only [smul_add, smul_neg, sub_eq_add_neg]
-  rw [h₂', h₃']
-  simp only [sub_eq_add_neg, add_assoc]
-  abel
+      d1 N M (inverseConjugationHomotopy2 g c) := by
+  have hconj :
+      (inverseConjugationHom N (g : G) : N →* N) =
+        (MulAut.conj (g⁻¹) : MulAut N) := by
+    ext n
+    simp [inverseConjugationHom_apply]
+  have h := inverseConjugationCochainHomotopy2 (K := N) (A := M) g (c : N × N → M)
+      (mem_Z2_iff.1 c.property).2
+  rw [← hconj] at h
+  change cochainsMap2 (inverseConjugationHom N (g : G) : N →* N)
+      (DistribSMul.toAddMonoidHom M (g : G)) (c : N × N → M) - c = _ at h
+  exact h
 
 omit [IsTopologicalGroup G] in
 private theorem explicitMap1_congr_of_eq (N : Subgroup G)
@@ -235,9 +219,8 @@ private theorem explicitMap1_congr_of_eq (N : Subgroup G)
 theorem explicitConj1_one (N : Subgroup G) [N.Normal] :
     explicitConj1 (M := M) N 1 = AddMonoidHom.id _ := by
   unfold explicitConj1
-  have hφ : inverseConjugationHom N 1 = ContinuousMonoidHom.id N := by
-    ext n
-    simp [inverseConjugationHom_apply]
+  have hφ : inverseConjugationHom N 1 = ContinuousMonoidHom.id N :=
+    inverseConjugationHom_one N
   have hf : DistribSMul.toAddMonoidHom.{uG, uM} M (1 : G) = AddMonoidHom.id M := by
     ext m
     simp
@@ -251,14 +234,14 @@ theorem explicitConj1_one (N : Subgroup G) [N.Normal] :
   exact hmap.trans (explicitMap1_id N M (fun _ _ => rfl))
 
 /-- Successive conjugations compose in the order dictated by the left `G`-action. -/
+@[simp]
 theorem explicitConj1_mul (N : Subgroup G) [N.Normal] (g h : G) :
     explicitConj1 (M := M) N (g * h) =
       (explicitConj1 (M := M) N g).comp (explicitConj1 (M := M) N h) := by
   unfold explicitConj1
   have hφ : inverseConjugationHom N (g * h) =
-      (inverseConjugationHom N h).comp (inverseConjugationHom N g) := by
-    ext n
-    simp [inverseConjugationHom_apply, mul_assoc]
+      (inverseConjugationHom N h).comp (inverseConjugationHom N g) :=
+    inverseConjugationHom_mul N g h
   have hf : DistribSMul.toAddMonoidHom M (g * h) =
       (DistribSMul.toAddMonoidHom M g).comp (DistribSMul.toAddMonoidHom M h) := by
     ext m
@@ -312,7 +295,7 @@ theorem explicitConj1_eq_id_of_mem (N : Subgroup G) [N.Normal] (g : N) :
   intro x
   induction x using QuotientAddGroup.induction_on with
   | _ c =>
-      rw [explicitConj1_apply_eq_smul, explicitConj1_mk, AddMonoidHom.id_apply, H1pi_eq_iff]
+      rw [explicitConj1_mk, AddMonoidHom.id_apply, H1pi_eq_iff]
       refine mem_B1_iff.2 ⟨(c : N → M) g, ?_⟩
       intro n
       simpa [d0_apply, inverseConjugationHomotopy1] using
