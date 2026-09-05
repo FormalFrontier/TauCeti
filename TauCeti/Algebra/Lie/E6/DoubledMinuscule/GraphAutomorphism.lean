@@ -92,7 +92,7 @@ theorem graphRootPerm_graphRootPerm (k : Fin 6 ⊕ Fin 6) :
 
 /-- The parity height used to orient the doubled minuscule weight graph. Its four coordinates are
 invariant as a set under the type-`E₆` diagram involution, and every simple root has odd height. -/
-def basisHeight (a : Fin 27 ⊕ Fin 27) : ℤ :=
+private def basisHeight (a : Fin 27 ⊕ Fin 27) : ℤ :=
   e6DoubledMinusculeWeight a 1 + e6DoubledMinusculeWeight a 2 +
     e6DoubledMinusculeWeight a 3 + e6DoubledMinusculeWeight a 4
 
@@ -435,6 +435,7 @@ theorem graphModuleEquiv_matrixBasis (i : Fin 54) :
 
 /-- The coordinate permutation of the signed graph symmetry relabels the matrix weights by the
 type-`E₆` diagram involution. -/
+@[simp]
 theorem matrixWeight_graphMatrixPerm (i : Fin 54) (k : Fin 6) :
     matrixWeight (graphMatrixPerm i) (graphPermE6 k) = matrixWeight i k := by
   rw [matrixWeight_apply, matrixWeight_apply]

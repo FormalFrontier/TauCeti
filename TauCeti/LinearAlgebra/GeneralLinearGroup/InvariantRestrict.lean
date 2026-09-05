@@ -32,24 +32,6 @@ public section
 
 open CategoryTheory TensorProduct
 
-namespace LinearEquiv
-
-universe u v
-
-variable {R : Type u} [Semiring R]
-variable {V : Type v} [AddCommGroup V] [Module R V]
-
-/-- Viewing a linear automorphism successively as an additive automorphism and an integral linear
-automorphism preserves the action of all its powers. -/
-theorem toAddEquiv_toIntLinearEquiv_pow_apply (θ : V ≃ₗ[R] V) (n : ℕ) (v : V) :
-    (θ.toAddEquiv.toIntLinearEquiv ^ n) v = (θ ^ n) v := by
-  rw [LinearEquiv.pow_apply θ.toAddEquiv.toIntLinearEquiv n v, LinearEquiv.pow_apply θ n v]
-  -- both sides now iterate coercions of the same underlying function
-  simp only [AddEquiv.coe_toIntLinearEquiv]
-  rfl
-
-end LinearEquiv
-
 namespace AddEquiv
 
 universe u v w
