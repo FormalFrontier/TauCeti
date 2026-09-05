@@ -111,30 +111,6 @@ private theorem rootIntMatrix_inr_of_ne_last (i : Fin (n + 1)) (hi : i ≠ Fin.l
     Int.cast_sub, Int.cast_ite, Int.cast_one, Int.cast_zero,
     Equiv.eq_symm_apply, Equiv.symm_apply_eq] using h)
 
-private theorem one_add_smul_single (a b : Fin ((n + 1) + (n + 1))) (c : A) :
-    (1 : Matrix _ _ A) + c • Matrix.single a b 1 = Matrix.transvection a b c := by
-  rw [Matrix.smul_single, smul_eq_mul, mul_one, Matrix.transvection]
-
-private theorem one_add_smul_single_sub_single
-    (a b d e : Fin ((n + 1) + (n + 1))) (hbd : b ≠ d) (c : A) :
-    (1 : Matrix _ _ A) + c • (Matrix.single a b 1 - Matrix.single d e 1) =
-      Matrix.transvection a b c * Matrix.transvection d e (-c) := by
-  simp only [smul_sub, Matrix.smul_single, smul_eq_mul, mul_one, Matrix.transvection,
-    Matrix.mul_add, Matrix.add_mul, Matrix.one_mul]
-  rw [Matrix.single_mul_single_of_ne _ _ _ _ hbd, add_zero, ← Matrix.single_neg]
-  abel
-
-private theorem map_single_intCast (a b : Fin ((n + 1) + (n + 1))) :
-    (Matrix.single a b (1 : ℤ)).map (Int.cast : ℤ → A) = Matrix.single a b 1 := by
-  ext r s
-  simp [Matrix.map_apply, Matrix.single_apply]
-
-private theorem map_single_sub_single_intCast (a b d e : Fin ((n + 1) + (n + 1))) :
-    (Matrix.single a b (1 : ℤ) - Matrix.single d e 1).map (Int.cast : ℤ → A) =
-      Matrix.single a b 1 - Matrix.single d e 1 := by
-  ext r s
-  simp [Matrix.map_apply, Matrix.single_apply]
-
 private theorem val_rootSubgroupPoints_eq_one_add_smul
     (k : Fin (n + 1) ⊕ Fin (n + 1)) (c : A) :
     ((rootSubgroupPoints n k A (Multiplicative.ofAdd c) : points n A) :
@@ -162,7 +138,7 @@ theorem coe_rootSubgroupPoints_inl_last (c : A) :
   rw [val_rootSubgroupPoints_eq_one_add_smul, rootIntMatrix_inl_last,
     GLSymplecticFin.coe_positiveLongRootTransvectionUnit, TauCeti.coe_transvectionUnit,
     map_single_intCast]
-  exact congrFun (congrFun (one_add_smul_single n
+  exact congrFun (congrFun (one_add_smul_single_eq_transvection
     (finSumFinEquiv (Sum.inl (Fin.last n)))
     (finSumFinEquiv (Sum.inr (Fin.last n))) c) r) s
 
@@ -177,7 +153,7 @@ theorem coe_rootSubgroupPoints_inr_last (c : A) :
   rw [val_rootSubgroupPoints_eq_one_add_smul, rootIntMatrix_inr_last,
     GLSymplecticFin.coe_negativeLongRootTransvectionUnit, TauCeti.coe_transvectionUnit,
     map_single_intCast]
-  exact congrFun (congrFun (one_add_smul_single n
+  exact congrFun (congrFun (one_add_smul_single_eq_transvection
     (finSumFinEquiv (Sum.inr (Fin.last n)))
     (finSumFinEquiv (Sum.inl (Fin.last n))) c) r) s
 
@@ -195,7 +171,7 @@ theorem coe_rootSubgroupPoints_inl_of_ne_last (i : Fin (n + 1)) (hi : i ≠ Fin.
     TauCeti.coe_transvectionUnit, TauCeti.coe_transvectionUnit,
     map_single_sub_single_intCast]
   exact congrFun (congrFun
-    (one_add_smul_single_sub_single n
+    (one_add_smul_single_sub_single_eq_mul_transvection
       (finSumFinEquiv (Sum.inl i))
       (finSumFinEquiv (Sum.inl (next n i hi)))
       (finSumFinEquiv (Sum.inr (next n i hi)))
@@ -216,7 +192,7 @@ theorem coe_rootSubgroupPoints_inr_of_ne_last (i : Fin (n + 1)) (hi : i ≠ Fin.
     TauCeti.coe_transvectionUnit, TauCeti.coe_transvectionUnit,
     map_single_sub_single_intCast]
   exact congrFun (congrFun
-    (one_add_smul_single_sub_single n
+    (one_add_smul_single_sub_single_eq_mul_transvection
       (finSumFinEquiv (Sum.inl (next n i hi)))
       (finSumFinEquiv (Sum.inl i))
       (finSumFinEquiv (Sum.inr i))
