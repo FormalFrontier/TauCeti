@@ -12,13 +12,13 @@ public import Mathlib.GroupTheory.Perm.Cycle.Type
 /-!
 # Recognizing cycles and transpositions in a permutation group
 
-This file supplies recognition steps for
-`TauCetiRoadmap/PolynomialGaloisGroups/README.md`. A transitive subgroup of a finite symmetric
-group whose degree is prime contains a full cycle: the proof combines orbit--stabilizer with
-Cauchy's theorem and the permutation-group criterion that an element of prime order in prime
-degree is a cycle. A permutation with exactly one 2-cycle and only odd-length remaining cycles
-has an explicit odd power that is a transposition: the product of the odd lengths kills every
-remaining cycle while preserving the 2-cycle.
+This file supplies permutation-group recognition steps used to recognize full symmetric groups
+from cycle data. A transitive subgroup of a finite symmetric group whose degree is prime contains
+a full cycle: the proof combines orbit--stabilizer with Cauchy's theorem and the permutation-group
+criterion that an element of prime order in prime degree is a cycle. A permutation with exactly
+one 2-cycle and only odd-length remaining cycles has an explicit odd power that is a
+transposition: the product of the odd lengths kills every remaining cycle while preserving the
+2-cycle.
 
 ## Main results
 
