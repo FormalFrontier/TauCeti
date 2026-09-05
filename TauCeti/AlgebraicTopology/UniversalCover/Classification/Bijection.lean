@@ -9,6 +9,7 @@ public import TauCeti.AlgebraicTopology.UniversalCover.Classification.Existence
 public import TauCeti.AlgebraicTopology.UniversalCover.Classification.RecoveredSubgroup
 public import TauCeti.AlgebraicTopology.UniversalCover.Classification.Regular
 public import TauCeti.AlgebraicTopology.UniversalCover.Classification.Unpointed
+import TauCeti.Topology.IsLocalHomeomorph
 
 /-!
 # Subgroups parametrise the pointed connected covers bijectively
@@ -73,17 +74,18 @@ variable {X : Type*} [TopologicalSpace X] [PathConnectedSpace X] [LocallyPathCon
   [SemilocallySimplyConnectedSpace X] (x₀ : X)
 
 /-- **A pointed connected cover is the quotient of the universal cover by the subgroup it
-recovers.** If a covering map `p` with path-connected, locally path-connected total space and a
-lift `e₀` of `x₀` recover `H ≤ π₁(X, x₀)`, then `E` is homeomorphic to `UniversalCover x₀ / H`
-over `X`, by a homeomorphism carrying `e₀` to the distinguished point.
+recovers.** If a covering map `p` with path-connected total space and a lift `e₀` of `x₀` recover
+`H ≤ π₁(X, x₀)`, then `E` is homeomorphic to `UniversalCover x₀ / H` over `X`, by a
+homeomorphism carrying `e₀` to the distinguished point.
 
 This is the surjectivity of the subgroup parametrisation. -/
 theorem exists_homeomorph_subgroupQuotient_of_range_eq {E : Type*} [TopologicalSpace E]
-    [PathConnectedSpace E] [LocallyPathConnectedSpace E] {p : E → X} (hp : IsCoveringMap p)
+    [PathConnectedSpace E] {p : E → X} (hp : IsCoveringMap p)
     {e₀ : E} (hpe : p e₀ = x₀) (H : Subgroup (FundamentalGroup X x₀))
     (hH : (mapOfEq ⟨p, hp.continuous⟩ hpe).range = H) :
     ∃ h : E ≃ₜ SubgroupQuotient x₀ H, h e₀ = SubgroupQuotient.basepoint x₀ H ∧
       subgroupQuotientProj x₀ H ∘ h = p := by
+  have := hp.isLocalHomeomorph.locallyPathConnectedSpace
   have := locallyPathConnectedSpace_subgroupQuotient x₀ H
   exact TauCeti.IsCoveringMap.exists_homeomorph_comp_eq_of_range_eq hp
     (isCoveringMap_subgroupQuotientProj x₀ H) hpe (subgroupQuotientProj_basepoint x₀ H)
@@ -93,10 +95,11 @@ theorem exists_homeomorph_subgroupQuotient_of_range_eq {E : Type*} [TopologicalS
 `π₁(X, x₀)`.** The subgroups of `π₁(X, x₀)` therefore parametrise the pointed connected covers
 of `(X, x₀)` bijectively, up to isomorphism over `X` respecting the chosen lifts. -/
 theorem existsUnique_subgroup_homeomorph_subgroupQuotient {E : Type*} [TopologicalSpace E]
-    [PathConnectedSpace E] [LocallyPathConnectedSpace E] {p : E → X} (hp : IsCoveringMap p)
+    [PathConnectedSpace E] {p : E → X} (hp : IsCoveringMap p)
     {e₀ : E} (hpe : p e₀ = x₀) :
     ∃! H : Subgroup (FundamentalGroup X x₀), ∃ h : E ≃ₜ SubgroupQuotient x₀ H,
       h e₀ = SubgroupQuotient.basepoint x₀ H ∧ subgroupQuotientProj x₀ H ∘ h = p := by
+  have := hp.isLocalHomeomorph.locallyPathConnectedSpace
   refine ⟨(mapOfEq ⟨p, hp.continuous⟩ hpe).range,
     exists_homeomorph_subgroupQuotient_of_range_eq x₀ hp hpe _ rfl, fun H hH => ?_⟩
   have := locallyPathConnectedSpace_subgroupQuotient x₀ H
@@ -135,6 +138,7 @@ theorem exists_homeomorph_subgroupQuotient_comp_eq_iff_exists_eq_map_conj
   simp only [range_mapOfEq_subgroupQuotientProj]
 
 /-- **The cover attached to `H` is a regular cover exactly when `H` is normal.** -/
+@[simp]
 theorem isRegular_subgroupQuotientProj_iff_normal (H : Subgroup (FundamentalGroup X x₀)) :
     Deck.IsRegular (subgroupQuotientProj x₀ H) ↔ H.Normal := by
   have := locallyPathConnectedSpace_subgroupQuotient x₀ H
