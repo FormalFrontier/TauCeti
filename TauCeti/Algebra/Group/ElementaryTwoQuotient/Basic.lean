@@ -188,13 +188,6 @@ theorem elementaryTwoQuotientMk_eq_iff (g h : G) :
 
 variable {H : Type*} [CommGroup H]
 
-/-- A monoid homomorphism of commutative groups carries squares to squares, so the subgroup of
-squares of the source lands inside the preimage of the subgroup of squares of the target. This is
-the side condition needed to descend `f` to a map of the quotients by squares. -/
-theorem _root_.Subgroup.square_le_comap (f : G →* H) :
-    Subgroup.square G ≤ (Subgroup.square H).comap f :=
-  fun _ hg => hg.map f
-
 /-- A homomorphism of commutative groups induces a `ZMod 2`-linear map on maximal elementary-2
 quotients. -/
 noncomputable def elementaryTwoQuotientMap (f : G →* H) :
