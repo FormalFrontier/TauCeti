@@ -51,10 +51,6 @@ attribute [local instance high] Algebra.toModule
 variable (n : ℕ)
 variable {A : Type u} [CommRing A]
 
-private theorem map_intCast_eq_mapMatrix {m : Type*} [Fintype m] [DecidableEq m]
-    (M : Matrix m m ℤ) :
-    M.map (Int.cast : ℤ → A) = (Int.castRingHom A).mapMatrix M := rfl
-
 private theorem rootIntMatrix_eq_of_map_eq
     (k : Fin (n + 1) ⊕ Fin (n + 1))
     {M : Matrix (Fin ((n + 1) + (n + 1))) (Fin ((n + 1) + (n + 1))) ℤ}
@@ -63,8 +59,7 @@ private theorem rootIntMatrix_eq_of_map_eq
         finSumFinEquiv.symm finSumFinEquiv.symm = (Int.castRingHom ℚ).mapMatrix M) :
     rootIntMatrix n k = M := by
   apply Matrix.map_injective (Int.cast_injective : Function.Injective (Int.cast : ℤ → ℚ))
-  exact (map_rootIntMatrix n k).trans
-    (h.trans (map_intCast_eq_mapMatrix (A := ℚ) M).symm)
+  exact (map_rootIntMatrix n k).trans h
 
 private theorem rootIntMatrix_inl_last :
     rootIntMatrix n (.inl (Fin.last n)) =
@@ -114,9 +109,10 @@ private theorem val_rootSubgroupPoints_eq_one_add_smul
     (k : Fin (n + 1) ⊕ Fin (n + 1)) (c : A) :
     ((rootSubgroupPoints n k A (Multiplicative.ofAdd c) : points n A) :
         Matrix.GeneralLinearGroup (Fin ((n + 1) + (n + 1))) A).val =
-      1 + c • (rootIntMatrix n k).map (Int.cast : ℤ → A) := by
+      1 + c • (Int.castRingHom A).mapMatrix (rootIntMatrix n k) := by
+  rw [RingHom.mapMatrix_apply]
   rw [coe_rootSubgroupPoints]
-  simpa only [MulEquiv.apply_symm_apply, toAdd_ofAdd] using
+  simpa only [MulEquiv.apply_symm_apply, toAdd_ofAdd, Int.coe_castRingHom] using
     (kostantRootSubgroupMatrix_eq_one_add_smul
       (rootGenerator n) (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
       (fun _ hu _ hv => rep_kostantForm_mem_lattice n hu hv) k
@@ -135,7 +131,6 @@ theorem coe_rootSubgroupPoints_inl_last (c : A) :
   apply Units.ext
   rw [val_rootSubgroupPoints_eq_one_add_smul, rootIntMatrix_inl_last,
     GLSymplecticFin.coe_positiveLongRootTransvectionUnit, TauCeti.coe_transvectionUnit]
-  rw [map_intCast_eq_mapMatrix]
   rw [RingHom.mapMatrix_apply, Matrix.map_single, map_one, Matrix.smul_single,
     smul_eq_mul, mul_one, Matrix.transvection]
 
@@ -148,7 +143,6 @@ theorem coe_rootSubgroupPoints_inr_last (c : A) :
   apply Units.ext
   rw [val_rootSubgroupPoints_eq_one_add_smul, rootIntMatrix_inr_last,
     GLSymplecticFin.coe_negativeLongRootTransvectionUnit, TauCeti.coe_transvectionUnit]
-  rw [map_intCast_eq_mapMatrix]
   rw [RingHom.mapMatrix_apply, Matrix.map_single, map_one, Matrix.smul_single,
     smul_eq_mul, mul_one, Matrix.transvection]
 
@@ -163,7 +157,6 @@ theorem coe_rootSubgroupPoints_inl_of_ne_last (i : Fin (n + 1)) (hi : i ≠ Fin.
   rw [val_rootSubgroupPoints_eq_one_add_smul, rootIntMatrix_inl_of_ne_last n i hi,
     GLSymplecticFin.coe_differenceShortRootUnit, Units.val_mul,
     TauCeti.coe_transvectionUnit, TauCeti.coe_transvectionUnit]
-  rw [map_intCast_eq_mapMatrix]
   rw [map_sub, RingHom.mapMatrix_apply, RingHom.mapMatrix_apply, Matrix.map_single,
     Matrix.map_single, map_one]
   simp only [smul_sub, Matrix.smul_single, smul_eq_mul, mul_one, Matrix.transvection,
@@ -184,7 +177,6 @@ theorem coe_rootSubgroupPoints_inr_of_ne_last (i : Fin (n + 1)) (hi : i ≠ Fin.
   rw [val_rootSubgroupPoints_eq_one_add_smul, rootIntMatrix_inr_of_ne_last n i hi,
     GLSymplecticFin.coe_differenceShortRootUnit, Units.val_mul,
     TauCeti.coe_transvectionUnit, TauCeti.coe_transvectionUnit]
-  rw [map_intCast_eq_mapMatrix]
   rw [map_sub, RingHom.mapMatrix_apply, RingHom.mapMatrix_apply, Matrix.map_single,
     Matrix.map_single, map_one]
   simp only [smul_sub, Matrix.smul_single, smul_eq_mul, mul_one, Matrix.transvection,

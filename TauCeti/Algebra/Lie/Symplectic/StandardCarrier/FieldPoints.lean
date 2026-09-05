@@ -22,8 +22,6 @@ the standard alternating form, its matrix points are therefore exactly
 
 * `TauCeti.SpStd.points_eq_GLSymplecticFin`: over a field, the carrier points are the full
   symplectic group.
-* `TauCeti.SpStd.mem_points_iff_mem_GLSymplecticFin`: over a field, carrier-point membership is
-  equivalent to membership in the standard symplectic group.
 
 ## References
 
@@ -95,14 +93,7 @@ theorem points_eq_GLSymplecticFin {K : Type u} [Field K] :
     have : (⟨g, hg⟩ : GLSymplecticFin (n + 1) K) ∈ H := by
       rw [hH]
       exact Subgroup.mem_top _
-    rw [Subgroup.mem_comap] at this
-    exact this
-
-/-- Over a field, a general linear matrix is a point of the full-weight type `C_(n+1)` carrier if
-and only if it belongs to the standard symplectic group. -/
-theorem mem_points_iff_mem_GLSymplecticFin {K : Type u} [Field K]
-    (g : Matrix.GeneralLinearGroup (Fin ((n + 1) + (n + 1))) K) :
-    g ∈ points n K ↔ g ∈ GLSymplecticFin (n + 1) K := by
-  rw [points_eq_GLSymplecticFin n]
+    change (GLSymplecticFin (n + 1) K).subtype ⟨g, hg⟩ ∈ points n K at this
+    simpa only [Subgroup.subtype_apply] using this
 
 end TauCeti.SpStd
