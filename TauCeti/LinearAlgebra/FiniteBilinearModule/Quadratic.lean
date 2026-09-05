@@ -425,20 +425,22 @@ theorem neg_toFiniteBilinearModule :
 theorem isNondegenerate_neg : A.neg.IsNondegenerate ↔ A.IsNondegenerate := by
   exact A.toFiniteBilinearModule.isNondegenerate_neg
 
-/-- The orthogonal product of two finite quadratic modules. -/
-@[expose] def prod (B : FiniteQuadraticModule) : FiniteQuadraticModule where
+/-- The orthogonal product of two finite quadratic modules.
+
+Reducible, exactly as `TauCeti.FiniteBilinearModule.prod` is, so that the carrier of an orthogonal
+product reduces to the product of the carriers and a subgroup of that product is a subgroup of the
+orthogonal product without further coercion. -/
+abbrev prod (B : FiniteQuadraticModule) : FiniteQuadraticModule where
   toFiniteBilinearModule := A.toFiniteBilinearModule.prod B.toFiniteBilinearModule
   quadratic := A.quadratic.prod B.quadratic
   polar_eq_pairing' x y := by
     rw [FiniteBilinearModule.prod_pairing, ← A.polar_eq_pairing, ← B.polar_eq_pairing]
     exact QuadraticMap.polar_prod A.quadratic B.quadratic x y
 
-@[simp]
 theorem prod_quadratic (B : FiniteQuadraticModule) (x : A) (y : B) :
     (A.prod B).quadratic (x, y) = A.quadratic x + B.quadratic y := by
   rfl
 
-@[simp]
 theorem prod_pairing (B : FiniteQuadraticModule) (x y : A.carrier × B.carrier) :
     (A.prod B).toFiniteBilinearModule.pairing x y =
       A.toFiniteBilinearModule.pairing x.1 y.1 +
@@ -560,6 +562,11 @@ polar bilinear pairing. -/
 def IsLagrangian (H : AddSubgroup A) : Prop :=
   A.IsIsotropic H ∧ A.toFiniteBilinearModule.IsLagrangian H
 
+/-- The quadratic Lagrangian condition, unfolded to its two defining properties. -/
+theorem isLagrangian_def (H : AddSubgroup A) :
+    A.IsLagrangian H ↔
+      A.IsIsotropic H ∧ A.toFiniteBilinearModule.IsLagrangian H := Iff.rfl
+
 /-- A quadratic isometry transports quadratic Lagrangian subgroups. -/
 @[simp]
 theorem Isometry.isLagrangian_map_iff {B : FiniteQuadraticModule} (f : Isometry A B)
@@ -647,6 +654,12 @@ noncomputable def quotientOfLeQuadraticRadicalMk (K : AddSubgroup A)
     (hK : K.toIntSubmodule ≤ A.quadratic.radical) :
     A →+ A.quotientOfLeQuadraticRadical K hK :=
   K.toIntSubmodule.mkQ.toAddMonoidHom
+
+/-- The quotient map sends an element to its quotient class. -/
+theorem quotientOfLeQuadraticRadicalMk_apply (K : AddSubgroup A)
+    (hK : K.toIntSubmodule ≤ A.quadratic.radical) (x : A) :
+    A.quotientOfLeQuadraticRadicalMk K hK x = Submodule.Quotient.mk x :=
+  Submodule.mkQ_apply K.toIntSubmodule x
 
 /-- The quotient quadratic map is represented by the original quadratic map. -/
 @[simp]
@@ -797,6 +810,16 @@ noncomputable def orthogonalQuotientMk (H : AddSubgroup A) (hH : A.IsIsotropic H
     (A.restrict (A.toFiniteBilinearModule.orthogonalComplement H))
     (A.subgroupInOrthogonalComplement H)
     (A.subgroupInOrthogonalComplement_le_quadraticRadical hH)
+
+/-- The orthogonal-quotient map sends an element of `H^⊥` to its quotient class. -/
+theorem orthogonalQuotientMk_apply (H : AddSubgroup A) (hH : A.IsIsotropic H)
+    (x : A.toFiniteBilinearModule.orthogonalComplement H) :
+    A.orthogonalQuotientMk H hH x = Submodule.Quotient.mk x := by
+  unfold orthogonalQuotientMk
+  exact quotientOfLeQuadraticRadicalMk_apply
+    (A.restrict (A.toFiniteBilinearModule.orthogonalComplement H))
+    (A.subgroupInOrthogonalComplement H)
+    (A.subgroupInOrthogonalComplement_le_quadraticRadical hH) x
 
 /-- The quadratic form on `H^⊥ / H` is represented by the original quadratic form. -/
 @[simp]
