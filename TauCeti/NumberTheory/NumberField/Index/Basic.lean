@@ -31,7 +31,7 @@ invariances under translating the generator by an integer and negating it.
 
 * `TauCeti.NumberField.IntegralPrimitiveElement.finrank_adjoin`: `ℤ[θ]` has full rank in `𝓞 K`.
 * `TauCeti.NumberField.IntegralPrimitiveElement.index_pos`: the index is positive.
-* `TauCeti.NumberField.IntegralPrimitiveElement.index_addInt`: integer translation preserves
+* `TauCeti.NumberField.IntegralPrimitiveElement.index_addIntCast`: integer translation preserves
   the index.
 * `TauCeti.NumberField.IntegralPrimitiveElement.index_neg`: negation preserves the index.
 
@@ -113,7 +113,7 @@ theorem index_pos (θ : IntegralPrimitiveElement K) : 0 < θ.index := by
 
 /-- Translating an integral primitive element by an integer gives another integral primitive
 element. -/
-def addInt (θ : IntegralPrimitiveElement K) (n : ℤ) : IntegralPrimitiveElement K :=
+def addIntCast (θ : IntegralPrimitiveElement K) (n : ℤ) : IntegralPrimitiveElement K :=
   ⟨θ.1 + algebraMap ℤ (𝓞 K) n, by
     have h : Algebra.adjoin ℚ {(θ.1 : K) + (n : K)} =
         Algebra.adjoin ℚ {(θ.1 : K)} := by
@@ -137,15 +137,15 @@ def addInt (θ : IntegralPrimitiveElement K) (n : ℤ) : IntegralPrimitiveElemen
     exact h.trans θ.2⟩
 
 @[simp]
-theorem coe_addInt (θ : IntegralPrimitiveElement K) (n : ℤ) :
-    (θ.addInt n : 𝓞 K) = θ.1 + algebraMap ℤ (𝓞 K) n :=
+theorem coe_addIntCast (θ : IntegralPrimitiveElement K) (n : ℤ) :
+    (θ.addIntCast n : 𝓞 K) = θ.1 + algebraMap ℤ (𝓞 K) n :=
   (rfl)
 
 /-- Integer translation does not change the generated `ℤ`-subalgebra. -/
 @[simp]
-theorem adjoin_addInt (θ : IntegralPrimitiveElement K) (n : ℤ) :
-    (θ.addInt n).adjoin = θ.adjoin := by
-  simp only [adjoin_def, coe_addInt]
+theorem adjoin_addIntCast (θ : IntegralPrimitiveElement K) (n : ℤ) :
+    (θ.addIntCast n).adjoin = θ.adjoin := by
+  simp only [adjoin_def, coe_addIntCast]
   apply le_antisymm
   · rw [Algebra.adjoin_le_iff, Set.singleton_subset_iff]
     exact (Algebra.adjoin ℤ {θ.1}).add_mem
@@ -158,9 +158,9 @@ theorem adjoin_addInt (θ : IntegralPrimitiveElement K) (n : ℤ) :
 
 /-- Translating an integral primitive element by an integer preserves its index. -/
 @[simp]
-theorem index_addInt (θ : IntegralPrimitiveElement K) (n : ℤ) :
-    (θ.addInt n).index = θ.index := by
-  rw [index, index, adjoin_addInt]
+theorem index_addIntCast (θ : IntegralPrimitiveElement K) (n : ℤ) :
+    (θ.addIntCast n).index = θ.index := by
+  rw [index, index, adjoin_addIntCast]
 
 /-- Negating an integral primitive element gives another integral primitive element. -/
 protected def neg (θ : IntegralPrimitiveElement K) : IntegralPrimitiveElement K :=
