@@ -33,8 +33,9 @@ The proofs are adapted from `PrimeNumberTheoremAnd/Wiener.lean` in the Apache-2.
 `AxiomMath/PrimeNumberTheoremAnd` repository, revision
 `2667e414c38e5a5dc9aa1946f16f13001e5cd3ed`. The source declarations are `first_fourier`,
 `second_fourier`, and `limiting_fourier_aux`. The statements here use Mathlib's
-`LSeriesSummable` directly, remove the source project's local `nterm` wrapper, and require only
-Mathlib imports.
+`LSeriesSummable` directly, remove the source project's local `nterm` wrapper, and rely on
+Mathlib's APIs together with the local vertical-line continuity theorem
+`TauCeti.LSeries.continuous_LSeries_vertical`.
 
 ## References
 
@@ -193,9 +194,10 @@ private lemma polePrimitive_at_lowerEndpoint (hx : 0 < x) (t sigma : ℝ) :
       rw [Complex.cpow_add _ _ (ofReal_ne_zero.mpr hx.ne')]
     _ = _ := by rw [ofReal_cpow hx.le]; push_cast; ring
 
-/-- The Fourier integral of the simple pole `1 / (s - 1)` on the line `Re s = sigma` equals a
-one-sided Laplace transform of the Fourier transform. This is the pole term subtracted in the
-Wiener--Ikehara boundary argument. -/
+/-- The one-sided Laplace transform `∫ u in Ici (-log x), exp (-u * (sigma - 1)) * 𝓕 psi (u / 2π)`
+equals `x ^ (sigma - 1)` times the Fourier integral of the simple pole `1 / (s - 1)` on the line
+`Re s = sigma`. This is the pole term subtracted in the Wiener--Ikehara boundary argument, and the
+factor `x ^ (sigma - 1)` is the normalization that makes it match the Dirichlet-series identity. -/
 theorem integral_exp_mul_fourier_eq (hpsi : Integrable psi) (hx : 0 < x) (hsigma : 1 < sigma) :
     ∫ u in Ici (-Real.log x), Real.exp (-u * (sigma - 1)) *
         FourierTransform.fourier psi (u / (2 * π)) =
