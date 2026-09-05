@@ -27,6 +27,8 @@ has degree one the second summand carries the twist `a ↦ (-1) ^ |a| a` on the 
 * `TauCeti.dgTensorDifferential`: the differential of the tensor product.
 * `TauCeti.dgTensorIncludeLeft` and `TauCeti.dgTensorIncludeRight`: the inclusions of the two
   factors, as morphisms of differential graded algebras.
+* `TauCeti.dgTensorLift`: the morphism of differential graded algebras out of the tensor product
+  induced by two morphisms whose images satisfy the Koszul commutation rule.
 
 ## Main results
 
@@ -34,6 +36,8 @@ has degree one the second summand carries the twist `a ↦ (-1) ^ |a| a` on the 
   algebras is a differential graded algebra for the total-degree grading.
 * `TauCeti.dgTensorDifferential_tmul_of_mem`: the sign rule on pure tensors with a homogeneous
   left factor.
+* `TauCeti.dgTensorAlgHom_ext`: morphisms of differential graded algebras out of the tensor product
+  are determined by their restrictions to the two factors.
 
 Only the left factor of a pure tensor has to be homogeneous for the sign rule, and only the left
 factor of a product has to be homogeneous for the Leibniz rule, exactly as in the one-factor
@@ -51,7 +55,7 @@ open scoped DirectSum TensorProduct
 
 namespace TauCeti
 
-universe uR uA uB
+universe uR uA uB uC
 
 variable {R : Type uR} {A : Type uA} {B : Type uB}
   [CommRing R] [Ring A] [Ring B] [Algebra R A] [Algebra R B]
@@ -231,5 +235,55 @@ theorem dgTensorIncludeRight_apply (hA : IsDGAlgebra 𝒜 dA) (hB : IsDGAlgebra 
   -- projection so the graded inclusion's public application lemma applies.
   change gradedTensorIncludeRight 𝒜 ℬ b = _
   exact gradedTensorIncludeRight_apply 𝒜 ℬ b
+
+section Lift
+
+variable {C : Type uC} [Ring C] [Algebra R C] {𝒞 : ℤ → Submodule R C} [GradedAlgebra 𝒞]
+  {dC : C →ₗ[R] C} {hA : IsDGAlgebra 𝒜 dA} {hB : IsDGAlgebra ℬ dB} {hC : IsDGAlgebra 𝒞 dC}
+
+/-- The morphism of differential graded algebras out of a tensor product induced by two morphisms
+of differential graded algebras whose images satisfy the Koszul commutation rule. -/
+noncomputable def dgTensorLift (f : DGAlgHom hA hC) (g : DGAlgHom hB hC)
+    (h : ∀ ⦃i j⦄ (a : 𝒜 i) (b : ℬ j),
+      f a * g b = (-1 : ℤˣ) ^ (j * i) • (g b * f a)) :
+    DGAlgHom (isDGAlgebra_gradedTensorGrading hA hB) hC where
+  toGradedAlgHom := gradedTensorLift 𝒜 ℬ 𝒞 f.toGradedAlgHom g.toGradedAlgHom h
+  map_d' x := by
+    have key : (dC ∘ₗ (gradedTensorLift 𝒜 ℬ 𝒞 f.toGradedAlgHom g.toGradedAlgHom
+          h).toAlgHom.toLinearMap : (𝒜 ᵍ⊗[R] ℬ) →ₗ[R] C) =
+        (gradedTensorLift 𝒜 ℬ 𝒞 f.toGradedAlgHom g.toGradedAlgHom h).toAlgHom.toLinearMap ∘ₗ
+          dgTensorDifferential 𝒜 ℬ dA dB := by
+      refine linearMap_ext_of_tmul 𝒜 ℬ fun p q a ha b _ ↦ ?_
+      have hfa : (f a : C) ∈ 𝒞 p := f.toGradedAlgHom.map_mem ha
+      simp only [LinearMap.comp_apply, AlgHom.toLinearMap_apply, GradedAlgHom.coe_toAlgHom,
+        DGAlgHom.coe_toGradedAlgHom, gradedTensorLift_tmul,
+        dgTensorDifferential_tmul_of_mem' ha, map_add, map_smul]
+      rw [hC.leibniz hfa (g b), f.map_d, g.map_d, negOnePow_smul_eq (R := R)]
+    exact LinearMap.congr_fun key x
+
+/-- The lift of two morphisms of differential graded algebras sends a pure tensor to the product of
+their values. -/
+@[simp]
+theorem dgTensorLift_tmul (f : DGAlgHom hA hC) (g : DGAlgHom hB hC)
+    (h : ∀ ⦃i j⦄ (a : 𝒜 i) (b : ℬ j),
+      f a * g b = (-1 : ℤˣ) ^ (j * i) • (g b * f a)) (a : A) (b : B) :
+    dgTensorLift f g h (a ᵍ⊗ₜ[R] b) = f a * g b :=
+  gradedTensorLift_tmul 𝒜 ℬ 𝒞 f.toGradedAlgHom g.toGradedAlgHom h a b
+
+/-- Two morphisms of differential graded algebras out of a tensor product agree if their
+compositions with the left and right factor inclusions agree. -/
+@[ext]
+theorem dgTensorAlgHom_ext ⦃f g : DGAlgHom (isDGAlgebra_gradedTensorGrading hA hB) hC⦄
+    (ha : f.comp (dgTensorIncludeLeft hA hB) = g.comp (dgTensorIncludeLeft hA hB))
+    (hb : f.comp (dgTensorIncludeRight hA hB) = g.comp (dgTensorIncludeRight hA hB)) :
+    f = g := by
+  refine DGAlgHom.toGradedAlgHom_injective (gradedTensorAlgHom_ext 𝒜 ℬ 𝒞
+    (GradedAlgHom.ext fun x ↦ ?_) (GradedAlgHom.ext fun x ↦ ?_))
+  · simpa only [GradedAlgHom.comp_apply, DGAlgHom.coe_toGradedAlgHom, DGAlgHom.comp_apply,
+      gradedTensorIncludeLeft_apply, dgTensorIncludeLeft_apply] using DFunLike.congr_fun ha x
+  · simpa only [GradedAlgHom.comp_apply, DGAlgHom.coe_toGradedAlgHom, DGAlgHom.comp_apply,
+      gradedTensorIncludeRight_apply, dgTensorIncludeRight_apply] using DFunLike.congr_fun hb x
+
+end Lift
 
 end TauCeti
