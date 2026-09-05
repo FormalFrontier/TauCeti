@@ -9,6 +9,7 @@ public import TauCeti.Algebra.Homology.DG.Algebra.Hom.Basic
 public import TauCeti.RingTheory.GradedAlgebra.TensorProduct
 
 import Mathlib.Tactic.LinearCombination
+import TauCeti.Algebra.Ring.NegOnePow
 
 /-!
 # Tensor products of differential graded algebras
@@ -89,20 +90,16 @@ theorem dgTensorDifferential_tmul_of_mem {p : ℤ} {a : A} (ha : a ∈ 𝒜 p) (
     (InternalGrading.ofDecomposition 𝒜).koszulTwist_apply_of_mem
       (by simpa only [InternalGrading.ofDecomposition_piece] using ha) 1]
   congr 1
-  rw [gradedTensor_smul_tmul, Units.smul_def, ← Int.cast_smul_eq_zsmul R, one_mul]
-
-/-- A sign `(-1) ^ k`, acting through the units of `ℤ`, acts as the image of `(-1) ^ k` in the
-ground ring. -/
-private theorem negOnePow_smul_eq (k : ℤ) {M : Type*} [AddCommGroup M] [Module R M] (x : M) :
-    k.negOnePow • x = (((k.negOnePow : ℤ) : R)) • x := by
-  rw [Units.smul_def, ← Int.cast_smul_eq_zsmul R]
+  rw [gradedTensor_smul_tmul, negOnePow_smul_eq_negOnePowCast_smul (R := R),
+    negOnePowCast_eq_intCast, one_mul]
 
 /-- The sign rule for the differential of a tensor product, with the sign written as a scalar of
 the ground ring. -/
 private theorem dgTensorDifferential_tmul_of_mem' {p : ℤ} {a : A} (ha : a ∈ 𝒜 p) (b : B) :
     dgTensorDifferential 𝒜 ℬ dA dB (a ᵍ⊗ₜ[R] b) =
       dA a ᵍ⊗ₜ[R] b + (((p.negOnePow : ℤ) : R)) • (a ᵍ⊗ₜ[R] dB b : 𝒜 ᵍ⊗[R] ℬ) := by
-  rw [dgTensorDifferential_tmul_of_mem ha, negOnePow_smul_eq (R := R)]
+  rw [dgTensorDifferential_tmul_of_mem ha,
+    negOnePow_smul_eq_negOnePowCast_smul (R := R), negOnePowCast_eq_intCast]
 
 /-- The Leibniz rule of the tensor product, on two pure tensors of homogeneous elements. -/
 private theorem dgTensorDifferential_leibniz_tmul (hA : IsDGAlgebra 𝒜 dA) (hB : IsDGAlgebra ℬ dB)
@@ -113,7 +110,8 @@ private theorem dgTensorDifferential_leibniz_tmul (hA : IsDGAlgebra 𝒜 dA) (hB
         (((p + q).negOnePow : ℤ) : R) •
           ((a ᵍ⊗ₜ[R] b) * dgTensorDifferential 𝒜 ℬ dA dB (a' ᵍ⊗ₜ[R] b')) := by
   rw [GradedTensorProduct.tmul_coe_mul_coe_tmul 𝒜 ℬ a ⟨b, hb⟩ ⟨a', ha'⟩ b',
-    ← Int.negOnePow_def, negOnePow_smul_eq (R := R), map_smul,
+    ← Int.negOnePow_def, negOnePow_smul_eq_negOnePowCast_smul (R := R),
+    negOnePowCast_eq_intCast, map_smul,
     dgTensorDifferential_tmul_of_mem' (SetLike.mul_mem_graded ha ha'),
     hA.leibniz ha a', hB.leibniz hb b']
   rw [dgTensorDifferential_tmul_of_mem' ha, dgTensorDifferential_tmul_of_mem' ha']
@@ -122,8 +120,9 @@ private theorem dgTensorDifferential_leibniz_tmul (hA : IsDGAlgebra 𝒜 dA) (hB
     GradedTensorProduct.tmul_coe_mul_coe_tmul 𝒜 ℬ a ⟨dB b, hB.map_mem hb⟩ ⟨a', ha'⟩ b',
     GradedTensorProduct.tmul_coe_mul_coe_tmul 𝒜 ℬ a ⟨b, hb⟩ ⟨dA a', hA.map_mem ha'⟩ b',
     GradedTensorProduct.tmul_coe_mul_coe_tmul 𝒜 ℬ a ⟨b, hb⟩ ⟨a', ha'⟩ (dB b')]
-  simp only [← Int.negOnePow_def, negOnePow_smul_eq (R := R), gradedTensor_add_tmul,
-    gradedTensor_tmul_add, gradedTensor_smul_tmul, gradedTensor_tmul_smul, smul_add, smul_smul]
+  simp only [← Int.negOnePow_def, negOnePow_smul_eq_negOnePowCast_smul (R := R),
+    negOnePowCast_eq_intCast, gradedTensor_add_tmul, gradedTensor_tmul_add,
+    gradedTensor_smul_tmul, gradedTensor_tmul_smul, smul_add, smul_smul]
   have hq : ((q.negOnePow : ℤ) : R) * ((q.negOnePow : ℤ) : R) = 1 := by
     rw [← Int.cast_mul, ← Units.val_mul, ← Int.negOnePow_add, Int.negOnePow_even _ ⟨q, rfl⟩]
     norm_num
@@ -151,7 +150,7 @@ private theorem dgTensorDifferential_leibniz_tmul_left (hA : IsDGAlgebra 𝒜 dA
         (((p + q).negOnePow : ℤ) : R) •
           (GradedTensorProduct.mulHom 𝒜 ℬ (a ᵍ⊗ₜ[R] b) ∘ₗ
             dgTensorDifferential 𝒜 ℬ dA dB) := by
-    refine linearMap_ext_of_tmul 𝒜 ℬ fun p' q' a' ha' b' _ ↦ ?_
+    refine gradedTensor_linearMap_ext 𝒜 ℬ fun p' q' a' ha' b' _ ↦ ?_
     simp only [LinearMap.comp_apply, LinearMap.add_apply, LinearMap.smul_apply,
       ← GradedTensorProduct.mul_def]
     exact dgTensorDifferential_leibniz_tmul hA hB ha hb ha' b'
@@ -176,7 +175,7 @@ theorem isDGAlgebra_gradedTensorGrading (hA : IsDGAlgebra 𝒜 dA) (hB : IsDGAlg
   sq_zero x := by
     have key : (dgTensorDifferential 𝒜 ℬ dA dB ∘ₗ dgTensorDifferential 𝒜 ℬ dA dB :
         (𝒜 ᵍ⊗[R] ℬ) →ₗ[R] (𝒜 ᵍ⊗[R] ℬ)) = 0 := by
-      refine linearMap_ext_of_tmul 𝒜 ℬ fun p q a ha b hb ↦ ?_
+      refine gradedTensor_linearMap_ext 𝒜 ℬ fun p q a ha b hb ↦ ?_
       rw [LinearMap.comp_apply, dgTensorDifferential_tmul_of_mem' ha, map_add, map_smul,
         dgTensorDifferential_tmul_of_mem' (hA.map_mem ha),
         dgTensorDifferential_tmul_of_mem' ha, hA.sq_zero, hB.sq_zero, Int.negOnePow_succ]
@@ -199,7 +198,7 @@ theorem isDGAlgebra_gradedTensorGrading (hA : IsDGAlgebra 𝒜 dA) (hB : IsDGAlg
     simp only [LinearMap.mem_ker, LinearMap.sub_apply, LinearMap.comp_apply,
       LinearMap.add_apply, LinearMap.smul_apply, LinearMap.flip_apply,
       ← GradedTensorProduct.mul_def, sub_eq_zero] at key
-    rw [key, negOnePow_smul_eq (R := R)]
+    rw [key, negOnePow_smul_eq_negOnePowCast_smul (R := R), negOnePowCast_eq_intCast]
 
 /-- The inclusion `a ↦ a ᵍ⊗ₜ 1` of the left factor, as a morphism of differential graded
 algebras. -/
@@ -253,12 +252,13 @@ noncomputable def dgTensorLift (f : DGAlgHom hA hC) (g : DGAlgHom hB hC)
           h).toAlgHom.toLinearMap : (𝒜 ᵍ⊗[R] ℬ) →ₗ[R] C) =
         (gradedTensorLift 𝒜 ℬ 𝒞 f.toGradedAlgHom g.toGradedAlgHom h).toAlgHom.toLinearMap ∘ₗ
           dgTensorDifferential 𝒜 ℬ dA dB := by
-      refine linearMap_ext_of_tmul 𝒜 ℬ fun p q a ha b _ ↦ ?_
+      refine gradedTensor_linearMap_ext 𝒜 ℬ fun p q a ha b _ ↦ ?_
       have hfa : (f a : C) ∈ 𝒞 p := f.toGradedAlgHom.map_mem ha
       simp only [LinearMap.comp_apply, AlgHom.toLinearMap_apply, GradedAlgHom.coe_toAlgHom,
         DGAlgHom.coe_toGradedAlgHom, gradedTensorLift_tmul,
         dgTensorDifferential_tmul_of_mem' ha, map_add, map_smul]
-      rw [hC.leibniz hfa (g b), f.map_d, g.map_d, negOnePow_smul_eq (R := R)]
+      rw [hC.leibniz hfa (g b), f.map_d, g.map_d,
+        negOnePow_smul_eq_negOnePowCast_smul (R := R), negOnePowCast_eq_intCast]
     exact LinearMap.congr_fun key x
 
 /-- The lift of two morphisms of differential graded algebras sends a pure tensor to the product of

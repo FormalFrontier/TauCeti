@@ -17,6 +17,11 @@ This file provides the cast to a ground ring of Mathlib's unit-valued sign chara
 ## Main definitions
 
 * `TauCeti.negOnePowCast`: the scalar `(-1) ^ e` in a ground ring.
+
+## Main results
+
+* `TauCeti.negOnePow_smul_eq_negOnePowCast_smul`: the unit-valued sign and its ground-ring cast
+  induce the same scalar action on a module.
 -/
 
 public section
@@ -60,6 +65,17 @@ theorem negOnePowCast_even {e : ℤ} (he : Even e) : negOnePowCast R e = 1 := by
 
 theorem negOnePowCast_odd {e : ℤ} (he : Odd e) : negOnePowCast R e = -1 := by
   simp [negOnePowCast, Int.negOnePow_odd _ he]
+
+section
+
+variable {A : Type uA} [AddCommGroup A] [Module R A]
+
+/-- A sign `(-1) ^ e`, acting through the units of `ℤ`, acts as its cast to the ground ring. -/
+theorem negOnePow_smul_eq_negOnePowCast_smul (e : ℤ) (a : A) :
+    e.negOnePow • a = negOnePowCast R e • a := by
+  rw [negOnePowCast, Units.smul_def, ← Int.cast_smul_eq_zsmul R]
+
+end
 
 variable {A : Type uA} [AddCommMonoid A] [Module R A]
 

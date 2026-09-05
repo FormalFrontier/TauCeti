@@ -36,11 +36,11 @@ compatible with: the total-degree grading of the underlying tensor product of gr
 * `TauCeti.instGradedAlgebraGradedTensorGrading`: the graded tensor product of two internally
   `ℤ`-graded algebras is an internally `ℤ`-graded algebra.
 * `TauCeti.gradedTensorGrading_le`: a submodule containing every homogeneous pure tensor of total
-  degree `n` contains the whole degree-`n` piece; `TauCeti.eq_top_of_tmul_mem` and
-  `TauCeti.linearMap_ext_of_tmul` are the corresponding statements for the whole graded tensor
-  product and for maps out of it.  These three are the tools with which a statement about the
-  graded tensor product is reduced to pure tensors of homogeneous elements, which is where the
-  Koszul sign is available.
+  degree `n` contains the whole degree-`n` piece; `TauCeti.gradedTensor_eq_top_of_tmul_mem` and
+  `TauCeti.gradedTensor_linearMap_ext` are the corresponding statements for the whole graded
+  tensor product and for maps out of it.  These three are the tools with which a statement about
+  the graded tensor product is reduced to pure tensors of homogeneous elements, which is where
+  the Koszul sign is available.
 * `TauCeti.gradedTensorAlgHom_ext`: graded algebra maps out of the tensor product are determined by
   their restrictions to the two factors.
 
@@ -98,7 +98,7 @@ theorem gradedTensorGrading_le {n : ℤ} {C : Submodule R (𝒜 ᵍ⊗[R] ℬ)}
   exact iSup_le fun p ↦ Submodule.map₂_le.2 fun a ha b hb ↦ h p a ha b hb
 
 /-- A submodule containing every homogeneous pure tensor is the whole graded tensor product. -/
-theorem eq_top_of_tmul_mem {C : Submodule R (𝒜 ᵍ⊗[R] ℬ)}
+theorem gradedTensor_eq_top_of_tmul_mem {C : Submodule R (𝒜 ᵍ⊗[R] ℬ)}
     (h : ∀ p q : ℤ, ∀ a ∈ 𝒜 p, ∀ b ∈ ℬ q, a ᵍ⊗ₜ[R] b ∈ C) :
     C = ⊤ := by
   refine top_le_iff.1 ?_
@@ -235,13 +235,13 @@ theorem gradedTensor_tmul_zero (a : A) : a ᵍ⊗ₜ[R] (0 : B) = (0 : 𝒜 ᵍ�
 
 /-- Two linear maps out of the graded tensor product agree as soon as they agree on the pure
 tensors of homogeneous elements. -/
-theorem linearMap_ext_of_tmul {M : Type*} [AddCommGroup M] [Module R M]
+theorem gradedTensor_linearMap_ext {M : Type*} [AddCommGroup M] [Module R M]
     {f g : (𝒜 ᵍ⊗[R] ℬ) →ₗ[R] M}
     (h : ∀ p q : ℤ, ∀ a ∈ 𝒜 p, ∀ b ∈ ℬ q, f (a ᵍ⊗ₜ[R] b) = g (a ᵍ⊗ₜ[R] b)) :
     f = g := by
   refine LinearMap.ext fun x ↦ sub_eq_zero.1 ?_
   have hx : x ∈ (⊤ : Submodule R (𝒜 ᵍ⊗[R] ℬ)) := trivial
-  rw [← eq_top_of_tmul_mem 𝒜 ℬ (C := LinearMap.ker (f - g))
+  rw [← gradedTensor_eq_top_of_tmul_mem 𝒜 ℬ (C := LinearMap.ker (f - g))
     fun p q a ha b hb ↦ by simp [h p q a ha b hb]] at hx
   simpa using hx
 
