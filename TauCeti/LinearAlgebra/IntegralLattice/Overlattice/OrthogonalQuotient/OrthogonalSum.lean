@@ -10,7 +10,7 @@ public import TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Naturality
 public import TauCeti.LinearAlgebra.IntegralLattice.Overlattice.OrthogonalQuotient.Bilinear
 
 /-!
-# The comparison `A_M ≅ H⊥ / H` on an orthogonal direct sum
+# The comparison `A_(P ⊕ Q) ≅ (H⊥ / H) ⊥ (K⊥ / K)` for an orthogonal direct sum
 
 Let `L` and `M` be nondegenerate integral lattices in rational spaces `V` and `W`, and let
 `L ≤ P ≤ Lᵛ` and `M ≤ Q ≤ Mᵛ` be integral overlattices with subgroups `H = P / L ≤ A_L` and
@@ -27,19 +27,18 @@ the class of a dual vector `y` of `P ⊕ Q` to the pair of the classes of its tw
 the comparison isometries of `P` and of `Q`. Together with the naturality of that comparison
 under a lattice isometry, proved in
 `TauCeti.LinearAlgebra.IntegralLattice.Overlattice.OrthogonalQuotient.Bilinear`, this is the
-functoriality package the gluing theory asks of `A_M ≅ H⊥ / H`.
+functoriality package the gluing theory asks of the comparison isometry attached to an integral
+overlattice.
 
 The two ingredients are the splitting of an orthogonal quotient of finite bilinear modules along
 a product subgroup, from
 `TauCeti.LinearAlgebra.FiniteBilinearModule.Orthogonal.Prod`, and the componentwise description
 of the intermediate-carrier correspondence, from
-`TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Naturality`.
+`TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Naturality` and
+`TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Dual`.
 
 ## Main declarations
 
-* `TauCeti.IntegralLattice.IntermediateCarrier.mem_dualCarrier_orthogonalSum_iff`: a vector is a
-  dual vector of the assembled overlattice exactly when both components are dual vectors of the
-  factors.
 * `IntermediateCarrier.discriminantBilinearOrthogonalQuotientIsometryOrthogonalSum`: the
   isometry `A_(P ⊕ Q) ≅ (H⊥ / H) ⊥ (K⊥ / K)` obtained from the comparison of `P ⊕ Q` and the
   splitting of the orthogonal quotient.
@@ -65,34 +64,6 @@ variable [L.IsNondegenerate] [M.IsNondegenerate]
 variable {P : L.IntermediateCarrier} {Q : M.IntermediateCarrier}
 
 namespace IntermediateCarrier
-
-omit [L.IsNondegenerate] [M.IsNondegenerate] in
-/-- The assembled carrier `P ⊕ Q` of two integral intermediate carriers is integral. -/
-theorem IsIntegral.orthogonalSum (hP : IsIntegral P) (hQ : IsIntegral Q) :
-    IsIntegral (orthogonalSumIntermediateCarrier L M P Q) :=
-  (isIntegral_orthogonalSumIntermediateCarrier_iff P Q).mpr ⟨hP, hQ⟩
-
-/-- **Dual vectors of an assembled overlattice are componentwise.** -/
-theorem mem_dualCarrier_orthogonalSum_iff (hP : IsIntegral P) (hQ : IsIntegral Q) (x : V × W) :
-    x ∈ (hP.orthogonalSum hQ).toIntegralLattice.dualCarrier ↔
-      x.1 ∈ hP.toIntegralLattice.dualCarrier ∧ x.2 ∈ hQ.toIntegralLattice.dualCarrier := by
-  rw [IsIntegral.toIntegralLattice_dualCarrier, IsIntegral.toIntegralLattice_dualCarrier,
-    IsIntegral.toIntegralLattice_dualCarrier, dual_orthogonalSumIntermediateCarrier,
-    mem_orthogonalSumIntermediateCarrier_iff]
-
-/-- The first component of a dual vector of the assembled overlattice is a dual vector of the
-first overlattice. -/
-theorem fst_mem_dualCarrier_orthogonalSum (hP : IsIntegral P) (hQ : IsIntegral Q)
-    (y : (hP.orthogonalSum hQ).toIntegralLattice.dualCarrier) :
-    (y : V × W).1 ∈ hP.toIntegralLattice.dualCarrier :=
-  ((mem_dualCarrier_orthogonalSum_iff hP hQ (y : V × W)).mp y.2).1
-
-/-- The second component of a dual vector of the assembled overlattice is a dual vector of the
-second overlattice. -/
-theorem snd_mem_dualCarrier_orthogonalSum (hP : IsIntegral P) (hQ : IsIntegral Q)
-    (y : (hP.orthogonalSum hQ).toIntegralLattice.dualCarrier) :
-    (y : V × W).2 ∈ hQ.toIntegralLattice.dualCarrier :=
-  ((mem_dualCarrier_orthogonalSum_iff hP hQ (y : V × W)).mp y.2).2
 
 /-- **The orthogonal-sum isometry of discriminant bilinear modules on a dual class.** The
 discriminant class in `A_(L ⊥ M)` of a dual vector of the assembled overlattice is the pair of the
@@ -170,9 +141,10 @@ noncomputable def discriminantBilinearOrthogonalQuotientIsometryOrthogonalSum
       (A := L.discriminantBilinearModule) (B := M.discriminantBilinearModule)
       (L.discriminantSubgroup P) (M.discriminantSubgroup Q))
 
-/-- **The comparison isometry `A_M ≅ H⊥ / H` is componentwise on an orthogonal direct sum.** The
-isometry attached to the assembled overlattice sends the class of a dual vector to the pair of
-the classes of its two components under the comparison isometries of the two factors. -/
+/-- **The comparison isometry `A_(P ⊕ Q) ≅ (H⊥ / H) ⊥ (K⊥ / K)` is componentwise.** The isometry
+attached to the assembled overlattice sends the class of a dual vector to the pair of the classes
+of its two components under the comparison isometries `A_P ≅ H⊥ / H` of `P` and
+`A_Q ≅ K⊥ / K` of `Q`. -/
 theorem discriminantBilinearOrthogonalQuotientIsometryOrthogonalSum_mk
     (hP : IsIntegral P) (hQ : IsIntegral Q)
     (y : (hP.orthogonalSum hQ).toIntegralLattice.dualCarrier) :

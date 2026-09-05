@@ -18,8 +18,8 @@ against the product subgroup `H × K` is orthogonality of each component against
 (H × K)⊥ = H⊥ × K⊥.
 ```
 
-Isotropy and the Lagrangian condition are componentwise for the same reason, and the orthogonal
-quotient splits:
+The Lagrangian condition is componentwise for the same reason — as is isotropy, proved in
+`TauCeti.LinearAlgebra.FiniteBilinearModule.Basic` — and the orthogonal quotient splits:
 
 ```text
 (H × K)⊥ / (H × K) ≅ (H⊥ / H) ⊥ (K⊥ / K).
@@ -27,7 +27,9 @@ quotient splits:
 
 The same statements hold for finite quadratic modules, whose orthogonal quotient is taken along a
 quadratic-isotropic subgroup; there the quadratic values, not only the pairings, add across the
-two factors.
+two factors. The quadratic splitting is the bilinear one: the underlying bilinear module of a
+quadratic orthogonal quotient is the bilinear orthogonal quotient, so only the preservation of
+quadratic values has to be checked.
 
 These are the componentwise laws that the gluing theory of integral lattices needs: the
 discriminant module of an orthogonal direct sum of lattices is the orthogonal direct sum of the
@@ -37,14 +39,10 @@ sum of the two glued overlattices, so its discriminant module must split the sam
 ## Main declarations
 
 * `TauCeti.FiniteBilinearModule.orthogonalComplement_prod`: `(H × K)⊥ = H⊥ × K⊥`.
-* `TauCeti.FiniteBilinearModule.isIsotropic_prod_iff` and
-  `TauCeti.FiniteBilinearModule.isLagrangian_prod_iff`: isotropy and the Lagrangian condition are
-  componentwise.
+* `TauCeti.FiniteBilinearModule.isLagrangian_prod_iff`: the Lagrangian condition is componentwise.
 * `TauCeti.FiniteBilinearModule.orthogonalQuotientProdIsometry`: the isometry
   `(H × K)⊥ / (H × K) ≅ (H⊥ / H) ⊥ (K⊥ / K)`.
-* `TauCeti.FiniteBilinearModule.Isometry.prod`: the orthogonal direct sum of two isometries.
-* `TauCeti.FiniteQuadraticModule.isIsotropic_prod_iff`,
-  `TauCeti.FiniteQuadraticModule.isLagrangian_prod_iff` and
+* `TauCeti.FiniteQuadraticModule.isLagrangian_prod_iff` and
   `TauCeti.FiniteQuadraticModule.orthogonalQuotientProdIsometry`: the quadratic counterparts.
   An orthogonal direct sum of quadratic isometries is Mathlib's
   `QuadraticMap.IsometryEquiv.prod`.
@@ -59,7 +57,7 @@ public section
 
 namespace TauCeti
 
-universe u v w x
+universe u v
 
 namespace FiniteBilinearModule
 
@@ -110,31 +108,12 @@ private theorem prod_eq_prod_iff {H H' : AddSubgroup A} {K K' : AddSubgroup B} :
   · rintro ⟨rfl, rfl⟩
     rfl
 
-/-- **Isotropy of a product subgroup is componentwise.** -/
-@[simp]
-theorem isIsotropic_prod_iff (H : AddSubgroup A) (K : AddSubgroup B) :
-    (A.prod B).IsIsotropic (H.prod K) ↔ A.IsIsotropic H ∧ B.IsIsotropic K := by
-  rw [(A.prod B).isIsotropic_iff_le_orthogonalComplement,
-    A.isIsotropic_iff_le_orthogonalComplement, B.isIsotropic_iff_le_orthogonalComplement,
-    A.orthogonalComplement_prod B]
-  constructor
-  · intro h
-    refine ⟨fun x hx ↦ ?_, fun y hy ↦ ?_⟩
-    · exact (AddSubgroup.mem_prod.mp (h (show (x, (0 : B.carrier)) ∈ H.prod K from
-        AddSubgroup.mem_prod.mpr ⟨hx, K.zero_mem⟩))).1
-    · exact (AddSubgroup.mem_prod.mp (h (show ((0 : A.carrier), y) ∈ H.prod K from
-        AddSubgroup.mem_prod.mpr ⟨H.zero_mem, hy⟩))).2
-  · rintro ⟨hH, hK⟩ x hx
-    rw [AddSubgroup.mem_prod] at hx ⊢
-    exact ⟨hH hx.1, hK hx.2⟩
-
 /-- **The Lagrangian condition on a product subgroup is componentwise.** -/
 @[simp]
 theorem isLagrangian_prod_iff (H : AddSubgroup A) (K : AddSubgroup B) :
     (A.prod B).IsLagrangian (H.prod K) ↔ A.IsLagrangian H ∧ B.IsLagrangian K := by
   rw [(A.prod B).isLagrangian_def, A.isLagrangian_def, B.isLagrangian_def,
     A.orthogonalComplement_prod B, A.prod_eq_prod_iff B]
-
 
 /-! ## The orthogonal quotient of an orthogonal direct sum -/
 
@@ -158,11 +137,15 @@ def orthogonalComplementProdSnd (H : AddSubgroup A) (K : AddSubgroup B) :
   map_zero' := rfl
   map_add' _ _ := rfl
 
+/-- Taking the first component of a vector of `(H × K)⊥` and then forgetting that it lies in `H⊥`
+is taking the first component in `A ⊥ B`. -/
 @[simp]
 theorem coe_orthogonalComplementProdFst (H : AddSubgroup A) (K : AddSubgroup B)
     (x : (A.prod B).orthogonalComplement (H.prod K)) :
     (orthogonalComplementProdFst H K x : A) = (x : A.carrier × B.carrier).1 := (rfl)
 
+/-- Taking the second component of a vector of `(H × K)⊥` and then forgetting that it lies in `K⊥`
+is taking the second component in `A ⊥ B`. -/
 @[simp]
 theorem coe_orthogonalComplementProdSnd (H : AddSubgroup A) (K : AddSubgroup B)
     (x : (A.prod B).orthogonalComplement (H.prod K)) :
@@ -192,8 +175,8 @@ private theorem orthogonalQuotientProdMap_orthogonalQuotientMk (H : AddSubgroup 
     orthogonalQuotientProdMap H K ((A.prod B).orthogonalQuotientMk (H.prod K) x) =
       (A.orthogonalQuotientMk H (orthogonalComplementProdFst H K x),
         B.orthogonalQuotientMk K (orthogonalComplementProdSnd H K x)) := by
-  rw [(A.prod B).orthogonalQuotientMk_apply]
-  rfl
+  rw [(A.prod B).orthogonalQuotientMk_apply, orthogonalQuotientProdMap]
+  exact Submodule.liftQ_apply _ _ x
 
 private theorem orthogonalQuotientProdMap_bijective (H : AddSubgroup A) (K : AddSubgroup B) :
     Function.Bijective (orthogonalQuotientProdMap H K) := by
@@ -212,7 +195,11 @@ private theorem orthogonalQuotientProdMap_bijective (H : AddSubgroup A) (K : Add
     refine ⟨(A.prod B).orthogonalQuotientMk (H.prod K)
       ⟨((y : A), (z : B)), (A.mem_orthogonalComplement_prod_iff B H K _).mpr ⟨y.2, z.2⟩⟩, ?_⟩
     rw [orthogonalQuotientProdMap_orthogonalQuotientMk]
-    rfl
+    exact Prod.ext
+      (congrArg (A.orthogonalQuotientMk H)
+        (Subtype.ext (coe_orthogonalComplementProdFst H K _)))
+      (congrArg (B.orthogonalQuotientMk K)
+        (Subtype.ext (coe_orthogonalComplementProdSnd H K _)))
 
 /-- **The orthogonal quotient of an orthogonal direct sum splits.** For subgroups `H ≤ A` and
 `K ≤ B`, the orthogonal quotient of `A ⊥ B` by `H × K` is the orthogonal direct sum of the two
@@ -233,6 +220,8 @@ noncomputable def orthogonalQuotientProdIsometry (H : AddSubgroup A) (K : AddSub
     | mk x =>
       induction r using orthogonalQuotient_induction_on with
       | mk y =>
+        -- `AddEquiv.ofBijective` has no `coe` simp lemma, so name the underlying linear map
+        -- explicitly; the two are the same function by definition.
         change ((A.orthogonalQuotient H).prod (B.orthogonalQuotient K)).pairing
             (orthogonalQuotientProdMap H K _) (orthogonalQuotientProdMap H K _) = _
         rw [orthogonalQuotientProdMap_orthogonalQuotientMk,
@@ -251,45 +240,13 @@ theorem orthogonalQuotientProdIsometry_orthogonalQuotientMk (H : AddSubgroup A)
         B.orthogonalQuotientMk K (orthogonalComplementProdSnd H K x)) :=
   orthogonalQuotientProdMap_orthogonalQuotientMk H K x
 
-/-! ## Orthogonal direct sums of isometries -/
-
-/-- **The orthogonal direct sum of two isometries.** -/
-def Isometry.prod {C : FiniteBilinearModule.{w}} {D : FiniteBilinearModule.{x}}
-    (f : Isometry A C) (g : Isometry B D) :
-    Isometry (A.prod B) (C.prod D) where
-  toAddEquiv := f.toAddEquiv.prodCongr g.toAddEquiv
-  map_pairing' x y := by
-    rw [prod_pairing, prod_pairing]
-    exact congrArg₂ (· + ·) (f.map_pairing x.1 y.1) (g.map_pairing x.2 y.2)
-
-@[simp]
-theorem Isometry.prod_apply {C : FiniteBilinearModule.{w}} {D : FiniteBilinearModule.{x}}
-    (f : Isometry A C) (g : Isometry B D) (z : A.carrier × B.carrier) :
-    f.prod g z = (f z.1, g z.2) := (rfl)
-
 end FiniteBilinearModule
 
 namespace FiniteQuadraticModule
 
 variable (A : FiniteQuadraticModule.{u}) (B : FiniteQuadraticModule.{v})
 
-/-! ## Quadratic isotropy of a product subgroup -/
-
-/-- **Quadratic isotropy of a product subgroup is componentwise.** -/
-@[simp]
-theorem isIsotropic_prod_iff (H : AddSubgroup A) (K : AddSubgroup B) :
-    (A.prod B).IsIsotropic (H.prod K) ↔ A.IsIsotropic H ∧ B.IsIsotropic K := by
-  simp only [isIsotropic_def]
-  constructor
-  · intro h
-    refine ⟨fun x hx ↦ ?_, fun y hy ↦ ?_⟩
-    · have hx' := h (x, 0) (AddSubgroup.mem_prod.mpr ⟨hx, K.zero_mem⟩)
-      rwa [A.prod_quadratic B, B.quadratic.map_zero, add_zero] at hx'
-    · have hy' := h (0, y) (AddSubgroup.mem_prod.mpr ⟨H.zero_mem, hy⟩)
-      rwa [A.prod_quadratic B, A.quadratic.map_zero, zero_add] at hy'
-  · rintro ⟨hH, hK⟩ ⟨x, y⟩ hxy
-    rw [AddSubgroup.mem_prod] at hxy
-    rw [A.prod_quadratic B, hH x hxy.1, hK y hxy.2, add_zero]
+/-! ## The quadratic Lagrangian condition on a product subgroup -/
 
 /-- **The quadratic Lagrangian condition on a product subgroup is componentwise.** -/
 @[simp]
@@ -316,62 +273,34 @@ theorem isLagrangian_prod_iff (H : AddSubgroup A) (K : AddSubgroup B) :
 
 variable {A B}
 
-/-- The map splitting the quadratic orthogonal quotient of `A ⊥ B` by a product subgroup into the
-two quadratic orthogonal quotients, as a `ℤ`-linear map. -/
-private noncomputable def orthogonalQuotientProdMap {H : AddSubgroup A} {K : AddSubgroup B}
+/-- The additive equivalence splitting a quadratic orthogonal quotient of `A ⊥ B` along a product
+subgroup. It *is* the bilinear splitting: the underlying bilinear module of a quadratic orthogonal
+quotient is the bilinear orthogonal quotient, and an orthogonal direct sum of quadratic modules
+has the orthogonal direct sum of the polar pairings, so the two source and target modules agree. -/
+private noncomputable def orthogonalQuotientProdAddEquiv {H : AddSubgroup A} {K : AddSubgroup B}
     (hH : A.IsIsotropic H) (hK : B.IsIsotropic K) :
-    (A.prod B).orthogonalQuotient (H.prod K) ((A.isIsotropic_prod_iff B H K).mpr ⟨hH, hK⟩) →ₗ[ℤ]
-      (A.orthogonalQuotient H hH).carrier × (B.orthogonalQuotient K hK).carrier :=
-  Submodule.liftQ ((A.prod B).subgroupInOrthogonalComplement (H.prod K)).toIntSubmodule
-    (((A.orthogonalQuotientMk H hH).comp
-        (FiniteBilinearModule.orthogonalComplementProdFst H K)).prod
-      ((B.orthogonalQuotientMk K hK).comp
-        (FiniteBilinearModule.orthogonalComplementProdSnd H K))).toIntLinearMap
-    (by
-      intro x hx
-      have hx0 : x ∈ (A.prod B).subgroupInOrthogonalComplement (H.prod K) := hx
-      have hx' : (x : A.carrier × B.carrier) ∈ H.prod K :=
-        ((A.prod B).mem_subgroupInOrthogonalComplement_iff (H.prod K) x).mp hx0
-      rw [AddSubgroup.mem_prod] at hx'
-      rw [LinearMap.mem_ker]
-      refine Prod.ext ?_ ?_
-      · exact (A.orthogonalQuotientMk_eq_zero_iff H hH _).mpr hx'.1
-      · exact (B.orthogonalQuotientMk_eq_zero_iff K hK _).mpr hx'.2)
+    (A.prod B).orthogonalQuotient (H.prod K) ((A.isIsotropic_prod_iff B H K).mpr ⟨hH, hK⟩) ≃+
+      (A.orthogonalQuotient H hH).prod (B.orthogonalQuotient K hK) :=
+  (FiniteBilinearModule.orthogonalQuotientProdIsometry (A := A.toFiniteBilinearModule)
+    (B := B.toFiniteBilinearModule) H K).toAddEquiv
 
 @[simp]
-private theorem orthogonalQuotientProdMap_orthogonalQuotientMk {H : AddSubgroup A}
+private theorem orthogonalQuotientProdAddEquiv_orthogonalQuotientMk {H : AddSubgroup A}
     {K : AddSubgroup B} (hH : A.IsIsotropic H) (hK : B.IsIsotropic K)
     (x : (A.prod B).toFiniteBilinearModule.orthogonalComplement (H.prod K)) :
-    orthogonalQuotientProdMap hH hK
+    orthogonalQuotientProdAddEquiv hH hK
         ((A.prod B).orthogonalQuotientMk (H.prod K)
           ((A.isIsotropic_prod_iff B H K).mpr ⟨hH, hK⟩) x) =
       (A.orthogonalQuotientMk H hH (FiniteBilinearModule.orthogonalComplementProdFst H K x),
         B.orthogonalQuotientMk K hK
           (FiniteBilinearModule.orthogonalComplementProdSnd H K x)) := by
-  rw [(A.prod B).orthogonalQuotientMk_apply]
-  rfl
-
-private theorem orthogonalQuotientProdMap_bijective {H : AddSubgroup A} {K : AddSubgroup B}
-    (hH : A.IsIsotropic H) (hK : B.IsIsotropic K) :
-    Function.Bijective (orthogonalQuotientProdMap hH hK) := by
-  constructor
-  · rw [injective_iff_map_eq_zero]
-    intro z hz
-    induction z using orthogonalQuotient_induction_on with
-    | mk x =>
-      rw [orthogonalQuotientProdMap_orthogonalQuotientMk] at hz
-      rw [(A.prod B).orthogonalQuotientMk_eq_zero_iff, AddSubgroup.mem_prod]
-      exact ⟨(A.orthogonalQuotientMk_eq_zero_iff H hH _).mp (congrArg Prod.fst hz),
-        (B.orthogonalQuotientMk_eq_zero_iff K hK _).mp (congrArg Prod.snd hz)⟩
-  · rintro ⟨p, q⟩
-    obtain ⟨y, rfl⟩ := A.orthogonalQuotientMk_surjective H hH p
-    obtain ⟨z, rfl⟩ := B.orthogonalQuotientMk_surjective K hK q
-    refine ⟨(A.prod B).orthogonalQuotientMk (H.prod K)
-      ((A.isIsotropic_prod_iff B H K).mpr ⟨hH, hK⟩)
-      ⟨((y : A), (z : B)),
-        (FiniteBilinearModule.mem_orthogonalComplement_prod_iff _ _ H K _).mpr ⟨y.2, z.2⟩⟩, ?_⟩
-    rw [orthogonalQuotientProdMap_orthogonalQuotientMk]
-    rfl
+  rw [(A.prod B).orthogonalQuotientMk_apply, A.orthogonalQuotientMk_apply,
+    B.orthogonalQuotientMk_apply]
+  have h := FiniteBilinearModule.orthogonalQuotientProdIsometry_orthogonalQuotientMk
+    (A := A.toFiniteBilinearModule) (B := B.toFiniteBilinearModule) H K x
+  rwa [FiniteBilinearModule.orthogonalQuotientMk_apply,
+    FiniteBilinearModule.orthogonalQuotientMk_apply,
+    FiniteBilinearModule.orthogonalQuotientMk_apply] at h
 
 /-- **The quadratic orthogonal quotient of an orthogonal direct sum splits.** For
 quadratic-isotropic subgroups `H ≤ A` and `K ≤ B`, the orthogonal quotient of `A ⊥ B` by the
@@ -381,22 +310,20 @@ quotients:
 ```text
 (H × K)⊥ / (H × K) ≅ (H⊥ / H) ⊥ (K⊥ / K).
 ```
--/
+
+The underlying additive equivalence is `TauCeti.FiniteBilinearModule`'s splitting of the same
+quotient; only the preservation of quadratic values is new. -/
 noncomputable def orthogonalQuotientProdIsometry {H : AddSubgroup A} {K : AddSubgroup B}
     (hH : A.IsIsotropic H) (hK : B.IsIsotropic K) :
     Isometry
       ((A.prod B).orthogonalQuotient (H.prod K) ((A.isIsotropic_prod_iff B H K).mpr ⟨hH, hK⟩))
       ((A.orthogonalQuotient H hH).prod (B.orthogonalQuotient K hK)) where
-  toLinearEquiv := (AddEquiv.ofBijective (orthogonalQuotientProdMap hH hK).toAddMonoidHom
-    (orthogonalQuotientProdMap_bijective hH hK)).toIntLinearEquiv
+  toLinearEquiv := (orthogonalQuotientProdAddEquiv hH hK).toIntLinearEquiv
   map_app' q := by
-    change ((A.orthogonalQuotient H hH).prod (B.orthogonalQuotient K hK)).quadratic
-        (orthogonalQuotientProdMap hH hK q) =
-      ((A.prod B).orthogonalQuotient (H.prod K)
-        ((A.isIsotropic_prod_iff B H K).mpr ⟨hH, hK⟩)).quadratic q
     induction q using orthogonalQuotient_induction_on with
     | mk x =>
-      rw [orthogonalQuotientProdMap_orthogonalQuotientMk,
+      simp only [LinearMap.toFun_eq_coe, LinearEquiv.coe_coe, AddEquiv.coe_toIntLinearEquiv]
+      rw [orthogonalQuotientProdAddEquiv_orthogonalQuotientMk,
         prod_quadratic, A.orthogonalQuotient_quadratic_mk H hH,
         B.orthogonalQuotient_quadratic_mk K hK,
         (A.prod B).orthogonalQuotient_quadratic_mk (H.prod K)
@@ -415,7 +342,7 @@ theorem orthogonalQuotientProdIsometry_orthogonalQuotientMk {H : AddSubgroup A}
       (A.orthogonalQuotientMk H hH (FiniteBilinearModule.orthogonalComplementProdFst H K x),
         B.orthogonalQuotientMk K hK
           (FiniteBilinearModule.orthogonalComplementProdSnd H K x)) :=
-  orthogonalQuotientProdMap_orthogonalQuotientMk hH hK x
+  orthogonalQuotientProdAddEquiv_orthogonalQuotientMk hH hK x
 
 end FiniteQuadraticModule
 

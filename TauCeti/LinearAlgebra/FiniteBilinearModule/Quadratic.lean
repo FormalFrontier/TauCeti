@@ -36,6 +36,8 @@ the polar pairing is therefore `B(x, y)` modulo `ℤ`.
 * `TauCeti.FiniteQuadraticModule.Hom`: a quadratic-map-preserving additive homomorphism.
 * `TauCeti.FiniteQuadraticModule.Isometry`: a quadratic-map isometric equivalence.
 * `TauCeti.FiniteQuadraticModule.IsIsotropic`: quadratic isotropy of an additive subgroup.
+* `TauCeti.FiniteQuadraticModule.isIsotropic_prod_iff`: quadratic isotropy of a product subgroup
+  in an orthogonal direct sum is quadratic isotropy of each factor subgroup.
 * `TauCeti.FiniteQuadraticModule.IsLagrangian`: a quadratic-isotropic subgroup equal to its
   bilinear orthogonal complement.
 * `TauCeti.FiniteQuadraticModule.orthogonalQuotient`: the quadratic module induced on
@@ -529,6 +531,23 @@ theorem IsIsotropic.mono {H K : AddSubgroup A} (hK : A.IsIsotropic K) (h : H ≤
 theorem isIsotropic_bot : A.IsIsotropic ⊥ := by
   simp [IsIsotropic]
 
+/-- **Quadratic isotropy of a product subgroup is componentwise.** -/
+@[simp]
+theorem isIsotropic_prod_iff (B : FiniteQuadraticModule) (H : AddSubgroup A)
+    (K : AddSubgroup B) :
+    (A.prod B).IsIsotropic (H.prod K) ↔ A.IsIsotropic H ∧ B.IsIsotropic K := by
+  simp only [isIsotropic_def]
+  constructor
+  · intro h
+    refine ⟨fun x hx ↦ ?_, fun y hy ↦ ?_⟩
+    · have hx' := h (x, 0) (AddSubgroup.mem_prod.mpr ⟨hx, K.zero_mem⟩)
+      rwa [A.prod_quadratic B, B.quadratic.map_zero, add_zero] at hx'
+    · have hy' := h (0, y) (AddSubgroup.mem_prod.mpr ⟨H.zero_mem, hy⟩)
+      rwa [A.prod_quadratic B, A.quadratic.map_zero, zero_add] at hy'
+  · rintro ⟨hH, hK⟩ ⟨x, y⟩ hxy
+    rw [AddSubgroup.mem_prod] at hxy
+    rw [A.prod_quadratic B, hH x hxy.1, hK y hxy.2, add_zero]
+
 /-- A subgroup is quadratically isotropic exactly when the restricted quadratic map is zero. -/
 theorem isIsotropic_iff_restrict_eq_zero (H : AddSubgroup A) :
     A.IsIsotropic H ↔ (A.restrict H).quadratic = 0 := by
@@ -749,8 +768,11 @@ theorem card_quotientOfLeQuadraticRadical (K : AddSubgroup A)
 /-! ### The induced quadratic form on `H^⊥ / H` -/
 
 /-- The elements of `H` lying in `H^⊥`, viewed as a subgroup of `H^⊥`. When `H ≤ H^⊥`, this
-intersection is a copy of all of `H`. -/
-def subgroupInOrthogonalComplement (H : AddSubgroup A) :
+intersection is a copy of all of `H`.
+
+Exposed for the same reason as `orthogonalQuotient`, which is built on it: so that the carrier of
+the quadratic orthogonal quotient reduces to the carrier of the bilinear one. -/
+@[expose] def subgroupInOrthogonalComplement (H : AddSubgroup A) :
     AddSubgroup (A.toFiniteBilinearModule.orthogonalComplement H) :=
   H.addSubgroupOf (A.toFiniteBilinearModule.orthogonalComplement H)
 
