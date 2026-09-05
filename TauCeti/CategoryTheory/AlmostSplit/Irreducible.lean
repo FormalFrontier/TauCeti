@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.CategoryTheory.AlmostSplit.Sequence
-public import TauCeti.CategoryTheory.Preadditive.Radical
+public import TauCeti.CategoryTheory.Preadditive.Radical.Basic
 
 /-!
 # The irreducible morphisms attached to an almost-split sequence
