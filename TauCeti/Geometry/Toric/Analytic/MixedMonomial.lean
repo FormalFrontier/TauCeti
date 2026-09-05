@@ -5,11 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.Calculus.ContDiff.Comp
 public import Mathlib.Analysis.Calculus.ContDiff.Operations
 public import Mathlib.Analysis.Complex.Basic
-public import Mathlib.Data.Matrix.Mul
-public import Mathlib.Topology.OpenPartialHomeomorph.Defs
+public import Mathlib.LinearAlgebra.Matrix.SemiringInverse
 
 /-!
 # Mixed monomial maps between mixed charts
@@ -53,8 +51,10 @@ monomial maps really is a different function off that locus.
 * `TauCeti.Toric.MixedExponent.ofTorusBlock` and
   `TauCeti.Toric.basisChangeOpenPartialHomeomorph`: the exponent data that keeps the boundary
   coordinates and acts on the torus coordinates by an integral matrix, and the biholomorphism it
-  induces when that matrix is unimodular. This is the shape of a change of the basis extending
-  the primitive ray generators of a regular cone.
+  induces when that matrix is unimodular, holomorphic in both directions by
+  `TauCeti.Toric.basisChangeOpenPartialHomeomorph_contDiffOn` and
+  `TauCeti.Toric.basisChangeOpenPartialHomeomorph_symm_contDiffOn`. This is the shape of a change
+  of the basis extending the primitive ray generators of a regular cone.
 
 ## References
 
@@ -180,10 +180,12 @@ theorem comp_boundaryTorus (B : MixedExponent k' l' k'' l'') (A : MixedExponent 
 theorem comp_torusTorus (B : MixedExponent k' l' k'' l'') (A : MixedExponent k l k' l') :
     (B.comp A).torusTorus = B.torusTorus * A.torusTorus := (rfl)
 
+/-- The identity exponent data is a left unit for composition. -/
 @[simp]
 theorem id_comp (A : MixedExponent k l k' l') : (MixedExponent.id k' l').comp A = A :=
   MixedExponent.ext (by simp) (by simp [Matrix.map_one _ Nat.cast_zero Nat.cast_one]) (by simp)
 
+/-- The identity exponent data is a right unit for composition. -/
 @[simp]
 theorem comp_id (A : MixedExponent k l k' l') : A.comp (MixedExponent.id k l) = A :=
   MixedExponent.ext (by simp) (by simp) (by simp)
@@ -194,6 +196,7 @@ private theorem map_natCast_mul {m p q : ℕ} (L : Matrix (Fin m) (Fin p) ℕ)
     (L * M).map (Nat.cast : ℕ → ℤ) = L.map Nat.cast * M.map Nat.cast :=
   Matrix.map_mul (f := Nat.castRingHom ℤ)
 
+/-- Composition of exponent data is associative. -/
 theorem comp_assoc {k''' l''' : ℕ} (C : MixedExponent k'' l'' k''' l''')
     (B : MixedExponent k' l' k'' l'') (A : MixedExponent k l k' l') :
     (C.comp B).comp A = C.comp (B.comp A) :=
@@ -244,6 +247,7 @@ private theorem prod_prod_pow {m : ℕ} (x : Fin k → ℂ) (e : Fin m → Fin k
     _ = ∏ b, x b ^ ∑ a, g a * e a b :=
         prod_congr rfl fun b _ ↦ prod_pow_eq_pow_sum _ _ _
 
+/-- The identity exponent data induces the identity map, at every ambient point. -/
 @[simp]
 theorem mixedMonomialMap_id : mixedMonomialMap (MixedExponent.id k l) = id := by
   have hone : ∀ {m : ℕ} (w : Fin m → ℂ) (a : Fin m),
@@ -285,16 +289,6 @@ theorem mixedMonomialMap_comp (B : MixedExponent k' l' k'' l'') (A : MixedExpone
 
 variable {n : WithTop ℕ∞}
 
-private theorem contDiffAt_finsetProd {ι E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
-    {s : Finset ι} {g : ι → E → ℂ} {x : E} (h : ∀ i ∈ s, ContDiffAt ℂ n (g i) x) :
-    ContDiffAt ℂ n (fun z ↦ ∏ i ∈ s, g i z) x := by
-  classical
-  induction s using Finset.cons_induction with
-  | empty => simpa using contDiffAt_const
-  | cons a s ha ih =>
-      simp only [prod_cons]
-      exact (h a (by simp)).mul (ih fun i hi ↦ h i (by simp [hi]))
-
 private theorem contDiffAt_zpow {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
     {f : E → ℂ} {x : E} (hf : ContDiffAt ℂ n f x) (hx : f x ≠ 0) (m : ℤ) :
     ContDiffAt ℂ n (fun z ↦ f z ^ m) x := by
@@ -311,15 +305,16 @@ theorem mixedMonomialMap_contDiffAt (A : MixedExponent k l k' l')
   have hy : ∀ b, ContDiffAt ℂ n (fun w : (Fin k → ℂ) × (Fin l → ℂ) ↦ w.2 b) z :=
     fun b ↦ contDiffAt_pi.mp contDiffAt_snd b
   refine ContDiffAt.prodMk (contDiffAt_pi.mpr fun a ↦ ?_) (contDiffAt_pi.mpr fun a ↦ ?_)
-  · exact (contDiffAt_finsetProd fun b _ ↦ (hx b).pow _).mul
-      (contDiffAt_finsetProd fun b _ ↦ contDiffAt_zpow (hy b) (hz b) _)
-  · exact contDiffAt_finsetProd fun b _ ↦ contDiffAt_zpow (hy b) (hz b) _
+  · exact (contDiffAt_prod fun b _ ↦ (hx b).pow _).mul
+      (contDiffAt_prod fun b _ ↦ contDiffAt_zpow (hy b) (hz b) _)
+  · exact contDiffAt_prod fun b _ ↦ contDiffAt_zpow (hy b) (hz b) _
 
 /-- A mixed monomial map is holomorphic on the mixed-chart locus, to any order. -/
 theorem mixedMonomialMap_contDiffOn (A : MixedExponent k l k' l') :
     ContDiffOn ℂ n (mixedMonomialMap A) (mixedChartDomain k l) :=
   fun _ hz ↦ (mixedMonomialMap_contDiffAt A hz).contDiffWithinAt
 
+/-- A mixed monomial map is complex differentiable on the mixed-chart locus. -/
 theorem mixedMonomialMap_differentiableOn (A : MixedExponent k l k' l') :
     DifferentiableOn ℂ (mixedMonomialMap A) (mixedChartDomain k l) :=
   fun _ hz ↦ ((mixedMonomialMap_contDiffAt (n := 1) A hz).differentiableAt
@@ -426,7 +421,7 @@ theorem ofTorusBlock_comp_ofTorusBlock (C C' : Matrix (Fin k) (Fin l) ℤ)
   MixedExponent.ext (by simp) (by simp [Matrix.map_one _ Nat.cast_zero Nat.cast_one]) (by simp)
 
 /-- A unimodular torus block gives an inverse pair of exponent data. -/
-theorem ofTorusBlock_comp_ofTorusBlock_of_mul_eq_one (C : Matrix (Fin k) (Fin l) ℤ)
+theorem ofTorusBlock_comp_eq_id_of_mul_eq_one (C : Matrix (Fin k) (Fin l) ℤ)
     {D D' : Matrix (Fin l) (Fin l) ℤ} (h : D' * D = 1) :
     (ofTorusBlock (-(C * D')) D').comp (ofTorusBlock C D) = MixedExponent.id k l := by
   rw [ofTorusBlock_comp_ofTorusBlock, h, Matrix.neg_mul, Matrix.mul_assoc, h, Matrix.mul_one,
@@ -438,11 +433,11 @@ end MixedExponent
 primitive ray generators: the boundary coordinates are kept and twisted by `C`, and the torus
 coordinates are transformed by the unimodular matrix `D`. -/
 noncomputable def basisChangeOpenPartialHomeomorph (C : Matrix (Fin k) (Fin l) ℤ)
-    {D D' : Matrix (Fin l) (Fin l) ℤ} (h : D * D' = 1) (h' : D' * D = 1) :
+    {D D' : Matrix (Fin l) (Fin l) ℤ} (h : D * D' = 1) :
     OpenPartialHomeomorph ((Fin k → ℂ) × (Fin l → ℂ)) ((Fin k → ℂ) × (Fin l → ℂ)) :=
   mixedMonomialOpenPartialHomeomorph (MixedExponent.ofTorusBlock C D)
     (MixedExponent.ofTorusBlock (-(C * D')) D')
-    (MixedExponent.ofTorusBlock_comp_ofTorusBlock_of_mul_eq_one C h')
+    (MixedExponent.ofTorusBlock_comp_eq_id_of_mul_eq_one C (mul_eq_one_comm.1 h))
     (by
       rw [MixedExponent.ofTorusBlock_comp_ofTorusBlock, h, neg_add_cancel,
         MixedExponent.ofTorusBlock_zero_one])
@@ -450,25 +445,38 @@ noncomputable def basisChangeOpenPartialHomeomorph (C : Matrix (Fin k) (Fin l) �
 section
 
 variable (C : Matrix (Fin k) (Fin l) ℤ) {D D' : Matrix (Fin l) (Fin l) ℤ} (h : D * D' = 1)
-  (h' : D' * D = 1)
 
 @[simp]
 theorem basisChangeOpenPartialHomeomorph_coe :
-    ⇑(basisChangeOpenPartialHomeomorph C h h') =
+    ⇑(basisChangeOpenPartialHomeomorph C h) =
       mixedMonomialMap (MixedExponent.ofTorusBlock C D) := (rfl)
 
 @[simp]
 theorem basisChangeOpenPartialHomeomorph_symm_coe :
-    ⇑(basisChangeOpenPartialHomeomorph C h h').symm =
+    ⇑(basisChangeOpenPartialHomeomorph C h).symm =
       mixedMonomialMap (MixedExponent.ofTorusBlock (-(C * D')) D') := (rfl)
 
 @[simp]
 theorem basisChangeOpenPartialHomeomorph_source :
-    (basisChangeOpenPartialHomeomorph C h h').source = mixedChartDomain k l := (rfl)
+    (basisChangeOpenPartialHomeomorph C h).source = mixedChartDomain k l := (rfl)
 
 @[simp]
 theorem basisChangeOpenPartialHomeomorph_target :
-    (basisChangeOpenPartialHomeomorph C h h').target = mixedChartDomain k l := (rfl)
+    (basisChangeOpenPartialHomeomorph C h).target = mixedChartDomain k l := (rfl)
+
+/-- A unimodular change of the extending basis induces a biholomorphism: the induced homeomorphism
+is holomorphic, to any order. -/
+theorem basisChangeOpenPartialHomeomorph_contDiffOn :
+    ContDiffOn ℂ n (basisChangeOpenPartialHomeomorph C h)
+      (basisChangeOpenPartialHomeomorph C h).source :=
+  mixedMonomialOpenPartialHomeomorph_contDiffOn _ _ _ _
+
+/-- A unimodular change of the extending basis induces a biholomorphism: the inverse of the induced
+homeomorphism is holomorphic, to any order. -/
+theorem basisChangeOpenPartialHomeomorph_symm_contDiffOn :
+    ContDiffOn ℂ n (basisChangeOpenPartialHomeomorph C h).symm
+      (basisChangeOpenPartialHomeomorph C h).target :=
+  mixedMonomialOpenPartialHomeomorph_symm_contDiffOn _ _ _ _
 
 end
 
