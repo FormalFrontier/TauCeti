@@ -18,7 +18,7 @@ is what makes the small special unitary groups computable by hand.
 
 ## Main results
 
-* `TauCeti.Matrix.specialUnitaryGroup.star_eq_adjugate`: the conjugate transpose of a special
+* `Matrix.specialUnitaryGroup.star_eq_adjugate`: the conjugate transpose of a special
   unitary matrix is its adjugate.
 -/
 
@@ -32,7 +32,7 @@ variable {n : Type*} [Fintype n] [DecidableEq n] {α : Type*} [CommRing α] [Sta
 
 /-- The conjugate transpose of a special unitary matrix is its adjugate: it is the inverse, and
 for determinant one the inverse is the adjugate. -/
-theorem specialUnitaryGroup.star_eq_adjugate (g : Matrix.specialUnitaryGroup n α) :
+theorem _root_.Matrix.specialUnitaryGroup.star_eq_adjugate (g : Matrix.specialUnitaryGroup n α) :
     star (g : Matrix n n α) = (g : Matrix n n α).adjugate := by
   have hmem := Matrix.mem_specialUnitaryGroup_iff.mp g.2
   have hmul : (g : Matrix n n α) * star (g : Matrix n n α) = 1 :=
