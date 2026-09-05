@@ -72,8 +72,8 @@ of its translate. -/
 theorem rightTranslationHomeomorph_image_connectedComponent
     (g : WithConv (H →ₐ[k] k)) (x : Spec (CommRingCat.of H)) :
     rightTranslationHomeomorph g '' connectedComponent x =
-      connectedComponent (rightTranslationHomeomorph g x) := by
-  exact TauCeti.Homeomorph.image_connectedComponent (rightTranslationHomeomorph g) x
+      connectedComponent (rightTranslationHomeomorph g x) :=
+  (rightTranslationHomeomorph g).image_connectedComponent x
 
 /-- A point in the identity component right-translates that component onto itself. -/
 theorem rightTranslationHomeomorph_image_connectedComponent_augmentationPoint_eq_self

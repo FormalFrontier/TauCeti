@@ -20,6 +20,8 @@ integrability domain of the negative-binomial probability-generating function.
 
 * `TauCeti.hasSum_multichoose_mul_geometric_of_abs_lt_one` — the multichoose binomial
   series on the open unit interval.
+* `TauCeti.hasSum_multichoose_mul_geometric_complex_of_norm_lt_one` — the complex-valued
+  multichoose binomial series on the open unit disk.
 * `TauCeti.summable_multichoose_mul_geometric_iff_norm_lt_one` — exact summability of
   `∑ n, multichoose r n * q ^ n` for `0 < r`.
 -/
@@ -43,6 +45,20 @@ theorem hasSum_multichoose_mul_geometric_of_abs_lt_one {r x : ℝ} (hx : |x| < 1
       Ring.choose (r + (n : ℝ) - 1) n = Ring.multichoose r n := by
     rw [Ring.multichoose_eq]
   simpa only [hchoose] using hsum
+
+/-- The generalized multichoose power series sums to `(1 - z)⁻ʳ` throughout the complex open
+unit disk. -/
+theorem hasSum_multichoose_mul_geometric_complex_of_norm_lt_one {r z : ℂ}
+    (hz : ‖z‖ < 1) :
+    HasSum (fun n : ℕ => Ring.multichoose r n * z ^ n) (1 / (1 - z) ^ r) := by
+  have hmem : z ∈ Metric.eball (0 : ℂ) (1 : ℝ≥0∞) := by
+    simpa only [Metric.mem_eball, edist_dist, dist_zero_right, ENNReal.ofReal_lt_one] using hz
+  have hsum := (Complex.one_div_one_sub_cpow_hasFPowerSeriesOnBall_zero r).hasSum_sub hmem
+  have hchoose (n : ℕ) :
+      Ring.choose (r + (n : ℂ) - 1) n = Ring.multichoose r n := by
+    rw [Ring.multichoose_eq]
+  simpa only [FormalMultilinearSeries.ofScalars_apply_eq, sub_zero, smul_eq_mul,
+    hchoose] using hsum
 
 /-- For positive real `r`, the generalized multichoose power series is unconditionally summable
 at a real or complex argument `q` exactly when `q` lies in the open unit ball. -/

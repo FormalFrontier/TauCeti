@@ -94,7 +94,7 @@ every theorem added in layers L0–L6, everything below is stated for maps of `�
 that never mention a holomorphic map are stated at their own generality elsewhere, and consumed
 here: `TauCeti.frontier_image_subset_image_union_frontier_image` for maps between arbitrary
 topological spaces, `TauCeti.diam_le_diam_of_frontier_subset` — through `TauCeti.diam_frontier`
-and `TauCeti.IsPreconnected.inter_frontier_nonempty` — for an arbitrary real normed space, and
+and `IsPreconnected.inter_frontier_nonempty` — for an arbitrary real normed space, and
 `TauCeti.subsingleton_clusterSetOn_of_forall_exists` for a map between metric spaces. What
 remains here is exactly the conformal content: the open mapping theorem, and the reading of a
 circular cut as a crosscut.

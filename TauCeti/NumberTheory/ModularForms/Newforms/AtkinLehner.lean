@@ -7,6 +7,7 @@ module
 
 public import TauCeti.NumberTheory.ModularForms.ConductorDichotomy
 public import TauCeti.NumberTheory.ModularForms.Newforms.Basic
+public import TauCeti.NumberTheory.ModularForms.Newforms.Descent
 
 /-!
 # A form with a periodic level-`l` descent is old
@@ -25,13 +26,20 @@ identically zero. Both horns say the same thing about `f`. On the first it is th
 
 `TauCeti.cuspFormsOld` is spanned by the level-raises from **proper** divisor levels, so what the
 argument needs of `l` is exactly that `N / l` be a proper divisor of `N` — that is, `l ≠ 1`, which
-together with `l ∣ N` and `N ≠ 0` gives `N / l < N`. Nothing here asks `l` to be prime, and the
-descent `φ` is supplied by the caller, so no hypothesis on the `q`-expansion of `f` appears.
+together with `l ∣ N` and `N ≠ 0` gives `N / l < N`. Neither result asks `l` to be prime.
+
+The two entry points differ in where the descent comes from.
+`mem_cuspFormsOld_of_slash_T_eq` takes `φ` from the caller, so no hypothesis on the
+`q`-expansion of `f` appears in it at all; `mem_cuspFormsOld_of_qExpansionSupportedOnDvd`
+instead assumes `QExpansionSupportedOnDvd l f` and obtains `φ` from it.
 
 ## Main results
 
 * `TauCeti.mem_cuspFormsOld_of_slash_T_eq`: a cusp form of level `Γ₁(N)` with a nebentypus, whose
   level-`l` descent is invariant under the weight-`k` slash action of `T`, is old.
+* `TauCeti.mem_cuspFormsOld_of_qExpansionSupportedOnDvd`: **the Atkin–Lehner step at one
+  divisor** — the same conclusion from the `q`-expansion support condition alone, the descent
+  being supplied by `Newforms/Descent.lean`.
 
 ## Provenance
 
@@ -86,6 +94,34 @@ theorem mem_cuspFormsOld_of_slash_T_eq {l : ℕ} (hl : l ≠ 1) (hlN : l ∣ N)
   · have hf0 : f = 0 := DFunLike.coe_injective <| by
       rw [hf, hφ, SlashAction.zero_slash, smul_zero, FunLike.coe_zero]
     exact hf0 ▸ (cuspFormsOld N k).zero_mem
+
+/-- **The Atkin–Lehner step at one divisor.** A cusp form of level `Γ₁(N)` with a nebentypus,
+whose period-one `q`-expansion is supported on the multiples of a divisor `l ≠ 1` of `N`, is old.
+
+The support condition is the only thing asked of the `q`-expansion, and `l` need not be prime.
+
+⚠ The hypothesis is support on the multiples of **one** divisor `l`, for a form in **one**
+character space. Diamond–Shurman Theorem 5.7.1 assumes instead that `aₙ(f) = 0` at every `n`
+coprime to `N`, a condition naming no divisor. The two are not interchangeable, and the
+implication runs one way: since `l ∣ N` and `l ≠ 1`, every `n` coprime to `N` is in particular
+not divisible by `l`, so `QExpansionSupportedOnDvd l` is the stronger hypothesis — it kills
+every index off the multiples of `l`, not merely those prime to `N`. The two agree only in the
+degenerate case where `l` is prime and `N` is a power of `l`: if they agree then every prime `q`
+dividing `N` satisfies `l ∣ q`, forcing `q = l`. Getting from Diamond–Shurman's hypothesis to
+this one therefore means splitting `f` across the primes dividing `N`. -/
+theorem mem_cuspFormsOld_of_qExpansionSupportedOnDvd {l : ℕ} (hl : l ≠ 1) (hlN : l ∣ N)
+    (χ : DirichletCharacter ℂ N) {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k}
+    (hfχ : f ∈ cuspFormCharSpace k χ.toUnitHom)
+    (hf : haveI : NeZero l := NeZero.of_dvd hlN
+      QExpansionSupportedOnDvd l f) :
+    f ∈ cuspFormsOld N k := by
+  -- The support condition is spent entirely on manufacturing the descent: `Descent.lean` turns
+  -- it into a `T`-invariant `φ` with `f = l ^ (1 - k) • (φ ∣[k] diag(l, 1))`, and
+  -- `mem_cuspFormsOld_of_slash_T_eq` reads the level-lowering dichotomy off that.
+  have : NeZero l := NeZero.of_dvd hlN
+  obtain ⟨φ, hφ, hT⟩ :=
+    CuspForm.exists_eq_smul_slash_scaleGL_and_slash_T_eq_of_qExpansionSupportedOnDvd f hf
+  exact mem_cuspFormsOld_of_slash_T_eq hl hlN χ φ hfχ hφ hT
 
 end TauCeti
 

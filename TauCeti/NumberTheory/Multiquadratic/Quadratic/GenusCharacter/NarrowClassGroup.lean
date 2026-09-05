@@ -27,6 +27,8 @@ theorem used here are developed in the preceding Tau Ceti modules.
   the map to the narrow class group.
 * `genusCharFunNarrowClassGroupHom`: the descended genus character on `Cl⁺(K)`.
 * `genusCharFunNarrowClassGroupHom_mk0`: its computation on a coprime integral ideal.
+* `genusCharFunNarrowClassGroupHom_eq_prod_singleton`: a subset-indexed narrow genus character is
+  the product of its singleton characters.
 -/
 
 public section
@@ -180,5 +182,64 @@ noncomputable def genusCharFunNarrowClassGroupHom
     exact (Con.kerLift_mk (f := q) I).symm
   rw [he]
   exact Con.lift_mk' hχ I
+
+/-- A genus character indexed by a set `t` of prime discriminants is the product of the
+characters indexed by the singletons in `t`.
+
+Although this is immediate for the arithmetic function `genusCharFun`, the narrow-class-group
+characters are defined using coprime representatives. The statement records that their descent
+preserves the same product decomposition. -/
+theorem genusCharFunNarrowClassGroupHom_eq_prod_singleton
+    {s t : Finset ℤ} (hs : ∀ P ∈ s, IsPrimeDiscriminant P)
+    (heven : ∀ P ∈ s, ∀ P' ∈ s,
+      IsEvenPrimeDiscriminant P → IsEvenPrimeDiscriminant P' → P = P')
+    (hprod : ∏ P ∈ s, P = fundamentalDiscriminant d)
+    (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
+    (hsf : Squarefree d) (hts : t ⊆ s) :
+    genusCharFunNarrowClassGroupHom hs heven hprod hmin hgen hsf hts =
+      ∏ P : ↥t, genusCharFunNarrowClassGroupHom hs heven hprod hmin hgen hsf
+        (Finset.singleton_subset_iff.mpr (hts P.2)) := by
+  apply MonoidHom.ext
+  intro A
+  have hm : (∏ P ∈ t, P) ≠ 0 := by
+    rw [Finset.prod_ne_zero_iff]
+    intro P hP
+    exact (hs P (hts hP)).isFundamentalDiscriminant.ne_zero
+  obtain ⟨I, hIA, hIcop⟩ :=
+    NumberField.NarrowClassGroup.exists_mk0_eq_and_isCoprime_absNorm A hm
+  let It : genusCharFunCoprimeIdealSubmonoid (K := K) t := ⟨I, by
+    simpa only [mem_genusCharFunCoprimeIdealSubmonoid_iff] using hIcop⟩
+  rw [← hIA]
+  -- `It` and `I` carry the same ideal; expose that equality to use the quotient computation rule.
+  rw [← show NumberField.NarrowClassGroup.mk0 It.1 =
+      NumberField.NarrowClassGroup.mk0 I from rfl,
+    genusCharFunNarrowClassGroupHom_mk0]
+  have h_eval :
+      (∏ P : ↥t, genusCharFunNarrowClassGroupHom hs heven hprod hmin hgen hsf
+        (Finset.singleton_subset_iff.mpr (hts P.2)))
+          (NumberField.NarrowClassGroup.mk0 It.1) =
+        ∏ P : ↥t, genusCharFunNarrowClassGroupHom hs heven hprod hmin hgen hsf
+          (Finset.singleton_subset_iff.mpr (hts P.2))
+          (NumberField.NarrowClassGroup.mk0 It.1) := by
+    simp
+  rw [h_eval]
+  apply Units.ext
+  rw [genusCharFunCoprimeIdealHom_apply, genusCharFun_def, Units.coe_prod]
+  -- Coercing the product of unit-valued characters leaves a product of their integer values.
+  change _ = ∏ P : ↥t,
+    ((genusCharFunNarrowClassGroupHom hs heven hprod hmin hgen hsf
+      (Finset.singleton_subset_iff.mpr (hts P.2))
+      (NumberField.NarrowClassGroup.mk0 It.1) : ℤˣ) : ℤ)
+  rw [Finset.prod_subtype t (fun _ => Iff.rfl)]
+  apply Finset.prod_congr rfl
+  intro P _
+  let IP : genusCharFunCoprimeIdealSubmonoid (K := K) {P.1} := ⟨I, by
+    rw [mem_genusCharFunCoprimeIdealSubmonoid_iff]
+    simpa using (IsCoprime.prod_right_iff.mp hIcop) P P.2⟩
+  -- `IP` only equips the same ideal with the weaker singleton coprimality property.
+  rw [show NumberField.NarrowClassGroup.mk0 I =
+      NumberField.NarrowClassGroup.mk0 IP.1 from rfl,
+    genusCharFunNarrowClassGroupHom_mk0, genusCharFunCoprimeIdealHom_apply,
+    genusCharFun_singleton]
 
 end TauCeti.Multiquadratic

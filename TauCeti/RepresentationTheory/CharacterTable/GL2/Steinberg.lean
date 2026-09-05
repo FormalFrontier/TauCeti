@@ -28,8 +28,9 @@ dimension and its character. The character values are the fixed-coset counts les
 Bruhat decomposition then gives the character-theoretic form of irreducibility: the Steinberg
 character has norm `1` for the character pairing of
 `TauCeti/RepresentationTheory/CharacterTable/Pairing.lean`. Everything proved here is an identity
-between characters — irreducibility itself, and the splitting of the boundary principal series as a
-representation, are not proved; see the implementation notes.
+between characters; irreducibility itself is not proved here. The splitting of the boundary
+principal series as a representation is `TauCeti.nonempty_iso_GL2PrincipalSeries_self` in
+`TauCeti/RepresentationTheory/CharacterTable/GL2/Boundary.lean`.
 
 ## Main definitions
 
@@ -69,15 +70,13 @@ other statements do not. It is used, not decorative: `TauCeti.ClassFunction.char
 averages over a `Fintype` of the group, and a `Fintype (GL (Fin 2) F)` instance needs decidable
 equality on the matrix entries.
 
-The irreducibility of the Steinberg representation is *not* proved here. Norm `1` is the
-character-theoretic content of it, and Mathlib's `FDRep.simple_iff_char_is_norm_one` is the
-converse of `TauCeti.ClassFunction.characterPairing_ofFDRep_self` that would turn it into
-`CategoryTheory.Simple`. That lemma is however stated for a coefficient field and a group *in the
-same universe*, so applying it to `FDRep ℂ (GL (Fin 2) F)` would pin `F : Type`, giving up the
-universe polymorphism that `TauCeti.GL2Steinberg` and `TauCeti.GL2PrincipalSeries` both keep; it
-also needs `IsAlgClosed ℂ`, hence the fundamental theorem of algebra, which nothing else in this
-layer imports. Simplicity of the Steinberg constituent is not a roadmap build target either — the
-roadmap names `simple_GL2PrincipalSeries_iff`, not a Steinberg counterpart — so it is left out.
+The irreducibility of the Steinberg representation is packaged downstream as
+`TauCeti.simple_GL2Steinberg`, using the norm computed here and Mathlib's
+`FDRep.simple_iff_char_is_norm_one`. That criterion is stated for a coefficient field and a group
+in the same universe, so the downstream theorem necessarily pins `F : Type`; keeping it out of
+this file preserves the universe polymorphism of the construction and character computation. It
+also keeps the fundamental theorem of algebra, needed for the `IsAlgClosed ℂ` instance, out of
+this foundational module.
 
 ## References
 
@@ -167,8 +166,8 @@ theorem character_GL2PrincipalSeries_one_one_eq_character_ofMulAction (g : GL (F
 
 /-- **The character of the boundary principal series is `1` plus the Steinberg character.** The
 `1` is the trivial character, carried by the invariant line of `ℂ[GL₂ ⧸ B]`. This is the
-character-theoretic form of the two-constituent splitting; the splitting itself, as an
-isomorphism of representations, is not proved here. -/
+character-theoretic form of the two-constituent splitting; the corresponding isomorphism of
+representations is `TauCeti.nonempty_iso_GL2PrincipalSeries_self`. -/
 @[simp]
 theorem character_GL2PrincipalSeries_one_one_eq_one_add (g : GL (Fin 2) F) :
     (GL2PrincipalSeries F 1 1).character g = 1 + (GL2Steinberg F).character g := by
@@ -183,8 +182,9 @@ section Pairing
 variable [DecidableEq F]
 
 /-- **The Steinberg character has norm `1`.** This is the character-theoretic form of the
-irreducibility of the Steinberg representation; see the implementation notes for what turning it
-into `CategoryTheory.Simple` would still need. -/
+irreducibility of the Steinberg representation; `TauCeti.simple_GL2Steinberg` in
+`TauCeti/RepresentationTheory/CharacterTable/GL2/Boundary.lean` packages it as
+`CategoryTheory.Simple`. -/
 @[simp]
 theorem characterPairing_GL2Steinberg_self :
     characterPairing (ofFDRep (GL2Steinberg F)) (ofFDRep (GL2Steinberg F)) = 1 := by

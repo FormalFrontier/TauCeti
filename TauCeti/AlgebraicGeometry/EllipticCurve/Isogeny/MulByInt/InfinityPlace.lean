@@ -78,16 +78,9 @@ variable {F : Type*} [Field F] (W : WeierstrassCurve.Affine F)
 
 namespace Isogeny
 
--- The canonical `mk W (C p) = algebraMap _ _ p`, exposed in `Affine/CoordinateRing.lean` for
--- this use. It sits under TauCeti's own `WeierstrassCurve.Affine` root, not Mathlib's, so it is
--- opened by name rather than reached through the `Affine.` prefix used elsewhere here.
+-- `mk_C_eq_algebraMap` sits under TauCeti's own `WeierstrassCurve.Affine` root, not Mathlib's,
+-- so it is opened by name rather than reached through the `Affine.` prefix used elsewhere here.
 open TauCeti.WeierstrassCurve.Affine.CoordinateRing (mk_C_eq_algebraMap)
-
-/-- `Φₙ` at the generic point is the image of the univariate `Φₙ`. -/
-theorem phiFunctionField_eq_algebraMap (n : ℤ) :
-    phiFunctionField W n = algebraMap F[X] W.FunctionField (W.Φ n) := by
-  rw [phiFunctionField_def, Affine.CoordinateRing.mk_φ,
-    mk_C_eq_algebraMap, ← IsScalarTower.algebraMap_apply]
 
 /-- **`Φₙ` has a pole of order `2n²` at infinity.** Its degree is `n²` and it is nonzero for
 every `n`, both without any hypothesis on the characteristic. -/
