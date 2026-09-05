@@ -82,19 +82,19 @@ section IsotypicProjection
 
 variable {k G V : Type*} [RCLike k] [IsAlgClosed k] [Group G] [TopologicalSpace G]
   [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
-  [NormedAddCommGroup V] [InnerProductSpace k V] [NormedSpace ℝ V] [SMulCommClass ℝ k V]
-  [FiniteDimensional k V]
-
-local instance instCompleteSpaceIsotypicProjection : CompleteSpace V :=
-  FiniteDimensional.complete k V
+  [NormedAddCommGroup V]
 
 /-! ### The kernel, the projector, and the matching blocks -/
 
 section Normed
 
+variable [NormedSpace k V] [NormedSpace ℝ V] [SMulCommClass ℝ k V] [FiniteDimensional k V]
 variable {W W' : Type*}
   [NormedAddCommGroup W] [NormedSpace k W] [FiniteDimensional k W]
   [NormedAddCommGroup W'] [NormedSpace k W'] [FiniteDimensional k W']
+
+local instance instCompleteSpaceIsotypicProjectionNormed : CompleteSpace V :=
+  FiniteDimensional.complete k V
 
 omit [IsAlgClosed k] [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G] in
 /-- The normalized conjugate-character kernel `dim(sigma) · conj(character sigma)` of a
@@ -234,6 +234,21 @@ private theorem isotypicProjector_apply_coe (sigma : ContRepresentation k G W)
       rw [hT]
       exact subrepresentationInclusion_apply rho tau (T v)
 
+end Normed
+
+section AmbientInnerProduct
+
+variable [InnerProductSpace k V] [NormedSpace ℝ V] [SMulCommClass ℝ k V]
+  [FiniteDimensional k V]
+variable {W : Type*} [NormedAddCommGroup W] [NormedSpace k W] [FiniteDimensional k W]
+
+local instance instCompleteSpaceIsotypicProjectionAmbient : CompleteSpace V :=
+  FiniteDimensional.complete k V
+
+variable (rho : ContRepresentation k G V) (hrho : Continuous rho)
+
+include hrho
+
 /-- **The isotypic projector is the identity on every equivalent irreducible block.** -/
 theorem isotypicProjector_apply_subtype_of_equiv (hunitary : IsUnitary rho)
     (sigma : ContRepresentation k G W) (hsigma : Continuous sigma)
@@ -295,7 +310,7 @@ theorem isotypicProjector_apply_of_mem_isotypicComponent (hunitary : IsUnitary r
         m.2 (⟨x, hx⟩ : tau.toSubmodule)
       rw [Representation.asModuleEquiv_apply]
       exact happly
-    · simp
+    · exact map_zero (isotypicProjector rho hrho sigma hsigma)
     · intro x y hx hy
       simpa only [map_add] using congrArg₂ (fun a b ↦ a + b) hx hy
   have h := hfix (rho.toRepresentation.asModuleEquiv.symm v) hv
@@ -315,7 +330,7 @@ private theorem equivLinearMapAsModule_isotypicProjector_apply
     (ContIntertwiningMap.toIntertwiningMap_apply (isotypicProjector rho hrho sigma hsigma)
       (x : V))
 
-end Normed
+end AmbientInnerProduct
 
 /-! ### The non-matching blocks, the range and idempotence -/
 
@@ -323,6 +338,11 @@ section InnerProduct
 
 variable {W : Type*} [NormedAddCommGroup W] [InnerProductSpace k W] [NormedSpace ℝ W]
   [SMulCommClass ℝ k W] [FiniteDimensional k W]
+variable [InnerProductSpace k V] [NormedSpace ℝ V] [SMulCommClass ℝ k V]
+  [FiniteDimensional k V]
+
+local instance instCompleteSpaceIsotypicProjectionInner : CompleteSpace V :=
+  FiniteDimensional.complete k V
 
 variable (rho : ContRepresentation k G V) (hrho : Continuous rho)
 

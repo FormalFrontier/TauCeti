@@ -58,16 +58,15 @@ variable {ρ : _root_.Representation k G V} {σ : _root_.Representation k G W}
 
 /-- **Evaluation of the identification of `ρ.asModule` with `V`.** `Representation.asModuleEquiv`
 is the identity map of the underlying type, so it may be erased from an application; naming that
-fact keeps proofs that cross the type synonym from unfolding it. It is deliberately not `@[simp]`:
-`Representation.asModuleEquiv` marks which of the two module structures on the carrier a term is
-being read in, and erasing it everywhere would lose that information. -/
+fact keeps proofs that cross the type synonym from unfolding it. -/
+@[simp]
 theorem asModuleEquiv_apply (x : ρ.asModule) : ρ.asModuleEquiv x = (x : V) :=
   (rfl)
 
 /-- **Evaluation of the `k[G]`-linear map attached to an intertwining map.** The map
 `Representation.IntertwiningMap.equivLinearMapAsModule ρ σ f` is `f` itself on the underlying
-types, so it too may be erased from an application. Like
-`TauCeti.Representation.asModuleEquiv_apply` it is not `@[simp]`. -/
+types, so it too may be erased from an application. -/
+@[simp]
 theorem equivLinearMapAsModule_apply (f : _root_.Representation.IntertwiningMap ρ σ)
     (x : ρ.asModule) :
     _root_.Representation.IntertwiningMap.equivLinearMapAsModule ρ σ f x = (f (x : V) : W) :=
@@ -110,7 +109,7 @@ theorem asModuleLinearEquivOfEquiv_equivOfAsModuleLinearEquiv
     (f : ρ.asModule ≃ₗ[k[G]] σ.asModule) :
     asModuleLinearEquivOfEquiv (equivOfAsModuleLinearEquiv f) = f := by
   ext x
-  simp
+  rfl
 
 /-- **The two notions of isomorphism agree.** Two representations are equivalent exactly when the
 `k[G]`-modules they carry are isomorphic. -/
