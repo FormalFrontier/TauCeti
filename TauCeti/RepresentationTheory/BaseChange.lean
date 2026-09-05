@@ -215,6 +215,18 @@ private def intertwiningMapEquivKerDefect (ρ : _root_.Representation K G V)
   left_inv _ := rfl
   right_inv _ := rfl
 
+/-- **The intertwining defect of a base-changed map is the base change of its defect**,
+componentwise: base change is compatible with composition and subtraction, and the base-changed
+representations act by the base-changed operators. -/
+private theorem intertwiningDefect_baseChange (ρ : _root_.Representation K G V)
+    (σ : _root_.Representation K G W) (f : V →ₗ[K] W) (g : G) :
+    intertwiningDefect (_root_.Representation.baseChange L ρ)
+        (_root_.Representation.baseChange L σ) (f.baseChange L) g
+      = (intertwiningDefect ρ σ f g).baseChange L := by
+  rw [intertwiningDefect_apply, intertwiningDefect_apply, LinearMap.baseChange_sub,
+    LinearMap.baseChange_comp, LinearMap.baseChange_comp, _root_.Representation.baseChange_apply,
+    _root_.Representation.baseChange_apply]
+
 variable [FiniteDimensional K V]
 
 variable (K L V W) in
@@ -240,6 +252,12 @@ private noncomputable def piBaseChangeEquiv (G : Type*) [Fintype G] [DecidableEq
   (TensorProduct.piRight K L L _).trans
     (LinearEquiv.piCongrRight fun _ => homBaseChangeEquiv K L V W)
 
+private theorem piBaseChangeEquiv_tmul {G : Type*} [Fintype G] [DecidableEq G] (a : L)
+    (f : G → (V →ₗ[K] W)) (g : G) :
+    piBaseChangeEquiv K L V W G (a ⊗ₜ[K] f) g = a • (f g).baseChange L := by
+  rw [piBaseChangeEquiv, LinearEquiv.trans_apply, LinearEquiv.piCongrRight_apply,
+    TensorProduct.piRight_apply, TensorProduct.piRightHom_tmul, homBaseChangeEquiv_tmul]
+
 /-- The intertwining defect commutes with scalar extension. -/
 private theorem intertwiningDefect_homBaseChangeEquiv [Fintype G] [DecidableEq G]
     (ρ : _root_.Representation K G V) (σ : _root_.Representation K G W)
@@ -253,30 +271,46 @@ private theorem intertwiningDefect_homBaseChangeEquiv [Fintype G] [DecidableEq G
   | add x y hx hy => simp [hx, hy]
   | tmul a f =>
     funext g
-    simp [intertwiningDefect_apply, homBaseChangeEquiv_tmul, piBaseChangeEquiv,
-      LinearMap.baseChange_sub, LinearMap.baseChange_comp, LinearMap.smul_comp,
-      LinearMap.comp_smul]
-    module
+    -- the defect is linear, so both sides are `a • (intertwiningDefect ρ σ f g)`
+    -- base-changed to `L`
+    rw [homBaseChangeEquiv_tmul, _root_.map_smul, Pi.smul_apply, intertwiningDefect_baseChange,
+      TensorProduct.AlgebraTensorModule.lTensor_tmul, piBaseChangeEquiv_tmul]
 
-/-- **The kernel of the intertwining defect commutes with scalar extension.** `L` is flat over `K`,
-so extending the scalars commutes with taking the kernel of a linear map
-(`LinearMap.tensorKerEquiv`); the identification `TauCeti.homBaseChangeEquiv` of the two ambient
-spaces carries one kernel onto the other, so the two dimensions agree. -/
+/-- **The intertwiner kernels correspond under the identification of the ambient spaces.** Pulling
+the kernel of the base-changed defect back along `TauCeti.homBaseChangeEquiv` gives the kernel of
+the scalar extension of the defect. -/
+private theorem comap_ker_intertwiningDefect_baseChange [Finite G]
+    (ρ : _root_.Representation K G V) (σ : _root_.Representation K G W) :
+    Submodule.comap (homBaseChangeEquiv K L V W : L ⊗[K] (V →ₗ[K] W) →ₗ[L] _)
+        (LinearMap.ker (intertwiningDefect (_root_.Representation.baseChange L ρ)
+          (_root_.Representation.baseChange L σ)))
+      = LinearMap.ker (TensorProduct.AlgebraTensorModule.lTensor L L
+          (intertwiningDefect ρ σ)) := by
+  classical
+  let _ := Fintype.ofFinite G
+  ext x
+  simp [LinearMap.mem_ker, intertwiningDefect_homBaseChangeEquiv,
+    (piBaseChangeEquiv K L V W G).map_eq_zero_iff]
+
+/-- **The kernel of a base-changed linear map has the dimension of the original kernel.** `L` is
+flat over `K`, so the kernel of the extended map is the extension of the kernel
+(`LinearMap.tensorKerEquiv`), whose dimension over `L` is that of the kernel over `K`. -/
+private theorem finrank_ker_lTensor {M N : Type*} [AddCommGroup M] [Module K M] [AddCommGroup N]
+    [Module K N] (f : M →ₗ[K] N) :
+    Module.finrank L (LinearMap.ker (TensorProduct.AlgebraTensorModule.lTensor L L f))
+      = Module.finrank K (LinearMap.ker f) :=
+  ((LinearMap.tensorKerEquiv L L f).finrank_eq).symm.trans Module.finrank_baseChange
+
+/-- **The kernel of the intertwining defect commutes with scalar extension.** The identification
+`TauCeti.homBaseChangeEquiv` of the two ambient spaces carries one kernel onto the other
+(`TauCeti.comap_ker_intertwiningDefect_baseChange`), and taking a kernel commutes with the
+extension because `L` is flat over `K` (`TauCeti.finrank_ker_lTensor`), so the two dimensions
+agree. -/
 private theorem finrank_ker_intertwiningDefect_baseChange [Finite G]
     (ρ : _root_.Representation K G V) (σ : _root_.Representation K G W) :
     Module.finrank L (LinearMap.ker (intertwiningDefect
         (_root_.Representation.baseChange L ρ) (_root_.Representation.baseChange L σ)))
-      = Module.finrank K (LinearMap.ker (intertwiningDefect ρ σ)) := by
-  classical
-  let _ := Fintype.ofFinite G
-  have hcomap : Submodule.comap (homBaseChangeEquiv K L V W : L ⊗[K] (V →ₗ[K] W) →ₗ[L] _)
-      (LinearMap.ker (intertwiningDefect (_root_.Representation.baseChange L ρ)
-        (_root_.Representation.baseChange L σ)))
-      = LinearMap.ker (TensorProduct.AlgebraTensorModule.lTensor L L
-          (intertwiningDefect ρ σ)) := by
-    ext x
-    simp [LinearMap.mem_ker, intertwiningDefect_homBaseChangeEquiv,
-      (piBaseChangeEquiv K L V W G).map_eq_zero_iff]
+      = Module.finrank K (LinearMap.ker (intertwiningDefect ρ σ)) :=
   calc Module.finrank L (LinearMap.ker (intertwiningDefect
         (_root_.Representation.baseChange L ρ) (_root_.Representation.baseChange L σ)))
       -- transport the kernel along the identification of the ambient spaces
@@ -286,11 +320,9 @@ private theorem finrank_ker_intertwiningDefect_baseChange [Finite G]
             (_root_.Representation.baseChange L σ)))) :=
         ((LinearEquiv.ofSubmodule' (homBaseChangeEquiv K L V W) _).finrank_eq).symm
     _ = Module.finrank L (LinearMap.ker (TensorProduct.AlgebraTensorModule.lTensor L L
-          (intertwiningDefect ρ σ))) := by rw [hcomap]
-    -- flatness: the kernel of the extended map is the extension of the kernel
-    _ = Module.finrank L (L ⊗[K] LinearMap.ker (intertwiningDefect ρ σ)) :=
-        ((LinearMap.tensorKerEquiv L L (intertwiningDefect ρ σ)).finrank_eq).symm
-    _ = Module.finrank K (LinearMap.ker (intertwiningDefect ρ σ)) := Module.finrank_baseChange
+          (intertwiningDefect ρ σ))) := by
+        rw [comap_ker_intertwiningDefect_baseChange]
+    _ = Module.finrank K (LinearMap.ker (intertwiningDefect ρ σ)) := finrank_ker_lTensor _
 
 /-- **Base change preserves the dimension of an intertwiner space.** An intertwiner is a linear
 map annihilated by the finite family of linear conditions `σ g ∘ₗ f = f ∘ₗ ρ g`, so the intertwiner
