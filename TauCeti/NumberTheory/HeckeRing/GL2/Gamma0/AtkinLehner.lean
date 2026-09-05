@@ -16,6 +16,7 @@ import TauCeti.NumberTheory.HeckeRing.GL2.Gamma0.Diagonal.Coset
 import TauCeti.LinearAlgebra.Matrix.Divisibility
 import TauCeti.LinearAlgebra.Matrix.SmithNormalForm
 import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Equivalence
+import TauCeti.Data.Int.Fin2Tuple
 import Mathlib.Data.ZMod.Units
 
 /-!
@@ -382,7 +383,7 @@ private lemma exists_sl2_mul_mul_eq_atkinLehnerEntries
     simpa [Fin.prod_univ_two] using Matrix.prod_eq_det_of_mul_mul_eq_diagonal hA_snf
   have hprodB : dB 0 * dB 1 = B.det := by
     simpa [Fin.prod_univ_two] using Matrix.prod_eq_det_of_mul_mul_eq_diagonal hB_snf
-  have hd : dA = dB := Matrix.eq_of_dvd_of_dvd_of_mul_eq_mul (hdA_pos 0) (hdB_pos 0)
+  have hd : dA = dB := Int.eq_of_dvd_of_dvd_of_mul_eq_mul (hdA_pos 0) (hdB_pos 0)
     hdA0_dvd_dB0 hdB0_dvd_dA0 (by rw [hprodA, hprodB, hB_det])
   -- the two diagonal forms coincide, so `A` and `B` share an `SL₂(ℤ)`-transform
   exact Matrix.exists_SL_mul_mul_eq_of_mul_mul_eq

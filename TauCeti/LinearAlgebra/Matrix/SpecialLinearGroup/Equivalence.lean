@@ -20,8 +20,6 @@ rather than inside it, and hold over an arbitrary finite index type.
 ## Main results
 
 * `Matrix.inv_mul_mul_inv_of_mul_mul_eq`: inverting a two-sided unimodular transformation.
-* `Matrix.inv_coe_eq_coe_inv`: the `SL` inverse agrees with the matrix inverse of the
-  coercion.
 * `Matrix.prod_eq_det_of_mul_mul_eq_diagonal`: the product of a diagonalisation's diagonal
   entries is the determinant.
 * `Matrix.exists_SL_mul_mul_eq_of_mul_mul_eq`: two matrices carried to a common value by
@@ -50,15 +48,6 @@ theorem inv_mul_mul_inv_of_mul_mul_eq {S : Type*} [Semiring S]
   simp only [Matrix.mul_assoc, hR, Matrix.mul_one]
   rw [← Matrix.mul_assoc, hL, Matrix.one_mul]
 
-/-- **The `SL` inverse agrees with the matrix inverse of the coercion.** Determinant `1` makes
-the coercion of `M⁻¹` a right inverse of the coercion of `M`, which pins the matrix inverse
-without unfolding how either inverse is represented. -/
-theorem inv_coe_eq_coe_inv {n : Type*} [Fintype n] [DecidableEq n] {S : Type*} [CommRing S]
-    (M : SpecialLinearGroup n S) :
-    ((M : Matrix n n S))⁻¹ = ((M⁻¹ : SpecialLinearGroup n S) : Matrix n n S) :=
-  Matrix.inv_eq_right_inv (by
-    rw [← SpecialLinearGroup.coe_mul, mul_inv_cancel, SpecialLinearGroup.coe_one])
-
 /-- **The product of a diagonalisation's diagonal entries is the determinant.** Both `SL`
 factors have determinant `1`, so taking determinants through `L * A * R = diagonal d` leaves
 the product of the diagonal.
@@ -85,7 +74,10 @@ theorem exists_SL_mul_mul_eq_of_mul_mul_eq {S : Type*} [CommRing S]
     ∃ (P : SpecialLinearGroup ι S) (Q : SpecialLinearGroup κ S),
       (P : Matrix ι ι S) * A * (Q : Matrix κ κ S) = B := by
   refine ⟨LB⁻¹ * LA, RA * RB⁻¹, ?_⟩
-  simpa [SpecialLinearGroup.coe_mul, Matrix.mul_assoc, inv_coe_eq_coe_inv] using
+  -- `toGL` is a monoid hom, so `map_inv` moves the inverse to the `SL` side and
+  -- `coe_GL_coe_matrix` drops back to matrices; both inverses then normalise the same way
+  simpa [SpecialLinearGroup.coe_mul, Matrix.mul_assoc, ← map_inv,
+    SpecialLinearGroup.coe_GL_coe_matrix] using
     inv_mul_mul_inv_of_mul_mul_eq LB.toGL RB.toGL h.symm
 
 end

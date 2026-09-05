@@ -11,6 +11,7 @@ import Mathlib.Algebra.EuclideanDomain.Int
 -- `dvd_mul_mul_apply` and `dvd_diag_of_dvd_entries`, used only inside proofs below.
 import TauCeti.LinearAlgebra.Matrix.Divisibility
 import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Equivalence
+import TauCeti.Data.Int.Fin2Tuple
 import Mathlib.Data.Int.GCD
 import Mathlib.Basic.Sign.Basic
 import Mathlib.LinearAlgebra.Determinant
@@ -885,7 +886,7 @@ divisibility directions privately at `Fin 2` as `snf_first_dvd_entry₂` and
 `dvd_snf_first_of_dvd_entries`, proved by entrywise cofactor algebra; the proofs here are a
 re-derivation at general `n`, where inverting the unimodular factors removes the need for that
 algebra. The source's third lemma `snf_mutual_dvd_eq` is adapted here as
-`Matrix.eq_of_dvd_of_dvd_of_mul_eq_mul`, which does *not* go through
+`Int.eq_of_dvd_of_dvd_of_mul_eq_mul`, which does *not* go through
 `Matrix.smith_normal_form_unique`. The statement here keeps none of the source's matrix
 hypotheses: it is arithmetic on two `Fin 2 → ℤ` tuples, concluding `dA = dB` from positivity
 of the two first entries, their mutual divisibility, and equality of the two products.
@@ -943,22 +944,5 @@ theorem invariant_factor_zero_eq_gcd [NeZero n] (A : Matrix (Fin n) (Fin n) ℤ)
     d 0 = Finset.univ.gcd fun p : Fin n × Fin n ↦ A p.1 p.2 :=
   Int.eq_of_associated_of_nonneg (associated_invariant_factor_zero_gcd A d hd0 L R h) hnonneg
     (Int.nonneg_of_normalize_eq_self Finset.normalize_gcd)
-
-/-- **Two positive `Fin 2` diagonals with mutually dividing first entries and equal products
-are equal.** The first entries agree by antisymmetry, and the second is then pinned by the
-product.
-
-This is the arithmetic behind "equal determinants and mutually dividing first invariant factors
-determine a `2 × 2` diagonal form". No matrix hypothesis appears: callers obtain `hprod` from
-`Matrix.prod_eq_det_of_mul_mul_eq_diagonal` and an equality of determinants. -/
-theorem eq_of_dvd_of_dvd_of_mul_eq_mul {dA dB : Fin 2 → ℤ}
-    (hdA0_pos : 0 < dA 0) (hdB0_pos : 0 < dB 0) (hAB : dA 0 ∣ dB 0) (hBA : dB 0 ∣ dA 0)
-    (hprod : dA 0 * dA 1 = dB 0 * dB 1) : dA = dB := by
-  have hd0 : dA 0 = dB 0 :=
-    le_antisymm (Int.le_of_dvd hdB0_pos hAB) (Int.le_of_dvd hdA0_pos hBA)
-  have hd1 : dA 1 = dB 1 :=
-    mul_left_cancel₀ (ne_of_gt hdA0_pos) (by rw [hprod, hd0])
-  funext i
-  fin_cases i <;> assumption
 
 end Matrix
