@@ -122,35 +122,36 @@ private theorem rightTranslationAlgHom_eq_self
     (g : WithConv (K ⊗[k] coordinateHopfAlgebra k m →ₐ[K] K)) :
     HopfAlgebra.rightTranslationAlgHom g e = e := by
   let E := baseChangeSymplecticPointsMulEquiv (k := k) (K := K) m K
-  let P : Subgroup (GLSymplecticFin m K) := {
-    carrier := {x | HopfAlgebra.rightTranslationAlgHom (E.symm x) e = e}
-    one_mem' := by
-      change HopfAlgebra.rightTranslationAlgHom (E.symm 1) e = e
-      rw [map_one, HopfAlgebra.rightTranslationAlgHom_one, AlgHom.id_apply]
-    mul_mem' := by
-      intro x y hx hy
-      change HopfAlgebra.rightTranslationAlgHom (E.symm x) e = e at hx
-      change HopfAlgebra.rightTranslationAlgHom (E.symm y) e = e at hy
-      change HopfAlgebra.rightTranslationAlgHom (E.symm (x * y)) e = e
-      rw [map_mul, HopfAlgebra.rightTranslationAlgHom_mul, AlgHom.comp_apply, hy, hx]
-    inv_mem' := by
-      intro x hx
-      change HopfAlgebra.rightTranslationAlgHom (E.symm x) e = e at hx
-      change HopfAlgebra.rightTranslationAlgHom (E.symm x⁻¹) e = e
-      have h := DFunLike.congr_fun
-        (HopfAlgebra.rightTranslationAlgHom_mul (E.symm x⁻¹) (E.symm x)) e
-      rw [← map_mul E.symm, inv_mul_cancel x, map_one,
-        HopfAlgebra.rightTranslationAlgHom_one,
-        AlgHom.id_apply, AlgHom.comp_apply, hx] at h
-      exact h.symm
-  }
+  let fixes (x : GLSymplecticFin m K) : Prop :=
+    HopfAlgebra.rightTranslationAlgHom (E.symm x) e = e
+  have fixes_one : fixes 1 := by
+    dsimp only [fixes]
+    rw [map_one, HopfAlgebra.rightTranslationAlgHom_one, AlgHom.id_apply]
+  have fixes_mul {x y : GLSymplecticFin m K} (hx : fixes x) (hy : fixes y) :
+      fixes (x * y) := by
+    dsimp only [fixes] at hx hy ⊢
+    rw [map_mul, HopfAlgebra.rightTranslationAlgHom_mul, AlgHom.comp_apply, hy, hx]
+  have fixes_inv {x : GLSymplecticFin m K} (hx : fixes x) : fixes x⁻¹ := by
+    dsimp only [fixes] at hx ⊢
+    have h := DFunLike.congr_fun
+      (HopfAlgebra.rightTranslationAlgHom_mul (E.symm x⁻¹) (E.symm x)) e
+    rw [← map_mul E.symm, inv_mul_cancel x, map_one,
+      HopfAlgebra.rightTranslationAlgHom_one,
+      AlgHom.id_apply, AlgHom.comp_apply, hx] at h
+    exact h.symm
+  let P : Subgroup (GLSymplecticFin m K) :=
+    { carrier := fixes
+      one_mem' := fixes_one
+      mul_mem' := fixes_mul
+      inv_mem' := fixes_inv }
+  have mem_P (x : GLSymplecticFin m K) : x ∈ P ↔ fixes x := Iff.rfl
   have hP : P = ⊤ := by
     apply GLSymplecticFin.eq_top_of_root_subgroups P
     intro root c
-    exact rightTranslationAlgHom_eq_self_of_root (k := k) (K := K) m e he root c.toAdd
+    exact (mem_P _).mpr
+      (rightTranslationAlgHom_eq_self_of_root (k := k) (K := K) m e he root c.toAdd)
   have hg : E g ∈ P := by rw [hP]; exact Subgroup.mem_top _
-  change HopfAlgebra.rightTranslationAlgHom (E.symm (E g)) e = e at hg
-  simpa using hg
+  simpa only [fixes, MulEquiv.symm_apply_apply] using (mem_P _).mp hg
 
 /-- The coordinate Hopf algebra of `Sp_{2m}` is geometrically connected over every field. -/
 theorem geometricallyConnectedCommHopfAlgProperty_coordinateHopfAlgebra
