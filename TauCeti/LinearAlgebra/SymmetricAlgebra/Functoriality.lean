@@ -161,13 +161,13 @@ theorem mapEquiv_toAlgHom (e : M ≃ₗ[R] N) :
   rw [mapEquiv, AlgEquiv.toAlgHom_ofAlgHom]
 
 /-- The induced equivalence agrees with the induced algebra map on every element. -/
+@[simp]
 theorem mapEquiv_apply (e : M ≃ₗ[R] N) (a : SymmetricAlgebra R M) :
     mapEquiv R e a = map R e.toLinearMap a := by
   rw [← AlgEquiv.toAlgHom_apply, mapEquiv_toAlgHom]
 
 /-- The bundled equivalence acts on canonical generators by the underlying linear equivalence. -/
-@[simp]
-theorem mapEquiv_apply_ι (e : M ≃ₗ[R] N) (a : M) :
+theorem mapEquiv_ι (e : M ≃ₗ[R] N) (a : M) :
     mapEquiv R e (ι R M a) = ι R N (e a) := by
   simp [mapEquiv_apply]
 
