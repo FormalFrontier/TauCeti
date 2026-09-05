@@ -23,8 +23,8 @@ eigenvalues assemble into a unit-valued character of `G`.
 
 ## Main declaration
 
-* `Representation.exists_unitHom_jointEigenvector_of_commutator_le_of_isUnipotent`: a normal
-  unipotent subgroup containing every commutator forces a common eigenvector.
+* `Representation.exists_unitHom_jointEigenvector_of_commutator_le_of_isUnipotent`: a unipotent
+  subgroup containing every commutator forces a common eigenvector.
 
 ## References
 
@@ -46,17 +46,18 @@ variable {K : Type u} {G : Type v} {V : Type w}
 variable [Field K] [IsAlgClosed K] [Group G]
 variable [AddCommGroup V] [Module K V] [FiniteDimensional K V] [Nontrivial V]
 
-/-- A representation has a common eigenvector if some normal subgroup containing the commutator
-subgroup acts unipotently.
+/-- A representation has a common eigenvector if some subgroup containing the commutator subgroup
+acts unipotently. Such a subgroup is automatically normal.
 
 Kolchin first produces a nonzero vector fixed by the normal subgroup. Its entire fixed space is
 stable under the ambient group, and the induced action factors through the commutative quotient.
 -/
 theorem _root_.Representation.exists_unitHom_jointEigenvector_of_commutator_le_of_isUnipotent
-    (rho : _root_.Representation K G V) (N : Subgroup G) [N.Normal]
+    (rho : _root_.Representation K G V) (N : Subgroup G)
     (hcomm : _root_.commutator G ≤ N)
     (hunipotent : ∀ n : N, IsNilpotent (rho n - 1)) :
     ∃ (χ : G →* Kˣ) (v : V), v ≠ 0 ∧ ∀ g, rho g v = (χ g : K) • v := by
+  let _ : N.Normal := Subgroup.Normal.of_commutator_le (G := G) hcomm
   let S := Representation.invariants (rho.comp N.subtype)
   obtain ⟨x, hx, hfixed⟩ :=
     _root_.Representation.exists_common_fixed_vector_of_isUnipotent
