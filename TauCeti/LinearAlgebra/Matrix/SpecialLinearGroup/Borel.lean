@@ -6,9 +6,11 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.GroupTheory.DoubleCoset
+public import Mathlib.GroupTheory.Solvable
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.UpperTriangular.Solvable
-public import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Solvable
+import TauCeti.GroupTheory.DoubleCoset.Identity
+import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.UpperTriangular.Solvable
+import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Solvable
 
 /-!
 # The upper-triangular subgroup of `SL₂`
@@ -36,8 +38,8 @@ field.
 
 * J. E. Humphreys, *Linear Algebraic Groups*, §28.3.
 * R. Steinberg, *Lectures on Chevalley Groups*, §3.
-* The proofs of `closure_insert_modularGroup_S_eq_top` and `le_of_isSolvable` adapt the formal
-  templates `GL2Borel.closure_insert_gl2WeylElement_eq_top` and `GL2Borel.le_of_isSolvable`.
+* The proofs of `closure_insert_modularGroup_S_eq_top` and `le_of_isSolvable` use the same generic
+  two-double-coset lemmas as their `GL₂` counterparts.
 -/
 
 public section
@@ -59,6 +61,13 @@ namespace SL2Borel
 section CommRing
 
 variable {R : Type u} [CommRing R]
+
+private theorem coe_modularGroup_S :
+    ((((ModularGroup.S : SL(2, ℤ)) : SL(2, R)) : SL(2, R)) :
+        Matrix (Fin 2) (Fin 2) R) = !![0, -1; 1, 0] := by
+  rw [Matrix.SpecialLinearGroup.coe_matrix_coe, ModularGroup.coe_S]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp
 
 /-- An element of `SL₂(R)` belongs to the standard Borel exactly when its lower-left entry
 vanishes. -/
@@ -117,14 +126,8 @@ theorem mem_doubleCoset_modularGroup_S_of_notMem {g : SL(2, F)} (hg : g ∉ SL2B
     rw [mem_iff]
     rfl
   refine DoubleCoset.mem_doubleCoset.mpr ⟨x, hx, y, hy, ?_⟩
-  have hS :
-      ((((ModularGroup.S : SL(2, ℤ)) : SL(2, F)) : SL(2, F)) :
-          Matrix (Fin 2) (Fin 2) F) = !![0, -1; 1, 0] := by
-    rw [Matrix.SpecialLinearGroup.coe_matrix_coe, ModularGroup.coe_S]
-    ext i j
-    fin_cases i <;> fin_cases j <;> simp
   apply Subtype.ext
-  rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.SpecialLinearGroup.coe_mul, hS]
+  rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.SpecialLinearGroup.coe_mul, coe_modularGroup_S]
   dsimp only [x, y]
   rw [Matrix.mul_fin_two, Matrix.mul_fin_two]
   ext i j
@@ -163,13 +166,7 @@ theorem mem_doubleCoset_modularGroup_S_iff {g : SL(2, F)} :
       intro h
       rw [h, zero_mul] at hydet
       exact zero_ne_one hydet
-    have hS :
-        ((((ModularGroup.S : SL(2, ℤ)) : SL(2, F)) : SL(2, F)) :
-            Matrix (Fin 2) (Fin 2) F) = !![0, -1; 1, 0] := by
-      rw [Matrix.SpecialLinearGroup.coe_matrix_coe, ModularGroup.coe_S]
-      ext i j
-      fin_cases i <;> fin_cases j <;> simp
-    rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.SpecialLinearGroup.coe_mul, hS]
+    rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.SpecialLinearGroup.coe_mul, coe_modularGroup_S]
     simpa only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply, Matrix.cons_val_one,
       Matrix.cons_val_zero, Matrix.head_cons, neg_mul, one_mul, zero_mul, add_zero, hx10, hy10,
       mul_zero, mul_one, zero_add] using mul_ne_zero hx11 hy00
@@ -181,44 +178,17 @@ theorem closure_insert_modularGroup_S_eq_top :
     Subgroup.closure
         (insert (((ModularGroup.S : SL(2, ℤ)) : SL(2, F)))
           (SL2Borel F : Set SL(2, F))) = ⊤ := by
-  refine eq_top_iff.mpr fun g _ ↦ ?_
-  by_cases hg : g ∈ SL2Borel F
-  · exact Subgroup.subset_closure (Set.mem_insert_of_mem _ hg)
-  · obtain ⟨x, hx, y, hy, rfl⟩ :=
-      DoubleCoset.mem_doubleCoset.mp (mem_doubleCoset_modularGroup_S_of_notMem hg)
-    exact mul_mem
-      (mul_mem (Subgroup.subset_closure (Set.mem_insert_of_mem _ hx))
-        (Subgroup.subset_closure (Set.mem_insert _ _)))
-      (Subgroup.subset_closure (Set.mem_insert_of_mem _ hy))
+  exact closure_insert_eq_top_of_notMem_imp_mem_doubleCoset (SL2Borel F)
+    ((ModularGroup.S : SL(2, ℤ)) : SL(2, F)) mem_doubleCoset_modularGroup_S_of_notMem
 
 /-- Every solvable subgroup of `SL₂` over an infinite field that contains the standard Borel
 is contained in it. -/
 theorem le_of_isSolvable [Infinite F] (P : Subgroup SL(2, F)) [Group.IsSolvable P]
     (hBP : SL2Borel F ≤ P) : P ≤ SL2Borel F := by
-  by_contra hPB
-  obtain ⟨g, hgP, hgB⟩ := SetLike.not_le_iff_exists.mp hPB
-  obtain ⟨x, hx, y, hy, hxy⟩ :=
-    DoubleCoset.mem_doubleCoset.mp (mem_doubleCoset_modularGroup_S_of_notMem hgB)
-  have hwP : ((ModularGroup.S : SL(2, ℤ)) : SL(2, F)) ∈ P := by
-    have hxP := hBP hx
-    have hyP := hBP hy
-    have hprod : x⁻¹ * g * y⁻¹ ∈ P := mul_mem (mul_mem (inv_mem hxP) hgP) (inv_mem hyP)
-    convert hprod using 1
-    rw [hxy]
-    group
-  have hclosure :
-      Subgroup.closure
-          (insert (((ModularGroup.S : SL(2, ℤ)) : SL(2, F)))
-            (SL2Borel F : Set SL(2, F))) ≤ P :=
-    (Subgroup.closure_le P).mpr (Set.insert_subset_iff.mpr ⟨hwP, hBP⟩)
-  rw [closure_insert_modularGroup_S_eq_top] at hclosure
-  have hPtop : P = ⊤ := top_unique hclosure
-  apply Matrix.SpecialLinearGroup.not_isSolvable_fin_two F
-  apply Group.isSolvable_of_surjective (f := P.subtype)
-  intro g
-  refine ⟨⟨g, ?_⟩, rfl⟩
-  rw [hPtop]
-  exact Subgroup.mem_top g
+  exact le_of_isSolvable_of_not_isSolvable_of_notMem_imp_mem_doubleCoset
+    (SL2Borel F) P ((ModularGroup.S : SL(2, ℤ)) : SL(2, F))
+    (Matrix.SpecialLinearGroup.not_isSolvable_fin_two F)
+    mem_doubleCoset_modularGroup_S_of_notMem hBP
 
 end Field
 

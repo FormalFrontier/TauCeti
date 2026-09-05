@@ -329,15 +329,8 @@ triangular or a product `b₁ w b₂` of two upper-triangular matrices with the 
 the generation axiom of the `(B, N)`-pair of `GL₂`. -/
 theorem closure_insert_gl2WeylElement_eq_top :
     Subgroup.closure (insert (GL2WeylElement F) (GL2Borel F : Set (GL (Fin 2) F))) = ⊤ := by
-  refine eq_top_iff.mpr fun g _ => ?_
-  by_cases hg : g ∈ GL2Borel F
-  · exact Subgroup.subset_closure (Set.mem_insert_of_mem _ hg)
-  · obtain ⟨x, hx, y, hy, rfl⟩ :=
-      DoubleCoset.mem_doubleCoset.mp (mem_doubleCoset_weyl_of_notMem hg)
-    exact mul_mem
-      (mul_mem (Subgroup.subset_closure (Set.mem_insert_of_mem _ hx))
-        (Subgroup.subset_closure (Set.mem_insert _ _)))
-      (Subgroup.subset_closure (Set.mem_insert_of_mem _ hy))
+  exact closure_insert_eq_top_of_notMem_imp_mem_doubleCoset (GL2Borel F) (GL2WeylElement F)
+    mem_doubleCoset_weyl_of_notMem
 
 end GL2Borel
 
@@ -359,28 +352,9 @@ namespace GL2Borel
 subgroup is contained in it. -/
 theorem le_of_isSolvable [Infinite F] (P : Subgroup (GL (Fin 2) F)) [Group.IsSolvable P]
     (hBP : GL2Borel F ≤ P) : P ≤ GL2Borel F := by
-  by_contra hPB
-  obtain ⟨g, hgP, hgB⟩ := SetLike.not_le_iff_exists.mp hPB
-  obtain ⟨x, hx, y, hy, hxy⟩ :=
-    DoubleCoset.mem_doubleCoset.mp (mem_doubleCoset_weyl_of_notMem hgB)
-  have hwP : GL2WeylElement F ∈ P := by
-    have hxP := hBP hx
-    have hyP := hBP hy
-    have hprod : x⁻¹ * g * y⁻¹ ∈ P := mul_mem (mul_mem (inv_mem hxP) hgP) (inv_mem hyP)
-    convert hprod using 1
-    rw [hxy]
-    group
-  have hclosure :
-      Subgroup.closure (insert (GL2WeylElement F) (GL2Borel F : Set (GL (Fin 2) F))) ≤ P :=
-    (Subgroup.closure_le P).mpr (Set.insert_subset_iff.mpr ⟨hwP, hBP⟩)
-  rw [closure_insert_gl2WeylElement_eq_top] at hclosure
-  have hPtop : P = ⊤ := top_unique hclosure
-  apply Matrix.GeneralLinearGroup.not_isSolvable_fin_two F
-  apply Group.isSolvable_of_surjective (f := P.subtype)
-  intro g
-  refine ⟨⟨g, ?_⟩, rfl⟩
-  rw [hPtop]
-  exact Subgroup.mem_top g
+  exact le_of_isSolvable_of_not_isSolvable_of_notMem_imp_mem_doubleCoset
+    (GL2Borel F) P (GL2WeylElement F) (Matrix.GeneralLinearGroup.not_isSolvable_fin_two F)
+    mem_doubleCoset_weyl_of_notMem hBP
 
 end GL2Borel
 
