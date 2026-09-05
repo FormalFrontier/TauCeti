@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Basic
+public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Space
 
 /-!
 # Wasserstein distance under pushforward
@@ -31,6 +31,10 @@ spaces.
   two measures admitting a coupling.
 * `TauCeti.wassersteinEDist_map_le_mul` is the probability-measure specialization.
 * `TauCeti.HasFiniteMoment.map` shows that Lipschitz pushforward preserves finite moments.
+* `TauCeti.WassersteinSpace.map` lifts pushforward to finite-moment probability measures.
+* `TauCeti.WassersteinSpace.lipschitzWith_map` gives the induced Lipschitz map between
+  Wasserstein spaces.
+* `TauCeti.WassersteinSpace.mapIsometryEquiv` lifts measurable isometric equivalences.
 * `TauCeti.wassersteinEDist_map_eq` gives invariance under a measurable isometric equivalence.
 
 ## References
@@ -51,8 +55,11 @@ namespace TauCeti
 universe u v
 
 variable {X : Type u} {Y : Type v} [MeasurableSpace X] [MeasurableSpace Y]
-  [PseudoEMetricSpace X] [PseudoEMetricSpace Y]
   {p : ℝ≥0∞} {K : ℝ≥0} {f : X → Y} {μ ν : Measure X} {π : Measure (X × X)}
+
+section PseudoEMetric
+
+variable [PseudoEMetricSpace X] [PseudoEMetricSpace Y]
 
 /-- The image of a specified coupling under a Lipschitz map bounds the Wasserstein distance of the
 pushforward measures. This is the coupling-level estimate from which functoriality follows. -/
@@ -137,6 +144,27 @@ theorem HasFiniteMoment.map (hμ : HasFiniteMoment p μ)
   · exact .of_forall fun y ↦ by
       simpa only [Function.comp_apply, enorm_eq_self] using hLip.edist_le_mul x y
 
+namespace WassersteinSpace
+
+/-- Pushforward by a measurable Lipschitz map, as a map between finite-moment Wasserstein
+spaces. -/
+noncomputable def map (f : X → Y)
+    (hdY : ∀ y : Y, Measurable fun z : Y ↦ edist y z) (hf : Measurable f)
+    (hLip : LipschitzWith K f) (mu : WassersteinSpace p X) : WassersteinSpace p Y :=
+  .mk ((mu : ProbabilityMeasure X).map f) <| by
+    simpa only [ProbabilityMeasure.toMeasure_map] using
+      (hasFiniteMoment mu).map hdY hf hLip
+
+/-- The probability measure underlying a Wasserstein-space pushforward is the pushforward of the
+underlying probability measure. -/
+@[simp]
+theorem coe_map (f : X → Y) (hdY : ∀ y : Y, Measurable fun z : Y ↦ edist y z)
+    (hf : Measurable f) (hLip : LipschitzWith K f) (mu : WassersteinSpace p X) :
+    (map f hdY hf hLip mu : ProbabilityMeasure Y) = (mu : ProbabilityMeasure X).map f :=
+  by rw [map, coe_mk]
+
+end WassersteinSpace
+
 section Isometry
 
 variable {e : X ≃ᵐ Y}
@@ -188,5 +216,54 @@ theorem hasFiniteMoment_map_iff
   exact h.map hdX e.symm.measurable ei.symm.isometry.lipschitzWith
 
 end Isometry
+
+end PseudoEMetric
+
+namespace WassersteinSpace
+
+variable [PseudoMetricSpace X] [PseudoMetricSpace Y]
+  [StandardBorelSpace X] [StandardBorelSpace Y] [BorelSpace X] [BorelSpace Y]
+  [SecondCountableTopology X] [SecondCountableTopology Y] [Fact (1 ≤ p)]
+
+/-- Pushforward by a measurable `K`-Lipschitz map is `K`-Lipschitz between finite-moment
+Wasserstein spaces. -/
+theorem lipschitzWith_map (hf : Measurable f) (hLip : LipschitzWith K f) :
+    LipschitzWith K (map (p := p) f (fun _ ↦ measurable_edist_right) hf hLip) := by
+  intro mu nu
+  simpa only [edist_def, coe_map, ProbabilityMeasure.toMeasure_map] using
+    wassersteinEDist_map_le_mul (p := p) measurable_edist hf hLip
+      ((mu : ProbabilityMeasure X) : Measure X) ((nu : ProbabilityMeasure X) : Measure X)
+
+/-- A measurable isometric equivalence of ground spaces induces an isometric equivalence of their
+finite-moment Wasserstein spaces. -/
+noncomputable def mapIsometryEquiv (e : X ≃ᵐ Y) (he : Isometry e) :
+    WassersteinSpace p X ≃ᵢ WassersteinSpace p Y := by
+  have he_symm : Isometry e.symm := he.right_inv e.right_inv
+  refine
+    { toFun := map (p := p) e (fun _ ↦ measurable_edist_right) e.measurable
+        he.lipschitzWith
+      invFun := map (p := p) e.symm (fun _ ↦ measurable_edist_right) e.symm.measurable
+        he_symm.lipschitzWith
+      left_inv := ?_
+      right_inv := ?_
+      isometry_toFun := ?_ }
+  · intro mu
+    apply ext
+    rw [coe_map, coe_map]
+    apply ProbabilityMeasure.toMeasure_injective
+    simpa only [ProbabilityMeasure.toMeasure_map] using
+      (e.map_symm_map (μ := ((mu : ProbabilityMeasure X) : Measure X)))
+  · intro mu
+    apply ext
+    rw [coe_map, coe_map]
+    apply ProbabilityMeasure.toMeasure_injective
+    simpa only [ProbabilityMeasure.toMeasure_map] using
+      (e.map_map_symm (ν := ((mu : ProbabilityMeasure Y) : Measure Y)))
+  · intro mu nu
+    simpa only [edist_def, coe_map, ProbabilityMeasure.toMeasure_map] using
+      wassersteinEDist_map_eq (p := p) measurable_edist he
+        ((mu : ProbabilityMeasure X) : Measure X) ((nu : ProbabilityMeasure X) : Measure X)
+
+end WassersteinSpace
 
 end TauCeti
