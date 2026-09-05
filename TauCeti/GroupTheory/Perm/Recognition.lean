@@ -12,13 +12,17 @@ public import Mathlib.GroupTheory.Perm.Cycle.Type
 /-!
 # Recognizing cycles and transpositions in a permutation group
 
-This file supplies permutation-group recognition steps used to recognize full symmetric groups
-from cycle data. A transitive subgroup of a finite symmetric group whose degree is prime contains
-a full cycle: the proof combines orbit--stabilizer with Cauchy's theorem and the permutation-group
-criterion that an element of prime order in prime degree is a cycle. A permutation with exactly
-one 2-cycle and only odd-length remaining cycles has an explicit odd power that is a
-transposition: the product of the odd lengths kills every remaining cycle while preserving the
-2-cycle.
+This file supplies recognition steps that read off structure of a permutation group from cycle
+data. A transitive subgroup of a finite symmetric group whose degree is prime contains a full
+cycle. A permutation with exactly one 2-cycle and all its other cycles of odd length has an odd
+power that is a transposition, and the exponent is given explicitly as the product of those odd
+lengths.
+
+Both feed the recognition of a full symmetric group, which needs a primitive group containing a
+transposition: a transitive group of prime degree is primitive, and a transposition is what the
+second result produces. In the Galois-theoretic application the cycle pattern of the element fed
+to the second result is the degree pattern of a factorization of a polynomial modulo a prime, read
+through the Frobenius element.
 
 ## Main results
 
@@ -27,12 +31,6 @@ transposition: the product of the odd lengths kills every remaining cycle while 
 * `Equiv.Perm.isSwap_pow_prod_erase_two_cycleType_and_odd`: if a permutation has exactly one
   2-cycle and all its other cycles have odd length, an explicit odd power is a transposition.
 * `Equiv.Perm.exists_odd_isSwap_pow`: the corresponding existential form.
-
-## References
-
-* `TauCetiRoadmap/PolynomialGaloisGroups/README.md`, which specifies both recognition steps: the
-  full cycle in a transitive group of prime degree, and the odd power of a permutation with a
-  unique 2-cycle and otherwise odd cycle lengths that is a transposition.
 -/
 
 public section
