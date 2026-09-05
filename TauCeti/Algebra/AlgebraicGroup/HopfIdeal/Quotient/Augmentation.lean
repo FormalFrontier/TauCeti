@@ -44,7 +44,7 @@ noncomputable section
 
 namespace HopfIdeal
 
-variable {k : Type u} [Field k]
+variable {k : Type u} [CommRing k]
 
 /-- The quotient by the augmentation ideal is the trivial finite-type Hopf algebra. -/
 def quotientAugmentationIso (H : FiniteTypeCommHopfAlgCat.{u, u} k) :

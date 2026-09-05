@@ -204,7 +204,7 @@ noncomputable section
 
 /-- The rank-zero split torus is the trivial affine group: the group algebra of the trivial
 character group is the base field. -/
-def rankZeroSplitTorusIso (k : Type u) [Field k] :
+def rankZeroSplitTorusIso (k : Type u) [CommRing k] :
     DiagonalizableGroup.coordinateRing k
         (SplitTorus.characterGroup (ULift.{u} (Fin 0))) ≅
       FiniteTypeCommHopfAlgCat.of k k :=
@@ -213,7 +213,7 @@ def rankZeroSplitTorusIso (k : Type u) [Field k] :
 
 /-- The rank-zero split-torus isomorphism is the counit on its coordinate ring. -/
 @[simp]
-theorem rankZeroSplitTorusIso_hom_apply (k : Type u) [Field k]
+theorem rankZeroSplitTorusIso_hom_apply (k : Type u) [CommRing k]
     (x : DiagonalizableGroup.coordinateRing k
       (SplitTorus.characterGroup (ULift.{u} (Fin 0)))) :
     (rankZeroSplitTorusIso k).hom x = Coalgebra.counit (R := k) x := by
@@ -221,7 +221,7 @@ theorem rankZeroSplitTorusIso_hom_apply (k : Type u) [Field k]
 
 /-- The trivial affine group is the split torus of rank zero. -/
 @[grind =>]
-theorem splitTorusCommHopfAlgProperty_trivial (k : Type u) [Field k] :
+theorem splitTorusCommHopfAlgProperty_trivial (k : Type u) [CommRing k] :
     splitTorusCommHopfAlgProperty k (FiniteTypeCommHopfAlgCat.of k k) :=
   (splitTorusCommHopfAlgProperty k).prop_of_iso (rankZeroSplitTorusIso k)
     (SplitTorus.splitTorus_coordinateRing k (ULift.{u} (Fin 0)))
