@@ -37,6 +37,8 @@ system does not get that hypothesis for free; what it has to supply is the domin
 
 ## Main results
 
+* `TauCeti.primePowerSummatory_indicator_sub_primeTheta` splits the exponent-one part off the
+  standard weight restricted to any set of prime powers containing exactly the primes of `S`.
 * `TauCeti.primePsi_sub_primeTheta` identifies `ψ - ϑ` with the higher-prime-power sum.
 * `TauCeti.standardPrimePowerRemoval` proves `HasNegligibleHigherPrimePowers K S` for every `S`,
   from the Layer 5 estimate `ψ(x) - ϑ(x) = O(√x log² x)`.
@@ -163,29 +165,40 @@ theorem primePsi_eq_zero_of_lt_two (S : Set (HeightOneSpectrum (𝓞 K))) (hx : 
 
 /-! ### The higher prime powers as the gap between `ψ` and `ϑ` -/
 
+/-- **Splitting the exponent-one part off a restricted prime-power sum.**  For a set `T` of prime
+powers containing exactly the primes of `S`, the summatory function of the standard logarithmic
+weight restricted to `T` exceeds `ϑ` by the higher-prime-power sum over `T`. -/
+theorem primePowerSummatory_indicator_sub_primeTheta (T : Set (IdealPrimePower K))
+    (S : Set (HeightOneSpectrum (𝓞 K)))
+    (hTS : ∀ v : HeightOneSpectrum (𝓞 K), IdealPrimePower.ofPrime v ∈ T ↔ v ∈ S) (x : ℝ) :
+    primePowerSummatory K (T.indicator primePowerWeight) x - primeTheta K S x =
+      primePowerSummatory K (T.indicator higherPrimePowerWeight) x := by
+  have hsplit : T.indicator primePowerWeight
+      = T.indicator (primePowerWeight - higherPrimePowerWeight)
+        + T.indicator higherPrimePowerWeight := by
+    rw [← Set.indicator_add', sub_add_cancel]
+  have hzero : ∀ A : IdealPrimePower K, ¬ Prime (A : Ideal (𝓞 K)) →
+      T.indicator (primePowerWeight - higherPrimePowerWeight) A = 0 := fun A hA ↦ by
+    simp [higherPrimePowerWeight_of_not_prime hA]
+  have hexp : primePowerSummatory K
+      (T.indicator (primePowerWeight - higherPrimePowerWeight)) x = primeTheta K S x := by
+    rw [primePowerSummatory_eq_primeSummatory K _ hzero, primeSummatory_apply, primeTheta_apply]
+    refine Finset.sum_congr rfl fun v _ ↦ ?_
+    by_cases hv : v ∈ S
+    · rw [Set.indicator_of_mem ((hTS v).mpr hv), Set.indicator_of_mem hv, Pi.sub_apply,
+        higherPrimePowerWeight_of_prime (IdealPrimePower.prime_ofPrime v), sub_zero,
+        primePowerWeight_ofPrime]
+    · rw [Set.indicator_of_notMem (fun h ↦ hv ((hTS v).mp h)), Set.indicator_of_notMem hv]
+  rw [hsplit, primePowerSummatory_add, hexp, add_sub_cancel_left]
+
 /-- **The difference between `ψ` and `ϑ` is the higher-prime-power sum.**  Both sides run over the
 prime powers whose base lies in `S`; the exponent-one part of `ψ` is exactly `ϑ`. -/
 theorem primePsi_sub_primeTheta (S : Set (HeightOneSpectrum (𝓞 K))) (x : ℝ) :
     primePsi K S x - primeTheta K S x =
       primePowerSummatory K
         ({A : IdealPrimePower K | primePowerBase A ∈ S}.indicator higherPrimePowerWeight) x := by
-  have hsplit : ({A : IdealPrimePower K | primePowerBase A ∈ S}.indicator primePowerWeight)
-      = {A : IdealPrimePower K | primePowerBase A ∈ S}.indicator
-          (primePowerWeight - higherPrimePowerWeight)
-        + {A : IdealPrimePower K | primePowerBase A ∈ S}.indicator higherPrimePowerWeight := by
-    rw [← Set.indicator_add', sub_add_cancel]
-  have hzero : ∀ A : IdealPrimePower K, ¬ Prime (A : Ideal (𝓞 K)) →
-      {A : IdealPrimePower K | primePowerBase A ∈ S}.indicator
-        (primePowerWeight - higherPrimePowerWeight) A = 0 := fun A hA ↦ by
-    simp [higherPrimePowerWeight_of_not_prime hA]
-  have hexp : primePowerSummatory K
-      ({A : IdealPrimePower K | primePowerBase A ∈ S}.indicator
-        (primePowerWeight - higherPrimePowerWeight)) x = primeTheta K S x := by
-    rw [primePowerSummatory_eq_primeSummatory K _ hzero, primeSummatory_apply, primeTheta_apply]
-    refine Finset.sum_congr rfl fun v _ ↦ ?_
-    by_cases hv : v ∈ S <;>
-      simp [hv, higherPrimePowerWeight_of_prime (IdealPrimePower.prime_ofPrime v)]
-  rw [primePsi, hsplit, primePowerSummatory_add, hexp, add_sub_cancel_left]
+  rw [primePsi]
+  exact primePowerSummatory_indicator_sub_primeTheta _ S (fun v ↦ by simp) x
 
 /-- Chebyshev's `ϑ` never exceeds `ψ`. -/
 theorem primeTheta_le_primePsi (S : Set (HeightOneSpectrum (𝓞 K))) (x : ℝ) :
