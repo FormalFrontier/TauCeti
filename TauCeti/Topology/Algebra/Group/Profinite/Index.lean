@@ -24,14 +24,16 @@ description as the least common multiple of the indices of open overgroups.
 
 ## Main results
 
-* `profiniteIndex`: the supernatural index of a subgroup of a profinite group.
-* `profiniteIndex_eq_iSup_openSubgroup`: the description as the least common multiple of the
-  indices of open overgroups.
-* `profiniteIndex_openSubgroup`: agreement with the ordinary index for an open subgroup.
-* `profiniteIndex_topologicalClosure`: taking topological closure does not change the index.
-* `profiniteIndex_eq_one_iff_topologicalClosure_eq_top`: the index is one exactly for dense
-  subgroups.
-* `profiniteIndex_eq_one_iff`: the closed-subgroup specialization.
+* `TauCeti.Subgroup.profiniteIndex`: the supernatural index of a subgroup of a profinite group.
+* `TauCeti.Subgroup.profiniteIndex_anti`: subgroup inclusion reverses supernatural indices.
+* `TauCeti.Subgroup.profiniteIndex_eq_iSup_openSubgroup`: the description as the least common
+  multiple of the indices of open overgroups.
+* `TauCeti.OpenSubgroup.profiniteIndex`: agreement with the ordinary index for an open subgroup.
+* `TauCeti.Subgroup.profiniteIndex_topologicalClosure`: taking topological closure does not change
+  the index.
+* `TauCeti.Subgroup.profiniteIndex_eq_one_iff_topologicalClosure_eq_top`: the index is one exactly
+  for dense subgroups.
+* `TauCeti.Subgroup.profiniteIndex_eq_one_iff`: the closed-subgroup specialization.
 
 ## References
 
@@ -45,6 +47,8 @@ namespace TauCeti
 open scoped ENat
 
 variable {G : Type*} [Group G] [TopologicalSpace G]
+
+namespace Subgroup
 
 /-- The **index of a subgroup of a profinite group**, as a supernatural number. At a prime
 `ℓ`, it is the supremum over open normal subgroups `N` of the `ℓ`-adic valuations of
@@ -64,19 +68,23 @@ theorem profiniteIndex_apply (H : Subgroup G) (ℓ : Nat.Primes) :
       (padicValNat ℓ ((H.map (QuotientGroup.mk' N.toSubgroup)).index) : ℕ∞) :=
   by rw [profiniteIndex, Supernatural.ofFun_apply]
 
+end Subgroup
+
 /-- The whole group has supernatural index one. -/
 @[simp]
-theorem profiniteIndex_top : profiniteIndex (⊤ : Subgroup G) = 1 := by
+theorem profiniteIndex_top : Subgroup.profiniteIndex (⊤ : Subgroup G) = 1 := by
   have hmap : ∀ N : OpenNormalSubgroup G,
       (⊤ : Subgroup G).map (QuotientGroup.mk' N.toSubgroup) = ⊤ := fun N ↦
     Subgroup.map_top_of_surjective _ (QuotientGroup.mk'_surjective N.toSubgroup)
   ext ℓ
-  simp_rw [profiniteIndex_apply, hmap]
+  simp_rw [Subgroup.profiniteIndex_apply, hmap]
   simp
 
 section Profinite
 
 variable [IsTopologicalGroup G] [CompactSpace G]
+
+namespace Subgroup
 
 /-- The supernatural index is equivalently the supremum of the ordinary positive indices of
 the images in finite continuous quotients. -/
@@ -93,6 +101,18 @@ theorem profiniteIndex_eq_iSup_ofNat (H : Subgroup G) :
     (Supernatural.ofNat_apply
       ⟨(H.map (QuotientGroup.mk' N.toSubgroup)).index,
         Nat.zero_lt_of_ne_zero Subgroup.index_ne_zero_of_finite⟩ ℓ).symm
+
+/-- Inclusion of subgroups reverses their supernatural indices. -/
+theorem profiniteIndex_anti {H K : Subgroup G} (h : H ≤ K) :
+    profiniteIndex K ≤ profiniteIndex H := by
+  rw [profiniteIndex_eq_iSup_ofNat, profiniteIndex_eq_iSup_ofNat]
+  refine iSup_le fun N ↦ ?_
+  refine (Supernatural.ofNat_le_ofNat_iff.mpr ?_).trans
+    (le_iSup (fun N : OpenNormalSubgroup G ↦
+      Supernatural.ofNat
+        ⟨(H.map (QuotientGroup.mk' N.toSubgroup)).index,
+          Nat.zero_lt_of_ne_zero Subgroup.index_ne_zero_of_finite⟩) N)
+  exact PNat.dvd_iff.mpr (Subgroup.index_dvd_of_le (Subgroup.map_mono h))
 
 /-- The profinite index is the least common multiple, in the supernatural lattice, of the
 ordinary indices of the open subgroups containing `H`.
@@ -161,15 +181,19 @@ theorem profiniteIndex_apply_eq_iSup_openSubgroup [TotallyDisconnectedSpace G]
   funext U
   exact Supernatural.ofNat_apply _ _
 
+end Subgroup
+
+namespace OpenSubgroup
+
 /-- For an open subgroup, the supernatural index is the prime factorization of its ordinary
 index. -/
 @[simp]
-theorem profiniteIndex_openSubgroup [TotallyDisconnectedSpace G] (U : OpenSubgroup G) :
-    profiniteIndex U.toSubgroup =
+theorem profiniteIndex [TotallyDisconnectedSpace G] (U : OpenSubgroup G) :
+    Subgroup.profiniteIndex U.toSubgroup =
       Supernatural.ofNat
         (⟨U.toSubgroup.index,
           Nat.zero_lt_of_ne_zero Subgroup.index_ne_zero_of_finite⟩ : ℕ+) := by
-  rw [profiniteIndex_eq_iSup_openSubgroup]
+  rw [Subgroup.profiniteIndex_eq_iSup_openSubgroup]
   apply le_antisymm
   · refine iSup_le fun V ↦ ?_
     exact Supernatural.ofNat_le_ofNat_iff.mpr <|
@@ -181,13 +205,16 @@ theorem profiniteIndex_openSubgroup [TotallyDisconnectedSpace G] (U : OpenSubgro
 
 /-- Primewise, the profinite index of an open subgroup is the valuation of its ordinary
 index. -/
-theorem profiniteIndex_openSubgroup_apply [TotallyDisconnectedSpace G]
+theorem profiniteIndex_apply [TotallyDisconnectedSpace G]
     (U : OpenSubgroup G) (ℓ : Nat.Primes) :
-    profiniteIndex U.toSubgroup ℓ = (padicValNat ℓ U.toSubgroup.index : ℕ∞) := by
-  rw [profiniteIndex_openSubgroup]
+    Subgroup.profiniteIndex U.toSubgroup ℓ =
+      (padicValNat ℓ U.toSubgroup.index : ℕ∞) := by
+  rw [profiniteIndex]
   exact Supernatural.ofNat_apply
     (⟨U.toSubgroup.index,
       Nat.zero_lt_of_ne_zero Subgroup.index_ne_zero_of_finite⟩ : ℕ+) ℓ
+
+end OpenSubgroup
 
 private theorem map_topologicalClosure_quotient_eq (H : Subgroup G)
     (N : OpenNormalSubgroup G) :
@@ -202,6 +229,8 @@ private theorem map_topologicalClosure_quotient_eq (H : Subgroup G)
         (H.map (QuotientGroup.mk' N.toSubgroup) : Set (G ⧸ N.toSubgroup))).isClosed.preimage
           (QuotientGroup.continuous_mk (N := N.toSubgroup))
   · exact Subgroup.map_mono H.le_topologicalClosure
+
+namespace Subgroup
 
 /-- Taking the topological closure of a subgroup does not change its supernatural index. -/
 @[simp]
@@ -254,6 +283,8 @@ theorem profiniteIndex_eq_one_iff (H : Subgroup G) (hH : IsClosed (H : Set G)) :
     rw [Subgroup.topologicalClosure_coe, hH.closure_eq]
   rw [profiniteIndex_eq_one_iff_topologicalClosure_eq_top,
     hclosure]
+
+end Subgroup
 
 end Profinite
 
