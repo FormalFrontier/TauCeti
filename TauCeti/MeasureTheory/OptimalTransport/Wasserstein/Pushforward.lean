@@ -173,20 +173,22 @@ theorem map_id (hdX : ∀ x : X, Measurable fun z : X ↦ edist x z)
   apply ProbabilityMeasure.toMeasure_injective
   simp only [ProbabilityMeasure.toMeasure_map, Measure.map_id]
 
-/-- Pushforward along a composition is the composition of the pushforwards. -/
-theorem map_comp {Z : Type w} [MeasurableSpace Z] [PseudoEMetricSpace Z] {g : Y → Z} {K' : ℝ≥0}
+/-- Successive pushforwards are the pushforward along the composition, matching the orientation of
+`MeasureTheory.Measure.map_map`. -/
+@[simp]
+theorem map_map {Z : Type w} [MeasurableSpace Z] [PseudoEMetricSpace Z] {g : Y → Z} {K' : ℝ≥0}
     (hdY : ∀ y : Y, Measurable fun z : Y ↦ edist y z)
     (hdZ : ∀ z : Z, Measurable fun w : Z ↦ edist z w)
     (hf : Measurable f) (hLip : LipschitzWith K f)
     (hg : Measurable g) (hgLip : LipschitzWith K' g)
     (mu : WassersteinSpace p X) :
-    map (g ∘ f) hdZ (hg.comp hf) (hgLip.comp hLip) mu =
-      map g hdZ hg hgLip (map f hdY hf hLip mu) := by
+    map g hdZ hg hgLip (map f hdY hf hLip mu) =
+      map (g ∘ f) hdZ (hg.comp hf) (hgLip.comp hLip) mu := by
   apply ext
   rw [coe_map, coe_map, coe_map]
   apply ProbabilityMeasure.toMeasure_injective
   simp only [ProbabilityMeasure.toMeasure_map]
-  exact (Measure.map_map hg hf).symm
+  exact Measure.map_map hg hf
 
 end WassersteinSpace
 
