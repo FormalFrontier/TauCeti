@@ -34,11 +34,10 @@ The zeroth iterate is the identity, exponents add under composition and multiply
 powers in the endomorphism monoid, and the fixed points are the points of the same carrier over
 the Frobenius-fixed subring of `A`.
 
-The `E₇` diagram has no nontrivial symmetry, so `E₇(q)` is the only classification-list family
-built on this carrier: once that carrier is identified with the pinned simply connected
-Chevalley--Demazure group, this Frobenius will be its whole Steinberg map, with no graph
-automorphism to compose. Nothing here asserts reductivity, maximality of the weight torus, an
-identification of the carrier's root datum, or any finiteness or simplicity statement.
+The `E₇` diagram has no nontrivial symmetry, so a Steinberg endomorphism built on this carrier
+is a field Frobenius alone, with no graph automorphism to compose with. Nothing here asserts
+reductivity, maximality of the weight torus, an identification of the carrier's root datum, or
+any finiteness or simplicity statement.
 
 ## Main declarations
 
@@ -68,18 +67,6 @@ identification of the carrier's root datum, or any finiteness or simplicity stat
   weight-torus matrix from
   `TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Frobenius`,
   and the power law of an additive character from Mathlib's `AddChar.map_nsmul_eq_pow`.
-
-## Roadmap
-
-This advances the target "points over an algebraically closed field as a group, functorially in
-the field, so that a field endomorphism induces a group endomorphism of the points", whose "the
-`q`-power Frobenius is the case a consumer asks for first", in Layer 9, "pinned
-Chevalley--Demazure group schemes over `ℤ`", of `TauCetiRoadmap/ReductiveGroups/README.md`. Its
-consumer is milestone L1, "ordinary and graph Steinberg maps", of
-`TauCetiRoadmap/CFSGStatement/README.md`, whose table assigns the untwisted family `E₇(q)` the
-Steinberg map `Frob_q` on the points of a carrier for the `E₇` diagram over an algebraic closure
-of `ZMod p`. The identification of this carrier with the pinned simply connected
-Chevalley--Demazure group that milestone requires remains pending.
 -/
 
 public section
@@ -95,8 +82,8 @@ variable (p k : ℕ) (A : Type v) [CommRing A] [ExpChar A p]
 /-- **The `p ^ k`-power Frobenius endomorphism of the full-weight type-`E₇` minuscule carrier**,
 the functorial map on points induced by the iterated Frobenius endomorphism of the value ring.
 
-For `p` prime, `0 < k`, and `A` an algebraic closure of `ZMod p`, this is the map intended as the
-Steinberg endomorphism of a future construction of the untwisted family `E₇(p ^ k)`. -/
+For `p` prime, `0 < k` and `A` an algebraic closure of `ZMod p`, this is the `q`-power Frobenius
+of the carrier's points for `q = p ^ k`. -/
 def frobenius : points A →* points A :=
   pointsMap (iterateFrobenius A p k)
 
@@ -178,10 +165,7 @@ theorem frobenius_eq_self_iff (g : points A) :
     _root_.Matrix.GeneralLinearGroup.map_iterateFrobenius_eq_self_iff]
 
 /-- **The Frobenius-fixed points of the full-weight type-`E₇` minuscule carrier are its points
-over the Frobenius-fixed subring.** For `p` prime, `0 < k`, `A` an algebraic closure of `ZMod p`
-and `q = p ^ k`, this will read the fixed group of the `E₇(q)` Steinberg map as the carrier's
-`𝔽_q`-points once that carrier is identified with the pinned simply connected group; no finiteness
-of either side is asserted. -/
+over the Frobenius-fixed subring.** No finiteness of either side is asserted. -/
 theorem map_subtype_fixedSubgroup_frobenius_eq :
     (fixedSubgroup (frobenius p k A)).map (points A).subtype =
       (points ↥(frobeniusFixedSubring A p k)).map
