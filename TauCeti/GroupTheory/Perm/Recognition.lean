@@ -27,6 +27,12 @@ transposition: the product of the odd lengths kills every remaining cycle while 
 * `Equiv.Perm.isSwap_pow_prod_erase_two_cycleType_and_odd`: if a permutation has exactly one
   2-cycle and all its other cycles have odd length, an explicit odd power is a transposition.
 * `Equiv.Perm.exists_odd_isSwap_pow`: the corresponding existential form.
+
+## References
+
+* `TauCetiRoadmap/PolynomialGaloisGroups/README.md`, which specifies both recognition steps: the
+  full cycle in a transitive group of prime degree, and the odd power of a permutation with a
+  unique 2-cycle and otherwise odd cycle lengths that is a transposition.
 -/
 
 public section
