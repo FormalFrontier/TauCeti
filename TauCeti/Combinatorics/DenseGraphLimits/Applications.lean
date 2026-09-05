@@ -6,7 +6,6 @@ Authors: Codex
 module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.HomDensity.SmallGraphs
-public import Mathlib.Combinatorics.SimpleGraph.CycleGraph
 import TauCeti.MeasureTheory.Integral.Bochner.Basic
 
 /-!
