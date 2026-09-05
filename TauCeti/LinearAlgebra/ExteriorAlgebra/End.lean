@@ -92,7 +92,7 @@ private theorem basisFactor_apply {n : ℕ}
     (b : Module.Basis (Fin n) K W) (s t : Finset (Fin n)) (i : Fin n) :
     (if i ∈ s then occupationProjection b i else vacancyProjection b i)
         (b.ExteriorAlgebra t) =
-      (if (i ∈ s ↔ i ∈ t) then 1 else 0) • b.ExteriorAlgebra t := by
+      (if (i ∈ s ↔ i ∈ t) then (1 : K) else 0) • b.ExteriorAlgebra t := by
   by_cases his : i ∈ s <;> by_cases hit : i ∈ t <;>
     simp [-contractLeft_coord_basis, his, hit, occupationProjection,
       ι_mul_contractLeft_coord_basis,
