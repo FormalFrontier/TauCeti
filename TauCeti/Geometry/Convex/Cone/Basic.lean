@@ -5,22 +5,20 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Basic.Real.Basic
 public import Mathlib.Geometry.Convex.Cone.Pointed
 public import Mathlib.LinearAlgebra.Prod
 
 /-!
-# Salience of images and products of pointed cones
+# Salience of images and products of cones
 
 Mathlib's `ConvexCone.Salient` records that a convex cone contains no line. This file proves the
-two closure properties of salience that concern the standard constructions on Mathlib's
-`PointedCone`: the image under an injective linear map, and the product of two cones. Neither
-statement involves a lattice, so both belong to the generic convex-cone API rather than to any
-consumer of it.
+two closure properties of salience that concern standard cone constructions: the image under an
+injective linear map, and the product of two pointed cones. Neither statement involves a lattice,
+so both belong to the generic convex-cone API rather than to any consumer of it.
 
 ## Main declarations
 
-* `ConvexCone.Salient.map`: the image of a salient pointed cone under an injective linear map is
+* `ConvexCone.Salient.map`: the image of a salient convex cone under an injective linear map is
   salient.
 * `ConvexCone.Salient.prod`: a product of salient pointed cones is salient.
 -/
@@ -29,22 +27,21 @@ public section
 
 namespace ConvexCone.Salient
 
-variable {V V' : Type*} [AddCommGroup V] [AddCommGroup V'] [Module ℝ V] [Module ℝ V']
-  {σ : PointedCone ℝ V}
+variable {R V V' : Type*} [Semiring R] [PartialOrder R] [AddCommGroup V] [AddCommGroup V']
+  [Module R V] [Module R V']
 
-/-- The image of a salient pointed cone under an injective linear map is salient. -/
-theorem map {g : V →ₗ[ℝ] V'} (hσ : (σ : ConvexCone ℝ V).Salient)
-    (hg : Function.Injective g) :
-    ((PointedCone.map g σ : PointedCone ℝ V') : ConvexCone ℝ V').Salient := by
+/-- The image of a salient convex cone under an injective linear map is salient. -/
+theorem map {C : ConvexCone R V} {g : V →ₗ[R] V'} (hC : C.Salient)
+    (hg : Function.Injective g) : (C.map g).Salient := by
   rintro _ ⟨x, hx, rfl⟩ hne hneg
   obtain ⟨y, hy, hgy⟩ := hneg
   have hyx : y = -x := hg (by rw [map_neg]; exact hgy)
-  exact hσ x hx (fun h ↦ hne (by simp [h])) (hyx ▸ hy)
+  exact hC x hx (fun h ↦ hne (by simp [h])) (hyx ▸ hy)
 
 /-- A product of salient pointed cones is salient. -/
-theorem prod {τ : PointedCone ℝ V'} (hσ : (σ : ConvexCone ℝ V).Salient)
-    (hτ : (τ : ConvexCone ℝ V').Salient) :
-    ((σ.prod τ : PointedCone ℝ (V × V')) : ConvexCone ℝ (V × V')).Salient := by
+theorem prod [IsOrderedRing R] {σ : PointedCone R V} {τ : PointedCone R V'}
+    (hσ : (σ : ConvexCone R V).Salient) (hτ : (τ : ConvexCone R V').Salient) :
+    ((σ.prod τ : PointedCone R (V × V')) : ConvexCone R (V × V')).Salient := by
   rintro ⟨x, y⟩ ⟨hx, hy⟩ hne ⟨hnx, hny⟩
   rcases eq_or_ne x 0 with rfl | hx0
   · exact hτ y hy (fun h ↦ hne (by simp [h])) hny
