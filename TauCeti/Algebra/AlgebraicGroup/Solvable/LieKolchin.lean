@@ -93,6 +93,8 @@ private theorem hasNonzeroWeightVector_of_forall_isUnipotentPoint_derived_aux
     (CommHopfAlgCat.isNormal_derivedDefiningIdeal A) (CommAlgCat.of k k)
   let rho : _root_.Representation k G (k ⊗[k] V) :=
     pointsRepresentation (R := k) (H := H) (A := k) V
+  have hrho (g : G) : rho g = endOfPoint V g.ofConv := by
+    simp only [rho, G, pointsRepresentation_apply]
   have hcomm : _root_.commutator G ≤ N :=
     CommHopfAlgCat.commutator_le_quotientPointsSubgroup_of_le_derivedDefiningIdeal
       A I le_rfl (CommAlgCat.of k k)
@@ -108,8 +110,7 @@ private theorem hasNonzeroWeightVector_of_forall_isUnipotentPoint_derived_aux
         AlgHom.mapDomain q g := by
       rw [CommHopfAlgCat.quotientPointsHom_apply, AlgHom.mapDomain_apply]
     have hn : (n : G) = AlgHom.mapDomain q g := hg.symm.trans hinclude
-    rw [show rho n = endOfPoint V (n : G).ofConv by
-      exact pointsRepresentation_apply V (n : G), hn]
+    rw [hrho n, hn]
     exact hnil
   obtain ⟨χ, w, hw, haction⟩ :=
     rho.exists_unitHom_jointEigenvector_of_commutator_le_of_isUnipotent N hcomm hunipotent
@@ -122,7 +123,7 @@ private theorem hasNonzeroWeightVector_of_forall_isUnipotentPoint_derived_aux
       basePointsRepresentation (R := k) (H := H) V g v = (χ g : k) • v := by
     rw [basePointsRepresentation_apply, hv']
     have hg := haction g
-    rw [show rho g = endOfPoint V g.ofConv by exact pointsRepresentation_apply V g] at hg
+    rw [hrho g] at hg
     rw [hg, map_smul]
   let p : Submodule k V := k ∙ v
   have hact (g : WithConv (H →ₐ[k] k)) {m : V} (hm : m ∈ p) :
