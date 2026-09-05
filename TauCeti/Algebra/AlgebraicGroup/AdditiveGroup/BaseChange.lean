@@ -91,6 +91,7 @@ private noncomputable def symmetricAlgebraBialgEquiv {P N : Type*}
               (SymmetricAlgebra.mapEquiv K e (SymmetricAlgebra.ι K P m)) =
             (Bialgebra.counitAlgHom K (SymmetricAlgebra K P))
               (SymmetricAlgebra.ι K P m) := by
+        rw [SymmetricAlgebra.counitAlgHom_eq]
         rw [SymmetricAlgebra.mapEquiv_apply, SymmetricAlgebra.map_apply_ι]
         exact (SymmetricAlgebra.algebraMapInv_ι _).trans
           (SymmetricAlgebra.algebraMapInv_ι _).symm
@@ -109,10 +110,7 @@ private theorem symmetricAlgebraBialgEquiv_ι {P N : Type*}
       SymmetricAlgebra.ι K N (e p) :=
   by
     rw [symmetricAlgebraBialgEquiv, BialgEquiv.ofAlgEquiv_apply]
-    -- The bialgebra wrapper exposes the algebra equivalence through its `toFun` field.
-    change SymmetricAlgebra.mapEquiv K e (SymmetricAlgebra.ι K P p) = _
-    rw [SymmetricAlgebra.mapEquiv_apply, SymmetricAlgebra.map_apply_ι]
-    simp only [LinearEquiv.coe_coe]
+    exact SymmetricAlgebra.mapEquiv_ι K e p
 
 @[simp]
 private theorem symmetricAlgebraBialgEquiv_symm_ι {P N : Type*}

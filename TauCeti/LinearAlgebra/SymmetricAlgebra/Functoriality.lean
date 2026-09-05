@@ -163,6 +163,7 @@ theorem mapEquiv_apply (e : M ≃ₗ[R] N) (a : SymmetricAlgebra R M) :
   rw [← AlgEquiv.toAlgHom_apply, mapEquiv_toAlgHom]
 
 /-- The bundled equivalence acts on canonical generators by the underlying linear equivalence. -/
+@[simp, nolint simpNF]
 theorem mapEquiv_ι (e : M ≃ₗ[R] N) (a : M) :
     mapEquiv R e (ι R M a) = ι R N (e a) := by
   simp [mapEquiv_apply]
@@ -174,8 +175,11 @@ theorem mapEquiv_symm (e : M ≃ₗ[R] N) :
     (mapEquiv R e).symm = mapEquiv R e.symm := by
   apply AlgEquiv.ext
   intro a
-  rw [mapEquiv, AlgEquiv.ofAlgHom_symm]
-  simp only [AlgEquiv.ofAlgHom_apply, mapEquiv, LinearEquiv.symm_symm]
+  apply (mapEquiv R e).injective
+  rw [(mapEquiv R e).apply_symm_apply, mapEquiv_apply (e := e.symm),
+    mapEquiv_apply (e := e)]
+  rw [← AlgHom.comp_apply, map_comp_map, e.comp_symm, map_id]
+  rfl
 
 /-- The identity linear equivalence induces the identity algebra equivalence. -/
 @[simp]
