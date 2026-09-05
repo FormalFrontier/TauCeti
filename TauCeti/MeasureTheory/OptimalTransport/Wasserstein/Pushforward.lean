@@ -52,7 +52,7 @@ open scoped ENNReal NNReal
 
 namespace TauCeti
 
-universe u v
+universe u v w
 
 variable {X : Type u} {Y : Type v} [MeasurableSpace X] [MeasurableSpace Y]
   {p : ℝ≥0∞} {K : ℝ≥0} {f : X → Y} {μ ν : Measure X} {π : Measure (X × X)}
@@ -163,6 +163,31 @@ theorem coe_map (f : X → Y) (hdY : ∀ y : Y, Measurable fun z : Y ↦ edist y
     (map f hdY hf hLip mu : ProbabilityMeasure Y) = (mu : ProbabilityMeasure X).map f :=
   by rw [map, coe_mk]
 
+/-- Pushforward by the identity map is the identity on finite-moment Wasserstein spaces. -/
+@[simp]
+theorem map_id (hdX : ∀ x : X, Measurable fun z : X ↦ edist x z)
+    (hf : Measurable (id : X → X)) (hLip : LipschitzWith K (id : X → X))
+    (mu : WassersteinSpace p X) : map id hdX hf hLip mu = mu := by
+  apply ext
+  rw [coe_map]
+  apply ProbabilityMeasure.toMeasure_injective
+  simp only [ProbabilityMeasure.toMeasure_map, Measure.map_id]
+
+/-- Pushforward along a composition is the composition of the pushforwards. -/
+theorem map_comp {Z : Type w} [MeasurableSpace Z] [PseudoEMetricSpace Z] {g : Y → Z} {K' L : ℝ≥0}
+    (hdY : ∀ y : Y, Measurable fun z : Y ↦ edist y z)
+    (hdZ : ∀ z : Z, Measurable fun w : Z ↦ edist z w)
+    (hf : Measurable f) (hLip : LipschitzWith K f)
+    (hg : Measurable g) (hgLip : LipschitzWith K' g)
+    (hgf : Measurable (g ∘ f)) (hgfLip : LipschitzWith L (g ∘ f))
+    (mu : WassersteinSpace p X) :
+    map (g ∘ f) hdZ hgf hgfLip mu = map g hdZ hg hgLip (map f hdY hf hLip mu) := by
+  apply ext
+  rw [coe_map, coe_map, coe_map]
+  apply ProbabilityMeasure.toMeasure_injective
+  simp only [ProbabilityMeasure.toMeasure_map]
+  exact (Measure.map_map hg hf).symm
+
 end WassersteinSpace
 
 section Isometry
@@ -263,6 +288,23 @@ noncomputable def mapIsometryEquiv (e : X ≃ᵐ Y) (he : Isometry e) :
     simpa only [edist_def, coe_map, ProbabilityMeasure.toMeasure_map] using
       wassersteinEDist_map_eq (p := p) measurable_edist he
         ((mu : ProbabilityMeasure X) : Measure X) ((nu : ProbabilityMeasure X) : Measure X)
+
+/-- The isometric equivalence induced by a measurable isometric equivalence acts by pushforward
+along that equivalence. -/
+@[simp]
+theorem mapIsometryEquiv_apply (e : X ≃ᵐ Y) (he : Isometry e) (mu : WassersteinSpace p X) :
+    mapIsometryEquiv (p := p) e he mu =
+      map e (fun _ ↦ measurable_edist_right) e.measurable he.lipschitzWith mu :=
+  (rfl)
+
+/-- The inverse of the induced isometric equivalence acts by pushforward along the inverse
+equivalence. -/
+@[simp]
+theorem mapIsometryEquiv_symm_apply (e : X ≃ᵐ Y) (he : Isometry e) (nu : WassersteinSpace p Y) :
+    (mapIsometryEquiv (p := p) e he).symm nu =
+      map e.symm (fun _ ↦ measurable_edist_right) e.symm.measurable
+        (he.right_inv e.right_inv : Isometry (e.symm : Y → X)).lipschitzWith nu :=
+  (rfl)
 
 end WassersteinSpace
 
