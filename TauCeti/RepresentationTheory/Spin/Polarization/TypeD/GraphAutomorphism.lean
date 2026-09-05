@@ -83,19 +83,6 @@ datum for the type-`D` spin representation and the permutation `TauCeti.graphPer
   the graph automorphism of a pinned group of Lie type.
 * N. Bourbaki, *Groupes et algèbres de Lie*, Chapters 4--6, Plate IV, for the numbering of the
   `Dₙ` diagram whose last two nodes the symmetry exchanges.
-
-## Roadmap
-
-This advances Layer 9, "The Chevalley--Demazure construction", of
-`TauCetiRoadmap/ReductiveGroups/README.md`, whose pinned carriers carry diagram automorphisms; the
-consumer is milestone L1, "ordinary and graph Steinberg maps", of
-`TauCetiRoadmap/CFSGStatement/README.md`, which needs the graph automorphism `γ` of the pinned
-ambient group of the `²Dₙ(q)` branch. Only that branch is served here: `TauCeti.graphPermD` is the
-order-two exchange of the two fork nodes, whereas the `³D₄(q)` branch is twisted by the order-three
-triality permutation of the three outer nodes of `D₄`, which a separate operator has still to
-supply. Descending the operator built here to
-`TauCeti.TypeDSpinCarrier.groupScheme` and its points, which is what produces `γ` itself, is
-subsequent work.
 -/
 
 public section
@@ -130,9 +117,10 @@ theorem typeDGraphVector_def (hn : 2 ≤ n) :
   (rfl)
 
 /-- The graph vector is orthogonal to every basis vector other than the last. -/
-theorem polar_typeDGraphVector_basis_of_ne (hn : 2 ≤ n) {j : Fin n} (hj : (j : ℕ) ≠ n - 1) :
-    polar Q (P.typeDGraphVector b hn) (b j : V) = 0 := by
-  rw [typeDGraphVector_def, polar_comm, polar_sub_right, P.polar_W_eq_zero, P.polar_dualVector]
+theorem isOrtho_typeDGraphVector_basis_of_ne (hn : 2 ≤ n) {j : Fin n} (hj : (j : ℕ) ≠ n - 1) :
+    Q.IsOrtho (P.typeDGraphVector b hn) (b j : V) := by
+  rw [← isOrtho_polarBilin, polarBilin_apply_apply, typeDGraphVector_def, polar_comm,
+    polar_sub_right, P.polar_W_eq_zero, P.polar_dualVector]
   simp only [Fin.ext_iff, zero_sub, neg_eq_zero, ite_eq_right_iff]
   omega
 
@@ -144,9 +132,10 @@ theorem polar_typeDGraphVector_basis_last (hn : 2 ≤ n) :
   ring
 
 /-- The graph vector is orthogonal to every dual basis vector other than the last. -/
-theorem polar_typeDGraphVector_dualVector_of_ne (hn : 2 ≤ n) {j : Fin n} (hj : (j : ℕ) ≠ n - 1) :
-    polar Q (P.typeDGraphVector b hn) (P.dualVector b j : V) = 0 := by
-  rw [typeDGraphVector_def, polar_sub_left, P.polar_W'_eq_zero, P.polar_dualVector]
+theorem isOrtho_typeDGraphVector_dualVector_of_ne (hn : 2 ≤ n) {j : Fin n}
+    (hj : (j : ℕ) ≠ n - 1) : Q.IsOrtho (P.typeDGraphVector b hn) (P.dualVector b j : V) := by
+  rw [← isOrtho_polarBilin, polarBilin_apply_apply, typeDGraphVector_def, polar_sub_left,
+    P.polar_W'_eq_zero, P.polar_dualVector]
   simp only [Fin.ext_iff, sub_zero, ite_eq_right_iff]
   omega
 
@@ -164,7 +153,8 @@ theorem quadraticForm_typeDGraphVector (hn : 2 ≤ n) : Q (P.typeDGraphVector b 
     QuadraticMap.map_neg, P.isotropic_W', polar_neg_right, P.polar_dualVector_self]
   ring
 
-/-- The Clifford generator of the graph vector squares to `-1`. -/
+/-- The Clifford generator of the graph vector squares to `-1`. This is not `@[simp]`: `simp`
+already closes it from `CliffordAlgebra.ι_sq_scalar` and `quadraticForm_typeDGraphVector`. -/
 theorem ι_typeDGraphVector_mul_self (hn : 2 ≤ n) :
     ι Q (P.typeDGraphVector b hn) * ι Q (P.typeDGraphVector b hn) = -1 := by
   rw [ι_sq_scalar, quadraticForm_typeDGraphVector, map_neg, map_one]
@@ -186,12 +176,6 @@ private theorem ι_typeDGraphVector_mul_ι (hn : 2 ≤ n) (u : V) :
   rw [map_add, map_smul, add_mul, smul_mul_assoc, ι_typeDGraphVector_mul_self,
     ι_mul_ι_comm (Q := Q), Algebra.algebraMap_eq_smul_one]
   module
-
-/-- A generator orthogonal to the graph vector anticommutes with its Clifford generator. -/
-private theorem ι_typeDGraphVector_mul_ι_of_polar_eq_zero (hn : 2 ≤ n) {u : V}
-    (hu : polar Q (P.typeDGraphVector b hn) u = 0) :
-    ι Q (P.typeDGraphVector b hn) * ι Q u = -(ι Q u * ι Q (P.typeDGraphVector b hn)) := by
-  rw [P.ι_typeDGraphVector_mul_ι b hn u, hu, zero_smul, add_zero]
 
 /-- Conjugation carries the last basis vector to its polar dual. -/
 private theorem ι_typeDGraphVector_mul_ι_basis_last (hn : 2 ≤ n) :
@@ -277,10 +261,8 @@ private theorem ι_typeDGraphVector_mul_occupation_of_ne (hn : 2 ≤ n) {j : Fin
     ι Q (P.typeDGraphVector b hn) * (ι Q (b j : V) * ι Q (P.dualVector b j : V)) =
       ι Q (b j : V) * ι Q (P.dualVector b j : V) * ι Q (P.typeDGraphVector b hn) :=
   P.ι_typeDGraphVector_mul_ι_mul_ι b hn
-    (P.ι_typeDGraphVector_mul_ι_of_polar_eq_zero b hn
-      (P.polar_typeDGraphVector_basis_of_ne b hn hj))
-    (P.ι_typeDGraphVector_mul_ι_of_polar_eq_zero b hn
-      (P.polar_typeDGraphVector_dualVector_of_ne b hn hj))
+    (ι_mul_ι_comm_of_isOrtho (P.isOrtho_typeDGraphVector_basis_of_ne b hn hj))
+    (ι_mul_ι_comm_of_isOrtho (P.isOrtho_typeDGraphVector_dualVector_of_ne b hn hj))
 
 /-- Conjugating the occupation product at the last node reverses it, and reversing it subtracts it
 from `1`. -/
@@ -337,8 +319,8 @@ theorem ι_typeDGraphVector_mul_typeDSimpleRootBivector (hn : 2 ≤ n) (i : Fin 
       P.typeDSimpleRootBivector_of_chain b hn (j := ⟨n - 1, by omega⟩)
         (show n - 2 + 1 < n by omega) (show n - 1 = n - 2 + 1 by omega)]
     exact P.ι_typeDGraphVector_mul_ι_mul_ι b hn
-      (P.ι_typeDGraphVector_mul_ι_of_polar_eq_zero b hn
-        (P.polar_typeDGraphVector_basis_of_ne b hn (show n - 2 ≠ n - 1 by omega)))
+      (ι_mul_ι_comm_of_isOrtho
+        (P.isOrtho_typeDGraphVector_basis_of_ne b hn (show n - 2 ≠ n - 1 by omega)))
       (P.ι_typeDGraphVector_mul_ι_basis_last b hn)
   · by_cases hpen : (i : ℕ) = n - 2
     · rw [P.typeDSimpleRootBivector_of_chain b hn (j := ⟨n - 1, by omega⟩) (by omega)
@@ -347,18 +329,17 @@ theorem ι_typeDGraphVector_mul_typeDSimpleRootBivector (hn : 2 ≤ n) (i : Fin 
         P.typeDSimpleRootBivector_of_fork b hn (show ¬n - 1 + 1 < n by omega),
         P.basis_coe_of_val_eq_penultimate b hpen]
       exact P.ι_typeDGraphVector_mul_ι_mul_ι b hn
-        (P.ι_typeDGraphVector_mul_ι_of_polar_eq_zero b hn
-          (P.polar_typeDGraphVector_basis_of_ne b hn (show n - 2 ≠ n - 1 by omega)))
+        (ι_mul_ι_comm_of_isOrtho
+          (P.isOrtho_typeDGraphVector_basis_of_ne b hn (show n - 2 ≠ n - 1 by omega)))
         (P.ι_typeDGraphVector_mul_ι_dualVector_last b hn)
     · have hnext : (i : ℕ) + 1 < n := by omega
       rw [P.typeDSimpleRootBivector_of_chain b hn (j := ⟨(i : ℕ) + 1, hnext⟩) hnext rfl,
         graphPermD_apply_of_ne_of_ne n hn i hpen hfork,
         P.typeDSimpleRootBivector_of_chain b hn (j := ⟨(i : ℕ) + 1, hnext⟩) hnext rfl]
       exact P.ι_typeDGraphVector_mul_ι_mul_ι b hn
-        (P.ι_typeDGraphVector_mul_ι_of_polar_eq_zero b hn
-          (P.polar_typeDGraphVector_basis_of_ne b hn hfork))
-        (P.ι_typeDGraphVector_mul_ι_of_polar_eq_zero b hn
-          (P.polar_typeDGraphVector_dualVector_of_ne b hn (show (i : ℕ) + 1 ≠ n - 1 by omega)))
+        (ι_mul_ι_comm_of_isOrtho (P.isOrtho_typeDGraphVector_basis_of_ne b hn hfork))
+        (ι_mul_ι_comm_of_isOrtho
+          (P.isOrtho_typeDGraphVector_dualVector_of_ne b hn (show (i : ℕ) + 1 ≠ n - 1 by omega)))
 
 /-- **The graph generator exchanges the two fork lowering operators** and commutes with the
 others. -/
@@ -373,8 +354,8 @@ theorem ι_typeDGraphVector_mul_typeDSimpleNegativeRootBivector (hn : 2 ≤ n) (
         (show n - 2 + 1 < n by omega) (show n - 1 = n - 2 + 1 by omega)]
     exact P.ι_typeDGraphVector_mul_ι_mul_ι b hn
       (P.ι_typeDGraphVector_mul_ι_dualVector_last b hn)
-      (P.ι_typeDGraphVector_mul_ι_of_polar_eq_zero b hn
-        (P.polar_typeDGraphVector_dualVector_of_ne b hn (show n - 2 ≠ n - 1 by omega)))
+      (ι_mul_ι_comm_of_isOrtho
+        (P.isOrtho_typeDGraphVector_dualVector_of_ne b hn (show n - 2 ≠ n - 1 by omega)))
   · by_cases hpen : (i : ℕ) = n - 2
     · rw [P.typeDSimpleNegativeRootBivector_of_chain b hn (j := ⟨n - 1, by omega⟩) (by omega)
           (show n - 1 = (i : ℕ) + 1 by omega),
@@ -383,17 +364,16 @@ theorem ι_typeDGraphVector_mul_typeDSimpleNegativeRootBivector (hn : 2 ≤ n) (
         P.dualVector_coe_of_val_eq_penultimate b hpen]
       exact P.ι_typeDGraphVector_mul_ι_mul_ι b hn
         (P.ι_typeDGraphVector_mul_ι_basis_last b hn)
-        (P.ι_typeDGraphVector_mul_ι_of_polar_eq_zero b hn
-          (P.polar_typeDGraphVector_dualVector_of_ne b hn (show n - 2 ≠ n - 1 by omega)))
+        (ι_mul_ι_comm_of_isOrtho
+          (P.isOrtho_typeDGraphVector_dualVector_of_ne b hn (show n - 2 ≠ n - 1 by omega)))
     · have hnext : (i : ℕ) + 1 < n := by omega
       rw [P.typeDSimpleNegativeRootBivector_of_chain b hn (j := ⟨(i : ℕ) + 1, hnext⟩) hnext rfl,
         graphPermD_apply_of_ne_of_ne n hn i hpen hfork,
         P.typeDSimpleNegativeRootBivector_of_chain b hn (j := ⟨(i : ℕ) + 1, hnext⟩) hnext rfl]
       exact P.ι_typeDGraphVector_mul_ι_mul_ι b hn
-        (P.ι_typeDGraphVector_mul_ι_of_polar_eq_zero b hn
-          (P.polar_typeDGraphVector_basis_of_ne b hn (show (i : ℕ) + 1 ≠ n - 1 by omega)))
-        (P.ι_typeDGraphVector_mul_ι_of_polar_eq_zero b hn
-          (P.polar_typeDGraphVector_dualVector_of_ne b hn hfork))
+        (ι_mul_ι_comm_of_isOrtho
+          (P.isOrtho_typeDGraphVector_basis_of_ne b hn (show (i : ℕ) + 1 ≠ n - 1 by omega)))
+        (ι_mul_ι_comm_of_isOrtho (P.isOrtho_typeDGraphVector_dualVector_of_ne b hn hfork))
 
 /-- **The graph generator exchanges the two fork coroots** and commutes with the others. The two
 fork coroots differ by the reversal of the occupation product at the last node, which is what
@@ -462,7 +442,9 @@ theorem typeDGraphOperator_apply (hn : 2 ≤ n) (x : ExteriorAlgebra K P.W) :
   (rfl)
 
 /-- **The graph operator is creation at the last coordinate minus annihilation at it.** This is
-the Fock-model description of the spin action of the graph generator. -/
+the Fock-model description of the spin action of the graph generator. It is not `@[simp]`:
+unfolding the operator into the Fock model takes `typeDGraphOperator_typeDGraphOperator` and
+`typeDGraphOperator_symm_apply`, which are the intended normal forms, out of simp normal form. -/
 theorem typeDGraphOperator_eq_wedge_sub_contract (hn : 2 ≤ n) (x : ExteriorAlgebra K P.W) :
     P.typeDGraphOperator b hn x =
       P.wedge (b ⟨n - 1, by omega⟩) x - P.contract (P.dualVector b ⟨n - 1, by omega⟩) x := by
@@ -543,7 +525,9 @@ theorem typeDGraphOperator_mem_integralLattice (hn : 2 ≤ n) {x : ExteriorAlgeb
 
 /-- **The graph operator preserves the spinor lattice in both directions**, since its square is
 `-1` and the lattice is a subgroup. This is the lattice-invariance datum that the numbered-symmetry
-construction of a Chevalley--Demazure carrier consumes. -/
+construction of a Chevalley--Demazure carrier consumes. It is not `@[simp]`:
+`TauCeti.ExteriorAlgebra.mem_integralLattice_iff` is, and rewrites the membership into its
+coordinate form, so this left-hand side is not in simp normal form. -/
 theorem typeDGraphOperator_mem_integralLattice_iff (hn : 2 ≤ n) {x : ExteriorAlgebra ℚ P.W} :
     P.typeDGraphOperator b hn x ∈ TauCeti.ExteriorAlgebra.integralLattice b ↔
       x ∈ TauCeti.ExteriorAlgebra.integralLattice b := by
