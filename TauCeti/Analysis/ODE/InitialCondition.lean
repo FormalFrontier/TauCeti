@@ -85,6 +85,8 @@ private theorem eq_globalSolution_of_smul [CompleteSpace E] (v : E → E) {K : �
     (by simp [hu₀])
   simpa using heq (right_mem_Icc.2 zero_le_one)
 
+section
+
 variable [CompleteSpace E]
 
 /-- The finite-order form of `ODE.contDiffAt_globalSolution`, which is where the parameterized
@@ -149,6 +151,8 @@ theorem eventually_contDiffAt_globalSolution (n : ℕ) (v : E → E) {K : ℝ≥
   filter_upwards [hslice] with t ht
   exact ht.comp a (contDiffAt_id.prodMk contDiffAt_const)
 
+end
+
 /-- **The local flow of a smooth vector field.** A field which is `C^(n+1)` on a neighbourhood of
 `a` admits a flow `Φ`: a family of curves, one through each point, which start at that point,
 obey the flow law `Φ x (t + u) = Φ (Φ x t) u`, depend on the initial condition and the time in a
@@ -162,6 +166,7 @@ theorem exists_contDiffAt_localFlow [FiniteDimensional ℝ E] {n : ℕ∞} (v : 
     ∃ Φ : E → ℝ → E, ContDiffAt ℝ (n + 1) (fun p : E × ℝ ↦ Φ p.1 p.2) (a, 0) ∧
       (∀ x, Φ x 0 = x) ∧ (∀ x t u, Φ x (t + u) = Φ (Φ x t) u) ∧
       ∀ᶠ p in nhds ((a, 0) : E × ℝ), HasDerivAt (Φ p.1) (v (Φ p.1 p.2)) p.2 := by
+  let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
   obtain ⟨g, K, hg, hgK, hgv⟩ :=
     hv.exists_lipschitzWith_contDiff_eventuallyEq_of_finiteDimensional hs
   refine ⟨globalSolution g hgK, contDiffAt_globalSolution g hgK hg a,
