@@ -256,7 +256,10 @@ theorem le_of_forall_apply_eq_smul_inner (hB : IsCoercive B) {J : V →L[ℝ] H}
   have hsq : 0 < ‖u‖ ^ 2 := by positivity
   exact le_of_mul_le_mul_right (by linarith [hlower u]) hsq
 
-omit [CompleteSpace V] [CompleteSpace H] in
+variable {V H : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
+  [NormedAddCommGroup H] [InnerProductSpace ℝ H]
+  {B : V →L[ℝ] V →L[ℝ] ℝ}
+
 /-- **A variational eigenfunction has nonzero image in `H`.**  If `J u` vanished, the
 eigenvalue equation would make the energy of `u` vanish too, which coercivity forbids for
 `u ≠ 0`. -/
@@ -269,6 +272,10 @@ theorem apply_ne_zero_of_forall_apply_eq_smul_inner (hB : IsCoercive B) (J : V �
   have hself : B u u = 0 := by rw [heq u, hzero, inner_zero_left, mul_zero]
   have h2 : 0 < C * ‖u‖ * ‖u‖ := mul_pos (mul_pos hC hpos) hpos
   linarith [hle u]
+
+variable {V H : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [CompleteSpace V]
+  [NormedAddCommGroup H] [InnerProductSpace ℝ H] [CompleteSpace H]
+  {B : V →L[ℝ] V →L[ℝ] ℝ}
 
 /-- A variational eigenfunction for `κ ≠ 0` produces an eigenvector of the solution operator
 with eigenvalue `κ⁻¹`. -/
