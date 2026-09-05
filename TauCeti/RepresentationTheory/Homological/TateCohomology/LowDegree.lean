@@ -104,6 +104,14 @@ theorem H0π_comp_H0IsoNormQuotient_hom (M : Rep R G) :
       ModuleCat.ofHom (Submodule.mkQ ((range M.ρ.norm).submoduleOf M.ρ.invariants)) := by
   simp [H0π]
 
+/-- Composing the quotient map by the norm image with the inverse of the low-degree
+identification is the map from invariant representatives to degree-zero Tate cohomology. -/
+@[reassoc (attr := simp), elementwise (attr := simp)]
+theorem mkQ_comp_H0IsoNormQuotient_inv (M : Rep R G) :
+    ModuleCat.ofHom (Submodule.mkQ ((range M.ρ.norm).submoduleOf M.ρ.invariants)) ≫
+      (H0IsoNormQuotient M).inv = H0π M :=
+  (Iso.comp_inv_eq _).2 (H0π_comp_H0IsoNormQuotient_hom M).symm
+
 /-- An invariant represents the zero degree-zero Tate cohomology class exactly when it lies in
 the image of the norm. -/
 @[simp]
@@ -126,7 +134,10 @@ theorem H0_induction_on {M : Rep R G} {C : tateCohomology M 0 → Prop} (x : tat
     (h : ∀ y : M.ρ.invariants, C (H0π M y)) : C x := by
   obtain ⟨y, hy⟩ := Submodule.mkQ_surjective ((range M.ρ.norm).submoduleOf M.ρ.invariants)
     ((H0IsoNormQuotient M).hom x)
-  simpa [H0π, hy] using h y
+  have hx : H0π M y = x := by
+    rw [← mkQ_comp_H0IsoNormQuotient_inv_apply, ← Submodule.mkQ_apply, hy,
+      Iso.hom_inv_id_apply]
+  exact hx ▸ h y
 
 variable (A : Rep R G) [A.IsTrivial]
 
