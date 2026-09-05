@@ -27,7 +27,7 @@ the Borel construction. Smoothness, connectedness, and maximality are separate g
 ## Main results
 
 * `TauCeti.UniversalEnvelopingAlgebra.
-    upperTriangularDefiningIdeal_le_kostantTorusSubsystemDefiningIdeal`:
+    generalLinearUpperTriangularDefiningHopfIdeal_le_kostantTorusSubsystemDefiningIdeal`:
   the positive subsystem carrier is scheme-theoretically contained in the upper-triangular group.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTorusSubsystemToUpperTriangular`: the resulting
   closed immersion of group schemes.
@@ -72,7 +72,7 @@ include α hwt hα hpos in
 /-- **A torus-plus-positive-root Kostant subsystem is contained in the standard
 upper-triangular group scheme.** In Hopf coordinates, the upper-triangular defining ideal is
 contained in the common-kernel ideal of the selected root subgroups and the weight torus. -/
-theorem upperTriangularDefiningIdeal_le_kostantTorusSubsystemDefiningIdeal :
+theorem generalLinearUpperTriangularDefiningHopfIdeal_le_kostantTorusSubsystemDefiningIdeal :
     GeneralLinear.UpperTriangular.definingHopfIdeal ℤ n ≤
       kostantTorusSubsystemDefiningIdeal e h ρ M hM b wt S hnilS := by
   rw [le_kostantTorusSubsystemDefiningIdeal_iff]
@@ -125,9 +125,21 @@ noncomputable def kostantTorusSubsystemToUpperTriangular :
     kostantTorusSubsystemGroupScheme e h ρ M hM b wt S hnilS ⟶
       GeneralLinear.UpperTriangular.groupScheme ℤ n :=
   CommHopfAlgCat.quotientSpecMapOfLe (GeneralLinear.coordinateHopfAlgebra ℤ n)
-      (upperTriangularDefiningIdeal_le_kostantTorusSubsystemDefiningIdeal
+      (generalLinearUpperTriangularDefiningHopfIdeal_le_kostantTorusSubsystemDefiningIdeal
         e h ρ M hM b wt α S hnilS hwt hα hpos) ≫
     eqToHom (GeneralLinear.UpperTriangular.groupScheme_def ℤ n).symm
+
+include α hwt hα hpos in
+/-- `kostantTorusSubsystemToUpperTriangular` is the quotient-spectrum map induced by containment
+of the upper-triangular defining Hopf ideal, followed by the canonical presentation isomorphism. -/
+theorem kostantTorusSubsystemToUpperTriangular_def :
+    kostantTorusSubsystemToUpperTriangular
+        e h ρ M hM b wt α S hnilS hwt hα hpos =
+      CommHopfAlgCat.quotientSpecMapOfLe (GeneralLinear.coordinateHopfAlgebra ℤ n)
+          (generalLinearUpperTriangularDefiningHopfIdeal_le_kostantTorusSubsystemDefiningIdeal
+            e h ρ M hM b wt α S hnilS hwt hα hpos) ≫
+        eqToHom (GeneralLinear.UpperTriangular.groupScheme_def ℤ n).symm :=
+  (rfl)
 
 include α hwt hα hpos in
 /-- The positive subsystem map to the upper-triangular group scheme is a closed immersion. -/
@@ -135,14 +147,16 @@ instance isClosedImmersion_kostantTorusSubsystemToUpperTriangular :
     AlgebraicGeometry.IsClosedImmersion
       (kostantTorusSubsystemToUpperTriangular
         e h ρ M hM b wt α S hnilS hwt hα hpos).hom.hom.left := by
-  unfold kostantTorusSubsystemToUpperTriangular
-  rw [CommHopfAlgCat.quotientSpecMapOfLe_def]
+  rw [kostantTorusSubsystemToUpperTriangular_def,
+    CommHopfAlgCat.quotientSpecMapOfLe_def]
   apply (CommHopfAlgCat.isClosedImmersion_hopfSpec_map_comp_eqToHom_iff
     (GeneralLinear.UpperTriangular.groupScheme_def ℤ n)
     (CommHopfAlgCat.quotientMapOfLe (GeneralLinear.coordinateHopfAlgebra ℤ n)
-      (upperTriangularDefiningIdeal_le_kostantTorusSubsystemDefiningIdeal
+      (generalLinearUpperTriangularDefiningHopfIdeal_le_kostantTorusSubsystemDefiningIdeal
         e h ρ M hM b wt α S hnilS hwt hα hpos))).mpr
-  exact CommHopfAlgCat.quotientMapOfLe_surjective _ _
+  rw [← CommHopfAlgCat.isClosedImmersion_hopfSpec_map_iff,
+    ← CommHopfAlgCat.quotientSpecMapOfLe_def]
+  infer_instance
 
 include α hwt hα hpos in
 /-- The positive subsystem inclusion into `GLₙ` factors through the standard upper-triangular
@@ -153,8 +167,8 @@ theorem kostantTorusSubsystemToUpperTriangular_comp_inclusion :
         e h ρ M hM b wt α S hnilS hwt hα hpos ≫
         GeneralLinear.UpperTriangular.inclusion ℤ n =
       kostantTorusSubsystemGroupSchemeι e h ρ M hM b wt S hnilS := by
-  unfold kostantTorusSubsystemToUpperTriangular
-  rw [GeneralLinear.UpperTriangular.inclusion,
+  rw [kostantTorusSubsystemToUpperTriangular_def,
+    GeneralLinear.UpperTriangular.inclusion,
     GeneralLinear.weightParabolicInclusion_def,
     kostantTorusSubsystemGroupSchemeι_def]
   simp only [Category.assoc, eqToHom_refl, Category.id_comp]
@@ -176,7 +190,7 @@ theorem isSolvable_points_kostantTorusSubsystem (A : Type v) [CommRing A] :
   let IB := GeneralLinear.UpperTriangular.definingHopfIdeal ℤ n
   let IS := kostantTorusSubsystemDefiningIdeal e h ρ M hM b wt S hnilS
   have hle : IB ≤ IS :=
-    upperTriangularDefiningIdeal_le_kostantTorusSubsystemDefiningIdeal
+    generalLinearUpperTriangularDefiningHopfIdeal_le_kostantTorusSubsystemDefiningIdeal
       e h ρ M hM b wt α S hnilS hwt hα hpos
   let f : CommHopfAlgCat.quotient H IB ⟶ CommHopfAlgCat.quotient H IS :=
     CommHopfAlgCat.quotientMapOfLe H hle
