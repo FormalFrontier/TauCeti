@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.LinearAlgebra.FiniteBilinearModule.Quadratic
+public import TauCeti.LinearAlgebra.Quotient.Prod
 
 /-!
 # Orthogonal complements and quotients of an orthogonal direct sum
@@ -93,27 +94,29 @@ theorem orthogonalComplement_prod (H : AddSubgroup A) (K : AddSubgroup B) :
   rw [AddSubgroup.mem_prod]
   exact A.mem_orthogonalComplement_prod_iff B H K x
 
-/-- Two product subgroups of a product group are equal exactly when their factors are. -/
-private theorem prod_eq_prod_iff {H H' : AddSubgroup A} {K K' : AddSubgroup B} :
-    H.prod K = H'.prod K' ↔ H = H' ∧ K = K' := by
-  constructor
-  · intro h
-    refine ⟨AddSubgroup.ext fun x ↦ ?_, AddSubgroup.ext fun y ↦ ?_⟩
-    · have hx : (x, (0 : B.carrier)) ∈ H.prod K ↔ (x, (0 : B.carrier)) ∈ H'.prod K' := by
-        rw [h]
-      simpa only [AddSubgroup.mem_prod, K.zero_mem, K'.zero_mem, and_true] using hx
-    · have hy : ((0 : A.carrier), y) ∈ H.prod K ↔ ((0 : A.carrier), y) ∈ H'.prod K' := by
-        rw [h]
-      simpa only [AddSubgroup.mem_prod, H.zero_mem, H'.zero_mem, true_and] using hy
-  · rintro ⟨rfl, rfl⟩
-    rfl
-
 /-- **The Lagrangian condition on a product subgroup is componentwise.** -/
 @[simp]
 theorem isLagrangian_prod_iff (H : AddSubgroup A) (K : AddSubgroup B) :
     (A.prod B).IsLagrangian (H.prod K) ↔ A.IsLagrangian H ∧ B.IsLagrangian K := by
   rw [(A.prod B).isLagrangian_def, A.isLagrangian_def, B.isLagrangian_def,
-    A.orthogonalComplement_prod B, A.prod_eq_prod_iff B]
+    A.orthogonalComplement_prod B]
+  constructor
+  · intro h
+    refine ⟨AddSubgroup.ext fun x ↦ ?_, AddSubgroup.ext fun y ↦ ?_⟩
+    · have hx : (x, (0 : B.carrier)) ∈ H.prod K ↔
+          (x, (0 : B.carrier)) ∈
+            (A.orthogonalComplement H).prod (B.orthogonalComplement K) := by
+        rw [h]
+      simpa only [AddSubgroup.mem_prod, K.zero_mem,
+        (B.orthogonalComplement K).zero_mem, and_true] using hx
+    · have hy : ((0 : A.carrier), y) ∈ H.prod K ↔
+          ((0 : A.carrier), y) ∈
+            (A.orthogonalComplement H).prod (B.orthogonalComplement K) := by
+        rw [h]
+      simpa only [AddSubgroup.mem_prod, H.zero_mem,
+        (A.orthogonalComplement H).zero_mem, true_and] using hy
+  · intro h
+    exact congrArg₂ AddSubgroup.prod h.1 h.2
 
 /-! ## The orthogonal quotient of an orthogonal direct sum -/
 
@@ -151,55 +154,61 @@ theorem coe_orthogonalComplementProdSnd (H : AddSubgroup A) (K : AddSubgroup B)
     (x : (A.prod B).orthogonalComplement (H.prod K)) :
     (orthogonalComplementProdSnd H K x : B) = (x : A.carrier × B.carrier).2 := (rfl)
 
-/-- The map splitting the orthogonal quotient of `A ⊥ B` by a product subgroup into the two
-orthogonal quotients, as a `ℤ`-linear map. -/
-private noncomputable def orthogonalQuotientProdMap (H : AddSubgroup A) (K : AddSubgroup B) :
-    (A.prod B).orthogonalQuotient (H.prod K) →ₗ[ℤ]
+/-- The identification `(H × K)⊥ ≃ H⊥ × K⊥` underlying the quotient splitting. -/
+private def orthogonalComplementProdEquiv (H : AddSubgroup A) (K : AddSubgroup B) :
+    (A.prod B).orthogonalComplement (H.prod K) ≃ₗ[ℤ]
+      A.orthogonalComplement H × B.orthogonalComplement K where
+  toFun x := (orthogonalComplementProdFst H K x, orthogonalComplementProdSnd H K x)
+  invFun x := ⟨((x.1 : A), (x.2 : B)),
+    (A.mem_orthogonalComplement_prod_iff B H K _).mpr ⟨x.1.2, x.2.2⟩⟩
+  left_inv _ := Subtype.ext rfl
+  right_inv _ := rfl
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+
+/-- Under `(H × K)⊥ ≃ H⊥ × K⊥`, the denominator is the product of the two
+denominators. -/
+private theorem map_addSubgroupOf_orthogonalComplement_prod (H : AddSubgroup A)
+    (K : AddSubgroup B) :
+    ((H.prod K).addSubgroupOf
+        ((A.prod B).orthogonalComplement (H.prod K))).toIntSubmodule.map
+      (orthogonalComplementProdEquiv H K : _ →ₗ[ℤ] _) =
+      (H.addSubgroupOf (A.orthogonalComplement H)).toIntSubmodule.prod
+        (K.addSubgroupOf (B.orthogonalComplement K)).toIntSubmodule := by
+  ext x
+  rw [Submodule.mem_map_equiv, Submodule.mem_prod]
+  change ((orthogonalComplementProdEquiv H K).symm x : A.carrier × B.carrier) ∈ H.prod K ↔
+    (x.1 : A) ∈ H ∧ (x.2 : B) ∈ K
+  rw [AddSubgroup.mem_prod]
+  rfl
+
+/-- The canonical linear equivalence splitting the orthogonal quotient of a product. -/
+private noncomputable def orthogonalQuotientProdLinearEquiv (H : AddSubgroup A)
+    (K : AddSubgroup B) :
+    (A.prod B).orthogonalQuotient (H.prod K) ≃ₗ[ℤ]
       (A.orthogonalQuotient H).carrier × (B.orthogonalQuotient K).carrier :=
-  Submodule.liftQ
-    ((H.prod K).addSubgroupOf ((A.prod B).orthogonalComplement (H.prod K))).toIntSubmodule
-    (((A.orthogonalQuotientMk H).comp (orthogonalComplementProdFst H K)).prod
-      ((B.orthogonalQuotientMk K).comp (orthogonalComplementProdSnd H K))).toIntLinearMap
-    (by
-      intro x hx
-      have hx' : (x : A.carrier × B.carrier) ∈ H.prod K := hx
-      rw [AddSubgroup.mem_prod] at hx'
-      rw [LinearMap.mem_ker]
-      refine Prod.ext ?_ ?_
-      · exact (A.orthogonalQuotientMk_eq_zero_iff H _).mpr hx'.1
-      · exact (B.orthogonalQuotientMk_eq_zero_iff K _).mpr hx'.2)
+  (Submodule.Quotient.equiv _ _ (orthogonalComplementProdEquiv H K)
+      (map_addSubgroupOf_orthogonalComplement_prod H K)).trans
+    (Submodule.quotientProdEquiv
+      (H.addSubgroupOf (A.orthogonalComplement H)).toIntSubmodule
+      (K.addSubgroupOf (B.orthogonalComplement K)).toIntSubmodule)
 
 @[simp]
-private theorem orthogonalQuotientProdMap_orthogonalQuotientMk (H : AddSubgroup A)
-    (K : AddSubgroup B) (x : (A.prod B).orthogonalComplement (H.prod K)) :
-    orthogonalQuotientProdMap H K ((A.prod B).orthogonalQuotientMk (H.prod K) x) =
+private theorem orthogonalQuotientProdLinearEquiv_orthogonalQuotientMk
+    (H : AddSubgroup A) (K : AddSubgroup B)
+    (x : (A.prod B).orthogonalComplement (H.prod K)) :
+    orthogonalQuotientProdLinearEquiv H K
+        ((A.prod B).orthogonalQuotientMk (H.prod K) x) =
       (A.orthogonalQuotientMk H (orthogonalComplementProdFst H K x),
         B.orthogonalQuotientMk K (orthogonalComplementProdSnd H K x)) := by
-  rw [(A.prod B).orthogonalQuotientMk_apply, orthogonalQuotientProdMap]
-  exact Submodule.liftQ_apply _ _ x
-
-private theorem orthogonalQuotientProdMap_bijective (H : AddSubgroup A) (K : AddSubgroup B) :
-    Function.Bijective (orthogonalQuotientProdMap H K) := by
-  constructor
-  · rw [injective_iff_map_eq_zero]
-    intro z hz
-    induction z using orthogonalQuotient_induction_on with
-    | mk x =>
-      rw [orthogonalQuotientProdMap_orthogonalQuotientMk] at hz
-      rw [(A.prod B).orthogonalQuotientMk_eq_zero_iff, AddSubgroup.mem_prod]
-      exact ⟨(A.orthogonalQuotientMk_eq_zero_iff H _).mp (congrArg Prod.fst hz),
-        (B.orthogonalQuotientMk_eq_zero_iff K _).mp (congrArg Prod.snd hz)⟩
-  · rintro ⟨p, q⟩
-    obtain ⟨y, rfl⟩ := A.orthogonalQuotientMk_surjective H p
-    obtain ⟨z, rfl⟩ := B.orthogonalQuotientMk_surjective K q
-    refine ⟨(A.prod B).orthogonalQuotientMk (H.prod K)
-      ⟨((y : A), (z : B)), (A.mem_orthogonalComplement_prod_iff B H K _).mpr ⟨y.2, z.2⟩⟩, ?_⟩
-    rw [orthogonalQuotientProdMap_orthogonalQuotientMk]
-    exact Prod.ext
-      (congrArg (A.orthogonalQuotientMk H)
-        (Subtype.ext (coe_orthogonalComplementProdFst H K _)))
-      (congrArg (B.orthogonalQuotientMk K)
-        (Subtype.ext (coe_orthogonalComplementProdSnd H K _)))
+  rw [(A.prod B).orthogonalQuotientMk_apply]
+  change (Submodule.quotientProdEquiv _ _)
+      ((Submodule.Quotient.equiv _ _ (orthogonalComplementProdEquiv H K)
+        (map_addSubgroupOf_orthogonalComplement_prod H K)) (Submodule.Quotient.mk x)) = _
+  rw [Submodule.Quotient.equiv_apply, Submodule.mapQ_apply,
+    Submodule.quotientProdEquiv_apply_mk, A.orthogonalQuotientMk_apply,
+    B.orthogonalQuotientMk_apply]
+  rfl
 
 /-- **The orthogonal quotient of an orthogonal direct sum splits.** For subgroups `H ≤ A` and
 `K ≤ B`, the orthogonal quotient of `A ⊥ B` by `H × K` is the orthogonal direct sum of the two
@@ -213,19 +222,16 @@ No isotropy hypothesis is needed, exactly as for the orthogonal quotient itself.
 noncomputable def orthogonalQuotientProdIsometry (H : AddSubgroup A) (K : AddSubgroup B) :
     Isometry ((A.prod B).orthogonalQuotient (H.prod K))
       ((A.orthogonalQuotient H).prod (B.orthogonalQuotient K)) where
-  toAddEquiv := AddEquiv.ofBijective (orthogonalQuotientProdMap H K).toAddMonoidHom
-    (orthogonalQuotientProdMap_bijective H K)
+  toAddEquiv := (orthogonalQuotientProdLinearEquiv H K).toAddEquiv
   map_pairing' q r := by
     induction q using orthogonalQuotient_induction_on with
     | mk x =>
       induction r using orthogonalQuotient_induction_on with
       | mk y =>
-        -- `AddEquiv.ofBijective` has no `coe` simp lemma, so name the underlying linear map
-        -- explicitly; the two are the same function by definition.
         change ((A.orthogonalQuotient H).prod (B.orthogonalQuotient K)).pairing
-            (orthogonalQuotientProdMap H K _) (orthogonalQuotientProdMap H K _) = _
-        rw [orthogonalQuotientProdMap_orthogonalQuotientMk,
-          orthogonalQuotientProdMap_orthogonalQuotientMk, prod_pairing,
+            (orthogonalQuotientProdLinearEquiv H K _) (orthogonalQuotientProdLinearEquiv H K _) = _
+        rw [orthogonalQuotientProdLinearEquiv_orthogonalQuotientMk,
+          orthogonalQuotientProdLinearEquiv_orthogonalQuotientMk, prod_pairing,
           A.orthogonalQuotient_pairing_mk, B.orthogonalQuotient_pairing_mk,
           (A.prod B).orthogonalQuotient_pairing_mk, prod_pairing,
           coe_orthogonalComplementProdFst, coe_orthogonalComplementProdFst,
@@ -238,7 +244,7 @@ theorem orthogonalQuotientProdIsometry_orthogonalQuotientMk (H : AddSubgroup A)
     orthogonalQuotientProdIsometry H K ((A.prod B).orthogonalQuotientMk (H.prod K) x) =
       (A.orthogonalQuotientMk H (orthogonalComplementProdFst H K x),
         B.orthogonalQuotientMk K (orthogonalComplementProdSnd H K x)) :=
-  orthogonalQuotientProdMap_orthogonalQuotientMk H K x
+  orthogonalQuotientProdLinearEquiv_orthogonalQuotientMk H K x
 
 end FiniteBilinearModule
 
