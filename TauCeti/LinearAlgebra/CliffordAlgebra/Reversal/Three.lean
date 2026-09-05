@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-import TauCeti.LinearAlgebra.CliffordAlgebra.Grading
 import TauCeti.LinearAlgebra.ExteriorPower
 import TauCeti.LinearAlgebra.Matrix.AdjugateFinTwo
 public import Mathlib.LinearAlgebra.Matrix.Adjugate
