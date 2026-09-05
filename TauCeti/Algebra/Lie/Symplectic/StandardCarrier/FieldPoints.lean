@@ -93,6 +93,7 @@ theorem points_eq_GLSymplecticFin {K : Type u} [Field K] :
     have : (⟨g, hg⟩ : GLSymplecticFin (n + 1) K) ∈ H := by
       rw [hH]
       exact Subgroup.mem_top _
+    rw [Subgroup.mem_comap] at this
     exact this
 
 end TauCeti.SpStd

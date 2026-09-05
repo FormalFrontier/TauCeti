@@ -133,14 +133,12 @@ theorem coe_rootSubgroupPoints_inl_last (c : A) :
     (rootSubgroupPoints n (.inl (Fin.last n)) A (Multiplicative.ofAdd c) :
         Matrix.GeneralLinearGroup (Fin ((n + 1) + (n + 1))) A) =
       GLSymplecticFin.positiveLongRootTransvectionUnit (Fin.last n) c := by
-  apply Matrix.GeneralLinearGroup.ext
-  intro r s
+  apply Units.ext
   rw [val_rootSubgroupPoints_eq_one_add_smul, rootIntMatrix_inl_last,
-    GLSymplecticFin.coe_positiveLongRootTransvectionUnit, TauCeti.coe_transvectionUnit,
-    map_single_intCast]
-  exact congrFun (congrFun (one_add_smul_single_eq_transvection
-    (finSumFinEquiv (Sum.inl (Fin.last n)))
-    (finSumFinEquiv (Sum.inr (Fin.last n))) c) r) s
+    GLSymplecticFin.coe_positiveLongRootTransvectionUnit, TauCeti.coe_transvectionUnit]
+  change 1 + c • (Int.castRingHom A).mapMatrix _ = _
+  rw [RingHom.mapMatrix_apply, Matrix.map_single, map_one, Matrix.smul_single,
+    smul_eq_mul, mul_one, Matrix.transvection]
 
 /-- The final lowering root subgroup of the carrier is the negative long-root subgroup of the
 standard symplectic group. -/
@@ -148,14 +146,12 @@ theorem coe_rootSubgroupPoints_inr_last (c : A) :
     (rootSubgroupPoints n (.inr (Fin.last n)) A (Multiplicative.ofAdd c) :
         Matrix.GeneralLinearGroup (Fin ((n + 1) + (n + 1))) A) =
       GLSymplecticFin.negativeLongRootTransvectionUnit (Fin.last n) c := by
-  apply Matrix.GeneralLinearGroup.ext
-  intro r s
+  apply Units.ext
   rw [val_rootSubgroupPoints_eq_one_add_smul, rootIntMatrix_inr_last,
-    GLSymplecticFin.coe_negativeLongRootTransvectionUnit, TauCeti.coe_transvectionUnit,
-    map_single_intCast]
-  exact congrFun (congrFun (one_add_smul_single_eq_transvection
-    (finSumFinEquiv (Sum.inr (Fin.last n)))
-    (finSumFinEquiv (Sum.inl (Fin.last n))) c) r) s
+    GLSymplecticFin.coe_negativeLongRootTransvectionUnit, TauCeti.coe_transvectionUnit]
+  change 1 + c • (Int.castRingHom A).mapMatrix _ = _
+  rw [RingHom.mapMatrix_apply, Matrix.map_single, map_one, Matrix.smul_single,
+    smul_eq_mul, mul_one, Matrix.transvection]
 
 /-- A nonfinal raising root subgroup of the carrier is the adjacent positive difference-root
 subgroup of the standard symplectic group. -/
@@ -164,19 +160,19 @@ theorem coe_rootSubgroupPoints_inl_of_ne_last (i : Fin (n + 1)) (hi : i ≠ Fin.
     (rootSubgroupPoints n (.inl i) A (Multiplicative.ofAdd c) :
         Matrix.GeneralLinearGroup (Fin ((n + 1) + (n + 1))) A) =
       GLSymplecticFin.differenceShortRootUnit (lt_next n i hi).ne c := by
-  apply Matrix.GeneralLinearGroup.ext
-  intro r s
+  apply Units.ext
   rw [val_rootSubgroupPoints_eq_one_add_smul, rootIntMatrix_inl_of_ne_last n i hi,
     GLSymplecticFin.coe_differenceShortRootUnit, Units.val_mul,
-    TauCeti.coe_transvectionUnit, TauCeti.coe_transvectionUnit,
-    map_single_sub_single_intCast]
-  exact congrFun (congrFun
-    (one_add_smul_single_sub_single_eq_mul_transvection
-      (finSumFinEquiv (Sum.inl i))
-      (finSumFinEquiv (Sum.inl (next n i hi)))
-      (finSumFinEquiv (Sum.inr (next n i hi)))
-      (finSumFinEquiv (Sum.inr i))
-      (GLSymplecticFin.finSumFinEquiv_inl_ne_inr (next n i hi) (next n i hi)) c) r) s
+    TauCeti.coe_transvectionUnit, TauCeti.coe_transvectionUnit]
+  change 1 + c • (Int.castRingHom A).mapMatrix _ = _
+  rw [map_sub, RingHom.mapMatrix_apply, RingHom.mapMatrix_apply, Matrix.map_single,
+    Matrix.map_single, map_one]
+  simp only [smul_sub, Matrix.smul_single, smul_eq_mul, mul_one, Matrix.transvection,
+    Matrix.mul_add, Matrix.add_mul, Matrix.one_mul]
+  rw [Matrix.single_mul_single_of_ne _ _ _ _
+    (GLSymplecticFin.finSumFinEquiv_inl_ne_inr (next n i hi) (next n i hi)), add_zero,
+    ← Matrix.single_neg]
+  abel
 
 /-- A nonfinal lowering root subgroup of the carrier is the adjacent negative difference-root
 subgroup of the standard symplectic group. -/
@@ -185,19 +181,18 @@ theorem coe_rootSubgroupPoints_inr_of_ne_last (i : Fin (n + 1)) (hi : i ≠ Fin.
     (rootSubgroupPoints n (.inr i) A (Multiplicative.ofAdd c) :
         Matrix.GeneralLinearGroup (Fin ((n + 1) + (n + 1))) A) =
       GLSymplecticFin.differenceShortRootUnit (lt_next n i hi).ne' c := by
-  apply Matrix.GeneralLinearGroup.ext
-  intro r s
+  apply Units.ext
   rw [val_rootSubgroupPoints_eq_one_add_smul, rootIntMatrix_inr_of_ne_last n i hi,
     GLSymplecticFin.coe_differenceShortRootUnit, Units.val_mul,
-    TauCeti.coe_transvectionUnit, TauCeti.coe_transvectionUnit,
-    map_single_sub_single_intCast]
-  exact congrFun (congrFun
-    (one_add_smul_single_sub_single_eq_mul_transvection
-      (finSumFinEquiv (Sum.inl (next n i hi)))
-      (finSumFinEquiv (Sum.inl i))
-      (finSumFinEquiv (Sum.inr i))
-      (finSumFinEquiv (Sum.inr (next n i hi)))
-      (GLSymplecticFin.finSumFinEquiv_inl_ne_inr i i) c) r) s
+    TauCeti.coe_transvectionUnit, TauCeti.coe_transvectionUnit]
+  change 1 + c • (Int.castRingHom A).mapMatrix _ = _
+  rw [map_sub, RingHom.mapMatrix_apply, RingHom.mapMatrix_apply, Matrix.map_single,
+    Matrix.map_single, map_one]
+  simp only [smul_sub, Matrix.smul_single, smul_eq_mul, mul_one, Matrix.transvection,
+    Matrix.mul_add, Matrix.add_mul, Matrix.one_mul]
+  rw [Matrix.single_mul_single_of_ne _ _ _ _
+    (GLSymplecticFin.finSumFinEquiv_inl_ne_inr i i), add_zero, ← Matrix.single_neg]
+  abel
 
 end
 

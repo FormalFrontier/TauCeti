@@ -60,11 +60,6 @@ elementary matrices against the diagonal torus.
 
 ## Main results
 
-* `TauCeti.one_add_smul_single_eq_transvection` and
-  `TauCeti.one_add_smul_single_sub_single_eq_mul_transvection`: matrix identities rewriting one
-  plus a scalar multiple of one or two matrix units as transvections.
-* `TauCeti.map_single_intCast` and `TauCeti.map_single_sub_single_intCast`: entrywise integer casts
-  of one or two matrix units.
 * `TauCeti.toGL_transvection_eq_transvectionUnit`: the defining equality relating the
   special-linear and general-linear transvection APIs.
 * `TauCeti.transvectionUnit_mem_of_adjacent`: a subgroup containing the adjacent transvections
@@ -109,43 +104,11 @@ universe u v
 
 variable {n : Type*} [DecidableEq n] {A : Type u} {i j k l : n}
 
-variable [CommRing A]
-
-/-- One plus a scalar multiple of a matrix unit is the corresponding transvection. -/
-theorem one_add_smul_single_eq_transvection (i j : n) (c : A) :
-    (1 : Matrix n n A) + c • Matrix.single i j 1 = Matrix.transvection i j c := by
-  rw [Matrix.smul_single, smul_eq_mul, mul_one, Matrix.transvection]
-
-/-- Entrywise integer cast carries a matrix unit with coefficient one to the corresponding matrix
-unit over the target ring. -/
-theorem map_single_intCast {m p : Type*} [DecidableEq m] [DecidableEq p] (i : m) (j : p) :
-    (Matrix.single i j (1 : ℤ)).map (Int.cast : ℤ → A) = Matrix.single i j 1 := by
-  ext r s
-  simp [Matrix.map_apply, Matrix.single_apply]
-
-/-- Entrywise integer cast carries a difference of matrix units with coefficient one to the
-corresponding difference over the target ring. -/
-theorem map_single_sub_single_intCast {m p : Type*} [DecidableEq m] [DecidableEq p]
-    (i k : m) (j l : p) :
-    (Matrix.single i j (1 : ℤ) - Matrix.single k l 1).map (Int.cast : ℤ → A) =
-      Matrix.single i j 1 - Matrix.single k l 1 := by
-  ext r s
-  simp [Matrix.map_apply, Matrix.single_apply]
-
 section Products
 
 variable [Fintype n]
 
-/-- One plus a scalar multiple of a difference of matrix units is a product of transvections
-when the cross term vanishes. -/
-theorem one_add_smul_single_sub_single_eq_mul_transvection
-    (i j k l : n) (hjk : j ≠ k) (c : A) :
-    (1 : Matrix n n A) + c • (Matrix.single i j 1 - Matrix.single k l 1) =
-      Matrix.transvection i j c * Matrix.transvection k l (-c) := by
-  simp only [smul_sub, Matrix.smul_single, smul_eq_mul, mul_one, Matrix.transvection,
-    Matrix.mul_add, Matrix.add_mul, Matrix.one_mul]
-  rw [Matrix.single_mul_single_of_ne _ _ _ _ hjk, add_zero, ← Matrix.single_neg]
-  abel
+variable [CommRing A]
 
 /-- Conjugating a transvection by a diagonal matrix rescales its parameter by the two
 corresponding diagonal entries. The hypothesis says that the two diagonals are inverse to one
@@ -159,6 +122,8 @@ theorem diagonal_mul_transvection_mul_diagonal {v w : n → A} (hvw : ∀ a, v a
     diagonal_mul_single_mul_diagonal]
 
 end Products
+
+variable [CommRing A]
 
 /-! ## Transvections as invertible matrices -/
 
