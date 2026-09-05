@@ -26,7 +26,7 @@ the variance as the covariance-matrix quadratic form.
   variance.
 * `TauCeti.integrableExpSet_inner_multivariateGaussian` gives the exact domain for a directional
   functional of a multivariate Gaussian.
-* `TauCeti.mgf_inner_toEuclideanLin_multivariateGaussian` gives the corresponding closed formula.
+* `TauCeti.mgf_inner_multivariateGaussian` gives the corresponding closed formula.
 
 ## References
 
@@ -95,7 +95,7 @@ theorem integrableExpSet_inner_multivariateGaussian (m θ : EuclideanSpace ℝ �
 
 The exponent consists of the directional mean and one half of the covariance quadratic form,
 scaled respectively by `t` and `t²`. -/
-theorem mgf_inner_toEuclideanLin_multivariateGaussian (m θ : EuclideanSpace ℝ ι)
+theorem mgf_inner_multivariateGaussian (m θ : EuclideanSpace ℝ ι)
     {S : Matrix ι ι ℝ} (hS : S.PosSemidef) (t : ℝ) :
     mgf (fun x ↦ ⟪θ, x⟫) (multivariateGaussian m S) t =
       Real.exp (t * ⟪θ, m⟫ + t ^ 2 / 2 * ⟪θ, S.toEuclideanLin θ⟫) := by
