@@ -51,31 +51,38 @@ attribute [local instance high] Algebra.toModule
 variable (n : ℕ)
 variable {A : Type u} [CommRing A]
 
+private theorem map_intCast_eq_mapMatrix {m : Type*} [Fintype m] [DecidableEq m]
+    (M : Matrix m m ℤ) :
+    M.map (Int.cast : ℤ → A) = (Int.castRingHom A).mapMatrix M := rfl
+
+private theorem rootIntMatrix_eq_of_map_eq
+    (k : Fin (n + 1) ⊕ Fin (n + 1))
+    {M : Matrix (Fin ((n + 1) + (n + 1))) (Fin ((n + 1) + (n + 1))) ℤ}
+    (h : (rootGenerator n k :
+          Matrix (Fin (n + 1) ⊕ Fin (n + 1)) (Fin (n + 1) ⊕ Fin (n + 1)) ℚ).submatrix
+        finSumFinEquiv.symm finSumFinEquiv.symm = (Int.castRingHom ℚ).mapMatrix M) :
+    rootIntMatrix n k = M := by
+  apply Matrix.map_injective (Int.cast_injective : Function.Injective (Int.cast : ℤ → ℚ))
+  exact (map_rootIntMatrix n k).trans
+    (h.trans (map_intCast_eq_mapMatrix (A := ℚ) M).symm)
+
 private theorem rootIntMatrix_inl_last :
     rootIntMatrix n (.inl (Fin.last n)) =
       Matrix.single
         (finSumFinEquiv (Sum.inl (Fin.last n)))
         (finSumFinEquiv (Sum.inr (Fin.last n))) 1 := by
-  apply Matrix.ext
-  intro r s
-  have h := congrFun (congrFun (map_rootIntMatrix n (.inl (Fin.last n))) r) s
-  exact Int.cast_injective (by simpa only [Matrix.map_apply, Matrix.submatrix_apply,
-    val_rootGenerator_inl,
-    positiveRootMatrix_last, Matrix.single_apply, Int.cast_ite, Int.cast_one, Int.cast_zero,
-    Equiv.eq_symm_apply, Equiv.symm_apply_eq] using h)
+  apply rootIntMatrix_eq_of_map_eq
+  simp only [val_rootGenerator_inl, positiveRootMatrix_last, Matrix.submatrix_single_equiv,
+    RingHom.mapMatrix_apply, Matrix.map_single, map_one, Equiv.symm_symm]
 
 private theorem rootIntMatrix_inr_last :
     rootIntMatrix n (.inr (Fin.last n)) =
       Matrix.single
         (finSumFinEquiv (Sum.inr (Fin.last n)))
         (finSumFinEquiv (Sum.inl (Fin.last n))) 1 := by
-  apply Matrix.ext
-  intro r s
-  have h := congrFun (congrFun (map_rootIntMatrix n (.inr (Fin.last n))) r) s
-  exact Int.cast_injective (by simpa only [Matrix.map_apply, Matrix.submatrix_apply,
-    val_rootGenerator_inr,
-    negativeRootMatrix_last, Matrix.single_apply, Int.cast_ite, Int.cast_one, Int.cast_zero,
-    Equiv.eq_symm_apply, Equiv.symm_apply_eq] using h)
+  apply rootIntMatrix_eq_of_map_eq
+  simp only [val_rootGenerator_inr, negativeRootMatrix_last, Matrix.submatrix_single_equiv,
+    RingHom.mapMatrix_apply, Matrix.map_single, map_one, Equiv.symm_symm]
 
 private theorem rootIntMatrix_inl_of_ne_last (i : Fin (n + 1)) (hi : i ≠ Fin.last n) :
     rootIntMatrix n (.inl i) =
@@ -85,14 +92,10 @@ private theorem rootIntMatrix_inl_of_ne_last (i : Fin (n + 1)) (hi : i ≠ Fin.l
         Matrix.single
           (finSumFinEquiv (Sum.inr (next n i hi)))
           (finSumFinEquiv (Sum.inr i)) 1 := by
-  apply Matrix.ext
-  intro r s
-  have h := congrFun (congrFun (map_rootIntMatrix n (.inl i)) r) s
-  exact Int.cast_injective (by simpa only [Matrix.map_apply, Matrix.submatrix_apply,
-    val_rootGenerator_inl,
-    positiveRootMatrix_of_ne_last n i hi, Matrix.sub_apply, Matrix.single_apply,
-    Int.cast_sub, Int.cast_ite, Int.cast_one, Int.cast_zero,
-    Equiv.eq_symm_apply, Equiv.symm_apply_eq] using h)
+  apply rootIntMatrix_eq_of_map_eq
+  simp only [val_rootGenerator_inl, positiveRootMatrix_of_ne_last n i hi,
+    Matrix.submatrix_sub, Pi.sub_apply, Matrix.submatrix_single_equiv, map_sub,
+    RingHom.mapMatrix_apply, Matrix.map_single, map_one, Equiv.symm_symm]
 
 private theorem rootIntMatrix_inr_of_ne_last (i : Fin (n + 1)) (hi : i ≠ Fin.last n) :
     rootIntMatrix n (.inr i) =
@@ -102,14 +105,10 @@ private theorem rootIntMatrix_inr_of_ne_last (i : Fin (n + 1)) (hi : i ≠ Fin.l
         Matrix.single
           (finSumFinEquiv (Sum.inr i))
           (finSumFinEquiv (Sum.inr (next n i hi))) 1 := by
-  apply Matrix.ext
-  intro r s
-  have h := congrFun (congrFun (map_rootIntMatrix n (.inr i)) r) s
-  exact Int.cast_injective (by simpa only [Matrix.map_apply, Matrix.submatrix_apply,
-    val_rootGenerator_inr,
-    negativeRootMatrix_of_ne_last n i hi, Matrix.sub_apply, Matrix.single_apply,
-    Int.cast_sub, Int.cast_ite, Int.cast_one, Int.cast_zero,
-    Equiv.eq_symm_apply, Equiv.symm_apply_eq] using h)
+  apply rootIntMatrix_eq_of_map_eq
+  simp only [val_rootGenerator_inr, negativeRootMatrix_of_ne_last n i hi,
+    Matrix.submatrix_sub, Pi.sub_apply, Matrix.submatrix_single_equiv, map_sub,
+    RingHom.mapMatrix_apply, Matrix.map_single, map_one, Equiv.symm_symm]
 
 private theorem val_rootSubgroupPoints_eq_one_add_smul
     (k : Fin (n + 1) ⊕ Fin (n + 1)) (c : A) :
@@ -126,10 +125,6 @@ private theorem val_rootSubgroupPoints_eq_one_add_smul
       (rep_rootGenerator_latticeBasis_eq_sum n k)
       ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm
         (Multiplicative.ofAdd c)))
-
-private theorem map_intCast_eq_mapMatrix {m : Type*} [Fintype m] [DecidableEq m]
-    (M : Matrix m m ℤ) :
-    M.map (Int.cast : ℤ → A) = (Int.castRingHom A).mapMatrix M := rfl
 
 /-- The final raising root subgroup of the carrier is the positive long-root subgroup of the
 standard symplectic group. -/
