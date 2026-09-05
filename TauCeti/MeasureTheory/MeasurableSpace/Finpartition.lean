@@ -7,12 +7,14 @@ module
 
 public import Mathlib.MeasureTheory.MeasurableSpace.Basic
 public import TauCeti.Order.Partition.Finpartition
+import Mathlib.MeasureTheory.MeasurableSpace.Constructions
 
 /-!
 # Measurable finite partitions
 
 This file records elementary ways to construct measurable finite partitions and shows that
-measurability passes from a finer finite partition to a coarser one.
+measurability passes from a finer finite partition to a coarser one.  It also makes the canonical
+map from a point to its finite-partition index measurable.
 -/
 
 public section
@@ -22,6 +24,19 @@ open Set
 namespace Finpartition
 
 variable {Ω : Type*} [MeasurableSpace Ω]
+
+/-- The map sending a point to its part in a measurable finite partition is measurable when the
+finite type of parts carries the discrete measurable space. -/
+theorem measurable_indexedPartition_index (P : Finpartition (Set.univ : Set Ω))
+    (hP : ∀ p ∈ P.parts, MeasurableSet p) :
+    @Measurable Ω P.parts _ ⊤ P.indexedPartition.index := by
+  let _ : MeasurableSpace P.parts := ⊤
+  refine measurable_to_countable' fun p => ?_
+  have hpreimage : P.indexedPartition.index ⁻¹' {p} = (p : Set Ω) := by
+    ext x
+    exact P.indexedPartition.mem_iff_index_eq.symm
+  rw [hpreimage]
+  exact hP p p.property
 
 /-- Every part of a bipartition along a measurable set is measurable. -/
 theorem measurableSet_of_mem_bipartition {s p : Set Ω} (hs : MeasurableSet s)
