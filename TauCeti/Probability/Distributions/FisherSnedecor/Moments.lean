@@ -12,26 +12,25 @@ import TauCeti.Analysis.SpecialFunctions.Beta
 /-!
 # Moments of Fisher's F distribution
 
-This file establishes the sharp first- and second-moment theory of the Fisher--Snedecor law.
-More generally, its natural moment of order `q` exists exactly when `2 * q < n`, and is expressed
-as a quotient of beta functions.  The mean and variance follow by specializing to `q = 1` and
-`q = 2`.
+This file establishes the sharp first- and second-moment theory of the Fisher--Snedecor law:
+the mean, the second raw moment, the variance, and the exact integrability thresholds `2 < n`
+and `4 < n` at which the first two moments diverge.  These all come from a file-internal
+computation of the natural moment of order `q`, which exists exactly when `2 * q < n` and is
+then a quotient of beta functions.
 
 ## Main results
 
-* `integrable_pow_fisherSnedecorMeasure_iff` gives the exact natural-moment threshold.
-* `integral_pow_fisherSnedecorMeasure` evaluates every finite natural moment.
+* `integrable_id_fisherSnedecorMeasure_iff` and `integrable_sq_fisherSnedecorMeasure_iff` give
+  the two sharp integrability thresholds, hence also the divergence at and below them.
 * `integral_id_fisherSnedecorMeasure` computes the mean.
+* `integral_sq_fisherSnedecorMeasure` computes the second raw moment.
 * `variance_id_fisherSnedecorMeasure` computes the variance.
-* `not_integrable_id_fisherSnedecorMeasure` and
-  `not_integrable_sq_fisherSnedecorMeasure` record the sharp failure at the two thresholds.
 
 The proof uses Euler's second beta integral for integrability and the beta pushforward
 representation for the exact value.
 
 ## References
 
-* Tau Ceti roadmap, `StandardDistributions`, Layer 3, "Fisher's F".
 * N. L. Johnson, S. Kotz, and N. Balakrishnan, *Continuous Univariate Distributions*, vol. 2,
   2nd ed., Wiley (1995), chapter 27.
 -/
@@ -225,8 +224,7 @@ private lemma integrableOn_scaled_fisherMomentKernel_iff (hm : 0 < m) (hn : 0 < 
 
 /-- A natural power is integrable under a valid Fisher--Snedecor law exactly when twice its
 order is below the denominator degrees of freedom. -/
-@[simp]
-theorem integrable_pow_fisherSnedecorMeasure_iff (hm : 0 < m) (hn : 0 < n) (q : ℕ) :
+private theorem integrable_pow_fisherSnedecorMeasure_iff (hm : 0 < m) (hn : 0 < n) (q : ℕ) :
     Integrable (fun x : ℝ ↦ x ^ q) (fisherSnedecorMeasure m n) ↔ 2 * q < n := by
   rw [integrable_fisherSnedecorMeasure_iff]
   have hC : IsUnit (Real.Gamma ((m + n) / 2) /
@@ -310,8 +308,7 @@ private lemma betaMomentIntegrand_eq (q : ℕ) {u : ℝ}
       rw [hpowu, hpowv]
 
 /-- The `q`th natural moment of a valid Fisher--Snedecor law, in beta-function form. -/
-@[simp]
-theorem integral_pow_fisherSnedecorMeasure (hm : 0 < m) (hn : 0 < n) (q : ℕ)
+private theorem integral_pow_fisherSnedecorMeasure (hm : 0 < m) (hn : 0 < n) (q : ℕ)
     (hq : 2 * q < n) :
     ∫ x, x ^ q ∂fisherSnedecorMeasure m n =
       (n / m) ^ q * beta (m / 2 + q) (n / 2 - q) / beta (m / 2) (n / 2) := by
@@ -368,7 +365,7 @@ theorem integral_id_fisherSnedecorMeasure (hm : 0 < m) (hn : 2 < n) :
     (by linarith : n - 2 ≠ 0), hden, hG']
 
 /-- The second raw moment of a Fisher--Snedecor law when `4 < n`. -/
-@[simp high]
+@[simp]
 theorem integral_sq_fisherSnedecorMeasure (hm : 0 < m) (hn : 4 < n) :
     ∫ x, x ^ 2 ∂fisherSnedecorMeasure m n =
       n ^ 2 * (m + 2) / (m * (n - 2) * (n - 4)) := by
@@ -412,18 +409,6 @@ theorem integral_sq_fisherSnedecorMeasure (hm : 0 < m) (hn : 4 < n) :
   field_simp [(by norm_num; linarith : n - 2 ^ 2 ≠ 0),
     (Real.Gamma_pos_of_pos (by norm_num; linarith : 0 < (n - 2 ^ 2) / 2)).ne']
   norm_num
-
-/-- At or below two denominator degrees of freedom, the mean integrand is not integrable. -/
-theorem not_integrable_id_fisherSnedecorMeasure (hm : 0 < m) (hn : 0 < n) (hn2 : n ≤ 2) :
-    ¬ Integrable id (fisherSnedecorMeasure m n) := by
-  rw [integrable_id_fisherSnedecorMeasure_iff hm hn]
-  exact not_lt.mpr hn2
-
-/-- At or below four denominator degrees of freedom, squaring is not integrable. -/
-theorem not_integrable_sq_fisherSnedecorMeasure (hm : 0 < m) (hn : 0 < n) (hn4 : n ≤ 4) :
-    ¬ Integrable (fun x : ℝ ↦ x ^ 2) (fisherSnedecorMeasure m n) := by
-  rw [integrable_sq_fisherSnedecorMeasure_iff hm hn]
-  exact not_lt.mpr hn4
 
 /-- The variance of a Fisher--Snedecor law when `4 < n`. -/
 @[simp]
