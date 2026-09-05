@@ -417,6 +417,7 @@ theorem IsIntegralLattice.realBasis_apply (i : N →+ V) (h : IsIntegralLattice 
   exact IsIntegralLattice.equiv_one_tmul i h _
 
 /-- The real span of the image of an integral lattice is the whole ambient space. -/
+@[simp]
 theorem IsIntegralLattice.span_range_eq_top (i : N →+ V) (h : IsIntegralLattice i) :
     Submodule.span ℝ (Set.range i) = ⊤ := by
   let b := IsIntegralLattice.realBasis i h
