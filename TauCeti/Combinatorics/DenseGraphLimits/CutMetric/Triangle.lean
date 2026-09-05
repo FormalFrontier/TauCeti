@@ -6,7 +6,6 @@ Authors: Codex
 module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.CutMetric.Stability
-public import TauCeti.Combinatorics.DenseGraphLimits.Graphon.Pullback
 public import TauCeti.Combinatorics.DenseGraphLimits.StepGraphon.Regularity
 import TauCeti.Combinatorics.DenseGraphLimits.Kernel.Pullback
 import TauCeti.MeasureTheory.MeasurableSpace.Finpartition
