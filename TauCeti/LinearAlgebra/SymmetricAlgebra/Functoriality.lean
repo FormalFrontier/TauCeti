@@ -161,7 +161,6 @@ theorem mapEquiv_toAlgHom (e : M ≃ₗ[R] N) :
   rw [mapEquiv, AlgEquiv.toAlgHom_ofAlgHom]
 
 /-- The induced equivalence agrees with the induced algebra map on every element. -/
-@[simp]
 theorem mapEquiv_apply (e : M ≃ₗ[R] N) (a : SymmetricAlgebra R M) :
     mapEquiv R e a = map R e.toLinearMap a := by
   rw [← AlgEquiv.toAlgHom_apply, mapEquiv_toAlgHom]
