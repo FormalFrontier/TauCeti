@@ -9,28 +9,35 @@ public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.Gener
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.Basic
 
 /-!
-# The tautological point of an isogeny
+# The tautological point of a coordinate pullback
 
-An isogeny `φ : W₁ ⟶ W₂` pulls the two coordinate functions of `W₂` back to functions on `W₁`.
-Because the Weierstrass relation is exactly what the coordinate ring quotients out, the pair it
-produces solves the equation of `W₂` over `F(W₁)`, and on an elliptic target that solution is
-nonsingular. So an isogeny cuts out a point of `W₂` with coordinates in `F(W₁)`, and distinct
-isogenies cut out distinct points.
+A coordinate pullback `p : W₂.CoordinateRing →ₐ[F] W₁.FunctionField` — the data underlying an
+isogeny `W₁ ⟶ W₂` — sends the two coordinate functions of `W₂` to elements of `F(W₁)`. The
+Weierstrass relation is exactly what the coordinate ring quotients out, so the pair solves the
+equation of `W₂` over `F(W₁)`, and on an elliptic target that solution is a point. A coordinate
+pullback therefore cuts out a point of `W₂⁄F(W₁)`, its *tautological point*, and does so
+injectively: evaluating the coordinate ring there recovers the pullback it came from.
 
-For the identity this is the generic point of `W`, of which the construction here is the
-isogeny-indexed generalisation: `W.genericPoint` is the tautological point of `Isogeny.id W`.
+The pointedness of an isogeny plays no part in any of this, so everything is stated for a bare
+coordinate pullback; an isogeny `φ` uses `φ.pullback.tautologicalPoint`.
+
+For the identity pullback this is the generic point of `W`, of which the construction here is the
+pullback-indexed generalisation.
 
 ## Main definitions
 
-* `TauCeti.Isogeny.tautologicalPoint`: the point of `W₂⁄F(W₁)` cut out by an isogeny.
+* `TauCeti.CoordinatePullback.tautologicalPoint`: the point of `W₂⁄F(W₁)` cut out by a coordinate
+  pullback.
 
 ## Main results
 
-* `TauCeti.Isogeny.tautologicalPoint_ne_zero`: it is an affine point, never the point at
-  infinity.
-* `TauCeti.Isogeny.tautologicalPoint_injective`: an isogeny is determined by its tautological
-  point.
-* `TauCeti.Isogeny.tautologicalPoint_id`: the identity's tautological point is the generic point.
+* `TauCeti.CoordinatePullback.tautologicalPoint_ne_zero`: it is an affine point, never the point
+  at infinity.
+* `TauCeti.CoordinatePullback.evalAlgHom_tautologicalPoint`: evaluating the coordinate ring at it
+  recovers the pullback.
+* `TauCeti.CoordinatePullback.tautologicalPoint_injective`: a pullback is determined by it.
+* `TauCeti.CoordinatePullback.tautologicalPoint_id`: the identity pullback's tautological point is
+  the generic point.
 -/
 
 public section
@@ -45,54 +52,62 @@ open _root_.WeierstrassCurve.Affine
 
 variable {F : Type*} [Field F] {W₁ W₂ : WeierstrassCurve.Affine F}
 
-namespace Isogeny
+namespace CoordinatePullback
 
 variable [W₂.IsElliptic]
 
-/-- **The tautological point of an isogeny**: the point of `W₂`, with coordinates in the function
-field of `W₁`, cut out by the pullbacks of the coordinate functions of `W₂`. They solve the
-equation of `W₂` because the Weierstrass polynomial is what the coordinate ring quotients out. -/
-noncomputable def tautologicalPoint (φ : Isogeny W₁ W₂) :
+/-- **The tautological point of a coordinate pullback**: the point of `W₂`, with coordinates in
+the function field of `W₁`, cut out by the images of the coordinate functions of `W₂`. They solve
+the equation of `W₂` because the Weierstrass polynomial is what the coordinate ring quotients
+out. -/
+noncomputable def tautologicalPoint (p : CoordinatePullback W₁ W₂) :
     (W₂⁄W₁.FunctionField).toAffine.Point :=
-  Point.mk (CoordinateRing.equation_of_algHom φ.pullback)
+  Point.mk (CoordinateRing.equation_of_algHom p)
 
-/-- **The tautological point is affine**, never the point at infinity: its coordinates are the
-elements of `F(W₁)` that `φ.pullback` produces, so `Point.mk` builds it on the `some` branch.
-This is what lets consumers use the coordinate-elimination API, which is stated for nonzero
-points. -/
-@[simp]
-theorem tautologicalPoint_ne_zero (φ : Isogeny W₁ W₂) : φ.tautologicalPoint ≠ 0 :=
+/-- **The tautological point is affine**, never the point at infinity. This is what lets consumers
+use the coordinate API for nonzero points. -/
+theorem tautologicalPoint_ne_zero (p : CoordinatePullback W₁ W₂) : p.tautologicalPoint ≠ 0 :=
   Point.some_ne_zero _
 
 @[simp]
-theorem xCoord_tautologicalPoint (φ : Isogeny W₁ W₂) :
-    Point.xCoord φ.tautologicalPoint = φ.pullback (AdjoinRoot.of W₂.polynomial X) :=
+theorem xCoord_tautologicalPoint (p : CoordinatePullback W₁ W₂) :
+    Point.xCoord p.tautologicalPoint = p (AdjoinRoot.of W₂.polynomial X) :=
   Point.xCoord_some _
 
 @[simp]
-theorem yCoord_tautologicalPoint (φ : Isogeny W₁ W₂) :
-    Point.yCoord φ.tautologicalPoint = φ.pullback (AdjoinRoot.root W₂.polynomial) :=
+theorem yCoord_tautologicalPoint (p : CoordinatePullback W₁ W₂) :
+    Point.yCoord p.tautologicalPoint = p (AdjoinRoot.root W₂.polynomial) :=
   Point.yCoord_some _
 
-/-- **An isogeny is determined by its tautological point.** The coordinate ring is generated by
-its two coordinate functions, so a pullback is fixed by where it sends them. -/
-theorem tautologicalPoint_injective :
-    Function.Injective (tautologicalPoint (W₁ := W₁) (W₂ := W₂)) := fun φ ψ h =>
-  Isogeny.ext (CoordinateRing.algHom_ext
-    (by rw [← xCoord_tautologicalPoint, h, xCoord_tautologicalPoint])
-    (by rw [← yCoord_tautologicalPoint, h, yCoord_tautologicalPoint]))
+-- Not `@[simp]`: the coordinate lemmas above already rewrite the point's coordinates back to the
+-- pullback's values, so simp reaches this on its own. It is exported for consumers to name.
+/-- **Evaluating the coordinate ring at the tautological point recovers the pullback.** This is
+the elimination rule: it turns a statement about the point back into one about the pullback. -/
+theorem evalAlgHom_tautologicalPoint (p : CoordinatePullback W₁ W₂) :
+    CoordinateRing.evalAlgHom (Point.nonsingular_coords (tautologicalPoint_ne_zero p)).left = p :=
+  CoordinateRing.algHom_ext
+    (by rw [CoordinateRing.evalAlgHom_of_X, xCoord_tautologicalPoint])
+    (by rw [CoordinateRing.evalAlgHom_root, yCoord_tautologicalPoint])
 
-/-- **The identity's tautological point is the generic point**, of which this construction is the
-isogeny-indexed generalisation. -/
+/-- **A coordinate pullback is determined by its tautological point.** The coordinate ring is
+generated by its two coordinate functions, so a pullback is fixed by where it sends them. -/
+theorem tautologicalPoint_injective :
+    Function.Injective (tautologicalPoint (W₁ := W₁) (W₂ := W₂)) := fun p q h =>
+  CoordinateRing.algHom_ext
+    (by rw [← xCoord_tautologicalPoint, h, xCoord_tautologicalPoint])
+    (by rw [← yCoord_tautologicalPoint, h, yCoord_tautologicalPoint])
+
+/-- **The identity pullback's tautological point is the generic point**, of which this
+construction is the pullback-indexed generalisation. -/
 @[simp]
 theorem tautologicalPoint_id (W : WeierstrassCurve.Affine F) [W.IsElliptic] :
-    (Isogeny.id W).tautologicalPoint = W.genericPoint := by
+    (CoordinatePullback.id W).tautologicalPoint = W.genericPoint := by
   rw [tautologicalPoint, genericPoint_eq_some]
   congr 1
-  · rw [id_pullback, CoordinatePullback.id_apply, genericX_def, AdjoinRoot.mk_C]
-  · rw [id_pullback, CoordinatePullback.id_apply, genericY_def, AdjoinRoot.mk_X]
+  · rw [CoordinatePullback.id_apply, genericX_def, AdjoinRoot.mk_C]
+  · rw [CoordinatePullback.id_apply, genericY_def, AdjoinRoot.mk_X]
 
-end Isogeny
+end CoordinatePullback
 
 end TauCeti
 
