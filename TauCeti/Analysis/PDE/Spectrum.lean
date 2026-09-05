@@ -398,7 +398,7 @@ theorem le_firstDirichletEigenvalue
 
 /-! ### The Rayleigh principle -/
 
-/-- **The first Dirichlet eigenvalue is a Poincaré constant for the energy form**:
+/-- **The quantity `firstDirichletEigenvalue` is a Poincaré constant for the energy form**:
 
 `κ₁ ‖u‖²_{L²(Ω)} ≤ a(u, u)` for every `u ∈ H¹₀(Ω)`,
 
@@ -450,9 +450,9 @@ theorem isLeast_rayleighQuotient_firstDirichletEigenvalue
   exact hcoercive.isLeast_rayleighQuotient (W1p0.isCompactOperator_valueL (by simp) hOmega)
     (energyFormH1L0_comm hcoeff hsymm) (W1p0.valueL_ne_zero hOmega_nonempty)
 
-/-- **The first Dirichlet eigenvalue is the optimal Poincaré constant** of the energy form: it is
-the greatest `C` with `C ‖u‖²_{L²(Ω)} ≤ a(u, u)` for all `u ∈ H¹₀(Ω)`.  This is the Rayleigh
-principle read as an inequality, and it is what makes the lower bounds
+/-- **The quantity `firstDirichletEigenvalue` is the optimal Poincaré constant** of the energy
+form: it is the greatest `C` with `C ‖u‖²_{L²(Ω)} ≤ a(u, u)` for all `u ∈ H¹₀(Ω)`.  This is the
+Rayleigh principle read as an inequality, and it is what makes the lower bounds
 `TauCeti.PDE.le_firstDirichletEigenvalue` sharp.  Boundedness of `Ω` is not needed because this
 optimal-constant characterization does not assert attainment. -/
 theorem isGreatest_firstDirichletEigenvalue

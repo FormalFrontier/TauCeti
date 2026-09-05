@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.InnerProductSpace.Variational.Spectrum
-public import Mathlib.LinearAlgebra.BilinearForm.Properties
 
 /-!
 # The Rayleigh principle for a coercive variational problem
@@ -96,8 +95,7 @@ theorem norm_apply_sq_le_norm_formSolutionOperator_mul (hB : IsCoercive B) (J : 
           mul_le_mul_of_nonneg_left ((hB.formSolutionOperator J).le_opNorm _) (norm_nonneg _)
       _ = ‖hB.formSolutionOperator J‖ * ‖J v‖ ^ 2 := by ring
   have hcs : B w v ^ 2 ≤ B w w * B v v :=
-    B.toBilinForm.apply_sq_le_of_symm hB.apply_self_nonneg
-      (LinearMap.BilinForm.isSymm_iff.mp (LinearMap.BilinForm.isSymm_def.2 hsymm)) w v
+    B.toBilinForm.apply_sq_le_of_symm hB.apply_self_nonneg ⟨hsymm⟩ w v
   rw [hwv] at hcs
   rcases eq_or_lt_of_le (norm_nonneg (J v)) with hzero | hpos
   · rw [← hzero]
@@ -112,9 +110,9 @@ theorem norm_apply_sq_le_norm_formSolutionOperator_mul (hB : IsCoercive B) (J : 
       _ = ‖hB.formSolutionOperator J‖ * B v v * ‖J v‖ ^ 2 := by ring
 
 /-- **The Rayleigh lower bound**: `‖S‖⁻¹ ‖J v‖² ≤ B v v` for every `v : V`.  For the Dirichlet
-problem this is the Poincaré inequality with the first eigenvalue as its constant.  Beyond
-coercivity, only symmetry is needed: when `S = 0` the left-hand side vanishes and the bound is the
-nonnegativity of the energy. -/
+problem this is the Poincaré inequality with the reciprocal solution-operator norm as its
+constant.  Beyond coercivity, only symmetry is needed: when `S = 0` the left-hand side vanishes
+and the bound is the nonnegativity of the energy. -/
 theorem inv_norm_formSolutionOperator_mul_norm_apply_sq_le (hB : IsCoercive B) (J : V →L[ℝ] H)
     (hsymm : ∀ u v : V, B u v = B v u) (v : V) :
     ‖hB.formSolutionOperator J‖⁻¹ * ‖J v‖ ^ 2 ≤ B v v := by
@@ -143,10 +141,11 @@ theorem isLeast_rayleighQuotient (hB : IsCoercive B) {J : V →L[ℝ] H} (hJ : I
     rw [le_div_iff₀ (by positivity : (0 : ℝ) < ‖J v‖ ^ 2)]
     exact hB.inv_norm_formSolutionOperator_mul_norm_apply_sq_le J hsymm v
 
-/-- **The first variational eigenvalue is the optimal constant** in the inequality
+/-- **The reciprocal solution-operator norm is the optimal constant** in the inequality
 `C ‖J v‖² ≤ B v v`: it satisfies the inequality, and no larger constant does.  For the Dirichlet
-problem this identifies the first eigenvalue with the best Poincaré constant.  Unlike attainment
-of the Rayleigh minimum, this characterization does not require compactness of `J`. -/
+problem this identifies the quantity defined as `firstDirichletEigenvalue` with the best Poincaré
+constant.  Unlike attainment of the Rayleigh minimum, this characterization does not require
+compactness of `J`. -/
 theorem isGreatest_inv_norm_formSolutionOperator (hB : IsCoercive B) {J : V →L[ℝ] H}
     (hsymm : ∀ u v : V, B u v = B v u) (hJne : J ≠ 0) :
     IsGreatest {C : ℝ | ∀ v : V, C * ‖J v‖ ^ 2 ≤ B v v} ‖hB.formSolutionOperator J‖⁻¹ := by
@@ -154,9 +153,9 @@ theorem isGreatest_inv_norm_formSolutionOperator (hB : IsCoercive B) {J : V →L
     simpa only [zero_apply] using DFunLike.ne_iff.mp hJne
   have _ : Nontrivial H := nontrivial_of_ne (J w) 0 hw
   set S := hB.formSolutionOperator J with hS
-  have hSne : S ≠ 0 := fun hzero =>
-    hw (inner_self_eq_zero.mp ((hB.formSolutionOperator_apply_eq_zero_iff J (J w)).mp
-      (by rw [← hS, hzero, zero_apply]) w))
+  have hSne : S ≠ 0 := by
+    rw [hS]
+    exact hB.formSolutionOperator_ne_zero hJne
   have hnorm_pos : 0 < ‖S‖ := norm_pos_iff.mpr hSne
   refine ⟨fun v => hB.inv_norm_formSolutionOperator_mul_norm_apply_sq_le J hsymm v, fun C hC => ?_⟩
   rcases le_or_gt C 0 with hCnonpos | hCpos
