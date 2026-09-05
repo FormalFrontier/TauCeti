@@ -38,7 +38,8 @@ therefore smooth directions.
   field is `C^(n+1)` in the initial condition.
 * `ODE.exists_contDiffAt_localFlow`: a vector field which is `C^(n+1)` on a neighbourhood of a
   point has a local flow through the nearby points which is `C^(n+1)` in time and initial
-  condition near that point at time `0`.
+  condition near that point at time `0`, and which obeys the flow law
+  `Φ x (t + u) = Φ (Φ x t) u`.
 
 The local flow produced here is the model-space input to the smooth flow of a vector field on a
 manifold, and in particular to the flow of the geodesic spray, whose base curves are the
@@ -149,20 +150,22 @@ theorem eventually_contDiffAt_globalSolution (n : ℕ) (v : E → E) {K : ℝ≥
   exact ht.comp a (contDiffAt_id.prodMk contDiffAt_const)
 
 /-- **The local flow of a smooth vector field.** A field which is `C^(n+1)` on a neighbourhood of
-`a` admits a family of curves, one through each point, which start at that point, depend on the
-initial condition and the time in a `C^(n+1)` way near `(a, 0)`, and solve the equation for every
-initial condition and time in some neighbourhood of `(a, 0)`. No global hypothesis on the field is
-needed: a bump function cuts the field down to a globally Lipschitz one agreeing with it near
-`a`, and the two fields still agree along the curves at the times where the equation is claimed. -/
+`a` admits a flow `Φ`: a family of curves, one through each point, which start at that point,
+obey the flow law `Φ x (t + u) = Φ (Φ x t) u`, depend on the initial condition and the time in a
+`C^(n+1)` way near `(a, 0)`, and solve the equation for every initial condition and time in some
+neighbourhood of `(a, 0)`. No global hypothesis on the field is needed: a bump function cuts the
+field down to a globally Lipschitz one agreeing with it near `a`, and the two fields still agree
+along the curves at the times where the equation is claimed. The flow law holds for all times
+because `Φ` is the global flow of that cut-off field; only the equation for `v` is local. -/
 theorem exists_contDiffAt_localFlow [FiniteDimensional ℝ E] {n : ℕ∞} (v : E → E) {a : E}
     {s : Set E} (hv : ContDiffOn ℝ (n + 1) v s) (hs : s ∈ nhds a) :
     ∃ Φ : E → ℝ → E, ContDiffAt ℝ (n + 1) (fun p : E × ℝ ↦ Φ p.1 p.2) (a, 0) ∧
-      (∀ x, Φ x 0 = x) ∧
+      (∀ x, Φ x 0 = x) ∧ (∀ x t u, Φ x (t + u) = Φ (Φ x t) u) ∧
       ∀ᶠ p in nhds ((a, 0) : E × ℝ), HasDerivAt (Φ p.1) (v (Φ p.1 p.2)) p.2 := by
   obtain ⟨g, K, hg, hgK, hgv⟩ :=
     hv.exists_lipschitzWith_contDiff_eventuallyEq_of_finiteDimensional hs
   refine ⟨globalSolution g hgK, contDiffAt_globalSolution g hgK hg a,
-    fun x ↦ globalSolution_zero g hgK x, ?_⟩
+    fun x ↦ globalSolution_zero g hgK x, fun x t u ↦ globalSolution_add g hgK x t u, ?_⟩
   have htends : Tendsto (fun p : E × ℝ ↦ globalSolution g hgK p.1 p.2) (nhds ((a, 0) : E × ℝ))
       (nhds a) := by
     have hcont : Continuous fun p : E × ℝ ↦ globalSolution g hgK p.1 p.2 :=

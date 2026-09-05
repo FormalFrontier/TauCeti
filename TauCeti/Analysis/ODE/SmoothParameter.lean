@@ -220,14 +220,12 @@ theorem exists_contDiffAt_picard_solution_of_contDiff
   let basePath : C(Set.Icc (0 : ℝ) 1, F) := ContinuousMap.const _ x₀
   let u : E × C(Set.Icc (0 : ℝ) 1, F) := (p₀, basePath)
   have hgc : ContDiff ℝ (n + 1) gc := by
-    change ContDiff ℝ (n + 1) f
-    exact hf
+    simpa only [gc, ContinuousMap.coe_mk] using hf
   have hR : ContDiffAt ℝ (n + 1) R u :=
     (contDiff_picardResidual (n + 1) gc hgc x₀).contDiffAt
   have hzeroBase : f (p₀, x₀) = 0 := hzero.self_of_nhds
   have hgzero : ∀ᶠ y in nhds x₀, gc (p₀, y) = 0 := by
-    change ∀ᶠ y in nhds x₀, f (p₀, y) = 0
-    exact hzero
+    simpa only [gc, ContinuousMap.coe_mk] using hzero
   -- At the constant base solution the path derivative of the residual is the identity, so the
   -- implicit function theorem produces a smooth parameter-to-path germ.
   have hinvertible :
