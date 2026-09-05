@@ -12,8 +12,8 @@ public import TauCeti.Algebra.Module.GradedModule.Opposite
 /-!
 # Opposites of differential graded algebras
 
-The ordinary multiplication on `Aᵐᵒᵖ` reverses products without a Koszul sign.  To make it into a
-differential graded algebra, its differential must therefore be
+The ordinary multiplication on `Aᵐᵒᵖ` reverses products without a Koszul sign.  In this file its
+differential is defined to be
 
 `dᵒᵖ (op a) = (-1) ^ |a| • op (d a)`
 
@@ -46,33 +46,33 @@ universe uR uA uB
 
 namespace InternalGrading
 
-variable {R : Type uR} {A : Type uA} [CommRing R] [Ring A] [Algebra R A]
+variable {R : Type uR} {M : Type uA} [CommRing R] [AddCommMonoid M] [Module R M]
 
 /-- The differential on the ordinary opposite algebra.  The Koszul twist compensates for reversing
 the multiplication without inserting a sign into the product itself. -/
-noncomputable def oppositeDifferential (G : InternalGrading R A) (d : A →ₗ[R] A) :
-    Aᵐᵒᵖ →ₗ[R] Aᵐᵒᵖ :=
+noncomputable def oppositeDifferential (G : InternalGrading R M) (d : M →ₗ[R] M) :
+    Mᵐᵒᵖ →ₗ[R] Mᵐᵒᵖ :=
   (opLinearEquiv R).toLinearMap ∘ₗ d ∘ₗ G.koszulTwist 1 ∘ₗ
     (opLinearEquiv R).symm.toLinearMap
 
 /-- The opposite differential applied to `op a`, before evaluating the Koszul twist on the
 homogeneous components of `a`. -/
 @[simp]
-theorem oppositeDifferential_op (G : InternalGrading R A) (d : A →ₗ[R] A) (a : A) :
+theorem oppositeDifferential_op (G : InternalGrading R M) (d : M →ₗ[R] M) (a : M) :
     G.oppositeDifferential d (op a) = op (d (G.koszulTwist 1 a)) :=
   (rfl)
 
 /-- After applying `unop`, the opposite differential is the original differential preceded by the
 Koszul twist. -/
 @[simp]
-theorem unop_oppositeDifferential (G : InternalGrading R A) (d : A →ₗ[R] A) (x : Aᵐᵒᵖ) :
+theorem unop_oppositeDifferential (G : InternalGrading R M) (d : M →ₗ[R] M) (x : Mᵐᵒᵖ) :
     unop (G.oppositeDifferential d x) = d (G.koszulTwist 1 x.unop) :=
   (rfl)
 
 /-- On an element of degree `p`, the opposite differential is `(-1) ^ p` times the opposite of
 the original differential. -/
-theorem oppositeDifferential_op_of_mem (G : InternalGrading R A) (d : A →ₗ[R] A)
-    {p : ℤ} {a : A} (ha : a ∈ G.piece p) :
+theorem oppositeDifferential_op_of_mem (G : InternalGrading R M) (d : M →ₗ[R] M)
+    {p : ℤ} {a : M} (ha : a ∈ G.piece p) :
     G.oppositeDifferential d (op a) = (((p.negOnePow : ℤ) : R) • op (d a)) := by
   rw [G.oppositeDifferential_op, G.koszulTwist_apply_of_mem ha]
   simp only [one_mul, map_smul, op_smul]
