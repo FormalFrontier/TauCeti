@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.SpecialFunctions.IncompleteGamma
+public import TauCeti.Probability.Cdf
 public import Mathlib.Probability.CDF
 public import Mathlib.Probability.Distributions.Poisson.Basic
 
@@ -157,22 +158,13 @@ theorem sum_range_poissonMeasure_real_singleton (r : ℝ≥0) (n : ℕ) :
 nonnegative point: it is the step function `1 - P(⌊x⌋₊ + 1, r)`. -/
 theorem cdf_map_cast_poissonMeasure (r : ℝ≥0) {x : ℝ} (hx : 0 ≤ x) :
     cdf Po(ℝ, r) x = 1 - regularizedGamma (⌊x⌋₊ + 1) (r : ℝ) := by
-  have hpre : (Nat.cast : ℕ → ℝ) ⁻¹' Iic x = Iic ⌊x⌋₊ := by
-    ext k
-    simp only [mem_preimage, mem_Iic]
-    exact (Nat.le_floor_iff hx).symm
-  rw [cdf_eq_real, map_measureReal_apply (by fun_prop) measurableSet_Iic, hpre,
-    poissonMeasure_real_Iic]
+  rw [Probability.cdf_map_natCast _ hx, poissonMeasure_real_Iic]
 
 /-- Below the origin the cumulative distribution function of `Po(ℝ, r)` vanishes: a Poisson law is
 carried by the natural numbers. -/
 theorem cdf_map_cast_poissonMeasure_of_neg (r : ℝ≥0) {x : ℝ} (hx : x < 0) :
-    cdf Po(ℝ, r) x = 0 := by
-  have hpre : (Nat.cast : ℕ → ℝ) ⁻¹' Iic x = ∅ := by
-    ext k
-    simp only [mem_preimage, mem_Iic, mem_empty_iff_false, iff_false, not_le]
-    exact lt_of_lt_of_le hx (Nat.cast_nonneg k)
-  rw [cdf_eq_real, map_measureReal_apply (by fun_prop) measurableSet_Iic, hpre, measureReal_empty]
+    cdf Po(ℝ, r) x = 0 :=
+  Probability.cdf_map_natCast_of_neg _ hx
 
 /-! ### Random-variable corollaries -/
 
