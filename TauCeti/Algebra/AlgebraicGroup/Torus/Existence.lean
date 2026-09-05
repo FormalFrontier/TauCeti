@@ -31,9 +31,6 @@ algebraic closure; comparing the two is again a separate theorem.
 
 ## Main declarations
 
-* `TauCeti.rankZeroSplitTorusIso`: the rank-zero split torus is the trivial affine group.
-* `TauCeti.splitTorusCommHopfAlgProperty_trivial`: the trivial affine group is the rank-zero
-  split torus.
 * `TauCeti.HopfIdeal.torusCommHopfAlgProperty_quotient_augmentation`: the identity subgroup of a
   finite-type affine group is a torus.
 * `TauCeti.HopfIdeal.exists_isMaximalTorus_le`: every torus closed subgroup is contained in a
@@ -59,30 +56,6 @@ universe u
 noncomputable section
 
 variable {k : Type u} [Field k]
-
-/-- The rank-zero split torus is the trivial affine group: the group algebra of the trivial
-character group is the base field. -/
-def rankZeroSplitTorusIso (k : Type u) [Field k] :
-    DiagonalizableGroup.coordinateRing k
-        (SplitTorus.characterGroup (ULift.{u} (Fin 0))) ≅
-      FiniteTypeCommHopfAlgCat.of k k :=
-  ObjectProperty.isoMk _ <| _root_.CommHopfAlgCat.isoMk <|
-    MonoidAlgebra.bialgEquivOfSubsingleton (R := k) _
-
-/-- The rank-zero split-torus isomorphism is the counit on its coordinate ring. -/
-@[simp]
-theorem rankZeroSplitTorusIso_hom_apply (k : Type u) [Field k]
-    (x : DiagonalizableGroup.coordinateRing k
-      (SplitTorus.characterGroup (ULift.{u} (Fin 0)))) :
-    (rankZeroSplitTorusIso k).hom x = Coalgebra.counit (R := k) x := by
-  exact Bialgebra.counitBialgHom_apply (R := k) x
-
-/-- The trivial affine group is the split torus of rank zero. -/
-@[grind =>]
-theorem splitTorusCommHopfAlgProperty_trivial (k : Type u) [Field k] :
-    splitTorusCommHopfAlgProperty k (FiniteTypeCommHopfAlgCat.of k k) :=
-  (splitTorusCommHopfAlgProperty k).prop_of_iso (rankZeroSplitTorusIso k)
-    (SplitTorus.splitTorus_coordinateRing k (ULift.{u} (Fin 0)))
 
 namespace HopfIdeal
 

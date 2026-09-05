@@ -43,6 +43,9 @@ distinguishes tori from general groups of multiplicative type.
   cocommutative.
 * `TauCeti.SplitTorus.splitTorus_coordinateRing`: the standard finite-rank split tori satisfy the
   split predicate.
+* `TauCeti.rankZeroSplitTorusIso`: the rank-zero split torus is the trivial affine group.
+* `TauCeti.splitTorusCommHopfAlgProperty_trivial`: the trivial affine group is the rank-zero
+  split torus.
 
 ## References
 
@@ -196,5 +199,33 @@ theorem splitTorus_coordinateRing (k : Type u) [CommRing k] (σ : Type u) [Finit
   exact ⟨Nat.card σ, ⟨i.symm⟩⟩
 
 end SplitTorus
+
+noncomputable section
+
+/-- The rank-zero split torus is the trivial affine group: the group algebra of the trivial
+character group is the base field. -/
+def rankZeroSplitTorusIso (k : Type u) [Field k] :
+    DiagonalizableGroup.coordinateRing k
+        (SplitTorus.characterGroup (ULift.{u} (Fin 0))) ≅
+      FiniteTypeCommHopfAlgCat.of k k :=
+  ObjectProperty.isoMk _ <| _root_.CommHopfAlgCat.isoMk <|
+    MonoidAlgebra.bialgEquivOfSubsingleton (R := k) _
+
+/-- The rank-zero split-torus isomorphism is the counit on its coordinate ring. -/
+@[simp]
+theorem rankZeroSplitTorusIso_hom_apply (k : Type u) [Field k]
+    (x : DiagonalizableGroup.coordinateRing k
+      (SplitTorus.characterGroup (ULift.{u} (Fin 0)))) :
+    (rankZeroSplitTorusIso k).hom x = Coalgebra.counit (R := k) x := by
+  exact Bialgebra.counitBialgHom_apply (R := k) x
+
+/-- The trivial affine group is the split torus of rank zero. -/
+@[grind =>]
+theorem splitTorusCommHopfAlgProperty_trivial (k : Type u) [Field k] :
+    splitTorusCommHopfAlgProperty k (FiniteTypeCommHopfAlgCat.of k k) :=
+  (splitTorusCommHopfAlgProperty k).prop_of_iso (rankZeroSplitTorusIso k)
+    (SplitTorus.splitTorus_coordinateRing k (ULift.{u} (Fin 0)))
+
+end
 
 end TauCeti
