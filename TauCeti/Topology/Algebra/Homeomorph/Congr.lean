@@ -23,9 +23,6 @@ conjugation isomorphism of permutation groups, and is the target of the forgetfu
 diffeomorphism-level `TauCeti.Diffeomorph.diffCongr` in
 `TauCeti.Geometry.Diffeomorphism.Congr`.
 
-These extensions of Mathlib's `Homeomorph` API live in the root `Homeomorph` namespace, so their
-placement is canonical and receiver notation is available where the arguments permit it.
-
 ## Main definitions
 
 * `Homeomorph.homeoCongr e`: the group isomorphism `(M ≃ₜ M) ≃* (N ≃ₜ N)` conjugating

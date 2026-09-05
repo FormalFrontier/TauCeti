@@ -42,6 +42,7 @@ variable {X : Type u} [TopologicalSpace X]
 namespace Homeomorph
 
 /-- A homeomorphism maps a connected component onto the connected component of the image point. -/
+@[simp]
 theorem image_connectedComponent {Y : Type*} [TopologicalSpace Y]
     (e : X ≃ₜ Y) (x : X) :
     e '' connectedComponent x = connectedComponent (e x) := by
