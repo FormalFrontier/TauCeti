@@ -70,8 +70,8 @@ theorem _root_.Representation.exists_unitHom_jointEigenvector_of_commutator_le_o
   obtain ⟨χ, y, hy, heigen⟩ :=
     TauCeti.exists_unitHom_jointEigenvector_of_pairwise_commute_of_isAlgClosed
       rhoQ fun (g h : G ⧸ N) _ ↦ by
-        change rhoQ g * rhoQ h = rhoQ h * rhoQ g
-        rw [← map_mul, mul_comm' g h, map_mul]
+        exact (rhoQ.map_mul g h).symm.trans <|
+          (congrArg rhoQ (mul_comm' g h)).trans (rhoQ.map_mul h g)
   let χ' : G →* Kˣ := χ.comp (QuotientGroup.mk' N)
   refine ⟨χ', y, fun h ↦ hy (Subtype.ext h), fun g ↦ ?_⟩
   exact congrArg Subtype.val (heigen (QuotientGroup.mk' N g))

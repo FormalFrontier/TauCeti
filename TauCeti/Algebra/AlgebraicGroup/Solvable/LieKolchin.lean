@@ -10,6 +10,8 @@ public import TauCeti.Algebra.AlgebraicGroup.Solvable.Trigonalizable
 public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Basic
 public import TauCeti.RepresentationTheory.Unipotent.DerivedEigenvector
 import TauCeti.Algebra.AlgebraicGroup.Unipotent.Reduced
+import TauCeti.Algebra.AlgebraicGroup.Representation.UnipotentPoint.Naturality
+import TauCeti.Algebra.Coalgebra.Comodule.Transport
 import TauCeti.Algebra.Coalgebra.Subcomodule.PointSeparation
 
 /-!
@@ -62,16 +64,82 @@ namespace TauCeti
 
 open CategoryTheory WithConv
 
-universe u
+universe u v w
 
 noncomputable section
 
 namespace Comodule
 
-variable {k H M : Type u}
+variable {k : Type u} {H : Type v} {M : Type w}
 variable [Field k] [IsAlgClosed k] [CommRing H] [HopfAlgebra k H]
 variable [Algebra.FiniteType k H] [IsReduced H]
 variable [AddCommGroup M] [Module k M] [Comodule k H M]
+
+private theorem hasNonzeroWeightVector_of_forall_isUnipotentPoint_derived_aux
+    {V : Type u} [AddCommGroup V] [Module k V] [Comodule k H V]
+    [FiniteDimensional k V] [Nontrivial V]
+    (hderived : ∀ g : WithConv
+      (CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of k H)
+        (CommHopfAlgCat.derivedDefiningIdeal (R := k) H) →ₐ[k] k),
+      HopfAlgebra.IsUnipotentPoint g) :
+    HasNonzeroWeightVector k H V := by
+  let A := _root_.CommHopfAlgCat.of k H
+  let I := CommHopfAlgCat.derivedDefiningIdeal (R := k) H
+  let Q := CommHopfAlgCat.quotient A I
+  let q : H →ₐc[k] Q := (CommHopfAlgCat.mkQuotient A I).hom
+  let G := HopfAlgebra.points (R := k) (H := H) (CommAlgCat.of k k)
+  let N := CommHopfAlgCat.quotientPointsSubgroup A I (CommAlgCat.of k k)
+  let _ : N.Normal := CommHopfAlgCat.quotientPointsSubgroup_normal A I
+    (CommHopfAlgCat.isNormal_derivedDefiningIdeal A) (CommAlgCat.of k k)
+  let rho : _root_.Representation k G (k ⊗[k] V) :=
+    pointsRepresentation (R := k) (H := H) (A := k) V
+  have hcomm : _root_.commutator G ≤ N :=
+    CommHopfAlgCat.commutator_le_quotientPointsSubgroup_of_le_derivedDefiningIdeal
+      A I le_rfl (CommAlgCat.of k k)
+  have hunipotent (n : N) : IsNilpotent (rho n - 1) := by
+    obtain ⟨g, hg⟩ := n.2
+    have hg' : HopfAlgebra.IsUnipotentPoint (AlgHom.mapDomain q g) :=
+      (hderived g).mapDomain q
+    have hnil :=
+      (HopfAlgebra.isUnipotentPoint_iff_forall_isNilpotent_endOfPoint_sub_one
+        (AlgHom.mapDomain q g)).mp hg'
+        (FGComoduleCat.of (R := k) (C := H) V)
+    have hinclude : CommHopfAlgCat.quotientPointsHom A I (CommAlgCat.of k k) g =
+        AlgHom.mapDomain q g := by
+      rw [CommHopfAlgCat.quotientPointsHom_apply, AlgHom.mapDomain_apply]
+    have hn : (n : G) = AlgHom.mapDomain q g := hg.symm.trans hinclude
+    rw [show rho n = endOfPoint V (n : G).ofConv by
+      exact pointsRepresentation_apply V (n : G), hn]
+    exact hnil
+  obtain ⟨χ, w, hw, haction⟩ :=
+    rho.exists_unitHom_jointEigenvector_of_commutator_le_of_isUnipotent N hcomm hunipotent
+  let e := TensorProduct.lid k V
+  let v := e w
+  have hv : v ≠ 0 := e.map_ne_zero_iff.mpr hw
+  have hv' : (1 : k) ⊗ₜ[k] v = w := by
+    exact (TensorProduct.lid_symm_apply (R := k) v).symm.trans (e.symm_apply_apply w)
+  have haction' (g : WithConv (H →ₐ[k] k)) :
+      basePointsRepresentation (R := k) (H := H) V g v = (χ g : k) • v := by
+    rw [basePointsRepresentation_apply, hv']
+    have hg := haction g
+    rw [show rho g = endOfPoint V g.ofConv by exact pointsRepresentation_apply V g] at hg
+    rw [hg, map_smul]
+  let p : Submodule k V := k ∙ v
+  have hact (g : WithConv (H →ₐ[k] k)) {m : V} (hm : m ∈ p) :
+      basePointsRepresentation (R := k) (H := H) V g m ∈ p := by
+    rw [Submodule.mem_span_singleton] at hm
+    obtain ⟨a, rfl⟩ := hm
+    rw [map_smul, haction' g]
+    exact p.smul_mem _ (p.smul_mem _ (Submodule.mem_span_singleton_self v))
+  have hstable : ∀ (g : H →ₐ[k] k) {m : V}, m ∈ p →
+      endOfPoint V g (1 ⊗ₜ[k] m) ∈ p.baseChange k := by
+    intro g m hm
+    rw [endOfPoint_tmul, one_smul,
+      endOfPoint_one_tmul_eq_one_tmul_basePointsRepresentation]
+    exact Submodule.tmul_mem_baseChange_of_mem _ (hact (toConv g) hm)
+  exact hasNonzeroWeightVector_of_toSubmodule_eq_span
+    (Subcomodule.ofEndOfPointStable (K := k) p hstable) hv
+    (Subcomodule.ofEndOfPointStable_toSubmodule (K := k) p hstable)
 
 /-- If every point of the derived closed subgroup acts unipotently, then every nonzero
 finite-dimensional representation has a nonzero weight vector.
@@ -87,76 +155,33 @@ theorem hasNonzeroWeightVector_of_forall_isUnipotentPoint_derived
         (CommHopfAlgCat.derivedDefiningIdeal (R := k) H) →ₐ[k] k),
       HopfAlgebra.IsUnipotentPoint g) :
     HasNonzeroWeightVector k H M := by
-  let A := _root_.CommHopfAlgCat.of k H
-  let I := CommHopfAlgCat.derivedDefiningIdeal (R := k) H
-  let Q := CommHopfAlgCat.quotient A I
-  let q : H →ₐc[k] Q := (CommHopfAlgCat.mkQuotient A I).hom
-  let G := HopfAlgebra.points (R := k) (H := H) (CommAlgCat.of k k)
-  let N := CommHopfAlgCat.quotientPointsSubgroup A I (CommAlgCat.of k k)
-  let _ : N.Normal := CommHopfAlgCat.quotientPointsSubgroup_normal A I
-    (CommHopfAlgCat.isNormal_derivedDefiningIdeal A) (CommAlgCat.of k k)
-  let rho : _root_.Representation k G (k ⊗[k] M) :=
-    pointsRepresentation (R := k) (H := H) (A := k) M
-  have hcomm : _root_.commutator G ≤ N :=
-    CommHopfAlgCat.commutator_le_quotientPointsSubgroup_of_le_derivedDefiningIdeal
-      A I le_rfl (CommAlgCat.of k k)
-  have hunipotent (n : N) : IsNilpotent (rho n - 1) := by
-    obtain ⟨g, hg⟩ := n.2
-    have hg' : HopfAlgebra.IsUnipotentPoint (AlgHom.mapDomain q g) :=
-      (hderived g).mapDomain q
-    have hnil :=
-      (HopfAlgebra.isUnipotentPoint_iff_forall_isNilpotent_endOfPoint_sub_one
-        (AlgHom.mapDomain q g)).mp hg'
-        (FGComoduleCat.of (R := k) (C := H) M)
-    have hn : (n : G) = AlgHom.mapDomain q g :=
-      hg.symm.trans <| by rfl
-    change IsNilpotent
-      (pointsRepresentation (R := k) (H := H) (A := k) M n - 1)
-    rw [pointsRepresentation_apply, hn]
-    exact hnil
-  obtain ⟨χ, w, hw, haction⟩ :=
-    rho.exists_unitHom_jointEigenvector_of_commutator_le_of_isUnipotent N hcomm hunipotent
-  let e := TensorProduct.lid k M
-  let v := e w
-  have hv : v ≠ 0 := e.map_ne_zero_iff.mpr hw
-  have hv' : (1 : k) ⊗ₜ[k] v = w := by
-    exact (TensorProduct.lid_symm_apply (R := k) v).symm.trans (e.symm_apply_apply w)
-  have haction' (g : WithConv (H →ₐ[k] k)) :
-      basePointsRepresentation (R := k) (H := H) M g v = (χ g : k) • v := by
-    rw [basePointsRepresentation_apply, hv']
-    have hg := haction g
-    change pointsRepresentation (R := k) (H := H) (A := k) M g w = _ at hg
-    rw [pointsRepresentation_apply] at hg
-    rw [hg, map_smul]
-  let p : Submodule k M := k ∙ v
-  have hact (g : WithConv (H →ₐ[k] k)) {m : M} (hm : m ∈ p) :
-      basePointsRepresentation (R := k) (H := H) M g m ∈ p := by
-    rw [Submodule.mem_span_singleton] at hm
-    obtain ⟨a, rfl⟩ := hm
-    rw [map_smul, haction' g]
-    exact p.smul_mem _ (p.smul_mem _ (Submodule.mem_span_singleton_self v))
-  have hstable : ∀ (g : H →ₐ[k] k) {m : M}, m ∈ p →
-      endOfPoint M g (1 ⊗ₜ[k] m) ∈ p.baseChange k := by
-    intro g m hm
-    rw [endOfPoint_tmul, one_smul,
-      endOfPoint_one_tmul_eq_one_tmul_basePointsRepresentation]
-    exact Submodule.tmul_mem_baseChange_of_mem _ (hact (toConv g) hm)
-  exact hasNonzeroWeightVector_of_toSubmodule_eq_span
-    (Subcomodule.ofEndOfPointStable (K := k) p hstable) hv
-    (Subcomodule.ofEndOfPointStable_toSubmodule (K := k) p hstable)
+  let e : M ≃ₗ[k] (Fin (Module.finrank k M) → k) := (Module.finBasis k M).equivFun
+  let _ : Comodule k H (Fin (Module.finrank k M) → k) := Comodule.Transport e
+  let _ : Nontrivial (Fin (Module.finrank k M) → k) := e.symm.toEquiv.nontrivial
+  have hweight : HasNonzeroWeightVector k H (Fin (Module.finrank k M) → k) :=
+    hasNonzeroWeightVector_of_forall_isUnipotentPoint_derived_aux hderived
+  obtain ⟨v, c, hv, hc, hvc⟩ := (hasNonzeroWeightVector_iff (k := k) (C := H)).mp hweight
+  refine (hasNonzeroWeightVector_iff (k := k) (C := H)).mpr
+    ⟨e.symm v, c, e.symm.map_ne_zero_iff.mpr hv, hc, ?_⟩
+  have hmap := (Comodule.transportInvHom (R := k) (C := H) e).map_coact_apply v
+  rw [hvc] at hmap
+  simpa only [Comodule.transportInvHom_apply, Comodule.transportInvHom_toLinearMap,
+    LinearEquiv.coe_coe, TensorProduct.map_tmul, LinearMap.id_apply] using hmap.symm
 
-/-- If the reduced derived closed subgroup is geometrically unipotent, then every nonzero
+/-- If the derived closed subgroup is geometrically unipotent, then every nonzero
 finite-dimensional representation has a nonzero weight vector. -/
 theorem hasNonzeroWeightVector_of_geometricallyUnipotent_derived
     [FiniteDimensional k M] [Nontrivial M]
-    [IsReduced (CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of k H)
-      (CommHopfAlgCat.derivedDefiningIdeal (R := k) H))]
     (hderived : geometricallyUnipotentPointsCommHopfAlgProperty k
       (CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of k H)
         (CommHopfAlgCat.derivedDefiningIdeal (R := k) H))) :
-    HasNonzeroWeightVector k H M :=
-  hasNonzeroWeightVector_of_forall_isUnipotentPoint_derived fun g ↦
-    geometricallyUnipotentPointsCommHopfAlgProperty.isUnipotentPoint hderived g
+    HasNonzeroWeightVector k H M := by
+  apply hasNonzeroWeightVector_of_forall_isUnipotentPoint_derived
+  intro g
+  let φ : k →ₐ[k] AlgebraicClosure k := _root_.Algebra.ofId k (AlgebraicClosure k)
+  have hgeom := (geometricallyUnipotentPointsCommHopfAlgProperty_iff k _).mp hderived
+  exact (HopfAlgebra.isUnipotentPoint_mapValue_iff_of_injective g φ φ.injective).mp
+    (hgeom (AlgHom.mapValue φ g))
 
 /-- **Lie--Kolchin under unipotence of the derived subgroup.** If every point of the derived
 closed subgroup of a reduced finite-type affine group over an algebraically closed field is
@@ -175,14 +200,12 @@ theorem exists_basis_coefficientMatrix_isUpperTriangular_of_forall_isUnipotentPo
     fun V _ _ _ _ _ ↦
       hasNonzeroWeightVector_of_forall_isUnipotentPoint_derived (M := V) hderived
 
-/-- **Geometric Lie--Kolchin reduction.** If the reduced derived closed subgroup of a reduced
+/-- **Geometric Lie--Kolchin reduction.** If the derived closed subgroup of a reduced
 finite-type affine group over an algebraically closed field is geometrically unipotent, then every
 finite-dimensional representation admits an upper-triangular basis with characters on the
 diagonal. -/
 theorem exists_basis_coefficientMatrix_isUpperTriangular_of_geometricallyUnipotent_derived
     [FiniteDimensional k M]
-    [IsReduced (CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of k H)
-      (CommHopfAlgCat.derivedDefiningIdeal (R := k) H))]
     (hderived : geometricallyUnipotentPointsCommHopfAlgProperty k
       (CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of k H)
         (CommHopfAlgCat.derivedDefiningIdeal (R := k) H))) :
