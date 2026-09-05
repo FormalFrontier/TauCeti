@@ -42,12 +42,11 @@ noncomputable def evenEquivMatrixFinTwoOfFinrankEqThree
   (nonempty_algEquiv_even_matrix_of_finrank_eq_two_mul_add_one hQ (l := 1) (by omega)).some
 
 /-- In the chosen two-by-two matrix model, Clifford reversal is matrix adjugation. -/
-@[simp]
 theorem evenEquivMatrixFinTwoOfFinrankEqThree_reverse
     (hQ : Q.Nondegenerate) (hV : Module.finrank K V = 3) (x : ↥(even Q)) :
     evenEquivMatrixFinTwoOfFinrankEqThree Q hQ hV (reverseEven Q x) =
       Matrix.adjugate (evenEquivMatrixFinTwoOfFinrankEqThree Q hQ hV x) :=
-  reverseEven_eq_adjugate_of_finrank_eq_three Q hV
+  map_reverseEven_eq_adjugate_of_finrank_eq_three Q hV
     (evenEquivMatrixFinTwoOfFinrankEqThree Q hQ hV) x
 
 end CliffordAlgebra

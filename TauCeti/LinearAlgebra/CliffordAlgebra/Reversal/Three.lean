@@ -181,7 +181,7 @@ private theorem exists_add_reverseMatrix_eq_smul_one
 
 /-- Reversal transported through any two-by-two model is matrix adjugation. -/
 @[simp]
-theorem reverseEven_eq_adjugate_of_finrank_eq_three
+ theorem map_reverseEven_eq_adjugate_of_finrank_eq_three
     (hV : Module.finrank K V = 3)
     (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) (x : ↥(even Q)) :
     e (reverseEven Q x) = Matrix.adjugate (e x) := by
@@ -193,11 +193,11 @@ theorem reverseEven_eq_adjugate_of_finrank_eq_three
     Matrix.adjugateFinTwoLinearMap_apply] using hf
 
 /-- The Clifford norm product maps to the matrix determinant times the identity. -/
-theorem reverseEven_mul_eq_det_smul_one_of_finrank_eq_three
+ theorem map_reverseEven_mul_eq_det_smul_one_of_finrank_eq_three
     (hV : Module.finrank K V = 3)
     (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) (x : ↥(even Q)) :
     e (reverseEven Q x * x) = (e x).det • (1 : Matrix (Fin 2) (Fin 2) K) := by
-  rw [map_mul, reverseEven_eq_adjugate_of_finrank_eq_three Q hV e x]
+  rw [map_mul, map_reverseEven_eq_adjugate_of_finrank_eq_three Q hV e x]
   exact Matrix.adjugate_mul _
 
 /-- The Clifford norm-one equation is equivalent to determinant one. -/
@@ -208,12 +208,12 @@ theorem reverseEven_mul_eq_one_iff_det_eq_one_of_finrank_eq_three
   constructor
   · intro h
     have hm := congrArg e h
-    rw [reverseEven_mul_eq_det_smul_one_of_finrank_eq_three Q hV e x, map_one] at hm
+    rw [map_reverseEven_mul_eq_det_smul_one_of_finrank_eq_three Q hV e x, map_one] at hm
     have h00 := congrArg (fun M : Matrix (Fin 2) (Fin 2) K => M 0 0) hm
     simpa using h00
   · intro hdet
     apply e.injective
-    rw [map_one, reverseEven_mul_eq_det_smul_one_of_finrank_eq_three Q hV e x, hdet, one_smul]
+    rw [map_one, map_reverseEven_mul_eq_det_smul_one_of_finrank_eq_three Q hV e x, hdet, one_smul]
 
 /-- On the even Clifford subalgebra in dimension three, the Clifford `star`-norm equation is
 equivalent to determinant one in any two-by-two matrix model. -/

@@ -86,7 +86,18 @@ private theorem map_single_eq_neg_of_ne
     -- The off-diagonal entry of the reversed product is the only surviving matrix-unit
     -- coefficient; evaluating it isolates the scalar translate `r`.
     have hpji' : (0 : K) = -r := by
-      simpa [E, F, sub_mul, mul_sub, hij, Ne.symm hij] using hpji
+      let D : Matrix (Fin 2) (Fin 2) K := t • 1 - Matrix.single i i 1
+      let A : Matrix (Fin 2) (Fin 2) K := s • 1 - Matrix.single j i 1
+      let B : Matrix (Fin 2) (Fin 2) K := r • 1 - Matrix.single i j 1
+      have hleft : (D j i : K) = 0 := by
+        simp [D, hij, Ne.symm hij]
+      have hright : ((A * B) j i : K) = -r := by
+        simp [A, B, sub_mul, mul_sub, hij, Ne.symm hij]
+      calc
+        (0 : K) = D j i := hleft.symm
+        _ = ((s • 1 - F) * (r • 1 - E)) j i := by simpa [D] using hpji
+        _ = (A * B) j i := by simp [A, B, E, F]
+        _ = -r := hright
     exact neg_eq_zero.mp hpji'.symm
   have hneg : f E = -E := by
     rw [hf, hr0]
