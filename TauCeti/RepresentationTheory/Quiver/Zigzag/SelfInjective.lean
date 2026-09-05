@@ -103,6 +103,8 @@ private theorem zigzagComponentPairing_mul_assoc (C : G.ConnectedComponent)
     -- preceding `by_cases` does not expose that equation to `simp` in this dependent family.
     change zigzagTracePairing k C.toSimpleGraph hns (e (x * y)) (e z) =
       zigzagTracePairing k C.toSimpleGraph hns (e x) (e (y * z))
+    -- `e.map_mul` is stated through `e.toMulEquiv`, whereas this goal contains the `AlgEquiv`
+    -- function coercion, so `rw [e.map_mul x y]` cannot find the syntactically different term.
     rw [show e (x * y) = e x * e y from e.map_mul x y,
       show e (y * z) = e y * e z from e.map_mul y z]
     exact zigzagTracePairing_mul_assoc k C.toSimpleGraph hns _ _ _
@@ -114,6 +116,7 @@ private theorem zigzagComponentPairing_mul_assoc (C : G.ConnectedComponent)
     -- singleton branch of the dependent `by_cases` has been selected.
     change dualNumberTracePairing k (e (x * y)) (e z) =
       dualNumberTracePairing k (e x) (e (y * z))
+    -- The typed equalities bridge the same `e.toMulEquiv` versus `AlgEquiv` coercion mismatch.
     rw [show e (x * y) = e x * e y from e.map_mul x y,
       show e (y * z) = e y * e z from e.map_mul y z]
     exact dualNumberTracePairing_mul_assoc k _ _ _
