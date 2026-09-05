@@ -22,13 +22,12 @@ pairing given by the infinitesimal coefficient of a product. Summing these pairi
 connected components proves the result for `TauCeti.zigzagAlgebra`, including disconnected graphs
 and isolated vertices.
 
-The argument is the general criterion `Function.Bijective.moduleBaer_self`: the trace turns a map
-out of a left ideal into a linear functional, which extends to the whole algebra as a vector space
-and is then written as pairing against a fixed element, giving the extension Baer's criterion asks
-for.
+The general criterion `Function.Bijective.moduleBaer_self` applied to the componentwise perfect
+associative pairing gives self-injectivity of the public zigzag algebra, and also recovers the
+relation-quotient result for graphs without isolated vertices.
 
 Because the vertex projective `Z e_i` is a retract of the regular module, it inherits injectivity:
-over a zigzag algebra the vertex projectives are also the indecomposable injectives. Their
+over a zigzag algebra the vertex projectives are indecomposable injective modules. Their
 projectivity is `TauCeti.zigzagProjective_projective`, and their indecomposability is
 `TauCeti.isIndecomposableModule_zigzagProjective`.
 

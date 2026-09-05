@@ -22,15 +22,6 @@ already forces `B x y = B 1 (x * y)`, so the form is multiplication followed by 
 functional `B 1`, the Frobenius trace; perfectness is nondegeneracy in the strong form which also
 makes every functional on `A` of the shape `B · a`.
 
-The proof is Baer's criterion. Given a left ideal `I` and an `A`-linear `f : I →ₗ[A] A`, the trace
-turns `f` into a `k`-linear functional on `I`, which extends to a functional `ψ` on `A` because `I`
-is a subspace of a vector space; perfectness writes `ψ` as `B · a` for some `a : A`, and right
-multiplication by `a` is the required extension of `f`. Indeed `x * a` and `f x` pair identically
-against every `y : A`, because associativity moves `y` inside `f`: `B y (x * a) = B (y * x) a` is
-`ψ` at `y * x ∈ I`, which is `B 1 (f (y * x)) = B 1 (y * f x) = B y (f x)`. Only bijectivity of
-`B.flip` is used, that is, nondegeneracy in the second variable together with surjectivity onto the
-dual.
-
 Two general facts about Baer modules are proved along the way and stated in Mathlib's `Module.Baer`
 namespace, which has neither. A retract of a Baer module is Baer (`Module.Baer.of_leftInverse`),
 and consequently the left ideal cut out by an idempotent is Baer over a self-injective ring
@@ -66,8 +57,9 @@ section Retract
 variable {R : Type u} [Ring R] {Q : Type v} [AddCommGroup Q] [Module R Q]
   {M : Type w} [AddCommGroup M] [Module R M]
 
-/-- **A retract of a Baer module is Baer.** A map out of an ideal is pushed into `Q`, extended
-there, and pulled back along the retraction. -/
+/-- **Baer modules are closed under retracts.** If `M` admits a split inclusion into a Baer module
+`Q`, then `M` is Baer. In particular, this criterion applies to projective summands of a
+self-injective regular module. -/
 theorem _root_.Module.Baer.of_leftInverse (hQ : Module.Baer R Q) (s : M →ₗ[R] Q) (r : Q →ₗ[R] M)
     (hrs : ∀ m, r (s m) = m) : Module.Baer R M := fun I g => by
   obtain ⟨g', hg'⟩ := hQ I (s ∘ₗ g)
