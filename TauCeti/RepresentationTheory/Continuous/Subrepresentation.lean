@@ -18,7 +18,7 @@ action operator, the continuous counterpart of Mathlib's `Representation.subrepr
 
 * `TauCeti.ContRepresentation.subrepresentation`: the restriction of a continuous representation to
   an invariant submodule.
-* `TauCeti.ContRepresentation.subrepresentationInclusion`: the continuous intertwiner including a
+* `ContRepresentation.subrepresentationInclusion`: the continuous intertwiner including a
   subrepresentation into its ambient representation.
 
 ## Main results
@@ -61,10 +61,12 @@ theorem coe_subrepresentation_apply (g : G) (v : W) :
     ((subrepresentation π W hW g v : W) : V) = π g (v : V) :=
   (rfl)
 
+-- Declared in the root `ContRepresentation` namespace, so that the inclusion is reachable as
+-- `π.subrepresentationInclusion σ` at its use sites.
 /-- The inclusion of a subrepresentation into its ambient continuous representation, packaged as a
 continuous intertwiner. -/
-noncomputable def subrepresentationInclusion (π : ContRepresentation R G V)
-    (σ : Subrepresentation π.toRepresentation) :
+noncomputable def _root_.ContRepresentation.subrepresentationInclusion
+    (π : ContRepresentation R G V) (σ : Subrepresentation π.toRepresentation) :
     ContIntertwiningMap
       (subrepresentation π σ.toSubmodule
         (fun g _ hv ↦ σ.apply_mem_toSubmodule g hv)) π :=
@@ -75,9 +77,9 @@ noncomputable def subrepresentationInclusion (π : ContRepresentation R G V)
 
 /-- The subrepresentation inclusion sends a vector to the same vector in the ambient space. -/
 @[simp]
-theorem subrepresentationInclusion_apply (π : ContRepresentation R G V)
+theorem _root_.ContRepresentation.subrepresentationInclusion_apply (π : ContRepresentation R G V)
     (σ : Subrepresentation π.toRepresentation) (v : σ.toSubmodule) :
-    subrepresentationInclusion π σ v = (v : V) :=
+    π.subrepresentationInclusion σ v = (v : V) :=
   (rfl)
 
 -- Not `@[simp]`: Mathlib's `@[simp] ContRepresentation.mem_invariants` already rewrites the
