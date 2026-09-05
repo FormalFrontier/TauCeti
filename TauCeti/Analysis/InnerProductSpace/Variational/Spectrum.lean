@@ -373,7 +373,7 @@ theorem exists_ne_zero_forall_apply_eq_inv_norm_smul_inner (hB : IsCoercive B)
   have hnorm_eigen : HasEigenvalue (S : H →ₗ[ℝ] H) ‖S‖ :=
     (hcompact.hasEigenvalue_iff_mem_spectrum hnorm_pos.ne').mpr hnorm_mem
   refine (hB.hasEigenvalue_formSolutionOperator_iff J (inv_ne_zero hnorm_pos.ne')).mp ?_
-  simpa using hnorm_eigen
+  simpa only [hS, inv_inv] using hnorm_eigen
 
 /-! ### The spectral theorem for the solution operator -/
 

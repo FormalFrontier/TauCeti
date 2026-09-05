@@ -65,8 +65,9 @@ weak solution for every `f ∈ L²(Ω)`
 The first Dirichlet eigenvalue is not only the least one: it is the minimum of the Rayleigh
 quotient `a(u, u) / ‖u‖²_{L²(Ω)}` over `H¹₀(Ω)`, equivalently the largest constant `C` for which
 the Poincaré-type inequality `C‖u‖²_{L²(Ω)} ≤ a(u, u)` holds.  The inequality itself needs
-neither boundedness nor nonemptiness of `Ω`; boundedness is what makes the minimum *attained*,
-through the compactness of the solution operator.
+neither boundedness nor nonemptiness of `Ω`; boundedness together with nonemptiness makes the
+minimum *attained*, through compactness of the solution operator and nonvanishing of the value
+map.
 
 ## Main declarations
 
@@ -86,7 +87,7 @@ through the compactness of the solution operator.
 * `TauCeti.PDE.isLeast_rayleighQuotient_firstDirichletEigenvalue`: the Rayleigh principle, that
   the first Dirichlet eigenvalue is the minimum of `a(u, u) / ‖u‖²_{L²(Ω)}`, with its inequality
   half `TauCeti.PDE.firstDirichletEigenvalue_mul_norm_value_sq_le` and its reading as the optimal
-  Poincaré constant `TauCeti.PDE.isGreatest_setOf_forall_mul_norm_value_sq_le`.
+  Poincaré constant `TauCeti.PDE.isGreatest_firstDirichletEigenvalue`.
 * `TauCeti.PDE.isDirichletEigenvalue_iff_hasEigenvalue`: the reciprocal correspondence with the
   nonzero eigenvalues of the solution operator.
 * `TauCeti.PDE.finiteDimensional_eigenspace_dirichletSolutionOperator` and
@@ -401,7 +402,7 @@ theorem le_firstDirichletEigenvalue
 
 `κ₁ ‖u‖²_{L²(Ω)} ≤ a(u, u)` for every `u ∈ H¹₀(Ω)`,
 
-and by `TauCeti.PDE.isGreatest_setOf_forall_mul_norm_value_sq_le` it is the largest constant for
+and by `TauCeti.PDE.isGreatest_firstDirichletEigenvalue` it is the largest constant for
 which this holds.  Neither boundedness nor nonemptiness of `Ω` is needed here: only coercivity,
 which makes the solution operator exist, and symmetry, which gives the energy form its
 Cauchy--Schwarz inequality. -/
@@ -454,7 +455,7 @@ the greatest `C` with `C ‖u‖²_{L²(Ω)} ≤ a(u, u)` for all `u ∈ H¹₀(
 principle read as an inequality, and it is what makes the lower bounds
 `TauCeti.PDE.le_firstDirichletEigenvalue` sharp.  Boundedness of `Ω` is not needed because this
 optimal-constant characterization does not assert attainment. -/
-theorem isGreatest_setOf_forall_mul_norm_value_sq_le
+theorem isGreatest_firstDirichletEigenvalue
     (hcoeff : MemLp (fun x => energyIntegrand (a x) (b x) (c x)) ⊤ (mu.restrict Omega))
     (hcoercive : IsCoercive (energyFormH1L0 hcoeff))
     (hsymm : ∀ u v : W1p0 mu Omega 2,
@@ -472,7 +473,7 @@ theorem isGreatest_setOf_forall_mul_norm_value_sq_le
         C * ‖W1p0.valueL u‖ ^ 2 ≤ energyFormH1L0 hcoeff u u} := by
     simp only [W1p0.valueL_apply, energyFormH1L0_apply]
   rw [hset, firstDirichletEigenvalue_def, dirichletSolutionOperator]
-  exact hcoercive.isGreatest_setOf_forall_mul_norm_apply_sq_le
+  exact hcoercive.isGreatest_inv_norm_formSolutionOperator
     (energyFormH1L0_comm hcoeff hsymm) (W1p0.valueL_ne_zero hOmega_nonempty)
 
 /-- **The eigenspaces of the Dirichlet problem are finite dimensional** on a bounded domain. -/
