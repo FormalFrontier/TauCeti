@@ -29,6 +29,9 @@ for the trivial line bundle.
 
 The underlying sheaf is exposed by `tensorProduct_obj`, while the congruence, symmetry, and unit
 isomorphisms provide the categorical API for manipulating tensor products of line bundles.
+
+This implements the invertible-sheaf tensor-product step in Layer A of
+`TauCetiRoadmap/JacobianChallenge/README.md`.
 -/
 
 public section

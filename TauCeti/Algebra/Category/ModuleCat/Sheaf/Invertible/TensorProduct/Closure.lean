@@ -24,7 +24,10 @@ result gives closure of invertible sheaves under tensor product.
   product.
 
 These declarations provide the site-level closure result used to define tensor products of line
-  bundles and, subsequently, the tensor operation in the Picard group.
+bundles and, subsequently, the tensor operation in the Picard group.
+
+This implements the invertible-sheaf tensor-product step in Layer A of
+`TauCetiRoadmap/JacobianChallenge/README.md`.
 -/
 
 public section
@@ -111,8 +114,12 @@ lemma tensorProduct_iso (tM : LocalTrivializations.{u, v₁, u₁} M)
             (tM.isoOver (r.leftIndex j) (r.left j)) ≪≫
           SheafOfModules.tensorProductCongrRight (R.over (r.X j))
             (tN.isoOver (r.rightIndex j) (r.right j)) ≪≫
-          (SheafOfModules.overTensorProductIso R M N (r.X j)).symm) :=
-  (rfl)
+          (SheafOfModules.overTensorProductIso R M N (r.X j)).symm) := by
+  -- The dependent `cast` above transports from the common-refinement object to the covering
+  -- object stored by the atlas; unfold the constructor and compare its fields explicitly.
+  dsimp only [tensorProduct]
+  apply Iso.ext
+  rfl
 
 end LocalTrivializations
 
