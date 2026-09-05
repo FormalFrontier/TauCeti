@@ -421,20 +421,16 @@ theorem IsIntegralLattice.span_range_eq_top (i : N →+ V) (h : IsIntegralLattic
   rintro _ ⟨j, rfl⟩
   exact ⟨_, (IsIntegralLattice.realBasis_apply i h j).symm⟩
 
-/-- The `ℤ`-submodule spanned by the image of an additive map. -/
-def IsIntegralLattice.range (i : N →+ V) : Submodule ℤ V :=
-  LinearMap.range i.toIntLinearMap
-
 /-- The image of an integral lattice is the `ℤ`-span of the induced real basis. -/
 theorem IsIntegralLattice.range_eq_span_realBasis (i : N →+ V) (h : IsIntegralLattice i) :
     Set.range i =
       (Submodule.span ℤ (Set.range (IsIntegralLattice.realBasis i h)) : Set V) := by
-  have hrange : Set.range i = (IsIntegralLattice.range i : Set V) := by
-    simp only [IsIntegralLattice.range, LinearMap.coe_range, AddMonoidHom.coe_toIntLinearMap]
+  have hrange : Set.range i = (LinearMap.range i.toIntLinearMap : Set V) := by
+    simp only [LinearMap.coe_range, AddMonoidHom.coe_toIntLinearMap]
   rw [hrange]
-  have hrange' : IsIntegralLattice.range i =
+  have hrange' : LinearMap.range i.toIntLinearMap =
       Submodule.span ℤ (Set.range (IsIntegralLattice.realBasis i h)) := by
-    rw [IsIntegralLattice.range, LinearMap.range_eq_map,
+    rw [LinearMap.range_eq_map,
       ← (@Module.Free.chooseBasis ℤ N _ _ _ h.free).span_eq,
       Submodule.map_span, ← Set.range_comp]
     congr 1
@@ -470,20 +466,20 @@ theorem IsIntegralLattice.isDiscrete_range (i : N →+ V₀)
 /-- The image submodule of an integral lattice has the discrete topology. -/
 theorem IsIntegralLattice.discreteTopology_range (i : N →+ V₀)
     (h : IsIntegralLattice i) :
-    DiscreteTopology (IsIntegralLattice.range i) := by
+    DiscreteTopology (LinearMap.range i.toIntLinearMap) := by
   apply SetLike.isDiscrete_iff_discreteTopology.mp
-  simpa only [IsIntegralLattice.range, LinearMap.coe_range,
-    AddMonoidHom.coe_toIntLinearMap] using IsIntegralLattice.isDiscrete_range i h
+  simpa only [LinearMap.coe_range, AddMonoidHom.coe_toIntLinearMap] using
+    IsIntegralLattice.isDiscrete_range i h
 
 /-- The image submodule of an integral lattice is a Mathlib `IsZLattice`. -/
 theorem IsIntegralLattice.isZLattice_range (i : N →+ V₀)
     (h : IsIntegralLattice i) :
-    @IsZLattice ℝ _ V₀ _ _ (IsIntegralLattice.range i)
+    @IsZLattice ℝ _ V₀ _ _ (LinearMap.range i.toIntLinearMap)
       (IsIntegralLattice.discreteTopology_range i h) := by
-  exact @IsZLattice.mk ℝ _ V₀ _ _ (IsIntegralLattice.range i)
+  exact @IsZLattice.mk ℝ _ V₀ _ _ (LinearMap.range i.toIntLinearMap)
     (IsIntegralLattice.discreteTopology_range i h) (by
-      simpa only [IsIntegralLattice.range, LinearMap.coe_range,
-        AddMonoidHom.coe_toIntLinearMap] using IsIntegralLattice.span_range_eq_top i h)
+      simpa only [LinearMap.coe_range, AddMonoidHom.coe_toIntLinearMap] using
+        IsIntegralLattice.span_range_eq_top i h)
 
 /-- A real-linear map carrying one integral lattice into another commutes with their lattice
 vectors, after applying the corresponding integral additive map. -/
