@@ -33,11 +33,6 @@ keep one coordinate pinned at an endpoint, so the whole journey stays inside the
 The two-element hypothesis is exactly what lets the second phase pin a *different* coordinate
 at `0` while releasing the first.
 
-This realises the "(pre)connectedness of cubes and cube boundaries for `n ≥ 2`" part of the
-higher-homotopy API requested in the universal-covers roadmap, Stage 3 item 9
-(`TauCetiRoadmap/UniversalCovers/README.md`), a prerequisite for proving that a covering map
-induces isomorphisms on `π_ n` for `n ≥ 2`.
-
 ## Main declarations
 
 * `TauCeti.pathTowardZero`: the straight-line path in `I` from `a` to `0`.
