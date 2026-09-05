@@ -111,12 +111,8 @@ theorem map_leftInverse {f : M →ₗ[R] N} {g : N →ₗ[R] M}
 /-- A right inverse of linear maps induces a right inverse of the corresponding symmetric-algebra
 maps. -/
 theorem map_rightInverse {f : M →ₗ[R] N} {g : N →ₗ[R] M}
-    (h : Function.RightInverse g f) : Function.RightInverse (map R g) (map R f) := by
-  intro a
-  have hmaps : (map R f).comp (map R g) = AlgHom.id R (SymmetricAlgebra R N) := by
-    have hfg : f.comp g = LinearMap.id := LinearMap.ext fun x => h x
-    rw [map_comp_map, hfg, map_id]
-  exact AlgHom.congr_fun hmaps a
+    (h : Function.RightInverse g f) : Function.RightInverse (map R g) (map R f) :=
+  map_leftInverse R (f := g) (g := f) h.leftInverse
 
 /-- A split monomorphism induces an injective map of symmetric algebras. -/
 theorem map_injective_of_leftInverse (f : M →ₗ[R] N) (g : N →ₗ[R] M)
