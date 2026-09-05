@@ -122,15 +122,8 @@ theorem spechtModuleClass_injective : Function.Injective (spechtModuleClass (n :
 /-- **The Specht modules exhaust the simple `ℚ[Sₙ]`-modules.** They are as many as the conjugacy
 classes of `Sₙ` and pairwise non-isomorphic, and no field admits more isomorphism classes of simple
 modules over the group algebra than the group has conjugacy classes. -/
-theorem spechtModuleClass_bijective : Function.Bijective (spechtModuleClass (n := n)) := by
-  classical
-  have : Finite (SimpleSubmoduleClasses ℚ[Equiv.Perm (Fin n)] ℚ[Equiv.Perm (Fin n)]) :=
-    .of_equiv _ (simpleSubmoduleClassesEquiv _ _).symm
-  let _ := Fintype.ofFinite (SimpleSubmoduleClasses ℚ[Equiv.Perm (Fin n)] ℚ[Equiv.Perm (Fin n)])
-  refine (Fintype.bijective_iff_injective_and_card _).mpr ⟨spechtModuleClass_injective, ?_⟩
-  rw [← Nat.card_eq_fintype_card, ← Nat.card_eq_fintype_card]
-  refine le_antisymm (Nat.card_le_card_of_injective _ spechtModuleClass_injective) ?_
-  exact (card_simpleSubmoduleClasses_le_card_conjClasses ℚ (Equiv.Perm (Fin n))).trans
+theorem spechtModuleClass_bijective : Function.Bijective (spechtModuleClass (n := n)) :=
+  SimpleSubmoduleClasses.bijective_of_injective_of_card_conjClasses_le spechtModuleClass_injective
     (Nat.card_congr (partitionEquivConjClasses n).symm).le
 
 /-- **The classification of the irreducible rational representations of the symmetric group.**

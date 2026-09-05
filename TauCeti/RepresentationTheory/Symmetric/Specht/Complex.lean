@@ -104,6 +104,7 @@ theorem character_spechtModuleℂ (μ : n.Partition) (σ : Equiv.Perm (Fin n)) :
 /-- **The complex character is the integer character `χ^μ` read in `ℂ`.** Combined with
 `TauCeti.spechtChar_eq_value` this says that the character table of `Sₙ` computed over `ℚ`,
 `TauCeti.symmetricCharacterTable`, is also its complex character table. -/
+@[simp]
 theorem character_spechtModuleℂ_intCast (μ : n.Partition) (σ : Equiv.Perm (Fin n)) :
     (spechtModuleℂ μ).character σ = (spechtChar μ σ : ℂ) := by
   rw [character_spechtModuleℂ, ← spechtChar_cast, eq_ratCast, Rat.cast_intCast]
@@ -117,7 +118,7 @@ theorem finrank_spechtModuleℂ (μ : n.Partition) :
 /-- **The dimension of an intertwiner space is unchanged by complexification.** This is the whole
 mechanism of the file: the rational intertwiner dimensions, `1` on the diagonal and `0` off it,
 are inherited verbatim by the complex Specht modules. -/
-theorem finrank_intertwiningMap_spechtModuleℂ (μ ν : n.Partition) :
+private theorem finrank_intertwiningMap_spechtModuleℂ (μ ν : n.Partition) :
     finrank ℂ (Representation.IntertwiningMap (spechtModuleℂ μ).ρ (spechtModuleℂ ν).ρ)
       = finrank ℚ (Representation.IntertwiningMap (spechtModule μ).ρ (spechtModule ν).ρ) := by
   rw [spechtModuleℂ_def, spechtModuleℂ_def, FDRep.of_ρ', FDRep.of_ρ']
@@ -147,7 +148,8 @@ private theorem finrank_intertwiningMap_spechtModule_eq_zero {μ ν : n.Partitio
 /-- **The character inner product of two complex Specht modules is the rational intertwiner
 dimension times `|Sₙ|`.** Unnormalized, because this is the shape both
 `FDRep.simple_iff_char_is_norm_one` and `FDRep.char_orthonormal` consume. -/
-theorem sum_character_spechtModuleℂ (μ ν : n.Partition) :
+private theorem sum_character_spechtModuleℂ_mul_character_spechtModuleℂ_inv_eq_finrank_mul_card
+    (μ ν : n.Partition) :
     ∑ σ : Equiv.Perm (Fin n),
         (spechtModuleℂ μ).character σ * (spechtModuleℂ ν).character σ⁻¹
       = (finrank ℚ (Representation.IntertwiningMap (spechtModule ν).ρ (spechtModule μ).ρ) : ℂ) *
@@ -170,7 +172,8 @@ instance instSimpleSpechtModuleℂ (μ : n.Partition) : Simple (spechtModuleℂ 
       (Representation.IntertwiningMap (spechtModule μ).ρ (spechtModule μ).ρ) = 1 := by
     rw [(spechtModuleIntertwiningEndAlgEquiv μ).toLinearEquiv.finrank_eq]
     exact Module.finrank_self ℚ
-  rw [FDRep.simple_iff_char_is_norm_one, sum_character_spechtModuleℂ, hend]
+  rw [FDRep.simple_iff_char_is_norm_one,
+    sum_character_spechtModuleℂ_mul_character_spechtModuleℂ_inv_eq_finrank_mul_card, hend]
   simp
 
 /-- **Complex Specht modules of distinct shapes are non-isomorphic.** -/
@@ -180,7 +183,7 @@ theorem spechtModuleℂ_iso_iff (μ ν : n.Partition) :
   refine ⟨fun hiso => ?_, by rintro rfl; exact ⟨Iso.refl _⟩⟩
   by_contra hne
   have h := FDRep.char_orthonormal (spechtModuleℂ μ) (spechtModuleℂ ν)
-  rw [sum_character_spechtModuleℂ,
+  rw [sum_character_spechtModuleℂ_mul_character_spechtModuleℂ_inv_eq_finrank_mul_card,
     finrank_intertwiningMap_spechtModule_eq_zero (Ne.symm hne)] at h
   simp [hiso] at h
 
@@ -209,24 +212,12 @@ non-isomorphic and as many as the conjugacy classes of `Sₙ`, and no field admi
 classes of simple objects than the group has conjugacy classes. -/
 theorem spechtModuleℂFDRepClass_bijective :
     Function.Bijective (spechtModuleℂFDRepClass (n := n)) := by
-  classical
-  have hinj : Function.Injective (spechtModuleℂFDRepClass (n := n)) := by
-    intro μ ν h
-    rw [spechtModuleℂFDRepClass_def, spechtModuleℂFDRepClass_def,
-      SimpleFDRepClasses.mk_eq_mk_iff] at h
-    exact (spechtModuleℂ_iso_iff μ ν).mp h
-  have _ : Finite (SimpleSubmoduleClasses ℂ[Equiv.Perm (Fin n)] ℂ[Equiv.Perm (Fin n)]) :=
-    .of_equiv _ (simpleSubmoduleClassesEquiv _ _).symm
-  have _ : Finite (SimpleFDRepClasses ℂ (Equiv.Perm (Fin n))) :=
-    .of_injective _ SimpleFDRepClasses.toSimpleSubmoduleClasses_injective
-  let _ := Fintype.ofFinite (SimpleFDRepClasses ℂ (Equiv.Perm (Fin n)))
-  refine (Fintype.bijective_iff_injective_and_card _).mpr ⟨hinj, ?_⟩
-  rw [← Nat.card_eq_fintype_card, ← Nat.card_eq_fintype_card]
-  refine le_antisymm (Nat.card_le_card_of_injective _ hinj) ?_
-  refine (Nat.card_le_card_of_injective _
-    SimpleFDRepClasses.toSimpleSubmoduleClasses_injective).trans ?_
-  exact (card_simpleSubmoduleClasses_le_card_conjClasses ℂ (Equiv.Perm (Fin n))).trans
+  refine SimpleFDRepClasses.bijective_of_injective_of_card_conjClasses_le ?_
     (Nat.card_congr (partitionEquivConjClasses n).symm).le
+  intro μ ν h
+  rw [spechtModuleℂFDRepClass_def, spechtModuleℂFDRepClass_def,
+    SimpleFDRepClasses.mk_eq_mk_iff] at h
+  exact (spechtModuleℂ_iso_iff μ ν).mp h
 
 /-- **The classification of the irreducible complex representations of the symmetric group**:
 `μ ↦ ℂ ⊗_ℚ S^μ` is a bijection from the partitions of `n` to the isomorphism classes of simple
