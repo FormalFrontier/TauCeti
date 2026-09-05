@@ -163,11 +163,13 @@ private lemma mem_doubleCoset_Gamma0Image_of_mem_Delta0
   obtain ⟨τ_N, hτ_N, τ_a, hτ_a, hσ₁_eq⟩ :=
     Subgroup.mem_sup_of_normal_left.mp (h_top ▸ Subgroup.mem_top σ₁)
   have hτ_N_Gamma0 : τ_N ∈ Gamma0 N := Gamma_le_Gamma0 N hτ_N
-  obtain ⟨hτ10, hτ11⟩ := dvd_lower_row_of_mem_Gamma N hτ_N
+  have hτ10 : (N : ℤ) ∣ (τ_N : Matrix (Fin 2) (Fin 2) ℤ) 1 0 :=
+    (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (Gamma0_mem.mp hτ_N_Gamma0)
+  have hτ11 : (N : ℤ) ∣ ((τ_N : Matrix (Fin 2) (Fin 2) ℤ) 1 1 - 1) :=
+    (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (by push_cast; simp [(Gamma_mem.mp hτ_N).2.2.2])
   -- the `Γ(det α)` factor crosses `α` and lands back in `SL₂(ℤ)`
-  have hτ_ker : τ_a ∈ (SpecialLinearGroup.map (Int.castRingHom (ZMod A.det.natAbs))).ker := by
-    rw [MonoidHom.mem_ker]
-    rwa [Gamma_mem'] at hτ_a
+  have hτ_ker : τ_a ∈ (SpecialLinearGroup.map (Int.castRingHom (ZMod A.det.natAbs))).ker :=
+    MonoidHom.mem_ker.mpr (Gamma_mem'.mp hτ_a)
   obtain ⟨h_sl, hh_sl⟩ :=
     (mem_SLnZ_iff 2).mp (inv_conjugate_mem_SLnZ_of_mem_ker 2 α A hA τ_a hτ_ker)
   set γ₂' := h_sl * σ₂ with hγ₂'
@@ -180,8 +182,8 @@ private lemma mem_doubleCoset_Gamma0Image_of_mem_Delta0
   -- the new right factor is in `Γ₀(N)`: read off the lower-left entry of the whole product
   have hγ₂'_mem : γ₂' ∈ Gamma0 N :=
     mem_Gamma0_of_mul_mem_Delta0 N α A hA hAN hA11 τ_N γ₂' hτ10 hτ11 (hx_eq ▸ hmem)
-  rw [DoubleCoset.mem_doubleCoset]
-  exact ⟨mapGL ℚ τ_N, (mem_Gamma0Image_iff N).mpr ⟨τ_N, hτ_N_Gamma0, rfl⟩,
+  exact DoubleCoset.mem_doubleCoset.mpr
+    ⟨mapGL ℚ τ_N, (mem_Gamma0Image_iff N).mpr ⟨τ_N, hτ_N_Gamma0, rfl⟩,
     mapGL ℚ γ₂', (mem_Gamma0Image_iff N).mpr ⟨γ₂', hγ₂'_mem, rfl⟩, hx_eq⟩
 
 /-- **Shimura, Lemma 3.29(3).** For `α ∈ Δ₀(N)` with `gcd(det α, N) = 1`, cutting the level-one

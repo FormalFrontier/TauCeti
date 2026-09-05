@@ -126,21 +126,6 @@ one of the four congruences it imposes. -/
 theorem Gamma_le_Gamma0 (N : ℕ) : Gamma N ≤ Gamma0 N := fun _ hA ↦
   Gamma0_mem.mpr (Gamma_mem.mp hA).2.2.1
 
-/-- **The lower row of a `Γ(N)` element.** For `τ ∈ Γ(N)`, `N` divides `τ 1 0` and
-`τ 1 1 - 1`: the lower row is congruent to `(0, 1)` modulo `N`, stated as divisibility of
-integers rather than as an equation in `ZMod N`. -/
-theorem dvd_lower_row_of_mem_Gamma (N : ℕ) {τ : SpecialLinearGroup (Fin 2) ℤ}
-    (hτ : τ ∈ Gamma N) :
-    (N : ℤ) ∣ (τ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 ∧
-      (N : ℤ) ∣ ((τ : Matrix (Fin 2) (Fin 2) ℤ) 1 1 - 1) := by
-  refine ⟨?_, ?_⟩
-  · have h0 := Gamma_le_Gamma0 N hτ
-    rwa [Gamma0_mem, ZMod.intCast_zmod_eq_zero_iff_dvd] at h0
-  · rw [Gamma_mem] at hτ
-    refine (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp ?_
-    push_cast
-    simp [hτ.2.2.2]
-
 /-- `Γ₀` is antitone in the level: if `M ∣ N` then `Γ₀(N) ≤ Γ₀(M)`. -/
 theorem Gamma0_le_Gamma0_of_dvd {M N : ℕ} (h : M ∣ N) : Gamma0 N ≤ Gamma0 M := by
   intro A hA
