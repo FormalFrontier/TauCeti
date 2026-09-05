@@ -5,7 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.AlgebraicGeometry.WeilDivisor.Scheme.Order
+public import TauCeti.AlgebraicGeometry.WeilDivisor.Scheme.Basic
+public import Mathlib.AlgebraicGeometry.OrderOfVanishing
 public import Mathlib.RingTheory.Valuation.Discrete.IsDiscreteValuationRing
 
 /-!
