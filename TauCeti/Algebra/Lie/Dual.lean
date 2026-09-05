@@ -33,6 +33,8 @@ invariant form and being self-dual are the same condition.
 
 ## Main results
 
+* `TauCeti.LieModule.dualCoannihilator`: the Lie submodule of `M` annihilated by every functional
+  in a Lie submodule of `M*`, refining `Submodule.dualCoannihilator`.
 * `TauCeti.LieModule.lieInvariant_coe_lieModuleHom`: a morphism `M → M*`, read as a bilinear form
   on `M`, is invariant.
 * `TauCeti.LieModule.exists_ne_zero_lieInvariant_iff_exists_ne_zero_lieModuleHom`: a nonzero
@@ -68,7 +70,7 @@ variable [AddCommGroup M] [Module R M] [LieRingModule L M] [_root_.LieModule R L
 /-- The vectors of `M` annihilated by every functional in a Lie submodule `N` of the dual. It is a
 Lie submodule because `N` is: if `f m = 0` for every `f ∈ N`, then `f ⁅x, m⁆ = -⁅x, f⁆ m = 0`,
 the functional `⁅x, f⁆` again lying in `N`. -/
-private def dualCoannihilator (N : LieSubmodule R L (Dual R M)) : LieSubmodule R L M where
+def dualCoannihilator (N : LieSubmodule R L (Dual R M)) : LieSubmodule R L M where
   __ := N.toSubmodule.dualCoannihilator
   lie_mem {x m} hm := by
     simp only [AddSubsemigroup.mem_carrier, AddSubmonoid.mem_toSubsemigroup,
@@ -79,18 +81,18 @@ private def dualCoannihilator (N : LieSubmodule R L (Dual R M)) : LieSubmodule R
     rwa [Module.Dual.lie_apply, neg_eq_zero] at h
 
 @[simp]
-private theorem mem_dualCoannihilator {N : LieSubmodule R L (Dual R M)} {m : M} :
+theorem mem_dualCoannihilator {N : LieSubmodule R L (Dual R M)} {m : M} :
     m ∈ dualCoannihilator N ↔ ∀ f ∈ N, f m = 0 := by
   simp [dualCoannihilator, ← LieSubmodule.mem_toSubmodule, Submodule.mem_dualCoannihilator]
 
 @[simp]
-private theorem dualCoannihilator_toSubmodule (N : LieSubmodule R L (Dual R M)) :
+theorem dualCoannihilator_toSubmodule (N : LieSubmodule R L (Dual R M)) :
     (dualCoannihilator N).toSubmodule = N.toSubmodule.dualCoannihilator := by
   ext m
   simp [Submodule.mem_dualCoannihilator]
 
 /-- Only the zero submodule of the dual annihilates all of `M`. -/
-private theorem eq_bot_of_dualCoannihilator_eq_top {N : LieSubmodule R L (Dual R M)}
+theorem eq_bot_of_dualCoannihilator_eq_top {N : LieSubmodule R L (Dual R M)}
     (h : dualCoannihilator N = ⊤) : N = ⊥ := by
   have hall : ∀ m : M, m ∈ dualCoannihilator N := by simp [h]
   refine eq_bot_iff.mpr fun f hf => ?_

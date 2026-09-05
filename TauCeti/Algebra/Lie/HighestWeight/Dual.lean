@@ -45,12 +45,13 @@ morphism `M → M*`, which by Schur's lemma is an equivalence.
 
 ## The criterion at `L(lam)`
 
-The criterion is not available at the named carrier `L(lam)` from dominance of `lam` alone. That
-form would entail `M(lam) ≠ 0` for every dominant integral `lam` with `-(w₀ • lam) = lam`, since
-for such a `lam` it produces a nonzero bilinear form on `L(lam)`, and the zero module carries none.
-That nonvanishing is the freeness half of Poincaré--Birkhoff--Witt, isolated as the hypothesis
-`vermaGenerator b lam ≠ 0` in `TauCeti/Algebra/Lie/HighestWeight/Verma.lean`, so the specialization
-below carries it explicitly.
+At the named carrier `L(lam)` the criterion needs more than dominance of `lam`. A form of it
+assuming dominance alone would entail `M(lam) ≠ 0` for every dominant integral `lam` with
+`-(w₀ • lam) = lam`, since for such a `lam` it produces a nonzero bilinear form on `L(lam)`, and
+the zero module carries none. That nonvanishing is the freeness half of
+Poincaré--Birkhoff--Witt, isolated as the hypothesis `vermaGenerator b lam ≠ 0` in
+`TauCeti/Algebra/Lie/HighestWeight/Verma.lean`, so the specialization below carries it
+explicitly.
 
 ## Main results
 
@@ -60,8 +61,8 @@ below carries it explicitly.
   `TauCeti.exists_ne_zero_lieInvariant_iff_neg_longestElement_smul_eq`: **the self-duality
   criterion**, in its module and its bilinear-form form.
 * `TauCeti.exists_ne_zero_lieInvariant_irreducibleQuotient_iff_of_vermaGenerator_ne_zero`: the
-  same criterion at the named carrier `L(lam)`, conditional on the currently missing PBW
-  nonvanishing input.
+  same criterion at the named carrier `L(lam)`, under the Poincaré--Birkhoff--Witt nonvanishing
+  hypothesis `vermaGenerator b lam ≠ 0`.
 
 ## References
 
@@ -89,15 +90,6 @@ variable [IsAlgClosed K]
 /-! ### The highest weight vector of the dual -/
 
 variable [FiniteDimensional K M]
-
-omit [CharZero K] [IsKilling K L] [FiniteDimensional K L] [IsTriangularizable K H L]
-  [_root_.LieModule.IsIrreducible K L M] in
-/-- A linear functional vanishing on every weight space is zero: the weight spaces span. -/
-private theorem eq_zero_of_forall_genWeightSpace {g : Dual K M}
-    (hg : ∀ chi : H → K, ∀ m ∈ genWeightSpace M chi, g m = 0) : g = 0 := by
-  refine LinearMap.ker_eq_top.mp (top_le_iff.mp ?_)
-  rw [← _root_.LieSubmodule.iSup_toSubmodule_eq_top.mpr (iSup_genWeightSpace_eq_top K H M)]
-  exact iSup_le fun chi m hm => hg chi m hm
 
 /-- **The dual of an irreducible highest weight module has a highest weight vector of weight
 `-(w₀ • lam)`.** A functional vanishing on every weight space but the lowest one has weight
@@ -131,13 +123,13 @@ theorem exists_isHighestWeightVector_dual (hv : IsHighestWeightVector b lam v) :
     fun _ hchi _ hm => hfN' _ (genWeightSpace_le_genWeightSpaceSpan hchi hm)
   refine ⟨f, isHighestWeightVector_of_forall_rootSpace hf0 (fun x => ?_) (fun alpha ha x hx => ?_)⟩
   · -- the Cartan subalgebra acts through `-mu`
-    refine sub_eq_zero.mp (eq_zero_of_forall_genWeightSpace (H := H) fun chi m hm => ?_)
+    refine sub_eq_zero.mp (eq_zero_of_forall_genWeightSpace (L := H) fun chi m hm => ?_)
     have hlie : ⁅(x : L), m⁆ = chi x • m := mem_genWeightSpace_iff_forall_lie_eq_smul.mp hm x
     rcases eq_or_ne chi ⇑mu with rfl | hchi
     · simp [Module.Dual.lie_apply, hlie]
     · simp [Module.Dual.lie_apply, hlie, hkill chi hchi m hm]
   · -- a positive root space kills `f`
-    refine eq_zero_of_forall_genWeightSpace (H := H) fun chi m hm => ?_
+    refine eq_zero_of_forall_genWeightSpace (L := H) fun chi m hm => ?_
     rw [Module.Dual.lie_apply, neg_eq_zero]
     rcases eq_or_ne ((alpha : H → K) + chi) ⇑mu with hsum | hsum
     · -- the raised weight is the lowest one, so `m` lives below it and is zero
