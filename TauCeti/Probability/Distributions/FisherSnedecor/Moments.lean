@@ -202,15 +202,18 @@ theorem integrable_sq_fisherSnedecorMeasure_iff (hm : 0 < m) (hn : 0 < n) :
 
 /-! ### Exponential moments -/
 
-/-- Every nonpositive exponential rate is integrable under a valid Fisher--Snedecor law. -/
-theorem integrable_exp_mul_id_fisherSnedecorMeasure_of_nonpos (hm : 0 < m) (hn : 0 < n)
-    {t : ℝ} (ht : t ≤ 0) :
+/-- Every nonpositive exponential rate is integrable under a Fisher--Snedecor measure,
+including the zero measure produced by invalid parameters. -/
+theorem integrable_exp_mul_id_fisherSnedecorMeasure_of_nonpos (m n : ℝ) {t : ℝ} (ht : t ≤ 0) :
     Integrable (fun x : ℝ ↦ Real.exp (t * x)) (fisherSnedecorMeasure m n) := by
-  let _ := isProbabilityMeasure_fisherSnedecorMeasure hm hn
-  have h := integrable_exp_mul_of_le (μ := fisherSnedecorMeasure m n) (X := fun x : ℝ ↦ -x)
-    (-t) 0 (neg_nonneg.mpr ht) measurable_id.neg.aemeasurable
-    ((ae_mem_Ioi_fisherSnedecorMeasure m n).mono fun _ hx ↦ neg_nonpos.mpr hx.le)
-  simpa only [neg_mul_neg] using h
+  by_cases hmn : 0 < m ∧ 0 < n
+  · let _ := isProbabilityMeasure_fisherSnedecorMeasure hmn.1 hmn.2
+    have h := integrable_exp_mul_of_le (μ := fisherSnedecorMeasure m n) (X := fun x : ℝ ↦ -x)
+      (-t) 0 (neg_nonneg.mpr ht) measurable_id.neg.aemeasurable
+      ((ae_mem_Ioi_fisherSnedecorMeasure m n).mono fun _ hx ↦ neg_nonpos.mpr hx.le)
+    simpa only [neg_mul_neg] using h
+  · rw [fisherSnedecorMeasure_of_not_pos hmn]
+    exact integrable_zero_measure
 
 /-- Positive exponential rates are not integrable under a valid Fisher--Snedecor law. -/
 theorem not_integrable_exp_mul_id_fisherSnedecorMeasure (hm : 0 < m) (hn : 0 < n)
@@ -218,7 +221,7 @@ theorem not_integrable_exp_mul_id_fisherSnedecorMeasure (hm : 0 < m) (hn : 0 < n
     ¬ Integrable (fun x : ℝ ↦ Real.exp (t * x)) (fisherSnedecorMeasure m n) := by
   intro hint
   have hpow := integrable_pow_of_integrable_exp_mul ht.ne' hint
-    (integrable_exp_mul_id_fisherSnedecorMeasure_of_nonpos hm hn
+    (integrable_exp_mul_id_fisherSnedecorMeasure_of_nonpos m n
       (by linarith : -t ≤ 0)) ⌈n⌉₊
   have hlt := (integrable_pow_fisherSnedecorMeasure_iff hm hn ⌈n⌉₊).1 hpow
   exact (not_lt_of_ge (by nlinarith [Nat.le_ceil n])) hlt
@@ -228,7 +231,7 @@ Fisher--Snedecor law exactly when the rate is nonpositive. -/
 @[simp]
 theorem integrable_exp_mul_id_fisherSnedecorMeasure_iff (hm : 0 < m) (hn : 0 < n) (t : ℝ) :
     Integrable (fun x : ℝ ↦ Real.exp (t * x)) (fisherSnedecorMeasure m n) ↔ t ≤ 0 := by
-  refine ⟨fun h ↦ ?_, integrable_exp_mul_id_fisherSnedecorMeasure_of_nonpos hm hn⟩
+  refine ⟨fun h ↦ ?_, integrable_exp_mul_id_fisherSnedecorMeasure_of_nonpos m n⟩
   exact not_lt.mp fun ht ↦ not_integrable_exp_mul_id_fisherSnedecorMeasure hm hn ht h
 
 /-- The exact exponential-integrability domain of the identity under a valid
