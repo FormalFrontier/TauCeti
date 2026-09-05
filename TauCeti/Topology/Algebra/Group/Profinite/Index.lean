@@ -24,16 +24,16 @@ description as the least common multiple of the indices of open overgroups.
 
 ## Main results
 
-* `TauCeti.Subgroup.profiniteIndex`: the supernatural index of a subgroup of a profinite group.
-* `TauCeti.Subgroup.profiniteIndex_anti`: subgroup inclusion reverses supernatural indices.
-* `TauCeti.Subgroup.profiniteIndex_eq_iSup_openSubgroup`: the description as the least common
+* `Subgroup.profiniteIndex`: the supernatural index of a subgroup of a profinite group.
+* `Subgroup.profiniteIndex_anti`: subgroup inclusion reverses supernatural indices.
+* `Subgroup.profiniteIndex_eq_iSup_openSubgroup`: the description as the least common
   multiple of the indices of open overgroups.
-* `TauCeti.OpenSubgroup.profiniteIndex`: agreement with the ordinary index for an open subgroup.
-* `TauCeti.Subgroup.profiniteIndex_topologicalClosure`: taking topological closure does not change
+* `OpenSubgroup.profiniteIndex`: agreement with the ordinary index for an open subgroup.
+* `Subgroup.profiniteIndex_topologicalClosure`: taking topological closure does not change
   the index.
-* `TauCeti.Subgroup.profiniteIndex_eq_one_iff_topologicalClosure_eq_top`: the index is one exactly
+* `Subgroup.profiniteIndex_eq_one_iff_topologicalClosure_eq_top`: the index is one exactly
   for dense subgroups.
-* `TauCeti.Subgroup.profiniteIndex_eq_one_iff`: the closed-subgroup specialization.
+* `Subgroup.profiniteIndex_eq_one_iff`: the closed-subgroup specialization.
 
 ## References
 
@@ -56,17 +56,17 @@ namespace Subgroup
 
 The definition makes sense for an arbitrary subgroup; closedness is required only by results
 that regard the subgroup itself as profinite. -/
-noncomputable def profiniteIndex (H : Subgroup G) : Supernatural :=
+noncomputable def _root_.Subgroup.profiniteIndex (H : Subgroup G) : Supernatural :=
   Supernatural.ofFun fun ℓ ↦ ⨆ N : OpenNormalSubgroup G,
     (padicValNat ℓ ((H.map (QuotientGroup.mk' N.toSubgroup)).index) : ℕ∞)
 
 /-- The exponent of a profinite index at a prime is the supremum of the valuations of the
 indices in the finite continuous quotients. -/
 @[simp]
-theorem profiniteIndex_apply (H : Subgroup G) (ℓ : Nat.Primes) :
-    profiniteIndex H ℓ = ⨆ N : OpenNormalSubgroup G,
+theorem _root_.Subgroup.profiniteIndex_apply (H : Subgroup G) (ℓ : Nat.Primes) :
+    Subgroup.profiniteIndex H ℓ = ⨆ N : OpenNormalSubgroup G,
       (padicValNat ℓ ((H.map (QuotientGroup.mk' N.toSubgroup)).index) : ℕ∞) :=
-  by rw [profiniteIndex, Supernatural.ofFun_apply]
+  by rw [Subgroup.profiniteIndex, Supernatural.ofFun_apply]
 
 end Subgroup
 
@@ -88,13 +88,13 @@ namespace Subgroup
 
 /-- The supernatural index is equivalently the supremum of the ordinary positive indices of
 the images in finite continuous quotients. -/
-theorem profiniteIndex_eq_iSup_ofNat (H : Subgroup G) :
-    profiniteIndex H = ⨆ N : OpenNormalSubgroup G,
+theorem _root_.Subgroup.profiniteIndex_eq_iSup_ofNat (H : Subgroup G) :
+    Subgroup.profiniteIndex H = ⨆ N : OpenNormalSubgroup G,
       Supernatural.ofNat
         ⟨(H.map (QuotientGroup.mk' N.toSubgroup)).index,
           Nat.zero_lt_of_ne_zero Subgroup.index_ne_zero_of_finite⟩ := by
   ext ℓ
-  rw [profiniteIndex_apply, Supernatural.iSup_apply]
+  rw [Subgroup.profiniteIndex_apply, Supernatural.iSup_apply]
   congr 1
   funext N
   exact
@@ -103,9 +103,9 @@ theorem profiniteIndex_eq_iSup_ofNat (H : Subgroup G) :
         Nat.zero_lt_of_ne_zero Subgroup.index_ne_zero_of_finite⟩ ℓ).symm
 
 /-- Inclusion of subgroups reverses their supernatural indices. -/
-theorem profiniteIndex_anti {H K : Subgroup G} (h : H ≤ K) :
-    profiniteIndex K ≤ profiniteIndex H := by
-  rw [profiniteIndex_eq_iSup_ofNat, profiniteIndex_eq_iSup_ofNat]
+theorem _root_.Subgroup.profiniteIndex_anti {H K : Subgroup G} (h : H ≤ K) :
+    Subgroup.profiniteIndex K ≤ Subgroup.profiniteIndex H := by
+  rw [Subgroup.profiniteIndex_eq_iSup_ofNat, Subgroup.profiniteIndex_eq_iSup_ofNat]
   refine iSup_le fun N ↦ ?_
   refine (Supernatural.ofNat_le_ofNat_iff.mpr ?_).trans
     (le_iSup (fun N : OpenNormalSubgroup G ↦
@@ -119,12 +119,13 @@ ordinary indices of the open subgroups containing `H`.
 
 Although the usual statement assumes that `H` is closed, the formula holds for every subgroup:
 an open subgroup contains `H` exactly when it contains its closure. -/
-theorem profiniteIndex_eq_iSup_openSubgroup [TotallyDisconnectedSpace G] (H : Subgroup G) :
-    profiniteIndex H = ⨆ U : {U : OpenSubgroup G // H ≤ U.toSubgroup},
+theorem _root_.Subgroup.profiniteIndex_eq_iSup_openSubgroup [TotallyDisconnectedSpace G]
+    (H : Subgroup G) :
+    Subgroup.profiniteIndex H = ⨆ U : {U : OpenSubgroup G // H ≤ U.toSubgroup},
       Supernatural.ofNat
         (⟨U.1.toSubgroup.index,
           Nat.zero_lt_of_ne_zero Subgroup.index_ne_zero_of_finite⟩ : ℕ+) := by
-  rw [profiniteIndex_eq_iSup_ofNat]
+  rw [Subgroup.profiniteIndex_eq_iSup_ofNat]
   have index_image_eq (N : OpenNormalSubgroup G) :
       (H.map (QuotientGroup.mk' N.toSubgroup)).index =
         (H ⊔ N.toSubgroup).index := by
@@ -172,11 +173,11 @@ theorem profiniteIndex_eq_iSup_openSubgroup [TotallyDisconnectedSpace G] (H : Su
     exact PNat.dvd_iff.mpr hdvd
 
 /-- Primewise form of `profiniteIndex_eq_iSup_openSubgroup`. -/
-theorem profiniteIndex_apply_eq_iSup_openSubgroup [TotallyDisconnectedSpace G]
+theorem _root_.Subgroup.profiniteIndex_apply_eq_iSup_openSubgroup [TotallyDisconnectedSpace G]
     (H : Subgroup G) (ℓ : Nat.Primes) :
-    profiniteIndex H ℓ = ⨆ U : {U : OpenSubgroup G // H ≤ U.toSubgroup},
+    Subgroup.profiniteIndex H ℓ = ⨆ U : {U : OpenSubgroup G // H ≤ U.toSubgroup},
       (padicValNat ℓ U.1.toSubgroup.index : ℕ∞) := by
-  rw [profiniteIndex_eq_iSup_openSubgroup, Supernatural.iSup_apply]
+  rw [Subgroup.profiniteIndex_eq_iSup_openSubgroup, Supernatural.iSup_apply]
   congr 1
   funext U
   exact Supernatural.ofNat_apply _ _
@@ -188,7 +189,7 @@ namespace OpenSubgroup
 /-- For an open subgroup, the supernatural index is the prime factorization of its ordinary
 index. -/
 @[simp]
-theorem profiniteIndex [TotallyDisconnectedSpace G] (U : OpenSubgroup G) :
+theorem _root_.OpenSubgroup.profiniteIndex [TotallyDisconnectedSpace G] (U : OpenSubgroup G) :
     Subgroup.profiniteIndex U.toSubgroup =
       Supernatural.ofNat
         (⟨U.toSubgroup.index,
@@ -205,11 +206,11 @@ theorem profiniteIndex [TotallyDisconnectedSpace G] (U : OpenSubgroup G) :
 
 /-- Primewise, the profinite index of an open subgroup is the valuation of its ordinary
 index. -/
-theorem profiniteIndex_apply [TotallyDisconnectedSpace G]
+theorem _root_.OpenSubgroup.profiniteIndex_apply [TotallyDisconnectedSpace G]
     (U : OpenSubgroup G) (ℓ : Nat.Primes) :
     Subgroup.profiniteIndex U.toSubgroup ℓ =
       (padicValNat ℓ U.toSubgroup.index : ℕ∞) := by
-  rw [profiniteIndex]
+  rw [OpenSubgroup.profiniteIndex]
   exact Supernatural.ofNat_apply
     (⟨U.toSubgroup.index,
       Nat.zero_lt_of_ne_zero Subgroup.index_ne_zero_of_finite⟩ : ℕ+) ℓ
@@ -234,16 +235,16 @@ namespace Subgroup
 
 /-- Taking the topological closure of a subgroup does not change its supernatural index. -/
 @[simp]
-theorem profiniteIndex_topologicalClosure (H : Subgroup G) :
-    profiniteIndex H.topologicalClosure = profiniteIndex H := by
+theorem _root_.Subgroup.profiniteIndex_topologicalClosure (H : Subgroup G) :
+    Subgroup.profiniteIndex H.topologicalClosure = Subgroup.profiniteIndex H := by
   ext ℓ
-  simp_rw [profiniteIndex_apply, map_topologicalClosure_quotient_eq]
+  simp_rw [Subgroup.profiniteIndex_apply, map_topologicalClosure_quotient_eq]
 
 variable [TotallyDisconnectedSpace G]
 
 /-- A subgroup of a profinite group has supernatural index one exactly when it is dense. -/
-theorem profiniteIndex_eq_one_iff_topologicalClosure_eq_top (H : Subgroup G) :
-    profiniteIndex H = 1 ↔ H.topologicalClosure = ⊤ := by
+theorem _root_.Subgroup.profiniteIndex_eq_one_iff_topologicalClosure_eq_top (H : Subgroup G) :
+    Subgroup.profiniteIndex H = 1 ↔ H.topologicalClosure = ⊤ := by
   constructor
   · intro hindex
     have himage : ∀ N : OpenNormalSubgroup G,
@@ -253,8 +254,8 @@ theorem profiniteIndex_eq_one_iff_topologicalClosure_eq_top (H : Subgroup G) :
       let n : ℕ+ :=
         ⟨(H.map (QuotientGroup.mk' N.toSubgroup)).index,
           Nat.zero_lt_of_ne_zero Subgroup.index_ne_zero_of_finite⟩
-      have hle : Supernatural.ofNat n ≤ profiniteIndex H := by
-        rw [profiniteIndex_eq_iSup_ofNat]
+      have hle : Supernatural.ofNat n ≤ Subgroup.profiniteIndex H := by
+        rw [Subgroup.profiniteIndex_eq_iSup_ofNat]
         exact le_iSup (fun U : OpenNormalSubgroup G ↦
           Supernatural.ofNat
             ⟨(H.map (QuotientGroup.mk' U.toSubgroup)).index,
@@ -272,16 +273,16 @@ theorem profiniteIndex_eq_one_iff_topologicalClosure_eq_top (H : Subgroup G) :
           Subgroup.comap_top]
       _ ≤ H.topologicalClosure ⊔ N.toSubgroup := sup_le_sup_right H.le_topologicalClosure _
   · intro hclosure
-    rw [← profiniteIndex_topologicalClosure H, hclosure, profiniteIndex_top]
+    rw [← Subgroup.profiniteIndex_topologicalClosure H, hclosure, profiniteIndex_top]
 
 /-- A closed subgroup of a profinite group has supernatural index one exactly when it is the
 whole group. -/
-theorem profiniteIndex_eq_one_iff (H : Subgroup G) (hH : IsClosed (H : Set G)) :
-    profiniteIndex H = 1 ↔ H = ⊤ := by
+theorem _root_.Subgroup.profiniteIndex_eq_one_iff (H : Subgroup G) (hH : IsClosed (H : Set G)) :
+    Subgroup.profiniteIndex H = 1 ↔ H = ⊤ := by
   have hclosure : H.topologicalClosure = H := by
     apply SetLike.coe_injective
     rw [Subgroup.topologicalClosure_coe, hH.closure_eq]
-  rw [profiniteIndex_eq_one_iff_topologicalClosure_eq_top,
+  rw [Subgroup.profiniteIndex_eq_one_iff_topologicalClosure_eq_top,
     hclosure]
 
 end Subgroup
