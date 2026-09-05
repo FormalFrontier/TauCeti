@@ -91,7 +91,7 @@ theorem map_comp_ι (f : M →ₗ[R] N) :
 
 /-- Composition of linear maps becomes composition of the induced algebra homomorphisms. -/
 @[simp]
-theorem map_comp_map (g : N →ₗ[R] P) (f : M →ₗ[R] N) :
+theorem map_comp_map (f : M →ₗ[R] N) (g : N →ₗ[R] P) :
     (map R g).comp (map R f) = map R (g.comp f) := by
   apply algHom_ext
   ext a
