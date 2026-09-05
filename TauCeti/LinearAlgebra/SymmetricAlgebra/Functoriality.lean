@@ -31,6 +31,7 @@ Tau Ceti formalization in `TauCeti/Algebra/Lie/UniversalEnveloping/Functoriality
 ## Main results
 
 * `SymmetricAlgebra.map_apply_ι`: evaluation of the induced map on a canonical generator.
+* `SymmetricAlgebra.map_unique`: characterization of the induced map by its generators.
 * `SymmetricAlgebra.map_id` and `SymmetricAlgebra.map_comp_map`: functoriality laws.
 * `SymmetricAlgebra.map_injective_of_leftInverse` and `SymmetricAlgebra.map_surjective`:
   transport of split monomorphisms and of surjections.
@@ -64,6 +65,18 @@ noncomputable def map (f : M →ₗ[R] N) :
 theorem map_apply_ι (f : M →ₗ[R] N) (a : M) :
     map R f (ι R M a) = ι R N (f a) := by
   simp [map]
+
+/-- The universal property characterizes the induced map by its values on generators. -/
+theorem map_unique (f : M →ₗ[R] N) (g : SymmetricAlgebra R M →ₐ[R] SymmetricAlgebra R N) :
+    (∀ a, g (ι R M a) = ι R N (f a)) ↔ g = map R f := by
+  constructor
+  · intro h
+    apply algHom_ext
+    ext a
+    change g (ι R M a) = map R f (ι R M a)
+    rw [h, map_apply_ι]
+  · intro h a
+    rw [h, map_apply_ι]
 
 /-- The identity linear map induces the identity algebra homomorphism. -/
 @[simp]
