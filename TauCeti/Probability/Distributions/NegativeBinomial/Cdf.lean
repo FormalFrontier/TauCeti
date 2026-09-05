@@ -92,7 +92,6 @@ theorem negativeBinomialMeasure_real_Iic (hr : 0 < r) (hp : 0 < p) (hp1 : p ≤ 
 
 /-- At shape zero, every native cumulative mass is one because the valid negative-binomial law is
 the Dirac measure at zero. -/
-@[simp]
 theorem negativeBinomialMeasure_real_Iic_zero (hp : 0 < p) (hp1 : p ≤ 1) (k : ℕ) :
     (negativeBinomialMeasure 0 p).real (Iic k) = 1 := by
   rw [negativeBinomialMeasure_zero hp hp1, measureReal_def]
