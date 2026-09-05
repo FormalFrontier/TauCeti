@@ -33,8 +33,6 @@ Tau Ceti formalization in `TauCeti/Algebra/Lie/UniversalEnveloping/Functoriality
 * `SymmetricAlgebra.map_apply_ι`: evaluation of the induced map on a canonical generator.
 * `SymmetricAlgebra.map_unique`: characterization of the induced map by its generators.
 * `SymmetricAlgebra.map_id` and `SymmetricAlgebra.map_comp_map`: functoriality laws.
-* `SymmetricAlgebra.map_injective_of_leftInverse` and `SymmetricAlgebra.map_surjective`:
-  transport of split monomorphisms and of surjections.
 
 ## Roadmap
 
@@ -101,46 +99,6 @@ theorem map_comp_map (g : N →ₗ[R] P) (f : M →ₗ[R] N) :
   ext a
   simp
 
-/-- A left inverse of linear maps induces a left inverse of the corresponding symmetric-algebra
-maps. -/
-theorem map_leftInverse {f : M →ₗ[R] N} {g : N →ₗ[R] M}
-    (h : Function.LeftInverse g f) : Function.LeftInverse (map R g) (map R f) := by
-  intro a
-  have hmaps : (map R g).comp (map R f) = AlgHom.id R (SymmetricAlgebra R M) := by
-    have hgf : g.comp f = LinearMap.id := LinearMap.ext fun x => h x
-    rw [map_comp_map, hgf, map_id]
-  exact AlgHom.congr_fun hmaps a
-
-/-- A right inverse of linear maps induces a right inverse of the corresponding symmetric-algebra
-maps. -/
-theorem map_rightInverse {f : M →ₗ[R] N} {g : N →ₗ[R] M}
-    (h : Function.RightInverse g f) : Function.RightInverse (map R g) (map R f) :=
-  map_leftInverse R h
-
-/-- A split monomorphism induces an injective map of symmetric algebras. -/
-theorem map_injective_of_leftInverse (f : M →ₗ[R] N) (g : N →ₗ[R] M)
-    (h : Function.LeftInverse g f) : Function.Injective (map R f) :=
-  (map_leftInverse R h).injective
-
-/-- A surjective linear map induces a surjective map of symmetric algebras. -/
-theorem map_surjective {f : M →ₗ[R] N} (hf : Function.Surjective f) :
-    Function.Surjective (map R f) := by
-  intro a
-  induction a using SymmetricAlgebra.induction with
-  | algebraMap r =>
-      exact ⟨algebraMap R (SymmetricAlgebra R M) r, by simp⟩
-  | ι n =>
-      obtain ⟨m, rfl⟩ := hf n
-      exact ⟨ι R M m, by simp⟩
-  | mul a b ha hb =>
-      obtain ⟨a', ha'⟩ := ha
-      obtain ⟨b', hb'⟩ := hb
-      exact ⟨a' * b', by simp [ha', hb']⟩
-  | add a b ha hb =>
-      obtain ⟨a', ha'⟩ := ha
-      obtain ⟨b', hb'⟩ := hb
-      exact ⟨a' + b', by simp [ha', hb']⟩
-
 /-- A linear equivalence induces an algebra equivalence of symmetric algebras. -/
 noncomputable def mapEquiv (e : M ≃ₗ[R] N) :
     SymmetricAlgebra R M ≃ₐ[R] SymmetricAlgebra R N :=
@@ -159,6 +117,12 @@ theorem mapEquiv_toAlgHom (e : M ≃ₗ[R] N) :
 theorem mapEquiv_apply (e : M ≃ₗ[R] N) (a : SymmetricAlgebra R M) :
     mapEquiv R e a = map R e.toLinearMap a := by
   rw [← AlgEquiv.toAlgHom_apply, mapEquiv_toAlgHom]
+
+/-- The bundled equivalence acts on canonical generators by the underlying linear equivalence. -/
+@[simp]
+theorem mapEquiv_apply_ι (e : M ≃ₗ[R] N) (a : M) :
+    mapEquiv R e (ι R M a) = ι R N (e a) := by
+  simp [mapEquiv_apply]
 
 /-- Passing the inverse linear equivalence to symmetric algebras gives the inverse algebra
 equivalence. -/
