@@ -110,6 +110,15 @@ theorem coordinateMap_surjective : Function.Surjective (coordinateMap A).hom := 
   exact CommHopfAlgCat.mkQuotient_surjective
     (GeneralLinear.coordinateHopfAlgebra A 56) (baseChangeDefiningIdeal A)
 
+/-- The kernel of the specialized carrier coordinate morphism is the transported defining ideal:
+the morphism presents the carrier as the closed subgroup of `GL₅₆` that ideal cuts out. -/
+theorem coordinateMap_ker :
+    RingHom.ker (coordinateMap A).hom.toAlgHom.toRingHom =
+      (baseChangeDefiningIdeal A).toIdeal := by
+  unfold coordinateMap
+  exact CommHopfAlgCat.mkQuotient_ker
+    (GeneralLinear.coordinateHopfAlgebra A 56) (baseChangeDefiningIdeal A)
+
 section Points
 
 variable {B : Type w} [CommRing B] [Algebra A B]
