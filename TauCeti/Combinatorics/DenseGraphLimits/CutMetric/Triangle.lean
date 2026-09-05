@@ -7,8 +7,8 @@ module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.CutMetric.Stability
 public import TauCeti.Combinatorics.DenseGraphLimits.StepGraphon.Regularity
+public import TauCeti.Combinatorics.DenseGraphLimits.Graphon.Pullback
 import TauCeti.Combinatorics.DenseGraphLimits.Kernel.Pullback
-import TauCeti.Combinatorics.DenseGraphLimits.Graphon.Pullback
 import TauCeti.MeasureTheory.MeasurableSpace.Finpartition
 import TauCeti.MeasureTheory.OptimalTransport.Gluing
 
@@ -34,6 +34,10 @@ graphons at cut distance zero.
 
 * `TauCeti.DenseGraphLimits.cutDist_triangle_of_countable_middle` proves the triangle inequality
   when the intermediate carrier is countable with measurable singletons.
+* `TauCeti.DenseGraphLimits.cutDist_le_cutDist_comap_right` bounds the cut distance by its value
+  against a measure-preserving pullback of the right-hand graphon.
+* `TauCeti.DenseGraphLimits.cutDist_comap_right_of_countable` upgrades that bound to an equality
+  over a countable carrier with measurable singletons.
 * `TauCeti.DenseGraphLimits.cutDist_triangle` proves it on arbitrary probability carriers.
 
 ## References
@@ -140,7 +144,10 @@ theorem cutDist_triangle_of_countable_middle [Countable Ω₂]
         @cutNorm _ _ π₂₃ hπ₂₃.isFiniteMeasure (overlayDiff W X π₂₃) := hnorm13
     _ ≤ cutDist U W + cutDist W X + ε := by linarith
 
-private theorem cutDist_le_cutDist_comap_right
+/-- Reading the right-hand graphon on a smaller carrier along a measure-preserving map can only
+increase the cut distance: every coupling with the pulled-back graphon pushes forward to a coupling
+with the original one, at the same cut norm. -/
+theorem cutDist_le_cutDist_comap_right
     {Ω₂' : Type*} [MeasurableSpace Ω₂'] {μ₂' : Measure Ω₂'} [IsProbabilityMeasure μ₂']
     (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) {f : Ω₂' → Ω₂}
     (hf : MeasurePreserving f μ₂' μ₂) :
@@ -148,16 +155,8 @@ private theorem cutDist_le_cutDist_comap_right
   refine le_cutDist U (W.comap f hf.measurable μ₂') fun π hπ => ?_
   let _ := hπ.isProbabilityMeasure
   let ρ : Measure (Ω₁ × Ω₂) := π.map (Prod.map id f)
-  have hρ : IsCoupling μ₁ μ₂ ρ := isCoupling_iff.2
-    ⟨by
-      rw [← hπ.fst_eq]
-      simp only [ρ, Measure.fst, Measure.map_map measurable_fst
-        (measurable_id.prodMap hf.measurable), Prod.map_fst', Function.id_comp],
-    by
-      rw [← hf.map_eq, ← hπ.snd_eq]
-      simp only [ρ, Measure.snd, Measure.map_map measurable_snd
-        (measurable_id.prodMap hf.measurable), Measure.map_map hf.measurable measurable_snd,
-        Prod.map_snd']⟩
+  have hρ : IsCoupling μ₁ μ₂ ρ :=
+    isCoupling_map_prodMk hπ.measurePreserving_fst (hf.comp hπ.measurePreserving_snd)
   let _ := hρ.isProbabilityMeasure
   have hmp : MeasurePreserving (Prod.map id f) π ρ :=
     ⟨measurable_id.prodMap hf.measurable, rfl⟩
@@ -170,7 +169,10 @@ private theorem cutDist_le_cutDist_comap_right
       ext p q
       simp
 
-private theorem cutDist_comap_right_of_countable
+/-- Over a countable carrier with measurable singletons, reading the right-hand graphon along a
+measure-preserving map leaves the cut distance unchanged: the pulled-back graphon is at cut distance
+zero from the original, and the countable-middle triangle inequality transfers that. -/
+theorem cutDist_comap_right_of_countable
     [Countable Ω₂] [MeasurableSingletonClass Ω₂]
     {Ω₂' : Type*} [MeasurableSpace Ω₂'] {μ₂' : Measure Ω₂'} [IsProbabilityMeasure μ₂']
     (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) {f : Ω₂' → Ω₂}
@@ -255,8 +257,8 @@ theorem cutDist_triangle (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) (X 
   have htriangle : cutDist U X ≤ cutDist U W' + cutDist W' X := by
     apply cutDist_triangle_of_constantOn_partition U W' X P hP
     intro p q x y hx hy
-    rw [show W' = stepGraphonAvg (μ := μ₂) P hP W from rfl,
-      stepGraphonAvg_apply P hP W hx hy,
+    dsimp only [W']
+    rw [stepGraphonAvg_apply P hP W hx hy,
       stepGraphonAvg_apply P hP W (P.indexedPartition.some_mem p)
         (P.indexedPartition.some_mem q)]
   have htransfer := cutDist_le_add_two_mul_cutNorm_of_le_add U W W' X htriangle

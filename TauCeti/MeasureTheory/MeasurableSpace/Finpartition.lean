@@ -25,12 +25,13 @@ namespace Finpartition
 
 variable {Ω : Type*} [MeasurableSpace Ω]
 
-/-- The map sending a point to its part in a measurable finite partition is measurable when the
-finite type of parts carries the discrete measurable space. -/
+/-- The map sending a point to its part in a measurable finite partition is measurable, for any
+measurable space structure on the finite type of parts — in particular for the discrete one.
+Countability of the parts is what makes an arbitrary structure on them admissible: measurability of
+the fibres already forces measurability of every preimage. -/
 theorem measurable_indexedPartition_index (P : Finpartition (Set.univ : Set Ω))
-    (hP : ∀ p ∈ P.parts, MeasurableSet p) :
-    @Measurable Ω P.parts _ ⊤ P.indexedPartition.index := by
-  let _ : MeasurableSpace P.parts := ⊤
+    [MeasurableSpace P.parts] (hP : ∀ p ∈ P.parts, MeasurableSet p) :
+    Measurable P.indexedPartition.index := by
   refine measurable_to_countable' fun p => ?_
   have hpreimage : P.indexedPartition.index ⁻¹' {p} = (p : Set Ω) := by
     ext x
