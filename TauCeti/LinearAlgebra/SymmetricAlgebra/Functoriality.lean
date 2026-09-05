@@ -175,11 +175,8 @@ theorem mapEquiv_symm (e : M ≃ₗ[R] N) :
     (mapEquiv R e).symm = mapEquiv R e.symm := by
   apply AlgEquiv.ext
   intro a
-  apply (mapEquiv R e).injective
-  rw [(mapEquiv R e).apply_symm_apply, mapEquiv_apply (e := e.symm),
-    mapEquiv_apply (e := e)]
-  rw [← AlgHom.comp_apply, map_comp_map, e.comp_symm, map_id]
-  simp only [AlgHom.id_apply]
+  rw [mapEquiv, AlgEquiv.ofAlgHom_symm]
+  simp only [AlgEquiv.ofAlgHom_apply, mapEquiv, LinearEquiv.symm_symm]
 
 /-- The identity linear equivalence induces the identity algebra equivalence. -/
 @[simp]
