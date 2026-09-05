@@ -253,15 +253,17 @@ open Classical in
 zigzag trace pairing of that component, transported along
 `TauCeti.zigzagComponentAlgebraEquivNonisolated`. -/
 theorem zigzagAlgebraPairing_single_nontrivial (C : G.ConnectedComponent) [Nontrivial C]
-    (hns : ∀ i : C, ∃ j, C.toSimpleGraph.Adj i j) (x y : zigzagComponentAlgebra k G C) :
+    (x y : zigzagComponentAlgebra k G C) :
     zigzagAlgebraPairing k G (zigzagAlgebraMk k G (Pi.single C x))
         (zigzagAlgebraMk k G (Pi.single C y)) =
-      zigzagTracePairing k C.toSimpleGraph hns
+      zigzagTracePairing k C.toSimpleGraph (fun i =>
+        exists_adj_iff_not_isIsolated.mpr
+          (C.connected_toSimpleGraph.preconnected.not_isIsolated i))
         (zigzagComponentAlgebraEquivNonisolated k G C x)
         (zigzagComponentAlgebraEquivNonisolated k G C y) := by
   classical
   rw [zigzagAlgebraPairing_single_left, zigzagComponentProjection_zigzagAlgebraMk,
-    Pi.single_eq_same, zigzagComponentPairing_apply_nontrivial k G C hns]
+    Pi.single_eq_same, zigzagComponentPairing_apply_nontrivial k G C]
 
 open Classical in
 /-- On a singleton component the direct-sum pairing restricted to the embedded factor is the
