@@ -64,8 +64,6 @@ point-stabilizer identity
 * [G. D. James, *The Representation Theory of the Symmetric Groups*][james1978], Chapter 4, where
   `M^{(n-1,1)}` is the permutation module on the `n` labels.
 * [W. Fulton, *Young Tableaux*][fulton1997], Section 7.2.
-* [Schur--Weyl roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SchurWeyl/README.md),
-  Layer 4, "The named small irreducibles", which asks for `M^{(n-1,1)} = triv ⊕ standard`.
 -/
 
 public section
