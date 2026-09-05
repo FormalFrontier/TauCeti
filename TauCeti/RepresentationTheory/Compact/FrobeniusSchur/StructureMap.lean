@@ -19,11 +19,11 @@ mentions a structure map.  This file supplies the missing step, in the operation
 reality applications ask for:
 
 `ν₂(π) = 1` iff `π` carries a **real structure** -- a conjugate-linear involution `K` of `V`
-commuting with the action, `TauCeti.Representation.IsRealStructure` -- equivalently iff `π` is
+commuting with the action, `Representation.IsRealStructure` -- equivalently iff `π` is
 **realizable over `ℝ`**, that is, is the complexification of a real representation; and
 `ν₂(π) = -1` iff `π` carries a **quaternionic structure**, a conjugate-linear `J` with
 `J (J v) = -v` commuting with the action,
-`TauCeti.Representation.IsQuaternionicStructure`.
+`Representation.IsQuaternionicStructure`.
 
 Nothing new has to be integrated over the group.  The unitarity hypothesis the whole
 Frobenius-Schur layer already carries *is* a positive definite invariant Hermitian form, namely the
@@ -39,8 +39,9 @@ Haar integral enters only through the invariant-form criteria this file rewrites
 
 ## Main statements
 
-* `ContRepresentation.frobeniusSchurIndicator_eq_one_iff_exists_isRealStructure`: **the indicator
-  is `1` exactly when the representation carries a real structure.**
+* `ContRepresentation.frobeniusSchurIndicator_eq_one_iff_exists_structureMap`: **the indicator
+  is `1` exactly when the representation carries a conjugate-linear involution commuting with the
+  action**, that is, a real structure.
 * `ContRepresentation.frobeniusSchurIndicator_eq_one_iff_isRealizableOverReal`: **the indicator is
   `1` exactly when the representation is realizable over `ℝ`.**
 * `ContRepresentation.frobeniusSchurIndicator_eq_neg_one_iff_exists_isQuaternionicStructure`: **the
@@ -48,12 +49,15 @@ Haar integral enters only through the invariant-form criteria this file rewrites
 
 ## Implementation notes
 
-Both criteria are stated with the named structure-map predicates rather than with their unfoldings.
 A structure map is an unbundled conjugate-linear `J : V →ₗ⋆[ℂ] V` with `J (J v) = v`, respectively
-`J (J v) = -v`, commuting with the action, and those are exactly
+`J (J v) = -v`, commuting with the action.  The `1` criterion spells those two conditions out, the
+shape in which the roadmap pins it and in which the reality applications consume it; the `-1` one
+names them, as `Representation.IsQuaternionicStructure` of
+`TauCeti/RepresentationTheory/QuaternionicStructure.lean`.  The two readings are interchangeable:
+the conditions are exactly the fields of that predicate, and of
 `Representation.IsRealStructure` -- which `TauCeti/RepresentationTheory/RealForm.lean` defines and
-equips with the passage to a real form -- and `Representation.IsQuaternionicStructure`, of
-`TauCeti/RepresentationTheory/QuaternionicStructure.lean`.
+equips with the passage to a real form -- so a witness of either statement is a witness of the
+other by `⟨_, _⟩`.
 
 ## References
 
@@ -113,32 +117,38 @@ variable (π : ContRepresentation ℂ G V) (hπ : Continuous π)
 
 include hπ
 
-/-- **The indicator is `1` exactly when there is a real structure**: an irreducible unitary
+/-- **The indicator is `1` exactly when there is a structure map**: an irreducible unitary
 representation of a compact group has Frobenius-Schur indicator `1` exactly when it carries a
-conjugate-linear involution of `V` commuting with the action.
+conjugate-linear `K` of `V` with `K (K v) = v` commuting with the action.
+
+The two conditions are spelled out rather than named because they are the two fields of
+`Representation.IsRealStructure`, so `⟨_, _⟩` passes between this statement and that predicate.
 
 The invariant-form criterion supplies a nondegenerate invariant symmetric form, and the inner
 product of the unitary representation supplies the positive definite invariant Hermitian form
 against which the existence of one is equivalent to the existence of the other. -/
-theorem frobeniusSchurIndicator_eq_one_iff_exists_isRealStructure (hunitary : IsUnitary π)
+theorem frobeniusSchurIndicator_eq_one_iff_exists_structureMap (hunitary : IsUnitary π)
     (hirr : Representation.IsIrreducible π.toRepresentation) :
     frobeniusSchurIndicator π hπ = 1 ↔
-      ∃ K : V →ₛₗ[starRingEnd ℂ] V, Representation.IsRealStructure π.toRepresentation K := by
+      ∃ K : V →ₛₗ[starRingEnd ℂ] V, (∀ v : V, K (K v) = v) ∧
+        ∀ (g : G) (v : V), K (π g v) = π g (K v) := by
   have := hirr
   rw [frobeniusSchurIndicator_eq_one_iff π hπ hunitary hirr]
-  exact (Representation.exists_isRealStructure_iff (isInvariantSesqForm_innerₛₗ hunitary)
-    isSymm_innerₛₗ isNonneg_innerₛₗ fun _ hx => innerₛₗ_apply_self_ne_zero hx).symm
+  refine ((Representation.exists_isRealStructure_iff (isInvariantSesqForm_innerₛₗ hunitary)
+    isSymm_innerₛₗ isNonneg_innerₛₗ fun _ hx => innerₛₗ_apply_self_ne_zero hx).symm).trans ?_
+  exact exists_congr fun _ => ⟨fun h => ⟨h.involutive, h.isIntertwining⟩, fun h => ⟨h.1, h.2⟩⟩
 
 /-- **The indicator is `1` exactly when the representation is realizable over `ℝ`**: the
 Frobenius-Schur criterion for a compact group in its realizability form, the compact mirror of
-`TauCeti.Representation.frobeniusSchurIndicator_eq_one_iff_isRealizableOverReal` for a finite
-group.  The real form is the fixed space of the structure map. -/
+`Representation.frobeniusSchurIndicator_eq_one_iff_isRealizableOverReal` for a finite group.  The
+real form is the fixed space of the structure map. -/
 theorem frobeniusSchurIndicator_eq_one_iff_isRealizableOverReal (hunitary : IsUnitary π)
     (hirr : Representation.IsIrreducible π.toRepresentation) :
     frobeniusSchurIndicator π hπ = 1 ↔
       Representation.IsRealizableOverReal π.toRepresentation := by
-  rw [frobeniusSchurIndicator_eq_one_iff_exists_isRealStructure π hπ hunitary hirr,
+  rw [frobeniusSchurIndicator_eq_one_iff_exists_structureMap π hπ hunitary hirr,
     Representation.isRealizableOverReal_iff_exists_isRealStructure]
+  exact exists_congr fun _ => ⟨fun h => ⟨h.1, h.2⟩, fun h => ⟨h.involutive, h.isIntertwining⟩⟩
 
 /-- **The indicator is `-1` exactly when there is a quaternionic structure**: an irreducible
 unitary representation of a compact group has Frobenius-Schur indicator `-1` exactly when it

@@ -24,10 +24,10 @@ Which structure map comes out is decided by the **flip rule** of the bilinear fo
 `B x y = ε * B y x` -- with `ε = 1` for a symmetric form and `ε = -1` for an alternating one -- the
 map `J` produced squares to `ε`:
 
-* a symmetric `B` gives a conjugate-linear involution, a `TauCeti.Representation.IsRealStructure`,
+* a symmetric `B` gives a conjugate-linear involution, a `Representation.IsRealStructure`,
   whose real points are a real form;
 * an alternating `B` gives a conjugate-linear `J` with `J (J x) = -x`, a
-  `TauCeti.Representation.IsQuaternionicStructure`, whose fixed points are only `0`.
+  `Representation.IsQuaternionicStructure`, whose fixed points are only `0`.
 
 Both cases are proved once here, for a real sign `ε` with `ε * ε = 1`, and specialized twice.
 
@@ -45,8 +45,10 @@ so `ε * c` is the ratio of two positive reals.  Rescaling `J` by the inverse sq
 ratio -- a *real* scalar, so conjugate-linearity survives -- makes `J ∘ J` equal to `ε`: a real
 structure when `ε = 1`, a quaternionic one when `ε = -1`.
 
-Only the two forms are needed, so nothing here asks for a finite group; producing the invariant
-Hermitian form is where finiteness enters, in
+Only the two forms are needed, so nothing here asks for a finite group -- nor even for a group,
+since a definite invariant Hermitian form on a finite-dimensional space already makes each action
+map bijective, which is all the equivariance argument would use an inverse for.  Producing the
+invariant Hermitian form is where finiteness enters, in
 `TauCeti/RepresentationTheory/InvariantForm/Hermitian.lean`, and the Frobenius-Schur criteria this
 feeds are in `TauCeti/RepresentationTheory/CharacterTable/FrobeniusSchur/Realizability.lean` and
 `TauCeti/RepresentationTheory/Compact/FrobeniusSchur/StructureMap.lean`.
@@ -229,23 +231,38 @@ end Inverting
 
 section Equivariance
 
-variable {G V : Type*} [Group G] [AddCommGroup V] [Module ℂ V] {ρ : Representation ℂ G V}
+variable {G V : Type*} [Monoid G] [AddCommGroup V] [Module ℂ V] {ρ : Representation ℂ G V}
   {B : BilinForm ℂ V} {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} [FiniteDimensional ℂ V]
 
+/-- **A definite invariant Hermitian form makes the action surjective.**  Invariance carries the
+self-pairing of `ρ g x` back to that of `x`, so definiteness makes `ρ g` injective, and on a
+finite-dimensional space an injective endomorphism is surjective.  This is what replaces the
+inverse of a group element below, so that nothing here needs more than a monoid acting. -/
+private theorem surjective_rep (hHinv : IsInvariantSesqForm ρ H)
+    (hdef : ∀ x : V, x ≠ 0 → H x x ≠ 0) (g : G) : Function.Surjective (ρ g) := by
+  refine LinearMap.injective_iff_surjective.mp ?_
+  rw [injective_iff_map_eq_zero]
+  intro x hx
+  by_contra hne
+  refine hdef x hne ?_
+  have h := hHinv.apply g x x
+  rw [hx] at h
+  simpa using h.symm
+
 /-- The comparison map of two invariant forms commutes with the action: both sides pair identically
-against every vector, and a positive definite form separates vectors. -/
+against every vector, and a positive definite form separates vectors.  The second argument is
+written as `ρ g z`, which is no loss because the action is surjective. -/
 private theorem compareForms_apply_rep (hBinv : IsInvariantForm ρ B)
     (hHinv : IsInvariantSesqForm ρ H) (hdef : ∀ x : V, x ≠ 0 → H x x ≠ 0) (g : G) (x : V) :
     compareForms B H hdef (ρ g x) = ρ g (compareForms B H hdef x) := by
   refine eq_of_forall_sesq_eq H hdef fun y => ?_
-  calc H (compareForms B H hdef (ρ g x)) y
-      = B (ρ g x) y := sesq_compareForms B H hdef (ρ g x) y
-    _ = B (ρ g x) (ρ g (ρ g⁻¹ y)) := by rw [ρ.self_inv_apply]
-    _ = B x (ρ g⁻¹ y) := hBinv.apply g x (ρ g⁻¹ y)
-    _ = H (compareForms B H hdef x) (ρ g⁻¹ y) := (sesq_compareForms B H hdef x (ρ g⁻¹ y)).symm
-    _ = H (ρ g (compareForms B H hdef x)) (ρ g (ρ g⁻¹ y)) :=
-        (hHinv.apply g (compareForms B H hdef x) (ρ g⁻¹ y)).symm
-    _ = H (ρ g (compareForms B H hdef x)) y := by rw [ρ.self_inv_apply]
+  obtain ⟨z, rfl⟩ := surjective_rep hHinv hdef g y
+  calc H (compareForms B H hdef (ρ g x)) (ρ g z)
+      = B (ρ g x) (ρ g z) := sesq_compareForms B H hdef (ρ g x) (ρ g z)
+    _ = B x z := hBinv.apply g x z
+    _ = H (compareForms B H hdef x) z := (sesq_compareForms B H hdef x z).symm
+    _ = H (ρ g (compareForms B H hdef x)) (ρ g z) :=
+        (hHinv.apply g (compareForms B H hdef x) z).symm
 
 variable [ρ.IsIrreducible]
 
@@ -322,7 +339,7 @@ end Equivariance
 
 section StructureMap
 
-variable {G V : Type*} [Group G] [AddCommGroup V] [Module ℂ V] {ρ : Representation ℂ G V}
+variable {G V : Type*} [Monoid G] [AddCommGroup V] [Module ℂ V] {ρ : Representation ℂ G V}
   [FiniteDimensional ℂ V] [ρ.IsIrreducible]
 
 /-- **An invariant bilinear form obeying a flip rule, together with an invariant Hermitian form,
@@ -492,7 +509,7 @@ end OfStructureMap
 
 section Equivalence
 
-variable {G V : Type*} [Group G] [AddCommGroup V] [Module ℂ V] {ρ : Representation ℂ G V}
+variable {G V : Type*} [Monoid G] [AddCommGroup V] [Module ℂ V] {ρ : Representation ℂ G V}
   [FiniteDimensional ℂ V] [ρ.IsIrreducible]
 
 /-- **Against a positive definite invariant Hermitian form, a real structure exists exactly when a
