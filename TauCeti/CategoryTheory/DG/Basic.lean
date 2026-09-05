@@ -23,7 +23,7 @@ category structure.  Enriched functors induce functors on zeroth cycles, and Mat
 opposite supplies the expected comparison `Z⁰(Cᵒᵖ) ≌ Z⁰(C)ᵒᵖ`.
 
 The enrichment uses `TauCeti.koszulSymmetricCategory`; hence its opposite composition carries the
-Koszul braiding fixed by the `DGAInfinity` roadmap.
+Koszul braiding.
 
 ## Main definitions
 
@@ -32,11 +32,8 @@ Koszul braiding fixed by the `DGAInfinity` roadmap.
 * `TauCeti.DGCategory.ZerothCycles`: the category of closed degree-zero morphisms.
 * `TauCeti.DGFunctor.zerothCycles`: the induced functor on closed degree-zero morphisms.
 * `TauCeti.DGCategory.zerothCyclesOppositeEquivalence`: compatibility of `Z⁰` with opposites.
-
-This advances `TauCetiRoadmap/DGAInfinity/README.md`, Layer 1, item "DG algebras, categories,
-modules, and bimodules", specifically the enriched definition of DG categories, DG functors, the
-`Z⁰` category, and the first opposite compatibility.  The explicit homogeneous-element comparison,
-the underlying graded category, `H⁰`, tensor products, and quasi-equivalences remain separate.
+* `CategoryTheory.EnrichedFunctor.forget_map`: the inherited normalization formula for the action
+  of `DGFunctor.zerothCycles` on a closed degree-zero morphism.
 
 ## References
 
@@ -90,11 +87,6 @@ variable {R : Type uR} [CommRing R]
 noncomputable abbrev zerothCycles (F : DGFunctor R C D) :
     DGCategory.ZerothCycles R C ⥤ DGCategory.ZerothCycles R D :=
   F.forget
-
-@[simp]
-theorem zerothCycles_obj (F : DGFunctor R C D) (X : C) : F.zerothCycles.obj X = F.obj X :=
-  rfl
-
 
 end DGFunctor
 
