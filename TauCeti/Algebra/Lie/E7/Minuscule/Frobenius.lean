@@ -7,8 +7,10 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Frobenius.GeneralLinear
 public import TauCeti.Algebra.Lie.E7.Minuscule.PointsFunctor
--- The toral-closure Frobenius is used only inside the proof of `frobenius_weightTorusPoints`, so
--- it is imported privately rather than re-exported to consumers of this module.
+-- The endomorphism power law and the toral-closure Frobenius are used only inside the proofs of
+-- `frobenius_pow` and `frobenius_weightTorusPoints`, so they are imported privately rather than
+-- re-exported to consumers of this module.
+import TauCeti.Algebra.Group.Hom.End
 import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Frobenius
 
 /-!
@@ -134,19 +136,12 @@ theorem frobenius_add (m : ℕ) :
 Frobenius of the type-`E₇` minuscule carrier, in the endomorphism monoid of its points, is its
 `p ^ (k * m)`-power Frobenius. -/
 -- `Monoid.End` is definitionally a bundled `MonoidHom`; the `show` picks its composition monoid
--- structure before the power is elaborated, and the closing `rfl` identifies the character's value
--- with the endomorphism again. `frobenius_zero` and `frobenius_add` say exactly that the iterates
--- form an additive character of `ℕ` in that monoid, so the law is Mathlib's
--- `AddChar.map_nsmul_eq_pow` rather than a fresh induction.
+-- structure before the power is elaborated. `frobenius_zero` and `frobenius_add` are exactly the
+-- hypotheses of the carrier-independent law `TauCeti.pow_eq_of_id_of_comp`.
 theorem frobenius_pow (m : ℕ) :
-    (show Monoid.End _ from frobenius p k A) ^ m = frobenius p (k * m) A := by
-  let ψ : AddChar ℕ (Monoid.End (points A)) :=
-    { toFun := fun k => frobenius p k A
-      map_zero_eq_one' := frobenius_zero p A
-      map_add_eq_mul' := fun i j => frobenius_add p i A j }
-  rw [show (show Monoid.End _ from frobenius p k A) = ψ k from rfl,
-    ← ψ.map_nsmul_eq_pow m k, smul_eq_mul, Nat.mul_comm]
-  rfl
+    (show Monoid.End _ from frobenius p k A) ^ m = frobenius p (k * m) A :=
+  pow_eq_of_id_of_comp (fun i => frobenius p i A) (frobenius_zero p A)
+    (fun i j => frobenius_add p i A j) k m
 
 /-- A type-`E₇` minuscule carrier point is fixed by Frobenius exactly when all of its matrix
 entries lie in the Frobenius-fixed subring. -/
