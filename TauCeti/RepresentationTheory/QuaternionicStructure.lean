@@ -71,6 +71,11 @@ structure IsQuaternionicStructure (J : V →ₛₗ[starRingEnd ℂ] V) : Prop wh
   /-- The map intertwines the action with itself. -/
   isIntertwining (g : G) (v : V) : J (ρ g v) = ρ g (J v)
 
+-- `grind` splits a witness in the context into its two fields, so both defining equations are
+-- available to it without the projections being invoked by hand.  They cannot be registered as
+-- rewrite rules individually: neither `G` nor `ρ` occurs in `sq_eq_neg`, so `grind =` rejects it.
+attribute [grind cases] IsQuaternionicStructure
+
 namespace IsQuaternionicStructure
 
 variable {J : V →ₛₗ[starRingEnd ℂ] V} (h : IsQuaternionicStructure ρ J)
