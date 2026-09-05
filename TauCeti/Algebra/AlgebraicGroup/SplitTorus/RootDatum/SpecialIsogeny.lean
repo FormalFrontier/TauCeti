@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.LinearMap
+public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Frobenius
 public import TauCeti.LinearAlgebra.RootSystem.Isogeny.Special
 
 /-!
@@ -31,6 +31,8 @@ isogenies of pinned reductive groups.
   `TauCeti.DynkinType.g2SpecialTorusEnd_comp_self`, and
   `TauCeti.DynkinType.f4SpecialTorusEnd_comp_self`: the special torus maps square to the
   characteristic power maps.
+* `TauCeti.DynkinType.mapValue_frobenius_two_eq_comp_b2SpecialTorusEnd_sq` and its `G₂` and
+  `F₄` counterparts: on points in the defining characteristic, these squares are Frobenius.
 
 ## References
 
@@ -139,6 +141,44 @@ theorem f4SpecialTorusEnd_comp_self :
   congr 1
   have h := congrArg RootPairingIsogeny.weightMap f4SpecialIsogeny_mul_self
   simpa [RootPairingIsogeny.mul_def] using h
+
+/-! ### Frobenius square relations on points -/
+
+/-- **On points in characteristic two, the square of the `B₂` special torus endomorphism is
+Frobenius.** -/
+theorem mapValue_frobenius_two_eq_comp_b2SpecialTorusEnd_sq
+    {A : Type} [CommRing A] [ExpChar A 2]
+    (q : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
+      (SplitTorus.groupScheme ℤ (Fin 2)).X) :
+    (Spec.map (CommRingCat.ofHom (frobenius A 2).toIntAlgHom.toRingHom)).asOver
+          (Spec (CommRingCat.of ℤ)) ≫ q =
+      q ≫ ((b2SpecialTorusEnd ℤ ≫ b2SpecialTorusEnd ℤ).hom.hom) := by
+  rw [b2SpecialTorusEnd_comp_self]
+  exact SplitTorus.mapValue_frobenius_eq_comp_powEnd 2 q
+
+/-- **On points in characteristic three, the square of the `G₂` special torus endomorphism is
+Frobenius.** -/
+theorem mapValue_frobenius_three_eq_comp_g2SpecialTorusEnd_sq
+    {A : Type} [CommRing A] [ExpChar A 3]
+    (q : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
+      (SplitTorus.groupScheme ℤ (Fin 2)).X) :
+    (Spec.map (CommRingCat.ofHom (frobenius A 3).toIntAlgHom.toRingHom)).asOver
+          (Spec (CommRingCat.of ℤ)) ≫ q =
+      q ≫ ((g2SpecialTorusEnd ℤ ≫ g2SpecialTorusEnd ℤ).hom.hom) := by
+  rw [g2SpecialTorusEnd_comp_self]
+  exact SplitTorus.mapValue_frobenius_eq_comp_powEnd 3 q
+
+/-- **On points in characteristic two, the square of the `F₄` special torus endomorphism is
+Frobenius.** -/
+theorem mapValue_frobenius_two_eq_comp_f4SpecialTorusEnd_sq
+    {A : Type} [CommRing A] [ExpChar A 2]
+    (q : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
+      (SplitTorus.groupScheme ℤ (Fin 4)).X) :
+    (Spec.map (CommRingCat.ofHom (frobenius A 2).toIntAlgHom.toRingHom)).asOver
+          (Spec (CommRingCat.of ℤ)) ≫ q =
+      q ≫ ((f4SpecialTorusEnd ℤ ≫ f4SpecialTorusEnd ℤ).hom.hom) := by
+  rw [f4SpecialTorusEnd_comp_self]
+  exact SplitTorus.mapValue_frobenius_eq_comp_powEnd 2 q
 
 end DynkinType
 
