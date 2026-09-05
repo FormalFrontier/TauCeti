@@ -27,7 +27,7 @@ Clifford-algebra induction.
 
 ## Main results
 
-* `SymmetricAlgebra.map_ι`: evaluation of the induced map on a canonical generator.
+* `SymmetricAlgebra.map_apply_ι`: evaluation of the induced map on a canonical generator.
 * `SymmetricAlgebra.map_id` and `SymmetricAlgebra.map_comp_map`: functoriality laws.
 * `SymmetricAlgebra.map_injective_of_leftInverse` and `SymmetricAlgebra.map_surjective`:
   transport of split monomorphisms and of surjections.
@@ -58,7 +58,7 @@ noncomputable def map (f : M →ₗ[R] N) :
 
 /-- A symmetric-algebra map acts on canonical generators by the original linear map. -/
 @[simp]
-theorem map_ι (f : M →ₗ[R] N) (a : M) :
+theorem map_apply_ι (f : M →ₗ[R] N) (a : M) :
     map R f (ι R M a) = ι R N (f a) := by
   simp [map]
 
@@ -70,7 +70,7 @@ theorem map_id :
   ext a
   simp
 
-/-- The induced map composed with the canonical generator map is the original linear map. -/
+/-- The induced map commutes with the canonical generator maps. -/
 @[simp]
 theorem map_comp_ι (f : M →ₗ[R] N) :
     (map R f).toLinearMap ∘ₗ ι R M = ι R N ∘ₗ f := by
@@ -145,12 +145,8 @@ theorem mapEquiv_symm (e : M ≃ₗ[R] N) :
     (mapEquiv R e).symm = mapEquiv R e.symm := by
   apply AlgEquiv.ext
   intro a
-  rw [AlgEquiv.symm_apply_eq, mapEquiv_apply, mapEquiv_apply]
-  have hcomp : (map R e.toLinearMap).comp (map R e.symm.toLinearMap) =
-      AlgHom.id R (SymmetricAlgebra R N) := by
-    rw [map_comp_map, e.comp_symm, map_id]
-  rw [← AlgHom.comp_apply, hcomp]
-  rfl
+  rw [mapEquiv, AlgEquiv.ofAlgHom_symm]
+  simp only [AlgEquiv.ofAlgHom_apply, mapEquiv, LinearEquiv.symm_symm]
 
 /-- The identity linear equivalence induces the identity algebra equivalence. -/
 @[simp]
@@ -168,7 +164,8 @@ theorem mapEquiv_trans (e : M ≃ₗ[R] N) (d : N ≃ₗ[R] P) :
   intro a
   simp only [AlgEquiv.trans_apply, mapEquiv_apply]
   calc
-    _ = ((map R d.toLinearMap).comp (map R e.toLinearMap)) a := rfl
+    _ = ((map R d.toLinearMap).comp (map R e.toLinearMap)) a := by
+      rw [AlgHom.comp_apply]
     _ = map R (d.toLinearMap.comp e.toLinearMap) a := by rw [map_comp_map]
     _ = _ := by rw [LinearEquiv.coe_trans]
 
