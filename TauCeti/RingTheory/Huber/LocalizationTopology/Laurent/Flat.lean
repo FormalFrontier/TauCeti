@@ -12,7 +12,8 @@ public import TauCeti.RingTheory.Huber.StronglyNoetherian
 /-!
 # Flatness of the Laurent quotient, and of every numerator enlargement
 
-`A⟨T/s⟩⟨X⟩ ⧸ (t/s - X)` is a flat `A⟨T/s⟩`-module, and so — this is **Wedhorn's Proposition 8.30**
+`A⟨T/s⟩⟨X⟩ ⧸ (t/s - X)` is a flat `A⟨T/s⟩`-module, and so — this is the elementary case of
+**Wedhorn's Proposition 8.30**
 at the ring level — is `A⟨T'/s⟩` for any enlargement `T ⊆ T'` of the numerators.
 
 The argument runs in three steps. Over a complete noetherian Tate ring `B` the quotient
@@ -39,10 +40,21 @@ tower.
 * `TauCeti.Huber.PairOfDefinition.flat_restrictionRingHomOfSubset_trans` : flatness composes along
   such a chain. This is the step the induction below repeats, and it carries that argument's
   instance bookkeeping.
-* `TauCeti.Huber.PairOfDefinition.flat_restrictionRingHomOfSubset_of_subset` : **Proposition 8.30**
-  — the restriction map of an arbitrary enlargement `T ⊆ T'` is flat. Strong noetherianity is
-  asked of every intermediate `A⟨U/s⟩`, since the elementary step needs it at its own base and it
-  does not descend along an enlargement; see that theorem's docstring.
+* `TauCeti.Huber.PairOfDefinition.flat_restrictionRingHomOfSubset_of_forall_isStronglyNoetherian`
+  : the chain form — the restriction map of an arbitrary enlargement `T ⊆ T'` is flat, **assuming
+  strong noetherianity of every intermediate `A⟨U/s⟩`**. That family hypothesis is what separates
+  this from Wedhorn's Proposition 8.30, which assumes it of `A` alone; see *What this is not*.
+
+## What this is not
+
+The chain result is **not** Wedhorn's Proposition 8.30 as he states it. His standing hypothesis is
+that `A` is strongly noetherian; ours is that every intermediate `A⟨U/s⟩` is. The two coincide once
+rational localisations of a strongly noetherian ring are known to be strongly noetherian again —
+the standing hypothesis of his §8.2, which this repository has not formalised. Until then the
+family hypothesis is carried rather than derived, and the theorem is named for what it assumes.
+
+The elementary case is unaffected: it needs strong noetherianity only at its own base, which is
+where Lemma 8.31 needs it too.
 
 ## References
 
@@ -393,8 +405,14 @@ private theorem flat_restrictionRingHomOfSubset_union [DecidableEq A]
         (hSN (T ∪ W) hTU fun x hx ↦ (Finset.mem_union.mp hx).elim (@hTT' x)
           fun h ↦ (Finset.mem_sdiff.mp (hWsub h)).1))
 
-/-- **Proposition 8.30 at the ring level**: the restriction map `A⟨T/s⟩ → A⟨T'/s⟩` of an arbitrary
-enlargement of the numerators is flat.
+/-- **The chain form of Proposition 8.30, with strong noetherianity assumed at every intermediate
+presentation**: the restriction map `A⟨T/s⟩ → A⟨T'/s⟩` of an arbitrary enlargement is flat.
+
+**This is not yet Wedhorn's Proposition 8.30, and should not be cited as it.** He assumes strong
+noetherianity of `A` alone; the hypothesis `hSN` here asks it of every intermediate `A⟨U/s⟩`. The
+gap between them is exactly the standing hypothesis of his §8.2 — that rational localisations of a
+strongly noetherian ring are again strongly noetherian — which is **not formalised here**. Once it
+is, each `hSN` follows from the single assumption on `A` and this becomes his statement verbatim.
 
 Any `T ⊆ T'` is reached from `T` by adjoining the elements of `T' \ T` one at a time, each step is
 `TauCeti.Huber.PairOfDefinition.flat_restrictionRingHomOfSubset_of_isStronglyNoetherian`, and
@@ -406,7 +424,8 @@ Strong noetherianity is asked of every intermediate `A⟨U/s⟩`, not only of `A
 step needs it at its own base, and it does not descend along an enlargement. Wedhorn has it from
 the standing hypothesis of his §8.2 — that rational localisations of a strongly noetherian ring
 are again strongly noetherian — which is not formalised here. -/
-theorem flat_restrictionRingHomOfSubset_of_subset (hnil : IsTopologicallyNilpotent s)
+theorem flat_restrictionRingHomOfSubset_of_forall_isStronglyNoetherian
+    (hnil : IsTopologicallyNilpotent s)
     (hSN : ∀ (U : Finset A) (hU : T ⊆ U), U ⊆ T' →
       letI := locUniformSpace P U s S (hden.mono hU)
       letI := isUniformAddGroup_locUniformSpace P U s S (hden.mono hU)
