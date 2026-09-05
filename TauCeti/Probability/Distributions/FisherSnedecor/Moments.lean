@@ -12,17 +12,16 @@ import TauCeti.Analysis.SpecialFunctions.Beta
 /-!
 # Moments of Fisher's F distribution
 
-This file establishes the natural moments of the Fisher--Snedecor law.  The moment of order `q`
-exists exactly when `2 * q < n` and is then a quotient of beta functions.  The first two cases
-give the mean, second raw moment, and variance, together with the exact thresholds `2 < n` and
-`4 < n` at which those moments diverge.
+This file establishes the sharp first- and second-moment theory of the Fisher--Snedecor law:
+the mean, the second raw moment, the variance, and the exact integrability thresholds `2 < n`
+and `4 < n` at which the first two moments diverge.  These all come from a file-internal
+computation of the natural moment of order `q`, which exists exactly when `2 * q < n` and is
+then a quotient of beta functions.
 
 ## Main results
 
 * `integrable_id_fisherSnedecorMeasure_iff` and `integrable_sq_fisherSnedecorMeasure_iff` give
   the two sharp integrability thresholds, hence also the divergence at and below them.
-* `integrable_pow_fisherSnedecorMeasure_iff` and `integral_pow_fisherSnedecorMeasure` give the
-  integrability criterion and beta-function formula for every natural moment.
 * `integral_id_fisherSnedecorMeasure` computes the mean.
 * `integral_sq_fisherSnedecorMeasure` computes the second raw moment.
 * `variance_id_fisherSnedecorMeasure` computes the variance.
@@ -145,7 +144,7 @@ private lemma integrableOn_scaled_fisherMomentKernel_iff (hm : 0 < m) (hn : 0 < 
 
 /-- A natural power is integrable under a valid Fisher--Snedecor law exactly when twice its
 order is below the denominator degrees of freedom. -/
-theorem integrable_pow_fisherSnedecorMeasure_iff (hm : 0 < m) (hn : 0 < n) (q : ℕ) :
+private theorem integrable_pow_fisherSnedecorMeasure_iff (hm : 0 < m) (hn : 0 < n) (q : ℕ) :
     Integrable (fun x : ℝ ↦ x ^ q) (fisherSnedecorMeasure m n) ↔ 2 * q < n := by
   rw [integrable_fisherSnedecorMeasure_iff]
   have hC : IsUnit (Real.Gamma ((m + n) / 2) /
@@ -230,7 +229,7 @@ private lemma betaMomentIntegrand_eq (q : ℕ) {u : ℝ}
       rw [hpowu, hpowv]
 
 /-- The `q`th natural moment of a Fisher--Snedecor law, in beta-function form. -/
-theorem integral_pow_fisherSnedecorMeasure (hm : 0 < m) (q : ℕ)
+private theorem integral_pow_fisherSnedecorMeasure (hm : 0 < m) (q : ℕ)
     (hq : 2 * q < n) :
     ∫ x, x ^ q ∂fisherSnedecorMeasure m n =
       (n / m) ^ q * beta (m / 2 + q) (n / 2 - q) / beta (m / 2) (n / 2) := by
