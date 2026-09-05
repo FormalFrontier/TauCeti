@@ -57,10 +57,10 @@ the places themselves.
 
 ## Implementation notes
 
-`div` is defined on `Fˣ`, not on `F` with a nonzero hypothesis: the roadmap pins it as a group
-homomorphism, and `Additive Fˣ →+ Divisor k F` is that statement.  For a nonzero `f : F` the
-divisor is `div (Units.mk0 f hf)`, and `TauCeti.Divisor.coeff_principal` reads its coefficients
-back as orders of the underlying function.
+`div` is defined on `Fˣ`, not on `F` with a nonzero hypothesis, so its multiplicativity is packaged
+as the group homomorphism `Additive Fˣ →+ Divisor k F`.  For a nonzero `f : F` the divisor is
+`div (Units.mk0 f hf)`, and `TauCeti.Divisor.coeff_principal` reads its coefficients back as orders
+of the underlying function.
 
 The function-field hypothesis `IsFunctionField k F` is an explicit argument rather than a
 typeclass, following the rest of this directory; it is what makes the support finite, so it
@@ -87,19 +87,6 @@ variable {k F : Type*} [Field k] [Field F] [Algebra k F]
 
 namespace Place
 
-/-- The order of vanishing at a place, as a homomorphism out of the additivized group of units
-`Additive Fˣ`.  Restricting to units is what makes it additive: `ord_P` is only additive away
-from the junk value `ord_P 0 = 0`. -/
-noncomputable def ordAddMonoidHom (P : Place k F) : Additive Fˣ →+ ℤ :=
-  AddMonoidHom.mk' (fun z => P.ord ((Additive.toMul z : Fˣ) : F)) fun z w => by
-    simpa only [toMul_add, Units.val_mul] using
-      P.ord_mul (Units.ne_zero _) (Units.ne_zero _)
-
-@[simp]
-theorem ordAddMonoidHom_apply (P : Place k F) (z : Fˣ) :
-    P.ordAddMonoidHom (Additive.ofMul z) = P.ord (z : F) := by
-  simp [ordAddMonoidHom]
-
 /-- **The places of an algebraic function field, as an order system.**  The points are the
 places, the group is `Additive Fˣ`, and the order at a place is `ord_P`.  The finiteness
 condition is Stichtenoth, Corollary 1.3.4: a function has finitely many zeros and poles. -/
@@ -108,7 +95,11 @@ noncomputable def orderSystem (hF : IsFunctionField k F) :
   ord P := P.ordAddMonoidHom
   finite_support z := by
     refine (finite_setOf_ord_ne_zero hF ((Additive.toMul z : Fˣ) : F)).subset fun P hP => ?_
-    exact hP
+    -- `ordAddMonoidHom` lives in `Place/Basic.lean` with an unexposed body, so this goes through
+    -- its application lemma rather than through definitional unfolding.
+    have hz : P.ordAddMonoidHom z = P.ord ((Additive.toMul z : Fˣ) : F) := by
+      simpa using ordAddMonoidHom_apply P (Additive.toMul z)
+    simpa only [Function.mem_support, Set.mem_ofPred_eq, hz] using hP
 
 @[simp]
 theorem orderSystem_ord (hF : IsFunctionField k F) (P : Place k F) (z : Fˣ) :

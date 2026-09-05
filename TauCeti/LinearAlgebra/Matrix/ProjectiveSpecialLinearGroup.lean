@@ -154,7 +154,6 @@ def glPosToSL2R : GL(2, ℝ)⁺ →* SL(2, ℝ) where
   map_mul' g h := by
     apply Subtype.ext
     have hg_pos : 0 < ((g : GL (Fin 2) ℝ).det.val : ℝ) := g.property
-    have hh_pos : 0 < ((h : GL (Fin 2) ℝ).det.val : ℝ) := h.property
     have h_det : ((g * h : GL(2, ℝ)⁺) : GL (Fin 2) ℝ).det.val =
         (g : GL (Fin 2) ℝ).det.val * (h : GL (Fin 2) ℝ).det.val := by
       simp [Units.val_mul]

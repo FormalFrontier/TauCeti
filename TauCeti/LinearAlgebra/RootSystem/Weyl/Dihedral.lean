@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.GroupTheory.SpecificGroups.Dihedral
+public import TauCeti.GroupTheory.SpecificGroups.Dihedral.Basic
 public import TauCeti.LinearAlgebra.RootSystem.BraidRelation
 
 /-!

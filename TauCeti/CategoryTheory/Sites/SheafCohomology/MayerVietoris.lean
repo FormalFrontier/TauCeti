@@ -10,16 +10,24 @@ public import Mathlib.CategoryTheory.Sites.SheafCohomology.MayerVietoris
 /-!
 # Vanishing consequences of the Mayer-Vietoris sequence
 
-This file records general consequences of Mathlib's Mayer-Vietoris sequence for sheaf
-cohomology. They are used for the scheme-cohomology vanishing results required by
-`TauCetiRoadmap/JacobianChallenge/README.md`, Layer B.
+For a Mayer-Vietoris square `S` in a site, where `S.X₄` is covered by `S.X₂` and `S.X₃`
+meeting in `S.X₁`, Mathlib provides a long exact sequence relating the cohomology of an abelian
+sheaf `F` on those four objects. This file records the two consequences that a vanishing
+argument needs:
+
+* `epi_δ`: the connecting map `Hⁿ⁰(S.X₁) ⟶ Hⁿ¹(S.X₄)` is an epimorphism as soon as the degree
+  `n₁` cohomology of `F` vanishes on `S.X₂` and on `S.X₃`;
+* `subsingleton_H'_X₄`: if in addition the degree `n₀` cohomology of `F` vanishes on `S.X₁`,
+  then its degree `n₁` cohomology vanishes on `S.X₄`.
+
+So the cohomology of a covered object vanishes once it vanishes on the covering objects and on
+their intersection one degree lower; this is the form in which Mayer-Vietoris is applied to a
+scheme covered by two open subsets.
 -/
 
 public section
 
 open CategoryTheory Limits
-
-namespace TauCeti
 
 namespace CategoryTheory.GrothendieckTopology.MayerVietorisSquare
 
@@ -50,9 +58,7 @@ theorem subsingleton_H'_X₄ (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁)
     (h₂ : Subsingleton (F.H' n₁ S.X₂)) (h₃ : Subsingleton (F.H' n₁ S.X₃)) :
     Subsingleton (F.H' n₁ S.X₄) := by
   have hsurj : Function.Surjective (S.δ F n₀ n₁ h) :=
-    (AddCommGrpCat.epi_iff_surjective _).mp (epi_δ S F n₀ n₁ h h₂ h₃)
+    (AddCommGrpCat.epi_iff_surjective _).mp (S.epi_δ F n₀ n₁ h h₂ h₃)
   exact hsurj.subsingleton
 
 end CategoryTheory.GrothendieckTopology.MayerVietorisSquare
-
-end TauCeti

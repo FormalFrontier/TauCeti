@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Analysis.PDE.EnergyForm.Integrability
 public import TauCeti.Analysis.PDE.EnergyForm.Integrated.Basic
+public import TauCeti.Analysis.PDE.EnergyForm.Integrated.Symmetry
 public import TauCeti.Analysis.PDE.EnergyForm.VariableLp
 public import TauCeti.Analysis.Sobolev.Poincare.W1p0
 
@@ -90,9 +91,13 @@ hypothesis is carried explicitly, and the interior estimates do not see the boun
 
 * `TauCeti.PDE.jetField`: the value-gradient jet field of a Sobolev function.
 * `TauCeti.PDE.energyFormH1`: the divergence-form energy form on `H¹(Ω) = W^{1,2}(Ω)`.
+* `TauCeti.PDE.energyFormH1_comm_of_isSymm_ae`: symmetry of the drift-free energy form under an
+  almost everywhere symmetric principal coefficient.
 * `TauCeti.PDE.energyFormH1L` and `TauCeti.PDE.energyFormH1L0`: the energy form bundled as a
   continuous bilinear map on `H¹(Ω)` and on `H¹₀(Ω)`, built from
   `TauCeti.PDE.energyFormLpVariable`.
+* `TauCeti.PDE.energyFormH1L0_comm`: symmetry of the bundled `H¹₀` energy form, from symmetry of
+  the energy form at the functions of `H¹₀(Ω)`.
 * `TauCeti.PDE.UniformlyEllipticOn.integrable_energyIntegrand_jetField`: the energy density of
   two Sobolev functions is integrable.
 * `TauCeti.PDE.UniformlyEllipticOn.norm_energyFormH1_le`: boundedness of the energy form, with
@@ -383,6 +388,16 @@ theorem energyFormH1_smul_right (a : EuclideanSpace ℝ ι → Matrix ι ι ℝ)
         .rfl .rfl .rfl .rfl (jetField_smul_ae r v)
     _ = r * energyFormH1 a b c u v := energyFormIntegral_smul_right _ _ _ _ _ _ r
 
+/-- **Symmetry of the energy form on `H¹(Ω)`.** With no drift and an almost everywhere symmetric
+principal coefficient the divergence-form energy form is symmetric, which is what makes the
+associated eigenvalue problem a self-adjoint one. The mass coefficient is unrestricted: it
+enters the form through the symmetric term `c u v`. -/
+theorem energyFormH1_comm_of_isSymm_ae
+    (ha : ∀ᵐ x ∂mu.restrict (Omega : Set (EuclideanSpace ℝ ι)), (a x).IsSymm)
+    (u v : W1p mu Omega 2) :
+    energyFormH1 a 0 c u v = energyFormH1 a 0 c v u :=
+  energyFormIntegral_zero_drift_comm_of_isSymm_ae ha
+
 /-- The coefficient in
 `TauCeti.PDE.UniformlyEllipticOn.mul_norm_sq_le_energyFormH1_self_of_poincare` is positive under the
 smallness condition `βP < λ` relating the drift bound, the Poincaré constant and the ellipticity;
@@ -553,6 +568,20 @@ theorem energyFormH1L0_apply
       energyFormH1 a b c (u : W1p mu Omega 2) (v : W1p mu Omega 2) := by
   rw [energyFormH1L0, ContinuousLinearMap.bilinearComp_apply, energyFormH1L_apply]
   simp only [Submodule.subtypeL_apply]
+
+omit [DecidableEq ι] in
+/-- **Symmetry of the bundled `H¹₀` energy form.**  Only symmetry of `energyFormH1` at the
+Sobolev functions underlying `H¹₀(Ω)` is needed; with no drift and an almost everywhere symmetric
+principal coefficient `TauCeti.PDE.energyFormH1_comm_of_isSymm_ae` supplies it. -/
+theorem energyFormH1L0_comm
+    (hcoeff : MemLp (fun x => energyIntegrand (a x) (b x) (c x)) ⊤ (mu.restrict Omega))
+    (hsymm : ∀ u v : W1p0 mu Omega 2,
+      energyFormH1 a b c (u : W1p mu Omega 2) (v : W1p mu Omega 2) =
+        energyFormH1 a b c (v : W1p mu Omega 2) (u : W1p mu Omega 2))
+    (u v : W1p0 mu Omega 2) :
+    energyFormH1L0 hcoeff u v = energyFormH1L0 hcoeff v u := by
+  rw [energyFormH1L0_apply, energyFormH1L0_apply]
+  exact hsymm u v
 
 namespace UniformlyEllipticOn
 

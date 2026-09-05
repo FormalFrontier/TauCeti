@@ -30,6 +30,11 @@ equivalence is needed and equality of places *is* equality of valuations
   element has order `1`. It has the junk value `ord_P 0 = 0`.
 * `TauCeti.Place.ResidueField`: the residue field `F_P = 𝒪_P / 𝔪_P`, a `k`-algebra.
 * `TauCeti.Place.degree`: the degree `deg P = [F_P : k]` of a place.
+* `TauCeti.Place.ordAddMonoidHom`: `ord_P` bundled as an additive homomorphism on `Additive Fˣ`.
+  Restricting to units is what makes it additive, since `ord_P 0 = 0` is a junk value.
+* `TauCeti.Place.ord_mul_eq_zero`, `ord_inv_eq_zero` and `ord_div_eq_zero`:
+  the units of order zero form a subgroup of `Fˣ`, read off that homomorphism. Its identity is
+  `ord_one` itself, since `((1 : Fˣ) : F)` is `1` definitionally.
 
 ## Main results
 
@@ -167,6 +172,50 @@ theorem ord_pow (f : F) (n : ℕ) : P.ord (f ^ n) = n * P.ord f :=
 
 theorem ord_div {f g : F} (hf : f ≠ 0) (hg : g ≠ 0) :
     P.ord (f / g) = P.ord f - P.ord g := Valuation.ord_div P.valuation hf hg
+
+/-- The order of vanishing at a place, as a homomorphism out of the additivized group of units
+`Additive Fˣ`.  Restricting to units is what makes it additive: `ord_P` is only additive away
+from the junk value `ord_P 0 = 0`. -/
+noncomputable def ordAddMonoidHom (P : Place k F) : Additive Fˣ →+ ℤ :=
+  AddMonoidHom.mk' (fun z => P.ord ((Additive.toMul z : Fˣ) : F)) fun z w => by
+    simpa only [toMul_add, Units.val_mul] using
+      P.ord_mul (Units.ne_zero _) (Units.ne_zero _)
+
+@[simp]
+theorem ordAddMonoidHom_apply (P : Place k F) (z : Fˣ) :
+    P.ordAddMonoidHom (Additive.ofMul z) = P.ord (z : F) := by
+  simp [ordAddMonoidHom]
+
+-- The units of order zero are the kernel of `ordAddMonoidHom`, so these four are `map_add`,
+-- `map_neg`, `map_sub` and `map_zero` read through `ordAddMonoidHom_apply` rather than four fresh
+-- order calculations. They are named rather than inlined because `TauCeti.Place.residueUnit`
+-- carries its admissibility proof as an argument, so each of its group laws has to name a proof
+-- for the composite function inside its own left-hand side.
+-- The `_root_` prefixes below only disambiguate against `Valuation.map_neg` / `Valuation.map_sub`,
+-- which this file has open.
+/-- **A product of order-zero units has order zero.** -/
+theorem ord_mul_eq_zero {P : Place k F} {f g : Fˣ} (hf : P.ord (f : F) = 0)
+    (hg : P.ord (g : F) = 0) : P.ord ((f * g : Fˣ) : F) = 0 := by
+  rw [← P.ordAddMonoidHom_apply] at hf hg ⊢
+  rw [ofMul_mul, map_add, hf, hg, add_zero]
+
+/-- **The inverse of an order-zero unit has order zero.** -/
+theorem ord_inv_eq_zero {P : Place k F} {f : Fˣ} (hf : P.ord (f : F) = 0) :
+    P.ord ((f⁻¹ : Fˣ) : F) = 0 := by
+  rw [← P.ordAddMonoidHom_apply] at hf ⊢
+  rw [ofMul_inv, _root_.map_neg, hf, neg_zero]
+
+/-- **A power of an order-zero unit has order zero.** -/
+theorem ord_zpow_eq_zero {P : Place k F} {f : Fˣ} (hf : P.ord (f : F) = 0) (n : ℤ) :
+    P.ord ((f ^ n : Fˣ) : F) = 0 := by
+  rw [← P.ordAddMonoidHom_apply] at hf ⊢
+  rw [ofMul_zpow, map_zsmul, hf, smul_zero]
+
+/-- **A quotient of order-zero units has order zero.** -/
+theorem ord_div_eq_zero {P : Place k F} {f g : Fˣ} (hf : P.ord (f : F) = 0)
+    (hg : P.ord (g : F) = 0) : P.ord ((f / g : Fˣ) : F) = 0 := by
+  rw [← P.ordAddMonoidHom_apply] at hf hg ⊢
+  rw [ofMul_div, _root_.map_sub, hf, hg, sub_zero]
 
 @[simp]
 theorem ord_neg (f : F) : P.ord (-f) = P.ord f := Valuation.ord_neg P.valuation f

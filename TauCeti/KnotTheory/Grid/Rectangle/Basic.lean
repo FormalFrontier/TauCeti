@@ -289,6 +289,24 @@ theorem isEmptyFor_of_le_two (hn : n ≤ 2) (R : GridRectangle n) (x : GridState
   rw [IsEmptyFor, R.interior_eq_empty_of_le_two hn]
   simp
 
+/-- Emptiness transfers between two grid states that agree away from two columns, once the two
+points of the first state on those columns are known to lie outside the rectangle: every other
+point of the first state is a point of the second. -/
+theorem isEmptyFor_of_eq_away {u v : GridState n} (a b : Fin n)
+    (ha : (a, u a) ∉ R.interior) (hb : (b, u b) ∉ R.interior)
+    (haway : ∀ p : Fin n × Fin n, p.1 ≠ a → p.1 ≠ b → (p ∈ u.pointSet ↔ p ∈ v.pointSet))
+    (hv : R.IsEmptyFor v) : R.IsEmptyFor u := by
+  rw [R.isEmptyFor_iff]
+  intro p hp hmem
+  have hpu : u p.1 = p.2 := (u.mem_pointSet p).mp hp
+  by_cases hpa : p.1 = a
+  · apply ha
+    simpa [hpa, ← hpu] using hmem
+  by_cases hpb : p.1 = b
+  · apply hb
+    simpa [hpb, ← hpu] using hmem
+  exact (R.isEmptyFor_iff v).mp hv p ((haway p hpa hpb).mp hp) hmem
+
 /-- A rectangle avoids the markings of a grid diagram when none of the squares it covers
 carries an `O` or `X` marking. -/
 def AvoidsMarkings (G : GridDiagram n) : Prop :=
@@ -490,6 +508,13 @@ theorem toGridRectangle_eq :
     R.toGridRectangle =
       { left := R.left, right := R.right, bottom := x R.left, top := x R.right } :=
   rfl
+
+/-- Membership in the interior of an oriented rectangle is membership in the open cyclic
+intervals between its side columns and the corresponding source-state rows. -/
+theorem mem_toGridRectangle_interior (p : Fin n × Fin n) :
+    p ∈ R.toGridRectangle.interior ↔
+      p.1 ∈ Grid.cIoo R.left R.right ∧ p.2 ∈ Grid.cIoo (x R.left) (x R.right) := by
+  simp [bottom, top]
 
 /-- The opposite oriented rectangle, obtained by reversing the two side columns.
 

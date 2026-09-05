@@ -40,7 +40,7 @@ for the naturality statement.
 * `Diffeomorph.diffCongr e`: the group isomorphism `Diff I M n ≃* Diff J N n` conjugating by
   a diffeomorphism `e : M ≃ₘ^n⟮I, J⟯ N`.
 
-The analogous self-homeomorphism-group isomorphism `TauCeti.Homeomorph.homeoCongr`, the target of
+The analogous self-homeomorphism-group isomorphism `Homeomorph.homeoCongr`, the target of
 the forgetful naturality below, lives in `TauCeti.Topology.Algebra.Homeomorph.Congr`.
 
 ## Main results
@@ -148,12 +148,11 @@ theorem toPerm_comp_diffCongr (e : M ≃ₘ^n⟮I, J⟯ N) :
   ext φ x
   simp [Equiv.permCongr_apply]
 
-/-- Forgetting only smoothness (keeping the topology) sends `diffCongr e φ` to the conjugate of
-underlying self-homeomorphisms `e ∘ φ ∘ e⁻¹`; the elementwise shadow of
+/-- Forgetting only smoothness (keeping the topology) sends `diffCongr e φ` to the conjugate
+`homeoCongr` of the underlying self-homeomorphisms; the elementwise shadow of
 `toHomeomorphHom_comp_diffCongr`. -/
 theorem toHomeomorph_diffCongr (e : M ≃ₘ^n⟮I, J⟯ N) (φ : M ≃ₘ^n⟮I, I⟯ M) :
-    (diffCongr e φ).toHomeomorph =
-      (e.toHomeomorph.symm.trans φ.toHomeomorph).trans e.toHomeomorph := by
+    (diffCongr e φ).toHomeomorph = e.toHomeomorph.homeoCongr φ.toHomeomorph := by
   have h := DFunLike.congr_fun (toHomeomorphHom_comp_diffCongr e) φ
   simpa using h
 

@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.FiniteBilinearModule.OrthogonalComplement
+public import TauCeti.LinearAlgebra.FiniteBilinearModule.Orthogonal.Complement
 public import TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Naturality
 
 /-!
@@ -48,6 +48,9 @@ computed componentwise on an orthogonal direct sum.
   intermediate carrier is unimodular exactly when its subgroup is Lagrangian.
 * `TauCeti.IntegralLattice.dual_intermediateCarrierOfDiscriminantSubgroup_eq_self_iff`: the
   overlattice `L_H` is unimodular exactly when `H = H⊥`.
+* `TauCeti.IntegralLattice.IntermediateCarrier.mem_dualCarrier_orthogonalSum_iff`: a vector is a
+  dual vector of an assembled overlattice exactly when both of its components are dual vectors of
+  the two factors.
 
 ## References
 
@@ -167,6 +170,27 @@ theorem discriminantSubgroup_dual (M : L.IntermediateCarrier) :
       fun b hb ↦ (L.discriminantBilinearModule_pairing a b).trans (h b hb), fun h b hb ↦ ?_⟩
   exact (L.discriminantBilinearModule_pairing a b).symm.trans
     ((L.discriminantBilinearModule.mem_orthogonalComplement_iff _ a).mp h b hb)
+
+/-- The discriminant class in `A_L` of a vector of the dual carrier of an integral intermediate
+carrier. -/
+noncomputable def IsIntegral.dualClassHom {M : L.IntermediateCarrier} (hM : IsIntegral M) :
+    hM.toIntegralLattice.dualCarrier →ₗ[ℤ] L.DiscriminantGroup :=
+  L.carrierInDual.mkQ.comp (Submodule.inclusion hM.dualCarrier_le)
+
+@[simp]
+theorem IsIntegral.dualClassHom_apply {M : L.IntermediateCarrier} (hM : IsIntegral M)
+    (y : hM.toIntegralLattice.dualCarrier) :
+    hM.dualClassHom y = Submodule.Quotient.mk ⟨(y : V), hM.dualCarrier_le y.2⟩ := (rfl)
+
+/-- The discriminant class of a vector of `Mᵛ` is orthogonal to `H = M / L`, because the dual
+of an intermediate carrier corresponds to the orthogonal complement of its subgroup. -/
+theorem IsIntegral.dualClassHom_mem_orthogonalComplement {M : L.IntermediateCarrier}
+    (hM : IsIntegral M) (y : hM.toIntegralLattice.dualCarrier) :
+    hM.dualClassHom y ∈
+      L.discriminantBilinearModule.orthogonalComplement (L.discriminantSubgroup M) := by
+  rw [← discriminantSubgroup_dual, hM.dualClassHom_apply]
+  exact (L.mk_mem_discriminantSubgroup_iff (dual M) _).mpr
+    (by rw [← hM.toIntegralLattice_dualCarrier]; exact y.2)
 
 /-- **Double duality for intermediate carriers.** -/
 @[simp]
@@ -313,6 +337,40 @@ theorem dual_orthogonalSumIntermediateCarrier (L : IntegralLattice V) (M : Integ
   · rintro ⟨hp₁, hp₂⟩ q hq
     rw [orthogonalSum_form, orthogonalSumForm_apply]
     exact add_mem (hp₁ q.1 hq.1) (hp₂ q.2 hq.2)
+
+section OrthogonalSum
+
+variable {M : IntegralLattice W} [L.IsNondegenerate] [M.IsNondegenerate]
+variable {P : L.IntermediateCarrier} {Q : M.IntermediateCarrier}
+
+namespace IntermediateCarrier
+
+/-- **Dual vectors of an assembled overlattice are componentwise.** -/
+@[simp]
+theorem mem_dualCarrier_orthogonalSum_iff (hP : IsIntegral P) (hQ : IsIntegral Q) (x : V × W) :
+    x ∈ (hP.orthogonalSum hQ).toIntegralLattice.dualCarrier ↔
+      x.1 ∈ hP.toIntegralLattice.dualCarrier ∧ x.2 ∈ hQ.toIntegralLattice.dualCarrier := by
+  rw [IsIntegral.toIntegralLattice_dualCarrier, IsIntegral.toIntegralLattice_dualCarrier,
+    IsIntegral.toIntegralLattice_dualCarrier, dual_orthogonalSumIntermediateCarrier,
+    mem_orthogonalSumIntermediateCarrier_iff]
+
+/-- The first component of a dual vector of the assembled overlattice is a dual vector of the
+first overlattice. -/
+theorem fst_mem_dualCarrier_orthogonalSum (hP : IsIntegral P) (hQ : IsIntegral Q)
+    (y : (hP.orthogonalSum hQ).toIntegralLattice.dualCarrier) :
+    (y : V × W).1 ∈ hP.toIntegralLattice.dualCarrier :=
+  ((mem_dualCarrier_orthogonalSum_iff hP hQ (y : V × W)).mp y.2).1
+
+/-- The second component of a dual vector of the assembled overlattice is a dual vector of the
+second overlattice. -/
+theorem snd_mem_dualCarrier_orthogonalSum (hP : IsIntegral P) (hQ : IsIntegral Q)
+    (y : (hP.orthogonalSum hQ).toIntegralLattice.dualCarrier) :
+    (y : V × W).2 ∈ hQ.toIntegralLattice.dualCarrier :=
+  ((mem_dualCarrier_orthogonalSum_iff hP hQ (y : V × W)).mp y.2).2
+
+end IntermediateCarrier
+
+end OrthogonalSum
 
 end IntegralLattice
 

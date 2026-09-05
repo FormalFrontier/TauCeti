@@ -43,10 +43,12 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # Read endpoint for `lake exe cache get`, wired from a repository variable. The cache tool
-  # treats unset and empty alike, so clearing the variable returns reads to the tool's
-  # default endpoints on the next run.
-  MATHLIB_CACHE_GET_URL: ${{ vars.MATHLIB_CACHE_GET_URL }}
+  # Temporary escape hatch for `lake exe cache get`, kept only for an easy rollback
+  # during the transition to the cache tool's new default read endpoint. Set the
+  # variable to `1` to send cache reads back to the legacy storage endpoint. Clear it to
+  # return reads to the default endpoint on the next run: the cache tool treats unset,
+  # empty, `0`, and `false` alike as off.
+  MATHLIB_CACHE_DEBUG_USE_LEGACY: ${{ vars.MATHLIB_CACHE_DEBUG_USE_LEGACY }}
 
 jobs:
   # Name kept distinct from `build` on purpose — see the header note. The required merge check is the

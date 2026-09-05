@@ -104,8 +104,8 @@ private theorem finrank_adjoin_sq_eq_intCast {d : ℤ}
     refine ⟨r, ?_⟩
     apply (algebraMap ℚ M).injective
     simpa only [map_mul, hr, pow_two] using hyQ.symm
-  have hdeg := TauCeti.IntermediateField.finrank_sup_adjoin_simple_eq_mul_two
-    (⊥ : IntermediateField ℚ M) hy_sq_mem hy_not_mem
+  have hdeg := (⊥ : IntermediateField ℚ M).finrank_sup_adjoin_simple_eq_mul_two
+    hy_sq_mem hy_not_mem
   rw [bot_sup_eq] at hdeg
   simpa using hdeg
 

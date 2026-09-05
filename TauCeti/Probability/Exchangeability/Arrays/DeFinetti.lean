@@ -25,7 +25,7 @@ through the one file whose subject it is.
 `Arrays.Basic` carries the symmetry predicates and their elementary theory, `Arrays.Block` the
 combinatorics of blocks, and `Arrays.MixingLaw` the results that hold of *any* supplied mixing
 representative. Each of those is now independent of `DeFinetti.Theorem`, so a file needing only
-array symmetry — for instance `Arrays.AldousHoover`, which uses four declarations from
+array symmetry — for instance `Arrays.AldousHoover.Basic`, which uses four declarations from
 `Arrays.Basic` — no longer depends on the representation theory at all.
 
 The layering is therefore

@@ -13,7 +13,7 @@ public import TauCeti.Algebra.Module.Submodule.Essential
 
 An **injective envelope** of a module `M` is an embedding `f : M →ₗ[R] Q` into an injective module
 whose image is essential in `Q` (`TauCeti.IsEssential`). This is the notion dual to the projective
-cover of `TauCeti/Algebra/Module/ProjectiveCover.lean`; Mathlib has injective objects but no
+cover of `TauCeti/Algebra/Module/ProjectiveCover/Basic.lean`; Mathlib has injective objects but no
 injective envelopes, and this file supplies the predicate together with the two facts everything
 downstream rests on.
 
@@ -74,7 +74,7 @@ as an extension target; it is automatic whenever `R` and that module live in the
 This implements the injective-envelope half of the "projective covers and injective envelopes"
 bullet of Layer 3 of `TauCetiRoadmap/RepresentationTheory/QuiverRepresentations/README.md`
 ("dually `injectiveEnvelope M`"), whose projective half is
-`TauCeti/Algebra/Module/ProjectiveCover.lean`. As on the projective side, the bullet is not
+`TauCeti/Algebra/Module/ProjectiveCover/Basic.lean`. As on the projective side, the bullet is not
 discharged by this file: existence of envelopes, and hence a canonical `injectiveEnvelope M`
 chosen by it, remains.
 

@@ -6,7 +6,6 @@ Authors: Codex
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Separation
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.HopfIdealPoints.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.SpecialLinear.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Smooth
 public import TauCeti.Algebra.Lie.SpecialLinear.StandardCarrier.BaseChange
@@ -224,7 +223,7 @@ theorem baseChangeDefiningIdeal_eq_specialLinearDefiningHopfIdeal
   let _ : IsReduced (SpecialLinear.coordinateHopfAlgebra k (r + 1)) :=
     isReduced_of_smooth_of_field k _
   apply le_antisymm
-  · apply HopfIdeal.le_of_quotientPointsSubgroup_le
+  · apply HopfIdeal.le_of_quotientPointsSubgroup_le (K := k)
     intro g hg
     rw [mem_baseChangeDefiningPointsSubgroup_iff_mem_points]
     apply (mem_points_iff_det_eq_one (K := k) r _).2

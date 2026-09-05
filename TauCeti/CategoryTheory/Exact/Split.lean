@@ -233,7 +233,6 @@ theorem split_isDeflation_comp {X Y Z : C} {p : X ⟶ Y} {q : Y ⟶ Z}
   obtain ⟨t₂⟩ := (split_conflation_iff _).mp hS₂
   have hi₁r : i₁ ≫ t₁.r = 𝟙 K₁ := t₁.f_r
   have hsp : t₁.s ≫ p = 𝟙 Y := t₁.s_g
-  have hsr : t₁.s ≫ t₁.r = 0 := t₁.s_r
   have hid₁ : t₁.r ≫ i₁ + p ≫ t₁.s = 𝟙 X := t₁.id
   have hi₂r : i₂ ≫ t₂.r = 𝟙 K₂ := t₂.f_r
   have hsq : t₂.s ≫ q = 𝟙 Z := t₂.s_g

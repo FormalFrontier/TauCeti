@@ -135,9 +135,8 @@ theorem IsFunctionField.algebraicClosure (hF : IsFunctionField k F) :
   simpa using h
 
 /-- The normalization device: every algebraic function field is, over a finite extension of its
-base field, an algebraic function field with an exact field of constants. Later layers, whose
-statements are stated under the exactness hypothesis, are applied to a general function field
-through this. -/
+base field, an algebraic function field with an exact field of constants. Results stated under
+the exactness hypothesis can therefore be applied to a general function field through this. -/
 theorem IsFunctionField.exists_intermediateField_isIntegrallyClosedIn (hF : IsFunctionField k F) :
     ∃ k' : IntermediateField k F,
       FiniteDimensional k k' ∧ IsFunctionField k' F ∧ IsIntegrallyClosedIn k' F :=

@@ -68,14 +68,6 @@ private theorem two_smul_contractLeft_associated [Invertible (2 : R)]
       rw [hpolar', Algebra.smul_def, ← ι_mul_ι_add_swap]
       noncomm_ring
 
-private theorem contractLeft_associated_eq_zero_of_commute_of_mem_even
-    [Invertible (2 : R)] (Q : QuadraticForm R M) {x : CliffordAlgebra Q}
-    (hx_even : x ∈ even Q) (hx_comm : ∀ v : M, Commute x (ι Q v)) (v : M) :
-    contractLeft (Q.associated v) x = 0 := by
-  apply (isUnit_of_invertible (2 : R)).smul_eq_zero.mp
-  rw [two_smul_contractLeft_associated Q, involute_eq_of_mem_even hx_even,
-    (hx_comm v).eq, sub_self]
-
 section Exterior
 
 private noncomputable def exteriorCoordProj {n : ℕ}

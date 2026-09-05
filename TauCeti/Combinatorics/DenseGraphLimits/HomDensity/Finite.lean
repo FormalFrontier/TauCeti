@@ -8,7 +8,7 @@ module
 public import Mathlib.Combinatorics.SimpleGraph.Copy
 public import Mathlib.SetTheory.Cardinal.Finite
 public import Mathlib.Basic.Real.Basic
-import Mathlib.Data.Fintype.CardEmbedding
+public import TauCeti.Combinatorics.SimpleGraph.Counting
 
 /-!
 # Homomorphism densities in a finite graph
@@ -170,25 +170,9 @@ theorem card_hom_eq_card_adjPreservingMaps :
     Nat.card (F →g G) = Nat.card {ψ : V → W // ∀ a b, F.Adj a b → G.Adj (ψ a) (ψ b)} :=
   Nat.card_congr (relHomEquivPreservingMaps F.Adj G.Adj)
 
+variable (F : SimpleGraph V) (G : SimpleGraph W)
+
 /-! ### Both densities lie in `[0, 1]` -/
-
-private theorem card_hom_le : Nat.card (F →g G) ≤ Fintype.card W ^ Fintype.card V := by
-  classical
-  calc Nat.card (F →g G) ≤ Nat.card (V → W) :=
-        Nat.card_le_card_of_injective (fun φ => (φ : V → W))
-          (fun a b h => by ext x; exact congrFun h x)
-    _ = Fintype.card W ^ Fintype.card V := by rw [Nat.card_eq_fintype_card, Fintype.card_fun]
-
-private theorem card_injective_hom_le :
-    Nat.card {φ : F →g G // Function.Injective φ}
-      ≤ (Fintype.card W).descFactorial (Fintype.card V) := by
-  classical
-  calc Nat.card {φ : F →g G // Function.Injective φ} ≤ Nat.card (V ↪ W) :=
-        Nat.card_le_card_of_injective (fun φ => ⟨(φ.1 : V → W), φ.2⟩)
-          (fun a b h => by
-            ext x; exact congrFun (congrArg (fun e : V ↪ W => (e : V → W)) h) x)
-    _ = (Fintype.card W).descFactorial (Fintype.card V) := by
-        rw [Nat.card_eq_fintype_card, Fintype.card_embedding_eq]
 
 /-- The homomorphism density is nonnegative. -/
 theorem homDensityFin_nonneg : 0 ≤ homDensityFin F G :=
@@ -201,7 +185,7 @@ No hypothesis is needed. When the host is empty and the pattern is not, numerato
 both vanish and `x / 0 = 0` gives `0`. -/
 theorem homDensityFin_le_one : homDensityFin F G ≤ 1 := by
   refine div_le_one_of_le₀ ?_ (pow_nonneg (Nat.cast_nonneg _) _)
-  exact_mod_cast card_hom_le F G
+  exact_mod_cast F.card_hom_le G
 
 /-- The injective homomorphism density is nonnegative. -/
 theorem injHomDensity_nonneg : 0 ≤ injHomDensity F G :=
@@ -213,7 +197,7 @@ particular an embedding `V(F) ↪ V(G)`, and those are counted by the falling fa
 No hypothesis is needed; the degenerate cases behave as for `homDensityFin_le_one`. -/
 theorem injHomDensity_le_one : injHomDensity F G ≤ 1 := by
   refine div_le_one_of_le₀ ?_ (Nat.cast_nonneg _)
-  exact_mod_cast card_injective_hom_le F G
+  exact_mod_cast F.card_injective_hom_le G
 
 end DenseGraphLimits
 

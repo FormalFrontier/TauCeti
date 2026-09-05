@@ -22,9 +22,12 @@ both marking-avoidance conditions are preserved. Reordering is an involution and
 intermediate state, giving the fixed-point-free pairing needed in the disjoint-side case of the
 eventual rectangle juxtaposition argument.
 
-This is purely the orientation and domain bookkeeping. Empty-rectangle transfer needs the
-geometric case split controlling how the two domains meet; the overlapping and annular cases also
-remain separate parts of the square-zero proof.
+Reordering also transfers emptiness. If both rectangles of the original decomposition are empty,
+then so are both rectangles of the reordered one. This is the one genuinely geometric step of the
+disjoint-side case: the two side columns of one rectangle sit on opposite cyclic arcs of the other
+pair, and `Grid.mem_cIoo_and_mem_cIoo_swap_of_notMem` turns that separation around to produce a
+grid-state point inside the rectangle assumed empty. The overlapping and annular cases remain
+separate parts of the square-zero proof.
 
 ## Main definitions
 
@@ -39,7 +42,12 @@ remain separate parts of the square-zero proof.
 * `TauCeti.GridRectangleDecomposition.avoidsMarkings_commute_first_iff` and
   `avoidsMarkings_commute_second_iff`: reordering preserves the marking-avoidance conditions.
 * `TauCeti.GridRectangleDecomposition.commute_commute`: reordering twice is the identity.
-* `TauCeti.GridRectangleDecomposition.commute_middle_ne`: the intermediate state changes.
+* `TauCeti.GridRectangleDecomposition.commute_middle_ne` and
+  `TauCeti.GridRectangleDecomposition.commute_ne`: the intermediate state changes, so reordering
+  has no fixed point.
+* `TauCeti.GridRectangleDecomposition.isEmpty_commute_first` and
+  `TauCeti.GridRectangleDecomposition.isEmpty_commute_second`: reordering a decomposition into
+  two empty rectangles again gives two empty rectangles.
 
 ## References
 
@@ -253,6 +261,12 @@ theorem commute_middle_ne (D : GridRectangleDecomposition x z) (h : D.HasDisjoin
     _ = D.middle := heq
     _ = x.swapColumns D.first.left D.first.right := D.first.target_eq_swapColumns
 
+/-- Reordering never fixes a decomposition with disjoint side columns: its intermediate state
+changes. -/
+theorem commute_ne (D : GridRectangleDecomposition x z) (h : D.HasDisjointSides) :
+    D.commute h ≠ D :=
+  fun heq => D.commute_middle_ne h (congrArg GridRectangleDecomposition.middle heq)
+
 /-- The reordered intermediate state belongs to the endpoint pair's two-step intermediate set. -/
 theorem commute_middle_mem_twoStepColumnSwapIntermediates
     (D : GridRectangleDecomposition x z) (h : D.HasDisjointSides) :
@@ -263,6 +277,122 @@ theorem commute_middle_mem_twoStepColumnSwapIntermediates
     exact ⟨D.second.left, D.second.right, D.second.left_ne_right, rfl⟩
   · rw [GridState.mem_columnSwapNeighbors]
     exact ⟨D.first.left, D.first.right, D.first.left_ne_right, D.target_eq_commuted h⟩
+
+/-! ### Reordering preserves emptiness -/
+
+/-- The interior of the second rectangle of a decomposition with disjoint side columns, as a
+product of cyclic arcs of the *source* state: the intermediate state agrees with the source away
+from the first pair of side columns. -/
+private theorem mem_interior_second_iff (D : GridRectangleDecomposition x z)
+    (h : D.HasDisjointSides) (p : Fin n × Fin n) :
+    p ∈ D.second.toGridRectangle.interior ↔
+      p.1 ∈ Grid.cIoo D.second.left D.second.right ∧
+        p.2 ∈ Grid.cIoo (x D.second.left) (x D.second.right) := by
+  rw [← D.commute_first_toGridRectangle h, (D.commute h).first.mem_toGridRectangle_interior,
+    D.commute_first_left h, D.commute_first_right h]
+
+/-- Reordering two empty rectangles with disjoint side columns leaves the new first rectangle
+empty.
+
+With `isEmpty_commute_second`, this makes reordering an operation on decompositions into *empty*
+rectangles, which is the form the rectangle juxtaposition argument consumes. -/
+theorem isEmpty_commute_first (D : GridRectangleDecomposition x z) (h : D.HasDisjointSides)
+    (h₁ : D.first.IsEmpty) (h₂ : D.second.IsEmpty) : (D.commute h).first.IsEmpty := by
+  -- The new first domain is the old second domain, which is empty for the intermediate state.
+  -- The two states differ only in the first pair of side columns, and if either of those two
+  -- source points fell inside the domain, then the cyclic separation forced on the four columns
+  -- and on the four rows would put a source point inside the first domain instead.
+  obtain ⟨hll, hlr, hrl, hrr⟩ := D.hasDisjointSides_iff.mp h
+  -- the two intermediate-state points off the second pair of side columns
+  have hmid₁ := D.mem_interior_second_iff h (D.first.left, x D.first.right)
+  have hmid₂ := D.mem_interior_second_iff h (D.first.right, x D.first.left)
+  have hout₁ : ¬((D.first.left ∈ Grid.cIoo D.second.left D.second.right) ∧
+      x D.first.right ∈ Grid.cIoo (x D.second.left) (x D.second.right)) :=
+    fun hc => D.second.not_mem_interior_of_isEmpty h₂ D.first.left_top_mem_target
+      (hmid₁.mpr hc)
+  have hout₂ : ¬((D.first.right ∈ Grid.cIoo D.second.left D.second.right) ∧
+      x D.first.left ∈ Grid.cIoo (x D.second.left) (x D.second.right)) :=
+    fun hc => D.second.not_mem_interior_of_isEmpty h₂ D.first.right_bottom_mem_target
+      (hmid₂.mpr hc)
+  rw [GridRectangleBetween.IsEmpty, D.commute_first_toGridRectangle h]
+  apply D.second.toGridRectangle.isEmptyFor_of_eq_away (u := x) (v := D.middle)
+    D.first.left D.first.right
+  · intro hmem
+    rw [D.mem_interior_second_iff h] at hmem
+    obtain ⟨hcol, hrow⟩ := hmem
+    have hcols := Grid.mem_cIoo_and_mem_cIoo_swap_of_notMem hrl hrr
+      (fun hb => hout₂ ⟨hb, hrow⟩) hcol
+    have hrows := Grid.mem_cIoo_and_mem_cIoo_swap_of_notMem (x.toPerm.injective.ne hrl)
+      (x.toPerm.injective.ne hrr) (fun hxb => hout₁ ⟨hcol, hxb⟩) hrow
+    exact D.first.not_mem_interior_of_isEmpty h₁
+      ((x.mk_mem_pointSet D.second.right (x D.second.right)).mpr rfl)
+      ((D.first.mem_toGridRectangle_interior _).mpr ⟨hcols.1, hrows.1⟩)
+  · intro hmem
+    rw [D.mem_interior_second_iff h] at hmem
+    obtain ⟨hcol, hrow⟩ := hmem
+    have hcols := Grid.mem_cIoo_and_mem_cIoo_swap_of_notMem hll hlr
+      (fun ha => hout₁ ⟨ha, hrow⟩) hcol
+    have hrows := Grid.mem_cIoo_and_mem_cIoo_swap_of_notMem (x.toPerm.injective.ne hll)
+      (x.toPerm.injective.ne hlr) (fun hxa => hout₂ ⟨hcol, hxa⟩) hrow
+    exact D.first.not_mem_interior_of_isEmpty h₁
+      ((x.mk_mem_pointSet D.second.left (x D.second.left)).mpr rfl)
+      ((D.first.mem_toGridRectangle_interior _).mpr ⟨hcols.2, hrows.2⟩)
+  · intro p hleft hright
+    exact (D.first.mem_target_pointSet_iff_of_ne hleft hright).symm
+  · exact h₂
+
+/-- Reordering two empty rectangles with disjoint side columns leaves the new second rectangle
+empty.
+
+This is the companion of `isEmpty_commute_first` for the other rectangle of the reordered
+decomposition. -/
+theorem isEmpty_commute_second (D : GridRectangleDecomposition x z) (h : D.HasDisjointSides)
+    (h₁ : D.first.IsEmpty) (h₂ : D.second.IsEmpty) : (D.commute h).second.IsEmpty := by
+  -- The new second domain is the old first domain, which is empty for the source state. The new
+  -- source state differs from the source only in the second pair of side columns, and if either
+  -- of those two points fell inside the domain, then the cyclic separation forced on the four
+  -- columns and on the four rows would put an intermediate-state point inside the second domain
+  -- instead.
+  obtain ⟨hll, hlr, hrl, hrr⟩ := D.hasDisjointSides_iff.mp h
+  -- the two source points on the second pair of side columns
+  have hout₁ : ¬((D.second.left ∈ Grid.cIoo D.first.left D.first.right) ∧
+      x D.second.left ∈ Grid.cIoo (x D.first.left) (x D.first.right)) :=
+    fun hc => D.first.not_mem_interior_of_isEmpty h₁
+      ((x.mk_mem_pointSet D.second.left (x D.second.left)).mpr rfl)
+      ((D.first.mem_toGridRectangle_interior _).mpr hc)
+  have hout₂ : ¬((D.second.right ∈ Grid.cIoo D.first.left D.first.right) ∧
+      x D.second.right ∈ Grid.cIoo (x D.first.left) (x D.first.right)) :=
+    fun hc => D.first.not_mem_interior_of_isEmpty h₁
+      ((x.mk_mem_pointSet D.second.right (x D.second.right)).mpr rfl)
+      ((D.first.mem_toGridRectangle_interior _).mpr hc)
+  rw [GridRectangleBetween.IsEmpty, D.commute_second_toGridRectangle h]
+  apply D.first.toGridRectangle.isEmptyFor_of_eq_away (u := (D.commute h).middle) (v := x)
+    D.second.left D.second.right
+  · intro hmem
+    rw [D.first.mem_toGridRectangle_interior] at hmem
+    obtain ⟨hcol, hrow⟩ := hmem
+    rw [D.commute_middle h, GridState.swapColumns_apply, Equiv.swap_apply_left] at hrow
+    have hcols := Grid.mem_cIoo_and_mem_cIoo_swap_of_notMem hlr.symm hrr.symm
+      (fun hd => hout₂ ⟨hd, hrow⟩) hcol
+    have hrows := Grid.mem_cIoo_and_mem_cIoo_swap_of_notMem (x.toPerm.injective.ne hll.symm)
+      (x.toPerm.injective.ne hrl.symm) (fun hxc => hout₁ ⟨hcol, hxc⟩) hrow
+    exact D.second.not_mem_interior_of_isEmpty h₂ D.first.right_bottom_mem_target
+      ((D.mem_interior_second_iff h _).mpr ⟨hcols.1, hrows.2⟩)
+  · intro hmem
+    rw [D.first.mem_toGridRectangle_interior] at hmem
+    obtain ⟨hcol, hrow⟩ := hmem
+    rw [D.commute_middle h, GridState.swapColumns_apply, Equiv.swap_apply_right] at hrow
+    have hcols := Grid.mem_cIoo_and_mem_cIoo_swap_of_notMem hll.symm hrl.symm
+      (fun hc => hout₁ ⟨hc, hrow⟩) hcol
+    have hrows := Grid.mem_cIoo_and_mem_cIoo_swap_of_notMem (x.toPerm.injective.ne hlr.symm)
+      (x.toPerm.injective.ne hrr.symm) (fun hxd => hout₂ ⟨hcol, hxd⟩) hrow
+    exact D.second.not_mem_interior_of_isEmpty h₂ D.first.left_top_mem_target
+      ((D.mem_interior_second_iff h _).mpr ⟨hcols.2, hrows.1⟩)
+  · intro p hleft hright
+    exact (D.commute h).first.mem_target_pointSet_iff_of_ne
+      (by simpa only [commute_first_left] using hleft)
+      (by simpa only [commute_first_right] using hright)
+  · exact h₁
 
 end GridRectangleDecomposition
 

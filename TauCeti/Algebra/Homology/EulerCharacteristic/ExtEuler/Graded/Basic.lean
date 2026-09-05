@@ -244,6 +244,13 @@ noncomputable def gradedExtDimension {X Y : C}
     {n : ℕ} (h : HasFiniteLaurentSupport k (GradedExt.{w} e X Y n)) : LaurentPolynomial ℤ :=
   targetShiftGradedDimension k (GradedExt.{w} e X Y n) h
 
+/-- The graded `Ext` dimension is the target-shift graded dimension of the bigraded family, so
+the generic reindexing lemmas for `TauCeti.targetShiftGradedDimension` apply to it. -/
+theorem gradedExtDimension_eq_targetShiftGradedDimension {X Y : C}
+    {n : ℕ} (h : HasFiniteLaurentSupport k (GradedExt.{w} e X Y n)) :
+    gradedExtDimension k e h = targetShiftGradedDimension k (GradedExt.{w} e X Y n) h :=
+  (rfl)
+
 /-- The coefficient of `q^j` in the graded Ext dimension is
 `dim_k Ext^{n,-j}(X,Y)`. -/
 @[simp]

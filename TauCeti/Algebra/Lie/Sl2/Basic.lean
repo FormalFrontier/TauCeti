@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Lie.Sl2
-public import TauCeti.Algebra.Lie.GeneralLinear.Basic
+public import TauCeti.Algebra.Lie.GeneralLinear.Finrank
 
 /-!
 # Basic theory of `sl₂` triples
@@ -50,8 +50,9 @@ that composes to zero is already zero.
   `TauCeti.lie_singleSubSingle_single_swap`.
 * `TauCeti.slFinTwoBasis`: the standard basis `(e, f, h)` of `sl (Fin 2) R`, obtained from the
   coordinate isomorphism `TauCeti.slFinTwoEquivFun` and identified vector by vector in
-  `TauCeti.slFinTwoBasis_zero`, `TauCeti.slFinTwoBasis_one` and `TauCeti.slFinTwoBasis_two`, with
-  `TauCeti.finrank_sl_fin_two` reading off the rank `3`.
+  `TauCeti.slFinTwoBasis_zero`, `TauCeti.slFinTwoBasis_one` and `TauCeti.slFinTwoBasis_two`. The
+  rank `3` is the case `n = Fin 2` of `TauCeti.finrank_sl`, and the `Module.Free` and
+  `Module.Finite` instances come from there too.
 * `TauCeti.toLieSubalgebra_isSl2Triple_single_eq_top`: in `sl (Fin 2) R` the subalgebra generated
   by a standard triple is the whole of `sl (Fin 2) R`. The underlying expansion of an arbitrary
   element in the triple is `TauCeti.eq_smul_single_add_smul_single_add_smul_singleSubSingle`.
@@ -272,17 +273,6 @@ theorem slFinTwoBasis_one : slFinTwoBasis R 1 = SpecialLinear.single 1 0 one_ne_
 @[simp]
 theorem slFinTwoBasis_two : slFinTwoBasis R 2 = SpecialLinear.singleSubSingle 0 1 (1 : R) :=
   Subtype.ext <| by simpa using slFinTwoBasis_apply R 2
-
-instance instModuleFreeSlFinTwo : Module.Free R (SpecialLinear.sl (Fin 2) R) :=
-  Module.Free.of_basis (slFinTwoBasis R)
-
-instance instModuleFiniteSlFinTwo : Module.Finite R (SpecialLinear.sl (Fin 2) R) :=
-  Module.Finite.of_basis (slFinTwoBasis R)
-
-/-- `sl₂` is three-dimensional. -/
-theorem finrank_sl_fin_two [StrongRankCondition R] :
-    finrank R (SpecialLinear.sl (Fin 2) R) = 3 := by
-  simpa using finrank_eq_card_basis (slFinTwoBasis R)
 
 variable {R}
 

@@ -21,6 +21,8 @@ covers comparing a function with its derivative.
 
 ## Main declarations
 
+* `TauCeti.eLpNorm_rpow_eq_lintegral`: for an `ℝ≥0∞`-valued function, the `p`-th power of the
+  `Lᵖ` seminorm is the integral `∫⁻ f ^ p`.
 * `TauCeti.eLpNorm_le_eLpNorm_of_lintegral_rpow_le`: from
   `∫⁻ ‖v‖ₑ ^ p ≤ c ^ p * ∫⁻ ‖w‖ₑ ^ p` conclude `‖v‖_p ≤ c * ‖w‖_p`.
 * `TauCeti.rpow_lintegral_le_measure_univ_rpow_mul`: Hölder's extended-valued integral inequality
@@ -34,6 +36,17 @@ namespace TauCeti
 
 open MeasureTheory
 open scoped ENNReal
+
+/-- For a finite nonzero exponent, the `p`-th power of the `Lᵖ` seminorm of an `ℝ≥0∞`-valued
+function is the integral of the `p`-th power of that function. This is
+`MeasureTheory.lintegral_rpow_enorm_eq_rpow_eLpNorm'` read at an `ℝ≥0∞`-valued exponent and at a
+function whose enorm is the identity, which is the shape the extended-valued estimates use. -/
+theorem eLpNorm_rpow_eq_lintegral {α : Type*} [MeasurableSpace α]
+    {p : ℝ≥0∞} (hp0 : p ≠ 0) (hp : p ≠ ∞) (f : α → ℝ≥0∞) (μ : Measure α) :
+    eLpNorm f p μ ^ p.toReal = ∫⁻ a, f a ^ p.toReal ∂μ := by
+  rw [eLpNorm_eq_eLpNorm' hp0 hp,
+    ← lintegral_rpow_enorm_eq_rpow_eLpNorm' (ENNReal.toReal_pos hp0 hp)]
+  simp
 
 /-- Turn a bound between the `∫⁻ ‖·‖ₑ ^ p` integrals into a bound between the `Lᵖ` seminorms.
 The two functions may have different codomains, which is what lets such a bound compare a

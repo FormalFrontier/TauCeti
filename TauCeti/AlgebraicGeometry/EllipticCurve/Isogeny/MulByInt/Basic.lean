@@ -82,6 +82,10 @@ is `WeierstrassCurve.Affine`'s, in `Affine/FunctionField/GenericPoint.lean`.
 * `TauCeti.Isogeny.psiFunctionField_ne_zero_of_Δ_ne_zero`: the same conclusion from `W.Δ ≠ 0`
   and `n ≠ 0`, with no hypothesis on the characteristic. These are the two discharges of
   `mulByIntPullback`'s hypothesis; neither subsumes the other.
+* `TauCeti.Isogeny.phiFunctionField_eq_algebraMap`: `Φₙ` at the generic point is the image of
+  the univariate `Φₙ`, the companion of `psiFunctionField_sq` for the numerator.
+* `TauCeti.Isogeny.mulByIntX_mul_aeval_ΨSq`: the coordinate identity `[n]*x · ΨSqₙ(x) = Φₙ(x)`
+  at the generic point, where `ψₙ` does not vanish.
 * `TauCeti.Isogeny.mulByIntPullback_mk`: the pullback of an arbitrary class, as evaluation of a
   bivariate polynomial at `(φₙ/ψₙ², ωₙ/ψₙ³)`, with `TauCeti.Isogeny.mulByIntPullback_X` and
   `TauCeti.Isogeny.mulByIntPullback_Y` its values on the two coordinates.
@@ -153,6 +157,13 @@ theorem omegaFunctionField_def (n : ℤ) : omegaFunctionField W n =
 theorem phiFunctionField_def (n : ℤ) : phiFunctionField W n =
     algebraMap W.CoordinateRing W.FunctionField (Affine.CoordinateRing.mk W (W.φ n)) := (rfl)
 
+/-- **`Φₙ` at the generic point is the image of the univariate `Φₙ`.** -/
+theorem phiFunctionField_eq_algebraMap (n : ℤ) :
+    phiFunctionField W n = algebraMap F[X] W.FunctionField (W.Φ n) := by
+  rw [phiFunctionField_def, Affine.CoordinateRing.mk_φ,
+    TauCeti.WeierstrassCurve.Affine.CoordinateRing.mk_C_eq_algebraMap,
+    ← IsScalarTower.algebraMap_apply]
+
 /-- **The defining equation of `mulByIntX`**: the `x`-coordinate of `[n]` is `φₙ / ψₙ²`. -/
 theorem mulByIntX_def (n : ℤ) :
     mulByIntX W n = phiFunctionField W n / psiFunctionField W n ^ 2 := (rfl)
@@ -202,6 +213,18 @@ private theorem smulEval_genericPoint_Y (n : ℤ) :
 theorem psiFunctionField_sq (n : ℤ) : psiFunctionField W n ^ 2 =
       algebraMap W.CoordinateRing W.FunctionField (Affine.CoordinateRing.mk W (C (W.ΨSq n))) := by
   rw [psiFunctionField, ← map_pow, Affine.CoordinateRing.mk_ψ, Affine.CoordinateRing.mk_Ψ_sq]
+
+/-- **The coordinate identity at the generic point**: `[n]*x · ΨSqₙ(x) = Φₙ(x)`. -/
+theorem mulByIntX_mul_aeval_ΨSq (n : ℤ) (hn : psiFunctionField W n ≠ 0) :
+    mulByIntX W n * aeval W.genericX (W.ΨSq n) = aeval W.genericX (W.Φ n) := by
+  have hphi : phiFunctionField W n = aeval W.genericX (W.Φ n) := by
+    rw [phiFunctionField_eq_algebraMap, W.algebraMap_eq_aeval_genericX]
+  have hpsi : psiFunctionField W n ^ 2 = aeval W.genericX (W.ΨSq n) := by
+    rw [psiFunctionField_sq, TauCeti.WeierstrassCurve.Affine.CoordinateRing.mk_C_eq_algebraMap,
+      ← IsScalarTower.algebraMap_apply F[X] W.CoordinateRing W.FunctionField,
+      W.algebraMap_eq_aeval_genericX]
+  rw [← hphi, ← hpsi, mulByIntX_def]
+  exact div_mul_cancel₀ _ (pow_ne_zero 2 hn)
 
 /-- **The coordinates of `[n]` satisfy the equation of `W` over its function field.**
 

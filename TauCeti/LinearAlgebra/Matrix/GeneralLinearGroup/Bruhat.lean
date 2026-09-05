@@ -12,10 +12,15 @@ public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel
 -- `DoubleCoset.doubleCoset`, `DoubleCoset.mk` and `DoubleCoset.Quotient` occur in the statements
 -- below.
 public import Mathlib.GroupTheory.DoubleCoset
+-- `Group.IsSolvable` occurs in the maximality statements below.
+public import Mathlib.GroupTheory.Solvable
 -- Non-public: the general double-coset identities — when two classes agree, and that the identity
 -- double coset of a subgroup is the subgroup itself — are used only inside the proofs of the
 -- double-coset results below, which are their specializations to the Borel subgroup of `GL₂`.
 import TauCeti.GroupTheory.DoubleCoset.Identity
+-- Non-public: perfect groups are nonsolvable, which proves that `GL₂` over an infinite field is
+-- nonsolvable.
+import Mathlib.GroupTheory.IsPerfect
 -- Non-public: the order of `GL₂` over a finite field is used only inside the proof of the size of
 -- the big cell.
 import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Card
@@ -68,6 +73,9 @@ the Weyl element.
 * `TauCeti.GL2Borel.card_doubleCosetQuotient_eq_two`: `B` has exactly two double cosets in `GL₂`.
 * `TauCeti.GL2Borel.closure_insert_gl2WeylElement_eq_top`: the Borel subgroup and the Weyl element
   generate `GL₂`.
+* `TauCeti.Matrix.GeneralLinearGroup.not_isSolvable_fin_two`: `GL₂` over an infinite field is not
+  solvable, and `TauCeti.GL2Borel.le_of_isSolvable`: every solvable subgroup containing the Borel
+  subgroup equals it.
 * `TauCeti.GL2Borel.ncard_doubleCoset_weyl`: the big cell of `GL₂(𝔽_q)` has `q² (q - 1)²`
   elements.
 
@@ -330,6 +338,77 @@ theorem closure_insert_gl2WeylElement_eq_top :
       (mul_mem (Subgroup.subset_closure (Set.mem_insert_of_mem _ hx))
         (Subgroup.subset_closure (Set.mem_insert _ _)))
       (Subgroup.subset_closure (Set.mem_insert_of_mem _ hy))
+
+end GL2Borel
+
+namespace Matrix.GeneralLinearGroup
+
+/-- The general linear group `GL₂` over an infinite field is not solvable. -/
+theorem not_isSolvable_fin_two [Infinite F] : ¬ Group.IsSolvable (GL (Fin 2) F) := by
+  let S : Set F := {0} ∪ {1} ∪ {-1}
+  let U := {x : F // x ∈ Sᶜ}
+  let _ : Infinite U := (Set.toFinite S).infinite_compl.to_subtype
+  obtain ⟨a, _, _⟩ := exists_pair_ne U
+  have ha0 : (a : F) ≠ 0 := by
+    intro h
+    apply a.property
+    simp [S, h]
+  have ha1 : (a : F) ^ 2 ≠ 1 := by
+    rw [sq_ne_one_iff]
+    constructor
+    · intro h
+      apply a.property
+      simp [S, h]
+    · intro h
+      apply a.property
+      simp [S, h]
+  let _ : Group.IsPerfect (Matrix.SpecialLinearGroup (Fin 2) F) :=
+    ⟨Matrix.SL2.commutator_eq_top ha0 ha1⟩
+  have h01 : (0 : Fin 2) ≠ 1 := by decide
+  let t : Matrix.SpecialLinearGroup (Fin 2) F :=
+    Matrix.SpecialLinearGroup.transvection h01 1
+  have ht : t ≠ 1 := by
+    intro ht
+    have hentry := congrArg
+      (fun s : Matrix.SpecialLinearGroup (Fin 2) F ↦ (s : Matrix (Fin 2) (Fin 2) F) 0 1) ht
+    simp [t, Matrix.SpecialLinearGroup.transvection_coe, Matrix.single] at hentry
+  let _ : Nontrivial (Matrix.SpecialLinearGroup (Fin 2) F) := ⟨t, 1, ht⟩
+  intro hGL
+  let _ : Group.IsSolvable (GL (Fin 2) F) := hGL
+  exact Group.IsPerfect.not_isSolvable (Matrix.SpecialLinearGroup (Fin 2) F) <|
+    Group.isSolvable_of_isSolvable_injective
+      (f := Matrix.SpecialLinearGroup.toGL) Matrix.SpecialLinearGroup.toGL_injective
+
+end Matrix.GeneralLinearGroup
+
+namespace GL2Borel
+
+/-- Every solvable subgroup of `GL₂` over an infinite field that contains the upper-triangular
+subgroup is contained in it. -/
+theorem le_of_isSolvable [Infinite F] (P : Subgroup (GL (Fin 2) F)) [Group.IsSolvable P]
+    (hBP : GL2Borel F ≤ P) : P ≤ GL2Borel F := by
+  by_contra hPB
+  obtain ⟨g, hgP, hgB⟩ := SetLike.not_le_iff_exists.mp hPB
+  obtain ⟨x, hx, y, hy, hxy⟩ :=
+    DoubleCoset.mem_doubleCoset.mp (mem_doubleCoset_weyl_of_notMem hgB)
+  have hwP : GL2WeylElement F ∈ P := by
+    have hxP := hBP hx
+    have hyP := hBP hy
+    have hprod : x⁻¹ * g * y⁻¹ ∈ P := mul_mem (mul_mem (inv_mem hxP) hgP) (inv_mem hyP)
+    convert hprod using 1
+    rw [hxy]
+    group
+  have hclosure :
+      Subgroup.closure (insert (GL2WeylElement F) (GL2Borel F : Set (GL (Fin 2) F))) ≤ P :=
+    (Subgroup.closure_le P).mpr (Set.insert_subset_iff.mpr ⟨hwP, hBP⟩)
+  rw [closure_insert_gl2WeylElement_eq_top] at hclosure
+  have hPtop : P = ⊤ := top_unique hclosure
+  apply Matrix.GeneralLinearGroup.not_isSolvable_fin_two F
+  apply Group.isSolvable_of_surjective (f := P.subtype)
+  intro g
+  refine ⟨⟨g, ?_⟩, rfl⟩
+  rw [hPtop]
+  exact Subgroup.mem_top g
 
 end GL2Borel
 

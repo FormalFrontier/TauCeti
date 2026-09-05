@@ -159,6 +159,41 @@ theorem finiteGraphGraphon_apply_fin (G : SimpleGraph (Fin m)) [DecidableRel G.A
 
 variable {V : Type*} [Fintype V]
 
+open scoped Classical in
+/-- **The edge product is an adjacency-preservation indicator.** For the graphon of a finite graph
+`G`, the product of `edgeFactor` over the edges of `F` is `1` exactly when every edge of `F` is
+carried to an edge of `G` by the cell index, and `0` otherwise.
+
+This is the pointwise identity that makes `homDensity_finiteGraphGraphon` a counting argument: it
+replaces the integrand of the graphon homomorphism density by an indicator, whose integral is then
+the proportion of cell-index tuples that are graph homomorphisms. Use it whenever the edge product
+of a finite-graph graphon has to be evaluated at a fixed tuple. -/
+theorem prod_edgeFactor_finiteGraphGraphon (F : SimpleGraph V) [DecidableRel F.Adj]
+    (G : SimpleGraph (Fin m)) (x : V → I) :
+    ∏ e ∈ F.edgeFinset, edgeFactor (finiteGraphGraphon G) x e
+      = if ∀ a b, F.Adj a b → (G.map Fin.valEmbedding).Adj (cellIdx m (x a)) (cellIdx m (x b))
+          then (1 : ℝ) else 0 := by
+  let p : Sym2 V → Prop := Sym2.lift
+    ⟨fun a b => (G.map Fin.valEmbedding).Adj (cellIdx m (x a)) (cellIdx m (x b)),
+      fun a b => propext (SimpleGraph.adj_comm (G.map Fin.valEmbedding) _ _)⟩
+  have hfac : ∀ e : Sym2 V,
+      edgeFactor (finiteGraphGraphon G) x e = if p e then 1 else 0 := by
+    intro e
+    induction e using Sym2.ind with
+    | _ a b =>
+      rw [edgeFactor_mk, finiteGraphGraphon_apply]
+      exact if_congr (by simp only [p, Sym2.lift_mk]) rfl rfl
+  have hp_iff : (∀ e ∈ F.edgeFinset, p e) ↔
+      ∀ a b, F.Adj a b →
+        (G.map Fin.valEmbedding).Adj (cellIdx m (x a)) (cellIdx m (x b)) := by
+    simp only [SimpleGraph.mem_edgeFinset, SimpleGraph.mem_edgeSet, Sym2.forall, p,
+      Sym2.lift_mk]
+  rw [Finset.prod_congr rfl fun e _ => hfac e, Finset.prod_boole]
+  by_cases h : ∀ a b, F.Adj a b →
+      (G.map Fin.valEmbedding).Adj (cellIdx m (x a)) (cellIdx m (x b))
+  · rw [ite_eq_left h, ite_eq_left (hp_iff.2 h)]
+  · rw [ite_eq_right h, ite_eq_right fun hp => h (hp_iff.1 hp)]
+
 /-- **Finite-graph compatibility.** The graphon homomorphism density of `F` in the graphon of a
 finite graph `G` on `Fin m` is the finite homomorphism density of `F` in `G`:
 
@@ -171,31 +206,6 @@ theorem homDensity_finiteGraphGraphon (F : SimpleGraph V) [DecidableRel F.Adj] (
     (G : SimpleGraph (Fin m)) :
     homDensity F (finiteGraphGraphon G) = homDensityFin F G := by
   classical
-  -- the integrand is the adjacency-preservation indicator of the tuple of cell indices
-  have hstep : ∀ x : V → I, ∏ e ∈ F.edgeFinset, edgeFactor (finiteGraphGraphon G) x e
-      = if ∀ a b, F.Adj a b → (G.map Fin.valEmbedding).Adj (cellIdx m (x a)) (cellIdx m (x b))
-          then (1 : ℝ) else 0 := by
-    intro x
-    let p : Sym2 V → Prop := Sym2.lift
-      ⟨fun a b => (G.map Fin.valEmbedding).Adj (cellIdx m (x a)) (cellIdx m (x b)),
-        fun a b => propext (SimpleGraph.adj_comm (G.map Fin.valEmbedding) _ _)⟩
-    have hfac : ∀ e : Sym2 V,
-        edgeFactor (finiteGraphGraphon G) x e = if p e then 1 else 0 := by
-      intro e
-      induction e using Sym2.ind with
-      | _ a b =>
-        rw [edgeFactor_mk, finiteGraphGraphon_apply]
-        exact if_congr (by simp only [p, Sym2.lift_mk]) rfl rfl
-    have hp_iff : (∀ e ∈ F.edgeFinset, p e) ↔
-        ∀ a b, F.Adj a b →
-          (G.map Fin.valEmbedding).Adj (cellIdx m (x a)) (cellIdx m (x b)) := by
-      simp only [SimpleGraph.mem_edgeFinset, SimpleGraph.mem_edgeSet, Sym2.forall, p,
-        Sym2.lift_mk]
-    rw [Finset.prod_congr rfl fun e _ => hfac e, Finset.prod_boole]
-    by_cases h : ∀ a b, F.Adj a b →
-        (G.map Fin.valEmbedding).Adj (cellIdx m (x a)) (cellIdx m (x b))
-    · rw [ite_eq_left h, ite_eq_left (hp_iff.2 h)]
-    · rw [ite_eq_right h, ite_eq_right fun hp => h (hp_iff.1 hp)]
   -- the resulting finite sum counts the homomorphisms
   have hsum : (∑ ψ : V → Fin m, if ∀ a b, F.Adj a b →
         (G.map Fin.valEmbedding).Adj ((ψ a : ℕ)) ((ψ b : ℕ)) then (1 : ℝ) else 0)
@@ -214,8 +224,9 @@ theorem homDensity_finiteGraphGraphon (F : SimpleGraph V) [DecidableRel F.Adj] (
       (integral_pi_comp_cellIdx_eq_inv_smul_sum (V := V) hm
         (fun ν : V → ℕ => if ∀ a b, F.Adj a b → (G.map Fin.valEmbedding).Adj (ν a) (ν b)
           then (1 : ℝ) else 0))
-  rw [homDensity_def, integral_congr_ae (Filter.Eventually.of_forall hstep), hpi, hsum,
-    homDensityFin_def, Fintype.card_fin]
+  rw [homDensity_def,
+    integral_congr_ae (Filter.Eventually.of_forall (prod_edgeFactor_finiteGraphGraphon F G)),
+    hpi, hsum, homDensityFin_def, Fintype.card_fin]
 
 end DenseGraphLimits
 

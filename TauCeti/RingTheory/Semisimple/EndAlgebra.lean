@@ -148,8 +148,8 @@ theorem finrank_end_mul_finrank_eq_sq :
   rw [← isSimpleModule_iff_isAtom] at hS
   obtain ⟨k, hk, ⟨eM⟩⟩ := exists_algEquiv_matrix_end K S M
   obtain ⟨m, hm, ⟨eR⟩⟩ := exists_algEquiv_matrix_end K S R
-  set s := finrank K S with hs
-  set d := finrank K (Module.End R ↥S) with hd
+  set s := finrank K S
+  set d := finrank K (Module.End R ↥S)
   -- The matrix presentations turn both endomorphism dimensions into `(size)² * d`.
   have hEM : finrank K (Module.End R M) = k ^ 2 * d := by
     rw [(eM.toLinearEquiv).finrank_eq, Module.finrank_matrix, Fintype.card_fin, sq]

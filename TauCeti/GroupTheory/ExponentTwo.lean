@@ -82,7 +82,7 @@ theorem exists_index_eq_two_notMem_of_exponent_dvd_two (hexp : Monoid.exponent G
     simpa using mul_mem (inv_mem hb) hbσ
   · -- Otherwise `H ⊔ ⟨b⟩` is strictly bigger than `H`, hence contains `σ` by maximality.
     refine Or.inl ⟨?_, hb⟩
-    set N : Subgroup G := Subgroup.closure {b} with hN
+    set N : Subgroup G := Subgroup.closure {b}
     have hbN : b ∈ N := Subgroup.subset_closure rfl
     have : N.Normal := ⟨fun n hn g => by
       rw [hcomm g n, mul_assoc, mul_inv_cancel, mul_one]; exact hn⟩

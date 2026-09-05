@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Lie.Weights.Root.String
 public import TauCeti.Algebra.Lie.Weights.StructureConstant.Symmetry
 
 /-!

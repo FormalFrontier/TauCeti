@@ -126,4 +126,31 @@ condition is vacuous in this branch, so it is irrelevant which proof is supplied
     diagCosetGamma0 N a hgcd = 1 :=
   congrArg (HeckeCoset.mk _ _) (Subtype.ext (natDiagGL_of_not_pos (n := 2) ha))
 
+/-- The representative of the `Γ₀(N)`-coset of `diag(a)` differs from `diag(a)` by a left and a
+right factor in `Γ₀(N)`. -/
+lemma exists_rep_diagCosetGamma0_eq_mul_natDiagGL_mul (a : Fin 2 → ℕ)
+    (hgcd : (∀ i, 0 < a i) → Nat.Coprime (a 0) N) :
+    ∃ h₁ ∈ (Gamma0 N).map (mapGL ℚ), ∃ h₂ ∈ (Gamma0 N).map (mapGL ℚ),
+      ((diagCosetGamma0 N a hgcd).rep : GL (Fin 2) ℚ) = h₁ * natDiagGL 2 a * h₂ := by
+  have hmem : ((diagCosetGamma0 N a hgcd).rep : GL (Fin 2) ℚ) ∈
+      DoubleCoset.doubleCoset (natDiagGL 2 a) ((Gamma0 N).map (mapGL ℚ))
+        ((Gamma0 N).map (mapGL ℚ)) := by
+    rw [← diagCosetGamma0_toSet]
+    exact HeckeCoset.rep_mem _
+  exact DoubleCoset.mem_doubleCoset.mp hmem
+
+/-- **The scalar double coset has degree one**: `diag(c, c)` is central, so its `Γ₀(N)`-double
+coset is a single right coset. The level-`N` companion of `degree_diagCoset_const`; it is what
+bounds the multiplicity of a product one of whose factors is scalar. -/
+@[simp]
+theorem degree_diagCosetGamma0_const (c : ℕ)
+    (hgcd : (∀ _ : Fin 2, 0 < c) → Nat.Coprime c N) :
+    (diagCosetGamma0 N (fun _ ↦ c) hgcd).degree = 1 := by
+  rw [diagCosetGamma0_def, HeckeCoset.degree_mk]
+  have hnorm : natDiagGL 2 (fun _ ↦ c) ∈ Subgroup.normalizer ((Gamma0 N).map (mapGL ℚ)) := by
+    rw [Subgroup.mem_normalizer_iff]
+    intro x
+    rw [natDiagGL_const_comm 2 c x, mul_assoc, mul_inv_cancel, mul_one]
+  rw [Subgroup.conjAct_pointwise_smul_eq_self hnorm, Subgroup.relIndex_self]
+
 end HeckeRing.GL2

@@ -118,6 +118,11 @@ noncomputable def quotientOfLeRadicalMk (K : AddSubgroup A) (hK : K ≤ A.radica
     A →+ A.quotientOfLeRadical K hK :=
   K.toIntSubmodule.mkQ.toAddMonoidHom
 
+/-- The quotient map sends an element to its quotient class. -/
+theorem quotientOfLeRadicalMk_apply (K : AddSubgroup A) (hK : K ≤ A.radical) (x : A) :
+    A.quotientOfLeRadicalMk K hK x = Submodule.Quotient.mk x :=
+  Submodule.mkQ_apply K.toIntSubmodule x
+
 /-- The quotient pairing is represented by the original pairing on representatives. -/
 @[simp]
 theorem quotientOfLeRadical_pairing_mk (K : AddSubgroup A) (hK : K ≤ A.radical) (x y : A) :

@@ -14,16 +14,14 @@ public import TauCeti.Topology.Algebra.ConstMulAction
 The self-diffeomorphism group `M ≃ₘ^n⟮I, I⟯ M` acts on the underlying manifold by evaluation:
 `φ • x = φ x`. This file records that action, its faithfulness, and continuity in the point.
 
-The action formalization mirrors `TauCeti.Homeomorph.applyMulAction` in
-`TauCeti.Topology.Algebra.Homeomorph.Action`,
-which in turn follows `Equiv.Perm.applyMulAction` and the construction in Kim Morrison's
-mathlib4#40135.
+The action formalization mirrors Mathlib's `Homeomorph.applyMulAction`
+(`Mathlib.Topology.Algebra.ConstMulAction`, added in Kim Morrison's mathlib4#40135), which
+generalizes `Equiv.Perm.applyMulAction`.
 
-This is a small prerequisite for the geometric-topology roadmap
-(`TauCetiRoadmap/GeometricTopology/README.md`, layer 3, "diffeomorphism groups with the C^∞
-topology"). The layer builds `Diff(M)` as a group first and then equips it with the `C^∞`
-topology; the evaluation action and the map `Diff(M) → Homeomorph(M)` are basic API for relating
-that future topological group to the underlying space.
+The evaluation action and the forgetful homomorphism `Diff(M) → Homeomorph(M)` are the basic
+API relating the abstract group `Diff(M)` to the space it acts on: faithfulness identifies a
+diffeomorphism with the permutation of `M` it induces, and continuity in the point records that
+each diffeomorphism acts by a homeomorphism.
 
 ## Main definitions
 

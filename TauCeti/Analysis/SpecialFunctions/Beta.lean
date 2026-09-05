@@ -6,7 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Probability.Distributions.Beta
-import Mathlib.MeasureTheory.Function.JacobianOneDim
+import TauCeti.Analysis.Calculus.RealCharts
+import Mathlib.Analysis.SpecialFunctions.NonIntegrable
 import Mathlib.MeasureTheory.Measure.Lebesgue.Integral
 
 /-!
@@ -28,7 +29,7 @@ statement, and specialises it to the Cauchy-type kernel `(1 + x ^ 2) ^ (-s)` on 
 These are the analytic prerequisites of
 `TauCeti/Analysis/SpecialFunctions/IncompleteBeta.lean`;
 `TauCeti/Probability/Distributions/Beta/Basic.lean` uses the beta integral for its moment formula,
-and `TauCeti/Probability/Distributions/StudentT.lean` normalizes its density with the
+and `TauCeti/Probability/Distributions/StudentT/Basic.lean` normalizes its density with the
 `(1 + x ^ 2) ^ (-s)` form of the second integral.
 
 ## Main results
@@ -40,9 +41,12 @@ and `TauCeti/Probability/Distributions/StudentT.lean` normalizes its density wit
 * `TauCeti.hasDerivAt_rpow_mul_one_sub_rpow` — the derivative of `t ^ a * (1 - t) ^ b`;
 * `TauCeti.integral_rpow_mul_one_sub_rpow_add_one_right` — raising the second parameter by one
   splits the integral as a difference;
-* `TauCeti.integrableOn_rpow_mul_one_add_rpow` and `TauCeti.integral_rpow_mul_one_add_rpow` —
-  Euler's second beta integral,
+* `TauCeti.integrableOn_rpow_mul_one_add_rpow_iff` and
+  `TauCeti.integral_rpow_mul_one_add_rpow` — Euler's second beta integral and its sharp
+  integrability criterion,
   `∫ x in Ioi 0, x ^ (a - 1) * (1 + x) ^ (-(a + b)) = Β(a, b)`;
+* `TauCeti.abs_deriv_smul_one_add_rpow` — the change-of-variables identity relating the first and
+  second beta-integral kernels under the chart `u ↦ u / (1 - u)`;
 * `TauCeti.integrable_one_add_sq_rpow`, `TauCeti.integral_one_add_sq_rpow`,
   `TauCeti.integrable_one_add_sq_div_rpow`, and `TauCeti.integral_one_add_sq_div_rpow` — the
   Cauchy-type kernel `(1 + x ^ 2 / ν) ^ (-s)` is integrable on the line for `0 < ν` and
@@ -81,7 +85,7 @@ public section
 
 namespace TauCeti
 
-open MeasureTheory ProbabilityTheory Set
+open Filter MeasureTheory ProbabilityTheory Set
 
 variable {a b x : ℝ}
 
@@ -177,47 +181,9 @@ section SecondIntegral
 
 variable {s : ℝ}
 
-/-- The chart `u ↦ u / (1 - u)` carries the open unit interval onto the positive half-line. -/
-private lemma image_div_one_sub : (fun u : ℝ => u / (1 - u)) '' Ioo 0 1 = Ioi 0 := by
-  ext x
-  constructor
-  · rintro ⟨u, ⟨hu0, hu1⟩, rfl⟩
-    exact div_pos hu0 (by linarith)
-  · intro hx
-    rw [mem_Ioi] at hx
-    have h1 : (0 : ℝ) < 1 + x := by linarith
-    refine ⟨x / (1 + x), ⟨by positivity, ?_⟩, ?_⟩
-    · rw [div_lt_one h1]
-      linarith
-    · have hden : (1 : ℝ) - x / (1 + x) = (1 + x)⁻¹ := by
-        field_simp
-        ring
-      have himage : x / (1 + x) / (1 - x / (1 + x)) = x := by
-        rw [hden]
-        field_simp
-      exact himage
-
-/-- The chart `u ↦ u / (1 - u)` is injective on the open unit interval. -/
-private lemma injOn_div_one_sub : InjOn (fun u : ℝ => u / (1 - u)) (Ioo (0 : ℝ) 1) := by
-  intro u hu v hv huv
-  have h1 : (0 : ℝ) < 1 - u := by linarith [hu.2]
-  have h2 : (0 : ℝ) < 1 - v := by linarith [hv.2]
-  rw [div_eq_div_iff h1.ne' h2.ne'] at huv
-  nlinarith
-
-/-- The derivative of the chart `u ↦ u / (1 - u)`. -/
-private lemma hasDerivAt_div_one_sub {u : ℝ} (hu : u ≠ 1) :
-    HasDerivAt (fun t : ℝ => t / (1 - t)) ((1 - u) ^ 2)⁻¹ u := by
-  have h : (1 : ℝ) - u ≠ 0 := sub_ne_zero_of_ne (Ne.symm hu)
-  have hd : HasDerivAt (fun t : ℝ => 1 - t) (-1) u := by
-    simpa using (hasDerivAt_id u).const_sub (1 : ℝ)
-  refine ((hasDerivAt_id' (x := u)).div hd h).congr_deriv ?_
-  have hnum : (1 : ℝ) * (1 - u) - u * -1 = 1 := by ring
-  rw [hnum, one_div]
-
 /-- Under the chart `u ↦ u / (1 - u)` the integrand of Euler's second beta integral becomes the
 integrand of Euler's first one. -/
-private lemma abs_deriv_smul_one_add_rpow (a b : ℝ) {u : ℝ} (hu : u ∈ Ioo (0 : ℝ) 1) :
+lemma abs_deriv_smul_one_add_rpow (a b : ℝ) {u : ℝ} (hu : u ∈ Ioo (0 : ℝ) 1) :
     |((1 - u) ^ 2)⁻¹| • ((u / (1 - u)) ^ (a - 1) * (1 + u / (1 - u)) ^ (-(a + b))) =
       u ^ (a - 1) * (1 - u) ^ (b - 1) := by
   obtain ⟨hu0, hu1⟩ := hu
@@ -249,18 +215,117 @@ theorem integrableOn_rpow_mul_one_add_rpow (ha : 0 < a) (hb : 0 < b) :
     exact (intervalIntegrable_iff_integrableOn_Ioc_of_le (zero_le_one : (0 : ℝ) ≤ 1)).mp
       (intervalIntegrable_rpow_mul_one_sub_rpow ha hb ⟨le_rfl, zero_le_one⟩
         ⟨zero_le_one, le_rfl⟩)
-  rw [← image_div_one_sub,
+  have hchart : (fun u : ℝ => u / (1 - u)) '' Ioo (0 : ℝ) 1 = Ioi (0 : ℝ) := by
+    rw [image_div_one_sub_Ioo (u0 := 0) zero_lt_one]
+    norm_num
+  rw [← hchart,
     integrableOn_image_iff_integrableOn_abs_deriv_smul measurableSet_Ioo
-      (fun u hu => (hasDerivAt_div_one_sub (ne_of_lt hu.2)).hasDerivWithinAt) injOn_div_one_sub]
+      (fun u hu => (hasDerivAt_div_one_sub (ne_of_lt hu.2)).hasDerivWithinAt)
+      (injOn_div_one_sub_Ioo (u0 := 0))]
   exact hIoo.congr_fun (fun u hu => (abs_deriv_smul_one_add_rpow a b hu).symm) measurableSet_Ioo
+
+private lemma eventually_const_mul_rpow_le_rpow_mul_one_add_rpow (hab : 0 < a + b) :
+    ∀ᶠ x in atTop,
+      (2 : ℝ) ^ (-(a + b)) * x ^ (-b - 1) ≤
+        x ^ (a - 1) * (1 + x) ^ (-(a + b)) := by
+  filter_upwards [eventually_ge_atTop (1 : ℝ)] with x hx
+  have hx0 : 0 < x := by linarith
+  have hle : 1 + x ≤ 2 * x := by linarith
+  have hpos1 : 0 < 1 + x := by linarith
+  have hpos2 : 0 < 2 * x := by linarith
+  have hpow : (2 * x) ^ (-(a + b)) ≤ (1 + x) ^ (-(a + b)) := by
+    rw [Real.rpow_neg hpos2.le, Real.rpow_neg hpos1.le]
+    simpa only [one_div] using one_div_le_one_div_of_le (Real.rpow_pos_of_pos hpos1 (a + b))
+      (Real.rpow_le_rpow hpos1.le hle hab.le)
+  have hmul : (2 * x) ^ (-(a + b)) =
+      (2 : ℝ) ^ (-(a + b)) * x ^ (-(a + b)) := by
+    rw [Real.mul_rpow (by positivity) hx0.le]
+  have hxpow : x ^ (a - 1) * x ^ (-(a + b)) = x ^ (-b - 1) := by
+    rw [← Real.rpow_add hx0]
+    congr 1
+    ring
+  calc
+    (2 : ℝ) ^ (-(a + b)) * x ^ (-b - 1) =
+        x ^ (a - 1) * ((2 : ℝ) ^ (-(a + b)) * x ^ (-(a + b))) := by
+          rw [← hxpow]
+          ring
+    _ = x ^ (a - 1) * (2 * x) ^ (-(a + b)) := by rw [hmul]
+    _ ≤ x ^ (a - 1) * (1 + x) ^ (-(a + b)) :=
+      mul_le_mul_of_nonneg_left hpow (Real.rpow_nonneg hx0.le _)
+
+private lemma not_integrableOn_rpow_mul_one_add_rpow_of_nonpos (hab : 0 < a + b)
+    (hb : b ≤ 0) :
+    ¬ IntegrableOn (fun x : ℝ => x ^ (a - 1) * (1 + x) ^ (-(a + b))) (Ioi 0) := by
+  intro h
+  let f : ℝ → ℝ := fun x ↦ (2 : ℝ) ^ (-(a + b)) * x ^ (-b - 1)
+  have hbound := eventually_const_mul_rpow_le_rpow_mul_one_add_rpow (a := a) (b := b) hab
+  have hIoi1 : IntegrableOn (fun x : ℝ => x ^ (a - 1) * (1 + x) ^ (-(a + b)))
+      (Ioi (1 : ℝ)) := h.mono_set fun x hx ↦ by
+    simpa only [mem_Ioi] using lt_trans zero_lt_one hx
+  obtain ⟨c, hc⟩ := eventually_atTop.mp hbound
+  let d := max c 1
+  have hbounded : IntegrableOn f (Ioc (1 : ℝ) d) := by
+    refine (ContinuousOn.mul continuousOn_const ?_).integrableOn_compact isCompact_Icc |>.mono_set
+      Ioc_subset_Icc_self
+    intro x hx
+    exact (Real.continuousAt_rpow_const x (-b - 1)
+      (Or.inl (ne_of_gt (lt_of_lt_of_le zero_lt_one hx.1)))).continuousWithinAt
+  have htail : IntegrableOn f (Ioi d) := by
+    refine (hIoi1.mono_set fun x hx ↦ lt_of_le_of_lt (le_max_right c 1) hx).mono'
+      (by fun_prop) ?_
+    filter_upwards [ae_restrict_mem measurableSet_Ioi] with x hx
+    have hx0 : 0 < x := lt_of_lt_of_le zero_lt_one
+      (le_trans (le_max_right c 1) (le_of_lt hx))
+    rw [Real.norm_eq_abs, abs_of_nonneg]
+    · exact hc x (le_trans (le_max_left c 1) (le_of_lt hx))
+    · exact mul_nonneg (Real.rpow_nonneg (by positivity) _) (Real.rpow_nonneg hx0.le _)
+  have hf : IntegrableOn f (Ioi (1 : ℝ)) := by
+    rw [← Ioc_union_Ioi_eq_Ioi (le_max_right c 1)]
+    exact hbounded.union htail
+  have hpow : IntegrableOn (fun x : ℝ ↦ x ^ (-b - 1)) (Ioi (1 : ℝ)) := by
+    have hunit : IsUnit ((2 : ℝ) ^ (-(a + b))) :=
+      isUnit_iff_ne_zero.mpr (Real.rpow_pos_of_pos (by positivity) _).ne'
+    simpa only [f, IntegrableOn, integrable_const_mul_iff hunit] using hf
+  rw [integrableOn_Ioi_rpow_iff one_pos] at hpow
+  linarith
+
+/-- The integrand of Euler's second beta integral is integrable on the positive half-line exactly
+when its tail parameter is positive, provided its exponent at zero is positive. -/
+theorem integrableOn_rpow_mul_one_add_rpow_iff (ha : 0 < a) :
+    IntegrableOn (fun x : ℝ => x ^ (a - 1) * (1 + x) ^ (-(a + b))) (Ioi 0) ↔ 0 < b := by
+  constructor
+  · intro h
+    refine lt_of_not_ge fun hb ↦ ?_
+    by_cases hab : 0 < a + b
+    · exact not_integrableOn_rpow_mul_one_add_rpow_of_nonpos hab hb h
+    · have hab' : a + b ≤ 0 := le_of_not_gt hab
+      have htail : IntegrableOn
+          (fun x : ℝ => x ^ (a - 1) * (1 + x) ^ (-(a + b))) (Ioi 1) :=
+        h.mono_set fun x hx ↦ by simpa only [mem_Ioi] using lt_trans zero_lt_one hx
+      have hpow : IntegrableOn (fun x : ℝ => x ^ (a - 1)) (Ioi 1) := by
+        refine htail.mono' (by fun_prop) ?_
+        filter_upwards [ae_restrict_mem measurableSet_Ioi] with x hx
+        have hx0 : 0 < x := lt_trans zero_lt_one hx
+        have hxp : 0 ≤ x ^ (a - 1) := Real.rpow_nonneg hx0.le _
+        have hfac : 1 ≤ (1 + x) ^ (-(a + b)) :=
+          Real.one_le_rpow (by linarith) (by linarith)
+        rw [Real.norm_eq_abs, abs_of_nonneg hxp]
+        exact le_mul_of_one_le_right hxp hfac
+      rw [integrableOn_Ioi_rpow_iff one_pos] at hpow
+      linarith
+  · exact integrableOn_rpow_mul_one_add_rpow ha
 
 /-- **Euler's second beta integral**: for positive parameters the integral of
 `x ^ (a - 1) * (1 + x) ^ (-(a + b))` over the positive half-line is `Β(a, b)`. -/
 theorem integral_rpow_mul_one_add_rpow (ha : 0 < a) (hb : 0 < b) :
     ∫ x in Ioi (0 : ℝ), x ^ (a - 1) * (1 + x) ^ (-(a + b)) = beta a b := by
-  rw [← image_div_one_sub,
+  have hchart : (fun u : ℝ => u / (1 - u)) '' Ioo (0 : ℝ) 1 = Ioi (0 : ℝ) := by
+    rw [image_div_one_sub_Ioo (u0 := 0) zero_lt_one]
+    norm_num
+  rw [← hchart,
     integral_image_eq_integral_abs_deriv_smul measurableSet_Ioo
-      (fun u hu => (hasDerivAt_div_one_sub (ne_of_lt hu.2)).hasDerivWithinAt) injOn_div_one_sub,
+      (fun u hu => (hasDerivAt_div_one_sub (ne_of_lt hu.2)).hasDerivWithinAt)
+      (injOn_div_one_sub_Ioo (u0 := 0)),
     setIntegral_congr_fun measurableSet_Ioo (fun u hu => abs_deriv_smul_one_add_rpow a b hu),
     ← integral_rpow_mul_one_sub_rpow ha hb,
     intervalIntegral.integral_of_le (zero_le_one : (0 : ℝ) ≤ 1)]

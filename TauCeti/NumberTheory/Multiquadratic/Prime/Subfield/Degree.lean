@@ -56,7 +56,6 @@ theorem intermediateFieldEquivSubmoduleSqrtPrimes_apply_ofDual_eq
   ext v
   erw [mem_intermediateFieldEquivSubmoduleSqrtPrimes_apply_ofDual_iff,
     mem_intermediateFieldEquivSubmodule_apply_ofDual_iff]
-  rfl
 
 /-- **Degree/subspace-size relation for `ℚ(√p₁, …, √pₙ)`.** For an intermediate field `F`
 of a prime-radicand multiquadratic field, `[F : ℚ]` times the size of its attached subspace is

@@ -96,6 +96,21 @@ theorem kernelHopfIdeal_eq_augmentation_of_surjective (f : H ⟶ K)
   apply mem_kernelHopfIdeal_of_mem_augmentation f
   simpa only [CoalgHomClass.counit_comp_apply] using hy
 
+/-- The kernel Hopf ideal of a composite is the extension of the first morphism's kernel Hopf
+ideal along the second morphism. -/
+theorem kernelHopfIdeal_comp (f : H ⟶ K) {L : _root_.CommHopfAlgCat.{v} R} (g : K ⟶ L) :
+    kernelHopfIdeal (f ≫ g) = (kernelHopfIdeal f).map g.hom := by
+  rw [kernelHopfIdeal_def, kernelHopfIdeal_def, _root_.CommHopfAlgCat.hom_comp,
+    ← HopfIdeal.map_map]
+
+/-- Precomposing a coordinate morphism with a surjective morphism does not change its kernel
+closed subgroup scheme. -/
+theorem kernelHopfIdeal_comp_of_surjective (f : H ⟶ K)
+    (hf : Function.Surjective f.hom) {L : _root_.CommHopfAlgCat.{v} R} (g : K ⟶ L) :
+    kernelHopfIdeal (f ≫ g) = kernelHopfIdeal g := by
+  rw [kernelHopfIdeal_comp, kernelHopfIdeal_eq_augmentation_of_surjective f hf,
+    ← kernelHopfIdeal_def]
+
 -- Mathlib has no application lemma for `Bialgebra.unitBialgHom`; this contains its
 -- definitional unfolding to `algebraMap` in one place (upstream candidate).
 private lemma unitBialgHom_apply {A : Type*} [Semiring A] [Bialgebra R A] (r : R) :

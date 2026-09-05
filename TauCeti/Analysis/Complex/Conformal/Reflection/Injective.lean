@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.Reflection.Principle
 public import TauCeti.Analysis.Complex.Conformal.Biholomorph
-import TauCeti.Analysis.Complex.Conformal.InverseFunction
+import TauCeti.Analysis.Complex.Conformal.Inverse.Function
 import TauCeti.Analysis.Complex.Conformal.LocalDegree
 
 /-!
@@ -72,7 +72,7 @@ Layer L4 (reflection) and layer L5 (boundary correspondence) are absent from the
 Mathlib Riemann-mapping draft
 [mathlib4#33505](https://github.com/leanprover-community/mathlib4/pull/33505),
 so this is new Lean formalization rather than a shim; the shared L0--L3 infrastructure it consumes
-(`Conformal/Biholomorph.lean`, `Conformal/InverseFunction.lean`) carries its own shim notice.
+(`Conformal/Biholomorph.lean`, `Conformal/Inverse/Function.lean`) carries its own shim notice.
 
 ## References
 

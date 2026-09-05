@@ -7,6 +7,10 @@ module
 
 public import TauCeti.Analysis.Sobolev.W1p.Basic
 
+import Mathlib.Analysis.InnerProductSpace.Projection.Submodule
+import Mathlib.Analysis.Calculus.BumpFunction.FiniteDimension
+import Mathlib.Analysis.Distribution.AEEqOfIntegralContDiff
+
 /-!
 # The Sobolev space `W^{1,p}_0(Ω)`
 
@@ -40,6 +44,8 @@ subspace under a suitable geometric hypothesis but not on all of `W^{1,p}(Ω)`.
 * `TauCeti.w1p0Submodule` and `TauCeti.W1p0`: the space `W^{1,p}_0(Ω)`, complete for the graph
   norm.
 * `TauCeti.W1p0.valueL`: the canonical continuous value map into `Lᵖ(Ω)`.
+* `TauCeti.W1p0.denseRange_valueL_two`: test functions make the value map from
+  `W^{1,2}_0(Ω)` dense in `L²(Ω)`.
 * `TauCeti.w1p0Submodule_subset_of_isClosed`: a closed set containing every test-function jet
   contains `W^{1,p}_0(Ω)`, which is how a property is extended from test functions to the whole
   space.
@@ -158,6 +164,75 @@ def W1p0.valueL : W1p0 mu Omega p →L[ℝ] Lp ℝ p (mu.restrict Omega) :=
 theorem W1p0.valueL_apply (u : W1p0 mu Omega p) :
     W1p0.valueL u = W1p.value (u : W1p mu Omega p) :=
   by simp [W1p0.valueL]
+
+/-- The value map `W^{1,2}_0(Ω) → L²(Ω)` has dense range.  Indeed, its range contains
+all test functions, and an `L²` function orthogonal to every test function vanishes almost
+everywhere by the fundamental lemma of the calculus of variations. -/
+theorem W1p0.denseRange_valueL_two :
+    DenseRange (W1p0.valueL (mu := mu) (Omega := Omega) (p := 2)) := by
+  have hcoe : (LinearMap.range (W1p0.valueL (mu := mu) (Omega := Omega) (p := 2) :
+      W1p0 mu Omega 2 →ₗ[ℝ] Lp ℝ 2 (mu.restrict Omega)) :
+        Set (Lp ℝ 2 (mu.restrict Omega))) =
+      Set.range (W1p0.valueL (mu := mu) (Omega := Omega) (p := 2)) := by
+    rw [LinearMap.coe_range, ContinuousLinearMap.coe_coe]
+  have hdense : Dense ((LinearMap.range (W1p0.valueL (mu := mu) (Omega := Omega) (p := 2) :
+      W1p0 mu Omega 2 →ₗ[ℝ] Lp ℝ 2 (mu.restrict Omega)) :
+        Set (Lp ℝ 2 (mu.restrict Omega)))) := by
+    rw [Submodule.dense_iff_topologicalClosure_eq_top,
+      Submodule.topologicalClosure_eq_top_iff, Submodule.eq_bot_iff]
+    intro f hf
+    apply Lp.ext
+    have hzero : ∀ᵐ x ∂mu.restrict Omega, f x = 0 := by
+      rw [ae_restrict_iff' Omega.isOpen.measurableSet]
+      refine Omega.isOpen.ae_eq_zero_of_integral_contDiff_smul_eq_zero
+        (locallyIntegrableOn_of_locallyIntegrable_restrict
+          ((Lp.memLp f).locallyIntegrable (by simp))) fun g hg hgc hgs => ?_
+      let phi : 𝓓(Omega, ℝ) := ⟨g, hg, hgc, hgs⟩
+      let u : W1p0 mu Omega 2 :=
+        ⟨W1p.ofTestFunctionₗ mu Omega 2 phi, W1p.ofTestFunctionₗ_mem_w1p0Submodule phi⟩
+      have hinner : ⟪W1p0.valueL u, f⟫_ℝ = 0 := hf _ ⟨u, rfl⟩
+      rw [L2.inner_def, W1p0.valueL_apply, W1p.value_ofTestFunctionₗ] at hinner
+      calc
+        ∫ x, g x • f x ∂mu = ∫ x in Omega, g x • f x ∂mu := by
+          rw [← integral_indicator Omega.isOpen.measurableSet]
+          congr 1
+          symm
+          apply Set.indicator_eq_self.2
+          exact (Function.support_smul_subset_left g fun x => f x).trans
+            ((subset_tsupport g).trans hgs)
+        _ = 0 := by
+          rw [← hinner]
+          apply integral_congr_ae
+          filter_upwards [testFunctionLp_apply_ae (mu := mu) 2 phi] with x hx
+          rw [hx]
+          exact mul_comm _ _
+    exact Filter.EventuallyEq.trans hzero
+      (Lp.coeFn_zero ℝ 2 (mu.restrict Omega)).symm
+  rw [hcoe] at hdense
+  exact hdense
+
+/-- A nonempty open set contains a zero-boundary Sobolev function with nonzero `L²` value. -/
+theorem W1p0.exists_value_ne_zero (hOmega : (Omega : Set E).Nonempty) :
+    ∃ w : W1p0 mu Omega 2, W1p.value (w : W1p mu Omega 2) ≠ 0 := by
+  obtain ⟨x, hx⟩ := hOmega
+  obtain ⟨g, hgs, hgc, hg, _, hgx⟩ :=
+    exists_contDiff_tsupport_subset (n := (⊤ : ℕ∞)) (Omega.isOpen.mem_nhds hx)
+  let phi : 𝓓(Omega, ℝ) := ⟨g, hg, hgc, hgs⟩
+  let w : W1p0 mu Omega 2 :=
+    ⟨W1p.ofTestFunctionₗ mu Omega 2 phi, W1p.ofTestFunctionₗ_mem_w1p0Submodule phi⟩
+  refine ⟨w, ?_⟩
+  rw [W1p.value_ofTestFunctionₗ]
+  intro hzero
+  have hzeroTest : testFunctionLp (mu := mu) (Omega := Omega) 2 (0 : 𝓓(Omega, ℝ)) = 0 := by
+    apply Lp.ext
+    exact Filter.EventuallyEq.trans
+      (testFunctionLp_apply_ae (mu := mu) 2 (0 : 𝓓(Omega, ℝ)))
+      (Lp.coeFn_zero ℝ 2 (mu.restrict Omega)).symm
+  have hphi : phi = 0 := testFunctionLp_injective 2 (hzero.trans hzeroTest.symm)
+  have : g x = 0 := by
+    have := congrArg (fun q : 𝓓(Omega, ℝ) => q x) hphi
+    simpa [phi] using this
+  linarith
 
 /-- `W^{1,p}_0(Ω)` is complete: it is a closed subspace of the complete space `W^{1,p}(Ω)`. -/
 instance : CompleteSpace (W1p0 mu Omega p) :=

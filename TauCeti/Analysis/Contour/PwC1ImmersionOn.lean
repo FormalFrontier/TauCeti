@@ -160,7 +160,7 @@ private theorem exists_Icc_right_avoiding {p : Finset ℝ} {t₀ : ℝ}
     (hp : ↑p ⊆ Ioo (min a b) (max a b)) (ht₀ : t₀ ∈ Ico (min a b) (max a b)) :
     ∃ d : ℝ, t₀ < d ∧ Icc t₀ d ⊆ uIcc a b ∧ Disjoint (↑p : Set ℝ) (Ioo t₀ d) := by
   classical
-  set q : Finset ℝ := insert (max a b) (p.filter (t₀ < ·)) with hq_def
+  set q : Finset ℝ := insert (max a b) (p.filter (t₀ < ·))
   have hq_ne : q.Nonempty := ⟨max a b, Finset.mem_insert_self _ _⟩
   refine ⟨q.min' hq_ne, ?_, ?_, ?_⟩
   · rcases Finset.mem_insert.mp (q.min'_mem hq_ne) with hm | hm
@@ -181,7 +181,7 @@ private theorem exists_Icc_left_avoiding {p : Finset ℝ} {t₀ : ℝ}
     (hp : ↑p ⊆ Ioo (min a b) (max a b)) (ht₀ : t₀ ∈ Ioc (min a b) (max a b)) :
     ∃ c : ℝ, c < t₀ ∧ Icc c t₀ ⊆ uIcc a b ∧ Disjoint (↑p : Set ℝ) (Ioo c t₀) := by
   classical
-  set q : Finset ℝ := insert (min a b) (p.filter (· < t₀)) with hq_def
+  set q : Finset ℝ := insert (min a b) (p.filter (· < t₀))
   have hq_ne : q.Nonempty := ⟨min a b, Finset.mem_insert_self _ _⟩
   refine ⟨q.max' hq_ne, ?_, ?_, ?_⟩
   · rcases Finset.mem_insert.mp (q.max'_mem hq_ne) with hm | hm

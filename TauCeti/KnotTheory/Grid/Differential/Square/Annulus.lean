@@ -26,9 +26,10 @@ differential therefore has no two-step return, and the diagonal entries of the m
 `∂⁻ ∘ ∂⁻` are zero.
 
 The argument never inspects the `O`-markings, so it is insensitive to the weights `V^{O(r)}` and
-runs over an arbitrary commutative coefficient ring, characteristic two included. This is the
-first case of the square-zero argument to be settled for the unblocked complex; the disjoint and
-overlapping cases, where two distinct decompositions must be paired against each other, remain.
+runs over an arbitrary commutative coefficient ring, characteristic two included. The three cases
+of the juxtaposition analysis are told apart by how many side columns the two rectangles have in
+common: both for the annular case treated here, none for the disjoint case of
+`Differential/Square/DoubleTransposition.lean`, and exactly one for the overlapping case.
 On a grid of size at most two the annular case already suffices, because there is no room for the
 other two: that consequence is
 `GridDiagram.unblockedDifferential_comp_self_eq_zero_of_le_two` in `SmallGrid/Differential.lean`.
@@ -39,8 +40,6 @@ other two: that consequence is
   grid states, one of the two directions carries no rectangle the unblocked differential counts.
 * `TauCeti.GridDiagram.unblockedCoefficient_mul_unblockedCoefficient_eq_zero`: the product of the
   two matrix coefficients of `∂⁻` between a pair of grid states vanishes.
-* `TauCeti.GridDiagram.unblockedDifferential_sq_single_apply`: the matrix of `∂⁻ ∘ ∂⁻`, as a sum
-  over intermediate grid states of products of matrix coefficients.
 * `TauCeti.GridDiagram.unblockedDifferential_sq_single_apply_self`: its diagonal entries vanish.
 
 ## References
@@ -88,16 +87,6 @@ theorem unblockedCoefficient_mul_unblockedCoefficient_eq_zero (x y : GridState n
   by_cases h : G.unblockedCoefficient R x y = 0
   · rw [h, zero_mul]
   · rw [G.unblockedCoefficient_eq_zero_of_ne_zero R h, mul_zero]
-
-/-- The matrix of the square of the unblocked differential: its `(x, z)` entry is the sum over
-intermediate grid states of the products of the two matrix coefficients. -/
-theorem unblockedDifferential_sq_single_apply (x z : GridState n) :
-    G.unblockedDifferential R (G.unblockedDifferential R (Finsupp.single x 1)) z =
-      ∑ y : GridState n, G.unblockedCoefficient R x y * G.unblockedCoefficient R y z := by
-  rw [unblockedDifferential_single, unblockedDifferential_apply_apply,
-    Finsupp.sum_fintype _ _ fun _ => zero_mul _]
-  exact Finset.sum_congr rfl fun y _ => by
-    rw [unblockedDifferentialOnGenerator_apply]
 
 /-- The diagonal entries of the matrix of `∂⁻ ∘ ∂⁻` vanish: every annular term of the square of
 the unblocked grid differential is individually zero, for every coefficient ring. -/

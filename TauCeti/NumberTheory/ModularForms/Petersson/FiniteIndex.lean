@@ -147,16 +147,30 @@ theorem exists_slash_eq_smul_of_mem_withCenter {γ : SL(2, ℤ)} (hγ : γ ∈ �
         hcoe, ModularForm.slash_neg_one, SlashInvariantFormClass.SL_slash_eq f _ hγ']
 
 omit [Γ.FiniteIndex] in
+/-- **Slashing both arguments by an element of `Γ·{±I}` is invisible to the level-one-domain
+pairing, before any common further slash `β`.**
+
+This is the general form of `peterssonInner_slash_of_mem_withCenter` below, which is the `β = 1`
+case. It is what the coset-representative arguments consume: the pairing of two forms slashed into
+a coset does not depend on which representative of that coset is used to reach it, so the defining
+sum of the Petersson product may be reindexed over the coset space. -/
+theorem peterssonInner_slash_slash_of_mem_withCenter (f g : CuspForm (Γ.map (mapGL ℝ)) k)
+    {γ : SL(2, ℤ)} (hγ : γ ∈ Γ.withCenter) (β : SL(2, ℤ)) :
+    UpperHalfPlane.peterssonInner k fd ((⇑f ∣[k] γ) ∣[k] β) ((⇑g ∣[k] γ) ∣[k] β) =
+      UpperHalfPlane.peterssonInner k fd (⇑f ∣[k] β) (⇑g ∣[k] β) := by
+  obtain ⟨c, hc, hslash⟩ := exists_slash_eq_smul_of_mem_withCenter (k := k) hγ
+  rw [hslash f, hslash g, ModularForm.SL_smul_slash, ModularForm.SL_smul_slash,
+    peterssonInner_smul_left, peterssonInner_smul_right, ← mul_assoc, hc, one_mul]
+
+omit [Γ.FiniteIndex] in
 /-- **The summand does not depend on the coset representative**: the level-one-domain pairing
-is unchanged by slashing with `Γ·{±I}`. The `Γ` part fixes a `Γ`-invariant form, and `-I`
-scales it by the real sign `(-1)^k`, which the conjugate-linear pairing cancels against
-itself. This is what lets the defining sum be reindexed over the coset space. -/
+is unchanged by slashing with `Γ·{±I}`. This is what lets the defining sum be reindexed over the
+coset space. It is the `β = 1` case of `peterssonInner_slash_slash_of_mem_withCenter`. -/
 theorem peterssonInner_slash_of_mem_withCenter
     (f g : CuspForm (Γ.map (mapGL ℝ)) k) {γ : SL(2, ℤ)} (hγ : γ ∈ Γ.withCenter) :
     UpperHalfPlane.peterssonInner k fd (⇑f ∣[k] γ) (⇑g ∣[k] γ) = peterssonInnerFd f g := by
-  obtain ⟨c, hc, hslash⟩ := exists_slash_eq_smul_of_mem_withCenter (k := k) hγ
-  rw [hslash f, hslash g, peterssonInner_smul_left, peterssonInner_smul_right, ← mul_assoc, hc,
-    one_mul, peterssonInnerFd_def]
+  simpa [SlashAction.slash_one, peterssonInnerFd_def] using
+    peterssonInner_slash_slash_of_mem_withCenter f g hγ 1
 
 omit [Γ.FiniteIndex] in
 /-- Each summand of the self-pairing is a non-negative real: the integrand is

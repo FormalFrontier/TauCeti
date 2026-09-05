@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Lie.E6.DoubledMinuscule.GroupScheme
-public import TauCeti.GroupTheory.SpecificGroups.CFSG.Closure
+public import TauCeti.Algebra.Lie.E6.DoubledMinuscule.Frobenius
+public import TauCeti.GroupTheory.SpecificGroups.CFSG.Frobenius
 public import TauCeti.GroupTheory.SpecificGroups.CFSG.GraphTwisted
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Assembly
 
@@ -24,16 +24,18 @@ is `TauCeti.E6DoubledMinuscule.groupScheme`, built on `V(ϖ₁) ⊕ V(ϖ₆)` in
 
 This file attaches that carrier to a validated `²E₆` index. It supplies the group of
 algebraic-closure-valued points and the Bourbaki-numbered simple root subgroups, identifies the
-character of those subgroups with the corresponding simple root of the `E₆` root datum, and records
+character of those subgroups with the corresponding simple root of the `E₆` root datum, records
 that the involution of the fifty-four doubled coordinates realizes on the doubled weight family the
-diagram permutation the index itself carries.
+diagram permutation the index itself carries, and builds the `q`-power Frobenius factor `Frob_q` of
+the branch's Steinberg map, with the pinned equation `Frob_q (x_i(u)) = x_i(u ^ q)` on the numbered
+simple-root subgroups and the description of the points it fixes as those all of whose `54 × 54`
+matrix entries lie in the field of definition `𝔽_q`.
 
-The Steinberg map itself is *not* here, and neither is the candidate group of milestone L3. It is
-`γ₂ ∘ Frob_q`, and both factors are still owed on this carrier: the Frobenius is the endomorphism
-that `TauCeti.E6DoubledMinuscule.pointsMap` induces from the `q`-power map of the value ring, and
-`γ₂` is the automorphism the coordinate involution induces, whose construction consumes exactly the
-weight equivariance recorded below. Until both exist there is no fixed-point subgroup to form, and
-none is formed.
+The Steinberg map itself is *not* here, and no fixed-point subgroup of it is formed. That map is
+the composite `γ₂ ∘ Frob_q`, whose other factor `γ₂` is the automorphism of the carrier that the
+coordinate involution induces; constructing it consumes exactly the weight equivariance recorded
+below. In particular `TauCeti.TypeTwistedE6LieIndex.frobenius` is not that map: the twisted branch
+is precisely the one on which the Steinberg map and its Frobenius factor differ.
 
 Nothing here asserts that the carrier is reductive, that its weight torus is maximal, that it is
 the pinned simply connected Chevalley--Demazure group scheme of type `E₆`, or that any group
@@ -45,12 +47,18 @@ mentioned is finite, perfect, or simple.
   minuscule carrier, the group the classification recipe for `²E₆(q)` will be run inside.
 * `TauCeti.TypeTwistedE6LieIndex.simpleRootSubgroup`: its positive simple-root subgroup at a
   Bourbaki-numbered node.
+* `TauCeti.TypeTwistedE6LieIndex.frobenius`: the `q`-power Frobenius factor of the branch's
+  Steinberg map, at the field order the index records.
 
 ## Main results
 
 * `TauCeti.TypeTwistedE6LieIndex.rootGeneratorWeight_eq_root_simpleIndex`: the character of that
   subgroup is the corresponding simple root of
   `TauCeti.DynkinType.simplyConnectedRootDatum` at `E₆`.
+* `TauCeti.TypeTwistedE6LieIndex.frobenius_simpleRootSubgroup`: the pinned equation
+  `Frob_q (x_i(u)) = x_i(u ^ q)` on the numbered simple-root subgroups.
+* `TauCeti.TypeTwistedE6LieIndex.mem_fixedSubgroup_frobenius_iff`: a point is fixed by `Frob_q`
+  exactly when all entries of its `54 × 54` matrix lie in the field of definition.
 * `TauCeti.TypeTwistedE6LieIndex.e6DoubledMinusculeWeight_e6DoubledMinusculeGraphPerm_diagramPerm`:
   the coordinate involution of the doubled index set is equivariant for the diagram permutation
   that the index itself carries, read in the index's copy `Fin d.1.rank` of the Bourbaki index
@@ -80,10 +88,12 @@ its pinning, and any identification of a carrier with it are Layer 9 targets of
 `TauCetiRoadmap/ReductiveGroups/README.md` that the CFSG roadmap consumes rather than builds; none
 of them is proved of `TauCeti.E6DoubledMinuscule.groupScheme` here or in the files this one
 imports. What this file supplies is the `²E₆` branch's explicit carrier, its numbered root
-characters read in the `E₆` root datum, and the diagram-symmetry data that milestone L1's
-`γ (x_α(t)) = x_{γ α}(t)` will be proved from; they transfer to the L0 carrier along that Layer 9
-identification, and not before. The counterparts on the other branches already assembled are
-`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeA.lean`,
+characters read in the `E₆` root datum, the diagram-symmetry data that a graph automorphism's
+equation `γ (x_α(t)) = x_{γ α}(t)` will be proved from, and the `q`-power Frobenius `Frob_q`
+together with its own pinned equation `Frob_q (x_α(t)) = x_α(t ^ q)`; they transfer to the points
+of the pinned group along an identification of it with this carrier, and not before. The
+counterparts on the branches already assembled
+are `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeA.lean`,
 `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeE6.lean` and
 `TauCeti/GroupTheory/SpecificGroups/CFSG/Unimodular.lean`, and the branch that likewise stops short
 of a Steinberg map is `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeB2.lean`.
@@ -184,6 +194,73 @@ theorem e6DoubledMinusculeGraphPerm_pow_twistOrder :
     e6DoubledMinusculeGraphPerm ^ d.toGraphTwistedIndex.twistOrder = 1 := by
   rw [d.twistOrder_toGraphTwistedIndex, pow_two]
   exact Equiv.ext e6DoubledMinusculeGraphPerm_apply_apply
+
+/-! ## The Frobenius factor of the Steinberg map -/
+
+/-- **The `q`-power Frobenius endomorphism of the ambient group of a validated `²E₆` index**, `q`
+being the field order the index records.
+
+It is *not* the Steinberg map of the family, which for a graph-twisted family is `γ₂ ∘ Frob_q`.
+On this branch the two genuinely differ: the composite acts on the simple-root subgroups through
+the diagram permutation the index carries, which is `TauCeti.graphPermE6` by
+`TauCeti.TypeTwistedE6LieIndex.diagramPerm_toGraphTwistedIndex` and has order two by
+`TauCeti.orderOf_graphPermE6`. This is the right-hand factor of that composite, and the subgroup of
+points it fixes, characterized below, is correspondingly the untwisted one and not the fixed
+subgroup of the composite. -/
+def frobenius : d.AmbientGroup →* d.AmbientGroup :=
+  E6DoubledMinuscule.frobenius d.1.characteristic d.1.fieldExponent d.1.Closure
+
+/-- The Frobenius of a `²E₆` index is the doubled minuscule carrier's Frobenius at the
+characteristic and the exponent the index records. -/
+-- Not `@[simp]`: `frobenius_simpleRootSubgroup` and `coe_frobenius_apply` are the normal forms the
+-- pinned equations of this file are stated against, and unfolding to
+-- `TauCeti.E6DoubledMinuscule.frobenius` would keep them from firing, as it does on the branches
+-- already assembled.
+theorem frobenius_def :
+    d.frobenius = E6DoubledMinuscule.frobenius d.1.characteristic d.1.fieldExponent d.1.Closure :=
+  (rfl)
+
+/-- The Frobenius acts on the ambient group by raising each entry of the `54 × 54` matrix of a
+point to the `q`-th power. This is the coefficient-level form from which the commutation of
+`Frob_q` with a coordinate symmetry of the carrier is read. -/
+@[simp]
+theorem coe_frobenius_apply (g : d.AmbientGroup) (r c : Fin 54) :
+    ((d.frobenius g : Matrix.GeneralLinearGroup (Fin 54) d.1.Closure) :
+        Matrix (Fin 54) (Fin 54) d.1.Closure) r c =
+      ((g : Matrix.GeneralLinearGroup (Fin 54) d.1.Closure) :
+        Matrix (Fin 54) (Fin 54) d.1.Closure) r c ^ d.1.fieldOrder := by
+  rw [frobenius_def, d.1.fieldOrder_eq_characteristic_pow]
+  exact E6DoubledMinuscule.coe_frobenius_apply _ _ _ g r c
+
+/-- **The Frobenius fixes the Bourbaki numbering of a simple-root subgroup and raises its parameter
+to the `q`-th power**, that is, `Frob_q (x_i(u)) = x_i(u ^ q)`. The diagram permutation of the
+twisted family enters through the other factor `γ₂` of the Steinberg map, and not through this
+one. -/
+@[simp]
+theorem frobenius_simpleRootSubgroup (i : Fin d.1.rank) (u : Multiplicative d.1.Closure) :
+    d.frobenius (d.simpleRootSubgroup i u) =
+      d.simpleRootSubgroup i
+        (Multiplicative.ofAdd (Multiplicative.toAdd u ^ d.1.fieldOrder)) := by
+  rw [frobenius_def, simpleRootSubgroup_def, E6DoubledMinuscule.frobenius_rootSubgroupPoints,
+    ValidLieTypeIndex.fieldOrder_eq_characteristic_pow]
+
+/-- **A point of the ambient group is fixed by the Frobenius exactly when every entry of its
+`54 × 54` matrix lies in the field of definition.** Writing `𝔽_q` for
+`TauCeti.ValidLieTypeIndex.fixedField`, the copy of the field of `q` elements inside the algebraic
+closure, the Frobenius-fixed subgroup is therefore the group of points of the doubled minuscule
+carrier with coordinates in `𝔽_q`. It is not the group of points fixed by the twisted composite
+`γ₂ ∘ Frob_q`, which is the one the classification recipe for this branch is run inside. -/
+-- Not `@[simp]`, as for `TauCeti.ValidLieTypeIndex.mem_fixedSubgroup_geckFrobenius_iff`:
+-- `TauCeti.fixedSubgroup` is `MonoidHom.eqLocus` against the identity, so `simp` rewrites the
+-- left-hand side to `d.frobenius g = g` through `MonoidHom.mem_eqLocus`, and the `simpNF` linter
+-- rejects the annotation.
+theorem mem_fixedSubgroup_frobenius_iff (g : d.AmbientGroup) :
+    g ∈ fixedSubgroup d.frobenius ↔
+      ∀ r c, ((g : Matrix.GeneralLinearGroup (Fin 54) d.1.Closure) :
+        Matrix (Fin 54) (Fin 54) d.1.Closure) r c ∈ d.1.fixedField := by
+  rw [mem_fixedSubgroup, frobenius_def, E6DoubledMinuscule.frobenius_eq_self_iff]
+  simp only [mem_frobeniusFixedSubring, ValidLieTypeIndex.mem_fixedField,
+    d.1.fieldOrder_eq_characteristic_pow]
 
 end
 

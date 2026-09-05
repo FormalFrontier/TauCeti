@@ -72,7 +72,7 @@ at most `#U ^ (d + 1)`: such a polynomial is determined by the `d + 1` coefficie
 theorem ncard_natDegree_le_coeff_mem_le (d : ℕ) (U : Finset R) :
     {f : R[X] | f.natDegree ≤ d ∧ ∀ i, f.coeff i ∈ U}.ncard ≤ U.card ^ (d + 1) := by
   classical
-  set S : Set R[X] := {f | f.natDegree ≤ d ∧ ∀ i, f.coeff i ∈ U} with hS
+  set S : Set R[X] := {f | f.natDegree ≤ d ∧ ∀ i, f.coeff i ∈ U}
   -- The coefficient map sends `S` into the finite product `Fin (d + 1) → U`.
   set T : Finset (Fin (d + 1) → R) := Fintype.piFinset (fun _ => U) with hT
   have hcard : (T : Set (Fin (d + 1) → R)).ncard = U.card ^ (d + 1) := by

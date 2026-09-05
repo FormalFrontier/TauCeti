@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.NumberTheory.NumberField.Completion.FinitePlace
 public import TauCeti.RingTheory.DedekindDomain.AdicValuation.Completion
+public import TauCeti.RingTheory.AdjoinRoot.Factors
 public import TauCeti.RingTheory.DedekindDomain.Ideal
 public import TauCeti.RingTheory.DedekindDomain.ValuationOfNeZero
 
@@ -59,12 +59,12 @@ global étale algebra with its images in the completions passes through exactly 
   continuous, and is the only continuous ring homomorphism `K_v →+* L_w` extending `K → L`. Together
   these are its universal property, usable without unfolding the definition.
 
-## Roadmap
+## Motivation
 
-`TauCetiRoadmap/EllipticCurves/README.md`, Layer 6, lines 813–822: the "Explicit 2-descent (core,
-this layer)" bullet. The semilocal comparison behind it — matching the unramifiedness of a square
-class at the primes of the field factors with unramifiedness over the valuation ring of `K_v` —
-consumes every result here. Nothing in this file mentions a curve.
+Every result here is consumed by a semilocal comparison in explicit `2`-descent: matching the
+unramifiedness of a square class at the primes of the field factors with unramifiedness over the
+valuation ring of `K_v`. Nothing in this file mentions a curve — each statement is about a
+Dedekind domain and one of its completions.
 
 ## Provenance
 
@@ -93,22 +93,15 @@ its proof: the source contracts the maximal ideal with its own
 same thing about the ordered value monoid in one line. The odd-residue-characteristic step is split
 out as `ringChar_residueField_adicCompletionIntegers_ne_two`, which the source keeps inline.
 
-Only the part the `2`-descent consumes is ported: the Henselian and completeness chain of the
-source, which serves other consumers, is deliberately left out. The source is written against Lean
-`v4.32.0`; this is a forward port.
+The Henselian and completeness chain from that same Stoll file lives in
+`TauCeti.RingTheory.DedekindDomain.AdicValuation.Completion`, with the single-completion
+valuation results it rests on.
 
 ## Implementation notes
 
-`Mathlib.NumberTheory.NumberField.Completion.FinitePlace` is the sole Mathlib import. It is needed
-for two instances — `IsDiscreteValuationRing (v.adicCompletionIntegers K)` and
-`(Valued.v : Valuation (v.adicCompletion K) ℤᵐ⁰).IsRankOneDiscrete`. Both are stated there for an
-arbitrary Dedekind domain and its fraction field, not for number fields, so nothing in this file
-depends on number-field theory; they simply live in that module upstream. This note records the
-reason so the placement of a `NumberTheory` import inside `RingTheory` is not mistaken for a
-layering slip.
-
-It also transitively supplies the ramification-valuation and adic-valuation modules, so those are
-not imported directly.
+Every Mathlib module this file needs arrives through
+`TauCeti.RingTheory.DedekindDomain.AdicValuation.Completion`, which is imported for the
+single-completion results and publicly re-exports them.
 -/
 
 public section
@@ -119,20 +112,6 @@ namespace IsDedekindDomain.HeightOneSpectrum
 
 variable {R : Type*} [CommRing R] [IsDedekindDomain R]
   {K : Type*} [Field K] [Algebra R K] [IsFractionRing R K] (v : HeightOneSpectrum R)
-
-/-- An irreducible element of the ring of integers of a completion has valuation `exp (-1)`. -/
-theorem valued_algebraMap_eq_exp_neg_one_of_irreducible {π : v.adicCompletionIntegers K}
-    (hπ : Irreducible π) :
-    Valued.v (algebraMap (v.adicCompletionIntegers K) (v.adicCompletion K) π) = exp (-1) := by
-  -- `v.adicCompletionIntegers K` is by definition `Valued.v.valuationSubring`, which is what lets
-  -- `π`'s maximal ideal be retyped as an ideal of the valuation subring here.
-  have hgen : IsLocalRing.maximalIdeal (Valued.v : Valuation (v.adicCompletion K)
-      ℤᵐ⁰).valuationSubring = Ideal.span {π} := hπ.maximalIdeal_eq
-  have huni := Valuation.isUniformizer_of_maximalIdeal_eq_span
-    (v := (Valued.v : Valuation (v.adicCompletion K) ℤᵐ⁰)) hgen
-  rwa [Valuation.IsUniformizer.iff,
-    Valuation.IsRankOneDiscrete.generator_eq_exp_neg_one_of_surjective
-      (v.valuedAdicCompletion_surjective K)] at huni
 
 /-- The valuation associated to the maximal ideal of the ring of integers of an adic completion is
 the valuation of the completion.
@@ -512,5 +491,31 @@ lemma comap_maximalIdeal_adicCompletionIntegersExtension :
 end Extension
 
 end IsDedekindDomain.HeightOneSpectrum
+
+open Polynomial
+
+namespace AdjoinRoot
+
+/-- The base-change map `K[X] ⧸ (p) →+* K_v[X] ⧸ (q)` of `AdjoinRoot`s at a completion is
+compatible with the algebra maps from the underlying Dedekind domain `R` and from the ring of
+integers of the completion. -/
+-- Lives here rather than beside `AdjoinRoot.map` in `TauCeti.RingTheory.AdjoinRoot.Factors`
+-- because it is not a fact about `AdjoinRoot` alone: it names `adicCompletion` and
+-- `adicCompletionIntegers`, and this module is where those two developments first meet.
+lemma map_comp_algebraMap {R : Type*} [CommRing R] [IsDedekindDomain R] {K : Type*}
+    [Field K] [Algebra R K] [IsFractionRing R K] (v : HeightOneSpectrum R) {p : K[X]}
+    {q : (v.adicCompletion K)[X]} (hq : q ∣ p.map (algebraMap K (v.adicCompletion K))) :
+    (AdjoinRoot.map (algebraMap K (v.adicCompletion K)) p q hq).comp
+        (algebraMap R (AdjoinRoot p)) =
+      (algebraMap (v.adicCompletionIntegers K) (AdjoinRoot q)).comp
+        (algebraMap R (v.adicCompletionIntegers K)) := by
+  ext c
+  simp only [RingHom.comp_apply]
+  rw [IsScalarTower.algebraMap_apply R K (AdjoinRoot p), AdjoinRoot.algebraMap_eq, map_of,
+    IsScalarTower.algebraMap_apply (v.adicCompletionIntegers K) (v.adicCompletion K)
+      (AdjoinRoot q), AdjoinRoot.algebraMap_eq]
+  rfl
+
+end AdjoinRoot
 
 end

@@ -106,8 +106,7 @@ theorem intervalIntegral_fdBoundarySegment5_eq_circleIntegral_logDeriv_cuspFunct
   have hcper : Function.Periodic
       (fun θ ↦ deriv (circleMap 0 R) θ • Lc (circleMap 0 R θ)) (2 * π) := fun θ ↦ by
     simp only []
-    rw [TauCeti.Function.Periodic.deriv (periodic_circleMap 0 R) θ,
-      periodic_circleMap 0 R θ]
+    rw [(periodic_circleMap 0 R).deriv θ, periodic_circleMap 0 R θ]
   -- shift the circle integral to `[-π, π]`
   have h2π : -π + 2 * π = π := by ring
   have h0π : (0 : ℝ) + 2 * π = 2 * π := by ring

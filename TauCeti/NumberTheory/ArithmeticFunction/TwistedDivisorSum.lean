@@ -24,12 +24,12 @@ powers. For characters of level one it specializes to Mathlib's ordinary divisor
 
 ## Main declarations
 
-* `TauCeti.DirichletCharacter.twistedDivisorSum`: the arithmetic function of twisted divisor sums;
-* `TauCeti.DirichletCharacter.isMultiplicative_twistedDivisorSum`: its multiplicativity;
-* `TauCeti.DirichletCharacter.twistedDivisorSum_apply_prime_pow`: its prime-power formula;
-* `TauCeti.DirichletCharacter.twistedDivisorSum_apply_prime_pow_of_dvd_left_level`: its
+* `DirichletCharacter.twistedDivisorSum`: the arithmetic function of twisted divisor sums;
+* `DirichletCharacter.isMultiplicative_twistedDivisorSum`: its multiplicativity;
+* `DirichletCharacter.twistedDivisorSum_apply_prime_pow`: its prime-power formula;
+* `DirichletCharacter.twistedDivisorSum_apply_prime_pow_of_dvd_left_level`: its
   bad-level specialization;
-* `TauCeti.DirichletCharacter.twistedDivisorSum_modOne_eq_sigma`: its reduction to the ordinary
+* `DirichletCharacter.twistedDivisorSum_modOne_eq_sigma`: its reduction to the ordinary
   divisor sum.
 
 The convention follows Diamond--Shurman, *A First Course in Modular Forms*, Chapter 4
@@ -38,7 +38,7 @@ The convention follows Diamond--Shurman, *A First Course in Modular Forms*, Chap
 
 public section
 
-namespace TauCeti.DirichletCharacter
+namespace DirichletCharacter
 
 open ArithmeticFunction
 
@@ -174,4 +174,4 @@ theorem twistedDivisorSum_modOne_eq_sigma (e : ℕ) (psi phi : DirichletCharacte
   simpa using congrArg (fun f : ArithmeticFunction ℕ ↦ (f : ArithmeticFunction R))
     (ArithmeticFunction.zeta_mul_pow_eq_sigma (k := e))
 
-end TauCeti.DirichletCharacter
+end DirichletCharacter

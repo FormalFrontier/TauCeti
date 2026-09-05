@@ -34,8 +34,6 @@ of L. Alpöge's disproof of the uniform-constant Erdős unit-distance conjecture
 
 public section
 
-open TauCeti.IntermediateField
-
 namespace TauCeti.Multiquadratic
 
 variable {K L : Type*} [Field K] [Field L] [Algebra K L]
@@ -67,7 +65,7 @@ theorem finrank_sqrtTower {d : ℕ → K} {root : ℕ → L}
           · exact Set.Iio_subset_Iio (Nat.le_succ n) (hT hk)
         · rw [Finset.prod_insert hnT, heq]
           exact ⟨s * ∏ j ∈ T, d j, by ring⟩
-      rw [finrank_sup_adjoin_simple_eq_mul_two _ hx2 hxK,
+      rw [(sqrtTower root n).finrank_sup_adjoin_simple_eq_mul_two hx2 hxK,
         ih (fun S hS hsub => hindep S hS (hsub.trans (Set.Iio_subset_Iio (Nat.le_succ n)))),
         pow_succ]
 

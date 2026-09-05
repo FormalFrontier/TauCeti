@@ -473,6 +473,20 @@ theorem mem_restrictedMvPowerSeriesSubring {k : ℕ} {A : Type*} [Ring A] [Topol
     [NonarchimedeanRing A] {f : MvPowerSeries (Fin k) A} :
     f ∈ restrictedMvPowerSeriesSubring k A ↔ IsRestricted f := (Iff.rfl)
 
+/-- The variable `Xᵢ` of `A⟨X₁, …, Xₖ⟩`, as an element of the restricted subring. -/
+noncomputable def restrictedX {k : ℕ} {A : Type*} [Ring A] [TopologicalSpace A]
+    [NonarchimedeanRing A] (i : Fin k) : restrictedMvPowerSeriesSubring k A :=
+  ⟨MvPowerSeries.X i, mem_restrictedMvPowerSeriesSubring.mpr <| by
+    rw [MvPowerSeries.X_def]
+    exact isRestricted_monomial _ _⟩
+
+/-- `restrictedX i` is the power series `Xᵢ` underneath. -/
+@[simp]
+theorem coe_restrictedX {k : ℕ} {A : Type*} [Ring A] [TopologicalSpace A] [NonarchimedeanRing A]
+    (i : Fin k) :
+    ((restrictedX i : restrictedMvPowerSeriesSubring k A) : MvPowerSeries (Fin k) A) =
+      MvPowerSeries.X i := (rfl)
+
 /-! ### Algebra instance -/
 
 /-- Constant power series are restricted: the `algebraMap` image of any `a : A` has

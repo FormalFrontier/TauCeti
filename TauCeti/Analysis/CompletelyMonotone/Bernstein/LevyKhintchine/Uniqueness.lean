@@ -34,8 +34,6 @@ invertible away from zero, and the Levy condition `mu {0} = 0` recovers `mu`.
 
 * R. Schilling, R. Song, Z. Vondracek, *Bernstein Functions: Theory and Applications*
   (de Gruyter, 2nd ed. 2012), Theorem 3.2.
-* Roadmap: `TauCetiRoadmap/OneParameterSemigroups/README.md`, Part B (Levy--Khintchine
-  representation of Bernstein functions).
 -/
 
 public section

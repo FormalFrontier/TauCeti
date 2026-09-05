@@ -142,18 +142,6 @@ private lemma HasMetricProductRuleWithinAt.add_left
   ring
 
 omit [IsContMDiffRiemannianBundle I 1 E (fun x : M ↦ TangentSpace I x)] in
-/-- The product rule is additive in its second field. -/
-private lemma HasMetricProductRuleWithinAt.add_right
-    {V W W' : ∀ r, TangentSpace I (γ r)}
-    (hW : HasMetricProductRuleWithinAt (cov := cov) (s := s) (t := t) V W)
-    (hW' : HasMetricProductRuleWithinAt (cov := cov) (s := s) (t := t) V W')
-    (hcoordW : DifferentiableWithinAt ℝ (sectionCoord (F := E) γ W (γ t)) s t)
-    (hcoordW' : DifferentiableWithinAt ℝ (sectionCoord (F := E) γ W' (γ t)) s t) :
-    HasMetricProductRuleWithinAt (cov := cov) (s := s) (t := t) V
-      (fun r ↦ W r + W' r) :=
-  (hW.symm.add_left hW'.symm hcoordW hcoordW').symm
-
-omit [IsContMDiffRiemannianBundle I 1 E (fun x : M ↦ TangentSpace I x)] in
 /-- The product rule is preserved by multiplying its first field by a differentiable scalar. -/
 private lemma HasMetricProductRuleWithinAt.smul_left
     {V W : ∀ r, TangentSpace I (γ r)} {f : ℝ → ℝ}

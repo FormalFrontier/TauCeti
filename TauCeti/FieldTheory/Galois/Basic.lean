@@ -33,18 +33,16 @@ finite and normal (`Algebra.IsQuadraticExtension.normal`), hence Galois with sep
 (`Algebra.IsQuadraticExtension.isGalois`); `IsGalois.card_aut_eq_finrank` counts the
 automorphisms and `IsGalois.mem_range_algebraMap_iff_fixed` characterises the base field.
 
-These are the descent inputs for the quadratic-twist layer of
-`TauCetiRoadmap/EllipticCurves/README.md` (§Layer 5), consumed by
+These are the descent inputs for quadratic twists, consumed by
 `TauCeti/AlgebraicGeometry/EllipticCurve/GaloisDescent.lean` and by
 `TauCeti/RingTheory/Norm/Quadratic.lean`, which expresses the trace and norm of a
 separable quadratic extension through its nontrivial automorphism.
 
 Adapted from the FLT project (`ImperialCollegeLondon/FLT`,
-`FLT/Mathlib/FieldTheory/Galois/Basic.lean` at the roadmap's pin `bc2fe8ff7396`, FLT PR #1088,
+`FLT/Mathlib/FieldTheory/Galois/Basic.lean` at `bc2fe8ff7396`, FLT PR #1088,
 Apache 2.0). That file's own header reads `Authors: Kevin Buzzard, Claude`; following this
 repository's convention for adapted material, the upstream authorship is credited here rather
-than in the copyright header. Only the results consumed downstream are ported; the rest of
-the source file is deferred to the Tau Ceti PRs that consume it.
+than in the copyright header. Only the results consumed downstream are adapted here.
 -/
 
 public section

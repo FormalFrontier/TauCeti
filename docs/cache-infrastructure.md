@@ -35,13 +35,19 @@ incompatible, bump `mathlib-ltar-v1` once in
 `gh cache delete <key> --repo TauCetiProject/TauCeti`. A failed fetch also retries once with
 `lake exe cache get!`, which forces every linked file to be downloaded and unpacked again.
 
-Which endpoint serves those downloads is a repository variable. Every workflow that runs
-`lake exe cache get` (`ci.yml`, `pr-build.yml`, `pr-profile.yml`, `nightly-verify.yml`,
-`pages.yml`) exports `MATHLIB_CACHE_GET_URL` from `vars.MATHLIB_CACHE_GET_URL`. The cache
-tool treats an empty value as unset, so clearing the variable returns reads to the tool's
-default endpoints on the next run, with no code change. For local and radar runs,
-`scripts/bench/build/run` sets a default for the same variable; a value defined beforehand
-(even an empty one) wins over the default.
+Downloads go to the cache tool's default read endpoint. The escape hatch is a repository
+variable. Every workflow that runs `lake exe cache get` (`ci.yml`, `pr-build.yml`,
+`pr-profile.yml`, `nightly-verify.yml`, `pages.yml`) exports
+`MATHLIB_CACHE_DEBUG_USE_LEGACY` from `vars.MATHLIB_CACHE_DEBUG_USE_LEGACY`. An operator
+sets the variable to `1` to send reads back to the legacy storage endpoint, and clears it
+to return to the default endpoint. Both changes apply on the next run, with no code
+change: the tool treats unset, empty, `0`, and `false` alike as off. Local and radar runs
+need no wiring; the cache tool reads the variable from the caller's environment.
+
+The flag is temporary. It exists only for an easy rollback during the transition to the
+default endpoint that leanprover-community/mathlib4@03616a12 introduced, and upstream
+plans to retire it together with direct reads from the storage account. Remove this
+wiring when the pinned cache tool drops the flag.
 
 ## Cloudflare account
 

@@ -88,7 +88,7 @@ theorem IsPwC1ImmersionOn.exists_crossingDecomposition
     · exact fun htb => hbase (hclosed.trans (htb ▸ ht'.2))
   choose! R hR_pos L_R L_L hL_R hL_L h_R h_L hspec using
     fun t (ht : t ∈ T) =>
-      exists_radius_hasCauchyPVAt_exitCapWindow h_imm hab (hinterior t ht) (hT_mem.mp ht).2
+      exists_radius_hasCauchyPVAt_exitCapWindow h_imm (hinterior t ht) (hT_mem.mp ht).2
   obtain ⟨δ, hδ, hendpoints, hseparated, hδR⟩ :=
     exists_common_window_radius_le hinterior R hR_pos
   have hunique : ∀ t₀ ∈ T, ∀ t ∈ Icc (t₀ - δ) (t₀ + δ), γ t = s → t = t₀ := by

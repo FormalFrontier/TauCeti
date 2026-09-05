@@ -24,6 +24,10 @@ The pointwise identifications are assembled into a natural isomorphism of group-
   upper-triangular matrices in `GL_n`.
 * `TauCeti.GeneralLinear.UpperTriangular.pointsMulEquiv`: its points over an `R`-algebra `A` are
   the group `TauCeti.upperTriangularGroup (Fin n) A`.
+* `TauCeti.GeneralLinear.UpperTriangular.definingHopfIdeal_toIdeal_le_ker` and
+  `TauCeti.GeneralLinear.UpperTriangular.definingHopfIdeal_toIdeal_le_ker_of_isUpperTriangular`:
+  a coordinate morphism kills the defining Hopf ideal as soon as it kills the coordinates below
+  the diagonal, equivalently as soon as its tautological matrix point is upper triangular.
 * `TauCeti.GeneralLinear.UpperTriangular.pointsNatIso`: the corresponding natural isomorphism of
   group-valued functors.
 * `TauCeti.GeneralLinear.UpperTriangular.rootSubgroup`: the positive root subgroup `x_ij` factored
@@ -69,6 +73,13 @@ theorem weights_apply (i : Fin n) : weights n i = (n : ℤ) - 1 - (i : ℤ) :=
 /-- The standard weights decrease precisely when the row index increases. -/
 theorem weights_lt_weights_iff (i j : Fin n) : weights n i < weights n j ↔ j < i := by
   simp [weights]
+
+/-- The standard upper-triangular weights are pairwise distinct. -/
+theorem weights_injective : Function.Injective (weights n) := by
+  intro i j hij
+  apply Fin.ext
+  rw [weights_apply, weights_apply] at hij
+  omega
 
 /-- The matrix coordinates strictly below the diagonal. -/
 def definingRelationSet : Set (GeneralLinear.coordinateHopfAlgebra R n) :=
@@ -168,6 +179,28 @@ instance locallyOfFiniteType_groupScheme :
 section Points
 
 variable {A : Type w} [CommRing A] [Algebra R A]
+
+/-- A morphism out of the coordinate algebra of `GL_n` kills the upper-triangular defining Hopf
+ideal as soon as it kills every matrix coordinate strictly below the diagonal. -/
+theorem definingHopfIdeal_toIdeal_le_ker
+    (f : GeneralLinear.coordinateHopfAlgebra R n →ₐ[R] A)
+    (hf : ∀ i j, j < i → f (GeneralLinear.coordinateHopfAlgebraAlgEquiv R n
+      (GeneralLinear.coordinateRingMap R n (MvPolynomial.X (i, j)))) = 0) :
+    (definingHopfIdeal R n).toIdeal ≤ RingHom.ker f.toRingHom := by
+  rw [definingHopfIdeal_toIdeal, Ideal.span_le]
+  rintro x ⟨i, j, hji, rfl⟩
+  rw [SetLike.mem_coe, RingHom.mem_ker]
+  exact hf i j hji
+
+/-- A morphism out of the coordinate algebra of `GL_n` whose tautological matrix point is upper
+triangular kills the upper-triangular defining Hopf ideal. -/
+theorem definingHopfIdeal_toIdeal_le_ker_of_isUpperTriangular
+    (f : GeneralLinear.coordinateHopfAlgebra R n →ₐ[R] A)
+    (hf : ((GeneralLinear.pointToGeneralLinear n (toConv f) :
+        Matrix.GeneralLinearGroup (Fin n) A) : Matrix (Fin n) (Fin n) A).IsUpperTriangular) :
+    (definingHopfIdeal R n).toIdeal ≤ RingHom.ker f.toRingHom :=
+  definingHopfIdeal_toIdeal_le_ker R n f fun _ _ hji => by
+    simpa only [GeneralLinear.pointToGeneralLinear_apply, WithConv.ofConv_toConv] using hf hji
 
 /-- An ambient `GL_n`-point belongs to the upper-triangular closed subgroup exactly when its
 matrix is upper triangular. -/
