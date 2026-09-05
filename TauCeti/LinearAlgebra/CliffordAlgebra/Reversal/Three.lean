@@ -180,6 +180,7 @@ private theorem exists_add_reverseMatrix_eq_smul_one
     _ = r • 1 := by rw [map_smul, map_one]
 
 /-- Reversal transported through any two-by-two model is matrix adjugation. -/
+@[simp]
 theorem reverseEven_eq_adjugate_of_finrank_eq_three
     (hV : Module.finrank K V = 3)
     (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) (x : ↥(even Q)) :
