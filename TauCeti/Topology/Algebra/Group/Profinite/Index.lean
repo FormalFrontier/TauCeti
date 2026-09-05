@@ -35,6 +35,9 @@ description as the least common multiple of the indices of open overgroups.
 * `Subgroup.profiniteIndex_eq_one_iff_topologicalClosure_eq_top`: the index is one exactly
   for dense subgroups.
 * `Subgroup.profiniteIndex_eq_one_iff`: the closed-subgroup specialization.
+* `Subgroup.profiniteIndex_eq_bot_iff_topologicalClosure_eq_top` and
+  `Subgroup.profiniteIndex_eq_bot_iff`: the simp-normal forms of the two previous results,
+  since the supernatural unit is the bottom element.
 
 ## References
 
@@ -263,6 +266,14 @@ theorem _root_.Subgroup.profiniteIndex_eq_one_iff_topologicalClosure_eq_top (H :
   · intro hclosure
     rw [← Subgroup.profiniteIndex_topologicalClosure H, hclosure, Subgroup.profiniteIndex_top]
 
+/-- Simp-normal form of `profiniteIndex_eq_one_iff_topologicalClosure_eq_top`: the supernatural
+unit is the bottom element, so `simp` states index one as `profiniteIndex H = ⊥`. -/
+@[simp]
+theorem _root_.Subgroup.profiniteIndex_eq_bot_iff_topologicalClosure_eq_top (H : Subgroup G) :
+    Subgroup.profiniteIndex H = ⊥ ↔ H.topologicalClosure = ⊤ := by
+  rw [← Supernatural.one_eq_bot,
+    Subgroup.profiniteIndex_eq_one_iff_topologicalClosure_eq_top]
+
 /-- A closed subgroup of a profinite group has supernatural index one exactly when it is the
 whole group. -/
 theorem _root_.Subgroup.profiniteIndex_eq_one_iff (H : Subgroup G) (hH : IsClosed (H : Set G)) :
@@ -272,6 +283,16 @@ theorem _root_.Subgroup.profiniteIndex_eq_one_iff (H : Subgroup G) (hH : IsClose
     rw [Subgroup.topologicalClosure_coe, hH.closure_eq]
   rw [Subgroup.profiniteIndex_eq_one_iff_topologicalClosure_eq_top,
     hclosure]
+
+/-- Simp-normal form of `profiniteIndex_eq_one_iff`, stating index one for a closed subgroup as
+`profiniteIndex H = ⊥`. Its priority is above
+`profiniteIndex_eq_bot_iff_topologicalClosure_eq_top`, so that a closed subgroup simplifies to
+`H = ⊤` rather than to a statement about its closure. -/
+@[simp high]
+theorem _root_.Subgroup.profiniteIndex_eq_bot_iff (H : Subgroup G)
+    (hH : IsClosed (H : Set G)) :
+    Subgroup.profiniteIndex H = ⊥ ↔ H = ⊤ := by
+  rw [← Supernatural.one_eq_bot, Subgroup.profiniteIndex_eq_one_iff H hH]
 
 end Subgroup
 
