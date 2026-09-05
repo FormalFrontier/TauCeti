@@ -5,7 +5,6 @@ Authors: Codex
 -/
 module
 
-public import Mathlib.RepresentationTheory.Homological.GroupHomology.LowDegree
 public import Mathlib.RepresentationTheory.Homological.TateCohomology.Basic
 
 /-!
@@ -149,8 +148,13 @@ theorem HNegTwoAddEquivTensorOfIsTrivial_single (g : G) (a : A) :
       Additive.ofMul (Abelianization.of g) ⊗ₜ[ℤ] a := by
   let e : tateCohomology A (-2) ≅ groupHomology.H1 A :=
     (TateCohomology.isoGroupHomology (-2) 1 (Eq.refl (-2))).app A
+  -- The natural isomorphism lands in `groupHomology.functor R G 1`, whereas the low-degree API
+  -- uses the definitionally equal alias `groupHomology.H1`; an explicit rewrite cannot cross
+  -- that boundary at implicit transparency.
   change HNegTwoAddEquivTensorOfIsTrivial A
     (e.inv (H1π A ((cycles₁IsoOfIsTrivial A).inv (Finsupp.single g a)))) = _
+  -- Unfolding the composite similarly exposes the functor value rather than `H1`, so record the
+  -- definitionally equal, well-typed low-degree form before applying the isomorphism law.
   change (H1AddEquivOfIsTrivial A)
     (e.hom (e.inv (H1π A ((cycles₁IsoOfIsTrivial A).inv (Finsupp.single g a))))) = _
   rw [e.inv_hom_id_apply, H1AddEquivOfIsTrivial_single]
