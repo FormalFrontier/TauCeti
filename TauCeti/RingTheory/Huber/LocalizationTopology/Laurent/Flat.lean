@@ -6,15 +6,21 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.RingTheory.Huber.LocalizationTopology.Laurent.Presentation
+public import Mathlib.RingTheory.RingHom.Flat
 public import TauCeti.RingTheory.Huber.Restricted.Laurent
 public import TauCeti.RingTheory.Huber.StronglyNoetherian
 
 /-!
-# Flatness of the Laurent quotient, and of every numerator enlargement
+# Flatness of the Laurent quotient, and of a numerator enlargement
 
-`A⟨T/s⟩⟨X⟩ ⧸ (t/s - X)` is a flat `A⟨T/s⟩`-module, and so — this is the elementary case of
-**Wedhorn's Proposition 8.30**
-at the ring level — is `A⟨T'/s⟩` for any enlargement `T ⊆ T'` of the numerators.
+`A⟨T/s⟩⟨X⟩ ⧸ (t/s - X)` is a flat `A⟨T/s⟩`-module over a complete noetherian Tate ring, and so —
+the elementary case of **Wedhorn's Proposition 8.30** at the ring level — is `A⟨T'/s⟩` when `T'`
+adjoins the single numerator `t`.
+
+The enlargement `T ⊆ T'` is then reached one numerator at a time. That chain result carries the
+hypotheses its induction needs: `s` topologically nilpotent, and every *proper* intermediate
+`A⟨U/s⟩` strongly noetherian. It is therefore **not** Wedhorn's Proposition 8.30, which assumes
+strong noetherianity of `A` alone; see *What this is not*.
 
 The argument runs in three steps. Over a complete noetherian Tate ring `B` the quotient
 `B ⟨X⟩ ⧸ (f - X)` is flat over `B` (Wedhorn, Lemma 8.31(2)); with `B = A⟨T/s⟩` and `f = t/s` that
@@ -35,11 +41,6 @@ tower.
   elementary case** — the restriction map `A⟨T/s⟩ → A⟨T'/s⟩` is flat when `T'` adds the single
   numerator `t`; the `..._of_isStronglyNoetherian` variant takes the hypotheses in their usual
   form.
-* `TauCeti.Huber.PairOfDefinition.isScalarTower_restrictionRingHomOfSubset` : for `T ⊆ U ⊆ V` the
-  three coordinate rings form a scalar tower, because restriction maps compose.
-* `TauCeti.Huber.PairOfDefinition.flat_restrictionRingHomOfSubset_trans` : flatness composes along
-  such a chain. This is the step the induction below repeats, and it carries that argument's
-  instance bookkeeping.
 * `TauCeti.Huber.PairOfDefinition.flat_restrictionRingHomOfSubset_of_forall_isStronglyNoetherian`
   : the chain form — the restriction map of an arbitrary enlargement `T ⊆ T'` is flat, **assuming
   strong noetherianity of every intermediate `A⟨U/s⟩`**. That family hypothesis is what separates
@@ -190,8 +191,7 @@ theorem flat_restrictionRingHomOfSubset (ht : t ∈ T') (hsplit : ∀ u ∈ T', 
     letI := isUniformAddGroup_locUniformSpace P T' s S' hden'
     letI := isTopologicalRing_locUniformSpace P T' s S' hden'
     letI := isHuberRing_locUniformSpace P T' s S' hden'
-    letI := (restrictionRingHomOfSubset P T s S hden T' S' hden' hTT').toAlgebra
-    Module.Flat (UniformSpace.Completion S) (UniformSpace.Completion S') := by
+    (restrictionRingHomOfSubset P T s S hden T' S' hden' hTT').Flat := by
   let _ := locUniformSpace P T s S hden
   have _ := isUniformAddGroup_locUniformSpace P T s S hden
   have _ := isTopologicalRing_locUniformSpace P T s S hden
@@ -234,8 +234,7 @@ theorem flat_restrictionRingHomOfSubset_of_isStronglyNoetherian (ht : t ∈ T')
     letI := isUniformAddGroup_locUniformSpace P T' s S' hden'
     letI := isTopologicalRing_locUniformSpace P T' s S' hden'
     letI := isHuberRing_locUniformSpace P T' s S' hden'
-    letI := (restrictionRingHomOfSubset P T s S hden T' S' hden' hTT').toAlgebra
-    Module.Flat (UniformSpace.Completion S) (UniformSpace.Completion S') := by
+    (restrictionRingHomOfSubset P T s S hden T' S' hden' hTT').Flat := by
   let _ := locUniformSpace P T s S hden
   have _ := isUniformAddGroup_locUniformSpace P T s S hden
   have _ := isTopologicalRing_locUniformSpace P T s S hden
@@ -251,27 +250,36 @@ theorem flat_restrictionRingHomOfSubset_of_isStronglyNoetherian (ht : t ∈ T')
       (by rw [IsUniformAddGroup.rightUniformSpace_eq]; infer_instance))
     (isClosed_laurentRelationIdeal_of_isStronglyNoetherian P T s t S hden hnil hSN)
 
-/-- **A chain of numerator sets is a tower of coordinate rings.** For `T ⊆ U ⊆ V` the restriction
-map out of `A⟨T/s⟩` to `A⟨V/s⟩` factors through `A⟨U/s⟩` — that is
-`TauCeti.Huber.PairOfDefinition.restrictionRingHomOfSubset_comp_restrictionRingHomOfSubset` — so
-the three form a scalar tower. It is what lets flatness compose along a chain of enlargements. -/
-theorem isScalarTower_restrictionRingHomOfSubset (U V : Finset A) (hTU : T ⊆ U) (hUV : U ⊆ V) :
-    letI iT := locUniformSpace P T s S hden
+/-- The composition step of the induction below, extracted only because the instance chain for
+three presentations does not fit inside it. The mathematical content is Mathlib's
+`RingHom.Flat.comp` together with
+`TauCeti.Huber.PairOfDefinition.restrictionRingHomOfSubset_comp_restrictionRingHomOfSubset`. -/
+private theorem flat_comp_restrictionRingHomOfSubset (P : PairOfDefinition A) (T : Finset A)
+    (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
+    (hden : HasDenominatorPower P T s S) (U V : Finset A) (hTU : T ⊆ U) (hUV : U ⊆ V)
+    (h₁ : letI := locUniformSpace P T s S hden
+      letI := isUniformAddGroup_locUniformSpace P T s S hden
+      letI := isTopologicalRing_locUniformSpace P T s S hden
+      letI := locUniformSpace P U s S (hden.mono hTU)
+      letI := isUniformAddGroup_locUniformSpace P U s S (hden.mono hTU)
+      letI := isTopologicalRing_locUniformSpace P U s S (hden.mono hTU)
+      (restrictionRingHomOfSubset P T s S hden U S (hden.mono hTU) hTU).Flat)
+    (h₂ : letI := locUniformSpace P U s S (hden.mono hTU)
+      letI := isUniformAddGroup_locUniformSpace P U s S (hden.mono hTU)
+      letI := isTopologicalRing_locUniformSpace P U s S (hden.mono hTU)
+      letI := locUniformSpace P V s S (hden.mono (hTU.trans hUV))
+      letI := isUniformAddGroup_locUniformSpace P V s S (hden.mono (hTU.trans hUV))
+      letI := isTopologicalRing_locUniformSpace P V s S (hden.mono (hTU.trans hUV))
+      (restrictionRingHomOfSubset P U s S (hden.mono hTU) V S
+        (hden.mono (hTU.trans hUV)) hUV).Flat) :
+    letI := locUniformSpace P T s S hden
     letI := isUniformAddGroup_locUniformSpace P T s S hden
     letI := isTopologicalRing_locUniformSpace P T s S hden
-    letI iU := locUniformSpace P U s S (hden.mono hTU)
-    letI := isUniformAddGroup_locUniformSpace P U s S (hden.mono hTU)
-    letI := isTopologicalRing_locUniformSpace P U s S (hden.mono hTU)
-    letI iV := locUniformSpace P V s S (hden.mono (hTU.trans hUV))
+    letI := locUniformSpace P V s S (hden.mono (hTU.trans hUV))
     letI := isUniformAddGroup_locUniformSpace P V s S (hden.mono (hTU.trans hUV))
     letI := isTopologicalRing_locUniformSpace P V s S (hden.mono (hTU.trans hUV))
-    letI := (restrictionRingHomOfSubset P T s S hden U S (hden.mono hTU) hTU).toAlgebra
-    letI := (restrictionRingHomOfSubset P U s S (hden.mono hTU) V S
-      (hden.mono (hTU.trans hUV)) hUV).toAlgebra
-    letI := (restrictionRingHomOfSubset P T s S hden V S
-      (hden.mono (hTU.trans hUV)) (hTU.trans hUV)).toAlgebra
-    IsScalarTower (@UniformSpace.Completion S iT) (@UniformSpace.Completion S iU)
-      (@UniformSpace.Completion S iV) := by
+    (restrictionRingHomOfSubset P T s S hden V S
+      (hden.mono (hTU.trans hUV)) (hTU.trans hUV)).Flat := by
   let _ := locUniformSpace P T s S hden
   have _ := isUniformAddGroup_locUniformSpace P T s S hden
   have _ := isTopologicalRing_locUniformSpace P T s S hden
@@ -281,94 +289,33 @@ theorem isScalarTower_restrictionRingHomOfSubset (U V : Finset A) (hTU : T ⊆ U
   let _ := locUniformSpace P V s S (hden.mono (hTU.trans hUV))
   have _ := isUniformAddGroup_locUniformSpace P V s S (hden.mono (hTU.trans hUV))
   have _ := isTopologicalRing_locUniformSpace P V s S (hden.mono (hTU.trans hUV))
-  let _ := (restrictionRingHomOfSubset P T s S hden U S (hden.mono hTU) hTU).toAlgebra
-  let _ := (restrictionRingHomOfSubset P U s S (hden.mono hTU) V S
-    (hden.mono (hTU.trans hUV)) hUV).toAlgebra
-  let _ := (restrictionRingHomOfSubset P T s S hden V S
-    (hden.mono (hTU.trans hUV)) (hTU.trans hUV)).toAlgebra
-  exact IsScalarTower.of_algebraMap_eq fun x ↦ by
-    rw [RingHom.algebraMap_toAlgebra, RingHom.algebraMap_toAlgebra, RingHom.algebraMap_toAlgebra,
-      ← RingHom.comp_apply, restrictionRingHomOfSubset_comp_restrictionRingHomOfSubset P T s S
-        hden U S (hden.mono hTU) hTU V S (hden.mono (hTU.trans hUV)) hUV]
-
-/-- **Flatness composes along a chain of numerator sets.** For `T ⊆ U ⊆ V`, if `A⟨U/s⟩` is flat
-over `A⟨T/s⟩` and `A⟨V/s⟩` is flat over `A⟨U/s⟩`, then `A⟨V/s⟩` is flat over `A⟨T/s⟩`. This is
-`Module.Flat.trans` across the tower of
-`TauCeti.Huber.PairOfDefinition.isScalarTower_restrictionRingHomOfSubset`; it is the composition
-step of Proposition 8.30's induction, and it carries all of that argument's instance
-bookkeeping. -/
-theorem flat_restrictionRingHomOfSubset_trans (U V : Finset A) (hTU : T ⊆ U) (hUV : U ⊆ V)
-    (h₁ : letI iT := locUniformSpace P T s S hden
-      letI := isUniformAddGroup_locUniformSpace P T s S hden
-      letI := isTopologicalRing_locUniformSpace P T s S hden
-      letI iU := locUniformSpace P U s S (hden.mono hTU)
-      letI := isUniformAddGroup_locUniformSpace P U s S (hden.mono hTU)
-      letI := isTopologicalRing_locUniformSpace P U s S (hden.mono hTU)
-      letI := (restrictionRingHomOfSubset P T s S hden U S (hden.mono hTU) hTU).toAlgebra
-      Module.Flat (@UniformSpace.Completion S iT) (@UniformSpace.Completion S iU))
-    (h₂ : letI iU := locUniformSpace P U s S (hden.mono hTU)
-      letI := isUniformAddGroup_locUniformSpace P U s S (hden.mono hTU)
-      letI := isTopologicalRing_locUniformSpace P U s S (hden.mono hTU)
-      letI iV := locUniformSpace P V s S (hden.mono (hTU.trans hUV))
-      letI := isUniformAddGroup_locUniformSpace P V s S (hden.mono (hTU.trans hUV))
-      letI := isTopologicalRing_locUniformSpace P V s S (hden.mono (hTU.trans hUV))
-      letI := (restrictionRingHomOfSubset P U s S (hden.mono hTU) V S
-        (hden.mono (hTU.trans hUV)) hUV).toAlgebra
-      Module.Flat (@UniformSpace.Completion S iU) (@UniformSpace.Completion S iV)) :
-    letI iT := locUniformSpace P T s S hden
-    letI := isUniformAddGroup_locUniformSpace P T s S hden
-    letI := isTopologicalRing_locUniformSpace P T s S hden
-    letI iV := locUniformSpace P V s S (hden.mono (hTU.trans hUV))
-    letI := isUniformAddGroup_locUniformSpace P V s S (hden.mono (hTU.trans hUV))
-    letI := isTopologicalRing_locUniformSpace P V s S (hden.mono (hTU.trans hUV))
-    letI := (restrictionRingHomOfSubset P T s S hden V S
-      (hden.mono (hTU.trans hUV)) (hTU.trans hUV)).toAlgebra
-    Module.Flat (@UniformSpace.Completion S iT) (@UniformSpace.Completion S iV) := by
-  let iT := locUniformSpace P T s S hden
-  have _ := isUniformAddGroup_locUniformSpace P T s S hden
-  have _ := isTopologicalRing_locUniformSpace P T s S hden
-  let iU := locUniformSpace P U s S (hden.mono hTU)
-  have _ := isUniformAddGroup_locUniformSpace P U s S (hden.mono hTU)
-  have _ := isTopologicalRing_locUniformSpace P U s S (hden.mono hTU)
-  let iV := locUniformSpace P V s S (hden.mono (hTU.trans hUV))
-  have _ := isUniformAddGroup_locUniformSpace P V s S (hden.mono (hTU.trans hUV))
-  have _ := isTopologicalRing_locUniformSpace P V s S (hden.mono (hTU.trans hUV))
-  let _ := (restrictionRingHomOfSubset P T s S hden U S (hden.mono hTU) hTU).toAlgebra
-  let _ := (restrictionRingHomOfSubset P U s S (hden.mono hTU) V S
-    (hden.mono (hTU.trans hUV)) hUV).toAlgebra
-  let _ := (restrictionRingHomOfSubset P T s S hden V S
-    (hden.mono (hTU.trans hUV)) (hTU.trans hUV)).toAlgebra
-  have _ := h₁
-  have _ := h₂
-  have _ := isScalarTower_restrictionRingHomOfSubset P T s S hden U V hTU hUV
-  exact Module.Flat.trans (@UniformSpace.Completion S iT) (@UniformSpace.Completion S iU)
-    (@UniformSpace.Completion S iV)
+  have hcomp := RingHom.Flat.comp h₁ h₂
+  rwa [restrictionRingHomOfSubset_comp_restrictionRingHomOfSubset P T s S hden U S
+    (hden.mono hTU) hTU V S (hden.mono (hTU.trans hUV)) hUV] at hcomp
 
 /-- The induction behind Proposition 8.30: every numerator set reached from `T` by adjoining
 elements of `T' \ T` gives a coordinate ring flat over `A⟨T/s⟩`. The base case is the
-self-restriction, which induces the canonical algebra structure; each step composes the previous
-one with an elementary enlargement through
-`TauCeti.Huber.PairOfDefinition.flat_restrictionRingHomOfSubset_trans`. -/
+self-restriction, which is the identity ring homomorphism; each step composes the previous one
+with an elementary enlargement, using that flat ring homomorphisms compose. -/
 private theorem flat_restrictionRingHomOfSubset_union [DecidableEq A]
     (P : PairOfDefinition A) (T : Finset A)
     (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
     (hden : HasDenominatorPower P T s S) (T' : Finset A) (hTT' : T ⊆ T')
     (hnil : IsTopologicallyNilpotent s)
-    (hSN : ∀ (U : Finset A) (hU : T ⊆ U), U ⊆ T' →
+    (hSN : ∀ (U : Finset A) (hU : T ⊆ U), U ⊂ T' →
       letI := locUniformSpace P U s S (hden.mono hU)
       letI := isUniformAddGroup_locUniformSpace P U s S (hden.mono hU)
       letI := isTopologicalRing_locUniformSpace P U s S (hden.mono hU)
       letI := isHuberRing_locUniformSpace P U s S (hden.mono hU)
       IsStronglyNoetherian (UniformSpace.Completion S)) :
     ∀ (W V : Finset A), V = T ∪ W → W ⊆ T' \ T → ∀ hV : T ⊆ V,
-    letI iT := locUniformSpace P T s S hden
+    letI := locUniformSpace P T s S hden
     letI := isUniformAddGroup_locUniformSpace P T s S hden
     letI := isTopologicalRing_locUniformSpace P T s S hden
-    letI iV := locUniformSpace P V s S (hden.mono hV)
+    letI := locUniformSpace P V s S (hden.mono hV)
     letI := isUniformAddGroup_locUniformSpace P V s S (hden.mono hV)
     letI := isTopologicalRing_locUniformSpace P V s S (hden.mono hV)
-    letI := (restrictionRingHomOfSubset P T s S hden V S (hden.mono hV) hV).toAlgebra
-    Module.Flat (@UniformSpace.Completion S iT) (@UniformSpace.Completion S iV) := by
+    (restrictionRingHomOfSubset P T s S hden V S (hden.mono hV) hV).Flat := by
   classical
   let _ := locUniformSpace P T s S hden
   have _ := isUniformAddGroup_locUniformSpace P T s S hden
@@ -379,16 +326,9 @@ private theorem flat_restrictionRingHomOfSubset_union [DecidableEq A]
     intro V hVdef _ hV
     rw [Finset.union_empty] at hVdef
     subst hVdef
-    -- the restriction of a presentation to itself is the identity, so the algebra structure
-    -- it induces is the canonical one and the goal is flatness of a ring over itself
-    have hid := restrictionRingHomOfSubset_self P _ s S hden
-    have halg : (restrictionRingHomOfSubset P _ s S hden _ S (hden.mono hV) hV).toAlgebra
-        = Algebra.id (UniformSpace.Completion S) :=
-      Algebra.algebra_ext _ _ fun r ↦ by
-        rw [RingHom.algebraMap_toAlgebra, hid]
-        rfl
-    rw [halg]
-    exact Module.Flat.self
+    -- the restriction of a presentation to itself is the identity ring homomorphism
+    rw [restrictionRingHomOfSubset_self P _ s S hden]
+    exact RingHom.Flat.id _
   | @insert a W haW ih =>
     intro V hVdef hW hV
     rw [Finset.union_insert] at hVdef
@@ -396,14 +336,19 @@ private theorem flat_restrictionRingHomOfSubset_union [DecidableEq A]
     have hTU : T ⊆ T ∪ W := Finset.subset_union_left
     have hUV : T ∪ W ⊆ insert a (T ∪ W) := Finset.subset_insert _ _
     have hWsub : W ⊆ T' \ T := fun x hx ↦ hW (Finset.mem_insert_of_mem hx)
-    -- the previous step, then the elementary step onto it, composed
-    exact flat_restrictionRingHomOfSubset_trans P T s S hden (T ∪ W) (insert a (T ∪ W)) hTU hUV
+    -- `a` is a numerator of `T'` outside `T ∪ W`, so that union is a *proper* subset of `T'`,
+    -- which is all the strong-noetherianity hypothesis is asked of
+    have ha := Finset.mem_sdiff.mp (hW (Finset.mem_insert_self a W))
+    have hlt : T ∪ W ⊂ T' :=
+      ⟨fun x hx ↦ (Finset.mem_union.mp hx).elim (@hTT' x)
+        fun h ↦ (Finset.mem_sdiff.mp (hWsub h)).1,
+        fun hall ↦ (Finset.mem_union.mp (hall ha.1)).elim ha.2 haW⟩
+    -- the previous step, then the elementary step onto it; flat ring maps compose
+    exact flat_comp_restrictionRingHomOfSubset P T s S hden (T ∪ W) (insert a (T ∪ W)) hTU hUV
       (ih (T ∪ W) rfl hWsub hTU)
       (flat_restrictionRingHomOfSubset_of_isStronglyNoetherian P (T ∪ W) s a S
         (hden.mono hTU) (insert a (T ∪ W)) S (hden.mono hV) hUV (Finset.mem_insert_self _ _)
-        (fun u hu ↦ (Finset.mem_insert.mp hu).symm.imp id id) hnil
-        (hSN (T ∪ W) hTU fun x hx ↦ (Finset.mem_union.mp hx).elim (@hTT' x)
-          fun h ↦ (Finset.mem_sdiff.mp (hWsub h)).1))
+        (fun u hu ↦ (Finset.mem_insert.mp hu).symm.imp id id) hnil (hSN (T ∪ W) hTU hlt))
 
 /-- **The chain form of Proposition 8.30, with strong noetherianity assumed at every intermediate
 presentation**: the restriction map `A⟨T/s⟩ → A⟨T'/s⟩` of an arbitrary enlargement is flat.
@@ -426,20 +371,19 @@ the standing hypothesis of his §8.2 — that rational localisations of a strong
 are again strongly noetherian — which is not formalised here. -/
 theorem flat_restrictionRingHomOfSubset_of_forall_isStronglyNoetherian
     (hnil : IsTopologicallyNilpotent s)
-    (hSN : ∀ (U : Finset A) (hU : T ⊆ U), U ⊆ T' →
+    (hSN : ∀ (U : Finset A) (hU : T ⊆ U), U ⊂ T' →
       letI := locUniformSpace P U s S (hden.mono hU)
       letI := isUniformAddGroup_locUniformSpace P U s S (hden.mono hU)
       letI := isTopologicalRing_locUniformSpace P U s S (hden.mono hU)
       letI := isHuberRing_locUniformSpace P U s S (hden.mono hU)
       IsStronglyNoetherian (UniformSpace.Completion S)) :
-    letI iT := locUniformSpace P T s S hden
+    letI := locUniformSpace P T s S hden
     letI := isUniformAddGroup_locUniformSpace P T s S hden
     letI := isTopologicalRing_locUniformSpace P T s S hden
-    letI iT' := locUniformSpace P T' s S (hden.mono hTT')
+    letI := locUniformSpace P T' s S (hden.mono hTT')
     letI := isUniformAddGroup_locUniformSpace P T' s S (hden.mono hTT')
     letI := isTopologicalRing_locUniformSpace P T' s S (hden.mono hTT')
-    letI := (restrictionRingHomOfSubset P T s S hden T' S (hden.mono hTT') hTT').toAlgebra
-    Module.Flat (@UniformSpace.Completion S iT) (@UniformSpace.Completion S iT') := by
+    (restrictionRingHomOfSubset P T s S hden T' S (hden.mono hTT') hTT').Flat := by
   classical
   let _ := locUniformSpace P T s S hden
   have _ := isUniformAddGroup_locUniformSpace P T s S hden
