@@ -8,9 +8,6 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.StandardComodule
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.SmoothConnected
 public import TauCeti.Algebra.AlgebraicGroup.Reductive.Basic
-import TauCeti.Algebra.AlgebraicGroup.Reductive.LinearlyReductive
-import TauCeti.Algebra.AlgebraicGroup.Representation.ClosedSubgroup
-import TauCeti.Algebra.AlgebraicGroup.Unipotent.Embedding
 import TauCeti.Algebra.AlgebraicGroup.Unipotent.Radical.Faithful
 
 /-!
@@ -93,6 +90,8 @@ theorem eq_augmentation_of_isNormal_of_smoothUnipotent
       (FiniteTypeCommHopfAlgCat.quotient H J) :=
     (smoothUnipotentCommHopfAlgProperty k).prop_of_iso qIso'.symm hU
   let _ : IsReduced H := by
+    -- `H` packages this coordinate algebra with its finite-type proof, so its carrier is
+    -- definitionally the coordinate algebra on which smoothness supplies reducedness.
     change IsReduced (coordinateHopfAlgebra k n)
     exact isReduced_of_smooth_of_field k _
   let _ : Comodule k (coordinateHopfAlgebra k n) (Fin n → k) := standardComodule k n

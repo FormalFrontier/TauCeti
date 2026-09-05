@@ -588,12 +588,6 @@ noncomputable abbrev quotient (H : FiniteTypeCommHopfAlgCat.{u, v} R) (I : HopfI
     FiniteTypeCommHopfAlgCat.{u, v} R :=
   ⟨CommHopfAlgCat.quotient H.obj I, inferInstanceAs (Algebra.FiniteType R (H ⧸ I.toIdeal))⟩
 
-/-- The underlying commutative Hopf algebra of a finite-type quotient is the quotient of the
-underlying commutative Hopf algebra. -/
-theorem quotient_obj (H : FiniteTypeCommHopfAlgCat.{u, v} R) (I : HopfIdeal R H) :
-    (quotient H I).obj = CommHopfAlgCat.quotient H.obj I :=
-  rfl
-
 /-- Quotienting a finite-type commutative Hopf algebra by the zero Hopf ideal gives an
 isomorphic finite-type commutative Hopf algebra. -/
 noncomputable def quotientBotIso (H : FiniteTypeCommHopfAlgCat.{u, v} R) :

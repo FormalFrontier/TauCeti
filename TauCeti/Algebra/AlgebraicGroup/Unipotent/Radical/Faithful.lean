@@ -33,6 +33,8 @@ nor connectedness of `H` itself is needed; reducedness of `H` is.
 
 ## Main results
 
+* `TauCeti.HopfIdeal.eq_augmentation_of_isNormal_of_forall_isUnipotentPoint_of_isFaithful`:
+  a normal subgroup with reduced quotient and only unipotent points is trivial.
 * `TauCeti.HopfIdeal.eq_augmentation_of_isNormal_of_smoothUnipotent_of_isFaithful`: a normal
   smooth unipotent closed subgroup of such an `H` is trivial.
 * `TauCeti.FiniteTypeCommHopfAlgCat.unipotentRadicalDefiningIdeal_eq_augmentation_of_isFaithful`:
@@ -63,6 +65,24 @@ variable (M : Type u) [AddCommGroup M] [Module k M] [Comodule k H M] [FiniteDime
 
 namespace HopfIdeal
 
+/-- **A normal closed subgroup is trivial when its quotient is reduced, all of its points are
+unipotent, and the ambient affine group has a faithful completely reducible representation.**
+
+The conclusion is stated contravariantly: the subgroup's defining Hopf ideal is the augmentation
+ideal. -/
+theorem eq_augmentation_of_isNormal_of_forall_isUnipotentPoint_of_isFaithful
+    (hcr : Comodule.IsCompletelyReducible k H M)
+    (hM : Comodule.IsFaithful (k := k) (H := H) (V := M))
+    (I : HopfIdeal k H) (hI : I.IsNormal)
+    [IsReduced (CommHopfAlgCat.quotient H.obj I)]
+    (hu : ∀ g : WithConv (CommHopfAlgCat.quotient H.obj I →ₐ[k] k),
+      HopfAlgebra.IsUnipotentPoint g) :
+    I = HopfIdeal.augmentation k H := by
+  have htrivial :=
+    mkQuotient_coact_eq_tmul_one_of_isNormal_of_forall_isUnipotentPoint_of_isCompletelyReducible
+      (M := M) hI hu hcr
+  exact Comodule.eq_augmentation_of_isFaithful_of_quotient_coact_eq_tmul_one I hM htrivial
+
 /-- **A normal smooth unipotent closed subgroup is trivial as soon as the ambient reduced
 finite-type affine group has a faithful completely reducible finite-dimensional
 representation.**
@@ -78,28 +98,18 @@ theorem eq_augmentation_of_isNormal_of_smoothUnipotent_of_isFaithful
     I = HopfIdeal.augmentation k H := by
   have hU' := (smoothUnipotentCommHopfAlgProperty_iff k
     (FiniteTypeCommHopfAlgCat.quotient H I)).mp hU
-  -- The normal-invariants theorem is stated for the unbundled quotient `CommHopfAlgCat.quotient`,
-  -- while the smooth-unipotent property is an object property of the bundled finite-type quotient.
-  -- The two objects agree by `FiniteTypeCommHopfAlgCat.quotient_obj`; transport the smoothness and
-  -- the unipotence of the points along that identification rather than leaving it implicit.
-  let e : CommHopfAlgCat.quotient H.obj I ≅ (FiniteTypeCommHopfAlgCat.quotient H I).obj :=
-    eqToIso (FiniteTypeCommHopfAlgCat.quotient_obj H I).symm
   have hgeom : geometricallyUnipotentPointsCommHopfAlgProperty k
       (CommHopfAlgCat.quotient H.obj I) :=
-    (geometricallyUnipotentPointsCommHopfAlgProperty k).prop_of_iso e.symm
-      ((geometricallyUnipotentPointsCommHopfAlgProperty_iff k _).mpr hU'.2)
+    (geometricallyUnipotentPointsCommHopfAlgProperty_iff k _).mpr hU'.2
   let _ : Algebra.Smooth k (CommHopfAlgCat.quotient H.obj I) :=
     (smoothCommHopfAlgProperty_iff _).mp <|
-      (smoothCommHopfAlgProperty k).prop_of_iso e.symm
-        ((smoothCommHopfAlgProperty_iff _).mpr hU'.1)
+      (smoothCommHopfAlgProperty_iff _).mpr hU'.1
   let _ : IsReduced (CommHopfAlgCat.quotient H.obj I) := isReduced_of_smooth_of_field k _
   have hu : ∀ g : WithConv (CommHopfAlgCat.quotient H.obj I →ₐ[k] k),
       HopfAlgebra.IsUnipotentPoint g :=
     geometricallyUnipotentPointsCommHopfAlgProperty.forall_isUnipotentPoint hgeom
-  have htrivial :=
-    mkQuotient_coact_eq_tmul_one_of_isNormal_of_forall_isUnipotentPoint_of_isCompletelyReducible
-      (M := M) hI hu hcr
-  exact Comodule.eq_augmentation_of_isFaithful_of_quotient_coact_eq_tmul_one I hM htrivial
+  exact eq_augmentation_of_isNormal_of_forall_isUnipotentPoint_of_isFaithful
+    k H M hcr hM I hI hu
 
 end HopfIdeal
 
