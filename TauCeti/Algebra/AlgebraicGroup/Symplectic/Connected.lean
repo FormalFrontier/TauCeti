@@ -18,6 +18,9 @@ The coordinate Hopf algebra of the standard symplectic group `Sp_{2m}` is geomet
 over every field. The proof uses idempotents and algebraically closed points, avoiding an explicit
 presentation of the coordinate algebra as an integral domain.
 
+The formal proof architecture is adapted from
+`TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Connected`.
+
 Over an algebraically closed extension, an idempotent in a finite-type coordinate algebra is
 constant once right translation by every rational point fixes it. Every standard symplectic root
 subgroup is connected to the identity by its parameter over the polynomial ring. The root-subgroup
