@@ -8,6 +8,7 @@ module
 public import TauCeti.CategoryTheory.Exact.ExtensionClosed
 public import TauCeti.CategoryTheory.Exact.Graded.Basic
 public import Mathlib.CategoryTheory.ObjectProperty.Equivalence
+public import Mathlib.CategoryTheory.Preadditive.AdditiveFunctor
 
 /-!
 # Graded exact structures on full subcategories
@@ -71,23 +72,19 @@ variable [P.IsClosedUnderIsomorphisms]
 The equation `P.inverseImage E.shift.functor = P` states exactly that an object belongs to `P`
 if and only if its shift does.  Mathlib's full-subcategory restriction of an equivalence then
 uses the ambient inverse shift as its inverse. -/
-def fullSubcategoryShift (hshift : P.inverseImage E.shift.functor = P) :
+abbrev fullSubcategoryShift (hshift : P.inverseImage E.shift.functor = P) :
     P.FullSubcategory ≌ P.FullSubcategory :=
-  E.shift.congrFullSubcategory hshift
-
-/-- On objects, the restricted forward shift is the ambient forward shift. -/
-@[simp]
-theorem fullSubcategoryShift_functor_obj_obj
-    (hshift : P.inverseImage E.shift.functor = P) (X : P.FullSubcategory) :
-    ((fullSubcategoryShift E P hshift).functor.obj X).obj = E.shift.functor.obj X.obj :=
-  by simp [fullSubcategoryShift]
-
-/-- On objects, the inverse of the restricted shift is the ambient inverse shift. -/
-@[simp]
-theorem fullSubcategoryShift_inverse_obj_obj
-    (hshift : P.inverseImage E.shift.functor = P) (X : P.FullSubcategory) :
-    ((fullSubcategoryShift E P hshift).inverse.obj X).obj = E.shift.inverse.obj X.obj :=
-  by simp [fullSubcategoryShift]
+  { E.shift.congrFullSubcategory hshift with
+    functor := P.lift (P.ι ⋙ E.shift.functor) (fun X ↦ by
+      have hX : P.inverseImage E.shift.functor X.obj := by
+        rw [hshift]
+        exact X.property
+      exact hX)
+    inverse := P.lift (P.ι ⋙ E.shift.inverse) (fun X ↦ by
+      have hX : P.inverseImage E.shift.functor (E.shift.inverse.obj X.obj) :=
+        P.prop_of_iso (E.shift.counitIso.app X.obj).symm X.property
+      rw [hshift] at hX
+      exact hX) }
 
 /-- The inclusion of the full subcategory intertwines its restricted shift with the ambient
 shift. -/
@@ -112,24 +109,6 @@ def fullSubcategoryShiftInverseCompιIso
       P.prop_of_iso (E.shift.counitIso.app X.obj).symm X.property
     rw [hshift] at hX
     exact hX)
-
-/-- The restricted forward shift is additive when the ambient grading shift is additive. -/
-noncomputable instance fullSubcategoryShift_functor_additive
-    (hshift : P.inverseImage E.shift.functor = P) :
-    (fullSubcategoryShift E P hshift).functor.Additive where
-  map_add := by
-    intro X Y f g
-    apply ObjectProperty.hom_ext
-    exact E.shift.functor.map_add
-
-/-- The inverse restricted shift is additive when the ambient grading shift is additive. -/
-noncomputable instance fullSubcategoryShift_inverse_additive
-    (hshift : P.inverseImage E.shift.functor = P) :
-    (fullSubcategoryShift E P hshift).inverse.Additive where
-  map_add := by
-    intro X Y f g
-    apply ObjectProperty.hom_ext
-    exact E.shift.inverse.map_add
 
 end Shift
 
