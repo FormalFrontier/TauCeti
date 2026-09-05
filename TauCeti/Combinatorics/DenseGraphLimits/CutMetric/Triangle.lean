@@ -6,8 +6,8 @@ Authors: Codex
 module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.CutMetric.Stability
-public import TauCeti.Combinatorics.DenseGraphLimits.StepGraphon.Regularity
 public import TauCeti.Combinatorics.DenseGraphLimits.Graphon.Pullback
+public import TauCeti.Combinatorics.DenseGraphLimits.StepGraphon.Regularity
 import TauCeti.Combinatorics.DenseGraphLimits.Kernel.Pullback
 import TauCeti.MeasureTheory.MeasurableSpace.Finpartition
 import TauCeti.MeasureTheory.OptimalTransport.Gluing
@@ -18,7 +18,7 @@ import TauCeti.MeasureTheory.OptimalTransport.Gluing
 This file proves the triangle inequality for the coupling-primary cut distance on arbitrary
 probability carriers.  The central finite-middle case glues two couplings over a countable
 intermediate carrier and pulls all three overlaid kernels back to the glued probability space,
-where their pointwise difference telescopes.  Exact invariance of the cut norm under
+where their difference telescopes.  Exact invariance of the cut norm under
 measure-preserving pullback then returns the estimate to the original couplings.
 
 For an arbitrary intermediate carrier, Frieze--Kannan weak regularity replaces the middle graphon
@@ -32,13 +32,10 @@ graphons at cut distance zero.
 
 ## Main results
 
-* `TauCeti.DenseGraphLimits.cutDist_triangle_of_countable_middle` proves the triangle inequality
-  when the intermediate carrier is countable with measurable singletons.
-* `TauCeti.DenseGraphLimits.cutDist_le_cutDist_comap_right` bounds the cut distance by its value
-  against a measure-preserving pullback of the right-hand graphon.
-* `TauCeti.DenseGraphLimits.cutDist_comap_right_of_countable` upgrades that bound to an equality
-  over a countable carrier with measurable singletons.
-* `TauCeti.DenseGraphLimits.cutDist_triangle` proves it on arbitrary probability carriers.
+* `TauCeti.DenseGraphLimits.cutDist_triangle` proves the triangle inequality on arbitrary
+  probability carriers.
+* `TauCeti.DenseGraphLimits.cutDist_comap_right` states that reading the right-hand graphon along
+  a measure-preserving map leaves the cut distance unchanged.
 
 ## References
 
@@ -90,7 +87,8 @@ private theorem exists_isCoupling_cutNorm_overlayDiff_le_of_glue
   let _ := hπ₁₃.isProbabilityMeasure
   have hmp12 : MeasurePreserving (fun p : Ω₁ × Ω₂ × Ω₃ => (p.1, p.2.1)) γ π₁₂ :=
     ⟨measurable_id.prodMap measurable_fst, hleft⟩
-  have hmp23 : MeasurePreserving Prod.snd γ π₂₃ := ⟨measurable_snd, hright⟩
+  have hmp23 : MeasurePreserving (fun p : Ω₁ × Ω₂ × Ω₃ => (p.2.1, p.2.2)) γ π₂₃ :=
+    ⟨measurable_snd.fst.prodMk measurable_snd.snd, hright⟩
   have hmp13 : MeasurePreserving (fun p : Ω₁ × Ω₂ × Ω₃ => (p.1, p.2.2)) γ π₁₃ :=
     ⟨measurable_id.prodMap measurable_snd, rfl⟩
   refine ⟨π₁₃, hπ₁₃, ?_⟩
@@ -102,15 +100,18 @@ private theorem exists_isCoupling_cutNorm_overlayDiff_le_of_glue
     _ = cutNorm γ
         ((overlayDiff U W π₁₂).comap (fun p => (p.1, p.2.1))
             (measurable_id.prodMap measurable_fst) γ +
-          (overlayDiff W X π₂₃).comap Prod.snd measurable_snd γ) := by
+          (overlayDiff W X π₂₃).comap (fun p => (p.2.1, p.2.2))
+            (measurable_snd.fst.prodMk measurable_snd.snd) γ) := by
       congr 1
-      ext p q
-      simp only [overlayDiff_apply, SymmKernel.comap_apply, SymmKernel.coe_add, Pi.add_apply]
-      ring
+      rw [comap_overlayDiff_prodMk U X π₁₃ measurable_fst measurable_snd.snd γ,
+        comap_overlayDiff_prodMk U W π₁₂ measurable_fst measurable_snd.fst γ,
+        comap_overlayDiff_prodMk W X π₂₃ measurable_snd.fst measurable_snd.snd γ]
+      abel
     _ ≤ cutNorm γ
           ((overlayDiff U W π₁₂).comap (fun p => (p.1, p.2.1))
             (measurable_id.prodMap measurable_fst) γ) +
-        cutNorm γ ((overlayDiff W X π₂₃).comap Prod.snd measurable_snd γ) :=
+        cutNorm γ ((overlayDiff W X π₂₃).comap (fun p => (p.2.1, p.2.2))
+          (measurable_snd.fst.prodMk measurable_snd.snd) γ) :=
       cutNorm_add_le γ _ _
     _ = cutNorm π₁₂ (overlayDiff U W π₁₂) + cutNorm π₂₃ (overlayDiff W X π₂₃) := by
       rw [cutNorm_comap hmp12, cutNorm_comap hmp23]
@@ -118,9 +119,9 @@ private theorem exists_isCoupling_cutNorm_overlayDiff_le_of_glue
 /-- The coupling cut distance satisfies the triangle inequality when the intermediate carrier is
 countable and has measurable singletons.
 
-Two nearly optimal couplings are glued over the middle marginal.  This result is the exact finite
-gluing statement used after replacing an arbitrary middle graphon by a finite step graphon. -/
-theorem cutDist_triangle_of_countable_middle [Countable Ω₂]
+This is the case of `cutDist_triangle` that an arbitrary middle graphon is reduced to, by replacing
+it with a finite step graphon. -/
+private theorem cutDist_triangle_of_countable_middle [Countable Ω₂]
     [MeasurableSingletonClass Ω₂] (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂)
     (X : Graphon Ω₃ μ₃) : cutDist U X ≤ cutDist U W + cutDist W X := by
   refine le_of_forall_pos_le_add fun ε hε => ?_
@@ -143,55 +144,6 @@ theorem cutDist_triangle_of_countable_middle [Countable Ω₂]
     _ ≤ @cutNorm _ _ π₁₂ hπ₁₂.isFiniteMeasure (overlayDiff U W π₁₂) +
         @cutNorm _ _ π₂₃ hπ₂₃.isFiniteMeasure (overlayDiff W X π₂₃) := hnorm13
     _ ≤ cutDist U W + cutDist W X + ε := by linarith
-
-/-- Reading the right-hand graphon on a smaller carrier along a measure-preserving map can only
-increase the cut distance: every coupling with the pulled-back graphon pushes forward to a coupling
-with the original one, at the same cut norm. -/
-theorem cutDist_le_cutDist_comap_right
-    {Ω₂' : Type*} [MeasurableSpace Ω₂'] {μ₂' : Measure Ω₂'} [IsProbabilityMeasure μ₂']
-    (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) {f : Ω₂' → Ω₂}
-    (hf : MeasurePreserving f μ₂' μ₂) :
-    cutDist U W ≤ cutDist U (W.comap f hf.measurable μ₂') := by
-  refine le_cutDist U (W.comap f hf.measurable μ₂') fun π hπ => ?_
-  let _ := hπ.isProbabilityMeasure
-  let ρ : Measure (Ω₁ × Ω₂) := π.map (Prod.map id f)
-  have hρ : IsCoupling μ₁ μ₂ ρ :=
-    isCoupling_map_prodMk hπ.measurePreserving_fst (hf.comp hπ.measurePreserving_snd)
-  let _ := hρ.isProbabilityMeasure
-  have hmp : MeasurePreserving (Prod.map id f) π ρ :=
-    ⟨measurable_id.prodMap hf.measurable, rfl⟩
-  calc
-    cutDist U W ≤ cutNorm ρ (overlayDiff U W ρ) := cutDist_le U W hρ
-    _ = cutNorm π ((overlayDiff U W ρ).comap (Prod.map id f)
-          (measurable_id.prodMap hf.measurable) π) := (cutNorm_comap hmp _).symm
-    _ = cutNorm π (overlayDiff U (W.comap f hf.measurable μ₂') π) := by
-      congr 1
-      ext p q
-      simp
-
-/-- Over a countable carrier with measurable singletons, reading the right-hand graphon along a
-measure-preserving map leaves the cut distance unchanged: the pulled-back graphon is at cut distance
-zero from the original, and the countable-middle triangle inequality transfers that. -/
-theorem cutDist_comap_right_of_countable
-    [Countable Ω₂] [MeasurableSingletonClass Ω₂]
-    {Ω₂' : Type*} [MeasurableSpace Ω₂'] {μ₂' : Measure Ω₂'} [IsProbabilityMeasure μ₂']
-    (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) {f : Ω₂' → Ω₂}
-    (hf : MeasurePreserving f μ₂' μ₂) :
-    cutDist U (W.comap f hf.measurable μ₂') = cutDist U W := by
-  apply le_antisymm
-  · have hzero : cutDist W (W.comap f hf.measurable μ₂') = 0 := by
-      apply le_antisymm
-      · have h := cutDist_le_cutNorm_sub_of_measurePreserving W
-          (W.comap f hf.measurable μ₂') hf (MeasurePreserving.id μ₂')
-        rw [Graphon.toSymmKernel_comap, SymmKernel.comap_id, sub_self, cutNorm_zero] at h
-        exact h
-      · exact cutDist_nonneg _ _
-    calc
-      cutDist U (W.comap f hf.measurable μ₂') ≤
-          cutDist U W + cutDist W (W.comap f hf.measurable μ₂') :=
-        cutDist_triangle_of_countable_middle U W _
-      _ = cutDist U W := by rw [hzero, add_zero]
-  · exact cutDist_le_cutDist_comap_right U W hf
 
 section StepModel
 
@@ -242,10 +194,15 @@ private theorem cutDist_triangle_of_constantOn_partition
     ext x y
     rw [Graphon.comap_apply, stepGraphonModel_apply]
     exact hconst _ _ (P.indexedPartition.mem_index x) (P.indexedPartition.mem_index y)
-  rw [hmodel, cutDist_comap_right_of_countable U A hmp, cutDist_comm
-    (A.comap P.indexedPartition.index hindex μ₂) X, cutDist_comap_right_of_countable X A hmp,
-    cutDist_comm X A]
-  exact cutDist_triangle_of_countable_middle U A X
+  have hUA : cutDist U A ≤ cutDist U W := by
+    rw [hmodel]
+    exact cutDist_le_cutDist_comap_right U A hmp
+  have hAX : cutDist A X ≤ cutDist W X := by
+    rw [cutDist_comm A X, cutDist_comm W X, hmodel]
+    exact cutDist_le_cutDist_comap_right X A hmp
+  calc
+    cutDist U X ≤ cutDist U A + cutDist A X := cutDist_triangle_of_countable_middle U A X
+    _ ≤ cutDist U W + cutDist W X := by linarith
 
 /-- The coupling-primary graphon cut distance satisfies the triangle inequality on arbitrary
 probability carriers. -/
@@ -264,6 +221,27 @@ theorem cutDist_triangle (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) (X 
   have htransfer := cutDist_le_add_two_mul_cutNorm_of_le_add U W W' X htriangle
   dsimp only [W'] at htransfer
   nlinarith
+
+/-- Reading the right-hand graphon along a measure-preserving map `f : Ω₂' → Ω₂` leaves the cut
+distance unchanged: `cutDist U (W.comap f hf.measurable μ₂') = cutDist U W`.
+
+Together with `cutDist_comm` this says that the cut distance only depends on a graphon through its
+measure-preserving pullbacks, on arbitrary probability carriers; the inequality `≥` alone is
+`cutDist_le_cutDist_comap_right`, and needs no triangle inequality. -/
+theorem cutDist_comap_right {Ω₂' : Type*} [MeasurableSpace Ω₂'] {μ₂' : Measure Ω₂'}
+    [IsProbabilityMeasure μ₂'] (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) {f : Ω₂' → Ω₂}
+    (hf : MeasurePreserving f μ₂' μ₂) :
+    cutDist U (W.comap f hf.measurable μ₂') = cutDist U W := by
+  have hzero : cutDist W (W.comap f hf.measurable μ₂') = 0 := by
+    refine le_antisymm ?_ (cutDist_nonneg _ _)
+    have h := cutDist_le_cutNorm_sub_of_measurePreserving W (W.comap f hf.measurable μ₂') hf
+      (MeasurePreserving.id μ₂')
+    rwa [Graphon.toSymmKernel_comap, SymmKernel.comap_id, sub_self, cutNorm_zero] at h
+  refine le_antisymm ?_ (cutDist_le_cutDist_comap_right U W hf)
+  calc
+    cutDist U (W.comap f hf.measurable μ₂') ≤
+        cutDist U W + cutDist W (W.comap f hf.measurable μ₂') := cutDist_triangle U W _
+    _ = cutDist U W := by rw [hzero, add_zero]
 
 end DenseGraphLimits
 
