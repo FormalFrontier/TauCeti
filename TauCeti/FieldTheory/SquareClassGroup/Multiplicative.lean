@@ -118,7 +118,7 @@ variable {K L F : Type*} [Field K] [Field L] [Field F]
 def multiplicativeSquareClassMap (f : K →+* L) :
     MultiplicativeSquareClassGroup K →* MultiplicativeSquareClassGroup L :=
   QuotientGroup.map (Subgroup.square Kˣ) (Subgroup.square Lˣ)
-    (Units.map f.toMonoidHom) (Subgroup.square_le_comap _)
+    (Units.map f.toMonoidHom) (MonoidHom.square_le_comap _)
 
 /-- Pushforward sends the class of a unit to the class of its image. -/
 @[simp]

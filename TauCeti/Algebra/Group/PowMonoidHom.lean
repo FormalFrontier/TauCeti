@@ -33,7 +33,7 @@ quotients by squares.
 * `TauCeti.powMonoidHom_range_mk_eq_one_iff_exists_pow`: the class of a unit in `Mˣ ⧸ (Mˣ)ⁿ` is
   trivial iff the unit is an `n`th power in `M`.
 * `TauCeti.square_eq_powMonoidHom_two_range`: `G²` is the range of the squaring homomorphism.
-* `Subgroup.square_le_comap`: `G² ≤ (H²).comap f` for a homomorphism `f : G →* H`.
+* `MonoidHom.square_le_comap`: `G² ≤ (H²).comap f` for a homomorphism `f : G →* H`.
 * `TauCeti.index_square_le_of_closure_eq_top`: `[G : G²] ≤ 2 ^ S.card`.
 
 ## Provenance
@@ -121,7 +121,7 @@ theorem square_eq_powMonoidHom_two_range {G : Type*} [CommGroup G] :
 /-- A monoid homomorphism of commutative groups carries squares to squares, so the subgroup of
 squares of the source lands inside the preimage of the subgroup of squares of the target. This is
 the side condition needed to descend `f` to a map of the quotients by squares. -/
-theorem _root_.Subgroup.square_le_comap {G H : Type*} [CommGroup G] [CommGroup H] (f : G →* H) :
+theorem _root_.MonoidHom.square_le_comap {G H : Type*} [CommGroup G] [CommGroup H] (f : G →* H) :
     Subgroup.square G ≤ (Subgroup.square H).comap f :=
   fun _ hg => hg.map f
 
