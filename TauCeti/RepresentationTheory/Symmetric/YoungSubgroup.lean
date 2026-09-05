@@ -311,6 +311,7 @@ private theorem getElem_sort_parts_singletonSecondRow (n i : ℕ)
 /-- **The last label lies in the second block of the shape `(n+1, 1)`.**  The blocks are
 consecutive with sizes `n+1` and `1`, so the block-coordinate equivalence sends the single
 coordinate of the second block to `Fin.last (n+1)`. -/
+@[simp]
 theorem youngBlock_singletonSecondRow_last (n : ℕ) :
     ((youngBlock (Nat.Partition.singletonSecondRow n) (Fin.last (n + 1))) : ℕ) = 1 := by
   have hlen : ((Nat.Partition.singletonSecondRow n).parts.sort (· ≥ ·)).length = 2 := by
@@ -331,6 +332,7 @@ theorem youngBlock_singletonSecondRow_last (n : ℕ) :
 /-- **Every other label lies in the first block of the shape `(n+1, 1)`.**  The first block has
 `n+1` of the `n+2` labels, so its complement is the single label already located by
 `TauCeti.youngBlock_singletonSecondRow_last`. -/
+@[simp]
 theorem youngBlock_singletonSecondRow_eq_zero (n : ℕ) {x : Fin (n + 2)}
     (hx : x ≠ Fin.last (n + 1)) :
     ((youngBlock (Nat.Partition.singletonSecondRow n) x) : ℕ) = 0 := by
@@ -345,11 +347,9 @@ theorem youngBlock_singletonSecondRow_eq_zero (n : ℕ) {x : Fin (n + 2)}
   rw [hcard, Finset.card_univ, Fintype.card_fin] at hsum
   by_contra hne
   have hx' : ¬ ((youngBlock (Nat.Partition.singletonSecondRow n) x : ℕ) < 1) := by omega
-  have hl' : ¬ ((youngBlock (Nat.Partition.singletonSecondRow n) (Fin.last (n + 1)) : ℕ) < 1) := by
-    rw [youngBlock_singletonSecondRow_last]; omega
   have hlt : 1 < (Finset.univ.filter fun y : Fin (n + 2) =>
       ¬ ((youngBlock (Nat.Partition.singletonSecondRow n) y : ℕ) < 1)).card :=
-    Finset.one_lt_card.mpr ⟨x, by simpa using hx', Fin.last (n + 1), by simpa using hl', hx⟩
+    Finset.one_lt_card.mpr ⟨x, by simpa using hx', Fin.last (n + 1), by simp, hx⟩
   omega
 
 /-- **The Young subgroup of the shape `(n+1, 1)` is a point stabilizer.**  Its blocks are the last

@@ -48,7 +48,9 @@ point-stabilizer identity
   equivalence of representations onto the product of the trivial representation on `ℚ` and the
   standard representation, computed by
   `TauCeti.permutationModuleSingletonSecondRowEquivProd_apply` as the splitting of `ℚ[Fin (n+2)]`
-  at the transported vector.
+  at the transported vector and inverted by
+  `TauCeti.permutationModuleSingletonSecondRowEquivProd_symm_apply`, which reassembles a pair as
+  the corresponding multiple of the sum of the standard basis plus the given vector.
 
 ## Main results
 
@@ -181,6 +183,27 @@ theorem permutationModuleSingletonSecondRowEquivProd_apply (n : ℕ)
   -- `(rfl)`, not `rfl`: the body of `permutationModuleSingletonSecondRowEquivProd` is not
   -- `@[expose]`d, so this must not be inferred `@[defeq]`.
   (rfl)
+
+/-- **A pair is reassembled into a tabloid vector by adding a multiple of the sum of the standard
+basis.**  Inverting the splitting of `ℚ[Fin (n+2)]` sends a scalar `c` and a vector `w` of the
+standard representation to `c • permutationSum ℚ (Fin (n+2)) + w`, by
+`TauCeti.ofMulActionEquivProdAugmentation_symm_apply`; the identification of the labels with the
+tabloids then carries that back to `M^{(n+1,1)}`. -/
+@[simp]
+theorem permutationModuleSingletonSecondRowEquivProd_symm_apply (n : ℕ)
+    (v : ℚ × (augmentationSubrepresentation ℚ (Equiv.Perm (Fin (n + 2)))
+      (Fin (n + 2))).toSubmodule) :
+    (permutationModuleSingletonSecondRowEquivProd n).symm v =
+      (permutationModuleSingletonSecondRowIso n).inv.hom
+        (v.1 • permutationSum ℚ (Fin (n + 2)) + (v.2 : MonoidAlgebra ℚ (Fin (n + 2)))) := by
+  -- The inverse of the composite inverts the splitting first and the transport second; that step
+  -- is `(rfl)`, not `rfl`, the body of `permutationModuleSingletonSecondRowEquivProd` not being
+  -- `@[expose]`d, so it must not be inferred `@[defeq]`.
+  have hcomp : (permutationModuleSingletonSecondRowEquivProd n).symm v =
+      (permutationModuleSingletonSecondRowIso n).inv.hom
+        ((ofMulActionEquivProdAugmentation ℚ (Equiv.Perm (Fin (n + 2))) (Fin (n + 2))
+          (by rw [Fintype.card_fin]; positivity)).symm v) := (rfl)
+  rw [hcomp, ofMulActionEquivProdAugmentation_symm_apply]
 
 /-- **The character of `M^{(n+1,1)}` is `1` plus the character of the standard representation.**
 This is the character-level form of the decomposition
