@@ -1,1 +1,0 @@
-simpNF SymmetricAlgebra.mapEquiv_ι
