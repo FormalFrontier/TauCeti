@@ -123,6 +123,17 @@ private lemma eq_T_mul_mul_T_of_sub_eq {l Nl i j a a' e e' b b' : ℤ} (hNl : Nl
   · ring
   · linear_combination -hj
 
+/-- **The hypothesis, as a `FactorsThrough` negation.** `χ` being non-trivial somewhere on the
+kernel of `(ZMod N)ˣ → (ZMod (N / l))ˣ` says exactly that `χ` does not factor through level
+`N / l`, which is the form `DirichletCharacter`'s separation lemmas take. -/
+private lemma not_factorsThrough_of_not_forall {l : ℕ} (hlN : l ∣ N) {χ : (ZMod N)ˣ →* ℂˣ}
+    (hχ : ¬ ∀ u : (ZMod N)ˣ, ZMod.unitsMap (Nat.div_dvd_of_dvd hlN) u = 1 → χ u = 1) :
+    ¬ DirichletCharacter.FactorsThrough (MulChar.ofUnitHom χ) (N / l) := by
+  refine fun hfac ↦ hχ fun v hv ↦ ?_
+  simpa using MonoidHom.mem_ker.mp
+    ((DirichletCharacter.factorsThrough_iff_ker_unitsMap (Nat.div_dvd_of_dvd hlN)).mp hfac
+      (MonoidHom.mem_ker.mpr hv))
+
 /-- **The refactoring step.** For a character not trivial on the kernel, the `diag(l, 1)`-conjugate
 of the Bézout lift of `u` is a translate — on both sides — of the conjugate of the lift of some
 `u'` on which the character takes a *different* value. Since the function the vanishing argument
@@ -139,17 +150,11 @@ private theorem exists_apply_ne_and_eq_T_zpow_mul_conjScale_mul_T_zpow {l : ℕ}
         (gamma0TwistOfUnit_apply_one_zero_eq_mul hlN _) * ModularGroup.T ^ j := by
   -- `l ≠ 0` is forced by `hlN` and `NeZero N`, so it is derived rather than demanded
   have : NeZero l := NeZero.of_dvd hlN
-  -- the separation is `DirichletCharacter.exists_alt_unit_in_coset_with_char_separation`, read
-  -- through `MulChar.ofUnitHom`; `hχ` is the negation of `FactorsThrough` by
-  -- `DirichletCharacter.factorsThrough_iff_ker_unitsMap`, exactly as in the dichotomy below
-  have hnfac : ¬ DirichletCharacter.FactorsThrough (MulChar.ofUnitHom χ) (N / l) := by
-    refine fun hfac ↦ hχ fun v hv ↦ ?_
-    simpa using MonoidHom.mem_ker.mp
-      ((DirichletCharacter.factorsThrough_iff_ker_unitsMap (Nat.div_dvd_of_dvd hlN)).mp hfac
-        (MonoidHom.mem_ker.mpr hv))
+  -- the separation is `DirichletCharacter.exists_alt_unit_in_coset_with_char_separation`,
+  -- read through `MulChar.ofUnitHom`
   obtain ⟨u', hcoset, hne⟩ :=
     DirichletCharacter.exists_alt_unit_in_coset_with_char_separation
-      (Nat.div_dvd_of_dvd hlN) hnfac u
+      (Nat.div_dvd_of_dvd hlN) (not_factorsThrough_of_not_forall hlN hχ) u
   simp only [MulChar.toUnitHom_eq, MulChar.ofUnitHom_eq, Equiv.apply_symm_apply] at hne
   set Nl : ℤ := ((N / l : ℕ) : ℤ) with hNl
   have hNl_ne : Nl ≠ 0 := by
