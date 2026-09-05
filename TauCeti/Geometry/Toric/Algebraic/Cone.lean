@@ -7,7 +7,6 @@ module
 
 public import Mathlib.Basic.Real.Basic
 public import Mathlib.Geometry.Convex.Cone.Face.Lattice
-public import Mathlib.LinearAlgebra.Prod
 public import Mathlib.RingTheory.Finiteness.Basic
 public import TauCeti.Geometry.Convex.Cone.Basic
 
@@ -54,9 +53,6 @@ dimensionality of `V`, play no role in the definitions or preservation results h
 
 The mathematics is Chapter 1 of D. Cox, J. Little and H. Schenck, *Toric Varieties*, and §1.2 of
 W. Fulton, *Introduction to Toric Varieties*.
-
-The signatures of `IsLatticeRational` and `IsToricCone` are the ones pinned in
-`AnalyticToricGeometry/Suggested.lean` of the TauCetiRoadmap repository.
 -/
 
 public section
