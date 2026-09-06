@@ -71,6 +71,10 @@ open Finset
 
 variable {k l k' l' k'' l'' : ℕ}
 
+-- Source: the names and the three-block shape of `MixedExponent`, the coordinate formula
+-- `mixedMonomialMap`, the locus `mixedChartDomain` and the block-matrix composition law
+-- follow the target signatures in `AnalyticToricGeometry/Suggested.lean` of the
+-- TauCetiProject/TauCetiRoadmap repository.
 /-- Exponent data for a mixed monomial map `ℂ ^ k × (ℂ ^ *) ^ l → ℂ ^ k' × (ℂ ^ *) ^ l'`.
 
 The three blocks are the only admissible ones. A boundary coordinate of the source, which may
@@ -266,8 +270,8 @@ theorem mixedMonomialMap_contDiffAt (A : MixedExponent k l k' l')
     fun b ↦ contDiffAt_pi.mp contDiffAt_snd b
   refine ContDiffAt.prodMk (contDiffAt_pi.mpr fun a ↦ ?_) (contDiffAt_pi.mpr fun a ↦ ?_)
   · exact (contDiffAt_prod fun b _ ↦ (hx b).pow _).mul
-      (contDiffAt_prod fun b _ ↦ (hy b).zpow (hz b) _)
-  · exact contDiffAt_prod fun b _ ↦ (hy b).zpow (hz b) _
+      (contDiffAt_prod fun b _ ↦ (hy b).zpow (Or.inl (hz b)))
+  · exact contDiffAt_prod fun b _ ↦ (hy b).zpow (Or.inl (hz b))
 
 /-- A mixed monomial map is holomorphic on the mixed-chart locus, to any order. -/
 theorem mixedMonomialMap_contDiffOn (A : MixedExponent k l k' l') :
