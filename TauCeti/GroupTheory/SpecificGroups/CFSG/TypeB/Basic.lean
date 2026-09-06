@@ -50,26 +50,17 @@ untwisted family out of the pair sharing the `B₂` diagram, where this one cuts
 out of the whole list, at every rank the family has.
 
 Nothing here asserts that the carrier is reductive, that its weight torus is maximal, that it is
-the spin group scheme or the pinned simply connected Chevalley--Demazure group scheme of type `Bₙ`,
-or that any group below is finite, perfect, or simple.
+the spin group scheme, or that it is the pinned simply connected Chevalley--Demazure group scheme
+of type `Bₙ`: no identification of the spin carrier with that pinned group is proved here or in the
+files this one imports, and none is assumed. What is supplied is the explicit carrier, its numbered
+root characters read in the type-`Bₙ` root datum, the equation `Frob_q (x_i(u)) = x_i(u ^ q)`, and
+the fixed-point recipe run on that Frobenius; each of those is a statement about the spin carrier
+and transfers to another carrier only along an identification of the two. That is why the quotient
+formed below is named `TauCeti.TypeBLieIndex.SpinCarrierGroup` after the carrier it is formed on,
+and why no `TauCeti.TypeBLieIndex.Group` is defined. Nothing below asserts that any group formed
+here is finite, perfect, or simple.
 
-## What this file does not claim
-
-Milestone L0 of `TauCetiRoadmap/CFSGStatement/README.md` asks for the points of the *pinned* simply
-connected Chevalley--Demazure group scheme of `TauCeti.DynkinType.simplyConnectedRootDatum` at the
-diagram the index names, with its root subgroups. **This file does not close L0 on the type-`B`
-branch, and the spin carrier is not offered as a substitute for that pinned group.** The pinned
-group scheme, its pinning, and any identification of a carrier with it are Layer 9 targets of
-`TauCetiRoadmap/ReductiveGroups/README.md` that the CFSG roadmap consumes rather than builds; none
-of them is proved of `TauCeti.TypeBSpinCarrier.groupScheme` here or in the files this one imports.
-What this file supplies is the branch's explicit carrier, its numbered root characters read in the
-type-`Bₙ` root datum, the equation `Frob_q (x_i(u)) = x_i(u ^ q)` that milestone L1 asks of an
-ordinary Frobenius factor, and the milestone L3 recipe run on that Frobenius, each in the shape
-those milestones state it; they transfer to the L0 carrier along that Layer 9 identification, and
-not before. Accordingly the fixed-point quotient formed below is named
-`TauCeti.TypeBLieIndex.SpinCarrierGroup` after the carrier it is formed on, and the canonical
-`TauCeti.TypeBLieIndex.Group` of the branch is left undefined until that identification is
-available to define it by. The counterparts on the branches already assembled are
+The counterpart constructions on the other families are in
 `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeA.lean`,
 `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeD.lean`,
 `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeE6.lean` and
@@ -90,8 +81,7 @@ available to define it by. The counterparts on the branches already assembled ar
   family, its equation `Frob_q (x_i(u)) = x_i(u ^ q)` on the numbered simple-root subgroups, and
   the description of its fixed points as the carrier points with entries in `𝔽_q`.
 * `TauCeti.TypeBLieIndex.SpinCarrierGroup`: the derived subgroup of those fixed points, modulo its
-  centre. The name records the carrier it is formed on; the canonical `Group` of the branch is not
-  defined here, for the reason given below.
+  centre. The name records the carrier it is formed on.
 
 ## References
 
@@ -234,9 +224,10 @@ theorem valid_B_carrierRank_add_one : (DynkinType.B (d.carrierRank + 1)).Valid :
 type-`Bₙ` spin Chevalley carrier, at the rank the index names, over the algebraic closure of its
 prime field.
 
-It is infinite, and no finiteness, reductivity, pinning or maximality statement is attached to it,
-and it is not claimed to be the pinned simply connected `Bₙ` group scheme's points that milestone
-L0 asks for, that identification being the Layer 9 target described in the module docstring. -/
+It is infinite, and no finiteness, reductivity, pinning or maximality statement is attached to it;
+in particular it is not claimed to be the points of the pinned simply connected
+Chevalley--Demazure group scheme of type `Bₙ`, no identification of the spin carrier with that
+group being proved here. -/
 abbrev AmbientGroup : Type := TypeBSpinCarrier.points d.carrierRank d.1.Closure
 
 /-- The classification recipe is run inside this group, so it carries a group structure; the
@@ -356,16 +347,14 @@ theorem mem_fixedSubgroup_steinberg_iff (g : d.AmbientGroup) :
 
 /-! ## The classification candidate -/
 
-/-- **The milestone L3 quotient on the type-`B` spin carrier**: the derived subgroup of the fixed
+/-- **The fixed-point quotient of the type-`B` spin carrier**: the derived subgroup of the fixed
 points of the Steinberg map above, modulo the centre of that derived subgroup.
 
-This is the shape milestone L3 asks of the untwisted family `Bₙ(q)`, formed on the spin carrier
-rather than on the pinned simply connected Chevalley--Demazure group scheme that milestone L0 asks
-for. The name says which carrier it is formed on, and the branch's canonical `Group` is deliberately
-not defined here: this quotient becomes the candidate simple group of the family only along the
-Layer 9 identification of the two carriers described in the module docstring, so the canonical name
-is left for whatever definition that identification licenses. Nothing below asserts that this
-quotient is finite, perfect, or simple. -/
+This is the recipe of Chevalley and Steinberg, run on the spin carrier rather than on the pinned
+simply connected Chevalley--Demazure group scheme of type `Bₙ`. The name says which carrier it is
+formed on, and no `TauCeti.TypeBLieIndex.Group` is defined: this quotient is the candidate simple
+group of the family only along an identification of the two carriers, which is not proved here.
+Nothing below asserts that this quotient is finite, perfect, or simple. -/
 abbrev SpinCarrierGroup : Type := FixedPointCandidate d.steinberg
 
 /-- The classification recipe produces a group; the quotient construction supplies the instance. -/
