@@ -121,34 +121,26 @@ variable [Fact (0 < T)]
 namespace ContinuousMap
 
 /-- **A continuous function on the circle with vanishing Fourier coefficients is zero.** The
-Fourier coefficients are the coordinates of the function in Mathlib's Hilbert basis `fourierBasis`
-of `L²`, so they determine its class in `L²`, and a continuous function on the circle is determined
-by that class because normalized Haar measure is positive on nonempty open sets. -/
+separation statement for the Fourier coefficients of a continuous function, at the level of
+`C(AddCircle T, ℂ)` rather than of `L²`; it is what makes a nonzero continuous function have a
+nonzero Fourier coefficient. -/
 theorem eq_zero_of_forall_fourierCoeff_eq_zero (F : C(AddCircle T, ℂ))
     (h : ∀ n : ℤ, fourierCoeff (⇑F) n = 0) : F = 0 := by
-  have hzero : ∀ n : ℤ,
-      fourierBasis.repr (ContinuousMap.toLp (E := ℂ) 2 haarAddCircle ℂ F) n = 0 := fun n => by
-    rw [fourierBasis_repr, fourierCoeff_toLp, h n]
-  have hsum := fourierBasis.hasSum_repr (ContinuousMap.toLp (E := ℂ) 2 haarAddCircle ℂ F)
-  simp only [hzero, zero_smul] at hsum
   refine ContinuousMap.toLp_injective (𝕜 := ℂ) (p := 2) haarAddCircle ?_
-  rw [map_zero]
-  exact (hasSum_zero.unique hsum).symm
+  refine fourierBasis.repr.injective ?_
+  rw [map_zero, map_zero]
+  ext n
+  rw [fourierBasis_repr, fourierCoeff_toLp, h n]
+  rfl
 
 end ContinuousMap
 
 namespace AddChar
 
-/-- **Every continuous additive character of the circle is a Fourier monomial.** Together with
+/-- **Every continuous additive character of the circle is a Fourier monomial.** Continuity is the
+only hypothesis: no unitarity is assumed, and none is needed. Together with
 `TauCeti.fourierAddChar_injective` this identifies the continuous characters of `AddCircle T` with
-`ℤ`.
-
-Some Fourier coefficient `c = fourierCoeff χ n` is nonzero, because `χ 0 = 1` makes `χ` a nonzero
-continuous function. Normalized Haar measure is translation invariant, so translating the integral
-defining `c` by `y` leaves it unchanged; expanding both `fourier (-n)` and `χ` on the translated
-sum turns that integral into `(fourier (-n) y * χ y) * c`, so `fourier (-n) y * χ y = 1`. Since
-also `fourier (-n) y * fourier n y = fourier 0 y = 1`, and `fourier (-n) y ≠ 0`, the two values
-agree. -/
+`ℤ`, which is the content of `TauCeti.fourierAddCharEquiv`. -/
 theorem exists_fourierAddChar_eq (χ : AddChar (AddCircle T) ℂ) (hχ : Continuous χ) :
     ∃ n : ℤ, fourierAddChar n = χ := by
   have hcoeff : ∀ n : ℤ, fourierCoeff (⇑(⟨χ, hχ⟩ : C(AddCircle T, ℂ))) n
@@ -204,8 +196,10 @@ end AddChar
 
 namespace TauCeti
 
-/-- **The Fourier monomials index the continuous characters of the circle**, that is, the
-Pontryagin dual of `AddCircle T` is `ℤ`. -/
+/-- **The Fourier monomials index the continuous characters of the circle**: `n ↦ fourierAddChar n`
+is a bijection from `ℤ` onto the continuous additive characters of `AddCircle T`. This is a
+bijection of types only; it is not equipped here with the group structure of the Pontryagin
+dual. -/
 noncomputable def fourierAddCharEquiv :
     ℤ ≃ {χ : AddChar (AddCircle T) ℂ // Continuous χ} :=
   Equiv.ofBijective (fun n => ⟨fourierAddChar n, continuous_fourierAddChar n⟩)
