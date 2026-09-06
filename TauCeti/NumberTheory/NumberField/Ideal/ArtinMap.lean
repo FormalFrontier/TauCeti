@@ -8,6 +8,7 @@ module
 public import TauCeti.NumberTheory.NumberField.ArtinSymbol
 public import TauCeti.NumberTheory.NumberField.Ideal.Away
 import Mathlib.Algebra.Group.IsCommutative
+import Mathlib.FieldTheory.Galois.Abelian
 
 /-!
 # The ideal-theoretic Artin map away from a finite set of primes
@@ -143,11 +144,12 @@ noncomputable def artinHomAway : idealsAway (K := K) S →* (L ≃ₐ[K] L) :=
 
 /-- **The Artin map is the product of the local Artin automorphisms, with the multiplicities of
 the ideal as exponents.** The product is over all finite places of `K`, all but finitely many
-factors being trivial. The instance argument is the bundled form of `hab`, which the product on
-the right needs in order to be stated; `⟨⟨fun σ τ ↦ (hab σ τ).eq⟩⟩` supplies it. -/
-theorem artinHomAway_apply [IsMulCommutative (L ≃ₐ[K] L)] (I : idealsAway (K := K) S) :
-    artinHomAway (L := L) hab S hur I = ∏ᶠ v : HeightOneSpectrum (𝓞 K),
-      artinElementAway hab S hur v ^ FractionalIdeal.count K v
+factors being trivial. It is taken in the commutative structure that `hab` itself supplies, so
+no bundled commutativity is asked of the caller. -/
+theorem artinHomAway_apply (I : idealsAway (K := K) S) :
+    artinHomAway (L := L) hab S hur I =
+      letI : IsMulCommutative (L ≃ₐ[K] L) := ⟨⟨fun σ τ ↦ (hab σ τ).eq⟩⟩
+      ∏ᶠ v : HeightOneSpectrum (𝓞 K), artinElementAway hab S hur v ^ FractionalIdeal.count K v
         ((I : (FractionalIdeal (𝓞 K)⁰ K)ˣ) : FractionalIdeal (𝓞 K)⁰ K) := (rfl)
 
 /-- **The value of the Artin map at a prime outside `S` is the Frobenius there.** -/
@@ -218,14 +220,27 @@ variable {L : Type*} [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
   (hur : ∀ v : HeightOneSpectrum (𝓞 K), v ∉ S →
     ∀ (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver v.asIdeal], Algebra.IsUnramifiedAt (𝓞 K) Q)
 
+omit [NumberField K] [NumberField L] in
+include hab in
+/-- **Commutativity of the Galois group passes to an intermediate field.** Every subextension of an
+abelian extension is abelian, so the hypothesis `hab` for `L/K` is already the one for `M/K` and is
+never a second assumption. -/
+theorem commute_of_intermediateField (M : IntermediateField K L) (σ τ : M ≃ₐ[K] M) :
+    Commute σ τ := by
+  have : IsMulCommutative (L ≃ₐ[K] L) := ⟨⟨fun a b ↦ (hab a b).eq⟩⟩
+  have : IsAbelianGalois K L := {}
+  have : IsMulCommutative (M ≃ₐ[K] M) := inferInstance
+  exact Commute.all σ τ
+
 /-- **The Artin map is functorial in the top field.** Restriction of automorphisms to a normal
 intermediate field `M` carries the Artin map of `L/K` to the Artin map of `M/K`, over the same
-excluded set and with the unramifiedness hypothesis for `M/K` derived from the one for `L/K`. -/
-theorem artinHomAway_restrict (M : IntermediateField K L) [IsGalois K M]
-    (habM : ∀ σ τ : M ≃ₐ[K] M, Commute σ τ) :
+excluded set and with both the commutativity and the unramifiedness hypothesis for `M/K` derived
+from the ones for `L/K`. -/
+theorem artinHomAway_restrict (M : IntermediateField K L) [IsGalois K M] :
     (AlgEquiv.restrictNormalHom (F := K) M).comp (artinHomAway (L := L) hab S hur) =
-      artinHomAway (L := M) habM S (isUnramifiedAway_of_intermediateField M S hur) := by
-  refine artinHomAway_eq_of_apply_prime habM S _ _ ?_
+      artinHomAway (L := M) (commute_of_intermediateField hab M) S
+        (isUnramifiedAway_of_intermediateField M S hur) := by
+  refine artinHomAway_eq_of_apply_prime (commute_of_intermediateField hab M) S _ _ ?_
   intro I v hv hI P hPp hPl τ hτ
   obtain ⟨Q, _, _⟩ := (inferInstance : Nonempty (P.primesOver (𝓞 L)))
   have : Q.LiesOver v.asIdeal := Ideal.LiesOver.trans Q P v.asIdeal
