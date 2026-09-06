@@ -129,9 +129,6 @@ argument also makes multiplicativity `map_mul` rather than a law with side condi
     integralIdealsPrimeTo 𝔪 →* RayClassGroup 𝔪 :=
   (rayClassMk 𝔪).comp (NumberFieldArithmetic.integralIdealsAwayHom 𝔪.support)
 
-theorem idealClass_mul (𝔪 : Modulus K) (I J : integralIdealsPrimeTo 𝔪) :
-    idealClass 𝔪 (I * J) = idealClass 𝔪 I * idealClass 𝔪 J := map_mul _ _ _
-
 /-- **The intrinsic triviality criterion for a ray class.**  An integral ideal prime to `𝔪` has
 trivial ray class exactly when it is generated as a *fractional* ideal by an element of `Kˣ` that
 is congruent to one modulo `𝔪`; the congruence already carries both the finite conditions and the
