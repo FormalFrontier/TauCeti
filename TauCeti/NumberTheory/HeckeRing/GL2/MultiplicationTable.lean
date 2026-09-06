@@ -201,21 +201,17 @@ private lemma mulSupport_pp_dvd_p_aux (p : ℕ) (hp : p.Prime)
 /-- Divisibility constraint: if a `T(1,p) · T(1,pᵏ)`-shaped product lies in the double
 coset of `diag a`, the first invariant `a 0` divides `p`. -/
 private lemma mulSupport_pp_dvd_p (p : ℕ) (hp : p.Prime) (k : ℕ) (a : Fin 2 → ℕ)
-    (ha_pos : ∀ i, 0 < a i) (hdiv : IsDvdChain a) (D1c D2c i₀_gl j₀_gl : GL (Fin 2) ℚ)
+    (ha_pos : ∀ i, 0 < a i) (hdiv : IsDvdChain a) (D1c D2c : GL (Fin 2) ℚ)
     (SL_L₁ SL_R₁ SL_L₂ SL_R₂ SL_La SL_Ra SL_i₀ SL_j₀ : SpecialLinearGroup (Fin 2) ℤ)
     (hD1_eq : D1c = mapGL ℚ SL_L₁ * natDiagGL 2 (![1, p]) * mapGL ℚ SL_R₁)
     (hD2_eq : D2c = mapGL ℚ SL_L₂ * natDiagGL 2 (![1, p ^ k]) * mapGL ℚ SL_R₂)
-    (hi₀ : i₀_gl = mapGL ℚ SL_i₀) (hj₀ : j₀_gl = mapGL ℚ SL_j₀)
-    (h_prod_eq_a : i₀_gl * D1c * (j₀_gl * D2c) =
+    (h_prod_eq_a : mapGL ℚ SL_i₀ * D1c * (mapGL ℚ SL_j₀ * D2c) =
       mapGL ℚ SL_La * natDiagGL 2 a * mapGL ℚ SL_Ra) : a 0 ∣ p := by
   apply mulSupport_pp_dvd_p_aux p hp (SL_R₁ * SL_j₀ * SL_L₂) (SL_La⁻¹ * SL_i₀ * SL_L₁)
     (SL_R₂ * SL_Ra⁻¹) a ha_pos hdiv k
-  have hprod : mapGL ℚ SL_i₀ * (mapGL ℚ SL_L₁ * natDiagGL 2 (![1, p]) * mapGL ℚ SL_R₁) *
-      (mapGL ℚ SL_j₀ * (mapGL ℚ SL_L₂ * natDiagGL 2 (![1, p ^ k]) * mapGL ℚ SL_R₂)) =
-      mapGL ℚ SL_La * natDiagGL 2 a * mapGL ℚ SL_Ra := by
-    rwa [← hi₀, ← hj₀, ← hD1_eq, ← hD2_eq]
+  rw [hD1_eq, hD2_eq] at h_prod_eq_a
   have hiso := congr_arg (· * (mapGL ℚ SL_Ra)⁻¹)
-    (congr_arg ((mapGL ℚ SL_La)⁻¹ * ·) hprod)
+    (congr_arg ((mapGL ℚ SL_La)⁻¹ * ·) h_prod_eq_a)
   simp only [mul_assoc, inv_mul_cancel_left] at hiso
   simp only [map_mul, map_inv]
   convert hiso using 1
@@ -366,22 +362,21 @@ private lemma mulSupport_pp_subset (k : ℕ)
   obtain ⟨SL_R₂, hSL_R₂⟩ := (mem_SLnZ_iff 2).mp hR₂
   -- Stage 4: determinants. Both sides of the product have determinant `p^(k+1)`, which pins
   -- `a 0 * a 1`; the two coset representatives' determinants come from `diagCoset_rep_det`, and
-  -- the two `SL₂` factors' from `det_eq_one_of_mem_SLnZ`.
+  -- the two `SL₂` factors' from `SpecialLinearGroup.det_mapGL`.
   have h_det := diag_entries_mul_eq_pow_succ p k a ha_pos (mapGL ℚ SL_i₀)
     ((diagCoset ![1, p]).rep : GL (Fin 2) ℚ) (mapGL ℚ SL_j₀)
     ((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ)
-    (det_eq_one_of_mem_SLnZ 2 ((mem_SLnZ_iff 2).mpr ⟨SL_i₀, rfl⟩))
+    (congrArg Units.val (SpecialLinearGroup.det_mapGL (S := ℚ) SL_i₀))
     (by rw [diagCoset_rep_det _ h1p_pos]; simp [Fin.prod_univ_two])
-    (det_eq_one_of_mem_SLnZ 2 ((mem_SLnZ_iff 2).mpr ⟨SL_j₀, rfl⟩))
+    (congrArg Units.val (SpecialLinearGroup.det_mapGL (S := ℚ) SL_j₀))
     (by rw [diagCoset_rep_det _ h1pk_pos]; simp [Fin.prod_univ_two])
     SL_La SL_Ra h_prod_eq
   -- Stage 5: the first invariant factor divides `p`, because conjugating the middle matrix
   -- keeps it integral. With `a 0 * a 1 = p^(k+1)` that leaves only the two claimed cosets.
   have h_dvd := mulSupport_pp_dvd_p p hp k a ha_pos hdiv
     ((diagCoset ![1, p]).rep : GL (Fin 2) ℚ) ((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ)
-    (mapGL ℚ SL_i₀) (mapGL ℚ SL_j₀)
     SL_L₁ SL_R₁ SL_L₂ SL_R₂ SL_La SL_Ra SL_i₀ SL_j₀
-    (by rw [hD1, hSL_L₁, hSL_R₁]) (by rw [hD2, hSL_L₂, hSL_R₂]) rfl rfl h_prod_eq
+    (by rw [hD1, hSL_L₁, hSL_R₁]) (by rw [hD2, hSL_L₂, hSL_R₂]) h_prod_eq
   exact mulSupport_pp_case_split p hp k a h_det h_dvd
 
 include hp in
