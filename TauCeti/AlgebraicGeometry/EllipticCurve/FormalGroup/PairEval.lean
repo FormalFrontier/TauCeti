@@ -282,4 +282,14 @@ theorem formalAddEval_sub_add_mem {I : Ideal O} (hI : IsAdic I) {k : ℕ} {t₁ 
     (hasEval_pair h₁ h₂) hI (pair_mem hk₁ hk₂) _
     (fun d hd ↦ W.coeff_formalAdd_sub_eq_zero_of_degree_lt hd)
 
+/-- **The levels of the filtration are closed under the group law**: the addition series carries
+a pair of parameters of `I ^ k` back into `I ^ k`, because it deviates from their sum by an
+element of `I ^ (2 * k)`. -/
+theorem formalAddEval_mem {I : Ideal O} (hI : IsAdic I) {k : ℕ} {t₁ t₂ : O}
+    (hk₁ : t₁ ∈ I ^ k) (hk₂ : t₂ ∈ I ^ k) : W.formalAddEval t₁ t₂ ∈ I ^ k := by
+  have hle : I ^ (2 * k) ≤ I ^ k := Ideal.pow_le_pow_right (by omega)
+  have := Ideal.add_mem _ (hle (W.formalAddEval_sub_add_mem hI hk₁ hk₂))
+    (Ideal.add_mem _ hk₁ hk₂)
+  simpa using this
+
 end WeierstrassCurve

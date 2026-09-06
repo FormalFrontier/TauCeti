@@ -37,4 +37,17 @@ theorem formalPoint_equation {t : O} (ht : PowerSeries.HasEval t)
   field_simp
   linear_combination hkey
 
+variable [W.IsElliptic]
+
+theorem formalPoint_nonsingular {t : O} (ht : PowerSeries.HasEval t)
+    (hw : algebraMap O K (W.formalWEval t) ≠ 0) :
+    (W.baseChange K).toAffine.Nonsingular
+      (algebraMap O K t / algebraMap O K (W.formalWEval t))
+      (-(algebraMap O K (W.formalWEval t))⁻¹) := by
+  have hΔ : (W.baseChange K).Δ ≠ 0 := by
+    rw [WeierstrassCurve.baseChange, WeierstrassCurve.map_Δ]
+    exact (W.isUnit_Δ.map _).ne_zero
+  exact ((W.baseChange K).toAffine.equation_iff_nonsingular_of_Δ_ne_zero hΔ).mp
+    (W.formalPoint_equation ht hw)
+
 end WeierstrassCurve
