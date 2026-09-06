@@ -30,8 +30,10 @@ computation fixes that scalar:
 `integratedOperator π hπ f = (dim V)⁻¹ · (∫ g, f g · χ_π g) • id`.
 
 Specializing `f` to `conj χ_π` turns the character orthogonality relations into the character
-projections; that is done in `TauCeti/RepresentationTheory/Compact/Character/Projection.lean`,
-which is the only consumer of this file so far.
+projections; the irreducible block identities are in
+`TauCeti/RepresentationTheory/Compact/Character/Projection.lean`, and their assembly into the
+isotypic projector is in
+`TauCeti/RepresentationTheory/Compact/Character/IsotypicProjection.lean`.
 
 ## Main definitions
 
@@ -45,6 +47,8 @@ which is the only consumer of this file so far.
 
 * `TauCeti.ContRepresentation.trace_integratedOperator`: the trace of the integrated operator is
   `∫ g, f g · χ_π g`.
+* `ContRepresentation.comp_integratedOperator`: integrated operators are natural with
+  respect to continuous intertwiners.
 * `TauCeti.ContRepresentation.integratedOperator_comp`: a class function acts by an intertwiner.
 * `TauCeti.ContRepresentation.integratedOperator_eq_smul_id`: **a class function acts on a
   finite-dimensional irreducible representation by the scalar `(dim V)⁻¹ · ∫ g, f g · χ_π g`.**
@@ -160,6 +164,33 @@ theorem integratedOperator_apply (f : C(G, 𝕜)) (v : V) :
   rw [integratedOperator, ← h, haarAverage_apply]
   simp only [ContinuousMap.comp_apply, ContinuousMap.coe_coe, ContinuousLinearMap.apply_apply,
     weightFamily_apply, smul_apply]
+
+section Naturality
+
+variable {W : Type*} [NormedAddCommGroup W] [NormedSpace 𝕜 W] [NormedSpace ℝ W]
+  [SMulCommClass ℝ 𝕜 W] [CompleteSpace W]
+  (rho : ContRepresentation 𝕜 G W) (hrho : Continuous rho)
+
+/-- **Integrated operators are natural in the representation.** A continuous intertwiner commutes
+with the operators obtained by integrating the same scalar function on its source and target. -/
+theorem _root_.ContRepresentation.comp_integratedOperator
+    (T : ContIntertwiningMap π rho) (f : C(G, 𝕜)) :
+    T.toContinuousLinearMap.comp (integratedOperator π hπ f) =
+      (integratedOperator rho hrho f).comp T.toContinuousLinearMap := by
+  ext v
+  have hint : Integrable (fun g ↦ f g • π g v) (haarProb G) := by
+    exact integrable_continuousMap G
+      ⟨fun g ↦ f g • π g v, f.continuous.smul (hπ.clm_apply continuous_const)⟩
+  rw [ContinuousLinearMap.comp_apply, ContinuousLinearMap.comp_apply,
+    integratedOperator_apply, integratedOperator_apply,
+    ← T.toContinuousLinearMap.integral_comp_comm hint]
+  refine integral_congr_ae (Filter.Eventually.of_forall fun g ↦ ?_)
+  beta_reduce
+  rw [map_smul]
+  congr 1
+  exact T.isIntertwining g v
+
+end Naturality
 
 /-! ### Linearity in the acting function -/
 

@@ -260,7 +260,6 @@ private theorem cauchyPVExistsAt_exciseCrossings_of_ordered_windows
       have hinsideTail := inside_tail_of_ordered_windows W hordered.1 hinside
       have havoidTail := avoid_tail_of_ordered_windows W hW havoid
       have hpvTail := ih htail (by linarith [hW.2.2]) hordered.2 hinsideTail havoidTail
-      let excised := exciseCrossings γ s (W :: windows)
       obtain ⟨heqLeft, heqWindow, heqTail⟩ :=
         eqOn_pieces_exciseCrossings_cons W windows
           (List.pairwise_cons.mpr ⟨hordered.1, hordered.2⟩) hW

@@ -212,7 +212,6 @@ theorem comul_mem_connectedComponentIdeal_augmentationPoint
   intro hx
   let z : PrimeSpectrum H := Bialgebra.augmentationPoint k H
   let I := PrimeSpectrum.connectedComponentIdeal z
-  let e := PrimeSpectrum.connectedComponentIdempotent z
   -- Expose the local component ideal so its principal-generator characterization can rewrite.
   change x ∈ I at hx
   change Coalgebra.comul (R := k) x ∈

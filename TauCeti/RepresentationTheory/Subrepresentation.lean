@@ -15,7 +15,7 @@ Mathlib's `Subrepresentation` API records how `toSubmodule` interacts with the l
 operations — `Subrepresentation.toSubmodule_sup` and `Subrepresentation.toSubmodule_inf`, both
 `@[simp]` and both true by `rfl` — but not how it interacts with the bounded-lattice structure,
 nor how it interacts with the order relations themselves, nor how it interacts with membership.
-This file adds the five missing counterparts, in the same shape. It also records that the
+This file adds the six missing counterparts, in the same shape. It also records that the
 representation action on a subrepresentation is the restriction of the original action, when an
 intertwining map is zero and when it is surjective in terms of the subrepresentation its range is,
 the inclusion of a subrepresentation as an intertwining map, that the group-algebra action on a
@@ -40,7 +40,14 @@ are what they are proved for. In the same spirit,
 across `Subrepresentation.subrepresentationSubmoduleOrderIso`, so that Mathlib's simple- and
 semisimple-module API applies to minimal subrepresentations; being about `asSubmodule` it asks for
 the coefficients to be a commutative ring, as `Subrepresentation.asSubmodule` and
-`IsSimpleModule` between them do.
+`IsSimpleModule` between them do.  `Subrepresentation.isCompl_toSubmodule` is one more entry in
+the lattice dictionary, moving `IsCompl` across it, and stated with the rest of that dictionary at
+the typeclasses `Subrepresentation` itself asks for.  Finally,
+`Subrepresentation.equivProdOfIsCompl` upgrades a complement to an equivalence of representations
+`ρ ≃ ρ₁ × ρ₂`: `Submodule.prodEquivOfIsCompl` supplies the linear isomorphism and each `ρ g`,
+being additive and preserving both summands, supplies the equivariance.  Being about
+`Submodule.prodEquivOfIsCompl`, it asks for the coefficients to be a ring and the module to be a
+group, as that construction does.
 
 ## Main results
 
@@ -49,6 +56,7 @@ the coefficients to be a commutative ring, as `Subrepresentation.asSubmodule` an
 * `Subrepresentation.toSubmodule_top`
 * `Subrepresentation.toSubmodule_le_toSubmodule`
 * `Subrepresentation.toSubmodule_lt_toSubmodule`
+* `Subrepresentation.isCompl_toSubmodule`
 * `Subrepresentation.toRepresentation_apply`
 * `Representation.IntertwiningMap.eq_zero_iff_range_eq_bot`
 * `Representation.IntertwiningMap.surjective_iff_range_eq_top`
@@ -63,6 +71,7 @@ the coefficients to be a commutative ring, as `Subrepresentation.asSubmodule` an
 * `Subrepresentation.coe_toRepresentation_asAlgebraHom_apply`
 * `Subrepresentation.asModuleEquivAsSubmodule`
 * `Subrepresentation.isSimpleModule_asSubmodule_iff`
+* `Subrepresentation.equivProdOfIsCompl`
 -/
 
 public section
@@ -97,6 +106,16 @@ is. -/
 lemma toSubmodule_lt_toSubmodule {ρ₁ ρ₂ : Subrepresentation ρ} :
     ρ₁.toSubmodule < ρ₂.toSubmodule ↔ ρ₁ < ρ₂ := by
   simp only [lt_iff_le_not_ge, toSubmodule_le_toSubmodule]
+
+/-- Two subrepresentations are complementary exactly when the subspaces they carry are.  This is
+the counterpart, for `IsCompl`, of `Subrepresentation.toSubmodule_le_toSubmodule`: it is what lets
+a splitting established in the submodule lattice -- by a dimension count, say, or by an explicit
+projection -- be read as a splitting of representations. -/
+@[simp]
+theorem isCompl_toSubmodule {ρ₁ ρ₂ : Subrepresentation ρ} :
+    IsCompl ρ₁.toSubmodule ρ₂.toSubmodule ↔ IsCompl ρ₁ ρ₂ := by
+  simp only [isCompl_iff, disjoint_iff, codisjoint_iff, ← toSubmodule_inf, ← toSubmodule_sup,
+    ← toSubmodule_bot (ρ := ρ), ← toSubmodule_top (ρ := ρ), toSubmodule_injective.eq_iff]
 
 /-- The action on a subrepresentation is the restriction of the original action. -/
 theorem toRepresentation_apply (S : Subrepresentation ρ) (g : G) :
@@ -216,14 +235,14 @@ noncomputable def asModuleEquivAsSubmodule (σ : Subrepresentation ρ) :
 @[simp]
 theorem coe_asModuleEquivAsSubmodule_apply (σ : Subrepresentation ρ)
     (x : σ.toRepresentation.asModule) :
-    _root_.Representation.asModuleEquiv ρ (σ.asModuleEquivAsSubmodule x).1 =
+    (σ.asModuleEquivAsSubmodule x).1 =
       (σ.toRepresentation.asModuleEquiv x).1 :=
   (rfl)
 
 @[simp]
 theorem coe_asModuleEquivAsSubmodule_symm_apply (σ : Subrepresentation ρ)
     (x : σ.asSubmodule) :
-    (σ.toRepresentation.asModuleEquiv (σ.asModuleEquivAsSubmodule.symm x)).1 =
+    (σ.asModuleEquivAsSubmodule.symm x).1 =
       _root_.Representation.asModuleEquiv ρ x.1 :=
   (rfl)
 
@@ -245,5 +264,45 @@ theorem isSimpleModule_asSubmodule_iff {σ : Subrepresentation ρ} :
   isSimpleModule_iff_isAtom.trans (subrepresentationSubmoduleOrderIso.isAtom_iff σ)
 
 end AsSubmodule
+
+section Splitting
+
+variable {A G W : Type*} [Ring A] [Monoid G] [AddCommGroup W] [Module A W]
+  {ρ : Representation A G W}
+
+/-- **Complementary subrepresentations split the representation as a direct sum.**  Adding a
+vector of `ρ₁` to one of `ρ₂` is a linear isomorphism `ρ₁ × ρ₂ ≃ W` by
+`Submodule.prodEquivOfIsCompl`, and it is equivariant because every `ρ g` is additive and
+preserves each summand; so `ρ` is the product of the two representations the summands carry.
+This is the representation-theoretic content of a complement, of which
+`Submodule.prodEquivOfIsCompl` records only the linear part. -/
+noncomputable def equivProdOfIsCompl {ρ₁ ρ₂ : Subrepresentation ρ} (h : IsCompl ρ₁ ρ₂) :
+    ρ.Equiv (ρ₁.toRepresentation.prod ρ₂.toRepresentation) :=
+  (Representation.Equiv.mk
+    (Submodule.prodEquivOfIsCompl ρ₁.toSubmodule ρ₂.toSubmodule (isCompl_toSubmodule.mpr h))
+    fun g => LinearMap.ext fun v => by
+      simp [toRepresentation_apply]).symm
+
+/-- The splitting is the linear splitting `Submodule.prodEquivOfIsCompl` of the two carriers, read
+backwards: it sends a vector to the pair of its components along the complementary submodules. -/
+@[simp]
+theorem equivProdOfIsCompl_apply {ρ₁ ρ₂ : Subrepresentation ρ} (h : IsCompl ρ₁ ρ₂) (v : W) :
+    equivProdOfIsCompl h v =
+      (Submodule.prodEquivOfIsCompl ρ₁.toSubmodule ρ₂.toSubmodule
+        (isCompl_toSubmodule.mpr h)).symm v :=
+  -- `(rfl)`, not `rfl`: the body of `equivProdOfIsCompl` is not `@[expose]`d, so this must not be
+  -- inferred `@[defeq]`.
+  (rfl)
+
+/-- The inverse of the splitting adds the two components back together. -/
+@[simp]
+theorem equivProdOfIsCompl_symm_apply {ρ₁ ρ₂ : Subrepresentation ρ} (h : IsCompl ρ₁ ρ₂)
+    (v : ρ₁.toSubmodule × ρ₂.toSubmodule) :
+    (equivProdOfIsCompl h).symm v = (v.1 : W) + (v.2 : W) :=
+  -- `(rfl)`, not `rfl`: the body of `equivProdOfIsCompl` is not `@[expose]`d, so this must not be
+  -- inferred `@[defeq]`.
+  (rfl)
+
+end Splitting
 
 end Subrepresentation

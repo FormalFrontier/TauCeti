@@ -35,11 +35,12 @@ needs one hypothesis more, to make its target a legitimate one for the universal
 topologically nilpotent `s` over a strongly noetherian `A⟨T/s⟩` gives that, and the
 `..._of_isStronglyNoetherian` forms below take those two in its place.
 
-**What is not claimed.** The two maps are constructed; that they are mutually inverse is not
-proved here. For `T' = insert t T` — the case Wedhorn's Remark 7.55 chains, one numerator at a
-time — Remark 7.55 does present `A⟨T'/s⟩` as exactly this quotient, and Proposition 8.30 consumes
-that identification. For a general enlargement no identification is even expected, since `T'` may
-adjoin numerators other than `t`; `hsplit` is what rules that out.
+**The two maps are mutually inverse**, under the same `hsplit` that the second one needs, and so
+the quotient *is* `A⟨T'/s⟩` — Wedhorn's Remark 7.55. That is proved in
+`TauCeti.RingTheory.Huber.LocalizationTopology.Laurent.Identification`, which builds
+`laurentQuotientRingEquiv` from the two maps this file constructs. For a general enlargement no
+identification is expected, since `T'` may adjoin numerators other than `t`; `hsplit` is what
+rules that out.
 
 The restriction map itself, and the fact that it carries `t/s` to `t/s`, live one file earlier in
 `TauCeti.RingTheory.Huber.LocalizationTopology.Restriction`: they need only the
@@ -230,6 +231,11 @@ section OneStep
 variable (T' : Finset A) (S' : Type*) [CommRing S'] [Algebra A S'] [IsLocalization.Away s S']
   (hden' : HasDenominatorPower P T' s S') (hTT' : ∀ u ∈ T, u ∈ T')
 
+section OneStep
+
+variable (T' : Finset A) (S' : Type*) [CommRing S'] [Algebra A S'] [IsLocalization.Away s S']
+  (hden' : HasDenominatorPower P T' s S') (hTT' : ∀ u ∈ T, u ∈ T')
+
 /-- **The canonical evaluation out of the Laurent quotient.** There is exactly one
 continuous ring homomorphism
 
@@ -246,7 +252,8 @@ universal property
 `TauCeti.Huber.existsUnique_continuous_ringHom_quotient_weightedRestrictedSubring` of the
 quotient. In the special case `T' = insert t T`, Wedhorn's Remark 7.55 chains such refinements and
 Proposition 8.30 reduces flatness of a general restriction map along that chain to the elementary
-one; that reduction needs the identification of the two rings, which is not proved here. -/
+one; the identification that reduction needs is
+`TauCeti.Huber.PairOfDefinition.laurentQuotientRingEquiv`, below. -/
 theorem existsUnique_continuous_ringHom_laurentQuotient_restriction (ht : t ∈ T') :
     letI := locUniformSpace P T s S hden
     letI := isUniformAddGroup_locUniformSpace P T s S hden
@@ -417,8 +424,9 @@ compatible with the two structure maps from `A`.
 Paired with
 `TauCeti.Huber.PairOfDefinition.existsUnique_continuous_ringHom_laurentQuotient_restriction`
 this gives the two maps of Wedhorn's Remark 7.55, which Proposition 8.30 uses to reduce flatness
-of a general restriction map to the elementary one. Only the maps are constructed; that they are
-mutually inverse is separate work.
+of a general restriction map to the elementary one. They are mutually inverse — see
+`TauCeti.Huber.PairOfDefinition.laurentQuotientRingEquiv` and the two composite identities it is
+built from.
 
 The hypothesis beyond the splitting is what makes the target legitimate for
 `TauCeti.Huber.PairOfDefinition.existsUnique_continuous_ringHom_completion_locTopology`: a closed
@@ -626,6 +634,8 @@ theorem eq_laurentQuotientRingHom (hsplit : ∀ u ∈ T', u ∈ T ∨ u = t)
   exact fun g hgc hge ↦
     (existsUnique_continuous_ringHom_completion_laurentQuotient P T s t S hden T' S' hden'
       hsplit hcl).choose_spec.2 g ⟨hgc, hge⟩
+
+end OneStep
 
 end OneStep
 

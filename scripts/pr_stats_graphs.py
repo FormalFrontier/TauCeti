@@ -100,10 +100,38 @@ def atomic_write(path: Path, content: str) -> None:
         raise
 
 
+# A depleted budget is not a transient failure: retrying in one, two and four seconds cannot
+# refill it, so the original three quick attempts turned an hour-long wait into an immediate
+# error. The budget refills on a fixed schedule, so the only useful response is to wait for it.
+RATE_LIMITED = re.compile(r"rate limit|secondary rate|was submitted too quickly", re.I)
+# One GraphQL window is an hour, plus a margin for clock skew between here and GitHub. Capped so
+# that a misread reset time, or a limit that is not actually going to refill, fails the job
+# instead of holding a runner indefinitely.
+MAX_RATE_LIMIT_WAIT = 75 * 60
+
+
+def rate_limit_reset_wait() -> float | None:
+    """Seconds until the GraphQL budget refills, or None if that cannot be established."""
+    probe = subprocess.run(
+        ["gh", "api", "rate_limit", "--jq", ".resources.graphql.reset"],
+        text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    )
+    if probe.returncode != 0:
+        return None
+    try:
+        reset = datetime.fromtimestamp(int(probe.stdout.strip()), tz=timezone.utc)
+    except ValueError:
+        return None
+    # A small margin past the reset, so a request does not land on the boundary and fail again.
+    return max(0.0, (reset - datetime.now(timezone.utc)).total_seconds()) + 5
+
+
 def run_gh(arguments: list[str], attempts: int = 3) -> str:
-    """Run gh with short retries for transient GitHub/API failures."""
+    """Run gh, with short retries for transient failures and a long one for a depleted budget."""
     last_error = None
-    for attempt in range(attempts):
+    waited = 0.0
+    attempt = 0
+    while attempt < attempts:
         result = subprocess.run(
             ["gh", *arguments], text=True, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -111,7 +139,22 @@ def run_gh(arguments: list[str], attempts: int = 3) -> str:
         if result.returncode == 0:
             return result.stdout
         last_error = result.stderr.strip() or f"gh exited {result.returncode}"
-        if attempt + 1 < attempts:
+        if RATE_LIMITED.search(last_error):
+            wait = rate_limit_reset_wait()
+            if wait is None or waited + wait > MAX_RATE_LIMIT_WAIT:
+                raise RuntimeError(
+                    f"GitHub rate limit exhausted and not waitable: {last_error}. "
+                    f"Already waited {waited / 60:.0f} min of a {MAX_RATE_LIMIT_WAIT / 60:.0f} "
+                    "min budget. Pass a recent snapshot with --since-data so that unchanged "
+                    "pull requests do not have to be walked again.")
+            print(f"rate limit reached; waiting {wait / 60:.1f} min for the budget to refill",
+                  file=sys.stderr)
+            time.sleep(wait)
+            waited += wait
+            # Waiting is not one of the three attempts: the request never really ran.
+            continue
+        attempt += 1
+        if attempt < attempts:
             time.sleep(2 ** attempt)
     raise RuntimeError(f"GitHub query failed after {attempts} attempts: {last_error}")
 
@@ -130,7 +173,7 @@ query($owner:String!, $name:String!, $cursor:String) {
                  orderBy:{field:CREATED_AT, direction:ASC}) {
       pageInfo { hasNextPage endCursor }
       nodes {
-        number createdAt mergedAt closedAt state isDraft
+        number createdAt updatedAt mergedAt closedAt state isDraft
         author { login }
         labels(first:30) { nodes { name } }
       }
@@ -153,6 +196,63 @@ query($owner:String!, $name:String!, $number:Int!, $cursor:String) {
   }
 }
 """
+
+
+# Aliased pull requests in one query, so a cold walk costs a fiftieth of what it did. GitHub
+# prices a GraphQL request from the connection sizes it asks for, not from how many top-level
+# fields it has, and `pullRequest(number:)` is not a connection -- so fifty of them alongside
+# fifty 100-item timelines still scores one point, exactly what a single pull request cost
+# before. Measured against this repository: 25 and 50 aliases both cost 1, 100 costs 2.
+#
+# The old comment here said batching loses events. That is true of the OUTER pull-request page
+# query, whose nested timelines cannot be paged per node -- and it stays true; PR_PAGE_QUERY has
+# no timelineItems and a test enforces that. It is not true of aliases, which each carry their
+# own pageInfo and can be followed up individually. Anything reporting hasNextPage falls back to
+# the single-pull-request paginating query below, so depth is never silently truncated.
+TIMELINE_BATCH = 50
+TIMELINE_FIRST = 100
+
+TIMELINE_FRAGMENT = f"""
+fragment PrTimeline on PullRequest {{
+  mergedAt closedAt state isDraft
+  labels(first:30) {{ nodes {{ name }} }}
+  timelineItems(first:{TIMELINE_FIRST}, itemTypes:[LABELED_EVENT]) {{
+    pageInfo {{ hasNextPage }}
+    nodes {{ ... on LabeledEvent {{ createdAt label {{ name }} }} }}
+  }}
+}}
+"""
+
+
+def timeline_batch_query(numbers: list[int]) -> str:
+    """A query aliasing one `pullRequest` field per number.
+
+    The numbers are interpolated into the query text rather than passed as variables, because
+    GraphQL has no way to parameterise a field alias. They are required to be genuine ints
+    first: everything reaching here comes from the pull-request page query, so a non-int means a
+    bug rather than hostile input, but a query built by string-formatting is not the place to
+    find that out later.
+    """
+    for number in numbers:
+        if not isinstance(number, int) or isinstance(number, bool) or number < 0:
+            raise TypeError(f"pull request numbers must be non-negative ints, got {number!r}")
+    fields = "\n    ".join(f"p{number}: pullRequest(number:{number}) {{ ...PrTimeline }}"
+                            for number in numbers)
+    return (f"query($owner:String!, $name:String!) {{\n"
+            f"  repository(owner:$owner, name:$name) {{\n    {fields}\n  }}\n}}\n"
+            f"{TIMELINE_FRAGMENT}")
+
+
+def timeline_from_node(pull: dict) -> dict:
+    """The normalized timeline record, from either the batched or the single-PR query."""
+    return {
+        "merged_at": pull["mergedAt"],
+        "closed_at": pull["closedAt"],
+        "state": pull["state"],
+        "is_draft": pull["isDraft"],
+        "labels": [item["name"] for item in pull["labels"]["nodes"]],
+        "labeled_events": normalized_events(pull["timelineItems"]["nodes"]),
+    }
 
 
 def graphql(query: str, **variables) -> dict:
@@ -189,29 +289,108 @@ def fetch_timeline(owner: str, name: str, number: int) -> dict:
         timeline = pull["timelineItems"]
         events.extend(timeline["nodes"])
         if not timeline["pageInfo"]["hasNextPage"]:
-            return {
-                "merged_at": pull["mergedAt"],
-                "closed_at": pull["closedAt"],
-                "state": pull["state"],
-                "is_draft": pull["isDraft"],
-                "labels": [item["name"] for item in pull["labels"]["nodes"]],
-                "labeled_events": normalized_events(events),
-            }
+            record = timeline_from_node(pull)
+            # Every page's events, not just the last one's.
+            record["labeled_events"] = normalized_events(events)
+            return record
         cursor = timeline["pageInfo"]["endCursor"]
 
 
-def fetch_timelines(owner: str, name: str, numbers: list[int]) -> dict[int, dict]:
-    """Fetch current state and timelines independently; batching loses events."""
+def fetch_timelines(
+    owner: str, name: str, numbers: list[int], reusable: dict[int, dict] | None = None,
+) -> tuple[dict[int, dict], int]:
+    """Current state and label timelines for `numbers`, as cheaply as correctness allows.
+
+    Two things keep this proportional to the work rather than to the project. `reusable` maps a
+    number to a timeline recorded while the pull request had its current `updatedAt`, so nothing
+    that has not moved is fetched at all. What remains is fetched in batches of aliased pull
+    requests, which GitHub prices as one point per batch rather than one per pull request.
+
+    Together these took a full walk of this repository from about 4600 points -- against an
+    hourly budget of 5000, which it had already outgrown -- to under a hundred.
+
+    Returns the timelines and how many pull requests had to be fetched.
+    """
+    reusable = reusable or {}
     result = {}
-    for index, number in enumerate(numbers, start=1):
+    outstanding = []
+    for number in numbers:
+        cached = reusable.get(number)
+        if cached is not None:
+            result[number] = cached
+        else:
+            outstanding.append(number)
+
+    # Anything whose events did not fit in one batched page. Collected and handled afterwards so
+    # that a deep timeline costs one extra paginating fetch rather than shrinking the batch.
+    deep = []
+    for start in range(0, len(outstanding), TIMELINE_BATCH):
+        chunk = outstanding[start:start + TIMELINE_BATCH]
+        repository = graphql(
+            timeline_batch_query(chunk), owner=owner, name=name)["repository"]
+        for number in chunk:
+            pull = repository.get(f"p{number}")
+            if pull is None:
+                raise RuntimeError(f"GitHub returned no timeline for PR #{number}")
+            if pull["timelineItems"]["pageInfo"]["hasNextPage"]:
+                deep.append(number)
+                continue
+            result[number] = timeline_from_node(pull)
+        done = min(start + TIMELINE_BATCH, len(outstanding))
+        print(f"fetched {done:,} of {len(outstanding):,} PR timelines "
+              f"({len(numbers) - len(outstanding):,} reused)", file=sys.stderr)
+
+    for number in deep:
         result[number] = fetch_timeline(owner, name, number)
-        if index % 100 == 0 or index == len(numbers):
-            print(f"fetched {index:,}/{len(numbers):,} PR timelines", file=sys.stderr)
-    return result
+    if deep:
+        print(f"paged {len(deep):,} timeline(s) deeper than {TIMELINE_FIRST} events",
+              file=sys.stderr)
+
+    return result, len(outstanding)
 
 
-def fetch_prs(repo: str) -> list[dict]:
-    """Fetch every PR and its authoritative, directly queried label timeline."""
+def reusable_timelines(previous: dict | None, prs: list[dict]) -> dict[int, dict]:
+    """Timelines from an earlier snapshot that the current `updatedAt` proves are still current.
+
+    A pull request's `updatedAt` moves when it is labelled, so an unchanged one is a sound
+    certificate that its label timeline is unchanged too. Anything the previous snapshot does
+    not carry a matching `updated_at` and a recorded timeline for is simply refetched, so a
+    snapshot written before this field existed, a truncated one, or none at all all degrade to
+    the original full walk rather than to wrong data.
+    """
+    if not previous:
+        return {}
+    recorded = {}
+    for entry in previous.get("prs") or []:
+        if entry.get("updated_at") and "labeled_events" in entry:
+            recorded[entry.get("number")] = entry
+    reusable = {}
+    for pr in prs:
+        entry = recorded.get(pr["number"])
+        if entry is None or entry["updated_at"] != pr["updated_at"]:
+            continue
+        # Shaped like a fetch_timeline result, because that is what the caller substitutes it
+        # for. Only the event list comes from the previous snapshot: the state fields are taken
+        # from this run's page query, which was read later than the cached copy and so is the
+        # fresher of the two. They must agree anyway -- an unchanged `updatedAt` says so -- but
+        # preferring the newer read keeps a reused pull request no staler than a fetched one.
+        reusable[pr["number"]] = {
+            "merged_at": pr["merged_at"],
+            "closed_at": pr["closed_at"],
+            "state": pr["state"],
+            "is_draft": pr["is_draft"],
+            "labels": pr["labels"],
+            "labeled_events": entry.get("labeled_events") or [],
+        }
+    return reusable
+
+
+def fetch_prs(repo: str, previous: dict | None = None) -> list[dict]:
+    """Fetch every PR and its authoritative, directly queried label timeline.
+
+    `previous` is an earlier snapshot from this same repository, used only to skip refetching
+    the timeline of a pull request that has not been touched since. See `reusable_timelines`.
+    """
     owner, name = split_repo(repo)
     cursor = None
     prs = []
@@ -223,6 +402,7 @@ def fetch_prs(repo: str) -> list[dict]:
             prs.append({
                 "number": raw["number"],
                 "created_at": raw["createdAt"],
+                "updated_at": raw["updatedAt"],
                 "merged_at": raw["mergedAt"],
                 "closed_at": raw["closedAt"],
                 "state": raw["state"],
@@ -238,7 +418,8 @@ def fetch_prs(repo: str) -> list[dict]:
         pr["number"] for pr in prs
         if pr["closed_at"] is None or parse_dt(pr["closed_at"]) >= LIFECYCLE_EPOCH
     ]
-    timelines = fetch_timelines(owner, name, timeline_numbers)
+    timelines, _ = fetch_timelines(
+        owner, name, timeline_numbers, reusable_timelines(previous, prs))
     for pr in prs:
         if pr["number"] not in timelines:
             continue
@@ -279,11 +460,52 @@ def names_scoreboard_for(metas: Iterable[str], pr_number: int) -> bool:
     return False
 
 
+# The comment scan below reads the repository's whole comment history. That is affordable only
+# because it does not have to happen every run, and it will not stay possible at all: GitHub caps
+# this endpoint at 400 pages, and the scan is ASCENDING, so once the repository passes 40,000
+# comments the pages that stop arriving are the newest ones -- precisely the scoreboards that
+# decide whether a pull request may merge. At ~13,600 comments growing by ~150 a day, that is a
+# few months out, and it would arrive as quietly as everything else in this file did.
+#
+# So: scan descending, and normally only since the last scan. Descending means that if the cap is
+# ever reached anyway the oldest comments are lost rather than the newest, which is the survivable
+# direction. `since` filters on updated_at, so an edited comment is re-examined.
+#
+# What an incremental scan cannot see is a comment that was DELETED, or edited to drop its marker;
+# either lingers in the carried-over set. A full rescan every week bounds how long that can last,
+# and costs one run in fifty-six rather than every run.
+SCOREBOARD_FULL_RESCAN_DAYS = 7
+# Re-read a little before the last scan, so a comment written while that scan was running cannot
+# fall into the gap between the two.
+SCOREBOARD_OVERLAP = timedelta(hours=1)
+
+
+def scoreboard_watermark(previous: dict | None, now: datetime) -> datetime | None:
+    """The instant to scan comments from, or None to scan the whole history.
+
+    Returns None whenever the carried-over set cannot be trusted to be merged into: no previous
+    snapshot, one written before this bookkeeping existed, one whose records predate comment ids,
+    or one old enough that deletions may have accumulated behind it.
+    """
+    if not previous:
+        return None
+    scanned = parse_dt(previous.get("scoreboards_scanned_at") or "")
+    if scanned is None:
+        return None
+    if now - scanned > timedelta(days=SCOREBOARD_FULL_RESCAN_DAYS):
+        return None
+    if any("id" not in entry for entry in previous.get("scoreboards") or []):
+        return None
+    return scanned - SCOREBOARD_OVERLAP
+
+
 def fetch_scoreboards(
     repo: str,
     pr_numbers: set[int],
     trusted_logins: set[str],
-) -> tuple[list[dict], Counter]:
+    previous: dict | None = None,
+    now: datetime | None = None,
+) -> tuple[list[dict], dict[str, str], str]:
     """Canonical review scoreboards posted on this repository's pull requests.
 
     The repository issue-comments endpoint also serves ordinary issues and accepts comments
@@ -293,17 +515,32 @@ def fetch_scoreboards(
     works with the read-only Actions token and does not trust requester-dependent
     ``author_association`` values. Parsing runs at gh/jq, so only compact fields reach Python
     rather than memory growing with review prose. Rejections are published by reason.
+
+    Returns the scoreboards, the rejected comments as {id: reason}, and the instant the scan
+    covers up to. Rejections are kept per comment id rather than as bare counts so that a
+    re-examined comment replaces its own earlier verdict instead of being counted twice.
     """
+    now = now or datetime.now(timezone.utc)
+    since = scoreboard_watermark(previous, now)
     marker = json.dumps(SCOREBOARD_MARKER)
+    # Descending, so a future run that does hit GitHub's pagination cap loses the oldest
+    # comments rather than the newest. `--paginate` carries these parameters through the
+    # Link headers it follows.
+    query = "per_page=100&sort=created&direction=desc"
+    if since is not None:
+        query += f"&since={iso_z(since)}"
+        print(f"scanning scoreboard comments updated since {iso_z(since)}", file=sys.stderr)
+    else:
+        print("scanning the full scoreboard comment history", file=sys.stderr)
     raw = run_gh([
         "api", "--paginate",
-        f"repos/{repo}/issues/comments?per_page=100",
+        f"repos/{repo}/issues/comments?{query}",
         "--jq", f'.[] | select((.body // "") | contains({marker}))'
                 ' | . as $comment | ($comment.issue_url | split("/") | last) as $number'
                 ' | ([try ($comment.body | capture("<!--tauceti-meta:v1\\\\s+'
                 '(?<json>\\\\{[\\\\s\\\\S]*\\\\})\\\\s*-->").json'
                 ' | fromjson) catch null][0] // null) as $meta'
-                ' | {number: $number, created_at: $comment.created_at,'
+                ' | {id: $comment.id, number: $number, created_at: $comment.created_at,'
                 '    updated_at: $comment.updated_at, user: $comment.user.login,'
                 '    canonical: (($meta | type == "object")'
                 '      and $meta.kind == "scoreboard"'
@@ -311,49 +548,99 @@ def fetch_scoreboards(
                 '      and (($meta.pr | floor) == $meta.pr)'
                 '      and ($meta.pr == ($number | tonumber)))}',
     ])
-    scoreboards = []
-    rejected = Counter()
+    # An incremental scan starts from what the previous one established and revises it; a full
+    # scan starts from nothing, which is what makes it able to drop deleted comments.
+    kept: dict[str, dict] = {}
+    rejected: dict[str, str] = {}
+    if since is not None:
+        kept = {entry["id"]: entry for entry in previous["scoreboards"]}
+        rejected = dict(previous.get("rejected_scoreboard_comments_by_id") or {})
+
     for line in raw.splitlines():
         comment = json.loads(line)
+        identifier = str(comment.get("id"))
+        # A comment can cross the line in either direction when edited, so a fresh verdict
+        # always displaces the old one rather than being added alongside it.
+        kept.pop(identifier, None)
+        rejected.pop(identifier, None)
         try:
             pr_number = int(comment["number"])
         except (KeyError, TypeError, ValueError):
-            rejected["unparsable_issue_number"] += 1
+            rejected[identifier] = "unparsable_issue_number"
             continue
         if pr_number not in pr_numbers:
-            rejected["not_a_pull_request"] += 1
+            rejected[identifier] = "not_a_pull_request"
             continue
         if comment.get("user") not in trusted_logins:
-            rejected["untrusted_author"] += 1
+            rejected[identifier] = "untrusted_author"
             continue
         if not comment.get("canonical"):
-            rejected["no_canonical_scoreboard_meta"] += 1
+            rejected[identifier] = "no_canonical_scoreboard_meta"
             continue
-        scoreboards.append({
+        kept[identifier] = {
+            "id": identifier,
             "pr": pr_number,
             "created_at": comment["created_at"],
             "updated_at": comment["updated_at"],
             "user": comment.get("user") or "unknown",
-        })
-    return scoreboards, rejected
+        }
+    scoreboards = sorted(kept.values(), key=lambda entry: (entry["created_at"], entry["id"]))
+    return scoreboards, rejected, iso_z(now)
 
 
-def fetch_snapshot(repo: str) -> dict:
-    prs = fetch_prs(repo)
+def load_previous(path: Path | None, repo: str) -> dict | None:
+    """An earlier snapshot to reuse timelines from, or None if there is nothing usable.
+
+    Every failure here is non-fatal and reported, because this file is only ever an
+    optimisation: no snapshot, an unreadable one, or one from another repository all mean the
+    same thing -- walk everything, as before. Silence would be the wrong choice in the other
+    direction though. A cache that has quietly stopped being restored looks exactly like a
+    healthy run until the budget runs out, which is the failure this whole path exists to
+    prevent, so a miss says so on stderr.
+    """
+    if path is None:
+        return None
+    try:
+        previous = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        print(f"no previous snapshot at {path}; walking every timeline", file=sys.stderr)
+        return None
+    except (OSError, ValueError) as error:
+        print(f"ignoring unreadable snapshot {path}: {error}", file=sys.stderr)
+        return None
+    if previous.get("repo") != repo:
+        print(f"ignoring snapshot for {previous.get('repo')!r}, expected {repo!r}",
+              file=sys.stderr)
+        return None
+    print(f"reusing timelines from the snapshot taken at {previous.get('fetched_at')}",
+          file=sys.stderr)
+    return previous
+
+
+def fetch_snapshot(repo: str, previous: dict | None = None) -> dict:
+    prs = fetch_prs(repo, previous)
     trusted_logins = {
         pr["author"] for pr in prs
         if pr.get("merged_at") and pr.get("author") != "unknown"
     }
-    scoreboards, rejected = fetch_scoreboards(
-        repo, {pr["number"] for pr in prs}, trusted_logins,
+    scoreboards, rejected, scanned_at = fetch_scoreboards(
+        repo, {pr["number"] for pr in prs}, trusted_logins, previous,
     )
     return {
-        "schema_version": 1,
+        # 2: pull requests carry `updated_at` and scoreboards carry `id`, both so that the next
+        # run can tell what it may keep. A version 1 snapshot is still readable -- everything
+        # that reuses it checks for the field it needs and falls back to fetching -- so this
+        # bump records the shape rather than gating on it.
+        "schema_version": 2,
         "repo": repo,
         "fetched_at": iso_z(datetime.now(timezone.utc)),
         "prs": prs,
         "scoreboards": scoreboards,
-        "rejected_scoreboard_comments": dict(sorted(rejected.items())),
+        # Per comment, so that the next incremental scan can revise a single verdict. The
+        # published counts below are derived from it and stay exact across incremental runs.
+        "scoreboards_scanned_at": scanned_at,
+        "rejected_scoreboard_comments_by_id": dict(sorted(rejected.items())),
+        "rejected_scoreboard_comments": dict(sorted(Counter(rejected.values()).items())),
     }
 
 
@@ -889,6 +1176,11 @@ def main() -> int:
     parser.add_argument("--out-dir", required=True, type=Path)
     parser.add_argument("--data", type=Path, help="normalized offline snapshot")
     parser.add_argument("--dump-data", type=Path, help="write fetched normalized snapshot")
+    parser.add_argument("--since-data", type=Path,
+                        help="an earlier snapshot; pull requests untouched since it was written "
+                             "keep their recorded timeline instead of being walked again. "
+                             "A missing or unreadable file is ignored, so a cold start still "
+                             "works -- it is a cost optimisation, never a source of truth.")
     parser.add_argument("--as-of", help="override snapshot time (ISO 8601)")
     parser.add_argument("--contributor-limit", type=int, default=24)
     parser.add_argument("--history-days", type=int, default=90)
@@ -900,7 +1192,7 @@ def main() -> int:
     if args.data:
         data = json.loads(args.data.read_text(encoding="utf-8"))
     else:
-        data = fetch_snapshot(args.repo)
+        data = fetch_snapshot(args.repo, load_previous(args.since_data, args.repo))
         if args.dump_data:
             atomic_write(args.dump_data, json.dumps(data, indent=2) + "\n")
     as_of = parse_dt(args.as_of) if args.as_of else None

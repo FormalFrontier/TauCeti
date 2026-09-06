@@ -96,7 +96,7 @@ a divisor. -/
 theorem finite_setOf_differentExponent_ne_zero (hF : IsFunctionField k F) :
     {P' : Place k' F' | differentExponent k F P' ≠ 0}.Finite := by
   classical
-  set b : Basis (Fin (finrank F F')) F F' := finBasis F F' with hb
+  set b : Basis (Fin (finrank F F')) F F' := finBasis F F'
   set bad : Set (Place k F) :=
     {P | P.ord (Algebra.discr F b) ≠ 0} ∪ ⋃ i, {P | ¬ IsIntegral P.integers (b i)} with hbaddef
   have hbad : bad.Finite :=

@@ -19,9 +19,11 @@ smooth parameterized autonomous ODE depend smoothly on its parameter.
 
 ## Main results
 
-* `ODE.exists_contDiffAt_picard_solution`: a finite-order smooth family of local solutions of the
-  Picard integral equation, satisfying the ODE at interior times and from the right at the initial
-  endpoint.
+* `ODE.exists_contDiffAt_picard_solution_of_contDiff`: for a globally smooth field on complete
+  spaces, a finite-order smooth family of local solutions of the Picard integral equation,
+  satisfying the ODE at interior times and from the right at the initial endpoint.
+* `ODE.exists_contDiffAt_picard_solution`: the same for a germ of a smooth field, in finite
+  dimension.
 
 ## References
 
@@ -189,11 +191,94 @@ private theorem eventually_dist_parameterizedPath_lt {γ : E → C(K, F)} {p₀ 
   simpa only [hpathBase, Function.comp_apply, id_eq] using
     (Metric.continuousAt_iff'.mp hpath ε hε)
 
+/-- A globally smooth parameterized autonomous vector field which vanishes near the base state at
+the base parameter admits a locally smooth family of solutions through that state. The result is
+stated at every finite order; this is the form needed to assemble smoothness of a germ. Each
+nearby path satisfies the Picard integral equation, the corresponding ODE at every interior time,
+and its right-hand version at the initial endpoint. A field defined and smooth on the whole space
+needs no cutoff, so completeness of the two spaces is the only hypothesis. -/
+theorem exists_contDiffAt_picard_solution_of_contDiff
+    [CompleteSpace E] [CompleteSpace F]
+    (n : ℕ) (f : E × F → F) (p₀ : E) (x₀ : F)
+    (hf : ContDiff ℝ (n + 1) f)
+    (hzero : ∀ᶠ y in nhds x₀, f (p₀, y) = 0) :
+    ∃ γ : E → C(Set.Icc (0 : ℝ) 1, F),
+      ContDiffAt ℝ (n + 1) γ p₀ ∧
+      γ p₀ = ContinuousMap.const _ x₀ ∧
+      ∀ᶠ p in nhds p₀,
+        (∀ t : Set.Icc (0 : ℝ) 1,
+          γ p t = x₀ + ∫ s in (0 : ℝ)..t,
+            f (p, γ p (Set.projIcc 0 1 zero_le_one s))) ∧
+        (∀ t ∈ Set.Ioo (0 : ℝ) 1,
+          HasDerivAt (fun s ↦ γ p (Set.projIcc 0 1 zero_le_one s))
+            (f (p, γ p (Set.projIcc 0 1 zero_le_one t))) t) ∧
+        ∀ t ∈ Set.Ico (0 : ℝ) 1,
+          HasDerivWithinAt (fun s ↦ γ p (Set.projIcc 0 1 zero_le_one s))
+            (f (p, γ p (Set.projIcc 0 1 zero_le_one t))) (Set.Ici t) t := by
+  let gc : C(E × F, F) := ⟨f, hf.continuous⟩
+  let R := picardResidual gc x₀
+  let basePath : C(Set.Icc (0 : ℝ) 1, F) := ContinuousMap.const _ x₀
+  let u : E × C(Set.Icc (0 : ℝ) 1, F) := (p₀, basePath)
+  have hgc : ContDiff ℝ (n + 1) gc := by
+    simpa only [gc, ContinuousMap.coe_mk] using hf
+  have hR : ContDiffAt ℝ (n + 1) R u :=
+    (contDiff_picardResidual (n + 1) gc hgc x₀).contDiffAt
+  have hzeroBase : f (p₀, x₀) = 0 := hzero.self_of_nhds
+  have hgzero : ∀ᶠ y in nhds x₀, gc (p₀, y) = 0 := by
+    simpa only [gc, ContinuousMap.coe_mk] using hzero
+  -- At the constant base solution the path derivative of the residual is the identity, so the
+  -- implicit function theorem produces a smooth parameter-to-path germ.
+  have hinvertible :
+      (fderiv ℝ R u ∘L
+        ContinuousLinearMap.inr ℝ E C(Set.Icc (0 : ℝ) 1, F)).IsInvertible :=
+    isInvertible_fderiv_picardResidual_comp_inr gc (hgc.of_le (by norm_num)) p₀ x₀ hgzero
+  let γ : E → C(Set.Icc (0 : ℝ) 1, F) :=
+    hR.implicitFunction (by norm_num) hinvertible
+  have hγsmooth : ContDiffAt ℝ (n + 1) γ p₀ :=
+    hR.contDiffAt_implicitFunction (by norm_num) hinvertible
+  have hγbase : γ p₀ = basePath :=
+    hR.implicitFunction_apply_self (by norm_num) hinvertible
+  have hRbase : R u = 0 := by
+    have hcomp : gc.comp (parameterizedPath u) = 0 := by
+      ext t
+      rw [ContinuousMap.comp_apply, parameterizedPath_apply]
+      simp only [gc, u, basePath, ContinuousMap.const_apply]
+      exact hzeroBase
+    simp only [R, picardResidual_apply, u, basePath, hcomp, map_zero, sub_self]
+  have hγeq : ∀ᶠ p in nhds p₀, R (p, γ p) = 0 := by
+    filter_upwards [hR.eventually_apply_implicitFunction (by norm_num) hinvertible] with p hp
+    rw [hp, hRbase]
+  refine ⟨γ, hγsmooth, by simpa only [basePath] using hγbase, ?_⟩
+  filter_upwards [hγeq] with p hp
+  have hpicard : ∀ t : Set.Icc (0 : ℝ) 1,
+      γ p t = x₀ + ∫ s in (0 : ℝ)..t,
+        gc (p, γ p (Set.projIcc 0 1 zero_le_one s)) :=
+    (picardResidual_eq_zero_iff gc x₀ p (γ p)).mp hp
+  let vproj : ℝ → F := fun s ↦ gc (p, γ p (Set.projIcc 0 1 zero_le_one s))
+  have hvproj : Continuous vproj :=
+    gc.continuous.comp
+      (continuous_const.prodMk ((γ p).continuous.comp continuous_projIcc))
+  refine ⟨hpicard, ?_, ?_⟩
+  · intro t ht
+    exact (hasDerivWithinAt_Icc_of_forall_eq_picard vproj hvproj x₀ (γ p) hpicard
+      ⟨ht.1.le, ht.2.le⟩).hasDerivAt (Icc_mem_nhds ht.1 ht.2)
+  · intro t ht
+    have hIcc := hasDerivWithinAt_Icc_of_forall_eq_picard vproj hvproj x₀ (γ p) hpicard
+      ⟨ht.1, ht.2.le⟩
+    have hsmall := hIcc.mono (Set.Icc_subset_Icc ht.1 le_rfl)
+    apply hsmall.congr_set
+    filter_upwards [Iic_mem_nhds ht.2] with s hs
+    apply propext
+    constructor
+    · exact fun h ↦ h.1
+    · exact fun h ↦ ⟨h, hs⟩
+
 /-- A smooth parameterized autonomous vector field which vanishes at the base parameter admits a
-locally smooth family of solutions through a fixed initial state. The result is stated at every
-finite order; this is the form needed to assemble smoothness of a germ. Each nearby path satisfies
-the Picard integral equation, the corresponding ODE at every interior time, and its right-hand
-version at the initial endpoint. -/
+locally smooth family of solutions through a fixed initial state. Only a germ of the field at the
+base point is needed: a bump function replaces it by a globally smooth representative, to which
+`ODE.exists_contDiffAt_picard_solution_of_contDiff` applies. Each nearby path satisfies the Picard
+integral equation, the corresponding ODE at every interior time, and its right-hand version at the
+initial endpoint. -/
 theorem exists_contDiffAt_picard_solution
     [FiniteDimensional ℝ E] [FiniteDimensional ℝ F]
     (n : ℕ) (f : E × F → F) (p₀ : E) (x₀ : F)
@@ -214,91 +299,36 @@ theorem exists_contDiffAt_picard_solution
             (f (p, γ p (Set.projIcc 0 1 zero_le_one t))) (Set.Ici t) t := by
   let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
   let _ : CompleteSpace F := FiniteDimensional.complete ℝ F
-  -- Replace the local vector-field germ by a global smooth representative so the Banach-space
-  -- implicit function theorem applies without changing the ODE near the base point.
-  obtain ⟨g, hg, hgf⟩ :=
+  -- Replace the local vector-field germ by a global smooth representative, which does not change
+  -- the ODE near the base point.
+  obtain ⟨g, hg, -, hgf⟩ :=
     hf.exists_contDiff_eventuallyEq_of_finiteDimensional (n + 1)
-  let gc : C(E × F, F) := ⟨g, hg.continuous⟩
-  let R := picardResidual gc x₀
-  let basePath : C(Set.Icc (0 : ℝ) 1, F) := ContinuousMap.const _ x₀
-  let u : E × C(Set.Icc (0 : ℝ) 1, F) := (p₀, basePath)
-  have hR : ContDiffAt ℝ (n + 1) R u :=
-    (contDiff_picardResidual (n + 1) gc hg x₀).contDiffAt
-  have hgfBase : g (p₀, x₀) = f (p₀, x₀) :=
-    hgf.self_of_nhds
-  have hzeroBase : f (p₀, x₀) = 0 := hzero.self_of_nhds
-  have hgzero : ∀ᶠ y in nhds x₀, gc (p₀, y) = 0 := by
+  have hgzero : ∀ᶠ y in nhds x₀, g (p₀, y) = 0 := by
     have hpull : ∀ᶠ y in nhds x₀, g (p₀, y) = f (p₀, y) :=
       (continuousAt_const.prodMk continuousAt_id).eventually hgf
     filter_upwards [hpull, hzero] with y hy hyzero
     exact hy.trans hyzero
-  -- At the constant base solution the path derivative of the residual is the identity, so the
-  -- implicit function theorem produces a smooth parameter-to-path germ.
-  have hinvertible :
-      (fderiv ℝ R u ∘L
-        ContinuousLinearMap.inr ℝ E C(Set.Icc (0 : ℝ) 1, F)).IsInvertible :=
-    isInvertible_fderiv_picardResidual_comp_inr gc (hg.of_le (by norm_num)) p₀ x₀ hgzero
-  let γ : E → C(Set.Icc (0 : ℝ) 1, F) :=
-    hR.implicitFunction (by norm_num) hinvertible
-  have hγsmooth : ContDiffAt ℝ (n + 1) γ p₀ :=
-    hR.contDiffAt_implicitFunction (by norm_num) hinvertible
-  have hγbase : γ p₀ = basePath :=
-    hR.implicitFunction_apply_self (by norm_num) hinvertible
-  have hRbase : R u = 0 := by
-    have hcomp : gc.comp (parameterizedPath u) = 0 := by
-      ext t
-      rw [ContinuousMap.comp_apply, parameterizedPath_apply]
-      simp only [gc, u, basePath, ContinuousMap.const_apply]
-      exact hgfBase.trans hzeroBase
-    simp only [R, picardResidual_apply, u, basePath, hcomp, map_zero, sub_self]
-  have hγeq : ∀ᶠ p in nhds p₀, R (p, γ p) = 0 := by
-    filter_upwards [hR.eventually_apply_implicitFunction (by norm_num) hinvertible] with p hp
-    rw [hp, hRbase]
+  obtain ⟨γ, hγsmooth, hγbase, hprop⟩ :=
+    exists_contDiffAt_picard_solution_of_contDiff n g p₀ x₀ hg hgzero
+  refine ⟨γ, hγsmooth, hγbase, ?_⟩
   have hgfSet : {z : E × F | g z = f z} ∈ nhds (p₀, x₀) := hgf
   obtain ⟨ε, hε, hεgf⟩ := Metric.mem_nhds_iff.mp hgfSet
   have hpathsNear := eventually_dist_parameterizedPath_lt (γ := γ)
-    hγsmooth.continuousAt (by simpa only [basePath] using hγbase) hε
-  -- Restrict to parameters whose whole Picard path remains where the cutoff field agrees with
+    hγsmooth.continuousAt hγbase hε
+  -- Restrict to parameters whose whole Picard path remains where the representative agrees with
   -- the original field; then transfer the integral equation and its derivative consequences.
-  refine ⟨γ, hγsmooth, by simpa only [basePath] using hγbase, ?_⟩
-  filter_upwards [hγeq, hpathsNear] with p hp hpnear
-  have hpoint (t : Set.Icc (0 : ℝ) 1) :
-      gc (parameterizedPath (p, γ p) t) = f (p, γ p t) := by
+  filter_upwards [hprop, hpathsNear] with p hp hpnear
+  obtain ⟨hpicard, hderiv, hright⟩ := hp
+  have hpoint (t : Set.Icc (0 : ℝ) 1) : g (p, γ p t) = f (p, γ p t) := by
     apply hεgf
     rw [Metric.mem_ball]
     simpa only [parameterizedPath_apply, ContinuousMap.const_apply] using
       (ContinuousMap.dist_apply_le_dist
         (f := parameterizedPath (p, γ p))
         (g := ContinuousMap.const _ (p₀, x₀)) t).trans_lt hpnear
-  have hpicard : ∀ t : Set.Icc (0 : ℝ) 1,
-      γ p t = x₀ + ∫ s in (0 : ℝ)..t,
-        gc (p, γ p (Set.projIcc 0 1 zero_le_one s)) :=
-    (picardResidual_eq_zero_iff gc x₀ p (γ p)).mp hp
-  let vproj : ℝ → F := fun s ↦ gc (p, γ p (Set.projIcc 0 1 zero_le_one s))
-  have hvproj : Continuous vproj :=
-    gc.continuous.comp
-      (continuous_const.prodMk ((γ p).continuous.comp continuous_projIcc))
   refine ⟨fun t ↦ (hpicard t).trans (congrArg (x₀ + ·) ?_), ?_, ?_⟩
-  · apply intervalIntegral.integral_congr
-    intro s _
-    exact hpoint (Set.projIcc 0 1 zero_le_one s)
-  · intro t ht
-    have hderiv :=
-      (hasDerivWithinAt_Icc_of_forall_eq_picard vproj hvproj x₀ (γ p) hpicard
-        ⟨ht.1.le, ht.2.le⟩).hasDerivAt (Icc_mem_nhds ht.1 ht.2)
-    exact hderiv.congr_deriv (hpoint (Set.projIcc 0 1 zero_le_one t))
-  · intro t ht
-    have hIcc := hasDerivWithinAt_Icc_of_forall_eq_picard vproj hvproj x₀ (γ p) hpicard
-      ⟨ht.1, ht.2.le⟩
-    have hsmall := hIcc.mono (Set.Icc_subset_Icc ht.1 le_rfl)
-    have hderiv : HasDerivWithinAt
-        (fun s ↦ γ p (Set.projIcc 0 1 zero_le_one s)) (vproj t) (Set.Ici t) t := by
-      apply hsmall.congr_set
-      filter_upwards [Iic_mem_nhds ht.2] with s hs
-      apply propext
-      constructor
-      · exact fun h ↦ h.1
-      · exact fun h ↦ ⟨h, hs⟩
-    exact hderiv.congr_deriv (hpoint (Set.projIcc 0 1 zero_le_one t))
+  · exact intervalIntegral.integral_congr fun s _ ↦ hpoint (Set.projIcc 0 1 zero_le_one s)
+  · exact fun t ht ↦ (hderiv t ht).congr_deriv (hpoint (Set.projIcc 0 1 zero_le_one t))
+  · exact fun t ht ↦ (hright t ht).congr_deriv (hpoint (Set.projIcc 0 1 zero_le_one t))
 
 end ODE

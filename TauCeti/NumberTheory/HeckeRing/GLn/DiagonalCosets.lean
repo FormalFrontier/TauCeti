@@ -234,6 +234,20 @@ lemma exists_rep_diagCoset_eq_mul_natDiagGL_mul (a : Fin n → ℕ) :
     exact HeckeCoset.rep_mem _
   exact mem_doubleCoset.mp hmem
 
+/-- **The determinant of a diagonal coset's chosen representative is `∏ i, a i`**, the same as
+that of `natDiagGL n a` itself, since the two differ only by factors from `SLₙ(ℤ)`.
+
+This is the form in which determinants of products written through chosen double-coset
+representatives are computed, where the representative and not the diagonal matrix is what
+occurs. -/
+@[simp] lemma diagCoset_rep_det (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
+    (((diagCoset a).rep : GL (Fin n) ℚ) : Matrix (Fin n) (Fin n) ℚ).det = ∏ i, (a i : ℚ) := by
+  have hmem : ((diagCoset a).rep : GL (Fin n) ℚ) ∈
+      doubleCoset (natDiagGL n a) (SLnZ n) (SLnZ n) := by
+    rw [← diagCoset_toSet]
+    exact HeckeCoset.rep_mem _
+  rw [det_eq_of_mem_doubleCoset_SLnZ n hmem, natDiagGL_det n a ha]
+
 /-- Defining equation for the sealed `diagElem`. -/
 lemma diagElem_def (a : Fin n → ℕ) :
     diagElem a = HeckeCosetModule.single ℤ (diagCoset a) 1 :=

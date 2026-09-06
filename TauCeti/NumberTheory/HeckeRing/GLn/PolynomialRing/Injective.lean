@@ -156,16 +156,6 @@ private lemma det_doubleCoset_eq {g₁ g₂ : posDetInt 2}
   det_eq_of_mem_doubleCoset_SLnZ 2
     (HeckeCoset.eq_iff.mp h ▸ DoubleCoset.mem_doubleCoset_self _ _ _)
 
-/-- The diagonal product of rep(diagCoset a) equals ∏ a. -/
-private lemma prod_rep_T_diag (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i) :
-    (↑(↑(HeckeCoset.rep (diagCoset a)) : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det =
-      ∏ i, (a i : ℚ) := by
-  -- the representative and the explicit diagonal matrix lie in the same double coset
-  have h_eq : HeckeCoset.mk (SLnZ 2) (SLnZ 2) (HeckeCoset.rep (diagCoset a)) =
-      HeckeCoset.mk (SLnZ 2) (SLnZ 2) ⟨natDiagGL 2 a, natDiagGL_mem_posDetInt 2 a⟩ := by
-    rw [HeckeCoset.mk_rep, diagCoset_def]
-  exact (det_doubleCoset_eq h_eq).trans (natDiagGL_det 2 a ha)
-
 /-- Every coset in the support of a mulMap output has determinant = det(g₁) * det(g₂). -/
 private lemma det_mulMap_eq (g₁ g₂ : posDetInt 2)
     (p : DecompQuotient (SLnZ 2) (SLnZ 2) (g₁ : GL (Fin 2) ℚ) ×
@@ -244,7 +234,7 @@ private lemma det_rep_T_gen_zero_pow_mul (q : ℕ) (hq : 0 < q) (a₀ b₀ : ℕ
       -- intended spelling is stated here for the following rewrite to match.
       show (↑(↑(HeckeCoset.rep (diagCoset (![1, q]))) : GL (Fin 2) ℚ) :
           Matrix (Fin 2) (Fin 2) ℚ).det = (q : ℚ) from by
-        rw [prod_rep_T_diag (![1, q]) (fun i ↦ by fin_cases i <;> simp [hq])]
+        rw [diagCoset_rep_det (![1, q]) (fun i ↦ by fin_cases i <;> simp [hq])]
         simp [Fin.prod_univ_two],
       ih f D₂ hf_det (Finsupp.mem_support_iff.mp hD₂_mem)]
     push_cast; ring
@@ -272,10 +262,10 @@ private lemma T_gen_pow_support_qpower (q : ℕ) (hq : 0 < q) (e : Fin 2 → ℕ
     have h_eq : diagCoset (fun _ : Fin 2 ↦ q ^ (e 1)) = D'' := by
       by_contra h
       exact hD'' (by rw [diagElem_def, HeckeCosetModule.single_apply, ite_eq_right h])
-    rw [← h_eq, prod_rep_T_diag _ (fun i ↦ by fin_cases i <;> simp [pow_pos hq])]
+    rw [← h_eq, diagCoset_rep_det _ (fun i ↦ by fin_cases i <;> simp [pow_pos hq])]
     push_cast [Fin.prod_univ_two, ← pow_add]; ring_nf
   have h_result := det_rep_T_gen_zero_pow_mul q hq (2 * e 1) (e 0) _ D hf_det hD
-  rw [hD_eq, prod_rep_T_diag a ha_pos] at h_result
+  rw [hD_eq, diagCoset_rep_det a ha_pos] at h_result
   exact mod_cast h_result
 
 /-- `T_single(diagCoset a, α) * diagElem(c,c) = T_single(diagCoset(a * c), α)`. -/

@@ -83,7 +83,7 @@ variable (R : Type*) [CommRing R] (X : Type*)
 /-- The generators of a free Lie algebra generate it as a Lie subalgebra. -/
 theorem lieSpan_range_of_eq_top :
     LieSubalgebra.lieSpan R (FreeLieAlgebra R X) (Set.range (FreeLieAlgebra.of R)) = ⊤ := by
-  set K := LieSubalgebra.lieSpan R (FreeLieAlgebra R X) (Set.range (FreeLieAlgebra.of R)) with hK
+  set K := LieSubalgebra.lieSpan R (FreeLieAlgebra R X) (Set.range (FreeLieAlgebra.of R))
   have hmem (x : X) : FreeLieAlgebra.of R x ∈ K :=
     LieSubalgebra.subset_lieSpan (Set.mem_range_self x)
   set g : FreeLieAlgebra R X →ₗ⁅R⁆ K := FreeLieAlgebra.lift R fun x => ⟨_, hmem x⟩ with hg

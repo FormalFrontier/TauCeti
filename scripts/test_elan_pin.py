@@ -5,13 +5,13 @@ Run with: python3 scripts/test_elan_pin.py
 elan chooses the `lake` and `lean` a job runs, so whoever controls the elan a workflow installs
 controls what that job executes. That matters most in ci.yml's `publish-lake-cache` job, which
 hands LAKE_CACHE_KEY to a `lake` the installer selected, and in pr-build.yml, where elan is
-installed in the trusted phase before landrun confines anything. So every workflow takes elan
+installed in the trusted phase before bwrap confines anything. So every workflow takes elan
 from a pinned leanprover/elan release verified by SHA-256, and none of them runs the installer
 served at https://elan.lean-lang.org/elan-init.sh, whose contents are whatever that host returns
 at the moment of the request.
 
 The pin is deliberately duplicated across workflows rather than shared through a composite
-action, for the same reason landrun's is: pr-build.yml sits on the merge queue's critical path
+action, for the same reason bwrap's is: pr-build.yml sits on the merge queue's critical path
 and runs from the base definition under pull_request_target, so a shared action introduced by a
 pull request could not be exercised by that pull request's own build. This test is what stops
 the copies drifting.

@@ -45,7 +45,7 @@ trusted checkout. Lake pins are overlaid only after the
 trusted `check-bump.sh` validates the same forward-only transition accepted by
 the required build. Candidate lakefiles and scripts are never run.
 
-Every command that may elaborate candidate Lean code runs inside `landrun`:
+Every command that may elaborate candidate Lean code runs inside `bwrap`:
 
 - no network permission;
 - no GitHub token or cache endpoint in the environment allowlist;
@@ -56,11 +56,11 @@ Every command that may elaborate candidate Lean code runs inside `landrun`:
 
 The networked setup fetches Mathlib oleans and Tau Ceti's public, main-built
 artifact cache using only trusted base configuration. Cache endpoints and
-network access are not passed into `landrun`. The cache may prepare dependency
+network access are not passed into `bwrap`. The cache may prepare dependency
 cones, but it is explicitly disabled after the selected module output is
 invalidated, so the measured build must invoke Lean for that module.
 
-The trusted host invokes `perf stat` or GNU `time` *around* `landrun`.
+The trusted host invokes `perf stat` or GNU `time` *around* `bwrap`.
 GitHub-hosted runners set `perf_event_paranoid=4` and expose no virtual hardware
 instruction event, so the workflow deliberately does not lower that global
 protection or introduce a privileged monitor. It selects the unprivileged
@@ -74,7 +74,7 @@ inodes, but base is never executed or read as evidence again. Trusted scripts,
 config, manifests, and raw results are not in that writable tree. Status posting
 and Markdown rendering happen after the sandbox exits.
 
-The watchdog itself runs inside `landrun`. A trusted host step prepares a
+The watchdog itself runs inside `bwrap`. A trusted host step prepares a
 toolchain-shaped directory whose `bin/lean` is the watchdog, whose
 `bin/lean-real` points at the pinned elan compiler, and whose remaining files
 point at that same pinned toolchain. The directory is mounted read-only. This
@@ -133,7 +133,7 @@ infrastructure PR; do not add source-level bypasses or per-file exceptions.
 ## Pre-merge validation (2026-08-12)
 
 - The [historical E8 regression](https://github.com/TauCetiProject/TauCeti/actions/runs/31561889305)
-  passed landrun's confinement checks, entered the prepared read-only wrapper,
+  passed bwrap's confinement checks, entered the prepared read-only wrapper,
   and stopped `E8.lean` at 300 seconds with exit code 124. The trusted report
   failed closed and posted a terminal failing `perf` status. The head phase
   took 303 seconds; the full job took 8 minutes 3 seconds including setup and

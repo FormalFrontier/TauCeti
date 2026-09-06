@@ -9,6 +9,7 @@ public import Mathlib.Analysis.SpecialFunctions.Complex.Circle
 public import Mathlib.LinearAlgebra.Matrix.IsDiag
 public import Mathlib.LinearAlgebra.Matrix.Trace
 public import Mathlib.Topology.Algebra.ContinuousMonoidHom
+import TauCeti.LinearAlgebra.Matrix.AdjugateFinTwo
 public import TauCeti.LinearAlgebra.UnitaryGroup
 public import TauCeti.Topology.Algebra.UnitaryGroup
 import TauCeti.Topology.Circle.Basic
@@ -80,9 +81,8 @@ identity. Equivalently, the Hermitian part of `g` is a scalar matrix. -/
 theorem coe_add_star (g : SU2) :
     (g : Matrix (Fin 2) (Fin 2) ℂ) + star (g : Matrix (Fin 2) (Fin 2) ℂ)
       = Matrix.trace (g : Matrix (Fin 2) (Fin 2) ℂ) • 1 := by
-  rw [Matrix.specialUnitaryGroup.star_eq_adjugate, Matrix.adjugate_fin_two, Matrix.trace_fin_two]
-  ext i j
-  fin_cases i <;> fin_cases j <;> simp [add_comm]
+  simp [Matrix.specialUnitaryGroup.star_eq_adjugate,
+    Matrix.adjugate_fin_two_eq_trace_smul_one_sub]
 
 /-- **The trace of an element of `SU(2)` is real.** Taking traces in
 `TauCeti.SU2.coe_add_star`, `g + g* = (tr g) • 1`, gives `tr g + conj (tr g)` on the left and

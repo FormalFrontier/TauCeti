@@ -53,6 +53,8 @@ eigenfunction.
   the nonzero eigenvalues of `S` and the variational eigenvalues.
 * `IsCoercive.exists_ne_zero_forall_apply_eq_smul_inner`: existence of a variational
   eigenvalue.
+* `IsCoercive.exists_ne_zero_forall_apply_eq_inv_norm_smul_inner`: the reciprocal of the norm
+  of the solution operator is a variational eigenvalue.
 * `IsCoercive.pos_of_forall_apply_eq_smul_inner` and
   `IsCoercive.le_of_forall_apply_eq_smul_inner`: positivity of a variational eigenvalue, and
   the lower bound by the coercivity constant.
@@ -192,6 +194,16 @@ theorem formSolutionOperator_apply_eq_zero_iff (hB : IsCoercive B) (J : V →L[�
       eq_formSolutionMap hB J fun v => by rw [horth v]; simp
     rw [formSolutionOperator_apply, ← hsol, map_zero]
 
+/-- The solution operator is nonzero whenever the map defining it is nonzero. -/
+theorem formSolutionOperator_ne_zero (hB : IsCoercive B) {J : V →L[ℝ] H} (hJ : J ≠ 0) :
+    hB.formSolutionOperator J ≠ 0 := by
+  obtain ⟨w, hw⟩ : ∃ w : V, J w ≠ 0 := by
+    simpa only [zero_apply] using DFunLike.ne_iff.mp hJ
+  intro hzero
+  have hJw : hB.formSolutionOperator J (J w) = 0 := by rw [hzero, zero_apply]
+  exact hw (inner_self_eq_zero.mp
+    ((hB.formSolutionOperator_apply_eq_zero_iff J (J w)).mp hJw w))
+
 /-- **The kernel of the solution operator** is the orthogonal complement of the range of `J`;
 `IsCoercive.eigenspace_formSolutionOperator_zero_eq_bot` draws the consequence for a `J` with
 dense range. -/
@@ -256,6 +268,27 @@ theorem le_of_forall_apply_eq_smul_inner (hB : IsCoercive B) {J : V →L[ℝ] H}
   have hsq : 0 < ‖u‖ ^ 2 := by positivity
   exact le_of_mul_le_mul_right (by linarith [hlower u]) hsq
 
+variable {V H : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
+  [NormedAddCommGroup H] [InnerProductSpace ℝ H]
+  {B : V →L[ℝ] V →L[ℝ] ℝ}
+
+/-- **A variational eigenfunction has nonzero image in `H`.**  If `J u` vanished, the
+eigenvalue equation would make the energy of `u` vanish too, which coercivity forbids for
+`u ≠ 0`. -/
+theorem apply_ne_zero_of_forall_apply_eq_smul_inner (hB : IsCoercive B) (J : V →L[ℝ] H)
+    {kappa : ℝ} {u : V} (hu : u ≠ 0) (heq : ∀ v : V, B u v = kappa * ⟪J u, J v⟫_ℝ) :
+    J u ≠ 0 := by
+  intro hzero
+  obtain ⟨C, hC, hle⟩ := id hB
+  have hpos : 0 < ‖u‖ := norm_pos_iff.mpr hu
+  have hself : B u u = 0 := by rw [heq u, hzero, inner_zero_left, mul_zero]
+  have h2 : 0 < C * ‖u‖ * ‖u‖ := mul_pos (mul_pos hC hpos) hpos
+  linarith [hle u]
+
+variable {V H : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [CompleteSpace V]
+  [NormedAddCommGroup H] [InnerProductSpace ℝ H] [CompleteSpace H]
+  {B : V →L[ℝ] V →L[ℝ] ℝ}
+
 /-- A variational eigenfunction for `κ ≠ 0` produces an eigenvector of the solution operator
 with eigenvalue `κ⁻¹`. -/
 theorem hasEigenvector_formSolutionOperator (hB : IsCoercive B) (J : V →L[ℝ] H) {kappa : ℝ}
@@ -263,14 +296,8 @@ theorem hasEigenvector_formSolutionOperator (hB : IsCoercive B) (J : V →L[ℝ]
     HasEigenvector (hB.formSolutionOperator J : H →ₗ[ℝ] H) kappa⁻¹ (kappa • J u) := by
   have hsol : u = hB.formSolutionMap J (kappa • J u) :=
     eq_formSolutionMap hB J fun v => by rw [heq v, real_inner_smul_left]
-  have hJu : J u ≠ 0 := by
-    intro hzero
-    obtain ⟨C, hC, hle⟩ := id hB
-    have hpos : 0 < ‖u‖ := norm_pos_iff.mpr hu
-    have hself : B u u = 0 := by rw [heq u, hzero, inner_zero_left, mul_zero]
-    have h2 : 0 < C * ‖u‖ * ‖u‖ := mul_pos (mul_pos hC hpos) hpos
-    linarith [hle u]
-  refine ⟨mem_eigenspace_iff.mpr ?_, smul_ne_zero hkappa hJu⟩
+  refine ⟨mem_eigenspace_iff.mpr ?_,
+    smul_ne_zero hkappa (hB.apply_ne_zero_of_forall_apply_eq_smul_inner J hu heq)⟩
   rw [ContinuousLinearMap.coe_coe, formSolutionOperator_apply, ← hsol, smul_smul,
     inv_mul_cancel₀ hkappa, one_smul]
 
@@ -297,14 +324,7 @@ the variational eigenvalue problem has a nonzero eigenvalue with an eigenfunctio
 theorem exists_ne_zero_forall_apply_eq_smul_inner (hB : IsCoercive B) {J : V →L[ℝ] H}
     (hJ : IsCompactOperator J) (hsymm : ∀ u v : V, B u v = B v u) (hJne : J ≠ 0) :
     ∃ kappa : ℝ, kappa ≠ 0 ∧ ∃ u : V, u ≠ 0 ∧ ∀ v : V, B u v = kappa * ⟪J u, J v⟫_ℝ := by
-  obtain ⟨w, hw⟩ : ∃ w : V, J w ≠ 0 := by
-    simpa only [zero_apply] using DFunLike.ne_iff.mp hJne
-  have hSne : hB.formSolutionOperator J ≠ 0 := by
-    intro hzero
-    have hJw : hB.formSolutionOperator J (J w) = 0 := by
-      rw [hzero, zero_apply]
-    exact hw (inner_self_eq_zero.mp
-      ((hB.formSolutionOperator_apply_eq_zero_iff J (J w)).mp hJw w))
+  have hSne := hB.formSolutionOperator_ne_zero hJne
   have hcompact := hB.isCompactOperator_formSolutionOperator hJ
   have hsym := hB.isSymmetric_formSolutionOperator J hsymm
   have hex : ¬ ∀ mu : ℝ,
@@ -329,6 +349,43 @@ theorem hasEigenvalue_formSolutionOperator_iff (hB : IsCoercive B) (J : V →L[�
   · rintro ⟨u, hu, heq⟩
     exact hasEigenvalue_of_hasEigenvector
       (hB.hasEigenvector_formSolutionOperator J hkappa hu heq)
+
+/-- **The reciprocal of the norm of the solution operator is a variational eigenvalue.**
+Compactness of `J` is what makes `‖S‖` itself an eigenvalue of `S`, and positivity of `S` is what
+excludes `-‖S‖`. -/
+theorem exists_ne_zero_forall_apply_eq_inv_norm_smul_inner (hB : IsCoercive B)
+    {J : V →L[ℝ] H} (hJ : IsCompactOperator J) (hsymm : ∀ u v : V, B u v = B v u)
+    (hJne : J ≠ 0) :
+    ∃ u : V, u ≠ 0 ∧
+      ∀ v : V, B u v = ‖hB.formSolutionOperator J‖⁻¹ * ⟪J u, J v⟫_ℝ := by
+  obtain ⟨w, hw⟩ : ∃ w : V, J w ≠ 0 := by
+    simpa only [zero_apply] using DFunLike.ne_iff.mp hJne
+  have _ : Nontrivial H := nontrivial_of_ne (J w) 0 hw
+  set S := hB.formSolutionOperator J with hS
+  have hSne : S ≠ 0 := by
+    rw [hS]
+    exact hB.formSolutionOperator_ne_zero hJne
+  have hnorm_pos : 0 < ‖S‖ := norm_pos_iff.mpr hSne
+  have hcompact : IsCompactOperator S := hB.isCompactOperator_formSolutionOperator hJ
+  have hsym : LinearMap.IsSymmetric (S : H →ₗ[ℝ] H) :=
+    hB.isSymmetric_formSolutionOperator J hsymm
+  have hnorm_or_neg : ‖S‖ ∈ spectrum ℝ S ∨ -‖S‖ ∈ spectrum ℝ S := by
+    simp_rw [spectrum, Set.mem_compl_iff]
+    by_contra! h
+    obtain ⟨d, hd, hle⟩ := S.abs_rayleighQuotient_le_of_norm_mem_resolventSet h.1 h.2
+    have hsup := ciSup_le hle
+    have heq := ContinuousLinearMap.norm_eq_iSup_rayleighQuotient S hsym
+    linarith
+  have hnorm_mem : ‖S‖ ∈ spectrum ℝ S := hnorm_or_neg.resolve_right fun hneg => by
+    have hneg_eigen : HasEigenvalue (S : H →ₗ[ℝ] H) (-‖S‖) :=
+      (hcompact.hasEigenvalue_iff_mem_spectrum (neg_ne_zero.mpr hnorm_pos.ne')).mpr hneg
+    have hnonneg : 0 ≤ -‖S‖ := eigenvalue_nonneg_of_nonneg hneg_eigen fun f => by
+      simpa [hS] using hB.inner_formSolutionOperator_self_nonneg J f
+    linarith
+  have hnorm_eigen : HasEigenvalue (S : H →ₗ[ℝ] H) ‖S‖ :=
+    (hcompact.hasEigenvalue_iff_mem_spectrum hnorm_pos.ne').mpr hnorm_mem
+  refine (hB.hasEigenvalue_formSolutionOperator_iff J (inv_ne_zero hnorm_pos.ne')).mp ?_
+  simpa only [hS, inv_inv] using hnorm_eigen
 
 /-! ### The spectral theorem for the solution operator -/
 

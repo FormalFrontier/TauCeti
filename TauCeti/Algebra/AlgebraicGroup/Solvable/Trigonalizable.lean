@@ -31,6 +31,8 @@ enters, is not proved here.
 
 ## Main declarations
 
+* `TauCeti.Comodule.hasNonzeroWeightVector_of_basePointsRepresentation_stable`: a nonzero vector
+  spanning a point-stable line is a weight vector.
 * `TauCeti.Comodule.hasNonzeroWeightVector_of_pairwise_commute`: commuting point actions produce a
   weight vector.
 * `TauCeti.Comodule.hasNonzeroWeightVector_of_isCocomm`: every nonzero finite-dimensional
@@ -65,6 +67,24 @@ variable {k : Type u} {H : Type v} {M : Type w}
 variable [Field k] [CommRing H] [HopfAlgebra k H]
 variable [AddCommGroup M] [Module k M] [Comodule k H M]
 
+/-- A nonzero vector spanning a submodule preserved by every base-valued point is a weight
+vector. -/
+theorem hasNonzeroWeightVector_of_basePointsRepresentation_stable
+    [IsAlgClosed k] [Algebra.FiniteType k H] [IsReduced H]
+    (p : Submodule k M) (v : M) (hv : v ≠ 0) (hspan : p = k ∙ v)
+    (hact : ∀ (g : WithConv (H →ₐ[k] k)) {m : M}, m ∈ p →
+      basePointsRepresentation (R := k) (H := H) M g m ∈ p) :
+    HasNonzeroWeightVector k H M := by
+  have hstable : ∀ (g : H →ₐ[k] k) {m : M}, m ∈ p →
+      Comodule.endOfPoint M g ((1 : k) ⊗ₜ[k] m) ∈ p.baseChange k := by
+    intro g m hm
+    rw [endOfPoint_tmul, one_smul,
+      endOfPoint_one_tmul_eq_one_tmul_basePointsRepresentation]
+    exact Submodule.tmul_mem_baseChange_of_mem _ (hact (toConv g) hm)
+  exact hasNonzeroWeightVector_of_toSubmodule_eq_span
+    (Subcomodule.ofEndOfPointStable (K := k) p hstable) hv
+    ((Subcomodule.ofEndOfPointStable_toSubmodule (K := k) p hstable).trans hspan)
+
 /-- If the base-valued points of a reduced finite-type commutative Hopf algebra over an
 algebraically closed field act on a nonzero finite-dimensional comodule by pairwise-commuting
 operators, then that comodule has a nonzero weight vector. -/
@@ -86,17 +106,9 @@ theorem hasNonzeroWeightVector_of_pairwise_commute
   have hspan : (k ∙ v) = p :=
     Submodule.eq_of_le_of_finrank_eq ((Submodule.span_singleton_le_iff_mem v p).mpr hvp)
       ((finrank_span_singleton hv).trans hrank.symm)
-  have hstable : ∀ (g : H →ₐ[k] k) {m : M}, m ∈ p →
-      Comodule.endOfPoint M g ((1 : k) ⊗ₜ[k] m) ∈ p.baseChange k := by
-    intro g m hm
-    have haction := endOfPoint_one_tmul_eq_one_tmul_basePointsRepresentation
-      (R := k) (H := H) (M := M) (toConv g) m
-    rw [ofConv_toConv] at haction
-    rw [endOfPoint_tmul, one_smul, haction]
-    exact Submodule.tmul_mem_baseChange_of_mem _ (hact (toConv g) m hm ▸ p.smul_mem _ hm)
-  exact hasNonzeroWeightVector_of_toSubmodule_eq_span
-    (Subcomodule.ofEndOfPointStable (K := k) p hstable) hv
-    ((Subcomodule.ofEndOfPointStable_toSubmodule (K := k) p hstable).trans hspan.symm)
+  apply hasNonzeroWeightVector_of_basePointsRepresentation_stable p v hv hspan.symm
+  intro g m hm
+  exact hact g m hm ▸ p.smul_mem _ hm
 
 /-- Every nonzero finite-dimensional representation of a commutative affine group, reduced and of
 finite type over an algebraically closed field, has a nonzero weight vector. -/

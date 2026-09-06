@@ -39,6 +39,8 @@ itself a quotient covering map for any group.
   `H ≤ π₁(X, x₀)` is a covering space of `X`.
 * `TauCeti.UniversalCover.subgroupCover`: the same cover, bundled as a connected covering space.
 * `TauCeti.UniversalCover.subgroupCoverBasepointFiber`: its distinguished fibre point.
+* `TauCeti.UniversalCover.subgroupQuotientTopHomeomorph`: the cover associated to the whole
+  fundamental group is `X` itself.
 
 ## References
 
@@ -182,5 +184,22 @@ theorem subgroupCoverFiberEquivSubgroupQuotient_apply_basepoint
     subgroupCoverFiberEquivSubgroupQuotient x₀ H (subgroupCoverBasepointFiber x₀ H) =
       SubgroupQuotient.basepointFiber x₀ H :=
   Equiv.apply_symm_apply _ _
+
+/-- **The cover associated to the whole fundamental group is `X` itself.** The comparison is the
+descended endpoint projection, so this cover is the trivial one-sheeted cover. -/
+def subgroupQuotientTopHomeomorph [LocallyPathConnectedSpace X] [PathConnectedSpace X]
+    [SemilocallySimplyConnectedSpace X] (x₀ : X) :
+    SubgroupQuotient x₀ (⊤ : Subgroup (FundamentalGroup X x₀)) ≃ₜ X :=
+  (Equiv.ofBijective (subgroupQuotientProj x₀ ⊤) ⟨subgroupQuotientProj_top_injective x₀,
+    subgroupQuotientProj_surjective x₀ ⊤⟩).toHomeomorphOfContinuousOpen
+      (continuous_subgroupQuotientProj x₀ ⊤)
+      (isCoveringMap_subgroupQuotientProj x₀ ⊤).isLocalHomeomorph.isOpenMap
+
+@[simp]
+theorem coe_subgroupQuotientTopHomeomorph [LocallyPathConnectedSpace X] [PathConnectedSpace X]
+    [SemilocallySimplyConnectedSpace X] (x₀ : X) :
+    ⇑(subgroupQuotientTopHomeomorph x₀) =
+      subgroupQuotientProj x₀ (⊤ : Subgroup (FundamentalGroup X x₀)) :=
+  (rfl)
 
 end TauCeti.UniversalCover

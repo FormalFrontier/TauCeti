@@ -5,14 +5,16 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Data.Setoid.Partition
 public import Mathlib.Order.Partition.Finpartition
 
 /-!
 # Finite partition helpers
 
 This file contains general-purpose constructions and facts about finite partitions: the partition
-of the top element into an element and its complement, cardinality bounds for common refinements,
-and the behavior of intersections of parts under refinement.
+of the top element into an element and its complement, the associated indexed partition,
+cardinality bounds for common refinements, and the behavior of intersections of parts under
+refinement.
 -/
 
 public section
@@ -52,6 +54,17 @@ theorem card_parts_inf_le_mul {α : Type*} [DistribLattice α] [OrderBot α] [De
     (Finset.card_image_le.trans_eq (Finset.card_product _ _))
 
 variable {Ω : Type*} {u : Set Ω}
+
+/-- The indexed partition associated to a finite partition of `Set.univ`, indexed by its actual
+parts.  Its `index` sends each point to the unique part containing it. -/
+noncomputable def indexedPartition (P : Finpartition (Set.univ : Set Ω)) :
+    IndexedPartition (fun p : P.parts => (p : Set Ω)) :=
+  IndexedPartition.mk' _
+    (fun p q hne => P.disjoint p.property q.property fun h => hne (Subtype.ext h))
+    (fun p => Set.nonempty_iff_ne_empty.mpr (P.ne_bot p.property))
+    (fun x => by
+      obtain ⟨p, ⟨hp, hxp⟩, _⟩ := P.isPartition_parts.2 x
+      exact ⟨⟨p, hp⟩, hxp⟩)
 
 /-- Under refinement, a part of the finer partition is either contained in a given part of the
 coarser one or disjoint from it. -/

@@ -301,7 +301,7 @@ theorem classicalResidueTheorem_circle_of_meromorphicOrderAt_neg {f : ℂ → �
     circleIntegral f c R = 2 * (Real.pi : ℂ) * Complex.I * (∑ s ∈ S, residue f s) := by
   -- Pass to the meromorphic normal form `F` of `f`: it is genuinely analytic off `S` (whereas raw
   -- `f` may take isolated "wrong values"), and the circle integral and residues are unchanged.
-  set F := toMeromorphicNFOn f (closedBall c R) with hF_def
+  set F := toMeromorphicNFOn f (closedBall c R)
   have hF_mero : MeromorphicOn F (closedBall c R) :=
     (meromorphicNFOn_toMeromorphicNFOn f _).meromorphicOn
   have hordF : ∀ z ∈ closedBall c R, meromorphicOrderAt F z = meromorphicOrderAt f z :=

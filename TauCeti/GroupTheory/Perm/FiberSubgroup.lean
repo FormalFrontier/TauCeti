@@ -14,8 +14,8 @@ public import Mathlib.GroupTheory.Perm.DomMulAct
 Given `f : α → ι`, the permutations `σ` of `α` with `f (σ a) = f a` for every `a` form a subgroup
 of `Equiv.Perm α`, here called `TauCeti.fiberSubgroup f`.  This file records that subgroup, the
 transpositions it contains, the behaviour of the construction under conjugation and pairing two
-maps, the criterion for it to be trivial, and the isomorphism restricting a fiber-preserving
-permutation to each fiber,
+maps, the criteria for it to be trivial and for it to be a point stabilizer, and the isomorphism
+restricting a fiber-preserving permutation to each fiber,
 
 `fiberSubgroup f ≃* ∀ i, Equiv.Perm {a // f a = i}`,
 
@@ -90,6 +90,25 @@ theorem fiberSubgroup_inf (f : α → ι) (g : α → κ) :
     fiberSubgroup f ⊓ fiberSubgroup g = fiberSubgroup fun a => (f a, g a) := by
   ext σ
   simp [Subgroup.mem_inf, Prod.ext_iff, forall_and]
+
+/-- **A map whose fibers are `{a}` and at most one other makes the fiber subgroup a point
+stabilizer.**  If `f` separates `a` from every other point and identifies all the others with one
+another, then a permutation preserves the fibers of `f` exactly when it fixes `a`: the fiber `{a}`
+can only be mapped to itself, and its complement -- a second fiber when it is nonempty, and empty
+when `α = {a}` -- then takes care of itself. -/
+theorem fiberSubgroup_eq_stabilizer {f : α → ι} {a : α} (hsep : ∀ x, x ≠ a → f x ≠ f a)
+    (hrest : ∀ x y, x ≠ a → y ≠ a → f x = f y) :
+    fiberSubgroup f = MulAction.stabilizer (Equiv.Perm α) a := by
+  ext σ
+  rw [mem_fiberSubgroup, MulAction.mem_stabilizer_iff, Equiv.Perm.smul_def]
+  constructor
+  · intro hσ
+    by_contra hne
+    exact hsep (σ a) hne (hσ a)
+  · intro hσ x
+    rcases eq_or_ne x a with rfl | hx
+    · rw [hσ]
+    · exact hrest _ _ (fun h => hx (σ.injective (h.trans hσ.symm))) hx
 
 /-- Only the identity preserves the fibers of an injective map, its fibers being singletons. -/
 theorem fiberSubgroup_eq_bot_of_injective {f : α → ι} (hf : Function.Injective f) :

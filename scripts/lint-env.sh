@@ -168,13 +168,13 @@
 #   * Residual risk (accepted): initializer code could read /proc/self/cmdline to
 #     learn the driver path AND read the driver file to learn the nonce, then forge a
 #     passing report and exit(0) before the real work. Any lint that elaborates
-#     untrusted code has this ceiling; the pr-build landrun sandbox plus human review
+#     untrusted code has this ceiling; the pr-build bwrap sandbox plus human review
 #     of suspicious `initialize`/`@[init]` code are the outer defense. Everything
 #     short of that deliberate two-step forgery fails closed.
 #
 # Run from the repo root (or anywhere; it cd's to the root) AFTER `lake build` — it
 # needs the compiled oleans. It does no network I/O and writes only under $TMPDIR, so
-# it is safe inside the pr-build landrun sandbox. Usage:
+# it is safe inside the pr-build bwrap sandbox. Usage:
 #
 #   scripts/lint-env.sh            # check against the baseline
 #   scripts/lint-env.sh --update   # rewrite the baseline from the current state
@@ -188,7 +188,7 @@ ALLOWLIST="$TRUSTED_SCRIPTS/lint-nolints-allowlist.txt"
 UPDATE=0
 [ "${1:-}" = "--update" ] && UPDATE=1
 
-# In the required landrun build, route this script's two direct `lean`
+# In the required sandboxed build, route this script's two direct `lean`
 # invocations through the same trusted watchdog as `lake build`; they do not go
 # through Lake's LAKE_OVERRIDE_LEAN hook themselves. The trusted post-merge CI
 # also runs this script, but deliberately has no watchdog toolchain, so retain

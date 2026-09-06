@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.NumberTheory.NumberField.Units.DirichletTheorem
-public import TauCeti.Algebra.Group.PowMonoidHom
 public import TauCeti.Algebra.Group.ElementaryTwoQuotient.Basic
 public import Mathlib.NumberTheory.NumberField.Basic
 

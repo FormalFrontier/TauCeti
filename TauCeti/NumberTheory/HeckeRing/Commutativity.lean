@@ -258,6 +258,54 @@ private lemma out_mul_inv_mul_mem {g₁ g₂ d : G} {u : G} (hu : u ∈ H)
     _ = (g₂⁻¹ * (n : G)⁻¹ * g₂) * (h₁ * g₁ * h₂) := by rw [heq]
     _ = g₂⁻¹ * (n : G)⁻¹ * g₂ * h₁ * g₁ * h₂ := by group
 
+/-- **Shimura's change of variables, as a double-coset membership.** Given barred decompositions
+`bar d = a_D d b_D` and `bar g₁ = a₁ g₁ b₁`, and a decomposition `bar ((σᵢ g₁)⁻¹ d) = a g₂ b` of
+the barred `i`-th one-sided term, the element `a_D⁻¹ a g₂` witnesses the transported term: its
+own one-sided expression lies in `H g₁ H`.
+
+Only the ambient monoid is needed: `H ≤ Δ` places the coset representative in `Δ`, and the
+one-sided term is assumed to lie there. `g₂` is an arbitrary group element — nothing here
+constrains it to `Δ`. -/
+private lemma inv_mul_mul_inv_mul_mem_doubleCoset_of_bar_eq (hHΔ : H.toSubmonoid ≤ Δ)
+    (g₁ d : Δ) g₂ {aD bD : G}
+    (hbD : bD ∈ H) (hbarD : ι.bar (d : G) d.2 = aD * (d : G) * bD)
+    {a₁ b₁ : G} (ha₁ : a₁ ∈ H) (hb₁ : b₁ ∈ H)
+    (hbar₁ : ι.bar (g₁ : G) g₁.2 = a₁ * (g₁ : G) * b₁)
+    {i : DecompQuotient H H (g₁ : G)}
+    (hxΔ : ((i.out : G) * g₁)⁻¹ * (d : G) ∈ Δ)
+    {a b : G} (hb : b ∈ H)
+    (hbar : ι.bar (((i.out : G) * g₁)⁻¹ * (d : G)) hxΔ = a * g₂ * b) :
+    (aD⁻¹ * a * g₂)⁻¹ * (d : G) ∈ doubleCoset (g₁ : G) (H : Set G) H := by
+  have houtΔ : ((i.out : H) : G) ∈ Δ := hHΔ (i.out : H).2
+  have houtg₁Δ : (i.out : G) * (g₁ : G) ∈ Δ := mul_mem houtΔ g₁.2
+  have hd : (d : G) = (i.out : G) * (g₁ : G) * (((i.out : G) * g₁)⁻¹ * (d : G)) := by
+    group
+  have h2 : ι.bar (d : G) d.2 =
+      ι.bar (((i.out : G) * g₁)⁻¹ * (d : G)) hxΔ *
+        (ι.bar (g₁ : G) g₁.2 * ι.bar (i.out : G) houtΔ) := by
+    rw [ι.bar_congr hd d.2 (mul_mem houtg₁Δ hxΔ), ι.bar_mul houtg₁Δ hxΔ,
+      ι.bar_mul houtΔ g₁.2]
+  have hkey : aD * (d : G) * bD =
+      a * g₂ * b * (a₁ * (g₁ : G) * b₁) * ι.bar (i.out : G) houtΔ := by
+    rw [← hbarD, ← hbar, ← hbar₁, h2]
+    group
+  refine mem_doubleCoset.mpr ⟨b * a₁, H.mul_mem hb ha₁,
+    b₁ * ι.bar (i.out : G) houtΔ * bD⁻¹,
+    H.mul_mem (H.mul_mem hb₁ (ι.bar_mem_H houtΔ (i.out : H).2)) (H.inv_mem hbD), ?_⟩
+  have hADd : aD * (d : G) =
+      a * g₂ * (b * a₁ * (g₁ : G) * (b₁ * ι.bar (i.out : G) houtΔ * bD⁻¹)) := by
+    calc aD * (d : G) = aD * (d : G) * bD * bD⁻¹ := by group
+      _ = a * g₂ * b * (a₁ * (g₁ : G) * b₁) * ι.bar (i.out : G) houtΔ * bD⁻¹ := by
+        rw [hkey]
+      _ = a * g₂ * (b * a₁ * (g₁ : G) * (b₁ * ι.bar (i.out : G) houtΔ * bD⁻¹)) := by
+        group
+  calc (aD⁻¹ * a * g₂)⁻¹ * (d : G)
+      = (g₂)⁻¹ * a⁻¹ * (aD * (d : G)) := by group
+    _ = (g₂)⁻¹ * a⁻¹ *
+          (a * g₂ * (b * a₁ * (g₁ : G) * (b₁ * ι.bar (i.out : G) houtΔ * bD⁻¹))) := by
+        rw [hADd]
+    _ = b * a₁ * (g₁ : G) * (b₁ * ι.bar (i.out : G) houtΔ * bD⁻¹) := by group
+
 open Classical in
 /-- Shimura's change of variables: the anti-involution transports a member of the one-sided
 count set of `m(g₁, g₂; d)` to a member of the one-sided count set of `m(g₂, g₁; d)`. -/
@@ -276,47 +324,12 @@ private noncomputable def commFwdMap [IsHeckeTriple Δ H H]
         (IsHeckeTriple.mem_of_mem_doubleCoset g₂.2 p.2) = a * (g₂ : G) * b :=
     ι.exists_bar_eq h_fix p.2
   ⟨QuotientGroup.mk ⟨aD⁻¹ * hx.choose, H.mul_mem (H.inv_mem haD) hx.choose_spec.1⟩,
-    out_mul_inv_mul_mem _ (by
-      -- the raw membership `(aD⁻¹ * a * g₂)⁻¹ * d ∈ H g₁ H` for the chosen decomposition
-      -- `bar((σᵢ g₁)⁻¹ d) = a g₂ b`, before passing to the canonical representative
-      obtain ⟨hb, hbar⟩ := hx.choose_spec.2.choose_spec
-      set a := hx.choose
-      set b := hx.choose_spec.2.choose
-      have houtΔ : ((p.1.out : H) : G) ∈ Δ :=
-        IsHeckeTriple.mem_of_mem_left (Δ := Δ) H (p.1.out : H).2
-      have hxΔ : ((p.1.out : G) * g₁)⁻¹ * (d : G) ∈ Δ :=
-        IsHeckeTriple.mem_of_mem_doubleCoset g₂.2 p.2
-      have houtg₁Δ : (p.1.out : G) * (g₁ : G) ∈ Δ := mul_mem houtΔ g₁.2
-      have hd : (d : G) = (p.1.out : G) * (g₁ : G) * (((p.1.out : G) * g₁)⁻¹ * (d : G)) := by
-        group
-      have h2 : ι.bar (d : G) d.2 =
-          ι.bar (((p.1.out : G) * g₁)⁻¹ * (d : G)) hxΔ *
-            (ι.bar (g₁ : G) g₁.2 * ι.bar (p.1.out : G) houtΔ) := by
-        rw [ι.bar_congr hd d.2 (mul_mem houtg₁Δ hxΔ), ι.bar_mul houtg₁Δ hxΔ,
-          ι.bar_mul houtΔ g₁.2]
-      have hkey : aD * (d : G) * bD =
-          a * (g₂ : G) * b * (a₁ * (g₁ : G) * b₁) * ι.bar (p.1.out : G) houtΔ := by
-        rw [← hbarD, ← hbar, ← hbar₁, h2]
-        group
-      refine mem_doubleCoset.mpr ⟨b * a₁, H.mul_mem hb ha₁,
-        b₁ * ι.bar (p.1.out : G) houtΔ * bD⁻¹,
-        H.mul_mem (H.mul_mem hb₁ (ι.bar_mem_H houtΔ (p.1.out : H).2)) (H.inv_mem hbD), ?_⟩
-      have hADd : aD * (d : G) =
-          a * (g₂ : G) *
-            (b * a₁ * (g₁ : G) * (b₁ * ι.bar (p.1.out : G) houtΔ * bD⁻¹)) := by
-        calc aD * (d : G) = aD * (d : G) * bD * bD⁻¹ := by group
-          _ = a * (g₂ : G) * b * (a₁ * (g₁ : G) * b₁) * ι.bar (p.1.out : G) houtΔ * bD⁻¹ := by
-            rw [hkey]
-          _ = a * (g₂ : G) *
-              (b * a₁ * (g₁ : G) * (b₁ * ι.bar (p.1.out : G) houtΔ * bD⁻¹)) := by
-            group
-      calc (aD⁻¹ * a * (g₂ : G))⁻¹ * (d : G)
-          = ((g₂ : G))⁻¹ * a⁻¹ * (aD * (d : G)) := by group
-        _ = ((g₂ : G))⁻¹ * a⁻¹ *
-              (a * (g₂ : G) *
-                (b * a₁ * (g₁ : G) * (b₁ * ι.bar (p.1.out : G) houtΔ * bD⁻¹))) := by
-            rw [hADd]
-        _ = b * a₁ * (g₁ : G) * (b₁ * ι.bar (p.1.out : G) houtΔ * bD⁻¹) := by group)⟩
+    out_mul_inv_mul_mem _
+      (inv_mul_mul_inv_mul_mem_doubleCoset_of_bar_eq ι
+        (fun {_} hy ↦ IsHeckeTriple.mem_of_mem_left (Δ := Δ) H hy)
+        g₁ d (g₂ : G) hbD hbarD ha₁ hb₁ hbar₁
+        (IsHeckeTriple.mem_of_mem_doubleCoset g₂.2 p.2)
+        hx.choose_spec.2.choose_spec.1 hx.choose_spec.2.choose_spec.2)⟩
 
 /-- Transport back through the anti-involution: two elements of `Δ` whose barred
 decompositions share the middle `g₂` with stabilizer-related left parts differ by an element
