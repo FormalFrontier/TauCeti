@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.LinearAlgebra.ExteriorAlgebra.Contraction
+public import TauCeti.LinearAlgebra.End.List
 
 /-!
 # Exterior creation and contraction generate all endomorphisms
@@ -44,8 +45,9 @@ private noncomputable def vacancyProjection {n : ℕ} (b : Module.Basis (Fin n) 
 
 private noncomputable def basisProjection {n : ℕ} (b : Module.Basis (Fin n) K W)
     (s : Finset (Fin n)) : Module.End K (ExteriorAlgebra K W) :=
-  List.prod ((List.ofFn fun i : Fin n ↦ i).map fun i ↦
-    if i ∈ s then occupationProjection b i else vacancyProjection b i)
+  Module.End.basisDiagonalProjector
+    (List.ofFn fun i : Fin n ↦ i)
+    (fun s i ↦ if i ∈ s then occupationProjection b i else vacancyProjection b i) s
 
 private noncomputable def actionRange {n : ℕ} (b : Module.Basis (Fin n) K W) :
     Subalgebra K (Module.End K (ExteriorAlgebra K W)) :=
@@ -73,6 +75,7 @@ private theorem vacancyProjection_mem_actionRange {n : ℕ} (b : Module.Basis (F
 private theorem basisProjection_mem_actionRange {n : ℕ} (b : Module.Basis (Fin n) K W)
     (s : Finset (Fin n)) : basisProjection b s ∈ actionRange b := by
   rw [basisProjection]
+  rw [TauCeti.Module.End.basisDiagonalProjector_eq_listProd]
   apply Submonoid.list_prod_mem
   intro f hf
   obtain ⟨i, hi, rfl⟩ := List.mem_map.mp hf
@@ -104,18 +107,17 @@ private theorem listProd_basisFactor_apply {n : ℕ}
         (b.ExteriorAlgebra t) =
       (List.prod (l.map (fun i ↦ (if (i ∈ s ↔ i ∈ t) then 1 else 0 : K))) •
         b.ExteriorAlgebra t) := by
-  induction l with
-  | nil => simp
-  | cons i l ih =>
-      rw [List.map_cons, List.prod_cons, Module.End.mul_apply, ih, map_smul,
-        basisFactor_apply]
-      simp
+  apply TauCeti.Module.End.listProd_apply_eq_smul (R := K)
+  intro i hi
+  simpa using (basisFactor_apply b s t i)
 
 private theorem basisProjection_basis {n : ℕ}
     (b : Module.Basis (Fin n) K W) (s t : Finset (Fin n)) :
     basisProjection b s (b.ExteriorAlgebra t) =
       if s = t then b.ExteriorAlgebra t else 0 := by
-  rw [basisProjection, listProd_basisFactor_apply]
+  rw [basisProjection]
+  rw [TauCeti.Module.End.basisDiagonalProjector_eq_listProd]
+  rw [listProd_basisFactor_apply]
   by_cases hst : s = t
   · subst t
     simp only [iff_self, ite_true]

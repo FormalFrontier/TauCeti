@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.Lie.ExteriorPower
 public import TauCeti.Algebra.Lie.GeneralLinear.HighestWeight
+public import TauCeti.LinearAlgebra.End.List
 public import Mathlib.Algebra.Lie.Semisimple.Defs
 import Mathlib.Algebra.Lie.Matrix
 import Mathlib.LinearAlgebra.ExteriorPower.Basis
@@ -591,17 +592,6 @@ section Irreducibility
 variable {K : Type*} [Field K]
 variable {ι : Type*} [Fintype ι] [LinearOrder ι]
 
-private theorem listProd_end_apply_eq_smul {R : Type*} {N : Type*} {α : Type*}
-    [CommSemiring R] [AddCommMonoid N] [Module R N] (f : α → Module.End R N) (c : α → R)
-    (x : N) (l : List α) (h : ∀ i ∈ l, f i x = c i • x) :
-    (l.map f).prod x = (l.map c).prod • x := by
-  induction l with
-  | nil => simp
-  | cons i l ih =>
-    simp only [List.map_cons, List.prod_cons, Module.End.mul_apply]
-    rw [ih (fun j hj ↦ h j (List.mem_cons_of_mem i hj)), map_smul, h i (List.mem_cons_self)]
-    rw [smul_smul, mul_comm ((l.map c).prod) (c i)]
-
 private noncomputable def diagonalFactor (d : ℕ)
     (s : Set.powersetCard ι d) (i : ι) :
     Module.End K (⋀[K]^d (ι → K)) :=
@@ -638,7 +628,9 @@ private theorem diagonalFactor_apply (d : ℕ)
 
 private noncomputable def diagonalProjector (d : ℕ)
     (s : Set.powersetCard ι d) : Module.End K (⋀[K]^d (ι → K)) :=
-  ((Finset.univ.toList).map fun i : ι ↦ diagonalFactor (K := K) d s i).prod
+  TauCeti.Module.End.basisDiagonalProjector
+    (Finset.univ.toList)
+    (fun s i ↦ diagonalFactor (K := K) d s i) s
 
 private theorem diagonalProjector_coeff_eq_one (d : ℕ)
     (s : Set.powersetCard ι d) :
@@ -658,13 +650,15 @@ private theorem diagonalProjector_apply (d : ℕ)
         (u.map fun i ↦ if (i ∈ s.1) = (i ∈ t.1) then (1 : K) else 0).prod •
           ιMulti_family K d (Pi.basisFun K ι) t := by
     intro u
-    apply listProd_end_apply_eq_smul (R := K)
+    apply TauCeti.Module.End.listProd_apply_eq_smul (R := K)
     intro i _
     rw [diagonalFactor_apply]
     by_cases h : (i ∈ s.1) = (i ∈ t.1)
     · simp only [h, ite_true, one_smul]
     · simp only [h, ite_false, zero_smul]
-  rw [diagonalProjector, hprod]
+  rw [diagonalProjector]
+  rw [TauCeti.Module.End.basisDiagonalProjector_eq_listProd]
+  rw [hprod]
   by_cases hst : s = t
   · subst t
     rw [diagonalProjector_coeff_eq_one]
@@ -688,7 +682,6 @@ private theorem diagonalProjector_mem (d : ℕ)
   classical
   let _ : LieRingModule (Matrix ι ι K) (⋀[K]^d (ι → K)) :=
     glLieRingModule (K := K) (n := ι) d
-  rw [diagonalProjector]
   have hfactor (i : ι) {y : ⋀[K]^d (ι → K)} (hy : y ∈ N) :
       diagonalFactor (K := K) d s i y ∈ N := by
     rw [diagonalFactor]
@@ -705,6 +698,7 @@ private theorem diagonalProjector_mem (d : ℕ)
     induction u with
     | nil => simpa using hx
     | cons i u ih => simpa [Module.End.mul_apply] using hfactor i ih
+  rw [diagonalProjector, TauCeti.Module.End.basisDiagonalProjector_eq_listProd]
   exact hmem Finset.univ.toList
 
 private theorem exists_basisWedge_mem_of_nonzero_mem (d : ℕ)
