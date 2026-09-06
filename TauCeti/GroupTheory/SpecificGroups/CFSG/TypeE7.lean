@@ -65,6 +65,28 @@ the `E₇` diagram is the pinning equation
 
 The interface follows the parallel type-`E₆` file
 `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeE6.lean`.
+
+## Roadmap
+
+Milestone L0 of `TauCetiRoadmap/CFSGStatement/README.md` asks for the points of the *pinned* simply
+connected Chevalley--Demazure group scheme of `TauCeti.DynkinType.simplyConnectedRootDatum` at the
+diagram the index names, with its root subgroups. **This file does not close L0 on the `E₇` branch,
+and the minuscule carrier is not offered as a substitute for that pinned group.** The pinned group
+scheme, its pinning, and any identification of a carrier with it are Layer 9 targets of
+`TauCetiRoadmap/ReductiveGroups/README.md` that the CFSG roadmap consumes rather than builds; none
+of them is proved of `TauCeti.E7Minuscule.groupScheme` here or in the files this one imports. The
+names `TauCeti.ValidLieTypeIndex.AmbientGroup` and `TauCeti.ValidLieTypeIndex.simpleRootSubgroup`
+that L0 asks for are accordingly left free, as
+`TauCeti/GroupTheory/SpecificGroups/CFSG/GeckCarrier.lean` records; everything below is named inside
+the family's own subtype `TauCeti.TypeE7LieIndex`. What this file supplies is the `E₇` branch's
+explicit carrier, its numbered simple root subgroups as explicit unipotent matrices, and the pinning
+equation reading their characters in the `E₇` root datum, each in the shape that milestone states
+it; they transfer to the L0 carrier along that Layer 9 identification, and not before. The
+counterparts on the branches already assembled are
+`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeA.lean`,
+`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeD.lean`,
+`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeE6.lean` and
+`TauCeti/GroupTheory/SpecificGroups/CFSG/Unimodular.lean`.
 -/
 
 public section
@@ -153,7 +175,8 @@ variable (d : TypeE7LieIndex)
 /-- **The ambient group this file attaches to a validated `E₇` index**: the points of the explicit
 full-weight type-`E₇` minuscule Chevalley carrier over the algebraic closure of its prime field.
 No finiteness, reductivity, pinning or maximality statement is attached to it, and it is not
-claimed to be the points of the pinned simply connected `E₇` group scheme. -/
+claimed to be the points of the pinned simply connected `E₇` group scheme that milestone L0 asks
+for, that identification being the Layer 9 target described in the module docstring. -/
 abbrev AmbientGroup : Type := E7Minuscule.points d.1.Closure
 
 /-- The positive simple-root subgroup at the Bourbaki-numbered node `i` of the `E₇` diagram. It is
