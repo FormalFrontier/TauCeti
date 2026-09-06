@@ -110,8 +110,8 @@ variable {K : Type*} [Field K] [Algebra R K] [IsFractionRing R K]
 /-- **A prime-indexed family of powers with the multiplicities of a fractional ideal as exponents
 has finite multiplicative support.** Only finitely many primes divide an invertible fractional
 ideal, so only finitely many exponents are nonzero, whatever group the bases live in. -/
-lemma hasFiniteMulSupport_zpow_count {G : Type*} [DivInvMonoid G] (f : HeightOneSpectrum R → G)
-    (I : (FractionalIdeal R⁰ K)ˣ) :
+lemma hasFiniteMulSupport_zpow_count {G : Type*} [DivInvMonoid G] (I : (FractionalIdeal R⁰ K)ˣ)
+    (f : HeightOneSpectrum R → G) :
     (Function.mulSupport fun v : HeightOneSpectrum R ↦
       f v ^ count K v (I : FractionalIdeal R⁰ K)).Finite := by
   refine (Filter.eventually_cofinite.mp
@@ -122,7 +122,7 @@ lemma hasFiniteMulSupport_zpow_count {G : Type*} [DivInvMonoid G] (f : HeightOne
 lemma hasFiniteMulSupport_unitOfPrime_zpow (I : (FractionalIdeal R⁰ K)ˣ) :
     (Function.mulSupport fun v : HeightOneSpectrum R ↦
       v.unitOfPrime K ^ count K v (I : FractionalIdeal R⁰ K)).Finite :=
-  hasFiniteMulSupport_zpow_count (fun v ↦ v.unitOfPrime K) I
+  hasFiniteMulSupport_zpow_count I (fun v ↦ v.unitOfPrime K)
 
 /-- Unique factorization of an invertible fractional ideal as a product of prime powers. -/
 lemma finprod_unitOfPrime_zpow_count (I : (FractionalIdeal R⁰ K)ˣ) :
