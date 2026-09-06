@@ -222,8 +222,7 @@ excised arc away from the corners, and the excised integrals at `ρ` and `ρ + 1
 
 AINTLIB gives the same fact its own name at the corner `i`, where the angular unit is
 `5π / 12`: `half_angle_arcsinDelta` in `LeanModularForms/ForMathlib/CrossingAtI.lean`
-(github.com/CBirkbeck/AINTLIB, Apache-2.0). No code is transcribed; the statement here is
-against this repository's own `fdBoundaryArcExcisionHalfWidth`. -/
+(github.com/CBirkbeck/AINTLIB, Apache-2.0). -/
 lemma fdBoundaryArcExcisionHalfWidth_mul_pi_div_twelve (ε : ℝ) :
     fdBoundaryArcExcisionHalfWidth ε * (Real.pi / 12) = Real.arcsin (ε / 2) := by
   rw [fdBoundaryArcExcisionHalfWidth_def]
