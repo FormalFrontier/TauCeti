@@ -180,7 +180,7 @@ theorem exists_forall_mem_idealImage_exists_sum_eq (P : PairOfDefinition A) (T :
       (((P.isOpen_idealImage 1).preimage (continuous_const_mul (d z t))).mem_nhds h0)
     exact ⟨N, fun x hx ↦ hN hx⟩
   choose N hN using habs
-  set K : ℕ := G.sup fun z ↦ T.sup (N z) with hK
+  set K : ℕ := G.sup fun z ↦ T.sup (N z)
   refine ⟨m + K, fun a ha ↦ ?_⟩
   obtain ⟨y, hy, rfl⟩ := (P.mem_idealImage (m + K)).mp ha
   have hy' : y ∈ Ideal.span (G : Set P.ringOfDefinition) * P.idealOfDefinition ^ K := by

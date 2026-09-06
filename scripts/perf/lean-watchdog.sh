@@ -2,7 +2,7 @@
 # Toolchain-shaped Lake wrapper: put one hard deadline around each Lean process.
 #
 # GNU timeout uses a separate process group by default, sends TERM at the first
-# deadline, and escalates to KILL after --kill-after. The production landrun
+# deadline, and escalates to KILL after --kill-after. The production bwrap
 # environment does not pass the TAUCETI_* variables below; they exist only so
 # the trusted unit test can exercise this in milliseconds rather than minutes.
 set -uo pipefail

@@ -51,8 +51,6 @@ open scoped ENat
 
 variable {G : Type*} [Group G] [TopologicalSpace G]
 
-namespace Subgroup
-
 /-- The **index of a subgroup of a profinite group**, as a supernatural number. At a prime
 `ℓ`, it is the supremum over open normal subgroups `N` of the `ℓ`-adic valuations of
 `[G/N : HN/N]`.
@@ -81,13 +79,9 @@ theorem _root_.Subgroup.profiniteIndex_top : Subgroup.profiniteIndex (⊤ : Subg
   simp_rw [Subgroup.profiniteIndex_apply, hmap]
   simp
 
-end Subgroup
-
 section Profinite
 
 variable [IsTopologicalGroup G] [CompactSpace G]
-
-namespace Subgroup
 
 /-- The supernatural index is equivalently the supremum of the ordinary positive indices of
 the images in finite continuous quotients. -/
@@ -185,10 +179,6 @@ theorem _root_.Subgroup.profiniteIndex_apply_eq_iSup_openSubgroup (H : Subgroup 
   funext U
   exact Supernatural.ofNat_apply _ _
 
-end Subgroup
-
-namespace OpenSubgroup
-
 /-- For an open subgroup, the supernatural index is the prime factorization of its ordinary
 index. -/
 @[simp]
@@ -217,10 +207,6 @@ theorem _root_.OpenSubgroup.profiniteIndex_apply_eq_padicValNat (U : OpenSubgrou
   exact Supernatural.ofNat_apply
     (⟨U.toSubgroup.index,
       Nat.zero_lt_of_ne_zero Subgroup.index_ne_zero_of_finite⟩ : ℕ+) ℓ
-
-end OpenSubgroup
-
-namespace Subgroup
 
 omit [CompactSpace G] in
 /-- Taking the topological closure of a subgroup does not change its supernatural index. -/
@@ -292,8 +278,6 @@ theorem _root_.Subgroup.profiniteIndex_eq_bot_iff (H : Subgroup G)
     (hH : IsClosed (H : Set G)) :
     Subgroup.profiniteIndex H = ⊥ ↔ H = ⊤ := by
   rw [← Supernatural.one_eq_bot, Subgroup.profiniteIndex_eq_one_iff H hH]
-
-end Subgroup
 
 end Profinite
 

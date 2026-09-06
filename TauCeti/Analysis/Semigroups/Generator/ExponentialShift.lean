@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Calculus.ExponentialSlope
-public import TauCeti.Analysis.Normed.Operator.LinearPMap.Shift
+public import TauCeti.LinearAlgebra.LinearPMap.Shift
 public import TauCeti.Analysis.Semigroups.ExponentialShift
 public import TauCeti.Analysis.Semigroups.Generator.Basic
 
