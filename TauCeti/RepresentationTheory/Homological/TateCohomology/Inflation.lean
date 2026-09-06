@@ -95,23 +95,7 @@ theorem infl_comp_isoGroupCohomology_hom (S : Subgroup G) [S.Normal]
       (_root_.TateCohomology.isoGroupCohomology n).hom.app
           ((Rep.quotientToInvariantsFunctor R S).obj M) ≫
         (groupCohomology.infNatTrans R S n).app M := by
-  rw [infl_def]
-  calc
-    _ = (_root_.TateCohomology.isoGroupCohomology n).hom.app
-          ((Rep.quotientToInvariantsFunctor R S).obj M) ≫
-        (groupCohomology.infNatTrans R S n).app M ≫
-          ((_root_.TateCohomology.isoGroupCohomology n).inv.app M ≫
-            (_root_.TateCohomology.isoGroupCohomology n).hom.app M) := by
-        simp only [Category.assoc]
-    _ = _ := by
-      have h :
-          (_root_.TateCohomology.isoGroupCohomology n).inv.app M ≫
-              (_root_.TateCohomology.isoGroupCohomology n).hom.app M =
-            𝟙 ((groupCohomology.functor R G n).obj M) := by
-        simpa only [NatTrans.comp_app, NatTrans.id_app] using
-          NatTrans.congr_app
-            (_root_.TateCohomology.isoGroupCohomology n).inv_hom_id M
-      rw [h, Category.comp_id]
+  simp only [infl_def, Category.assoc, Iso.inv_hom_id_app, Category.comp_id]
 
 /-- Positive-degree Tate inflation is natural in the coefficient representation. -/
 @[reassoc]
