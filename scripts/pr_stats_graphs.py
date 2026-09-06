@@ -198,51 +198,27 @@ query($owner:String!, $name:String!, $number:Int!, $cursor:String) {
 """
 
 
-# Aliased pull requests in one query, so a cold walk costs a fiftieth of what it did. GitHub
-# prices a GraphQL request from the connection sizes it asks for, not from how many top-level
-# fields it has, and `pullRequest(number:)` is not a connection -- so fifty of them alongside
-# fifty 100-item timelines still scores one point, exactly what a single pull request cost
-# before. Measured against this repository: 25 and 50 aliases both cost 1, 100 costs 2.
+# DO NOT batch timeline queries by aliasing several `pullRequest` fields into one request.
 #
-# The old comment here said batching loses events. That is true of the OUTER pull-request page
-# query, whose nested timelines cannot be paged per node -- and it stays true; PR_PAGE_QUERY has
-# no timelineItems and a test enforces that. It is not true of aliases, which each carry their
-# own pageInfo and can be followed up individually. Anything reporting hasNextPage falls back to
-# the single-pull-request paginating query below, so depth is never silently truncated.
-TIMELINE_BATCH = 50
-TIMELINE_FIRST = 100
-
-TIMELINE_FRAGMENT = f"""
-fragment PrTimeline on PullRequest {{
-  mergedAt closedAt state isDraft
-  labels(first:30) {{ nodes {{ name }} }}
-  timelineItems(first:{TIMELINE_FIRST}, itemTypes:[LABELED_EVENT]) {{
-    pageInfo {{ hasNextPage }}
-    nodes {{ ... on LabeledEvent {{ createdAt label {{ name }} }} }}
-  }}
-}}
-"""
-
-
-def timeline_batch_query(numbers: list[int]) -> str:
-    """A query aliasing one `pullRequest` field per number.
-
-    The numbers are interpolated into the query text rather than passed as variables, because
-    GraphQL has no way to parameterise a field alias. They are required to be genuine ints
-    first: everything reaching here comes from the pull-request page query, so a non-int means a
-    bug rather than hostile input, but a query built by string-formatting is not the place to
-    find that out later.
-    """
-    for number in numbers:
-        if not isinstance(number, int) or isinstance(number, bool) or number < 0:
-            raise TypeError(f"pull request numbers must be non-negative ints, got {number!r}")
-    fields = "\n    ".join(f"p{number}: pullRequest(number:{number}) {{ ...PrTimeline }}"
-                            for number in numbers)
-    return (f"query($owner:String!, $name:String!) {{\n"
-            f"  repository(owner:$owner, name:$name) {{\n    {fields}\n  }}\n}}\n"
-            f"{TIMELINE_FRAGMENT}")
-
-
+# It is tempting, because GitHub prices a request from the connection sizes it asks for and fifty
+# aliases score the same single point as one. It was tried, and it silently returns INCOMPLETE
+# timelines. Measured against this repository on 2026-09-06: in a 50-alias batch, PR #1556 came
+# back with 2 label events and `hasNextPage: false`, where the paginating single-pull-request
+# query returns 4 -- the missing one being the `ci-failed` that the pull request currently
+# carries. Ten and twenty-five aliases happened to be complete for the same sample, and fifty was
+# not, so the limit depends on the total nodes a query asks for and cannot be pinned to a size.
+#
+# What makes it unusable rather than merely awkward is that `hasNextPage` is computed against the
+# truncated slice, so it reports false. There is no signal in the response to detect the loss
+# from, and `totalCount` counts unfiltered timeline items, so it cannot stand in for one either.
+# Silently dropping label events corrupts every lifecycle number downstream.
+#
+# The consistency guard in fetch_prs caught this within one deploy, which is the only reason it
+# was a failed Pages run rather than quietly wrong statistics. Keep that guard.
+#
+# The saving would have been small in any case. Reuse (see reusable_timelines) already takes a
+# normal run to a few dozen timelines, so batching them into one request saves tens of points out
+# of a run costing hundreds. It is not worth a class of error that has no detector.
 def timeline_from_node(pull: dict) -> dict:
     """The normalized timeline record, from either the batched or the single-PR query."""
     return {
@@ -299,54 +275,30 @@ def fetch_timeline(owner: str, name: str, number: int) -> dict:
 def fetch_timelines(
     owner: str, name: str, numbers: list[int], reusable: dict[int, dict] | None = None,
 ) -> tuple[dict[int, dict], int]:
-    """Current state and label timelines for `numbers`, as cheaply as correctness allows.
+    """Current state and label timelines, one paginating request per pull request.
 
-    Two things keep this proportional to the work rather than to the project. `reusable` maps a
-    number to a timeline recorded while the pull request had its current `updatedAt`, so nothing
-    that has not moved is fetched at all. What remains is fetched in batches of aliased pull
-    requests, which GitHub prices as one point per batch rather than one per pull request.
-
-    Together these took a full walk of this repository from about 4600 points -- against an
-    hourly budget of 5000, which it had already outgrown -- to under a hundred.
+    One request each is the only shape that has been shown to return complete timelines; see the
+    note above the batch query that used to live here. Cost is kept proportional to the work by
+    `reusable`, which maps a number to a timeline recorded while the pull request had its current
+    `updatedAt`, so nothing that has not moved is fetched at all. On a normal three-hourly run
+    that leaves a few dozen pull requests rather than every one the project has ever had.
 
     Returns the timelines and how many pull requests had to be fetched.
     """
     reusable = reusable or {}
     result = {}
-    outstanding = []
-    for number in numbers:
+    fetched = 0
+    for index, number in enumerate(numbers, start=1):
         cached = reusable.get(number)
         if cached is not None:
             result[number] = cached
-        else:
-            outstanding.append(number)
-
-    # Anything whose events did not fit in one batched page. Collected and handled afterwards so
-    # that a deep timeline costs one extra paginating fetch rather than shrinking the batch.
-    deep = []
-    for start in range(0, len(outstanding), TIMELINE_BATCH):
-        chunk = outstanding[start:start + TIMELINE_BATCH]
-        repository = graphql(
-            timeline_batch_query(chunk), owner=owner, name=name)["repository"]
-        for number in chunk:
-            pull = repository.get(f"p{number}")
-            if pull is None:
-                raise RuntimeError(f"GitHub returned no timeline for PR #{number}")
-            if pull["timelineItems"]["pageInfo"]["hasNextPage"]:
-                deep.append(number)
-                continue
-            result[number] = timeline_from_node(pull)
-        done = min(start + TIMELINE_BATCH, len(outstanding))
-        print(f"fetched {done:,} of {len(outstanding):,} PR timelines "
-              f"({len(numbers) - len(outstanding):,} reused)", file=sys.stderr)
-
-    for number in deep:
+            continue
         result[number] = fetch_timeline(owner, name, number)
-    if deep:
-        print(f"paged {len(deep):,} timeline(s) deeper than {TIMELINE_FIRST} events",
-              file=sys.stderr)
-
-    return result, len(outstanding)
+        fetched += 1
+        if fetched % 100 == 0 or index == len(numbers):
+            print(f"fetched {fetched:,} PR timelines "
+                  f"({len(numbers) - fetched:,} reused of {len(numbers):,})", file=sys.stderr)
+    return result, fetched
 
 
 def reusable_timelines(previous: dict | None, prs: list[dict]) -> dict[int, dict]:
