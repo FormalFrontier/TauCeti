@@ -75,6 +75,8 @@ The ideal-counting half of Layer 5.1 is a separate estimate: it is analytic, res
 * H. Davenport, *Multiplicative Number Theory*, Chapter 7.
 * G. Tenenbaum, *Introduction to Analytic and Probabilistic Number Theory*, Chapter I.2.
 * J. Neukirch, *Algebraic Number Theory*, Chapter VII.
+* `TauCetiRoadmap/Chebotarev/README.md`, Layer 11.3, whose two estimates share the
+  fibre-and-count step `TauCeti.card_fiber_mul_log_absNorm_le` proved below.
 -/
 
 public section

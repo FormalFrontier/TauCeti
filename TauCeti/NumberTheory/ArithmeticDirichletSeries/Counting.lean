@@ -80,6 +80,8 @@ fibre those estimates over the primes.
 * G. Tenenbaum, *Introduction to Analytic and Probabilistic Number Theory*, Chapters I--II.
 * H. Davenport, *Multiplicative Number Theory*, Chapters 1 and 7.
 * J. Neukirch, *Algebraic Number Theory*, Chapter VII.
+* `TauCetiRoadmap/Chebotarev/README.md`, Layer 11.3(2), for the negligible weight of a finite
+  set of primes in `ϑ`, supplied here by `TauCeti.primeTheta_isLittleO_of_finite`.
 -/
 
 public section

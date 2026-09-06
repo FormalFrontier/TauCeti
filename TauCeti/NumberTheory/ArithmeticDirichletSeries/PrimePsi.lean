@@ -73,6 +73,8 @@ theorem of Layer 9.
 * H. Davenport, *Multiplicative Number Theory*, Chapter 7.
 * G. Tenenbaum, *Introduction to Analytic and Probabilistic Number Theory*, Chapter I.2.
 * J. Neukirch, *Algebraic Number Theory*, Chapter VII.
+* `TauCetiRoadmap/Chebotarev/README.md`, Layer 11.3(3), for the `O(log x)` cost of discarding
+  a finite set of primes from `ψ`, which the estimates below supply.
 
 The rational-prime case of `ψ`, `ϑ` and their difference is Mathlib's
 `Mathlib/NumberTheory/Chebyshev.lean`, whose `Chebyshev.theta_le_psi` and

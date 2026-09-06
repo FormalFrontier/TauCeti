@@ -82,6 +82,8 @@ subfield.
 * J. Neukirch, *Algebraic Number Theory*, Chapter VII, §13.
 * J.-P. Serre, *A Course in Arithmetic*, Chapter VI, and J. Milne, *Algebraic Number Theory*,
   Chapter VIII, for the same estimate in the Dirichlet-density setting.
+* `TauCetiRoadmap/Chebotarev/README.md`, Layer 11.3(2), for the negligible weight of the primes
+  of residue degree above one.
 -/
 
 public section
