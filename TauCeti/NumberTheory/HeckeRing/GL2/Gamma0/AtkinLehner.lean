@@ -600,11 +600,11 @@ private lemma gcd_eq_one_of_eq_mul_of_dvd_pow {x : ℤ} {N m b c : ℕ} (hbc : m
     (((Int.isCoprime_iff_gcd_eq_one.mpr hxN).pow_right (n := m)).of_isCoprime_of_dvd_right
         (by exact_mod_cast hb) |>.mul_right (Int.isCoprime_iff_gcd_eq_one.mpr hxc))
 
-/-- **A scalar relating two `Δ₀(N)` elements is positive and coprime to the level.** The witness
-of `x` is `d • A₀`, so its upper-left entry is `d * A₀ 0 0`, and that entry being a unit mod `N`
-forces `d` coprime to `N`; while `d = 0` would collapse `x` to the zero matrix, against
-`0 < det x`. -/
-private lemma pos_and_coprime_of_coe_eq_smul [NeZero N] (d : ℕ) (x x₀ : GL (Fin 2) ℚ)
+/-- **A scalar relating two `Δ₀(N)` elements is positive and coprime to the level.** These are
+exactly what `atkinLehnerAntiInvolution_bar_mem_doubleCoset_of_smul` asks of its scalar `d`
+before it can form `diag(d, d)` in `Δ₀(N)`, and both come free from `x ∈ Δ₀(N)` — which is why
+that theorem assumes neither. -/
+private lemma pos_and_coprime_of_coe_eq_smul (d : ℕ) (x x₀ : GL (Fin 2) ℚ)
     (hx : x ∈ Delta0 N) (hx₀ : x₀ ∈ Delta0 N)
     (hsmul : (x : Matrix (Fin 2) (Fin 2) ℚ) = (d : ℚ) • (x₀ : Matrix (Fin 2) (Fin 2) ℚ)) :
     0 < d ∧ Nat.Coprime d N := by
@@ -617,10 +617,12 @@ private lemma pos_and_coprime_of_coe_eq_smul [NeZero N] (d : ℕ) (x x₀ : GL (
     simp only [Matrix.map_apply, Matrix.smul_apply, smul_eq_mul] at h
     exact_mod_cast h
   refine ⟨?_, ?_⟩
+  -- `d = 0` would collapse `x` to the zero matrix, against `0 < det x`
   · rcases Nat.eq_zero_or_pos d with rfl | h
     · rw [hsmul] at hxdet
       simp at hxdet
     · exact h
+  -- the upper-left entry of `x`'s witness is `d * A₀ 0 0`, and it is a unit mod `N`
   · rw [← ZMod.isUnit_iff_coprime]
     have hsplit : ((A 0 0 : ℤ) : ZMod N) = (d : ZMod N) * ((A₀ 0 0 : ℤ) : ZMod N) := by
       rw [hA00]
