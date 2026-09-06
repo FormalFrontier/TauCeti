@@ -6,31 +6,33 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.Topology.Algebra.Nonarchimedean.Completion.Basic
-public import TauCeti.Topology.Algebra.Nonarchimedean.FirstCountable
-public import TauCeti.Topology.Algebra.OpenMapping.Complete
+
+import TauCeti.Topology.Algebra.Nonarchimedean.FirstCountable
+import TauCeti.Topology.Algebra.OpenMapping.Complete
 
 /-!
-# An open map of nonarchimedean groups stays open, and an open surjection stays surjective
+# An open map out of a nonarchimedean group stays open, and an open surjection stays surjective
 
-For a continuous **open** homomorphism `f : G → H` of nonarchimedean additive groups with `G`
-first countable, the induced map on separated completions is again open; if `f` is moreover
-surjective then so is that map. Openness is what the statements turn on: a continuous surjection
-alone gives only a dense image in the completion of `H`.
+For a continuous **open** homomorphism `f : G → H` from a first-countable nonarchimedean additive
+group to a uniform additive group, the induced map on separated completions is again open; if `f`
+is moreover surjective then so is that map. Openness is what the statements turn on: a continuous
+surjection alone gives only a dense image in the completion of `H`. Nothing is asked of `H` beyond
+being a uniform additive group.
 
 ## Main results
 
-* `UniformSpace.Completion.isOpenMap_completion`: the induced map on completions is open.
-* `UniformSpace.Completion.surjective_completion`: it is surjective when `f` is.
+* `AddMonoidHom.isOpenMap_completion`: the induced map on completions is open.
+* `AddMonoidHom.surjective_completion`: it is surjective when `f` is.
 -/
 
 public section
 
-open Filter Topology
+open Filter Topology UniformSpace UniformSpace.Completion
 
-namespace UniformSpace.Completion
+namespace AddMonoidHom
 
 variable {G : Type*} [AddCommGroup G] [UniformSpace G] [IsUniformAddGroup G]
-variable {H : Type*} [AddCommGroup H] [UniformSpace H] [IsUniformAddGroup H]
+variable {H : Type*} [AddGroup H] [UniformSpace H] [IsUniformAddGroup H]
 
 /-- The image under the induced map of the first term of a basis of closures is a neighbourhood
 of zero in the completion of `H`. -/
@@ -70,10 +72,10 @@ private theorem image_closure_image_coe_mem_nhds {f : G →+ H} (hf : Continuous
       (fun n ↦ Filter.mem_of_superset (himg (n + 1)) (closure_mono (hsub (n + 1))))
       (closure_mono (hsub 0) hy)
 
-/-- **A continuous open homomorphism of nonarchimedean groups induces an open map on the separated
-completions**, the source being first countable. -/
+/-- **A continuous open homomorphism out of a first-countable nonarchimedean additive group
+induces an open map on the separated completions.** -/
 theorem isOpenMap_completion [NonarchimedeanAddGroup G] [(𝓝 (0 : G)).IsCountablyGenerated]
-    {f : G →+ H} (hf : Continuous f) (hopen : IsOpenMap f) :
+    (f : G →+ H) (hf : Continuous f) (hopen : IsOpenMap f) :
     IsOpenMap (f.completion hf) := by
   obtain ⟨V, hV⟩ := NonarchimedeanAddGroup.exists_antitone_basis_openAddSubgroup (G := G)
   have hbasis : (𝓝 (0 : Completion G)).HasBasis (fun _ : ℕ ↦ True)
@@ -88,15 +90,15 @@ theorem isOpenMap_completion [NonarchimedeanAddGroup G] [(𝓝 (0 : G)).IsCounta
       (hV.comp_strictMono fun a b hab ↦ Nat.add_lt_add_left hab n))
     ((Set.image_mono hn).trans (Set.image_preimage_subset _ _))
 
-/-- **A continuous open surjection of nonarchimedean groups induces a surjection on the separated
-completions**, the source being first countable. -/
+/-- **A continuous open surjection out of a first-countable nonarchimedean additive group induces
+a surjection on the separated completions.** -/
 theorem surjective_completion [NonarchimedeanAddGroup G] [(𝓝 (0 : G)).IsCountablyGenerated]
-    {f : G →+ H} (hf : Continuous f) (hsurj : Function.Surjective f) (hopen : IsOpenMap f) :
+    (f : G →+ H) (hf : Continuous f) (hsurj : Function.Surjective f) (hopen : IsOpenMap f) :
     Function.Surjective (f.completion hf) := by
   set F := f.completion hf with hF
   -- the range is an open subgroup, hence closed, and it is dense because `f` is onto
   have hcl : IsClosed ((F.range : AddSubgroup (Completion H)) : Set (Completion H)) :=
-    AddSubgroup.isClosed_of_isOpen F.range (isOpenMap_completion hf hopen).isOpen_range
+    AddSubgroup.isClosed_of_isOpen F.range (f.isOpenMap_completion hf hopen).isOpen_range
   have hdense : Dense ((F.range : AddSubgroup (Completion H)) : Set (Completion H)) := by
     refine Dense.mono (fun y hy ↦ ?_) (denseRange_coe (α := H))
     obtain ⟨x, rfl⟩ := hy
@@ -109,6 +111,6 @@ theorem surjective_completion [NonarchimedeanAddGroup G] [(𝓝 (0 : G)).IsCount
     rw [huniv]; exact Set.mem_univ y
   exact AddMonoidHom.mem_range.mp hy
 
-end UniformSpace.Completion
+end AddMonoidHom
 
 end
