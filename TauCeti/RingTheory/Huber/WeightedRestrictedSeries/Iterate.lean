@@ -54,8 +54,10 @@ a nonarchimedean group being nonarchimedean; and each tuple must be power-bounde
 * `TauCeti.Huber.continuous_iterateSplitHom` and `TauCeti.Huber.continuous_iterateJoinHom`, with
   `TauCeti.Huber.continuous_iterateFirstBlockHom`: all three are morphisms of *topological* rings.
 * `TauCeti.Huber.iterateSplitHom_coe_weightedC`, `…_coe_weightedX` and their `iterateJoinHom` and
-  `iterateFirstBlockHom` counterparts: the values on the generators. The bodies of the definitions
-  are not exported, so these are how a consumer computes with the maps.
+  `iterateFirstBlockHom` counterparts, with `TauCeti.Huber.iterateVar_castAdd` and
+  `TauCeti.Huber.iterateVar_natAdd` for the two blocks of generators: the values on the
+  generators. The bodies of the definitions are not exported, so these are how a consumer computes
+  with the maps.
 * `TauCeti.Huber.iterateJoinHom_comp_iterateSplitHom` and
   `TauCeti.Huber.iterateSplitHom_comp_iterateJoinHom`: the two maps are mutually inverse. Each is
   the uniqueness half of Proposition 5.50 — two continuous homomorphisms out of the completion
@@ -64,11 +66,12 @@ a nonarchimedean group being nonarchimedean; and each tuple must be power-bounde
 * `TauCeti.Huber.continuous_iterateRingEquiv` and its `symm`, with the `_coe` and `_apply` `@[simp]`
   lemmas: the isomorphism is one of *topological* rings, and it is `iterateSplitHom` with inverse
   `iterateJoinHom`.
-
 * `TauCeti.Huber.iterateSplitHom_comp_algebraMap`: the comparison carries the structure map of
   `A⟨X₁,…,X_{k+m}⟩` to that of the iterate, which is what makes it a map of `A`-algebras. The
   iterate carries no `Algebra A` instance — `Algebra` does not compose transitively — so
-  `iterateAlgEquiv` supplies the one its structure map induces.
+  `iterateAlgEquiv` supplies the one its structure map induces, and
+  `TauCeti.Huber.iterateAlgEquiv_toRingEquiv` with its two `_apply` forms says that this changes
+  nothing but the bundling.
 
 ## The shape of the argument
 
@@ -107,15 +110,39 @@ noncomputable def iterateVar (i : Fin (k + m)) :
       restrictedMvPowerSeriesCompletion m (restrictedMvPowerSeriesCompletion k A)))
     i
 
+omit [IsHuberRing A] in
+/-- On the first block the generator is the `i`-th variable of the inner algebra, read as a
+constant series of the outer one. -/
+@[simp]
+theorem iterateVar_castAdd (i : Fin k) :
+    iterateVar k m A (Fin.castAdd m i)
+      = ((weightedC (fun _ : Fin m ↦ ({1} : Set (restrictedMvPowerSeriesCompletion k A)))
+          isWeightFamily_one_weight
+          ((weightedX (fun _ : Fin k ↦ ({1} : Set A)) isWeightFamily_one_weight i :
+              weightedRestrictedSubring _ _) : restrictedMvPowerSeriesCompletion k A) :
+            weightedRestrictedSubring _ _) :
+        restrictedMvPowerSeriesCompletion m (restrictedMvPowerSeriesCompletion k A)) := by
+  rw [iterateVar, Fin.addCases_left]
+
+omit [IsHuberRing A] in
+/-- On the second block the generator is the `j`-th variable of the outer algebra. -/
+@[simp]
+theorem iterateVar_natAdd (j : Fin m) :
+    iterateVar k m A (Fin.natAdd k j)
+      = ((weightedX (fun _ : Fin m ↦ ({1} : Set (restrictedMvPowerSeriesCompletion k A)))
+          isWeightFamily_one_weight j : weightedRestrictedSubring _ _) :
+        restrictedMvPowerSeriesCompletion m (restrictedMvPowerSeriesCompletion k A)) := by
+  rw [iterateVar, Fin.addCases_right]
+
 /-- Each generator is power-bounded. -/
 theorem isPowerBounded_iterateVar (i : Fin (k + m)) :
     IsPowerBounded (iterateVar k m A i) := by
   refine Fin.addCases (fun i ↦ ?_) (fun j ↦ ?_) i
-  · rw [iterateVar, Fin.addCases_left]
+  · rw [iterateVar_castAdd]
     exact isPowerBounded_completion_coe_of_isPowerBounded
       (isPowerBounded_weightedC isWeightFamily_one_weight
         (isPowerBounded_coe_weightedX_one_weight i))
-  · rw [iterateVar, Fin.addCases_right]
+  · rw [iterateVar_natAdd]
     exact isPowerBounded_coe_weightedX_one_weight j
 
 /-- The structure map `A → A⟨X₁,…,Xₖ⟩⟨Y₁,…,Y_m⟩`, the composite of the two structure maps the
@@ -267,10 +294,10 @@ theorem iterateJoinHom_comp_iterateSplitHom :
       iterateFirstBlockHom_coe_weightedC,
       algebraMap_completion_weightedRestrictedSubring_apply _ _ isWeightFamily_one_weight]
   · simp only [RingHom.coe_comp, Function.comp_apply, RingHom.id_apply,
-      iterateSplitHom_coe_weightedX, iterateVar]
+      iterateSplitHom_coe_weightedX]
     refine Fin.addCases (fun i ↦ ?_) (fun j ↦ ?_) i
-    · rw [Fin.addCases_left, iterateJoinHom_coe_weightedC, iterateFirstBlockHom_coe_weightedX]
-    · rw [Fin.addCases_right, iterateJoinHom_coe_weightedX]
+    · rw [iterateVar_castAdd, iterateJoinHom_coe_weightedC, iterateFirstBlockHom_coe_weightedX]
+    · rw [iterateVar_natAdd, iterateJoinHom_coe_weightedX]
 
 /-- Splitting after including the first block is the structure map of the iterated algebra over
 `A⟨X₁,…,Xₖ⟩`: the two agree on the constants and on the variables of `A⟨X₁,…,Xₖ⟩`. -/
@@ -286,7 +313,7 @@ theorem iterateSplitHom_comp_iterateFirstBlockHom :
       algebraMap_completion_weightedRestrictedSubring_apply _ _ isWeightFamily_one_weight,
       iterateSplitHom_coe_weightedC, iterateStructureHom_eq]
   · simp only [RingHom.coe_comp, Function.comp_apply, iterateFirstBlockHom_coe_weightedX,
-      iterateSplitHom_coe_weightedX, iterateVar, Fin.addCases_left,
+      iterateSplitHom_coe_weightedX, iterateVar_castAdd,
       algebraMap_completion_weightedRestrictedSubring_apply _ _ isWeightFamily_one_weight]
 
 /-- **Splitting after joining is the identity on `A⟨X₁,…,Xₖ⟩⟨Y₁,…,Y_m⟩`.** -/
@@ -302,7 +329,7 @@ theorem iterateSplitHom_comp_iterateJoinHom :
     rw [← RingHom.comp_apply, iterateSplitHom_comp_iterateFirstBlockHom,
       algebraMap_completion_weightedRestrictedSubring_apply _ _ isWeightFamily_one_weight]
   · simp only [RingHom.coe_comp, Function.comp_apply, RingHom.id_apply,
-      iterateJoinHom_coe_weightedX, iterateSplitHom_coe_weightedX, iterateVar, Fin.addCases_right]
+      iterateJoinHom_coe_weightedX, iterateSplitHom_coe_weightedX, iterateVar_natAdd]
 
 /-- **The iteration isomorphism** `A⟨X₁,…,X_{k+m}⟩ ≃+* A⟨X₁,…,Xₖ⟩⟨Y₁,…,Y_m⟩`. -/
 noncomputable def iterateRingEquiv :
@@ -370,10 +397,8 @@ theorem iterateSplitHom_comp_algebraMap :
 
 The algebra structure on the iterate is the one its structure map induces: `Algebra` does not
 compose transitively, so `A⟨X₁,…,Xₖ⟩⟨Y₁,…,Y_m⟩` carries no `Algebra A` instance of its own and the
-statement supplies it.
-
-`@[expose]` so that `iterateAlgEquiv_apply` can identify it with the ring equivalence downstream. -/
-@[expose] noncomputable def iterateAlgEquiv :
+statement supplies it. -/
+noncomputable def iterateAlgEquiv :
     letI := (iterateStructureHom k m A).toAlgebra
     restrictedMvPowerSeriesCompletion (k + m) A ≃ₐ[A]
       restrictedMvPowerSeriesCompletion m (restrictedMvPowerSeriesCompletion k A) :=
@@ -384,10 +409,25 @@ statement supplies it.
 
 /-- The algebra equivalence is the ring equivalence. -/
 @[simp]
+theorem iterateAlgEquiv_toRingEquiv :
+    letI := (iterateStructureHom k m A).toAlgebra
+    (iterateAlgEquiv k m A).toRingEquiv = iterateRingEquiv k m A :=
+  (rfl)
+
+/-- The pointwise form of `TauCeti.Huber.iterateAlgEquiv_toRingEquiv`. -/
+@[simp]
 theorem iterateAlgEquiv_apply (x : restrictedMvPowerSeriesCompletion (k + m) A) :
     letI := (iterateStructureHom k m A).toAlgebra
     iterateAlgEquiv k m A x = iterateRingEquiv k m A x :=
-  rfl
+  (rfl)
+
+/-- The inverse of the algebra equivalence is the inverse of the ring equivalence. -/
+@[simp]
+theorem iterateAlgEquiv_symm_apply
+    (x : restrictedMvPowerSeriesCompletion m (restrictedMvPowerSeriesCompletion k A)) :
+    letI := (iterateStructureHom k m A).toAlgebra
+    (iterateAlgEquiv k m A).symm x = (iterateRingEquiv k m A).symm x :=
+  (rfl)
 
 end TauCeti.Huber
 

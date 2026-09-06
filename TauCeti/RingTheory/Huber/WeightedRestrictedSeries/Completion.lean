@@ -116,6 +116,7 @@ theorem continuous_algebraMap_completion_weightedRestrictedSubring {T : Fin k �
 
 This is what lets a statement about the generators — phrased with `weightedC` — meet one about the
 `A`-algebra structure, phrased with `algebraMap`. -/
+@[simp]
 theorem algebraMap_completion_weightedRestrictedSubring_apply {T : Fin k → Set A}
     (hT : IsWeightFamily T) (a : A) :
     algebraMap A (UniformSpace.Completion (weightedRestrictedSubring T hT)) a
