@@ -62,7 +62,7 @@ namespace SmoothCircleEmbedding
 
 /-- Two oriented smooth circle presentations represent the same unoriented presentation when they
 are equal or differ by the orientation-reversing circle reparametrization. -/
-def UnorientedRel (f g : SmoothCircleEmbedding I M) : Prop := f = g ∨ f = g.reverse
+private def UnorientedRel (f g : SmoothCircleEmbedding I M) : Prop := f = g ∨ f = g.reverse
 
 private theorem unorientedRel_refl (f : SmoothCircleEmbedding I M) : UnorientedRel f f :=
   Or.inl rfl
@@ -84,14 +84,14 @@ private theorem unorientedRel_trans {f g h : SmoothCircleEmbedding I M}
     · exact Or.inl (hfg.trans (by rw [hgh, reverse_reverse]))
 
 /-- The setoid of oriented smooth circle presentations modulo reversal. -/
-def unorientedSetoid : Setoid (SmoothCircleEmbedding I M) where
+private def unorientedSetoid : Setoid (SmoothCircleEmbedding I M) where
   r := UnorientedRel
   iseqv := ⟨unorientedRel_refl, unorientedRel_symm, unorientedRel_trans⟩
 
 end SmoothCircleEmbedding
 
 /-- A smooth circle presentation with its orientation forgotten. -/
-abbrev UnorientedSmoothCircleEmbedding
+def UnorientedSmoothCircleEmbedding
     (I : ModelWithCorners ℝ E H) (M : Type*) [TopologicalSpace M] [ChartedSpace H M] :=
   Quotient (SmoothCircleEmbedding.unorientedSetoid (I := I) (M := M))
 
@@ -108,11 +108,12 @@ def forgetOrientation (f : SmoothCircleEmbedding I M) :
 orientation reversal. -/
 @[simp]
 theorem forgetOrientation_eq_iff :
-    forgetOrientation f = forgetOrientation g ↔ UnorientedRel f g := by
-  change Quotient.mk (unorientedSetoid (I := I) (M := M)) f =
-      Quotient.mk (unorientedSetoid (I := I) (M := M)) g ↔
-    (unorientedSetoid (I := I) (M := M)).r f g
-  exact Quotient.eq
+    forgetOrientation f = forgetOrientation g ↔ f = g ∨ f = g.reverse := by
+  simp only [forgetOrientation, UnorientedSmoothCircleEmbedding]
+  rw [Quotient.eq_iff_equiv]
+  -- The quotient theorem leaves the setoid relation; unfolding the private setoid and relation
+  -- reduces it to the public equality-or-reversal criterion stated above.
+  rfl
 
 /-- Reversing the orientation does not change the unoriented presentation. -/
 @[simp]
