@@ -11,7 +11,8 @@ public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.FiniteSupport
 # Separability of the finite-moment Wasserstein space
 
 For a finite exponent `1 ≤ p < ∞` the Wasserstein space `TauCeti.WassersteinSpace p X` of laws of
-finite `p`-moment is separable as soon as the ground space is. The countable dense family is the
+finite `p`-moment is separable when the ground space is second countable and its measurable
+structure is standard Borel and induced by the metric topology. The countable dense family is the
 expected one: the laws carried by finitely many terms of a dense sequence of `X`, each term
 receiving a rational share of the total mass. Concretely it is the range of a map defined on
 `Finset (ℕ × ℕ)`, a pair `(i, k)` contributing the multiplicity `k` to the `i`-th term of the
@@ -69,8 +70,9 @@ variable [PseudoMetricSpace X] [StandardBorelSpace X] [BorelSpace X]
   [SecondCountableTopology X] [Fact (1 ≤ p)]
 
 /-- **`P_p (X)` is separable.** For a finite exponent `1 ≤ p < ∞`, the finite-moment Wasserstein
-space over a separable ground space is separable: the laws carried by finitely many terms of a
-dense sequence and giving each of them a rational share of the mass form a countable dense set. -/
+space over a second-countable ground space whose measurable structure is standard Borel and
+induced by the metric topology is separable: the laws carried by finitely many terms of a dense
+sequence and giving each of them a rational share of the mass form a countable dense set. -/
 theorem separableSpace (hp_top : p ≠ ∞) :
     TopologicalSpace.SeparableSpace (WassersteinSpace p X) := by
   classical
