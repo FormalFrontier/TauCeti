@@ -82,10 +82,7 @@ The two counting statements are the group-theoretic half of a fibre count: for a
 quotient `#G / (#C * orderOf σ)` counts something, and it does so only because the division is
 exact — `#C` is the index of the centralizer of `σ`, and `orderOf σ` divides that centralizer's
 order, so their product divides `#G`. Dividing then leaves the centralizer's order over
-`orderOf σ`. They are developed for the same roadmap (`Chebotarev/README.md` Layer 8.2, the
-fixed-field fibre count), whose `Suggested.lean` pins `card_carrier_mul_orderOf_dvd` with this
-signature and consumes it in `fixedField_frobenius_fiber_card`, the exact cardinality of the
-residue-degree-one relative fibre.
+`orderOf σ`.
 -/
 
 public section
@@ -238,7 +235,11 @@ For a *finite* group this is what makes `Nat.card G / (Nat.card C.carrier * orde
 division rather than a truncated one, which is why a fibre count needs it separately;
 `card_div_mul_card_carrier_orderOf_eq_card_centralizer_div_orderOf` evaluates that quotient. No
 finiteness is assumed here: for an infinite group `Nat.card G` is `0`, and every natural number
-divides `0`. -/
+divides `0`.
+
+`TauCetiRoadmap/Chebotarev/README.md`, Layer 8.2, pins this signature in its `Suggested.lean` and
+consumes it in `fixedField_frobenius_fiber_card`, the exact cardinality of the residue-degree-one
+relative fibre. -/
 theorem card_carrier_mul_orderOf_dvd {G : Type*} [Group G] (C : ConjClasses G) (σ : G)
     (hσ : σ ∈ C.carrier) :
     Nat.card C.carrier * orderOf σ ∣ Nat.card G := by
