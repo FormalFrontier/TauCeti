@@ -840,7 +840,7 @@ theorem smith_normal_form_unique {c d : Fin n → ℤ} (hc_pos : ∀ i, 0 ≤ c 
       (R : Matrix (Fin n) (Fin n) ℤ) = Matrix.diagonal d) : c = d := by
   have h' : (↑L⁻¹ : Matrix (Fin n) (Fin n) ℤ) * Matrix.diagonal d *
       (↑R⁻¹ : Matrix (Fin n) (Fin n) ℤ) = Matrix.diagonal c :=
-    inv_mul_mul_inv_of_mul_mul_eq L R h
+    L.inv_mul_mul_inv_of_mul_mul_eq R h
   have key : ∀ k (hk : k ≤ n),
       ∏ j : Fin k, c ⟨j.val, by omega⟩ = ∏ j : Fin k, d ⟨j.val, by omega⟩ := fun k hk ↦
     Int.dvd_antisymm
@@ -898,7 +898,7 @@ theorem invariant_factor_zero_dvd_entries {S : Type*} [CommSemiring S] [NeZero n
     (L R : GeneralLinearGroup (Fin n) S)
     (h : (L : Matrix (Fin n) (Fin n) S) * A * (R : Matrix (Fin n) (Fin n) S) =
       Matrix.diagonal d) (i j : Fin n) : d 0 ∣ A i j := by
-  rw [← inv_mul_mul_inv_of_mul_mul_eq L R h]
+  rw [← L.inv_mul_mul_inv_of_mul_mul_eq R h]
   refine dvd_mul_mul_apply (fun p q ↦ ?_) _ _ i j
   rcases eq_or_ne p q with rfl | hpq
   · simpa using hd0 p

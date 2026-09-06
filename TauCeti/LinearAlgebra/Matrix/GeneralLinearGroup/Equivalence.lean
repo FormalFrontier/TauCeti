@@ -16,10 +16,11 @@ semiring.
 
 ## Main results
 
-* `Matrix.inv_mul_mul_inv_of_mul_mul_eq`: inverting a two-sided invertible transformation.
+* `Matrix.GeneralLinearGroup.inv_mul_mul_inv_of_mul_mul_eq`: inverting a two-sided
+  invertible transformation.
 -/
 
-namespace Matrix
+namespace Matrix.GeneralLinearGroup
 
 variable {ι κ : Type*} [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ]
 
@@ -43,4 +44,4 @@ theorem inv_mul_mul_inv_of_mul_mul_eq {S : Type*} [Semiring S]
 
 end
 
-end Matrix
+end Matrix.GeneralLinearGroup

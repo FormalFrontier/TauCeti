@@ -15,7 +15,7 @@ import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Equivalence
 Matrices related by `L * A * R` with `L` and `R` in `SL`. Nothing here assumes a Smith normal
 form or a divisibility chain along a diagonal, so these facts sit below that theory rather
 than inside it, and hold over an arbitrary finite index type. The corresponding statement for
-merely invertible factors is `Matrix.inv_mul_mul_inv_of_mul_mul_eq`, in
+merely invertible factors is `Matrix.GeneralLinearGroup.inv_mul_mul_inv_of_mul_mul_eq`, in
 `TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Equivalence`.
 
 ## Main results
@@ -62,7 +62,7 @@ theorem exists_SL_mul_mul_eq_of_mul_mul_eq {S : Type*} [CommRing S]
   -- `coe_GL_coe_matrix` drops back to matrices; both inverses then normalise the same way
   simpa [SpecialLinearGroup.coe_mul, Matrix.mul_assoc, ← map_inv,
     SpecialLinearGroup.coe_GL_coe_matrix] using
-    inv_mul_mul_inv_of_mul_mul_eq LB.toGL RB.toGL h.symm
+    LB.toGL.inv_mul_mul_inv_of_mul_mul_eq RB.toGL h.symm
 
 end
 
