@@ -7,9 +7,6 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Frobenius.GeneralLinear
 public import TauCeti.Algebra.Lie.E7.Minuscule.PointsFunctor
--- The toral-closure Frobenius is used only inside the proof of `frobenius_weightTorusPoints`, so
--- it is imported privately rather than re-exported to consumers of this module.
-import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Frobenius
 
 /-!
 # The Frobenius of the full-weight type-E7 minuscule carrier
@@ -114,10 +111,13 @@ theorem frobenius_rootSubgroupPoints (i : Fin 7 ⊕ Fin 7) (u : Multiplicative A
 power.** -/
 @[simp]
 theorem frobenius_weightTorusPoints (s : Fin 7 → Aˣ) :
-    frobenius p k A (weightTorusPoints A s) = weightTorusPoints A (s ^ p ^ k) :=
-  Subtype.ext (by
-    rw [coe_frobenius, coe_weightTorusPoints,
-      UniversalEnvelopingAlgebra.map_iterateFrobenius_kostantTorusMatrix, coe_weightTorusPoints])
+    frobenius p k A (weightTorusPoints A s) = weightTorusPoints A (s ^ p ^ k) := by
+  have hs : (fun j => Units.map (iterateFrobenius A p k : A →* A) (s j)) = s ^ p ^ k := by
+    funext j
+    exact Units.ext (by
+      rw [Units.coe_map, MonoidHom.coe_coe, iterateFrobenius_def, Pi.pow_apply,
+        Units.val_pow_eq_pow_val])
+  rw [frobenius, pointsMap_weightTorusPoints, hs]
 
 /-- The zeroth Frobenius iterate is the identity on the type-`E₇` minuscule carrier's point
 group. -/
