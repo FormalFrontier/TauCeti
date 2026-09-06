@@ -184,6 +184,24 @@ lemma coe_scaleGL_smul [NeZero d] (τ : ℍ) : ((scaleGL d • τ : ℍ) : ℂ) 
   rw [coe_smul_of_det_pos val_det_scaleGL_pos]
   simp [UpperHalfPlane.num]
 
+/-- Scaling down divides the argument. -/
+@[simp]
+lemma coe_inv_scaleGL_smul [NeZero d] (τ : ℍ) : (((scaleGL d)⁻¹ • τ : ℍ) : ℂ) = τ / d := by
+  have hd : (d : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne d)
+  have hs := coe_scaleGL_smul (d := d) ((scaleGL d)⁻¹ • τ)
+  rw [smul_inv_smul] at hs
+  rw [hs, mul_comm, mul_div_assoc, div_self hd, mul_one]
+
+/-- Scaling down commutes with translation, at the cost of dividing the shift by `d`. -/
+@[simp]
+lemma inv_scaleGL_smul_vadd [NeZero d] (a : ℝ) (τ : ℍ) :
+    ((scaleGL d)⁻¹ • ((a : ℝ) +ᵥ τ) : ℍ) = (a / (d : ℝ)) +ᵥ ((scaleGL d)⁻¹ • τ) := by
+  apply UpperHalfPlane.ext
+  rw [coe_inv_scaleGL_smul, UpperHalfPlane.coe_vadd, UpperHalfPlane.coe_vadd,
+    coe_inv_scaleGL_smul]
+  push_cast
+  ring
+
 @[simp]
 lemma scaleGL_one : scaleGL 1 = 1 := by
   rw [scaleGL, ← map_one diagGL]

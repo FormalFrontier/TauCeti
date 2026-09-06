@@ -25,6 +25,7 @@ bundled structure.
 
 * `IsCoercive.solutionOfInner`: the solution of the variational equation with forcing
   represented by `F`.
+* `IsCoercive.apply_self_nonneg`: coercive forms have nonnegative diagonal.
 * `IsCoercive.apply_solutionOfInner_eq_inner`: the defining variational identity.
 * `IsCoercive.eq_solutionOfInner`: uniqueness of a vector satisfying the variational
   identity.
@@ -43,6 +44,15 @@ noncomputable section
 open scoped InnerProductSpace
 
 namespace IsCoercive
+
+variable {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
+variable {B : V →L[ℝ] V →L[ℝ] ℝ}
+
+/-- A coercive form has nonnegative diagonal. -/
+theorem apply_self_nonneg (hB : IsCoercive B) (v : V) : 0 ≤ B v v := by
+  obtain ⟨C, hC, hle⟩ := id hB
+  refine le_trans ?_ (hle v)
+  positivity
 
 variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [CompleteSpace V]
 variable {B : V →L[ℝ] V →L[ℝ] ℝ}

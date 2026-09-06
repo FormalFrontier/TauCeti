@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.InnerProductSpace.HilbertBasisMap
+public import TauCeti.Analysis.InnerProductSpace.HilbertBasis.Map
 public import TauCeti.Analysis.SpecialFunctions.Trigonometric.Chebyshev.Cosine.Transfer
 public import TauCeti.Analysis.SpecialFunctions.Trigonometric.Chebyshev.HilbertBasis
 

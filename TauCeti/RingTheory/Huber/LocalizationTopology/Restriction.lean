@@ -509,6 +509,46 @@ theorem restrictionRingHomOfSubset_comp_restrictionRingHomOfSubset (T'' : Finset
   · rw [RingHom.comp_assoc, restrictionRingHomOfSubset_comp_toCompletionLoc,
       restrictionRingHomOfSubset_comp_toCompletionLoc]
 
+/-- **A homomorphism that agrees with another after the structure maps sends `t/s` to `t/s`.**
+Given `g` out of `A⟨T'/s⟩` and `φ` out of `A⟨T/s⟩` into a common ring, agreeing after the two
+structure maps from `A`, the distinguished fractions correspond. Both `s`-inverses are inverses of
+the same element of the target, and inverses in a monoid are unique.
+
+This is the transport that identifies the fraction `t/s` across a numerator enlargement, and it
+needs nothing of the target beyond its ring structure. -/
+theorem map_divBy_of_comp_toCompletionLoc_eq (t : A) {B : Type*} [Semiring B] :
+    letI := locUniformSpace P T s S hden
+    letI := isUniformAddGroup_locUniformSpace P T s S hden
+    letI := isTopologicalRing_locUniformSpace P T s S hden
+    letI := locUniformSpace P T' s S' hden'
+    letI := isUniformAddGroup_locUniformSpace P T' s S' hden'
+    letI := isTopologicalRing_locUniformSpace P T' s S' hden'
+    ∀ (g : UniformSpace.Completion S' →+* B) (φ : UniformSpace.Completion S →+* B),
+      g.comp (toCompletionLoc P T' s S' hden') = φ.comp (toCompletionLoc P T s S hden) →
+      g ((divBy t s : S') : UniformSpace.Completion S')
+        = φ ((divBy t s : S) : UniformSpace.Completion S) := by
+  let _ := locUniformSpace P T s S hden
+  have _ := isUniformAddGroup_locUniformSpace P T s S hden
+  have _ := isTopologicalRing_locUniformSpace P T s S hden
+  let _ := locUniformSpace P T' s S' hden'
+  have _ := isUniformAddGroup_locUniformSpace P T' s S' hden'
+  have _ := isTopologicalRing_locUniformSpace P T' s S' hden'
+  intro g φ hge
+  have hu : IsUnit (toCompletionLoc P T s S hden s) :=
+    isUnit_toCompletionLoc_of_dvd P T s S hden dvd_rfl
+  have hu' : IsUnit (toCompletionLoc P T' s S' hden' s) :=
+    isUnit_toCompletionLoc_of_dvd P T' s S' hden' dvd_rfl
+  have hgs : g (toCompletionLoc P T' s S' hden' s) = φ (toCompletionLoc P T s S hden s) :=
+    congrArg (fun k : A →+* B ↦ k s) hge
+  have hgt : g (toCompletionLoc P T' s S' hden' t) = φ (toCompletionLoc P T s S hden t) :=
+    congrArg (fun k : A →+* B ↦ k t) hge
+  -- the two inverses of `s` correspond, being inverses of the same element of `B`
+  have hginv : g ↑hu'.unit⁻¹ = ↑(hu.map φ).unit⁻¹ := by
+    refine (Units.inv_eq_of_mul_eq_one_left ?_).symm
+    rw [(hu.map φ).unit_spec, ← hgs, ← map_mul, hu'.val_inv_mul, map_one]
+  rw [← toCompletionLoc_mul_unit_inv_eq_divBy P T' s S' hden' t hu', map_mul, hginv, hgt,
+    IsUnit.unit_inv_map φ hu, ← map_mul, toCompletionLoc_mul_unit_inv_eq_divBy P T s S hden t hu]
+
 end Subset
 
 end PairOfDefinition

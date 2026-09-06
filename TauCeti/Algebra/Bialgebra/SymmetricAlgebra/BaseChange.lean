@@ -154,6 +154,7 @@ private theorem scalarTensorAlgEquiv_counit_tmul_ι (m : M) :
       (Bialgebra.counitAlgHom K (K ⊗[k] _root_.SymmetricAlgebra k M))
         (1 ⊗ₜ[k] _root_.SymmetricAlgebra.ι k M m) := by
   rw [scalarTensorAlgEquiv_tmul_ι]
+  rw [_root_.SymmetricAlgebra.counitAlgHom_eq]
   simpa using _root_.SymmetricAlgebra.algebraMapInv_ι
     (R := K) (M := K ⊗[k] M) (1 ⊗ₜ[k] m)
 

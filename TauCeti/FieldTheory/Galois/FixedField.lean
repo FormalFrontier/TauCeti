@@ -8,14 +8,25 @@ module
 public import Mathlib.FieldTheory.Galois.Basic
 
 /-!
-# Fixed fields and fixing subgroups generate complementarily
+# Fixed fields and fixing subgroups
+
+Two complements to Mathlib's Galois correspondence.
 
 For a finite Galois extension `M / K`, a subgroup `H ≤ Gal(M/K)` and an intermediate field `E`,
 the fixed field of `H` and `E` generate `M` exactly when `H` meets the fixers of `E` trivially.
 
+The correspondence between subgroups and their fixed fields also holds with no hypothesis on
+`M / K` at all, provided the subgroup is finite: Artin's theorem makes `M` finite Galois over the
+fixed field of a finite `H`, and the fixers of that field are then exactly `H`. This is how a
+subgroup of the automorphism group of an infinite extension is recovered from the field it cuts
+out; the fixing subgroup of a subfield of finite degree is finite for the same reason.
+
 ## Main results
 
 * `Subgroup.fixedField_sup_eq_top_iff`
+* `IntermediateField.fixingSubgroup_fixedField_of_finite`
+* `IntermediateField.finite_of_finiteDimensional_fixedField`
+* `IntermediateField.card_fixingSubgroup_le`
 -/
 
 public section
@@ -48,3 +59,46 @@ theorem fixedField_sup_eq_top_iff (H : Subgroup (M ≃ₐ[K] M)) (E : Intermedia
     rwa [IsGalois.fixedField_fixingSubgroup, fixedField_bot] at this
 
 end Subgroup
+
+namespace IntermediateField
+
+variable {K M : Type*} [Field K] [Field M] [Algebra K M]
+
+/-- **A finite group of automorphisms is the whole fixing subgroup of its fixed field.** Every
+`K`-automorphism of `M` that fixes `M ^ H` pointwise already lies in `H`.
+
+Mathlib's `IntermediateField.fixingSubgroup_fixedField` is the same conclusion under
+`[FiniteDimensional K M]`, which is the stronger hypothesis: a finite-dimensional `M / K` has a
+finite automorphism group, so every subgroup of it is finite. Finiteness of `H` is what an
+infinite extension `M / K` can still supply. -/
+theorem fixingSubgroup_fixedField_of_finite (H : Subgroup (M ≃ₐ[K] M)) [Finite H] :
+    fixingSubgroup (fixedField H) = H := by
+  refine le_antisymm (fun σ hσ ↦ ?_) ((le_iff_le _ _).mp le_rfl)
+  rw [mem_fixingSubgroup_iff] at hσ
+  obtain ⟨g, hg⟩ := FixedPoints.toAlgAut_surjective H M
+    (AlgEquiv.ofRingEquiv (f := σ.toRingEquiv) fun x ↦ hσ x x.2)
+  have hgσ : (g : M ≃ₐ[K] M) = σ := AlgEquiv.ext fun z ↦ congrArg (fun τ ↦ τ z) hg
+  exact hgσ ▸ g.2
+
+/-- **An intermediate field of finite degree has a finite fixing subgroup**, being a copy of the
+automorphism group of a finite extension. -/
+instance finite_fixingSubgroup (E : IntermediateField K M) [FiniteDimensional E M] :
+    Finite (fixingSubgroup E) :=
+  .of_equiv _ (fixingSubgroupEquiv E).symm.toEquiv
+
+/-- **A group of automorphisms whose fixed field has finite degree is finite.** Thus a subgroup of
+`K`-automorphisms cannot be infinite when its fixed field has finite degree in `M`. -/
+theorem finite_of_finiteDimensional_fixedField (H : Subgroup (M ≃ₐ[K] M))
+    [FiniteDimensional (fixedField H) M] : Finite H :=
+  letI := finite_fixingSubgroup (fixedField H)
+  have hH : H ≤ fixingSubgroup (fixedField H) := (le_iff_le _ _).mp le_rfl
+  .of_injective (Set.inclusion hH) (Set.inclusion_injective hH)
+
+/-- **The fixing subgroup of an intermediate field of finite degree is no larger than that
+degree**, the bound on the automorphisms of a finite extension. -/
+theorem card_fixingSubgroup_le (E : IntermediateField K M) [FiniteDimensional E M] :
+    Nat.card (fixingSubgroup E) ≤ Module.finrank E M := by
+  rw [Nat.card_congr (fixingSubgroupEquiv E).toEquiv, Nat.card_eq_fintype_card]
+  exact AlgEquiv.card_le
+
+end IntermediateField

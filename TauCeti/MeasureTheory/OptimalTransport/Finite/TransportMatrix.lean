@@ -170,51 +170,6 @@ end TransportMatrix
 
 end Matrix
 
-namespace PMF
-
-section Fst
-
-variable [Fintype κ] (π : PMF (ι × κ))
-
-/-- The first marginal of a finite product PMF is obtained by summing each row of its matrix of
-point masses. -/
-theorem map_fst_apply (i : ι) : π.map Prod.fst i = ∑ j, π (i, j) := by
-  classical
-  rw [PMF.map_apply, ENNReal.tsum_prod']
-  rw [tsum_eq_single i]
-  · simp
-  · intro i' hi
-    simp [hi.symm]
-
-/-- A product PMF has first marginal `μ` exactly when its row sums are `μ`. -/
-theorem map_fst_eq_iff (μ : PMF ι) :
-    π.map Prod.fst = μ ↔ ∀ i, ∑ j, π (i, j) = μ i := by
-  rw [PMF.ext_iff]
-  simp only [map_fst_apply]
-
-end Fst
-
-section Snd
-
-variable [Fintype ι] (π : PMF (ι × κ))
-
-/-- The second marginal of a finite product PMF is obtained by summing each column of its matrix
-of point masses. -/
-theorem map_snd_apply (j : κ) : π.map Prod.snd j = ∑ i, π (i, j) := by
-  classical
-  rw [PMF.map_apply, ENNReal.tsum_prod']
-  simp
-
-/-- A product PMF has second marginal `ν` exactly when its column sums are `ν`. -/
-theorem map_snd_eq_iff (ν : PMF κ) :
-    π.map Prod.snd = ν ↔ ∀ j, ∑ i, π (i, j) = ν j := by
-  rw [PMF.ext_iff]
-  simp only [map_snd_apply]
-
-end Snd
-
-end PMF
-
 namespace TransportMatrix
 
 variable [Fintype ι] [Fintype κ]
@@ -223,20 +178,20 @@ variable {μ : PMF ι} {ν : PMF κ}
 /-- The PMF associated to a transportation matrix has the prescribed first marginal. -/
 @[simp]
 theorem map_fst_toPMF (A : TransportMatrix μ ν) : A.toPMF.map Prod.fst = μ :=
-  (TauCeti.PMF.map_fst_eq_iff A.toPMF μ).2 A.row_sum
+  (A.toPMF.map_fst_eq_iff_fintype μ).2 A.row_sum
 
 /-- The PMF associated to a transportation matrix has the prescribed second marginal. -/
 @[simp]
 theorem map_snd_toPMF (A : TransportMatrix μ ν) : A.toPMF.map Prod.snd = ν :=
-  (TauCeti.PMF.map_snd_eq_iff A.toPMF ν).2 A.col_sum
+  (A.toPMF.map_snd_eq_iff_fintype ν).2 A.col_sum
 
 /-- The transportation matrix obtained by recording the point masses of a finite product PMF
 with prescribed marginals. -/
 def ofPMF (π : PMF (ι × κ)) (hμ : π.map Prod.fst = μ) (hν : π.map Prod.snd = ν) :
     TransportMatrix μ ν where
   matrix i j := π (i, j)
-  row_sum := (TauCeti.PMF.map_fst_eq_iff π μ).1 hμ
-  col_sum := (TauCeti.PMF.map_snd_eq_iff π ν).1 hν
+  row_sum := (π.map_fst_eq_iff_fintype μ).1 hμ
+  col_sum := (π.map_snd_eq_iff_fintype ν).1 hν
 
 @[simp]
 theorem ofPMF_apply (π : PMF (ι × κ)) (hμ : π.map Prod.fst = μ)

@@ -13,14 +13,17 @@ public import Mathlib.AlgebraicGeometry.Modules.Sheaf
 
 Mathlib packages the forgetful functors out of the category `X.Modules` of `𝒪_X`-modules on a
 scheme that land in presheaves: `AlgebraicGeometry.Scheme.Modules.toPresheafOfModules` and
-`AlgebraicGeometry.Scheme.Modules.toPresheaf`. This file adds the one that lands in abelian
-sheaves, and records that it is exact.
+`AlgebraicGeometry.Scheme.Modules.toPresheaf`. This file adds the conversion of sheaf-level
+isomorphisms back to `𝒪_X`-module isomorphisms, the one that lands in abelian sheaves, and records
+that the latter is exact.
 
 ## Main declarations
 
 * `TauCeti.AlgebraicGeometry.Scheme.Modules.toSheaf`, the functor sending an `𝒪_X`-module to its
   underlying sheaf of abelian groups, with instances saying that it is additive and preserves
   finite limits and finite colimits;
+* `TauCeti.AlgebraicGeometry.Scheme.Modules.isoOfSheafIso`, which lifts an isomorphism of
+  underlying sheaves of modules to an isomorphism in `X.Modules`;
 * `TauCeti.AlgebraicGeometry.Scheme.Modules.shortExact_map_toSheaf`: a short exact sequence of
   `𝒪_X`-modules stays short exact after forgetting the module structures.
 
@@ -47,6 +50,30 @@ noncomputable section
 namespace Scheme.Modules
 
 variable (X : Scheme.{u})
+
+/-- Convert an isomorphism of sheaves of modules into an isomorphism of `𝒪_X`-modules. -/
+def _root_.AlgebraicGeometry.Scheme.Modules.isoOfSheafIso (X : Scheme.{u})
+    {M N : X.Modules} (e : @Iso (SheafOfModules X.ringCatSheaf) _ M N) : M ≅ N :=
+  { hom := ⟨e.hom.val⟩
+    inv := ⟨e.inv.val⟩
+    hom_inv_id := by
+      apply SheafOfModules.Hom.ext
+      exact congrArg SheafOfModules.Hom.val e.hom_inv_id
+    inv_hom_id := by
+      apply SheafOfModules.Hom.ext
+      exact congrArg SheafOfModules.Hom.val e.inv_hom_id }
+
+@[simp]
+lemma _root_.AlgebraicGeometry.Scheme.Modules.isoOfSheafIso_hom_val (X : Scheme.{u})
+    {M N : X.Modules} (e : @Iso (SheafOfModules X.ringCatSheaf) _ M N) :
+    (_root_.AlgebraicGeometry.Scheme.Modules.isoOfSheafIso X e).hom.val = e.hom.val :=
+  by simp only [_root_.AlgebraicGeometry.Scheme.Modules.isoOfSheafIso]
+
+@[simp]
+lemma _root_.AlgebraicGeometry.Scheme.Modules.isoOfSheafIso_inv_val (X : Scheme.{u})
+    {M N : X.Modules} (e : @Iso (SheafOfModules X.ringCatSheaf) _ M N) :
+    (_root_.AlgebraicGeometry.Scheme.Modules.isoOfSheafIso X e).inv.val = e.inv.val :=
+  by simp only [_root_.AlgebraicGeometry.Scheme.Modules.isoOfSheafIso]
 
 /-- The forgetful functor from `𝒪_X`-modules to sheaves of abelian groups on `X`.
 

@@ -260,7 +260,7 @@ private lemma hasSum_pow_mul_re_term (a : ℕ → ℂ) (c y : ℝ) (n : ℕ) :
   ring
 
 private lemma summable_re_term_of_summable_logPow (ha : 0 ≤ a) {c x y : ℝ}
-    (hx : x = c - y) (hy : 0 < y) (habsc : LSeries.abscissaOfAbsConv a < c)
+    (hx : x = c - y) (hy : 0 ≤ y) (habsc : LSeries.abscissaOfAbsConv a < c)
     (hsummable : Summable (fun k : ℕ ↦ y ^ k / Nat.factorial k *
       (LSeries (LSeries.logMul^[k] a) ((c : ℝ) : ℂ)).re)) :
     Summable (fun n : ℕ ↦ (LSeries.term a ((x : ℝ) : ℂ) n).re) := by
@@ -275,7 +275,7 @@ private lemma summable_re_term_of_summable_logPow (ha : 0 ≤ a) {c x y : ℝ}
   refine hasSum_le (fun k ↦ ?_) (hasSum_sum fun n _ ↦ hexp n) hsummable.hasSum
   rw [← Finset.mul_sum]
   refine mul_le_mul_of_nonneg_left ?_
-    (div_nonneg (pow_nonneg hy.le k) (Nat.cast_nonneg _))
+    (div_nonneg (pow_nonneg hy k) (Nat.cast_nonneg _))
   exact sum_le_hasSum s
     (fun n _ ↦ mul_nonneg (pow_nonneg (Real.log_natCast_nonneg n) k)
       (re_term_nonneg ha c n))
@@ -312,7 +312,7 @@ theorem landau (ha : 0 ≤ a) {σ : ℝ} (habs : LSeries.abscissaOfAbsConv a = (
       (LSeries (LSeries.logMul^[k] a) ((c : ℝ) : ℂ)).re) :=
     Complex.summable_ofReal.mp (htaylor.congr_fun fun k ↦ (hterm k).symm).summable
   have hsum_x : Summable (fun n : ℕ ↦ (LSeries.term a ((x : ℝ) : ℂ) n).re) := by
-    exact summable_re_term_of_summable_logPow ha hxdef hy0 habsc hsummable_k
+    exact summable_re_term_of_summable_logPow ha hxdef hy0.le habsc hsummable_k
   have hLS : LSeriesSummable a ((x : ℝ) : ℂ) :=
     (Complex.summable_ofReal.mpr hsum_x).congr fun n ↦
       (term_eq_ofReal_re ha x n).symm

@@ -39,7 +39,55 @@ namespace TauCeti
 variable {E X : Type*} [TopologicalSpace E] [TopologicalSpace X]
   {p : E → X} {x₀ x₁ : X}
 
-namespace IsCoveringMap
+/-- **Conjugation law for monodromy along a path.** A class `g` at `x₁` fixes the endpoint
+`hp.monodromy ⟦γ⟧ e₀` of the lift of `γ` exactly when its transport back along `γ` fixes the
+starting point `e₀`. This is the path-level statement behind
+`IsCoveringMap.range_mapOfEq_monodromy_path`: transporting the recovered subgroup along `γ`
+amounts to conjugating the classes that the monodromy action fixes. -/
+theorem _root_.IsCoveringMap.monodromy_eq_self_iff_fundamentalGroupMulEquivOfPath_symm_apply
+    (hp : IsCoveringMap p) (γ : Path x₀ x₁) (e₀ : p ⁻¹' {x₀})
+    (g : _root_.FundamentalGroup X x₁) :
+    hp.monodromy g (hp.monodromy ⟦γ⟧ e₀) = hp.monodromy ⟦γ⟧ e₀ ↔
+      hp.monodromy
+        ((_root_.FundamentalGroup.fundamentalGroupMulEquivOfPath γ).symm g) e₀ = e₀ := by
+  let γq : Path.Homotopic.Quotient x₀ x₁ := Path.Homotopic.Quotient.mk γ
+  let f := _root_.FundamentalGroup.fundamentalGroupMulEquivOfPath γ
+  -- Expose the local names so that the path-lifting composition laws apply directly.
+  change hp.monodromy g (hp.monodromy γq e₀) = hp.monodromy γq e₀ ↔
+    hp.monodromy (f.symm g) e₀ = e₀
+  have htrans :
+      hp.monodromy (Path.Homotopic.Quotient.trans γq g) e₀ =
+        hp.monodromy g (hp.monodromy γq e₀) :=
+    hp.monodromy_trans_apply γq g e₀
+  have hf :
+      f.symm g = Path.Homotopic.Quotient.trans γq
+        (Path.Homotopic.Quotient.trans g γq.symm) := by
+    simpa only [f, γq] using
+      _root_.FundamentalGroup.fundamentalGroupMulEquivOfPath_symm_apply γ g
+  rw [← htrans]
+  rw [hf]
+  have hback : hp.monodromy γq.symm (hp.monodromy γq e₀) = e₀ := by
+    rw [← hp.monodromy_trans_apply]
+    rw [Path.Homotopic.Quotient.trans_symm, hp.monodromy_refl]
+    rfl
+  have hforward {z : p ⁻¹' {x₁}} :
+      hp.monodromy γq (hp.monodromy γq.symm z) = z := by
+    rw [← hp.monodromy_trans_apply]
+    rw [Path.Homotopic.Quotient.symm_trans, hp.monodromy_refl]
+    rfl
+  have hcomp :
+      hp.monodromy (Path.Homotopic.Quotient.trans γq
+        (Path.Homotopic.Quotient.trans g γq.symm)) e₀ =
+        hp.monodromy γq.symm (hp.monodromy (Path.Homotopic.Quotient.trans γq g) e₀) := by
+    rw [← Path.Homotopic.Quotient.trans_assoc]
+    exact hp.monodromy_trans_apply _ _ _
+  rw [hcomp]
+  constructor
+  · intro h
+    rw [h, hback]
+  · intro h
+    have := congrArg (hp.monodromy γq) h
+    simpa only [hforward]
 
 /-- The subgroup recovered at the endpoint of a lifted path is the basepoint transport of the
 subgroup recovered at its starting point. -/
@@ -51,45 +99,6 @@ theorem _root_.IsCoveringMap.range_mapOfEq_monodromy_path (hp : IsCoveringMap p)
         (FundamentalGroup.mapOfEq ⟨p, hp.continuous⟩ e₀.2).range := by
   let γq : Path.Homotopic.Quotient x₀ x₁ := Path.Homotopic.Quotient.mk γ
   let e₁ : p ⁻¹' {x₁} := hp.monodromy γq e₀
-  let f := _root_.FundamentalGroup.fundamentalGroupMulEquivOfPath γ
-  have hmon (g : _root_.FundamentalGroup X x₁) :
-      hp.monodromy g e₁ = e₁ ↔ hp.monodromy (f.symm g) e₀ = e₀ := by
-    -- Expose the local names so that the path-lifting composition laws apply directly.
-    change hp.monodromy g (hp.monodromy γq e₀) = hp.monodromy γq e₀ ↔
-      hp.monodromy (f.symm g) e₀ = e₀
-    have htrans :
-        hp.monodromy (Path.Homotopic.Quotient.trans γq g) e₀ =
-          hp.monodromy g (hp.monodromy γq e₀) :=
-      hp.monodromy_trans_apply γq g e₀
-    have hf :
-        f.symm g = Path.Homotopic.Quotient.trans γq
-          (Path.Homotopic.Quotient.trans g γq.symm) := by
-      simpa only [f, γq] using
-        _root_.FundamentalGroup.fundamentalGroupMulEquivOfPath_symm_apply γ g
-    rw [← htrans]
-    rw [hf]
-    have hback : hp.monodromy γq.symm (hp.monodromy γq e₀) = e₀ := by
-      rw [← hp.monodromy_trans_apply]
-      rw [Path.Homotopic.Quotient.trans_symm, hp.monodromy_refl]
-      rfl
-    have hforward {z : p ⁻¹' {x₁}} :
-        hp.monodromy γq (hp.monodromy γq.symm z) = z := by
-      rw [← hp.monodromy_trans_apply]
-      rw [Path.Homotopic.Quotient.symm_trans, hp.monodromy_refl]
-      rfl
-    have hcomp :
-        hp.monodromy (Path.Homotopic.Quotient.trans γq
-          (Path.Homotopic.Quotient.trans g γq.symm)) e₀ =
-          hp.monodromy γq.symm (hp.monodromy (Path.Homotopic.Quotient.trans γq g) e₀) := by
-      rw [← Path.Homotopic.Quotient.trans_assoc]
-      exact hp.monodromy_trans_apply _ _ _
-    rw [hcomp]
-    constructor
-    · intro h
-      rw [h, hback]
-    · intro h
-      have := congrArg (hp.monodromy γq) h
-      simpa only [hforward]
   ext g
   -- The range criterion is stated with the subtype's endpoint proof, while `e₁` is the
   -- locally named monodromy endpoint; this change aligns those definitionally equal terms.
@@ -99,8 +108,6 @@ theorem _root_.IsCoveringMap.range_mapOfEq_monodromy_path (hp : IsCoveringMap p)
   rw [← IsCoveringMap.monodromy_eq_self_iff_mem_range hp e₁ g,
     FundamentalGroup.mem_basepointChangeSubgroup_iff,
     ← IsCoveringMap.monodromy_eq_self_iff_mem_range hp e₀]
-  exact hmon g
-
-end IsCoveringMap
+  exact hp.monodromy_eq_self_iff_fundamentalGroupMulEquivOfPath_symm_apply γ e₀ g
 
 end TauCeti

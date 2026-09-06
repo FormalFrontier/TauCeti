@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.Normed.Operator.LinearPMap.Shift
+public import TauCeti.LinearAlgebra.LinearPMap.Shift
 public import TauCeti.Analysis.Normed.Operator.Resolvent.Unbounded
 
 /-!
@@ -17,7 +17,7 @@ unchanged and translates its resolvent:
 `R(lambda, A - omega I) = R(lambda + omega, A)`.
 
 This file develops the characteristic resolvent API of the generic scalar shift from
-`TauCeti.Analysis.Normed.Operator.LinearPMap.Shift`.  The construction is independent of
+`TauCeti.LinearAlgebra.LinearPMap.Shift`.  The construction is independent of
 semigroups; in particular, it can be used for an operator not yet known to generate one.
 
 ## Main results

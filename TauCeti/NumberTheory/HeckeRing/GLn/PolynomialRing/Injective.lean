@@ -156,16 +156,6 @@ private lemma det_doubleCoset_eq {g₁ g₂ : posDetInt 2}
   det_eq_of_mem_doubleCoset_SLnZ 2
     (HeckeCoset.eq_iff.mp h ▸ DoubleCoset.mem_doubleCoset_self _ _ _)
 
-/-- The diagonal product of rep(diagCoset a) equals ∏ a. -/
-private lemma prod_rep_T_diag (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i) :
-    (↑(↑(HeckeCoset.rep (diagCoset a)) : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det =
-      ∏ i, (a i : ℚ) := by
-  -- the representative and the explicit diagonal matrix lie in the same double coset
-  have h_eq : HeckeCoset.mk (SLnZ 2) (SLnZ 2) (HeckeCoset.rep (diagCoset a)) =
-      HeckeCoset.mk (SLnZ 2) (SLnZ 2) ⟨natDiagGL 2 a, natDiagGL_mem_posDetInt 2 a⟩ := by
-    rw [HeckeCoset.mk_rep, diagCoset_def]
-  exact (det_doubleCoset_eq h_eq).trans (natDiagGL_det 2 a ha)
-
 /-- Every coset in the support of a mulMap output has determinant = det(g₁) * det(g₂). -/
 private lemma det_mulMap_eq (g₁ g₂ : posDetInt 2)
     (p : DecompQuotient (SLnZ 2) (SLnZ 2) (g₁ : GL (Fin 2) ℚ) ×
@@ -244,7 +234,7 @@ private lemma det_rep_T_gen_zero_pow_mul (q : ℕ) (hq : 0 < q) (a₀ b₀ : ℕ
       -- intended spelling is stated here for the following rewrite to match.
       show (↑(↑(HeckeCoset.rep (diagCoset (![1, q]))) : GL (Fin 2) ℚ) :
           Matrix (Fin 2) (Fin 2) ℚ).det = (q : ℚ) from by
-        rw [prod_rep_T_diag (![1, q]) (fun i ↦ by fin_cases i <;> simp [hq])]
+        rw [diagCoset_rep_det (![1, q]) (fun i ↦ by fin_cases i <;> simp [hq])]
         simp [Fin.prod_univ_two],
       ih f D₂ hf_det (Finsupp.mem_support_iff.mp hD₂_mem)]
     push_cast; ring
@@ -272,10 +262,10 @@ private lemma T_gen_pow_support_qpower (q : ℕ) (hq : 0 < q) (e : Fin 2 → ℕ
     have h_eq : diagCoset (fun _ : Fin 2 ↦ q ^ (e 1)) = D'' := by
       by_contra h
       exact hD'' (by rw [diagElem_def, HeckeCosetModule.single_apply, ite_eq_right h])
-    rw [← h_eq, prod_rep_T_diag _ (fun i ↦ by fin_cases i <;> simp [pow_pos hq])]
+    rw [← h_eq, diagCoset_rep_det _ (fun i ↦ by fin_cases i <;> simp [pow_pos hq])]
     push_cast [Fin.prod_univ_two, ← pow_add]; ring_nf
   have h_result := det_rep_T_gen_zero_pow_mul q hq (2 * e 1) (e 0) _ D hf_det hD
-  rw [hD_eq, prod_rep_T_diag a ha_pos] at h_result
+  rw [hD_eq, diagCoset_rep_det a ha_pos] at h_result
   exact mod_cast h_result
 
 /-- `T_single(diagCoset a, α) * diagElem(c,c) = T_single(diagCoset(a * c), α)`. -/
@@ -424,9 +414,21 @@ private lemma T_elem_p_ppow_eval_at_one_ppow_succ_zero (p : ℕ) (hp : 1 < p) {n
   simp only [Matrix.cons_val_zero] at this
   have := hp; omega
 
-/-- `(T(1,p) · T(1, pⁿ))` evaluated at the leading coset `T(1, p^{n+1})` equals `1`. -/
+/-- **The structure constant of `T(1,p) · T(1, pⁿ)` at the leading coset `T(1, p^(n+1))` is
+`1`.** This is the companion of `T_ad_one_p_mul_supp_ne_leading_eval_zero`, which gives `0` at
+every other coset in the support. -/
 private lemma T_ad_one_p_mul_T_ad_one_ppow_eval_leading (p : ℕ) (hp : p.Prime) (n : ℕ) :
-    (heckeTDiag 1 p * heckeTDiag 1 (p ^ n)) (diagCoset (![1, p ^ (n + 1)] : Fin 2 → ℕ)) = 1 := by
+    (HeckeCosetModule.structureConstants ℤ (SLnZ 2) (SLnZ 2) (SLnZ 2)
+      (HeckeCoset.rep (diagCoset (![1, p] : Fin 2 → ℕ)))
+      (HeckeCoset.rep (diagCoset (![1, p ^ n] : Fin 2 → ℕ))))
+      (diagCoset (![1, p ^ (n + 1)] : Fin 2 → ℕ)) = 1 := by
+  rw [← diagElem_mul_diagElem,
+    show diagElem (![1, p] : Fin 2 → ℕ) = heckeTDiag 1 p from
+      (heckeTDiag_eq_diagElem Nat.one_pos hp.pos (one_dvd _)).symm,
+    -- `![…]` literals that are only extensionally equal do not unify syntactically, so the
+    -- intended spelling is stated here for the following rewrite to match.
+    show diagElem (![1, p ^ n] : Fin 2 → ℕ) = heckeTDiag 1 (p ^ n) from
+      (heckeTDiag_eq_diagElem Nat.one_pos (pow_pos hp.pos n) (one_dvd _)).symm]
   classical
   rcases eq_or_ne n 0 with hn | hn
   · subst hn
@@ -512,15 +514,13 @@ private lemma T_ad_one_p_pow_eval_leading (p : ℕ) (hp : p.Prime) (a : ℕ) :
     -- `![1, 1]` and `fun _ ↦ 1` are extensionally but not syntactically equal, so the
     -- conversion is stated and proved pointwise before `diagElem_one` can apply.
     rw [pow_zero, pow_zero, show (![1, 1] : Fin 2 → ℕ) = (fun _ : Fin 2 ↦ 1) from by
-        funext i; fin_cases i <;> rfl, ← diagElem_one]
-    rw [diagElem_def, HeckeCosetModule.single_apply, ite_eq_left rfl]
+        funext i; fin_cases i <;> rfl, ← diagElem_one, diagElem_def,
+      HeckeCosetModule.single_apply, ite_eq_left rfl]
   | succ n ih =>
     rw [pow_succ']
     set g := (heckeTDiag 1 p) ^ n
-    set D_target : HeckeCoset (posDetInt 2) (SLnZ 2) (SLnZ 2) :=
-      diagCoset (![1, p ^ (n + 1)] : Fin 2 → ℕ)
-    set D_leading : HeckeCoset (posDetInt 2) (SLnZ 2) (SLnZ 2) :=
-      diagCoset (![1, p ^ n] : Fin 2 → ℕ)
+    set D_target := diagCoset (![1, p ^ (n + 1)] : Fin 2 → ℕ)
+    set D_leading := diagCoset (![1, p ^ n] : Fin 2 → ℕ)
     rw [heckeTDiag_eq_diagElem Nat.one_pos hp.pos (one_dvd _), diagElem_def,
       HeckeCosetModule.mul_def, HeckeCosetModule.single_mul]
     -- Evaluate the convolution at `D_target` in the wrapper's own vocabulary: push the
@@ -529,30 +529,6 @@ private lemma T_ad_one_p_pow_eval_leading (p : ℕ) (hp : p.Prime) (a : ℕ) :
     simp only [HeckeCosetModule.smul_apply, one_mul]
     have h_leading_in_supp : D_leading ∈ g.support :=
       HeckeCosetModule.mem_support_iff.mpr (ih ▸ one_ne_zero)
-    rw [← Finset.sum_erase_add _ _ h_leading_in_supp]
-    have h_erased : ∀ D₂ ∈ g.support.erase D_leading,
-        (g D₂ • HeckeCosetModule.structureConstants ℤ (SLnZ 2) (SLnZ 2) (SLnZ 2)
-          (HeckeCoset.rep (diagCoset (![1, p] : Fin 2 → ℕ))) (HeckeCoset.rep D₂)) D_target = 0 := by
-      intro D₂ hD₂
-      rw [Finset.mem_erase] at hD₂
-      -- The `•` here and the one in `smul_apply` print alike but sit on different instance
-      -- paths, so `rw`/`simp` cannot match it. Writing the equation out lets it elaborate
-      -- with the goal's instances, and `smul_apply` then checks against it up to defeq.
-      have hs : (g D₂ • HeckeCosetModule.structureConstants ℤ (SLnZ 2) (SLnZ 2) (SLnZ 2)
-            (diagCoset (![1, p] : Fin 2 → ℕ)).rep D₂.rep) D_target =
-          g D₂ * (HeckeCosetModule.structureConstants ℤ (SLnZ 2) (SLnZ 2) (SLnZ 2)
-            (diagCoset (![1, p] : Fin 2 → ℕ)).rep D₂.rep) D_target :=
-        HeckeCosetModule.smul_apply _ _ _
-      rw [hs]
-      rw [T_ad_one_p_mul_supp_ne_leading_eval_zero p hp n D₂
-        (HeckeCosetModule.mem_support_iff.mp hD₂.2) hD₂.1, mul_zero]
-    have h_sum_zero :
-        ∑ x ∈ g.support.erase D_leading, (g x •
-          HeckeCosetModule.structureConstants ℤ (SLnZ 2) (SLnZ 2) (SLnZ 2)
-          (HeckeCoset.rep (diagCoset (![1, p] : Fin 2 → ℕ))) (HeckeCoset.rep x)) D_target = 0 :=
-      Finset.sum_eq_zero h_erased
-    -- Goal: ∑ + (g D_leading • m ...) D_target = 1
-    -- Strategy: prove the leading term equals 1, then linarith with h_sum_zero
     have h_leading_eq : (g D_leading •
         HeckeCosetModule.structureConstants ℤ (SLnZ 2) (SLnZ 2) (SLnZ 2)
           (HeckeCoset.rep (diagCoset (![1, p] : Fin 2 → ℕ))) (HeckeCoset.rep D_leading))
@@ -562,28 +538,22 @@ private lemma T_ad_one_p_pow_eval_leading (p : ℕ) (hp : p.Prime) (a : ℕ) :
           g D_leading * (HeckeCosetModule.structureConstants ℤ (SLnZ 2) (SLnZ 2) (SLnZ 2)
             (diagCoset (![1, p] : Fin 2 → ℕ)).rep D_leading.rep) D_target :=
         HeckeCosetModule.smul_apply _ _ _
-      rw [hs, ih, one_mul, ← diagElem_mul_diagElem]
-      rw [show diagElem (![1, p] : Fin 2 → ℕ) = heckeTDiag 1 p from
-          (heckeTDiag_eq_diagElem Nat.one_pos hp.pos (one_dvd _)).symm,
-        -- `![…]` literals that are only extensionally equal do not unify syntactically, so the
-        -- intended spelling is stated here for the following rewrite to match.
-        show diagElem (![1, p ^ n] : Fin 2 → ℕ) = heckeTDiag 1 (p ^ n) from
-          (heckeTDiag_eq_diagElem Nat.one_pos (pow_pos hp.pos n) (one_dvd _)).symm]
+      rw [hs, ih, one_mul]
       exact T_ad_one_p_mul_T_ad_one_ppow_eval_leading p hp n
-    calc ∑ x ∈ g.support.erase D_leading, (g x •
-          HeckeCosetModule.structureConstants ℤ (SLnZ 2) (SLnZ 2) (SLnZ 2)
-            (HeckeCoset.rep (diagCoset (![1, p] : Fin 2 → ℕ))) (HeckeCoset.rep x)) D_target +
-          (g D_leading • HeckeCosetModule.structureConstants ℤ (SLnZ 2) (SLnZ 2) (SLnZ 2)
-            (HeckeCoset.rep (diagCoset (![1, p] : Fin 2 → ℕ))) (HeckeCoset.rep D_leading)) D_target
-        = 0 + (g D_leading • HeckeCosetModule.structureConstants ℤ (SLnZ 2) (SLnZ 2) (SLnZ 2)
-              (HeckeCoset.rep (diagCoset (![1, p] : Fin 2 → ℕ))) (HeckeCoset.rep D_leading))
-              D_target :=
-          by rw [h_sum_zero]
-      _ = (g D_leading • HeckeCosetModule.structureConstants ℤ (SLnZ 2) (SLnZ 2) (SLnZ 2)
-            (HeckeCoset.rep (diagCoset (![1, p] : Fin 2 → ℕ))) (HeckeCoset.rep D_leading))
-            D_target :=
-          zero_add _
-      _ = 1 := h_leading_eq
+    -- Every other coset in the support contributes nothing, so only the leading term survives.
+    refine (Finset.sum_eq_single_of_mem D_leading h_leading_in_supp ?_).trans h_leading_eq
+    intro D₂ hD₂ hne
+    -- The `•` here and the one in `smul_apply` print alike but sit on different instance
+    -- paths, so `rw`/`simp` cannot match it. Writing the equation out lets it elaborate
+    -- with the goal's instances, and `smul_apply` then checks against it up to defeq.
+    have hs : (g D₂ • HeckeCosetModule.structureConstants ℤ (SLnZ 2) (SLnZ 2) (SLnZ 2)
+          (diagCoset (![1, p] : Fin 2 → ℕ)).rep D₂.rep) D_target =
+        g D₂ * (HeckeCosetModule.structureConstants ℤ (SLnZ 2) (SLnZ 2) (SLnZ 2)
+          (diagCoset (![1, p] : Fin 2 → ℕ)).rep D₂.rep) D_target :=
+      HeckeCosetModule.smul_apply _ _ _
+    exact hs.trans (by
+      rw [T_ad_one_p_mul_supp_ne_leading_eval_zero p hp n D₂
+        (HeckeCosetModule.mem_support_iff.mp hD₂) hne, mul_zero])
 
 /-- For `a₁ ≠ a₂`, evaluating `(heckeTDiag 1 p)^a₁` at the coset `T(1, p^{a₂})` gives `0`. -/
 private lemma T_ad_one_p_pow_eval_at_one_ppow_of_ne (p : ℕ) (hp : p.Prime) {a₁ a₂ : ℕ}

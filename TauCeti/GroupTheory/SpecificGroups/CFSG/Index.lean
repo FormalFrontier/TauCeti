@@ -1148,6 +1148,13 @@ half-Frobenius. -/
 abbrev toSuzukiReeIndex (d : SuzukiLieIndex) : SuzukiReeIndex :=
   ⟨d.1, LieTypeIndex.usesHalfFrobenius_of_isSuzuki d.2⟩
 
+/-- A Suzuki index is an index on the rank-two diagram `B₂`. This is the reading through which the
+Suzuki family reaches the carrier data that
+`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeB2.lean` attaches to that diagram and that it shares
+with the untwisted family `B₂(q)`, the two differing only in the endomorphism taken of it. -/
+abbrev toRankTwoBLieIndex (d : SuzukiLieIndex) : RankTwoBLieIndex :=
+  ⟨d.1, d.dynkinType_eq⟩
+
 end SuzukiLieIndex
 
 /-! ## The untwisted family `E₆(q)`

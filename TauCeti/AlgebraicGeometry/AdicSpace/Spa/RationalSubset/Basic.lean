@@ -260,7 +260,8 @@ numerator set augmented by its own denominator,
 `R(T₁/s₁) ∩ R(T₂/s₂) = R(U₁U₂ / s₁s₂)`. The augmentation costs nothing
 (`rationalSubset_insert_self`) and is essential — with the bare products the identity fails
 for `T₂ = ∅`. Wedhorn's full Remark 7.30(5) additionally says the right-hand pair is again
-admissible; that lives with the deferred open-ideal layer. This identity is the form Theorem
+admissible; that is `TauCeti.Huber.PairOfDefinition.isOpen_span_insert_mul_insert`, which needs
+the open-ideal criterion and so lives downstream of this file. This identity is the form Theorem
 7.35's own proof consumes. -/
 @[simp]
 theorem rationalSubset_inter (Aplus : Subring A) (T₁ T₂ : Finset A) (s₁ s₂ : A) :

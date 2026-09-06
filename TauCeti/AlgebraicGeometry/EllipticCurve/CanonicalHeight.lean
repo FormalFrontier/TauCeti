@@ -413,6 +413,11 @@ theorem neronTatePairing_eq_zero_of_isOfFinAddOrder_right [W.toAffine.IsElliptic
     {Q : W.Point} (h : IsOfFinAddOrder Q) : neronTatePairing W P Q = 0 := by
   rw [neronTatePairing_comm, neronTatePairing_eq_zero_of_isOfFinAddOrder_left h]
 
+/-- **The pairing is reflexive**, being symmetric. Reflexivity is what permits a symmetric
+bilinear descent to a quotient. -/
+theorem isRefl_neronTatePairing [W.toAffine.IsElliptic] : (neronTatePairing W).IsRefl :=
+  fun P Q h ↦ by rwa [neronTatePairing_comm]
+
 -- `LinearMap.IsSymm` does not apply to a bilinear map whose target is not the scalar ring, which
 -- is why symmetry is stated pointwise above and as `flip` here; Mathlib documents
 -- `QuadraticMap.associated_flip` as the general-target version for exactly this reason.

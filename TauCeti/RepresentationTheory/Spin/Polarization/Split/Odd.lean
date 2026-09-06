@@ -298,6 +298,13 @@ theorem coe_splitOddRemainderOne (K : Type u) [CommRing K] (n : ℕ) :
     (splitOddRemainderOne K n : SplitOddSpace K n) = ((0, 0), 1) := by
   rw [splitOddRemainderOne]
 
+/-- The distinguished remainder vector has scalar coordinate one. -/
+@[simp]
+theorem splitOddPolarization_lineCoordinate_remainderOne
+    (K : Type u) [CommRing K] (n : ℕ) :
+    (splitOddPolarization K n).lineCoordinate (splitOddRemainderOne K n) = 1 := by
+  rfl
+
 /-- The distinguished remainder vector has quadratic norm one. -/
 theorem splitOddForm_remainderOne (K : Type u) [CommRing K] (n : ℕ) :
     splitOddForm K n (splitOddRemainderOne K n : SplitOddSpace K n) = 1 := by

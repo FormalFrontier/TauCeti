@@ -10,6 +10,7 @@ public import Mathlib.NumberTheory.LegendreSymbol.Basic
 public import Mathlib.NumberTheory.NumberField.Ideal.KummerDedekind
 public import Mathlib.RingTheory.Discriminant
 public import TauCeti.NumberTheory.NumberField.Quadratic.Basic
+public import TauCeti.NumberTheory.NumberField.SplitsCompletely
 
 /-!
 # The prime-splitting law for a quadratic field
@@ -28,9 +29,17 @@ power-basis discriminant `4d`, which is coprime to the odd prime `p ∤ d`.
 This is the base case (`n = 1`) of the multiquadratic prime-splitting law (Layer 1 of the
 multiquadratic roadmap).
 
+The splitting law is then read off at the level of ideals: a completely split rational prime is
+the absolute norm of a prime of `𝓞 K`
+(`Ideal.absNorm_eq_of_ncard_primesOver_eq_finrank`). That is the shape in which the
+splitting law enters genus theory, where an ideal of norm `p` is what carries the prescribed
+values of the genus characters.
+
 ## Main results
 
 * `NumberField.ncard_primesOver_quadratic_iff`: the quadratic splitting law.
+* `NumberField.exists_isPrime_and_absNorm_eq_of_legendreSym_eq_one`: an odd prime `p` with
+  `legendreSym p d = 1` is the absolute norm of a prime ideal of `𝓞 K`.
 
 ## Provenance
 
@@ -168,5 +177,29 @@ theorem ncard_primesOver_quadratic_iff {θ : 𝓞 K} {d : ℤ}
     exact Nat.card_eq_finsetCard _
   rw [hcard, hfr]
   exact card_monicFactorsMod_quadratic_iff hmin hodd hcop
+
+/-- **A split prime is an ideal norm.** For `K = ℚ(√d)` and an odd prime `p` for which `d` is a
+quadratic residue mod `p` — that is, one which splits in `K` by
+`ncard_primesOver_quadratic_iff` — there is a prime ideal of `𝓞 K` of absolute norm `p`. This is the
+form in which the splitting law feeds genus theory: the genus characters are computed on ideals
+through their absolute norms. -/
+theorem exists_isPrime_and_absNorm_eq_of_legendreSym_eq_one {θ : 𝓞 K} {d : ℤ}
+    (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
+    {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2) (hleg : legendreSym p d = 1) :
+    ∃ 𝔭 : Ideal (𝓞 K), 𝔭.IsPrime ∧ 𝔭.LiesOver (span {(p : ℤ)}) ∧ Ideal.absNorm 𝔭 = p := by
+  -- A nonzero value of the Legendre symbol already records that `p ∤ d`.
+  have hcop : ¬ (p : ℤ) ∣ d := by
+    intro hdvd
+    rw [(legendreSym.eq_zero_iff p d).mpr ((ZMod.intCast_zmod_eq_zero_iff_dvd d p).mpr hdvd)]
+      at hleg
+    exact zero_ne_one hleg
+  have hsplit : ((span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K)).ncard = finrank ℚ K :=
+    (ncard_primesOver_quadratic_iff hmin hgen hodd hcop).mpr hleg
+  obtain ⟨⟨𝔮, h𝔮, hlo⟩⟩ :=
+    (inferInstance : Nonempty ((span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K)))
+  -- `h𝔮` and `hlo` are the prime and lies-over hypotheses of the norm computation; pass them
+  -- explicitly rather than installing them as anonymous local instances.
+  exact ⟨𝔮, h𝔮, hlo,
+    @Ideal.absNorm_eq_of_ncard_primesOver_eq_finrank K _ _ p _ 𝔮 h𝔮 hlo hsplit⟩
 
 end NumberField

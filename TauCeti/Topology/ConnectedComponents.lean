@@ -19,7 +19,7 @@ space by them.
 
 ## Main declarations
 
-* `TauCeti.Homeomorph.image_connectedComponent`: a homeomorphism maps a connected component onto
+* `Homeomorph.image_connectedComponent`: a homeomorphism maps a connected component onto
   the connected component of the image point.
 * `TauCeti.frontier_connectedComponentIn_subset_compl`: in a locally connected space, a connected
   component of an open set has its frontier in the complement of that set.
@@ -39,14 +39,19 @@ universe u
 
 variable {X : Type u} [TopologicalSpace X]
 
-namespace TauCeti
+namespace Homeomorph
 
 /-- A homeomorphism maps a connected component onto the connected component of the image point. -/
-theorem Homeomorph.image_connectedComponent {Y : Type*} [TopologicalSpace Y]
+@[simp]
+theorem image_connectedComponent {Y : Type*} [TopologicalSpace Y]
     (e : X ≃ₜ Y) (x : X) :
     e '' connectedComponent x = connectedComponent (e x) := by
-  simpa only [connectedComponentIn_univ, Set.image_univ_of_surjective e.surjective] using
-    e.image_connectedComponentIn (s := Set.univ) (x := x) (Set.mem_univ x)
+  simpa only [connectedComponentIn_univ, _root_.Set.image_univ_of_surjective e.surjective] using
+    e.image_connectedComponentIn (s := _root_.Set.univ) (x := x) (_root_.Set.mem_univ x)
+
+end Homeomorph
+
+namespace TauCeti
 
 /-- **The frontier of a connected component of an open set misses the set.** Equivalently,
 `frontier (connectedComponentIn F x) ∩ F = ∅`: the component is clopen in `F`. -/

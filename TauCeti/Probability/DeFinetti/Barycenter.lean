@@ -7,7 +7,6 @@ module
 
 -- Public: the barycenter is a `Measure.bind` against the measurable countable-power kernel, and
 -- its values are exchangeable path laws.
-public import TauCeti.MeasureTheory.Measure.ProductKernel
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.Basic
 -- Public: `ExchangeableLaw.existsUnique_mixingLaw` is the path-law form of `deFinetti_mixture`.
 public import TauCeti.Probability.DeFinetti.Representation

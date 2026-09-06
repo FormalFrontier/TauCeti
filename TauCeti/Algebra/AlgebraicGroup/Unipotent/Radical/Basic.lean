@@ -8,7 +8,7 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.Connected.CommHopfAlgCat
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Cotangent
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Basic
-public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Augmentation
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Augmentation
 import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Central
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.FiniteType
 import TauCeti.Algebra.AlgebraicGroup.Trivial
@@ -110,15 +110,6 @@ theorem smoothUnipotent (hI : IsUnipotentRadicalCandidate H I) :
   hI.2.2
 
 end IsUnipotentRadicalCandidate
-
-/-- The quotient by the augmentation ideal is the trivial finite-type Hopf algebra. -/
-private noncomputable def quotientAugmentationIso
-    (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
-    FiniteTypeCommHopfAlgCat.quotient H (augmentation k H) ≅
-      FiniteTypeCommHopfAlgCat.of k k := by
-  rw [augmentation_def]
-  exact ObjectProperty.isoMk _ <| _root_.CommHopfAlgCat.isoMk <|
-    kerLiftBialgEquiv (Bialgebra.counitBialgHom k H) Bialgebra.counit_surjective
 
 /-- The trivial finite-type affine group is geometrically connected. -/
 private theorem geometricallyConnected_trivial :

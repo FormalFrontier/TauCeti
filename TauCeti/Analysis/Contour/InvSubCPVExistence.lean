@@ -15,7 +15,6 @@ import TauCeti.Analysis.Contour.Crossing.Finiteness
 import TauCeti.Analysis.Contour.Crossing.PVAggregation
 import TauCeti.Analysis.Contour.Crossing.Windows
 import TauCeti.Analysis.Contour.PerWindow.CPV
-import TauCeti.Analysis.Contour.PiecewiseC1On
 
 /-!
 # Existence of the Cauchy-kernel principal value along an immersed curve

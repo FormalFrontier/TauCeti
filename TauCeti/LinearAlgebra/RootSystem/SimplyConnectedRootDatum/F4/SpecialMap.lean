@@ -88,6 +88,14 @@ datum, in the fundamental-weight basis. -/
 def f4SpecialIsogenyMatrix : Matrix (Fin 4) (Fin 4) ℤ :=
   !![0, 0, 0, 1; 0, 0, 1, 0; 0, 2, 0, 0; 2, 0, 0, 0]
 
+private theorem f4SpecialIsogenyMatrix_def_private :
+    f4SpecialIsogenyMatrix = !![0, 0, 0, 1; 0, 0, 1, 0; 0, 2, 0, 0; 2, 0, 0, 0] := rfl
+
+/-- The explicit entries of the character-lattice special-isogeny matrix. -/
+theorem f4SpecialIsogenyMatrix_def :
+    f4SpecialIsogenyMatrix = !![0, 0, 0, 1; 0, 0, 1, 0; 0, 2, 0, 0; 2, 0, 0, 0] :=
+  f4SpecialIsogenyMatrix_def_private
+
 /-- The permutation of the forty-eight `F₄` roots induced by
 `TauCeti.DynkinType.f4SpecialIsogenyMatrix`. It exchanges long roots with short roots and commutes
 with root negation. -/

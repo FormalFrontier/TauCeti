@@ -38,6 +38,8 @@ downstream, in the `DGAInfinity` roadmap.
 * `TauCeti.ReducedTensorWords.IsCoderivation`: the co-Leibniz rule.
 * `TauCeti.ReducedTensorWords.coderiv`: the coderivation with prescribed Taylor components.
 * `TauCeti.ReducedTensorWords.coderivations`: the submodule of coderivations.
+* `LinearMap.taylorComponent`: the arity component of a linear endomorphism of reduced tensor
+  words.
 
 ## Main results
 
@@ -48,6 +50,8 @@ downstream, in the `DGAInfinity` roadmap.
   components `F`.
 * `TauCeti.ReducedTensorWords.coderivEquivTaylor`: coderivations are linearly isomorphic to their
   Taylor components.
+* `TauCeti.ReducedTensorWords.IsCoderivation.eq_zero_iff_taylorComponent_eq_zero`: a coderivation
+  vanishes exactly when all of its arity components vanish.
 
 ## References
 
@@ -500,6 +504,98 @@ theorem coderivEquivTaylor_apply (b : coderivations R M) :
 theorem coderivEquivTaylor_symm_apply (F : ReducedTensorWords R M →ₗ[R] M) :
     (coderivEquivTaylor R M).symm F =
       ⟨coderiv R F, (mem_coderivations R M).2 (isCoderivation_coderiv R F)⟩ := (rfl)
+
+end ReducedTensorWords
+
+end TauCeti
+
+namespace LinearMap
+
+open TauCeti TauCeti.ReducedTensorWords
+
+variable {R : Type uR} {M : Type uM} [CommSemiring R] [AddCommMonoid M] [Module R M]
+
+/-- The arity-`n` piece of the Taylor component `letter R M ∘ₗ b`: restrict to words of length
+`n`, apply the endomorphism, and retain its length-one component. -/
+noncomputable def taylorComponent
+    (b : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M) (n : {n : ℕ // 0 < n}) :
+    TensorPower R n.1 M →ₗ[R] M :=
+  (letter R M ∘ₗ b) ∘ₗ of R M n
+
+/-- Evaluation of a Taylor arity component is restriction to words of the specified length
+followed by projection to letters. -/
+@[simp]
+theorem taylorComponent_apply
+    (b : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M) (n : {n : ℕ // 0 < n})
+    (x : TensorPower R n.1 M) :
+    taylorComponent b n x = letter R M (b (of R M n x)) :=
+  (rfl)
+
+/-- Every arity component of the zero endomorphism is zero. -/
+@[simp]
+theorem taylorComponent_zero (n : {n : ℕ // 0 < n}) :
+    taylorComponent (0 : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M) n = 0 := by
+  rw [taylorComponent, LinearMap.comp_zero, LinearMap.zero_comp]
+
+/-- The arity components of `coderiv F` are the restrictions of `F` to each tensor length. -/
+@[simp]
+theorem taylorComponent_coderiv (F : ReducedTensorWords R M →ₗ[R] M)
+    (n : {n : ℕ // 0 < n}) :
+    taylorComponent (coderiv R F) n = F ∘ₗ of R M n := by
+  rw [taylorComponent, letter_comp_coderiv]
+
+/-- Taking an arity component preserves addition of endomorphisms. -/
+@[simp]
+theorem taylorComponent_add
+    (b₁ b₂ : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M)
+    (n : {n : ℕ // 0 < n}) :
+    taylorComponent (b₁ + b₂) n = taylorComponent b₁ n + taylorComponent b₂ n := by
+  simp only [taylorComponent, LinearMap.comp_add, LinearMap.add_comp]
+
+/-- Taking an arity component preserves scalar multiplication of endomorphisms. -/
+@[simp]
+theorem taylorComponent_smul (r : R)
+    (b : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M) (n : {n : ℕ // 0 < n}) :
+    taylorComponent (r • b) n = r • taylorComponent b n := by
+  simp only [taylorComponent, LinearMap.comp_smul, LinearMap.smul_comp]
+
+end LinearMap
+
+namespace TauCeti
+
+namespace ReducedTensorWords
+
+variable {R : Type uR} {M : Type uM} [CommSemiring R] [AddCommMonoid M] [Module R M]
+
+/-- A coderivation vanishes exactly when each of its aritywise Taylor components vanishes. -/
+theorem IsCoderivation.eq_zero_iff_taylorComponent_eq_zero
+    {b : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M} (hb : IsCoderivation R b) :
+    b = 0 ↔ ∀ n, b.taylorComponent n = 0 := by
+  constructor
+  · rintro rfl n
+    exact LinearMap.taylorComponent_zero n
+  · intro h
+    have hzero := (mem_coderivations R M).1 (coderivations R M).zero_mem
+    apply hb.eq_of_letter_comp_eq hzero
+    apply linearMap_ext R M
+    intro n x
+    have hn := LinearMap.congr_fun (h n) (PiTensorProduct.tprod R x)
+    simpa only [LinearMap.taylorComponent_apply, LinearMap.comp_apply, LinearMap.zero_apply,
+      map_zero]
+      using hn
+
+/-- A coderivation vanishes exactly when every arity component vanishes on pure tensors. -/
+theorem IsCoderivation.eq_zero_iff_taylorComponent_tprod_eq_zero
+    {b : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M} (hb : IsCoderivation R b) :
+    b = 0 ↔ ∀ n (x : Fin n.1 → M),
+      b.taylorComponent n (PiTensorProduct.tprod R x) = 0 := by
+  rw [hb.eq_zero_iff_taylorComponent_eq_zero]
+  constructor
+  · intro h n x
+    rw [h n, LinearMap.zero_apply]
+  · intro h n
+    refine PiTensorProduct.ext (MultilinearMap.ext fun x ↦ ?_)
+    simpa only [LinearMap.compMultilinearMap_apply, LinearMap.zero_apply] using h n x
 
 end ReducedTensorWords
 

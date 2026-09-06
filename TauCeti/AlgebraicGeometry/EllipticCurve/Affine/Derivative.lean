@@ -6,6 +6,8 @@ Authors: Chris Birkbeck, The Tau Ceti contributors
 module
 
 public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Basic
+-- Proof-only: `Δ ≠ 0` forces `a₁ ≠ 0 ∨ a₃ ≠ 0` where `2 = 0`.
+import TauCeti.AlgebraicGeometry.EllipticCurve.Weierstrass
 
 /-!
 # The Weierstrass partial derivatives are derivatives
@@ -26,8 +28,12 @@ derivative it is named after.
 * `WeierstrassCurve.Affine.derivative_eval_polynomial`: the chain rule along a substitution
   `Y := p`, which expresses `derivative (W(X, p))` through *both* partials. For a constant
   `p = C y` the `Y`-term drops out and this reads `W_X(X, y)`.
+* `WeierstrassCurve.Affine.polynomialY_ne_zero`: `W_Y` is a nonzero polynomial once `Δ ≠ 0`. This
+  is what makes the Weierstrass equation separable in `Y`, and so the function field a separable
+  extension of the rational functions in `x`; in characteristic two the leading term of `W_Y`
+  vanishes and the discriminant is what rules out `a₁ = a₃ = 0`.
 
-All three hold over an arbitrary commutative ring.
+The first three hold over an arbitrary commutative ring; the fourth adds `Δ ≠ 0`.
 
 ## Implementation notes
 
@@ -104,6 +110,30 @@ one-variable polynomial `W(X, p)` splits into the two partials of `W`, the `Y`-o
   have h := Derivation.apply_eval_eq (derivative' (R := R)) p W.polynomial
   rw [hbridge, equivPolynomial_mapCoeffs_polynomial, derivative_polynomial] at h
   simpa using h
+
+/-- The partial derivative `W_Y = 2Y + a₁X + a₃` of the Weierstrass polynomial is a nonzero
+polynomial whenever the discriminant is nonzero. In characteristic two the first term vanishes,
+and it is `Δ ≠ 0` that rules out `a₁ = a₃ = 0`. -/
+theorem polynomialY_ne_zero (hΔ : W.Δ ≠ 0) : W.polynomialY ≠ 0 := by
+  intro h
+  rw [WeierstrassCurve.Affine.polynomialY] at h
+  have h1 := congr_arg (fun p => p.coeff 1) h
+  have h0 := congr_arg (fun p => p.coeff 0) h
+  simp only [map_add, map_mul, coeff_add, coeff_mul_X, coeff_C, ↓reduceIte, coeff_mul_C,
+    zero_mul, add_zero, coeff_zero, Polynomial.C_eq_zero, mul_coeff_zero, coeff_X, one_ne_zero,
+    mul_zero, zero_add] at h1 h0
+  have ha1 : W.a₁ = 0 := by
+    have := congr_arg (fun p => p.coeff 1) h0
+    simp only [coeff_add, coeff_mul_X, coeff_C_zero, coeff_C_succ, add_zero, coeff_zero] at this
+    exact this
+  have ha3 : W.a₃ = 0 := by
+    have := congr_arg (fun p => p.coeff 0) h0
+    simp only [coeff_add, mul_coeff_zero, coeff_C_zero, coeff_X_zero, mul_zero, zero_add,
+      coeff_zero] at this
+    exact this
+  -- `2 = 0` and `a₁ = a₃ = 0` together contradict `Δ ≠ 0`.
+  exact (WeierstrassCurve.a₁_ne_zero_or_a₃_ne_zero_of_Δ_ne_zero_of_two_eq_zero W hΔ h1).elim
+    (fun h => h ha1) fun h => h ha3
 
 end WeierstrassCurve.Affine
 

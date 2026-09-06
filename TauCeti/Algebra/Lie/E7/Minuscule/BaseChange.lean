@@ -33,6 +33,8 @@ reductive, that its torus is maximal, or that its root datum has been identified
   `O(GL₅₆/A)`.
 * `TauCeti.E7Minuscule.coordinateHopfAlgebra` and `TauCeti.E7Minuscule.coordinateMap`: the
   specialized carrier coordinate algebra and its ambient quotient map.
+* `TauCeti.E7Minuscule.finiteTypeCoordinateHopfAlgebra`: the same coordinate algebra bundled
+  with its finite-type property.
 * `TauCeti.E7Minuscule.baseChangeCoordinateIso`: its quotient is the scalar extension of the
   integral carrier coordinate Hopf algebra.
 * `TauCeti.E7Minuscule.rootSubgroupToBaseChangeCoordinateMap`: the transported numbered root
@@ -70,7 +72,7 @@ open scoped Matrix TensorProduct
 
 namespace TauCeti.E7Minuscule
 
-universe v
+universe v w
 
 noncomputable section
 
@@ -92,15 +94,59 @@ noncomputable def baseChangeDefiningIdeal :
 
 /-- The coordinate Hopf algebra of the full-weight type-`E₇` minuscule carrier after base
 change to `A`. -/
-noncomputable abbrev coordinateHopfAlgebra :=
+public noncomputable abbrev coordinateHopfAlgebra :=
   CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra A 56)
     (baseChangeDefiningIdeal A)
 
 /-- The quotient coordinate morphism `O(GL₅₆) ⟶ O(carrier)`, representing the closed immersion
 of the specialized minuscule carrier into `GL₅₆`. -/
-noncomputable abbrev coordinateMap :
+public noncomputable def coordinateMap :
     GeneralLinear.coordinateHopfAlgebra A 56 ⟶ coordinateHopfAlgebra A :=
   CommHopfAlgCat.mkQuotient _ _
+
+/-- The specialized carrier coordinate morphism is surjective. -/
+theorem coordinateMap_surjective : Function.Surjective (coordinateMap A).hom := by
+  unfold coordinateMap
+  exact CommHopfAlgCat.mkQuotient_surjective
+    (GeneralLinear.coordinateHopfAlgebra A 56) (baseChangeDefiningIdeal A)
+
+/-- The kernel of the specialized carrier coordinate morphism is the transported defining ideal:
+the morphism presents the carrier as the closed subgroup of `GL₅₆` that ideal cuts out. -/
+theorem coordinateMap_ker :
+    RingHom.ker (coordinateMap A).hom.toAlgHom.toRingHom =
+      (baseChangeDefiningIdeal A).toIdeal := by
+  unfold coordinateMap
+  exact CommHopfAlgCat.mkQuotient_ker
+    (GeneralLinear.coordinateHopfAlgebra A 56) (baseChangeDefiningIdeal A)
+
+section Points
+
+variable {B : Type w} [CommRing B] [Algebra A B]
+
+/-- Mapping a carrier point along the coordinate morphism gives the corresponding quotient
+point of the ambient general linear group. -/
+theorem mapPointsFunctor_coordinateMap_app
+    (g : HopfAlgebra.points (R := A) (H := coordinateHopfAlgebra A) (CommAlgCat.of A B)) :
+    (CommHopfAlgCat.mapPointsFunctor (coordinateMap A)).app (CommAlgCat.of A B) g =
+      CommHopfAlgCat.quotientPointsHom
+        (GeneralLinear.coordinateHopfAlgebra A 56) (baseChangeDefiningIdeal A)
+        (CommAlgCat.of A B) g := by
+  apply WithConv.ext
+  rfl
+
+end Points
+
+/-- The specialized type-`E₇` minuscule carrier as a finite-type commutative Hopf algebra. -/
+public noncomputable abbrev finiteTypeCoordinateHopfAlgebra :
+    FiniteTypeCommHopfAlgCat.{v, v} A :=
+  FiniteTypeCommHopfAlgCat.of A (coordinateHopfAlgebra A)
+
+/-- The finite-type package has the specialized carrier coordinate Hopf algebra as its underlying
+object. -/
+@[simp]
+theorem finiteTypeCoordinateHopfAlgebra_obj :
+    (finiteTypeCoordinateHopfAlgebra A).obj = coordinateHopfAlgebra A :=
+  (rfl)
 
 /-- Membership in the transported defining ideal is membership of the corresponding element in
 the base change of the named integral defining ideal. -/
@@ -301,13 +347,14 @@ noncomputable def weightTorusToBaseChangeCoordinateMap :
     rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator latticeBasis
     e7MinusculeWeight A
 
-/-- The factored weight-torus map recovers its ambient transported coordinate map. -/
+/-- The factored weight-torus map composed with the carrier coordinate morphism recovers its
+ambient transported coordinate map. -/
 @[simp]
-theorem mkQuotient_comp_weightTorusToBaseChangeCoordinateMap :
-    CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra A 56)
-          (baseChangeDefiningIdeal A) ≫
+theorem coordinateMap_comp_weightTorusToBaseChangeCoordinateMap :
+    coordinateMap A ≫
         weightTorusToBaseChangeCoordinateMap A =
       GeneralLinear.weightTorusBaseChangeCoordinateMap ℤ A e7MinusculeWeight := by
+  unfold coordinateMap
   unfold baseChangeDefiningIdeal weightTorusToBaseChangeCoordinateMap
   exact mkQuotient_comp_kostantWeightTorusToralBaseChangePresentationCoordinateMap
     (TauCeti.serreRootGenerator (CartanMatrix.E 7))

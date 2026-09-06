@@ -45,7 +45,8 @@ subspace under a suitable geometric hypothesis but not on all of `W^{1,p}(Ω)`.
   norm.
 * `TauCeti.W1p0.valueL`: the canonical continuous value map into `Lᵖ(Ω)`.
 * `TauCeti.W1p0.denseRange_valueL_two`: test functions make the value map from
-  `W^{1,2}_0(Ω)` dense in `L²(Ω)`.
+  `W^{1,2}_0(Ω)` dense in `L²(Ω)`, and `TauCeti.W1p0.valueL_ne_zero`: on a nonempty `Ω` the value
+  map is nonzero for every `p`.
 * `TauCeti.w1p0Submodule_subset_of_isClosed`: a closed set containing every test-function jet
   contains `W^{1,p}_0(Ω)`, which is how a property is extended from test functions to the whole
   space.
@@ -211,28 +212,35 @@ theorem W1p0.denseRange_valueL_two :
   rw [hcoe] at hdense
   exact hdense
 
-/-- A nonempty open set contains a zero-boundary Sobolev function with nonzero `L²` value. -/
+/-- A nonempty open set contains a zero-boundary Sobolev function with nonzero `Lᵖ` value. -/
 theorem W1p0.exists_value_ne_zero (hOmega : (Omega : Set E).Nonempty) :
-    ∃ w : W1p0 mu Omega 2, W1p.value (w : W1p mu Omega 2) ≠ 0 := by
+    ∃ w : W1p0 mu Omega p, W1p.value (w : W1p mu Omega p) ≠ 0 := by
   obtain ⟨x, hx⟩ := hOmega
   obtain ⟨g, hgs, hgc, hg, _, hgx⟩ :=
     exists_contDiff_tsupport_subset (n := (⊤ : ℕ∞)) (Omega.isOpen.mem_nhds hx)
   let phi : 𝓓(Omega, ℝ) := ⟨g, hg, hgc, hgs⟩
-  let w : W1p0 mu Omega 2 :=
-    ⟨W1p.ofTestFunctionₗ mu Omega 2 phi, W1p.ofTestFunctionₗ_mem_w1p0Submodule phi⟩
+  let w : W1p0 mu Omega p :=
+    ⟨W1p.ofTestFunctionₗ mu Omega p phi, W1p.ofTestFunctionₗ_mem_w1p0Submodule phi⟩
   refine ⟨w, ?_⟩
   rw [W1p.value_ofTestFunctionₗ]
   intro hzero
-  have hzeroTest : testFunctionLp (mu := mu) (Omega := Omega) 2 (0 : 𝓓(Omega, ℝ)) = 0 := by
+  have hzeroTest : testFunctionLp (mu := mu) (Omega := Omega) p (0 : 𝓓(Omega, ℝ)) = 0 := by
     apply Lp.ext
     exact Filter.EventuallyEq.trans
-      (testFunctionLp_apply_ae (mu := mu) 2 (0 : 𝓓(Omega, ℝ)))
-      (Lp.coeFn_zero ℝ 2 (mu.restrict Omega)).symm
-  have hphi : phi = 0 := testFunctionLp_injective 2 (hzero.trans hzeroTest.symm)
+      (testFunctionLp_apply_ae (mu := mu) p (0 : 𝓓(Omega, ℝ)))
+      (Lp.coeFn_zero ℝ p (mu.restrict Omega)).symm
+  have hphi : phi = 0 := testFunctionLp_injective p (hzero.trans hzeroTest.symm)
   have : g x = 0 := by
     have := congrArg (fun q : 𝓓(Omega, ℝ) => q x) hphi
     simpa [phi] using this
   linarith
+
+/-- On a nonempty open set the value map `W^{1,p}_0(Ω) → Lᵖ(Ω)` is nonzero: it does not kill the
+test function of `TauCeti.W1p0.exists_value_ne_zero`. -/
+theorem W1p0.valueL_ne_zero (hOmega : (Omega : Set E).Nonempty) :
+    (W1p0.valueL (mu := mu) (Omega := Omega) (p := p)) ≠ 0 := by
+  obtain ⟨w, hw⟩ := W1p0.exists_value_ne_zero (mu := mu) (Omega := Omega) (p := p) hOmega
+  exact fun hzero => hw (by rw [← W1p0.valueL_apply, hzero, zero_apply])
 
 /-- `W^{1,p}_0(Ω)` is complete: it is a closed subspace of the complete space `W^{1,p}(Ω)`. -/
 instance : CompleteSpace (W1p0 mu Omega p) :=

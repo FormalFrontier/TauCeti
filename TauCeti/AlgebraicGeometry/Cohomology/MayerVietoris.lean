@@ -116,8 +116,7 @@ theorem epi_mayerVietorisδ (n : ℕ)
     (hU : Subsingleton (cohomologyOn M (n + 1) U))
     (hV : Subsingleton (cohomologyOn M (n + 1) V)) :
     Epi (mayerVietorisδ M U V n (n + 1) rfl) :=
-  TauCeti.CategoryTheory.GrothendieckTopology.MayerVietorisSquare.epi_δ
-    (Opens.mayerVietorisSquare U V)
+  (Opens.mayerVietorisSquare U V).epi_δ
     ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M) n (n + 1) rfl hU hV
 
 variable {U V}
@@ -129,8 +128,7 @@ theorem subsingleton_cohomologyOn_sup_succ (n : ℕ)
     (hU : Subsingleton (cohomologyOn M (n + 1) U))
     (hV : Subsingleton (cohomologyOn M (n + 1) V)) :
     Subsingleton (cohomologyOn M (n + 1) (U ⊔ V)) :=
-  TauCeti.CategoryTheory.GrothendieckTopology.MayerVietorisSquare.subsingleton_H'_X₄
-    (Opens.mayerVietorisSquare U V)
+  (Opens.mayerVietorisSquare U V).subsingleton_H'_X₄
     ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M) n (n + 1) rfl hInter hU hV
 
 /-- A scheme covered by two open subsets whose degree `n + 1` cohomology vanishes, and whose

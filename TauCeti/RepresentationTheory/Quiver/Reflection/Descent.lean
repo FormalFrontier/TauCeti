@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.QuadraticForm.PosDef
 public import TauCeti.RepresentationTheory.Quiver.Reflection.Coxeter
 
 /-!

@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.Category.ModuleCat.Sheaf.Free
 public import TauCeti.Algebra.Category.ModuleCat.Sheaf.Invertible.Basic
 public import Mathlib.AlgebraicGeometry.Modules.Sheaf
 
@@ -24,7 +25,9 @@ over an arbitrary site. This file only packages it over a scheme:
   `ObjectProperty.prop_of_iso` and `ObjectProperty.prop_iff_of_iso` apply to it);
 * `TauCeti.AlgebraicGeometry.InvertibleSheaf X` is the full subcategory it cuts out;
 * `InvertibleSheaf.free X I` is the free sheaf on an indexing type with exactly one element, and
-  `InvertibleSheaf.trivial X` is the globally free rank-one sheaf.
+  `InvertibleSheaf.trivial X` is the globally free rank-one sheaf;
+* `SheafOfModules.isInvertible_unit` records that the structure sheaf `𝒪_X`, as a sheaf of
+  modules over itself, is invertible.
 
 This advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer A, item "Invertible sheaves on a
 scheme; the Picard group `Pic X` under `⊗`". The tensor product and Picard group require a
@@ -56,6 +59,15 @@ instance : (isInvertible X).IsClosedUnderIsomorphisms where
   of_iso e hM := by
     have := hM
     exact TauCeti.SheafOfModules.IsInvertible.of_iso (R := X.ringCatSheaf) e
+
+/-- The structure sheaf, regarded as a sheaf of modules over itself, is an invertible sheaf: it is
+the free sheaf on one generator. -/
+instance isInvertible_unit :
+    isInvertible X (_root_.SheafOfModules.unit X.ringCatSheaf) :=
+  TauCeti.SheafOfModules.IsInvertible.of_iso
+    (M := _root_.SheafOfModules.free (R := X.ringCatSheaf) PUnit.{u + 1})
+    (N := _root_.SheafOfModules.unit X.ringCatSheaf)
+    (TauCeti.SheafOfModules.freePUnitIsoUnit X.ringCatSheaf)
 
 end SheafOfModules
 

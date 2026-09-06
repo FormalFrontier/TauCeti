@@ -10,33 +10,28 @@ import TauCeti.Probability.DeFinetti
 /-!
 # Worked examples: the de Finetti public API
 
-This file imports **only** `TauCeti.Probability.DeFinetti`, and that is its whole content: each
-example is a bare reference to a name Layer 7 advertises, so the file elaborates exactly when the
-curated facade exports everything it promises. Nothing is proved and nothing is declared; the
-import is not public, so this adds no second route to the API.
+This file demonstrates the public de Finetti API available from the single facade import
+`TauCeti.Probability.DeFinetti`. The initial bare references give a compact index of the principal
+process predicates, implications, representation theorems, uniqueness results, and empirical
+convergence statements.
 
-A failure here means an export went missing, not that a proof broke: a summit can be proved, and
-its module built, while the facade never re-exports it, leaving the name unreachable for a caller
-who imports only the facade.
+The worked examples then use two complementary descriptions of an exchangeable law. The canonical
+mixing-law example shows that an i.i.d. path law has a Dirac de Finetti measure. The two affine
+examples show that a convex combination of two Dirac mixing laws corresponds exactly to the same
+convex combination of the associated i.i.d. path laws, in both directions. Together they
+illustrate how the representation theorem and its affine equivalence are used in concrete
+calculations.
 
-## One advertised name does not exist
+Further worked examples live with the objects they concern: the conditionally i.i.d. coin-flip
+construction in `Exchangeability/ConditionallyIID/CoinFlips.lean`, the constant-witness
+characterisation of i.i.d. in `ConditionallyIID/Const.lean`, and the stationary but
+non-exchangeable 3-cycle in `Exchangeability/ThreeCycle.lean`.
 
-Layer 7 spells one endpoint `exchangeable_of_mixedIID`; the repository proves it canonically as
-`MixedIID.exchangeable`, which is checked below under that name. No alias is introduced.
-
-Every other advertised name is checked below.
-
-## The mathematical worked examples live elsewhere
-
-The roadmap's worked-example list is discharged with the objects each concerns, not here: the
-conditionally i.i.d. coin-flip construction in `Exchangeability/ConditionallyIID/CoinFlips.lean`,
-the constant-witness characterisation of i.i.d. in `ConditionallyIID/Const.lean`, and the
-stationary but non-exchangeable 3-cycle in `Exchangeability/ThreeCycle.lean`.
-
-## References
-
-* Roadmap: `TauCetiRoadmap/Exchangeability/README.md`, **Layer 7** (public API and examples), whose
-  suggested home for this file is `TauCeti/Examples/Probability/DeFinetti.lean`.
+The canonical mixing-law example rests on the uniqueness statement
+`eq_deFinettiMeasure_of_pathLaw_eq_bind_infinitePi` together with the barycentre computation
+`deFinettiBarycenter_dirac`; the affine examples rest on `deFinettiEquiv` and its values on Dirac
+mixing laws and on convex combinations, in both directions. A reader adapting these calculations to
+another exchangeable law should start from those results.
 -/
 
 open MeasureTheory

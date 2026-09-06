@@ -38,7 +38,9 @@ produces all the others, and those differences span.
 ## Main definitions
 
 * `TauCeti.standardRepresentation`: the standard representation of `Equiv.Perm α` on the
-  augmentation subrepresentation of `k[α]`.
+  augmentation subrepresentation of `k[α]`, with
+  `TauCeti.toRepresentation_augmentationSubrepresentation` naming it as the action that
+  subrepresentation carries, which is the form a splitting of `k[α]` produces.
 
 ## Main results
 
@@ -124,6 +126,16 @@ noncomputable def standardRepresentation :
     Representation k (Equiv.Perm α)
       (augmentationSubrepresentation k (Equiv.Perm α) α).toSubmodule :=
   (augmentationSubrepresentation k (Equiv.Perm α) α).toRepresentation
+
+/-- The standard representation is the action carried by the augmentation subrepresentation, which
+is how a splitting of `k[α]` into subrepresentations names it. -/
+@[simp]
+theorem toRepresentation_augmentationSubrepresentation :
+    (augmentationSubrepresentation k (Equiv.Perm α) α).toRepresentation =
+      standardRepresentation k α :=
+  -- `(rfl)`, not `rfl`: the body of `standardRepresentation` is not `@[expose]`d, so this must not
+  -- be inferred `@[defeq]`.
+  (rfl)
 
 variable {k α}
 

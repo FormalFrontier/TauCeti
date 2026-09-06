@@ -9,8 +9,6 @@ public import Mathlib.Analysis.Analytic.Order
 public import Mathlib.Analysis.Meromorphic.Divisor
 public import TauCeti.Analysis.Complex.ZeroCount
 public import TauCeti.Analysis.Contour.Argument.Cycle
-public import TauCeti.Analysis.Contour.Argument.Divisor
-import TauCeti.Analysis.Contour.LogDerivFTC
 import Mathlib.Analysis.Calculus.LogDeriv
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.MeasureTheory.Integral.CircleIntegral
@@ -184,10 +182,10 @@ private lemma order_eq_zero (hf : AnalyticOnNhd ℂ f (closedBall c R)) {z : ℂ
 
 /-- The logarithmic derivative of a function holomorphic and zero-free on a circle is continuous
 there, hence circle-integrable. -/
-private lemma circleIntegrable_logDeriv (hR : 0 < R)
+private lemma circleIntegrable_logDeriv (hR : 0 ≤ R)
     (hf : AnalyticOnNhd ℂ f (closedBall c R))
     (hne : ∀ z ∈ sphere c R, f z ≠ 0) : CircleIntegrable (logDeriv f) c R := by
-  refine ContinuousOn.circleIntegrable hR.le ?_
+  refine ContinuousOn.circleIntegrable hR ?_
   have hsub : sphere c R ⊆ closedBall c R := sphere_subset_closedBall
   have hd : ContinuousOn (deriv f) (sphere c R) := (hf.deriv.continuousOn).mono hsub
   have hc : ContinuousOn f (sphere c R) := (hf.continuousOn).mono hsub
@@ -283,8 +281,8 @@ theorem rouche_symm (hR : 0 < R)
         (hf z (sphere_subset_closedBall hz)).differentiableAt
     have h0 := circleIntegral_logDeriv_div_eq_zero hR hf hg hs
     rw [circleIntegral.integral_congr hR.le heq,
-      circleIntegral.integral_sub (circleIntegrable_logDeriv hR hg hneg)
-        (circleIntegrable_logDeriv hR hf hnef)] at h0
+      circleIntegral.integral_sub (circleIntegrable_logDeriv hR.le hg hneg)
+        (circleIntegrable_logDeriv hR.le hf hnef)] at h0
     linear_combination h0
   rw [TauCeti.Contour.argumentPrinciple_divisor hR hg.meromorphicOn
         (fun z hz => order_eq_zero hg (sphere_subset_closedBall hz) (hneg z hz)),

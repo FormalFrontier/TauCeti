@@ -587,6 +587,13 @@ theorem isIntegral_orthogonalSumIntermediateCarrier_iff (P : L.IntermediateCarri
     rw [orthogonalSum_form, orthogonalSumForm_apply]
     exact Submodule.add_mem _ (hP p.1 hp.1 q.1 hq.1) (hQ p.2 hp.2 q.2 hq.2)
 
+/-- The assembled carrier `P ⊕ Q` of two integral intermediate carriers is integral. -/
+theorem IntermediateCarrier.IsIntegral.orthogonalSum {P : L.IntermediateCarrier}
+    {Q : M.IntermediateCarrier} (hP : IntermediateCarrier.IsIntegral P)
+    (hQ : IntermediateCarrier.IsIntegral Q) :
+    IntermediateCarrier.IsIntegral (orthogonalSumIntermediateCarrier L M P Q) :=
+  (isIntegral_orthogonalSumIntermediateCarrier_iff P Q).mpr ⟨hP, hQ⟩
+
 /-- **Evenness of an assembled carrier is componentwise.** -/
 @[simp]
 theorem isEven_orthogonalSumIntermediateCarrier_iff (P : L.IntermediateCarrier)

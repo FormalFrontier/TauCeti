@@ -40,6 +40,8 @@ Nothing here is specific to a topology or to cohomology; the continuous-cohomolo
   fixed points and into the ambient additive monoid, with their functoriality laws.
 * `TauCeti.fixedPointsMap` and `TauCeti.fixedPointsQuotientMap`: functoriality of fixed points in
   the additive monoid, additively and as a quotient-equivariant map.
+* `TauCeti.fixedPointsPairing`: the pairing induced on the fixed points of an equivariant
+  biadditive pairing.
 -/
 
 public section
@@ -329,5 +331,57 @@ theorem fixedPointsMap_comp_fixedPointsInclusion (f : M →+[G] N) (h : K ≤ H)
 end Map
 
 end Functoriality
+
+section Pairing
+
+variable {G : Type*} [Group G]
+  {M : Type*} [AddCommGroup M] [DistribMulAction G M]
+  {N : Type*} [AddCommGroup N] [DistribMulAction G N]
+  {P : Type*} [AddCommGroup P] [DistribMulAction G P]
+
+/-- An `H`-equivariant biadditive pairing restricts to the fixed points of `H`. -/
+def fixedPointsPairing (H : Subgroup G) (μ : M →+ N →+ P)
+    (hequiv : ∀ (h : H) (m : M) (n : N),
+      μ ((h : G) • m) ((h : G) • n) = (h : G) • μ m n) :
+    FixedPoints.addSubgroup H M →+ FixedPoints.addSubgroup H N →+
+      FixedPoints.addSubgroup H P where
+  toFun m :=
+    { toFun := fun n =>
+        ⟨μ (m : M) (n : N), (FixedPoints.mem_addSubgroup H P _).2 fun h => by
+          have hm : (h : G) • (m : M) = m := by
+            simpa only [Subgroup.smul_def] using
+              (FixedPoints.mem_addSubgroup H M _).1 m.2 h
+          have hn : (h : G) • (n : N) = n := by
+            simpa only [Subgroup.smul_def] using
+              (FixedPoints.mem_addSubgroup H N _).1 n.2 h
+          simpa only [Subgroup.smul_def, hm, hn] using
+            (hequiv h (m : M) (n : N)).symm⟩
+      map_zero' := Subtype.ext (map_zero (μ (m : M)))
+      map_add' := fun n n' => Subtype.ext (map_add (μ (m : M)) (n : N) (n' : N)) }
+  map_zero' := AddMonoidHom.ext fun _ => Subtype.ext <| by simp
+  map_add' := fun m m' => AddMonoidHom.ext fun n => Subtype.ext <| by simp
+
+/-- The pairing on fixed points is the original pairing on underlying elements. -/
+@[simp]
+theorem coe_fixedPointsPairing (H : Subgroup G) (μ : M →+ N →+ P)
+    (hequiv : ∀ (h : H) (m : M) (n : N),
+      μ ((h : G) • m) ((h : G) • n) = (h : G) • μ m n)
+    (m : FixedPoints.addSubgroup H M) (n : FixedPoints.addSubgroup H N) :
+    (fixedPointsPairing H μ hequiv m n : P) = μ (m : M) (n : N) :=
+  by simp [fixedPointsPairing]
+
+/-- For a normal subgroup, the pairing on fixed points is equivariant for the quotient action. -/
+@[simp]
+theorem fixedPointsPairing_quotient_smul (H : Subgroup G) [H.Normal] (μ : M →+ N →+ P)
+    (hequiv : ∀ (g : G) (m : M) (n : N), μ (g • m) (g • n) = g • μ m n)
+    (q : G ⧸ H) (m : FixedPoints.addSubgroup H M) (n : FixedPoints.addSubgroup H N) :
+    fixedPointsPairing H μ (fun h => hequiv (h : G)) (q • m) (q • n) =
+      q • fixedPointsPairing H μ (fun h => hequiv (h : G)) m n := by
+  induction q using QuotientGroup.induction_on with
+  | H g =>
+      apply Subtype.ext
+      simpa using hequiv g (m : M) (n : N)
+
+end Pairing
 
 end TauCeti

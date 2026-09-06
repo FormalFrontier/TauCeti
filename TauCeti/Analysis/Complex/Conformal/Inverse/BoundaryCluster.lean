@@ -55,6 +55,67 @@ namespace TauCeti
 
 variable {U : Set ℂ} {f F : ℂ → ℂ} {a : ℂ}
 
+/-- The cluster set of `invFunOn f U` over an image-boundary point `a` is contained in the fibre
+`{z | z ∈ frontier U ∧ F z = a}`: such a point lies on the frontier of `U`, and the continuous
+extension `F` carries it to `a`. -/
+private theorem clusterSetOn_invFunOn_subset_boundary_fiber
+    (hUo : IsOpen U) (hfo : IsOpen (f '' U))
+    (hfi : InjOn f U)
+    (hFc : ContinuousOn F (closure U))
+    (hFf : EqOn F f U)
+    (ha : a ∈ frontier (f '' U)) :
+    clusterSetOn (invFunOn f U) (f '' U) a ⊆
+      {z | z ∈ frontier U ∧ F z = a} := by
+  let g : ℂ → ℂ := invFunOn f U
+  have hbij : BijOn f U (f '' U) := hfi.bijOn_image
+  have hgU : MapsTo g (f '' U) U := hbij.surjOn.mapsTo_invFunOn
+  have hright : RightInvOn g f (f '' U) := hbij.invOn_invFunOn.2
+  intro z hz
+  have hz' :
+      MapClusterPt z (nhdsWithin a (f '' U)) g :=
+    mem_clusterSetOn_iff.mp hz
+  have hzcl : z ∈ closure U :=
+    closure_mono
+      (invFunOn_image_image_subset f U)
+      (clusterSetOn_subset_closure_image hz)
+  let l : Filter ℂ := nhdsWithin a (f '' U)
+  have hmap_closure :
+      map g l ≤ principal (closure U) := by
+    rw [le_principal_iff, mem_map]
+    exact mem_of_superset self_mem_nhdsWithin
+      fun y hy ↦ subset_closure (hgU hy)
+  have hF_tendsto :
+      Tendsto F (nhds z ⊓ map g l) (nhds (F z)) := by
+    apply (hFc z hzcl).mono_left
+    rw [nhdsWithin]
+    exact inf_le_inf le_rfl hmap_closure
+  have hzF : MapClusterPt (F z) l (F ∘ g) := by
+    exact hz'.tendsto_comp' hF_tendsto
+  have hFg : F ∘ g =ᶠ[l] id := by
+    filter_upwards [self_mem_nhdsWithin] with y hy
+    simp only [Function.comp_apply, id_eq]
+    rw [hFf (hgU hy), hright hy]
+  have hzid : MapClusterPt (F z) l id :=
+    hzF.congrFun hFg
+  have hlim : Tendsto id l (nhds a) :=
+    tendsto_id.mono_left nhdsWithin_le_nhds
+  have : NeBot l :=
+    mem_closure_iff_nhdsWithin_neBot.mp
+      (frontier_subset_closure ha)
+  have hFa : F z = a := by
+    have : NeBot (nhds (F z) ⊓ l) := hzid.clusterPt
+    exact tendsto_nhds_unique
+      (tendsto_id.mono_left inf_le_left)
+      (hlim.mono_left inf_le_right)
+  have hzU : z ∉ U := by
+    intro hzU
+    have ha_image : a ∈ f '' U :=
+      ⟨z, hzU, by rw [← hFa, hFf hzU]⟩
+    exact (hfo.frontier_eq.subset ha).2 ha_image
+  refine ⟨?_, hFa⟩
+  rw [hUo.frontier_eq]
+  exact ⟨hzcl, hzU⟩
+
 /-- The fibre of a continuous extension over an image-boundary point
 is the cluster set of the inverse map at that point. -/
 theorem clusterSetOn_invFunOn_eq_boundary_fiber
@@ -67,87 +128,38 @@ theorem clusterSetOn_invFunOn_eq_boundary_fiber
       {z | z ∈ frontier U ∧ F z = a} := by
   let g : ℂ → ℂ := invFunOn f U
   have hbij : BijOn f U (f '' U) := hfi.bijOn_image
-  have hgU : MapsTo g (f '' U) U :=
-    hbij.surjOn.mapsTo_invFunOn
   have hleft : LeftInvOn g f U := hbij.invOn_invFunOn.1
-  have hright : RightInvOn g f (f '' U) :=
-    hbij.invOn_invFunOn.2
-  ext z
-  constructor
-  · intro hz
-    have hz' :
-        MapClusterPt z (nhdsWithin a (f '' U)) g :=
-      mem_clusterSetOn_iff.mp hz
-    have hzcl : z ∈ closure U :=
-      closure_mono
-        (invFunOn_image_image_subset f U)
-        (clusterSetOn_subset_closure_image hz)
-    let l : Filter ℂ := nhdsWithin a (f '' U)
-    have hmap_closure :
-        map g l ≤ principal (closure U) := by
-      rw [le_principal_iff, mem_map]
-      exact mem_of_superset self_mem_nhdsWithin
-        fun y hy ↦ subset_closure (hgU hy)
-    have hF_tendsto :
-        Tendsto F (nhds z ⊓ map g l) (nhds (F z)) := by
-      apply (hFc z hzcl).mono_left
-      rw [nhdsWithin]
-      exact inf_le_inf le_rfl hmap_closure
-    have hzF : MapClusterPt (F z) l (F ∘ g) := by
-      exact hz'.tendsto_comp' hF_tendsto
-    have hFg : F ∘ g =ᶠ[l] id := by
-      filter_upwards [self_mem_nhdsWithin] with y hy
-      simp only [Function.comp_apply, id_eq]
-      rw [hFf (hgU hy), hright hy]
-    have hzid : MapClusterPt (F z) l id :=
-      hzF.congrFun hFg
-    have hlim : Tendsto id l (nhds a) :=
-      tendsto_id.mono_left nhdsWithin_le_nhds
-    have : NeBot l :=
-      mem_closure_iff_nhdsWithin_neBot.mp
-        (frontier_subset_closure ha)
-    have hFa : F z = a := by
-      have : NeBot (nhds (F z) ⊓ l) := hzid.clusterPt
-      exact tendsto_nhds_unique
-        (tendsto_id.mono_left inf_le_left)
-        (hlim.mono_left inf_le_right)
-    have hzU : z ∉ U := by
-      intro hzU
-      have ha_image : a ∈ f '' U :=
-        ⟨z, hzU, by rw [← hFa, hFf hzU]⟩
-      exact (hfo.frontier_eq.subset ha).2 ha_image
-    refine ⟨?_, hFa⟩
-    rw [hUo.frontier_eq]
-    exact ⟨hzcl, hzU⟩
-  · rintro ⟨hzfr, hFza⟩
-    let p : Filter ℂ := nhdsWithin z U
-    have : NeBot p :=
-      mem_closure_iff_nhdsWithin_neBot.mp
-        (frontier_subset_closure hzfr)
-    have hgf : g ∘ f =ᶠ[p] id := by
+  refine Set.Subset.antisymm
+    (clusterSetOn_invFunOn_subset_boundary_fiber hUo hfo hfi hFc hFf ha) ?_
+  rintro z ⟨hzfr, hFza⟩
+  let p : Filter ℂ := nhdsWithin z U
+  have : NeBot p :=
+    mem_closure_iff_nhdsWithin_neBot.mp
+      (frontier_subset_closure hzfr)
+  have hgf : g ∘ f =ᶠ[p] id := by
+    filter_upwards [self_mem_nhdsWithin] with x hx
+    exact hleft hx
+  have hzcomp : MapClusterPt z p (g ∘ f) :=
+    ((ClusterPt.of_le_nhds
+      nhdsWithin_le_nhds).mapClusterPt_id).congrFun
+      hgf.symm
+  have hftend_nhds : Tendsto f p (nhds a) := by
+    have hFtend : Tendsto F p (nhds (F z)) :=
+      (hFc z (frontier_subset_closure hzfr)).mono_left
+        (nhdsWithin_mono z subset_closure)
+    have hfeq : f =ᶠ[p] F := by
       filter_upwards [self_mem_nhdsWithin] with x hx
-      exact hleft hx
-    have hzcomp : MapClusterPt z p (g ∘ f) :=
-      ((ClusterPt.of_le_nhds
-        nhdsWithin_le_nhds).mapClusterPt_id).congrFun
-        hgf.symm
-    have hftend_nhds : Tendsto f p (nhds a) := by
-      have hFtend : Tendsto F p (nhds (F z)) :=
-        (hFc z (frontier_subset_closure hzfr)).mono_left
-          (nhdsWithin_mono z subset_closure)
-      have hfeq : f =ᶠ[p] F := by
-        filter_upwards [self_mem_nhdsWithin] with x hx
-        exact (hFf hx).symm
-      simpa only [hFza] using
-        (tendsto_congr' hfeq).mpr hFtend
-    have hftend :
-        Tendsto f p (nhdsWithin a (f '' U)) :=
-      tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within
-        f hftend_nhds
-        (mem_of_superset self_mem_nhdsWithin
-          fun x hx ↦ ⟨x, hx, rfl⟩)
-    exact mem_clusterSetOn_iff.mpr
-      (MapClusterPt.of_comp hftend hzcomp)
+      exact (hFf hx).symm
+    simpa only [hFza] using
+      (tendsto_congr' hfeq).mpr hFtend
+  have hftend :
+      Tendsto f p (nhdsWithin a (f '' U)) :=
+    tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within
+      f hftend_nhds
+      (mem_of_superset self_mem_nhdsWithin
+        fun x hx ↦ ⟨x, hx, rfl⟩)
+  exact mem_clusterSetOn_iff.mpr
+    (MapClusterPt.of_comp hftend hzcomp)
 
 /-- If the image domain is locally preconnected from within at a
 boundary point, the fibre of a continuous extension over that point

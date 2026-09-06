@@ -69,7 +69,7 @@ theorem measure_inter_blockCylinder_eq_setLIntegral_of_condExp [StandardBorelSpa
   have hTail : tailProcess X ≤ ‹MeasurableSpace Ω› :=
     tailProcess_le_ambient 0 fun j _ => hX_meas j
   have : IsFiniteMeasure (μ.trim hTail) := isFiniteMeasure_trim hTail
-  set A : Set Ω := directingProbabilityMeasure μ X ⁻¹' S with hA_def
+  set A : Set Ω := directingProbabilityMeasure μ X ⁻¹' S
   have hA_tail : MeasurableSet[tailProcess X] A :=
     measurable_tailProcess_directingProbabilityMeasure hS
   have hA : MeasurableSet A := hTail _ hA_tail
