@@ -44,6 +44,8 @@ identification.
   tangent bundle of the tangent bundle.
 * `TauCeti.Manifold.continuousLinearMapAt_symmL_coordChange`: reading a tangent vector through the
   preferred trivializations of two charts is the tangent coordinate change between them.
+* `TauCeti.Manifold.trivializationAt_symm_eq_tangentCoordChange`: the inverse preferred
+  trivialization at a point in a chart source is the corresponding tangent coordinate change.
 * `TauCeti.Manifold.tangentSpaceOpenEquiv`: the canonical continuous linear equivalence between
   the tangent space of an open submanifold and the ambient tangent space.
 * `TauCeti.Manifold.mfderiv_subtype_val`: the differential of the inclusion is the canonical
@@ -411,6 +413,20 @@ theorem continuousLinearMapAt_symmL_coordChange {x x₀ y : M}
   have hy3 : y ∈ (extChartAt I x₀).source := by rw [extChartAt_source]; exact hyx₀
   exact tangentCoordChange_comp (I := I) (w := x) (x := y) (y := x₀) (z := y) (v := u)
     ⟨⟨hy1, hy2⟩, hy3⟩
+
+/-- Reading a model-space vector in the inverse preferred trivialization centred at `γ`, over a
+point `x` in its chart source, agrees with the tangent coordinate change from `γ` to the chart at
+`x`. -/
+theorem trivializationAt_symm_eq_tangentCoordChange {γ x : M}
+    (hxγ : x ∈ (chartAt H γ).source) (v : E) :
+    (trivializationAt E (TangentSpace I) γ).symm x v =
+      tangentCoordChange I γ x x v := by
+  have hxγ' : x ∈ (trivializationAt E (TangentSpace I) γ).baseSet := by
+    simpa only [TangentBundle.trivializationAt_baseSet] using hxγ
+  rw [← Bundle.Trivialization.symmL_apply (R := 𝕜)
+    (trivializationAt E (TangentSpace I) γ) hxγ' v]
+  exact congrArg (fun f ↦ f v)
+    (TangentBundle.symmL_trivializationAt_eq_core (I := I) (b₀ := γ) (b := x) hxγ)
 
 end TangentReading
 

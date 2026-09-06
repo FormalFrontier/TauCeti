@@ -12,6 +12,8 @@ public import Mathlib.Geometry.Manifold.Algebra.Structures
 public import Mathlib.Geometry.Manifold.VectorBundle.LocalFrame
 public import Mathlib.Geometry.Manifold.VectorBundle.Riemannian
 public import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
+public import Mathlib.LinearAlgebra.Basis.Defs
+public import TauCeti.Geometry.Manifold.VectorBundle.Tangent
 
 /-!
 # Chart Gram matrices of a Riemannian metric
@@ -24,8 +26,9 @@ when the model space has dimension zero.
 
 The Gram-matrix and inverse-matrix declarations are adapted from stages 1--5 of the Apache-2.0
 Poincare-Conjecture source file
-`DoCarmoLib/Riemannian/TensorBundle/MusicalIso.lean`, revision
-`24f32e4d600878bfaac6bc2f2f9324175571c321`. That source uses an explicit metric and a custom
+`DoCarmoLib/Riemannian/TensorBundle/MusicalIso.lean`, while the chart-transition identities are
+adapted from `DoCarmoLib/Riemannian/Geodesic/HopfRinow/MetricBridge.lean`, both at revision
+`24f32e4d600878bfaac6bc2f2f9324175571c321`. Those sources use an explicit metric and a custom
 chart frame; here the metric supplied by Mathlib's `RiemannianBundle` instance and its local-frame
 API replace them.
 
@@ -34,7 +37,12 @@ API replace them.
 * `Riemannian.Tensor.chartLocalFrame` and `Riemannian.Tensor.chartLocalFrame_def`: the frame
   induced by the tangent trivialization at a chart centre and `Module.finBasis`, and its
   identification with that trivialization's local frame.
+* `Riemannian.Tensor.trivializationAt_symm_eq_sum_chartLocalFrame`: expansion of an inverse
+  tangent trivialization in the chart-local frame.
 * `Riemannian.Tensor.chartGramMatrix`: the metric Gram matrix in this frame.
+* `Riemannian.Tensor.chartGramMatrix_change`: its change-of-chart formula.
+* `Riemannian.Tensor.chartGramMatrix_change_quadratic`: the corresponding change-of-chart formula
+  for the metric quadratic form on a coordinate velocity.
 * `Riemannian.Tensor.posDef_chartGramMatrix`: positive-definiteness on the base set.
 * `Riemannian.Tensor.chartGramMatrix_det_pos`: strict positivity of its determinant there.
 * `Riemannian.Tensor.contMDiffOn_chartGramMatrix_entry`: smoothness of Gram-matrix entries.
@@ -48,6 +56,9 @@ API replace them.
 * M. P. do Carmo, *Riemannian Geometry*, Chapter 2.
 * Poincare-Conjecture, `DoCarmoLib/Riemannian/TensorBundle/MusicalIso.lean`, stages 1--5,
   revision `24f32e4d600878bfaac6bc2f2f9324175571c321` (Apache-2.0).
+* Poincare-Conjecture, `DoCarmoLib/Riemannian/Geodesic/HopfRinow/MetricBridge.lean`,
+  chart-frame and Gram-matrix transition declarations, revision
+  `24f32e4d600878bfaac6bc2f2f9324175571c321` (Apache-2.0).
 
 -/
 
@@ -92,6 +103,54 @@ theorem chartLocalFrame_apply_of_mem_chart_source (α : M) {x : M}
       (Module.finBasis ℝ E) (i := i) (by
         simpa only [TangentBundle.trivializationAt_baseSet] using hx)
 
+/-- On the chart source, a chart-local frame vector is the inverse tangent trivialization of the
+corresponding model-space basis vector. -/
+theorem chartLocalFrame_apply_of_mem_chart_source_eq_symm (α : M) {x : M}
+    (hx : x ∈ (chartAt H α).source)
+    (i : Fin (Module.finrank ℝ E)) :
+    chartLocalFrame (I := I) α i x =
+      (trivializationAt E (TangentSpace I) α).symm x ((Module.finBasis ℝ E) i) := by
+  rw [chartLocalFrame_apply_of_mem_chart_source (I := I) α hx i]
+  rfl
+
+/-- The inverse tangent trivialization expands in the canonical chart-local frame. The
+  coefficients are the coordinates in `Module.finBasis ℝ E`; the chart-source hypothesis is needed
+  because local frames have a junk value outside the trivialization base set. -/
+theorem trivializationAt_symm_eq_sum_chartLocalFrame (α : M) (x : M) (v : E)
+    (hx : x ∈ (chartAt H α).source) :
+    (trivializationAt E (TangentSpace I) α).symm x v =
+      ∑ i, (Module.finBasis ℝ E).repr v i • chartLocalFrame (I := I) α i x := by
+  have hx' : x ∈ (trivializationAt E (TangentSpace I) α).baseSet := by
+    simpa only [TangentBundle.trivializationAt_baseSet] using hx
+  rw [← Bundle.Trivialization.coe_symmₗ (R := ℝ)
+    (trivializationAt E (TangentSpace I) α) hx']
+  conv_lhs => rw [← Module.Basis.sum_repr (Module.finBasis ℝ E) v]
+  rw [map_sum]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [map_smul, Bundle.Trivialization.coe_symmₗ (R := ℝ)
+    (trivializationAt E (TangentSpace I) α) hx',
+    ← chartLocalFrame_apply_of_mem_chart_source_eq_symm (I := I) α hx i]
+
+/-- At a common foot in two chart sources, the `β` chart-local frame vector is the `α`
+readback of the tangent coordinate change from `β` to `α`. -/
+theorem chartLocalFrame_eq_symm_tangentCoordChange (α β : M) {x : M}
+    (hxα : x ∈ (chartAt H α).source) (hxβ : x ∈ (chartAt H β).source)
+    (i : Fin (Module.finrank ℝ E)) :
+    chartLocalFrame (I := I) β i x =
+      (trivializationAt E (TangentSpace I) α).symm x
+        (tangentCoordChange I β α x ((Module.finBasis ℝ E) i)) := by
+  have hα : x ∈ (extChartAt I α).source := by
+    simpa only [extChartAt_source] using hxα
+  have hβ : x ∈ (extChartAt I β).source := by
+    simpa only [extChartAt_source] using hxβ
+  have hx : x ∈ (extChartAt I x).source := mem_extChartAt_source x
+  rw [chartLocalFrame_apply_of_mem_chart_source_eq_symm (I := I) β hxβ i,
+    TauCeti.Manifold.trivializationAt_symm_eq_tangentCoordChange
+      (I := I) hxβ ((Module.finBasis ℝ E) i),
+    TauCeti.Manifold.trivializationAt_symm_eq_tangentCoordChange (I := I) hxα
+      (tangentCoordChange I β α x ((Module.finBasis ℝ E) i))]
+  exact (tangentCoordChange_comp (I := I) ⟨⟨hβ, hα⟩, hx⟩).symm
+
 /-- Each member of `chartLocalFrame` is `C^n` on the tangent-trivialization base set. -/
 theorem contMDiffOn_chartLocalFrame {n : ℕ∞ω} [IsManifold I (n + 1) M]
     (α : M) (i : Fin (Module.finrank ℝ E)) :
@@ -117,6 +176,85 @@ def chartGramMatrix (α : M) (x : M) :
 theorem chartGramMatrix_apply (α : M) (x : M) (i j : Fin (Module.finrank ℝ E)) :
     chartGramMatrix (I := I) α x i j =
       inner ℝ (chartLocalFrame (I := I) α i x) (chartLocalFrame (I := I) α j x) := (rfl)
+
+/-- The Gram matrix transforms as a `(0,2)` tensor under a change of chart. At a point in the
+overlap, each entry in the `β` frame is a finite double sum of entries in the `α` frame and the
+two tangent-coordinate change coefficients. -/
+theorem chartGramMatrix_change (α β : M) {x : M}
+    (hxα : x ∈ (chartAt H α).source) (hxβ : x ∈ (chartAt H β).source)
+    (i j : Fin (Module.finrank ℝ E)) :
+    chartGramMatrix (I := I) β x i j =
+      ∑ a, ∑ b, chartGramMatrix (I := I) α x a b
+        * (Module.finBasis ℝ E).repr
+            (tangentCoordChange I β α x ((Module.finBasis ℝ E) i)) a
+        * (Module.finBasis ℝ E).repr
+            (tangentCoordChange I β α x ((Module.finBasis ℝ E) j)) b := by
+  let e := trivializationAt E (TangentSpace I) α
+  let u := tangentCoordChange I β α x ((Module.finBasis ℝ E) i)
+  let v := tangentCoordChange I β α x ((Module.finBasis ℝ E) j)
+  have hxα' : x ∈ e.baseSet := by
+    simpa only [e, TangentBundle.trivializationAt_baseSet] using hxα
+  rw [chartGramMatrix_apply (I := I) β x i j,
+    chartLocalFrame_eq_symm_tangentCoordChange (I := I) α β hxα hxβ i,
+    chartLocalFrame_eq_symm_tangentCoordChange (I := I) α β hxα hxβ j]
+  have hexpand :=
+    (LinearMap.sum_repr_mul_repr_mul (Module.finBasis ℝ E) (Module.finBasis ℝ E)
+      (B := (innerₗ (TangentSpace I x)).compl₁₂
+        (e.symmL ℝ x).toLinearMap (e.symmL ℝ x).toLinearMap) u v).symm
+  rw [Finsupp.sum_fintype] at hexpand
+  · have hinner (a : Fin (Module.finrank ℝ E)) :
+        ((Module.finBasis ℝ E).repr v).sum (fun b yb ↦
+            (Module.finBasis ℝ E).repr u a • yb •
+              (innerₗ (TangentSpace I x)).compl₁₂
+                (e.symmL ℝ x).toLinearMap (e.symmL ℝ x).toLinearMap
+                ((Module.finBasis ℝ E) a) ((Module.finBasis ℝ E) b)) =
+          ∑ b, (Module.finBasis ℝ E).repr u a •
+            (Module.finBasis ℝ E).repr v b •
+              (innerₗ (TangentSpace I x)).compl₁₂
+                (e.symmL ℝ x).toLinearMap (e.symmL ℝ x).toLinearMap
+                ((Module.finBasis ℝ E) a) ((Module.finBasis ℝ E) b) :=
+      Finsupp.sum_fintype _ _ (fun _ ↦ by simp)
+    simp_rw [hinner] at hexpand
+    simp only [e] at hexpand
+    have hsymmL (z : E) :
+        (trivializationAt E (TangentSpace I) α).symmL ℝ x z =
+          (trivializationAt E (TangentSpace I) α).symm x z :=
+      Bundle.Trivialization.symmL_apply (R := ℝ)
+        (trivializationAt E (TangentSpace I) α)
+        (by simpa only [e] using hxα') z
+    simp only [LinearMap.compl₁₂_apply, ContinuousLinearMap.coe_coe,
+      innerₗ_apply_apply] at hexpand
+    have hsymmL_fun :
+        ((trivializationAt E (TangentSpace I) α).symmL ℝ x :
+          E → TangentSpace I x) =
+            (trivializationAt E (TangentSpace I) α).symm x :=
+      funext hsymmL
+    rw [hsymmL_fun] at hexpand
+    simpa only [u, v, smul_eq_mul,
+      chartLocalFrame_apply_of_mem_chart_source_eq_symm (I := I) α hxα,
+      chartGramMatrix_apply (I := I) α x, mul_assoc, mul_comm, mul_left_comm] using hexpand
+  · intro
+    simp
+
+/-- The metric quadratic form of a coordinate velocity is invariant under the chart change: the
+  coefficients in the `β` frame are first converted to the `α` frame by the tangent-coordinate
+  change, and the `α` Gram matrix then evaluates the quadratic form. -/
+theorem chartGramMatrix_change_quadratic (α β : M) {x : M}
+    (hxα : x ∈ (chartAt H α).source) (hxβ : x ∈ (chartAt H β).source)
+    (c : Fin (Module.finrank ℝ E) → ℝ) :
+    (∑ i, ∑ j, chartGramMatrix (I := I) β x i j * c i * c j) =
+      ∑ a, ∑ b, chartGramMatrix (I := I) α x a b *
+        (∑ i, (Module.finBasis ℝ E).repr
+          (tangentCoordChange I β α x ((Module.finBasis ℝ E) i)) a * c i) *
+        (∑ j, (Module.finBasis ℝ E).repr
+          (tangentCoordChange I β α x ((Module.finBasis ℝ E) j)) b * c j) := by
+  classical
+  simp_rw [chartGramMatrix_change (I := I) α β hxα hxβ]
+  simp_rw [Finset.sum_mul, Finset.mul_sum]
+  simp only [mul_assoc]
+  simp_rw [Fintype.sum_mul_sum]
+  simp_rw [Finset.sum_mul, Finset.mul_sum]
+  simp only [Finset.sum_comm]
 
 /-- The Gram matrix of the chart-local frame is positive-definite on the tangent-trivialization
 base set. -/
