@@ -39,8 +39,6 @@ namespace TauCeti
 variable {E X : Type*} [TopologicalSpace E] [TopologicalSpace X]
   {p : E → X} {x₀ x₁ : X}
 
-namespace IsCoveringMap
-
 /-- **Conjugation law for monodromy along a path.** A class `g` at `x₁` fixes the endpoint
 `hp.monodromy ⟦γ⟧ e₀` of the lift of `γ` exactly when its transport back along `γ` fixes the
 starting point `e₀`. This is the path-level statement behind
@@ -111,7 +109,5 @@ theorem _root_.IsCoveringMap.range_mapOfEq_monodromy_path (hp : IsCoveringMap p)
     FundamentalGroup.mem_basepointChangeSubgroup_iff,
     ← IsCoveringMap.monodromy_eq_self_iff_mem_range hp e₀]
   exact hp.monodromy_eq_self_iff_fundamentalGroupMulEquivOfPath_symm_apply γ e₀ g
-
-end IsCoveringMap
 
 end TauCeti
