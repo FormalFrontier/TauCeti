@@ -34,6 +34,8 @@ the equivalence between cut-distance convergence and convergence of all homomorp
 
 ## References
 
+* Tau Ceti's human-authored formal specification,
+  `TauCetiRoadmap/DenseGraphLimits/Suggested.lean`.
 * L. Lovász, *Large Networks and Graph Limits*, AMS Colloquium Publications 60 (2012), Lemma 10.23.
 * S. Janson, *Graphons, cut norm and distance, couplings and rearrangements*, NYJM Monographs 4
   (2013), Lemma 7.2.

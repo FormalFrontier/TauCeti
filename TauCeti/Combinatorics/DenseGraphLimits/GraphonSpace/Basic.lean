@@ -32,6 +32,8 @@ quotient API directly.
 
 ## References
 
+* Tau Ceti's human-authored formal specification,
+  `TauCetiRoadmap/DenseGraphLimits/Suggested.lean`.
 * S. Janson, *Graphons, cut norm and distance, couplings and rearrangements*, NYJM Monographs 4
   (2013), Section 6.
 * L. Lovász, *Large Networks and Graph Limits*, AMS Colloquium Publications 60 (2012), Section 8.2.
@@ -65,6 +67,20 @@ instance Graphon.instPseudoMetricSpace : PseudoMetricSpace (Graphon Ω μ) where
 abbrev GraphonSpace (Ω : Type*) [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ] :
     Type _ :=
   SeparationQuotient (Graphon Ω μ)
+
+/-- The graphon-space distance between representatives is their coupling cut distance. -/
+@[simp]
+theorem dist_graphonSpace_mk_mk (U W : Graphon Ω μ) :
+    dist (SeparationQuotient.mk U) (SeparationQuotient.mk W) = cutDist U W :=
+  SeparationQuotient.dist_mk U W
+
+/-- Two representatives determine the same point of graphon space exactly when their coupling cut
+distance vanishes. -/
+@[simp]
+theorem graphonSpace_mk_eq_mk_iff (U W : Graphon Ω μ) :
+    SeparationQuotient.mk U = SeparationQuotient.mk W ↔ cutDist U W = 0 := by
+  rw [SeparationQuotient.mk_eq_mk, Metric.inseparable_iff]
+  rfl
 
 /-- The canonical graphon space over the unit interval with Lebesgue measure. -/
 abbrev GraphonSpaceI : Type _ := GraphonSpace I (volume : Measure I)
