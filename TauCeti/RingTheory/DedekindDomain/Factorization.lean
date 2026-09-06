@@ -109,7 +109,7 @@ variable {K : Type*} [Field K] [Algebra R K] [IsFractionRing R K]
 
 /-- **A prime-indexed family of powers with the multiplicities of a fractional ideal as exponents
 has finite multiplicative support.** Only finitely many primes occur in a fractional ideal, so
-only finitely many exponents are nonzero, whatever group the bases live in. -/
+only finitely many exponents are nonzero, whatever `DivInvMonoid` the bases live in. -/
 lemma hasFiniteMulSupport_zpow_count {G : Type*} [DivInvMonoid G] (I : FractionalIdeal R⁰ K)
     (f : HeightOneSpectrum R → G) :
     (Function.mulSupport fun v : HeightOneSpectrum R ↦ f v ^ count K v I).Finite := by

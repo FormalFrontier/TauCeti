@@ -9,6 +9,7 @@ public import TauCeti.FieldTheory.Galois.Abelian
 public import TauCeti.NumberTheory.NumberField.ArtinSymbol
 public import TauCeti.NumberTheory.NumberField.Ideal.Away
 import Mathlib.Algebra.Group.IsCommutative
+import TauCeti.Algebra.Group.Conj
 
 /-!
 # The ideal-theoretic Artin map away from a finite set of primes
@@ -90,7 +91,7 @@ noncomputable def artinElementAway (hab : ∀ σ τ : L ≃ₐ[K] L, Commute σ 
 
 /-- Inside the excluded set the Artin automorphism is trivial by definition. -/
 @[simp]
-theorem artinElementAway_of_mem {v : HeightOneSpectrum (𝓞 K)} (hv : v ∈ S) :
+theorem artinElementAway_eq_one_of_mem {v : HeightOneSpectrum (𝓞 K)} (hv : v ∈ S) :
     artinElementAway (L := L) hab S hur v = 1 :=
   dite_eq_left hv
 
@@ -230,15 +231,18 @@ theorem artinHomAway_restrict (M : IntermediateField K L) [IsGalois K M] :
         (isUnramifiedAway_of_intermediateField M S hur) := by
   refine artinHomAway_eq_of_apply_prime (commute_of_intermediateField hab M) S _ _ ?_
   intro I v hv hI P hPp hPl τ hτ
-  obtain ⟨Q, _, _⟩ := (inferInstance : Nonempty (P.primesOver (𝓞 L)))
-  have : Q.LiesOver v.asIdeal := Ideal.LiesOver.trans Q P v.asIdeal
+  obtain ⟨Q, _, _⟩ := (inferInstance : Nonempty (v.asIdeal.primesOver (𝓞 L)))
   obtain ⟨σ, hσ⟩ := exists_isArithFrobAt K Q (Ideal.ne_bot_of_liesOver_of_ne_bot v.ne_bot Q)
-  have : Algebra.IsUnramifiedAt (𝓞 K) P :=
-    isUnramifiedAway_of_intermediateField M S hur v hv P
-  have hunder : Q.under (𝓞 M) = P := (Ideal.LiesOver.over (p := P) (P := Q)).symm
-  have hrestrict : IsArithFrobAt (𝓞 K) (σ.restrictNormal M) P := hunder ▸ hσ.restrictNormal
+  have : IsMulCommutative (M ≃ₐ[K] M) :=
+    ⟨⟨fun a b ↦ (commute_of_intermediateField hab M a b).eq⟩⟩
   rw [MonoidHom.comp_apply, artinHomAway_apply_prime hab S hur I v hv hI Q σ hσ]
-  exact isArithFrobAt_eq_of_isUnramifiedAt hrestrict hτ
+  -- Both sides represent the Artin symbol of `v` for `M/K`, which is the image of the one for
+  -- `L/K` under restriction; in a commutative group a class has only one representative.
+  refine ConjClasses.mk_injective ?_
+  rw [← ConjClasses.map_mk (AlgEquiv.restrictNormalHom (F := K) (K₁ := L) M) σ,
+    ← artinSymbol_eq_mk_of_isArithFrobAt v.asIdeal (hur v hv) Q σ hσ,
+    artinSymbol_map_restrictNormalHom v.asIdeal (hur v hv),
+    artinSymbol_eq_mk_of_isArithFrobAt v.asIdeal _ P τ hτ]
 
 end Restrict
 
