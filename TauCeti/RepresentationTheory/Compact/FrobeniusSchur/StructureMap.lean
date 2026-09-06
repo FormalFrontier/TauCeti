@@ -61,8 +61,6 @@ other by `⟨_, _⟩`.
 
 ## References
 
-* [Compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md),
-  the source of the structure-map reading of the reality criterion that this file follows.
 * T. Bröcker, T. tom Dieck, *Representations of Compact Lie Groups*, Springer GTM 98 (1985),
   Chapter II, §6.
 * Daniel Bump, *Lie Groups*, second edition, Chapter 2.
