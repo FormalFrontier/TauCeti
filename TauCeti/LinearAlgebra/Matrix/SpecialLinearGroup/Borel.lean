@@ -204,4 +204,12 @@ end Field
 
 end SL2Borel
 
+/-- The standard Borel of `SL₂(R)` is the pullback of the standard Borel of `GL₂(R)` along the
+canonical inclusion. -/
+theorem SL2Borel_def (R : Type u) [CommRing R] :
+    SL2Borel R = (GL2Borel R).comap Matrix.SpecialLinearGroup.toGL := by
+  ext g
+  rw [SL2Borel.mem_iff, Subgroup.mem_comap, GL2Borel.mem_iff,
+    Matrix.SpecialLinearGroup.coe_GL_coe_matrix]
+
 end TauCeti

@@ -21,9 +21,8 @@ import TauCeti.GroupTheory.DoubleCoset.Identity
 -- Non-public: the generic two-cell generation and maximal-solvability arguments are used only to
 -- derive their `GL₂` specializations below.
 import TauCeti.GroupTheory.DoubleCoset.Generation
--- Non-public: `SL₂` over an infinite field is nonsolvable, which proves the corresponding result
--- for `GL₂`.
-import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Solvable
+-- Non-public: nonsolvability of `GL₂` is used only in the maximal-solvability results below.
+import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Solvable
 -- Non-public: the order of `GL₂` over a finite field is used only inside the proof of the size of
 -- the big cell.
 import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Card
@@ -76,10 +75,8 @@ the Weyl element.
 * `TauCeti.GL2Borel.card_doubleCosetQuotient_eq_two`: `B` has exactly two double cosets in `GL₂`.
 * `TauCeti.GL2Borel.closure_insert_gl2WeylElement_eq_top`: the Borel subgroup and the Weyl element
   generate `GL₂`.
-* `TauCeti.Matrix.GeneralLinearGroup.not_isSolvable_fin_two`: `GL₂` is not solvable when the
-  field contains a nonzero element whose square is not one, and
-  `TauCeti.GL2Borel.le_of_isSolvable`: every solvable subgroup containing the Borel subgroup
-  equals it under the same hypothesis.
+* `TauCeti.GL2Borel.le_of_isSolvable`: every solvable subgroup containing the Borel subgroup
+  equals it when the field contains a nonzero element whose square is not one.
 * `TauCeti.GL2Borel.ncard_doubleCoset_weyl`: the big cell of `GL₂(𝔽_q)` has `q² (q - 1)²`
   elements.
 
@@ -335,33 +332,6 @@ theorem closure_insert_gl2WeylElement_eq_top :
     Subgroup.closure (insert (GL2WeylElement F) (GL2Borel F : Set (GL (Fin 2) F))) = ⊤ := by
   exact closure_insert_eq_top_of_notMem_imp_mem_doubleCoset (GL2Borel F) (GL2WeylElement F)
     mem_doubleCoset_weyl_of_notMem
-
-end GL2Borel
-
-namespace Matrix.GeneralLinearGroup
-
-/-- The general linear group `GL₂(F)` is not solvable if `F` contains a nonzero element whose
-square is not one. -/
-theorem not_isSolvable_fin_two (hF : ∃ a : F, a ≠ 0 ∧ a ^ 2 ≠ 1) :
-    ¬ Group.IsSolvable (GL (Fin 2) F) := by
-  intro hGL
-  let _ : Group.IsSolvable (GL (Fin 2) F) := hGL
-  exact Matrix.SpecialLinearGroup.not_isSolvable_fin_two F hF <|
-    Group.isSolvable_of_isSolvable_injective
-      (f := Matrix.SpecialLinearGroup.toGL) Matrix.SpecialLinearGroup.toGL_injective
-
-/-- The general linear group `GL₂` over an infinite field is not solvable. -/
-theorem not_isSolvable_fin_two_of_infinite [Infinite F] :
-    ¬ Group.IsSolvable (GL (Fin 2) F) := by
-  intro hGL
-  let _ : Group.IsSolvable (GL (Fin 2) F) := hGL
-  exact Matrix.SpecialLinearGroup.not_isSolvable_fin_two_of_infinite F <|
-    Group.isSolvable_of_isSolvable_injective
-      (f := Matrix.SpecialLinearGroup.toGL) Matrix.SpecialLinearGroup.toGL_injective
-
-end Matrix.GeneralLinearGroup
-
-namespace GL2Borel
 
 /-- Every solvable subgroup of `GL₂(F)` that contains the upper-triangular subgroup is contained
 in it if `F` has a nonzero element whose square is not one. -/

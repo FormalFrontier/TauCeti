@@ -51,23 +51,10 @@ theorem not_isSolvable_fin_two (F : Type u) [Field F]
 theorem not_isSolvable_fin_two_of_infinite (F : Type u) [Field F] [Infinite F] :
     ¬ Group.IsSolvable SL(2, F) := by
   apply not_isSolvable_fin_two F
-  let S : Set F := {0} ∪ {1} ∪ {-1}
-  let U := {x : F // x ∈ Sᶜ}
-  let _ : Infinite U := (Set.toFinite S).infinite_compl.to_subtype
-  obtain ⟨a, _, _⟩ := exists_pair_ne U
-  have ha0 : (a : F) ≠ 0 := by
-    intro h
-    apply a.property
-    simp [S, h]
-  have ha1 : (a : F) ^ 2 ≠ 1 := by
-    rw [sq_ne_one_iff]
-    constructor
-    · intro h
-      apply a.property
-      simp [S, h]
-    · intro h
-      apply a.property
-      simp [S, h]
-  exact ⟨a, ha0, ha1⟩
+  classical
+  obtain ⟨a, ha⟩ := Infinite.exists_notMem_finset ({0, 1, -1} : Finset F)
+  have ha' : a ≠ 0 ∧ a ≠ 1 ∧ a ≠ -1 := by
+    simpa only [Finset.mem_insert, Finset.mem_singleton, not_or] using ha
+  exact ⟨a, ha'.1, sq_ne_one_iff.mpr ha'.2⟩
 
 end TauCeti.Matrix.SpecialLinearGroup
