@@ -7,7 +7,6 @@ module
 
 public import TauCeti.RepresentationTheory.Homological.TateCohomology.LowDegree
 public import Mathlib.RepresentationTheory.Homological.GroupHomology.FiniteCyclic
-public import Mathlib.Data.ZMod.QuotientRing
 
 /-!
 # Herbrand quotients of finite cyclic group representations
@@ -23,7 +22,10 @@ for the trivial integral representation.
 
 The proofs are adapted to Mathlib's current Tate complex from the corresponding calculations in
 `ClassFieldTheory/Cohomology/FiniteCyclic/HerbrandQuotient/{Defs,Finite,Trivial}.lean` in
-`kbuzzard/ClassFieldTheory`, commit `ccc3323c6750abca25b49b35106f54eb3a398509`.
+`kbuzzard/ClassFieldTheory`, commit `ccc3323c6750abca25b49b35106f54eb3a398509`. The trivial
+integral calculation reads off the low-degree evaluations
+`natCard_tateCohomology_zero_trivial_int_eq_card` and
+`subsingleton_tateCohomology_negOne_trivial_int`.
 
 ## Main definitions
 
@@ -158,53 +160,6 @@ theorem herbrandQuotient_eq_one_of_finite [IsCyclic G] (M : Rep R G) [Finite M] 
 section TrivialInt
 
 variable (H : Type) [Group H] [Fintype H]
-
-/-- Degree-zero Tate cohomology with trivial integral coefficients is `ZMod |G|`. -/
-def H0LinearEquivTrivialIntZModCard :
-    tateCohomology (Rep.trivial ℤ H ℤ) 0 ≃ₗ[ℤ] ZMod (Nat.card H) := by
-  -- A trivial representation is its own invariant submodule, so the inclusion of the invariants
-  -- is an equivalence onto `ℤ`.
-  let e : (Rep.trivial ℤ H ℤ).ρ.invariants ≃ₗ[ℤ] ℤ :=
-    LinearEquiv.ofEq _ _ (Representation.invariants_eq_top _) ≪≫ₗ Submodule.topEquiv
-  have he : (e : (Rep.trivial ℤ H ℤ).ρ.invariants →ₗ[ℤ] ℤ) =
-      (Rep.trivial ℤ H ℤ).ρ.invariants.subtype := by
-    ext x
-    simp [e]
-  have hsurjective : Function.Surjective
-      ⇑(Rep.trivial ℤ H ℤ).ρ.invariants.subtype :=
-    LinearMap.range_eq_top.mp <| by
-      rw [Submodule.range_subtype, Representation.invariants_eq_top]
-  refine (H0IsoNormQuotient (Rep.trivial ℤ H ℤ)).toLinearEquiv ≪≫ₗ
-    Submodule.Quotient.equiv _ _ e ?_ ≪≫ₗ
-      (Int.quotientSpanNatEquivZMod _).toIntLinearEquiv
-  rw [he, Submodule.submoduleOf, Submodule.map_comap_eq_of_surjective hsurjective,
-    range_norm_trivial_int]
-
-/-- The order of degree-zero Tate cohomology with trivial integral coefficients is the order of
-the group. -/
-@[simp]
-theorem natCard_tateCohomology_zero_trivial_int_eq_card :
-    Nat.card (tateCohomology (Rep.trivial ℤ H ℤ) 0) = Nat.card H := by
-  rw [Nat.card_congr (H0LinearEquivTrivialIntZModCard H).toEquiv, Nat.card_zmod]
-
-/-- Degree `-1` Tate cohomology with trivial integral coefficients is trivial. -/
-theorem subsingleton_tateCohomology_negOne_trivial_int :
-    Subsingleton (tateCohomology (Rep.trivial ℤ H ℤ) (-1)) := by
-  let Q := ker (Rep.trivial ℤ H ℤ).ρ.norm ⧸
-    (Representation.Coinvariants.ker (Rep.trivial ℤ H ℤ).ρ).submoduleOf
-      (ker (Rep.trivial ℤ H ℤ).ρ.norm)
-  have hker : ker (Rep.trivial ℤ H ℤ).ρ.norm = ⊥ := by
-    ext x
-    simp [Representation.norm]
-  have hQ : Subsingleton Q := by
-    have hkerSubsingleton : Subsingleton (ker (Rep.trivial ℤ H ℤ).ρ.norm) := by
-      rw [hker]
-      infer_instance
-    let _ : Subsingleton (ker (Rep.trivial ℤ H ℤ).ρ.norm) := hkerSubsingleton
-    infer_instance
-  let _ : Subsingleton Q := hQ
-  exact Function.Injective.subsingleton (HNegOneIsoNormKernelQuotient
-    (Rep.trivial ℤ H ℤ)).toLinearEquiv.injective
 
 /-- The Herbrand quotient of the trivial integral representation is the order of the finite
 group. -/
