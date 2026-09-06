@@ -79,7 +79,7 @@ namespace TauCeti.Huber
 
 open UniformSpace
 
-variable (k m : ℕ) (A : Type*) [CommRing A] [TopologicalSpace A] [NonarchimedeanRing A]
+variable (k m : ℕ) (A : Type*) [CommRing A] [TopologicalSpace A] [IsTopologicalRing A]
   [IsHuberRing A]
 
 /-- The generators of `A⟨X₁,…,Xₖ⟩⟨Y₁,…,Y_m⟩`, indexed as those of `A⟨X₁,…,X_{k+m}⟩`. -/
@@ -97,7 +97,6 @@ noncomputable def iterateVar (i : Fin (k + m)) :
       restrictedMvPowerSeriesCompletion m (restrictedMvPowerSeriesCompletion k A)))
     i
 
-omit [IsHuberRing A] in
 /-- On the first block the generator is the `i`-th variable of the inner algebra, read as a
 constant series of the outer one. -/
 @[simp]
@@ -111,7 +110,6 @@ theorem iterateVar_castAdd (i : Fin k) :
         restrictedMvPowerSeriesCompletion m (restrictedMvPowerSeriesCompletion k A)) := by
   rw [iterateVar, Fin.addCases_left]
 
-omit [IsHuberRing A] in
 /-- On the second block the generator is the `j`-th variable of the outer algebra. -/
 @[simp]
 theorem iterateVar_natAdd (j : Fin m) :
@@ -139,7 +137,6 @@ noncomputable def iterateStructureHom :
     (restrictedMvPowerSeriesCompletion m (restrictedMvPowerSeriesCompletion k A))).comp
     (algebraMap A (restrictedMvPowerSeriesCompletion k A))
 
-omit [IsHuberRing A] in
 /-- The structure map of the iterated algebra is continuous. -/
 theorem continuous_iterateStructureHom : Continuous (iterateStructureHom k m A) :=
   (continuous_algebraMap_restrictedMvPowerSeriesCompletion m
@@ -254,7 +251,6 @@ theorem iterateFirstBlockHom_coe_weightedC (a : A) :
 
 /-! ### The two maps are mutually inverse -/
 
-omit [IsHuberRing A] in
 /-- The structure map of the iterated algebra is the constant series of a constant series. -/
 theorem iterateStructureHom_eq (a : A) :
     iterateStructureHom k m A a
