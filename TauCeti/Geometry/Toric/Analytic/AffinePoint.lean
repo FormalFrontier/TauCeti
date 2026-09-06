@@ -45,6 +45,8 @@ not defined using them.
 
 ## References
 
+* `TauCetiRoadmap/AnalyticToricGeometry/Suggested.lean`,
+  "Affine complex points and an independent topology".
 * D. Cox, J. Little and H. Schenck, *Toric Varieties*, §§1.1–1.3.
 * W. Fulton, *Introduction to Toric Varieties*, §1.2.
 -/
