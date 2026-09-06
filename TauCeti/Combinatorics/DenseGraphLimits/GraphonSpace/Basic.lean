@@ -21,19 +21,26 @@ different carriers are still compared by the cross-carrier `cutDist`; they are n
 single universe-level quotient.  The abbreviation `GraphonSpaceI` names the canonical quotient on
 the unit interval.
 
-The implementation deliberately uses Mathlib's `SeparationQuotient`.  Once `cutDist` is installed
-as the pseudometric on strict graphons, Mathlib supplies the quotient, its metric, and the full
-quotient API directly.
+Two graphons at cut distance zero — for instance a graphon and any measure-preserving
+rearrangement of it — are topologically indistinguishable in the cut-metric topology, so the
+identification that turns the pseudometric into a metric is exactly the separation quotient of the
+strict graphon type.
 
 ## Main definitions
 
 * `TauCeti.DenseGraphLimits.GraphonSpace` is the corresponding fixed-carrier quotient;
 * `TauCeti.DenseGraphLimits.GraphonSpaceI` is the quotient over the unit interval.
 
+## Main results
+
+* `TauCeti.DenseGraphLimits.Graphon.dist_eq_cutDist` identifies the graphon distance with the
+  coupling cut distance;
+* `TauCeti.DenseGraphLimits.dist_graphonSpace_mk_mk` computes the quotient distance on
+  representatives;
+* `TauCeti.DenseGraphLimits.graphonSpace_mk_eq_mk_iff` characterises equality of representatives.
+
 ## References
 
-* Tau Ceti's human-authored formal specification,
-  `TauCetiRoadmap/DenseGraphLimits/Suggested.lean`.
 * S. Janson, *Graphons, cut norm and distance, couplings and rearrangements*, NYJM Monographs 4
   (2013), Section 6.
 * L. Lovász, *Large Networks and Graph Limits*, AMS Colloquium Publications 60 (2012), Section 8.2.
@@ -63,6 +70,10 @@ instance Graphon.instPseudoMetricSpace : PseudoMetricSpace (Graphon Ω μ) where
   dist_comm := cutDist_comm
   dist_triangle := cutDist_triangle
 
+/-- The distance between strict graphons on one carrier is their coupling cut distance. -/
+@[simp]
+theorem Graphon.dist_eq_cutDist (U W : Graphon Ω μ) : dist U W = cutDist U W := (rfl)
+
 /-- The fixed-carrier graphon space: strict graphons modulo vanishing cut distance. -/
 abbrev GraphonSpace (Ω : Type*) [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ] :
     Type _ :=
@@ -76,10 +87,10 @@ theorem dist_graphonSpace_mk_mk (U W : Graphon Ω μ) :
 
 /-- Two representatives determine the same point of graphon space exactly when their coupling cut
 distance vanishes. -/
+@[simp high]
 theorem graphonSpace_mk_eq_mk_iff (U W : Graphon Ω μ) :
     SeparationQuotient.mk U = SeparationQuotient.mk W ↔ cutDist U W = 0 := by
-  rw [SeparationQuotient.mk_eq_mk, Metric.inseparable_iff]
-  rfl
+  rw [SeparationQuotient.mk_eq_mk, Metric.inseparable_iff, Graphon.dist_eq_cutDist]
 
 /-- The canonical graphon space over the unit interval with Lebesgue measure. -/
 abbrev GraphonSpaceI : Type _ := GraphonSpace I (volume : Measure I)

@@ -6,7 +6,6 @@ Authors: Codex
 module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.GraphonSpace.Basic
-public import TauCeti.Combinatorics.DenseGraphLimits.HomDensity.Basic
 public import TauCeti.Combinatorics.DenseGraphLimits.Separation.Forward
 
 /-!
@@ -27,6 +26,8 @@ the equivalence between cut-distance convergence and convergence of all homomorp
 
 ## Main results
 
+* `TauCeti.DenseGraphLimits.lipschitzWith_homDensity` is the edge-count Lipschitz bound on strict
+  graphons, which makes the descent well defined;
 * `TauCeti.DenseGraphLimits.homDensityOnSpace_mk` computes it on a representative;
 * `TauCeti.DenseGraphLimits.lipschitzWith_homDensityOnSpace` gives the edge-count Lipschitz bound;
 * `TauCeti.DenseGraphLimits.continuous_homDensityOnSpace` gives continuity on every fixed-carrier
@@ -34,8 +35,6 @@ the equivalence between cut-distance convergence and convergence of all homomorp
 
 ## References
 
-* Tau Ceti's human-authored formal specification,
-  `TauCetiRoadmap/DenseGraphLimits/Suggested.lean`.
 * L. Lovász, *Large Networks and Graph Limits*, AMS Colloquium Publications 60 (2012), Lemma 10.23.
 * S. Janson, *Graphons, cut norm and distance, couplings and rearrangements*, NYJM Monographs 4
   (2013), Lemma 7.2.
@@ -51,40 +50,44 @@ namespace TauCeti
 
 namespace DenseGraphLimits
 
-variable {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasure μ]
+variable {V Ω : Type*} [Fintype V] [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasure μ]
 
-/-- The homomorphism density of a finite graph, as a function on graphon space. -/
-def homDensityOnSpace (n : ℕ) (F : SimpleGraph (Fin n)) [DecidableRel F.Adj] :
+/-- Homomorphism density is Lipschitz for the cut-distance pseudometric on strict graphons, with
+constant the number of edges of the finite graph. -/
+theorem lipschitzWith_homDensity (F : SimpleGraph V) [DecidableRel F.Adj] :
+    LipschitzWith (F.edgeFinset.card : NNReal) (homDensity F : Graphon Ω μ → ℝ) := by
+  refine LipschitzWith.of_dist_le_mul fun U W => ?_
+  rw [Real.dist_eq, NNReal.coe_natCast, Graphon.dist_eq_cutDist]
+  exact abs_homDensity_sub_le_cutDist F U W
+
+/-- The homomorphism density of a finite graph, as a function on graphon space.
+
+It is well defined because homomorphism density is continuous for the cut-distance pseudometric,
+hence constant on inseparable graphons. -/
+def homDensityOnSpace (F : SimpleGraph V) [DecidableRel F.Adj] :
     GraphonSpace Ω μ → ℝ :=
-  SeparationQuotient.lift (homDensity F) fun U W h =>
-    forall_homDensity_eq_of_cutDist_eq_zero U W (Metric.inseparable_iff.mp h) n F
+  SeparationQuotient.lift (homDensity F) fun _ _ h =>
+    (h.map (lipschitzWith_homDensity F).continuous).eq
 
 /-- Homomorphism density on graphon space computes as the original density on representatives. -/
 @[simp]
-theorem homDensityOnSpace_mk (n : ℕ) (F : SimpleGraph (Fin n)) [DecidableRel F.Adj]
-    (W : Graphon Ω μ) :
-    homDensityOnSpace (μ := μ) n F (SeparationQuotient.mk W) = homDensity F W :=
+theorem homDensityOnSpace_mk (F : SimpleGraph V) [DecidableRel F.Adj] (W : Graphon Ω μ) :
+    homDensityOnSpace (μ := μ) F (SeparationQuotient.mk W) = homDensity F W :=
   SeparationQuotient.lift_mk
-    (fun U W h => forall_homDensity_eq_of_cutDist_eq_zero U W
-      (Metric.inseparable_iff.mp h) n F) W
+    (fun _ _ h => (h.map (lipschitzWith_homDensity F).continuous).eq) W
 
 /-- Homomorphism density on graphon space is Lipschitz with constant the number of edges of the
 finite graph. -/
-theorem lipschitzWith_homDensityOnSpace (n : ℕ) (F : SimpleGraph (Fin n))
-    [DecidableRel F.Adj] :
-    LipschitzWith (F.edgeFinset.card : NNReal) (homDensityOnSpace (μ := μ) n F) := by
-  refine LipschitzWith.of_dist_le_mul ?_
-  refine SeparationQuotient.surjective_mk.forall₂.2 ?_
-  intro U W
-  rw [Real.dist_eq, homDensityOnSpace_mk, homDensityOnSpace_mk,
-    SeparationQuotient.dist_mk, NNReal.coe_natCast]
-  exact abs_homDensity_sub_le_cutDist F U W
+theorem lipschitzWith_homDensityOnSpace (F : SimpleGraph V) [DecidableRel F.Adj] :
+    LipschitzWith (F.edgeFinset.card : NNReal) (homDensityOnSpace (μ := μ) F) := by
+  refine LipschitzWith.of_dist_le_mul (SeparationQuotient.surjective_mk.forall₂.2 fun U W => ?_)
+  rw [homDensityOnSpace_mk, homDensityOnSpace_mk, SeparationQuotient.dist_mk]
+  exact (lipschitzWith_homDensity F).dist_le_mul U W
 
 /-- Every finite-graph homomorphism density is continuous on graphon space. -/
-theorem continuous_homDensityOnSpace (n : ℕ) (F : SimpleGraph (Fin n))
-    [DecidableRel F.Adj] :
-    Continuous (homDensityOnSpace (μ := μ) n F) :=
-  (lipschitzWith_homDensityOnSpace (μ := μ) n F).continuous
+theorem continuous_homDensityOnSpace (F : SimpleGraph V) [DecidableRel F.Adj] :
+    Continuous (homDensityOnSpace (μ := μ) F) :=
+  (lipschitzWith_homDensityOnSpace (μ := μ) F).continuous
 
 end DenseGraphLimits
 
