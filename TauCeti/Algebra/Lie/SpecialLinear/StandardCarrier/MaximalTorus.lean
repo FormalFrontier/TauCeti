@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Lie.SpecialLinear.StandardCarrier.FieldPoints
+public import TauCeti.Algebra.Lie.SpecialLinear.StandardCarrier.DeterminantOne
 
 /-!
 # Maximality of the type A weight torus on field-valued points
@@ -35,6 +35,18 @@ noncomputable section
 
 variable (r : ℕ)
 
+private theorem prod_ite_eq_of_eq {M : Type*} [CommMonoid M] (f : Fin r → M)
+    (e : Fin r → Fin (r + 1)) (he : Function.Injective e) (k : Fin (r + 1)) (c : Fin r)
+    (hkc : k = e c) :
+    (∏ i, if k = e i then f i else 1) = f c := by
+  rw [Finset.prod_eq_single c]
+  · simp only [hkc, ↓reduceIte]
+  · intro j _ hj
+    split_ifs with h
+    · exact (hj (he (hkc.symm.trans h)).symm).elim
+    · rfl
+  · exact fun h ↦ absurd (Finset.mem_univ c) h
+
 /-- The standard weight at coordinate `k` evaluates as the quotient of two adjacent partial
 products. Missing factors at the two ends are interpreted as one. -/
 private theorem torusCharacter_weight (K : Type u) [CommRing K]
@@ -55,14 +67,8 @@ private theorem torusCharacter_weight (K : Type u) [CommRing K]
     split_ifs with hk
     · let c : Fin r := ⟨k, hk⟩
       have hkc : k = c.castSucc := Fin.ext (by simp [c])
-      rw [Finset.prod_eq_single c]
-      · simp only [hkc, ↓reduceIte]
-        congr 1
-      · intro j _ hj
-        split_ifs with h
-        · exact (hj (Fin.castSucc_inj.mp (hkc.symm.trans h)).symm).elim
-        · rfl
-      · exact fun h ↦ absurd (Finset.mem_univ c) h
+      rw [prod_ite_eq_of_eq r s Fin.castSucc
+        (fun _ _ h ↦ Fin.castSucc_inj.mp h) k c hkc]
     · have : ∀ i : Fin r, k ≠ i.castSucc := by
         intro i hi
         apply hk
@@ -81,14 +87,8 @@ private theorem torusCharacter_weight (K : Type u) [CommRing K]
     · have hi : (k - 1 : ℕ) < r := by omega
       let c : Fin r := ⟨k - 1, hi⟩
       have hkc : k = c.succ := Fin.ext (by simp [c]; omega)
-      rw [Finset.prod_eq_single c]
-      · simp only [hkc, ↓reduceIte]
-        congr 1
-      · intro j _ hj
-        split_ifs with h
-        · exact (hj (Fin.succ_inj.mp (hkc.symm.trans h)).symm).elim
-        · rfl
-      · exact fun h ↦ absurd (Finset.mem_univ c) h
+      rw [prod_ite_eq_of_eq r (fun i ↦ (s i)⁻¹) Fin.succ
+        (fun _ _ h ↦ Fin.succ_inj.mp h) k c hkc]
     · have : ∀ i : Fin r, k ≠ i.succ := by
         intro i hi
         apply hk
@@ -97,43 +97,44 @@ private theorem torusCharacter_weight (K : Type u) [CommRing K]
         omega
       simp [this]
 
-/-- Partial products invert the standard weight parametrization on determinant-one diagonal
-families. -/
-private def partialProducts {K : Type u} [CommRing K]
-    (t : Fin (r + 1) → Kˣ) (i : Fin r) : Kˣ :=
-  ∏ j ∈ Finset.range (i + 1), if hj : j < r + 1 then t ⟨j, hj⟩ else 1
-
-private theorem torusCharacter_partialProducts {K : Type u} [CommRing K]
+private theorem torusCharacter_partialProd {K : Type u} [CommRing K]
     (t : Fin (r + 1) → Kˣ) (ht : ∏ i, t i = 1) (k : Fin (r + 1)) :
-    torusCharacter (partialProducts r t) (weight r k) = t k := by
+    torusCharacter (fun i : Fin r ↦ Fin.partialProd t i.succ.castSucc) (weight r k) = t k := by
   rw [torusCharacter_weight]
   split_ifs with hkr hk0
-  · rw [partialProducts, partialProducts]
-    have hpred : (k - 1 : ℕ) + 1 = k := by omega
-    rw [hpred, ← div_eq_mul_inv, Finset.prod_range_succ_div_prod]
-    rw [dite_eq_left (by omega)]
+  · let i : Fin r := ⟨k, hkr⟩
+    let j : Fin r := ⟨k - 1, by omega⟩
+    have hi : i.succ.castSucc = k.succ := Fin.ext (by simp [i])
+    have hj : j.succ.castSucc = k.castSucc := Fin.ext (by simp [j]; omega)
+    rw [hi, hj]
+    simpa only [mul_comm] using (Fin.partialProd_right_inv t k)
   · have hkzero : (k : ℕ) = 0 := by omega
     have hkfin : k = 0 := Fin.ext hkzero
     subst k
-    simp [partialProducts]
+    have hi : (⟨(0 : Fin (r + 1)), hkr⟩ : Fin r).succ.castSucc =
+        (0 : Fin (r + 1)).succ := Fin.ext rfl
+    rw [mul_one, hi, Fin.partialProd_succ,
+      show (0 : Fin (r + 1)).castSucc = (0 : Fin (r + 2)) by rfl,
+      Fin.partialProd_zero, one_mul]
   · have hkmax : (k : ℕ) = r := by omega
     have hrpos : 0 < r := by omega
     have hkfin : k = ⟨r, Nat.lt_succ_self r⟩ := Fin.ext hkmax
     subst k
-    rw [partialProducts]
-    have hpred : (r - 1 : ℕ) + 1 = r := by omega
-    rw [hpred]
-    have htotal :
-        (∏ j ∈ Finset.range r,
-            if hj : j < r + 1 then t ⟨j, hj⟩ else 1) *
-              t ⟨r, Nat.lt_succ_self r⟩ = 1 := by
-      have hlast :
-        (if hj : r < r + 1 then t ⟨r, hj⟩ else 1) =
-          t ⟨r, Nat.lt_succ_self r⟩ := by simp
-      rw [← hlast]
-      rw [← Finset.prod_range_succ]
-      simpa only [Finset.prod_fin_eq_prod_range] using ht
-    rw [one_mul, eq_inv_of_mul_eq_one_left htotal, inv_inv]
+    let i : Fin r := ⟨r - 1, by omega⟩
+    let k : Fin (r + 1) := ⟨r, Nat.lt_succ_self r⟩
+    have hi : i.succ.castSucc = k.castSucc := Fin.ext (by simp [i, k]; omega)
+    rw [hi]
+    have hlast : Fin.partialProd t k.succ = 1 := by
+      have hk_last : k.succ = Fin.last (r + 1) := Fin.ext (by simp [k])
+      rw [hk_last]
+      rw [Fin.partialProd, Fin.val_last]
+      have htake : (List.ofFn t).take (r + 1) = List.ofFn t :=
+        (List.take_eq_self_iff _).mpr (by simp)
+      rw [htake, Fin.prod_ofFn]
+      exact ht
+    have hright := Fin.partialProd_right_inv t k
+    rw [hlast, mul_one] at hright
+    simpa only [one_mul, k] using hright
   · have hrzero : r = 0 := by omega
     subst r
     have hkfin : k = 0 := Fin.eq_zero k
@@ -153,8 +154,11 @@ theorem mem_diagonalPoints_iff {K : Type u} [CommRing K] {g : points r K} :
   rw [diagonalPoints, Subgroup.mem_comap, mem_diagonalTorus_iff]
   rfl
 
-/-- Over an infinite field, a carrier point centralizing the weight torus is diagonal. -/
-theorem centralizer_range_weightTorusPoints (K : Type u) [Field K] [Infinite K] :
+/-- If distinct weights define distinct characters over a ring without zero divisors, a carrier
+point centralizing the weight torus is diagonal. -/
+theorem centralizer_range_weightTorusPoints_of_weightChar_injective
+    (K : Type u) [CommRing K] [IsCancelMulZero K]
+    (hchar : Function.Injective (weightChar K (κ := Fin r))) :
     Subgroup.centralizer
         ((weightTorusPoints r K).range : Set (points r K)) = diagonalPoints r K := by
   apply le_antisymm
@@ -162,12 +166,12 @@ theorem centralizer_range_weightTorusPoints (K : Type u) [Field K] [Infinite K] 
     rw [mem_diagonalPoints_iff]
     intro i j hij
     have hweight : weight r i ≠ weight r j := fun h ↦ hij (weight_injective r h)
-    have hchar : weightChar K (weight r i) ≠ weightChar K (weight r j) :=
-      fun h ↦ hweight (weightChar_injective h)
+    have hchar_ne : weightChar K (weight r i) ≠ weightChar K (weight r j) :=
+      fun h ↦ hweight (hchar h)
     have hexists : ∃ s, weightChar K (weight r i) s ≠ weightChar K (weight r j) s := by
       by_contra h
       push Not at h
-      exact hchar (MonoidHom.ext h)
+      exact hchar_ne (MonoidHom.ext h)
     obtain ⟨s, hs⟩ := hexists
     let d := weightTorusPoints r K s
     have hcomm : Commute d g :=
@@ -199,6 +203,24 @@ theorem centralizer_range_weightTorusPoints (K : Type u) [Field K] [Infinite K] 
     apply Subtype.ext
     exact hcomm.eq
 
+/-- Over an infinite field, a carrier point centralizing the weight torus is diagonal. -/
+theorem centralizer_range_weightTorusPoints (K : Type u) [Field K] [Infinite K] :
+    Subgroup.centralizer
+        ((weightTorusPoints r K).range : Set (points r K)) = diagonalPoints r K :=
+  centralizer_range_weightTorusPoints_of_weightChar_injective r K weightChar_injective
+
+/-- The standard weight-torus parametrization is injective over every commutative ring. -/
+theorem weightTorusPoints_injective (K : Type u) [CommRing K] :
+    Function.Injective (weightTorusPoints r K) := by
+  intro s t hst
+  apply eq_of_span_eq_top_of_torusCharacter_eq (span_range_weight_eq_top r)
+  intro i
+  have hmatrix := congrArg (fun g : points r K ↦ g.1) hst
+  rw [coe_weightTorusPoints, coe_weightTorusPoints,
+    UniversalEnvelopingAlgebra.kostantTorusMatrix_apply,
+    UniversalEnvelopingAlgebra.kostantTorusMatrix_apply] at hmatrix
+  exact congrFun (diagGL_injective hmatrix) i
+
 /-- **Over a commutative ring, the standard weight torus consists of all diagonal carrier
 points.** Thus every diagonal carrier point admits a standard weight-torus parametrization. -/
 theorem range_weightTorusPoints_eq_diagonalPoints (K : Type u) [CommRing K] :
@@ -218,13 +240,31 @@ theorem range_weightTorusPoints_eq_diagonalPoints (K : Type u) [CommRing K] :
       have hdet' := congrArg Matrix.GeneralLinearGroup.det ht
       rw [det_diagGL] at hdet'
       exact hdet'.trans hdet
-    refine ⟨partialProducts r t, ?_⟩
+    refine ⟨(fun i : Fin r ↦ Fin.partialProd t i.succ.castSucc), ?_⟩
     apply Subtype.ext
     rw [coe_weightTorusPoints,
       UniversalEnvelopingAlgebra.kostantTorusMatrix_apply]
-    have hchars : (fun i ↦ torusCharacter (partialProducts r t) (weight r i)) = t :=
-      funext (torusCharacter_partialProducts r t hprod)
+    have hchars :
+        (fun i ↦ torusCharacter (fun j : Fin r ↦ Fin.partialProd t j.succ.castSucc)
+          (weight r i)) = t :=
+      funext (torusCharacter_partialProd r t hprod)
     rw [hchars, ht]
+
+/-- If its weight characters are distinct over a ring without zero divisors, the standard weight
+torus is maximal among commutative subgroups of the type `A_r` carrier. -/
+theorem eq_range_weightTorusPoints_of_le_of_isMulCommutative_of_weightChar_injective
+    (K : Type u) [CommRing K] [IsCancelMulZero K]
+    (hchar : Function.Injective (weightChar K (κ := Fin r)))
+    (H : Subgroup (points r K)) [IsMulCommutative H]
+    (hle : (weightTorusPoints r K).range ≤ H) :
+    H = (weightTorusPoints r K).range :=
+  le_antisymm
+    (by
+      rw [range_weightTorusPoints_eq_diagonalPoints r K,
+        ← centralizer_range_weightTorusPoints_of_weightChar_injective r K hchar]
+      exact (Subgroup.le_centralizer (H := H)).trans
+        (Subgroup.centralizer_le (SetLike.coe_subset_coe.mpr hle)))
+    hle
 
 /-- **The standard weight torus is maximal among commutative subgroups of the type `A_r`
 carrier over an infinite field.** -/
@@ -233,13 +273,8 @@ theorem eq_range_weightTorusPoints_of_le_of_isMulCommutative
     (H : Subgroup (points r K)) [IsMulCommutative H]
     (hle : (weightTorusPoints r K).range ≤ H) :
     H = (weightTorusPoints r K).range :=
-  le_antisymm
-    (by
-      rw [range_weightTorusPoints_eq_diagonalPoints r K,
-        ← centralizer_range_weightTorusPoints r K]
-      exact (Subgroup.le_centralizer (H := H)).trans
-        (Subgroup.centralizer_le (SetLike.coe_subset_coe.mpr hle)))
-    hle
+  eq_range_weightTorusPoints_of_le_of_isMulCommutative_of_weightChar_injective r K
+    weightChar_injective H hle
 
 end
 
