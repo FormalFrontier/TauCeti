@@ -303,25 +303,21 @@ end DegreeCount
 
 section SupportSubset
 
-include hp in
-/-- The support of `T(1,p) · T(1,pᵏ)` is contained in `{T(1,p^(k+1)), T(p,pᵏ)}`. -/
-private lemma mulSupport_pp_subset (k : ℕ)
-    (A : HeckeCoset (posDetInt 2) (SLnZ 2) (SLnZ 2))
+/-- Unpacking a support coset of `T(1,p) · T(1,pᵏ)`. If `T(a)` occurs in the product then some
+pair of coset representatives multiplies into the double coset of `natDiagGL 2 a`; naming the
+`SL₂(ℤ)` lift of each of the four `SL₂` factors turns that membership into an explicit
+equation. -/
+private lemma mulSupport_pp_exists_prod_eq (k : ℕ) (a : Fin 2 → ℕ)
     (hA : multiplicity (SLnZ 2) (SLnZ 2) (SLnZ 2)
       (((diagCoset ![1, p]).rep : GL (Fin 2) ℚ))
-      (((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ)) ((A.rep : GL (Fin 2) ℚ)) ≠ 0) :
-    A = diagCoset ![1, p ^ (k + 1)] ∨ A = diagCoset ![p, p ^ k] := by
-  classical
-  -- Stage 1: positivity of the two input diagonals, and a diagonal representative `a` for `A`.
-  have h1p_pos : ∀ i : Fin 2, 0 < (![1, p] : Fin 2 → ℕ) i := fun i ↦ by
-    fin_cases i <;> simp [hp.pos]
-  have h1pk_pos : ∀ i : Fin 2, 0 < (![1, p ^ k] : Fin 2 → ℕ) i := fun i ↦ by
-    fin_cases i <;> simp [pow_pos hp.pos k]
-  obtain ⟨a, ha_pos, hdiv, hA_eq⟩ := exists_diagonal_representative A
-  -- Stage 2: `A` occurs in the product, so some pair `q` of coset representatives multiplies
-  -- into the double coset of `natDiagGL 2 a`; unpack that into an explicit `La · D · Ra`.
+      (((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ))
+      (((diagCoset a).rep : GL (Fin 2) ℚ)) ≠ 0) :
+    ∃ SL_i₀ SL_j₀ SL_La SL_Ra : SpecialLinearGroup (Fin 2) ℤ,
+      mapGL ℚ SL_i₀ * ((diagCoset ![1, p]).rep : GL (Fin 2) ℚ) *
+        (mapGL ℚ SL_j₀ * ((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ)) =
+        mapGL ℚ SL_La * natDiagGL 2 a * mapGL ℚ SL_Ra := by
   have hmem := (HeckeCoset.mem_image_mulMap_iff (diagCoset ![1, p]).rep
-    (diagCoset ![1, p ^ k]).rep A).mpr hA
+    (diagCoset ![1, p ^ k]).rep (diagCoset a)).mpr hA
   simp only [Finset.mem_image, Finset.mem_univ, true_and] at hmem
   obtain ⟨q, hq⟩ := hmem
   have h_prod_mem : ((q.1.out : GL (Fin 2) ℚ) * ((diagCoset ![1, p]).rep : GL (Fin 2) ℚ) *
@@ -333,47 +329,59 @@ private lemma mulSupport_pp_subset (k : ℕ)
           (diagCoset ![1, p]).rep (diagCoset ![1, p ^ k]).rep q).toSet := by
       rw [HeckeCoset.mulMap_eq_mk, HeckeCoset.toSet_mk]
       exact mem_doubleCoset_self _ _ _
-    rwa [hq, hA_eq, diagCoset_toSet] at hself
+    rwa [hq, diagCoset_toSet] at hself
   rw [mem_doubleCoset] at h_prod_mem
   obtain ⟨La, hLa, Ra, hRa, h_prod_eq⟩ := h_prod_mem
-  -- Stage 3: every `SLnZ 2` element appearing above is `mapGL ℚ` of an honest integral `SL₂`
-  -- matrix; name those lifts, and likewise for the two input cosets' own decompositions.
   obtain ⟨SL_La, hSL_La⟩ := (mem_SLnZ_iff 2).mp hLa
   obtain ⟨SL_Ra, hSL_Ra⟩ := (mem_SLnZ_iff 2).mp hRa
   obtain ⟨SL_i₀, hSL_i₀⟩ := (mem_SLnZ_iff 2).mp q.1.out.2
   obtain ⟨SL_j₀, hSL_j₀⟩ := (mem_SLnZ_iff 2).mp q.2.out.2
+  refine ⟨SL_i₀, SL_j₀, SL_La, SL_Ra, ?_⟩
+  rw [hSL_i₀, hSL_j₀, hSL_La, hSL_Ra]
+  exact h_prod_eq
+
+include hp in
+/-- The support of `T(1,p) · T(1,pᵏ)` is contained in `{T(1,p^(k+1)), T(p,pᵏ)}`. -/
+private lemma mulSupport_pp_subset (k : ℕ)
+    (A : HeckeCoset (posDetInt 2) (SLnZ 2) (SLnZ 2))
+    (hA : multiplicity (SLnZ 2) (SLnZ 2) (SLnZ 2)
+      (((diagCoset ![1, p]).rep : GL (Fin 2) ℚ))
+      (((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ)) ((A.rep : GL (Fin 2) ℚ)) ≠ 0) :
+    A = diagCoset ![1, p ^ (k + 1)] ∨ A = diagCoset ![p, p ^ k] := by
+  -- Stage 1: positivity of the two input diagonals, and a diagonal representative `a` for `A`.
+  have h1p_pos : ∀ i : Fin 2, 0 < (![1, p] : Fin 2 → ℕ) i := fun i ↦ by
+    fin_cases i <;> simp [hp.pos]
+  have h1pk_pos : ∀ i : Fin 2, 0 < (![1, p ^ k] : Fin 2 → ℕ) i := fun i ↦ by
+    fin_cases i <;> simp [pow_pos hp.pos k]
+  obtain ⟨a, ha_pos, hdiv, rfl⟩ := exists_diagonal_representative A
+  -- Stage 2: `T(a)` occurs in the product, so the two coset representatives multiply into the
+  -- double coset of `natDiagGL 2 a`, with every factor lifted to an integral `SL₂` matrix.
+  obtain ⟨SL_i₀, SL_j₀, SL_La, SL_Ra, h_prod_eq⟩ := mulSupport_pp_exists_prod_eq p k a hA
+  -- Stage 3: the two input cosets' own decompositions, lifted the same way.
   obtain ⟨L₁, hL₁, R₁, hR₁, hD1⟩ := exists_rep_diagCoset_eq_mul_natDiagGL_mul (![1, p])
   obtain ⟨SL_L₁, hSL_L₁⟩ := (mem_SLnZ_iff 2).mp hL₁
   obtain ⟨SL_R₁, hSL_R₁⟩ := (mem_SLnZ_iff 2).mp hR₁
   obtain ⟨L₂, hL₂, R₂, hR₂, hD2⟩ := exists_rep_diagCoset_eq_mul_natDiagGL_mul (![1, p ^ k])
   obtain ⟨SL_L₂, hSL_L₂⟩ := (mem_SLnZ_iff 2).mp hL₂
   obtain ⟨SL_R₂, hSL_R₂⟩ := (mem_SLnZ_iff 2).mp hR₂
-  have h_prod_eq' : (q.1.out : GL (Fin 2) ℚ) *
-      ((diagCoset ![1, p]).rep : GL (Fin 2) ℚ) *
-      ((q.2.out : GL (Fin 2) ℚ) * ((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ)) =
-      mapGL ℚ SL_La * natDiagGL 2 a * mapGL ℚ SL_Ra := by
-    rw [hSL_La, hSL_Ra]
-    exact h_prod_eq
   -- Stage 4: determinants. Both sides of the product have determinant `p^(k+1)`, which pins
   -- `a 0 * a 1`; the two coset representatives' determinants come from `diagCoset_rep_det`, and
   -- the two `SL₂` factors' from `det_eq_one_of_mem_SLnZ`.
-  have h_det := diag_entries_mul_eq_pow_succ p k a ha_pos (q.1.out : GL (Fin 2) ℚ)
-    ((diagCoset ![1, p]).rep : GL (Fin 2) ℚ) (q.2.out : GL (Fin 2) ℚ)
+  have h_det := diag_entries_mul_eq_pow_succ p k a ha_pos (mapGL ℚ SL_i₀)
+    ((diagCoset ![1, p]).rep : GL (Fin 2) ℚ) (mapGL ℚ SL_j₀)
     ((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ)
-    (det_eq_one_of_mem_SLnZ 2 q.1.out.2)
+    (det_eq_one_of_mem_SLnZ 2 ((mem_SLnZ_iff 2).mpr ⟨SL_i₀, rfl⟩))
     (by rw [diagCoset_rep_det _ h1p_pos]; simp [Fin.prod_univ_two])
-    (det_eq_one_of_mem_SLnZ 2 q.2.out.2)
+    (det_eq_one_of_mem_SLnZ 2 ((mem_SLnZ_iff 2).mpr ⟨SL_j₀, rfl⟩))
     (by rw [diagCoset_rep_det _ h1pk_pos]; simp [Fin.prod_univ_two])
-    SL_La SL_Ra h_prod_eq'
+    SL_La SL_Ra h_prod_eq
   -- Stage 5: the first invariant factor divides `p`, because conjugating the middle matrix
   -- keeps it integral. With `a 0 * a 1 = p^(k+1)` that leaves only the two claimed cosets.
   have h_dvd := mulSupport_pp_dvd_p p hp k a ha_pos hdiv
     ((diagCoset ![1, p]).rep : GL (Fin 2) ℚ) ((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ)
-    (q.1.out : GL (Fin 2) ℚ) (q.2.out : GL (Fin 2) ℚ)
+    (mapGL ℚ SL_i₀) (mapGL ℚ SL_j₀)
     SL_L₁ SL_R₁ SL_L₂ SL_R₂ SL_La SL_Ra SL_i₀ SL_j₀
-    (by rw [hD1, hSL_L₁, hSL_R₁]) (by rw [hD2, hSL_L₂, hSL_R₂])
-    hSL_i₀.symm hSL_j₀.symm h_prod_eq'
-  rw [hA_eq]
+    (by rw [hD1, hSL_L₁, hSL_R₁]) (by rw [hD2, hSL_L₂, hSL_R₂]) rfl rfl h_prod_eq
   exact mulSupport_pp_case_split p hp k a h_det h_dvd
 
 include hp in
