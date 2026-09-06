@@ -74,14 +74,14 @@ noncomputable def formalPoint {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ 
 open scoped Classical in
 @[simp]
 theorem formalPoint_of_eq_zero {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I) (h0 : t = 0) :
-    W.formalPoint (K := K) hI ht = 0 :=
-  dif_pos h0
+    W.formalPoint (K := K) hI ht = 0 := by
+  simp [formalPoint, h0]
 
 open scoped Classical in
 theorem formalPoint_of_ne_zero {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I) (h0 : t ≠ 0) :
     W.formalPoint (K := K) hI ht =
       .some _ _ (W.formalPoint_nonsingular (K := K) (hI.isTopologicallyNilpotent_of_mem ht)
-        (W.algebraMap_formalWEval_ne_zero hI ht h0)) :=
-  dif_neg h0
+        (W.algebraMap_formalWEval_ne_zero hI ht h0)) := by
+  simp [formalPoint, h0]
 
 end WeierstrassCurve
