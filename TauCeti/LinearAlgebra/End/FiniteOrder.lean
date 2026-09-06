@@ -212,13 +212,6 @@ theorem conj_trace_eq_trace_pow_sub_one {f : End ℂ V} {n : ℕ} (hn : n ≠ 0)
     exact inv_eq_of_mul_eq_one_right
       (by rw [← pow_succ', Nat.sub_add_cancel (Nat.one_le_iff_ne_zero.2 hn), hμ])
 
-/-- A complex number of norm `1` whose real part is `1` is `1`: the real part already exhausts the
-norm, so the imaginary part vanishes. -/
-private theorem eq_one_of_norm_eq_one_of_re_eq_one {μ : ℂ} (hnorm : ‖μ‖ = 1) (hre : μ.re = 1) :
-    μ = 1 := by
-  have him : μ.im = 0 := Complex.abs_re_eq_norm.mp (by rw [hre, hnorm, abs_one])
-  exact Complex.ext (by simpa using hre) (by simpa using him)
-
 /-- **An endomorphism of finite order whose trace has the largest possible absolute value is a
 scalar.** The eigenvalues of `f` are `n`-th roots of unity and the trace is their sum, weighted by
 the dimensions of the eigenspaces, which add up to `finrank ℂ V`. A sum of `finrank ℂ V` many unit
@@ -292,8 +285,11 @@ theorem exists_eq_smul_of_norm_trace_eq_finrank {f : End ℂ V} {n : ℕ} (hn : 
       rcases mul_eq_zero.1 hz with h' | h'
       · exact absurd h' hdpos
       · linarith
+    -- a real part of `1` already exhausts the norm `1`, so the imaginary part vanishes
+    have him : ((starRingEnd ℂ) μ₀ * μ).im = 0 :=
+      Complex.abs_re_eq_norm.mp (by rw [hre, hnormE μ hμ, abs_one])
     have h1 : (starRingEnd ℂ) μ₀ * μ = 1 :=
-      eq_one_of_norm_eq_one_of_re_eq_one (hnormE μ hμ) hre
+      Complex.ext (by simpa using hre) (by simpa using him)
     calc μ = ((starRingEnd ℂ) μ₀ * μ₀) * μ := by rw [hconj, one_mul]
       _ = μ₀ * ((starRingEnd ℂ) μ₀ * μ) := by ring
       _ = μ₀ := by rw [h1, mul_one]

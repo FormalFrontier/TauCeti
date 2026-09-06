@@ -7,10 +7,10 @@ module
 
 public import TauCeti.Algebra.Group.Conj
 public import Mathlib.GroupTheory.Solvable
-public import Mathlib.GroupTheory.Sylow
 import TauCeti.RepresentationTheory.CharacterTable.Table
 import TauCeti.RepresentationTheory.CharacterTable.Vanishing
 import Mathlib.GroupTheory.Nilpotent
+import Mathlib.GroupTheory.Sylow
 
 /-!
 # Burnside's `pᵃqᵇ` theorem
@@ -71,31 +71,6 @@ open Module
 
 universe u
 
-section Integrality
-
-/-- **No algebraic integer is the negative reciprocal of a prime.** A rational algebraic integer is
-an integer, because `ℤ` is integrally closed in `ℚ`, and `-1/p` is not one. -/
-private theorem not_isIntegral_of_mul_eq_neg_one {p : ℕ} (hp : 1 < p) {z : ℂ}
-    (hz : (p : ℂ) * z = -1) : ¬ IsIntegral ℤ z := by
-  intro hint
-  have hp0 : (p : ℂ) ≠ 0 := Nat.cast_ne_zero.2 (by omega)
-  have hzval : z = ((-1 / p : ℚ) : ℂ) := by
-    have hcast : ((-1 / p : ℚ) : ℂ) = -1 / (p : ℂ) := by push_cast; ring
-    rw [hcast, eq_div_iff hp0]
-    linear_combination hz
-  rw [hzval, show (((-1 / p : ℚ)) : ℂ) = algebraMap ℚ ℂ (-1 / p : ℚ) from
-    (eq_ratCast (algebraMap ℚ ℂ) _).symm, isIntegral_algebraMap_iff] at hint
-  obtain ⟨m, hm⟩ := IsIntegrallyClosed.isIntegral_iff.1 hint
-  have hmq : (m : ℚ) * p = -1 := by
-    have hm' : (m : ℚ) = -1 / p := by simpa using hm
-    rw [hm', div_mul_cancel₀ _ (Nat.cast_ne_zero.2 (by omega : p ≠ 0))]
-  have hmz : m * (p : ℤ) = -1 := by exact_mod_cast hmq
-  have hdvd : (p : ℤ) ∣ 1 := ⟨-m, by linear_combination hmz⟩
-  have := Int.le_of_dvd one_pos hdvd
-  omega
-
-end Integrality
-
 section ClassSize
 
 variable {G : Type u} [Group G] [Finite G]
@@ -142,7 +117,9 @@ private theorem exists_ne_of_not_dvd_characterDegree [Invertible (Nat.card G : �
     rw [← character_irreducibleRepresentation ℂ i]
     exact Representation.isIntegral_char _ (isOfFinOrder_of_finite g).orderOf_pos.ne'
       (pow_orderOf_eq_one g)
-  exact not_isIntegral_of_mul_eq_neg_one hp.one_lt (by linear_combination hone) hzint
+  -- `p · (-z) = 1` with `-z` an algebraic integer makes `p` divide `1`
+  exact hp.ne_one (Nat.dvd_one.1 (dvd_of_isIntegral_of_natCast_mul_eq (m := 1) hzint.neg
+    (by push_cast; linear_combination -hone) hp.pos.ne'))
 
 /-- **A conjugacy class of prime-power size larger than one forces a proper normal subgroup.** If
 some element of a finite group has a conjugacy class of size `p ^ k` with `p` prime and `k ≠ 0`,
@@ -202,8 +179,7 @@ theorem not_isSimpleGroup_of_card_carrier_eq_prime_pow {g : G} {p k : ℕ} (hp :
       rw [← character_irreducibleRepresentation ℂ i]
       simp [Representation.character, hone]
     have horth := card_inv_mul_sum_characterTable_mul_conj (G := G) i i₀
-    rw [show (if i = i₀ then (1 : ℂ) else 0) = 0 from ite_eq_right fun h => absurd h hne]
-      at horth
+    simp only [hne, ite_false] at horth
     have hval : ∀ g' : G, characterTable ℂ G i (ConjClasses.mk g') *
         (starRingEnd ℂ) (characterTable ℂ G i₀ (ConjClasses.mk g'))
           = (characterDegree ℂ i : ℂ) := by
