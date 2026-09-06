@@ -55,9 +55,12 @@ theorem listProd_indicator_eq_if_eq (l : List I) (hl : ∀ i, i ∈ l) (s t : Fi
   classical
   by_cases hst : s = t
   · subst t
-    induction l with
-    | nil => simp
-    | cons i l ih => simp [ih]
+    have hones : ∀ l : List I, (l.map (fun _ ↦ (1 : R))).prod = 1 := by
+      intro l
+      induction l with
+      | nil => simp
+      | cons i l ih => simp only [List.map_cons, List.prod_cons, one_mul, ih]
+    simpa using hones l
   · obtain ⟨i, hi⟩ : ∃ i, ¬ (i ∈ s ↔ i ∈ t) := by
       contrapose! hst
       exact Finset.ext hst
@@ -69,8 +72,9 @@ theorem listProd_indicator_eq_if_eq (l : List I) (hl : ∀ i, i ∈ l) (s t : Fi
       | nil => simp at hmem
       | cons j l ih =>
           simp only [List.map_cons, List.prod_cons]
-          rcases hmem with rfl | hmem
-          · simp [hi]
+          rcases List.mem_cons.mp hmem with hji | hmem
+          · subst j
+            simp [hi]
           · rw [ih hmem, mul_zero]
     exact hprodzero l (hl i)
 
