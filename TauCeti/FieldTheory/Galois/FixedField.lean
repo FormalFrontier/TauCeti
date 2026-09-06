@@ -36,6 +36,7 @@ Galois group of its fixed points, and that fixed-point subfield is the one under
 * `IntermediateField.fixingSubgroup_fixedField_of_finite`
 * `IntermediateField.finite_of_finiteDimensional_fixedField`
 * `IntermediateField.card_fixingSubgroup_le`
+* `FixedPoints.toAlgAutMulEquiv_apply`
 * `Subgroup.isCyclic_fixedField`
 * `Subgroup.zpowers_toAlgAutMulEquiv_eq_top`
 * `AlgEquiv.isCyclic_fixedField_zpowers`
@@ -128,10 +129,19 @@ variable {K M : Type*} [Field K] [Field M] [Algebra K M]
 
 /-- **The field fixed by a finite cyclic group of automorphisms has cyclic Galois group.**
 
-Neither `M / K` Galois nor `M / K` finite is needed; only that `H` be finite. -/
+Both `[Finite H]` and `[IsCyclic H]` are needed: cyclicity of the Galois group is inherited from
+`H`, not produced by finiteness alone. What is *not* needed is any hypothesis on `M / K`, which may
+be infinite and need not be Galois. -/
 theorem isCyclic_fixedField (H : Subgroup (M ≃ₐ[K] M)) [Finite H] [IsCyclic H] :
     IsCyclic (M ≃ₐ[IntermediateField.fixedField H] M) :=
   isCyclic_of_surjective _ (FixedPoints.toAlgAutMulEquiv H M).surjective
+
+/-- **Mathlib's identification acts as the automorphism it came from.** `toAlgAutMulEquiv` sends
+`h : H` to the automorphism of `M` over `M ^ H` that `h` already was as an automorphism over `K`;
+only the base field is forgotten. -/
+@[simp]
+theorem _root_.FixedPoints.toAlgAutMulEquiv_apply (H : Subgroup (M ≃ₐ[K] M)) [Finite H] (h : H)
+    (x : M) : FixedPoints.toAlgAutMulEquiv H M h x = (h : M ≃ₐ[K] M) x := rfl
 
 /-- **A generator of `H` maps to a generator of `Gal(M / M ^ H)`.**
 
@@ -140,11 +150,9 @@ which `IsCyclic` alone does not give. -/
 theorem zpowers_toAlgAutMulEquiv_eq_top (H : Subgroup (M ≃ₐ[K] M)) [Finite H] (h : H)
     (hh : zpowers h = ⊤) :
     zpowers (FixedPoints.toAlgAutMulEquiv H M h) = ⊤ := by
-  -- `rw` cannot match `MonoidHom.map_zpowers` through the `MulEquiv` coercion, so the application
-  -- is first restated in `toMonoidHom` form, to which it is definitionally equal.
-  rw [show FixedPoints.toAlgAutMulEquiv H M h
-        = (FixedPoints.toAlgAutMulEquiv H M).toMonoidHom h from rfl,
-    ← MonoidHom.map_zpowers, hh,
+  -- `MonoidHom.map_zpowers` is about a `MonoidHom`, so the `MulEquiv` application is restated
+  -- through `MulEquiv.coe_toMonoidHom` rather than by unfolding the coercion.
+  rw [← MulEquiv.coe_toMonoidHom, ← MonoidHom.map_zpowers, hh,
     map_top_of_surjective (FixedPoints.toAlgAutMulEquiv H M).toMonoidHom
       (FixedPoints.toAlgAutMulEquiv H M).surjective]
 
