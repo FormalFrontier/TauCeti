@@ -231,8 +231,7 @@ theorem primeDiscriminantCharFun_eq_legendreSym {P : ℤ} (hP : IsPrimeDiscrimin
 /-! ### Nontriviality -/
 
 /-- **The character of a prime discriminant is nontrivial.** For every prime discriminant `P`,
-some natural number has character `-1` at `P`: the residue `3` for the even prime discriminants
-`-4` and `8`, the residue `5` for `-8`, and any quadratic non-residue modulo `p` for `p* = ±p`. -/
+some natural number has character `-1` at `P`. -/
 theorem exists_primeDiscriminantCharFun_eq_neg_one {P : ℤ} (hP : IsPrimeDiscriminant P) :
     ∃ a : ℕ, primeDiscriminantCharFun P a = -1 := by
   rcases isPrimeDiscriminant_iff.mp hP with hev | ⟨p, hp, hodd, rfl⟩

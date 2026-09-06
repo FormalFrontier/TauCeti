@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.NumberTheory.Multiquadratic.Legendre.PrimeDiscriminant.Character
-import TauCeti.NumberTheory.Multiquadratic.FundamentalDiscriminant.Basic
 import Mathlib.Data.Nat.ChineseRemainder
 import Mathlib.NumberTheory.LSeries.PrimesInAP
 
@@ -31,8 +30,8 @@ The statement is classical; see D. A. Cox, *Primes of the Form x² + ny²*, §3.
 Theorem 3.15), and F. Lemmermeyer, *Reciprocity Laws: From Euler to Eisenstein*, §2.2.
 
 The nontriviality of a single character (`exists_primeDiscriminantCharFun_eq`) and the coprimality
-of the moduli of distinct prime discriminants (`natAbs_coprime_natAbs_of_ne`) are supplied by
-`TauCeti.NumberTheory.Multiquadratic.Legendre.PrimeDiscriminant.Character` and
+of distinct prime discriminants (`isCoprime_primeDiscriminant_of_ne_of_not_both_even`) are
+supplied by `TauCeti.NumberTheory.Multiquadratic.Legendre.PrimeDiscriminant.Character` and
 `TauCeti.NumberTheory.Multiquadratic.Prime.Discriminants`.
 
 ## Main results
@@ -60,9 +59,11 @@ theorem exists_forall_primeDiscriminantCharFun_eq {s : Finset ℤ}
   classical
   choose! r hr using fun P (hP : P ∈ s) => exists_primeDiscriminantCharFun_eq (hs P hP) (ε P)
   have hmod : ∀ P ∈ s, P.natAbs ≠ 0 := fun P hP =>
-    Int.natAbs_ne_zero.mpr (hs P hP).isFundamentalDiscriminant.ne_zero
+    Int.natAbs_ne_zero.mpr (hs P hP).ne_zero
   have hcop : Set.Pairwise (↑s : Set ℤ) (Function.onFun Nat.Coprime fun P : ℤ => P.natAbs) :=
-    fun P hP Q hQ hne => natAbs_coprime_natAbs_of_ne (hs P hP) (hs Q hQ) (heven P hP Q hQ) hne
+    fun P hP Q hQ hne => Int.isCoprime_iff_nat_coprime.mp
+      (isCoprime_primeDiscriminant_of_ne_of_not_both_even (hs P hP) (hs Q hQ) hne
+        fun h => hne (heven P hP Q hQ h.1 h.2))
   obtain ⟨a, ha⟩ := Nat.chineseRemainderOfFinset r (fun P : ℤ => P.natAbs) s hmod hcop
   refine ⟨a, fun P hP => ?_⟩
   rw [← hr P hP]
@@ -83,7 +84,7 @@ theorem exists_prime_gt_forall_primeDiscriminantCharFun_eq {s : Finset ℤ}
   classical
   obtain ⟨a, ha⟩ := exists_forall_primeDiscriminantCharFun_eq hs heven ε
   have hM0 : (∏ P ∈ s, P.natAbs) ≠ 0 := Finset.prod_ne_zero_iff.mpr fun P hP =>
-    Int.natAbs_ne_zero.mpr (hs P hP).isFundamentalDiscriminant.ne_zero
+    Int.natAbs_ne_zero.mpr (hs P hP).ne_zero
   have hcop : IsCoprime (a : ℤ) ((∏ P ∈ s, P.natAbs : ℕ) : ℤ) := by
     rw [Nat.cast_prod]
     refine IsCoprime.prod_right fun P hP => ?_
