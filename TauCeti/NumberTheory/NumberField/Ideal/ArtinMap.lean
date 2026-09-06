@@ -5,10 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.FieldTheory.Galois.Abelian
 public import TauCeti.NumberTheory.NumberField.ArtinSymbol
 public import TauCeti.NumberTheory.NumberField.Ideal.Away
 import Mathlib.Algebra.Group.IsCommutative
-import Mathlib.FieldTheory.Galois.Abelian
 
 /-!
 # The ideal-theoretic Artin map away from a finite set of primes
@@ -219,18 +219,6 @@ variable {L : Type*} [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
   (S : Finset (HeightOneSpectrum (𝓞 K)))
   (hur : ∀ v : HeightOneSpectrum (𝓞 K), v ∉ S →
     ∀ (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver v.asIdeal], Algebra.IsUnramifiedAt (𝓞 K) Q)
-
-omit [NumberField K] [NumberField L] in
-include hab in
-/-- **Commutativity of the Galois group passes to an intermediate field.** Every subextension of an
-abelian extension is abelian, so the hypothesis `hab` for `L/K` is already the one for `M/K` and is
-never a second assumption. -/
-theorem commute_of_intermediateField (M : IntermediateField K L) (σ τ : M ≃ₐ[K] M) :
-    Commute σ τ := by
-  have : IsMulCommutative (L ≃ₐ[K] L) := ⟨⟨fun a b ↦ (hab a b).eq⟩⟩
-  have : IsAbelianGalois K L := {}
-  have : IsMulCommutative (M ≃ₐ[K] M) := inferInstance
-  exact Commute.all σ τ
 
 /-- **The Artin map is functorial in the top field.** Restriction of automorphisms to a normal
 intermediate field `M` carries the Artin map of `L/K` to the Artin map of `M/K`, over the same
