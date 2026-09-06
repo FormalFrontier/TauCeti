@@ -74,7 +74,7 @@ private theorem nilradical_comul_mem
     rw [RingHom.mem_ker]
     exact hzero
   rw [AlgHom.toRingHom_eq_coe, RingHom.ker_coe_toRingHom] at hmem
-  rw [tensor_map_ker_eq_left_sup_right q
+  rw [AlgHom.tensor_map_ker_eq_left_sup_right q
     (Ideal.Quotient.mkₐ_surjective R (nilradical H))] at hmem
   rw [← RingHom.ker_coe_toRingHom q, Ideal.Quotient.mkₐ_ker] at hmem
   exact hmem
