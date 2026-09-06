@@ -29,7 +29,7 @@ universe uR uRm uS uSm uK uL
 variable {R : Type uR} {Rₘ : Type uRm} {S : Type uS} {Sₘ : Type uSm}
 variable {K : Type uK} {L : Type uL}
 variable [CommRing R] [CommRing Rₘ] [CommRing S] [CommRing Sₘ] [Field K] [Field L]
-variable (M : Submonoid R)
+variable {M : Submonoid R}
 variable [Algebra R Rₘ] [Algebra R S] [Algebra Rₘ Sₘ] [Algebra S Sₘ]
 variable [Algebra R Sₘ] [IsScalarTower R S Sₘ]
 variable [Algebra R K] [Algebra Rₘ K] [IsScalarTower R Rₘ K]
@@ -142,7 +142,7 @@ theorem span_traceDual_one_eq_traceDual_one :
   -- Conversely, clear one denominator for trace values on a finite set of algebra generators.
   · intro x hx
     obtain ⟨b, hbx⟩ := exists_smul_mem_traceDual_of_mem_traceDual
-      (R := R) (Rₘ := Rₘ) (S := S) (Sₘ := Sₘ) (K := K) (L := L) M hx
+      (R := R) (Rₘ := Rₘ) (S := S) (Sₘ := Sₘ) (K := K) (L := L) (M := M) hx
     let bm : Algebra.algebraMapSubmonoid S M := ⟨algebraMap R S b, ⟨b, b.2, rfl⟩⟩
     have hbx' := Submodule.smul_mem (Submodule.span Sₘ
       (Submodule.traceDual R K (1 : Submodule S L) : Set L)) (IsLocalization.mk' Sₘ 1 bm)
@@ -153,12 +153,15 @@ theorem span_traceDual_one_eq_traceDual_one :
       ← mul_assoc, ← map_mul, IsLocalization.mk'_spec]
     simp only [map_one, one_mul]
 
-variable [IsDedekindDomain S] [IsDedekindDomain Sₘ]
 variable [IsFractionRing S L] [IsFractionRing Sₘ L]
 variable [IsIntegrallyClosed R] [IsIntegrallyClosed Rₘ]
 variable [IsIntegralClosure S R L] [IsIntegralClosure Sₘ Rₘ L]
 variable [FiniteDimensional K L] [Algebra.IsSeparable K L]
 variable [IsTorsionFree R S] [IsTorsionFree Rₘ Sₘ]
+
+section
+
+variable [IsDomain S] [IsDomain Sₘ]
 
 omit [IsTorsionFree R S] [IsTorsionFree Rₘ Sₘ] in
 /-- The trace-dual fractional ideal commutes with localization. -/
@@ -176,20 +179,33 @@ theorem extendedHom_dual_one_eq_dual_one
     rw [IsLocalization.map_eq, RingHom.id_apply, IsScalarTower.algebraMap_apply S Sₘ L]
   rw [hmap]
   simp only [RingHom.id_apply, Set.image_id']
-  have hdual :
-      ((↑(FractionalIdeal.dual R K (1 : FractionalIdeal S⁰ L)) : Submodule S L) : Set L) =
-        (Submodule.traceDual R K (1 : Submodule S L) : Set L) :=
-    congrArg (fun N : Submodule S L ↦ (N : Set L))
-      (FractionalIdeal.coe_dual_one R K L S)
+  -- Mathlib's coercion lemma for `dual 1` is Dedekind-scoped, although this definitional
+  -- reduction only needs a domain.
+  have hdualS :
+      (↑(FractionalIdeal.dual R K (1 : FractionalIdeal S⁰ L)) : Submodule S L) =
+        Submodule.traceDual R K (1 : Submodule S L) := by
+    set_option backward.isDefEq.respectTransparency.types false in
+      rw [FractionalIdeal.dual, dite_eq_right one_ne_zero, FractionalIdeal.coe_mk,
+        FractionalIdeal.coe_one]
+  have hdualSₘ :
+      (↑(FractionalIdeal.dual Rₘ K (1 : FractionalIdeal Sₘ⁰ L)) : Submodule Sₘ L) =
+        Submodule.traceDual Rₘ K (1 : Submodule Sₘ L) := by
+    set_option backward.isDefEq.respectTransparency.types false in
+      rw [FractionalIdeal.dual, dite_eq_right one_ne_zero, FractionalIdeal.coe_mk,
+        FractionalIdeal.coe_one]
   calc
     Submodule.span Sₘ
         ((↑(FractionalIdeal.dual R K (1 : FractionalIdeal S⁰ L)) : Submodule S L) : Set L) =
         Submodule.span Sₘ (Submodule.traceDual R K (1 : Submodule S L) : Set L) :=
-      congrArg (Submodule.span Sₘ) hdual
+      congrArg (Submodule.span Sₘ) (congrArg (fun N : Submodule S L ↦ (N : Set L)) hdualS)
     _ = Submodule.traceDual Rₘ K (1 : Submodule Sₘ L) :=
-      span_traceDual_one_eq_traceDual_one M hM
+      span_traceDual_one_eq_traceDual_one (M := M) hM
     _ = (↑(FractionalIdeal.dual Rₘ K (1 : FractionalIdeal Sₘ⁰ L)) : Submodule Sₘ L) :=
-      (FractionalIdeal.coe_dual_one Rₘ K L Sₘ).symm
+      hdualSₘ.symm
+
+end
+
+variable [IsDedekindDomain S] [IsDedekindDomain Sₘ]
 
 omit [IsTorsionFree R S] [IsTorsionFree Rₘ Sₘ] in
 include K L in
@@ -216,7 +232,7 @@ theorem map_differentIdeal_eq_differentIdeal :
   rw [coeIdeal_differentIdeal R K L S, coeIdeal_differentIdeal Rₘ K L Sₘ, map_inv₀,
     extendedHom_dual_one_eq_dual_one (R := R) (Rₘ := Rₘ) (S := S)
       (Sₘ := Sₘ)
-      (K := K) (L := L) M hM h]
+      (K := K) (L := L) (M := M) hM h]
 
 end TauCeti
 
