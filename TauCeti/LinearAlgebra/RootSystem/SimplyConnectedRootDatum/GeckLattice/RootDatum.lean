@@ -69,6 +69,15 @@ noncomputable section
 
 variable (t : DynkinType) (ht : t.Valid)
 
+/-! None of the restatements below is a `simp` lemma, at any of the three tiers. Their right-hand
+sides are not `simp`-normal: `TauCeti.DynkinType.root_simpleIndex` rewrites a named simple root
+back to its Bourbaki row of `t.cartanMatrix`, which is also what
+`TauCeti.DynkinType.rootGeneratorWeight_inl` produces from the character on the left. This is the
+policy recorded in `TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/KostantForm.lean`
+beside the substitution these restatements perform: both forms are already `simp`-normal, so
+orienting the identification either way would undo an existing rule. They are stated to be used by
+`exact` and `rw`, as `TauCeti/GroupTheory/SpecificGroups/CFSG/GeckCarrier.lean` uses them. -/
+
 /-! ## The pointwise conjugation equations -/
 
 /-- **The pointwise conjugation equation of the Geck carrier at a named simple root.** A split-torus
