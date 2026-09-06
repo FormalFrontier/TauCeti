@@ -34,6 +34,18 @@ untwisted file's comparison of two enumerations unchanged.
   depends only on the right coset `Γ₀(N) x`.
 * `HeckeRing.GL2.twistedHeckeSlashSum_eq_sum_of_rightCosets`: `twistedHeckeSlashSum k χ D f` is
   the weighted sum over any family of representatives of the right cosets.
+* `HeckeRing.GL2.sum_nebentypus_smul_slash_eq_nsmul_twistedHeckeSlashSum`: if a family names
+  every right coset exactly `m` times, its weighted sum is `m` times the twisted slash sum.
+
+## Provenance
+
+The uniformly repeating-family theorem corresponds to the role of
+`twisted_filtered_sum_collapse_of_qOf` in AINTLIB's
+`LeanModularForms/HeckeRIngs/GL2/Unified/TwistedHeckeRing.lean` (Chris Birkbeck, Apache-2.0,
+<https://github.com/CBirkbeck/AINTLIB> at commit
+`2baa76f742bdb4fb8ee323fabba41203bd390e08`). No code is transcribed: the statement and proof are
+the weighted analogue of this repository's `sum_slash_eq_nsmul_heckeSlashSum`, using
+`smul_slash_eq_of_rightCoset_eq` for the one per-fibre substitution.
 
 ## References
 
@@ -128,6 +140,58 @@ theorem twistedHeckeSlashSum_eq_sum_of_rightCosets {ι : Type*} [Fintype ι]
   rw [nebentypusWeight_def]
   exact (smul_slash_eq_of_rightCoset_eq k χ f hf (mem_Delta0_of_cover D hcover i)
     (rightCosetRep_mem_Delta0 D (φ i)) (hφ i)).symm
+
+/-- **A uniformly repeating family gives a multiple of the twisted slash sum.** Let `(aᵢ)` be a
+family of elements in the double coset of `D`. If every right coset `Γ₀(N) x` inside `D` is named
+by exactly `m` members of the family, then
+
+`∑ᵢ χ'(aᵢ) • (f ∣[k] aᵢ) = m • twistedHeckeSlashSum k χ D f`
+
+for every `χ`-eigenfunction `f`, where `χ'` is `delta0NebentypusChar N χ`.
+
+This is the twisted counterpart of `sum_slash_eq_nsmul_heckeSlashSum`. Covering is not a
+hypothesis: if some right coset is missed, the common multiplicity is zero, and the conclusion
+still holds. The membership hypothesis puts each `aᵢ` in `Δ₀(N)` automatically, since the whole
+double coset lies there. -/
+theorem sum_nebentypus_smul_slash_eq_nsmul_twistedHeckeSlashSum
+    {ι : Type*} [Fintype ι] (a : ι → GL (Fin 2) ℚ) (m : ℕ)
+    (hmem : ∀ i, a i ∈ doubleCoset (D.out : GL (Fin 2) ℚ)
+      ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)))
+    (hcard : ∀ x ∈ doubleCoset (D.out : GL (Fin 2) ℚ)
+      ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)),
+      Nat.card {i // MulOpposite.op (a i) •
+          (((Gamma0 N).map (mapGL ℚ) : Subgroup (GL (Fin 2) ℚ)) : Set (GL (Fin 2) ℚ)) =
+        MulOpposite.op x •
+          (((Gamma0 N).map (mapGL ℚ) : Subgroup (GL (Fin 2) ℚ)) : Set (GL (Fin 2) ℚ))} = m)
+    (f : ℍ → ℂ) (hf : f ∈ functionCharSpace k χ) :
+    ∑ i, (delta0NebentypusChar N χ
+        ⟨a i, IsHeckeTriple.mem_of_mem_doubleCoset D.out.2 (hmem i)⟩ : ℂ) • (f ∣[k] a i) =
+      m • twistedHeckeSlashSum k χ D f := by
+  classical
+  let _ : Fintype (DecompQuotient ((Gamma0 N).map (mapGL ℚ))
+      ((Gamma0 N).map (mapGL ℚ)) (D.out : GL (Fin 2) ℚ)⁻¹) := Fintype.ofFinite _
+  choose g hg using fun i ↦ exists_rightCosetRep_smul_eq D (hmem i)
+  rw [twistedHeckeSlashSum_def, Finset.smul_sum,
+    ← Finset.sum_fiberwise_of_maps_to (fun i _ ↦ Finset.mem_univ (g i))
+      fun i ↦ (delta0NebentypusChar N χ
+        ⟨a i, IsHeckeTriple.mem_of_mem_doubleCoset D.out.2 (hmem i)⟩ : ℂ) • (f ∣[k] a i)]
+  refine Finset.sum_congr rfl fun v _ ↦ ?_
+  rw [Finset.sum_congr rfl fun i hi ↦ ?_, Finset.sum_const]
+  · have hfib : (Finset.univ.filter fun i ↦ g i = v) =
+        Finset.univ.filter fun i ↦ MulOpposite.op (a i) •
+          (((Gamma0 N).map (mapGL ℚ) : Subgroup (GL (Fin 2) ℚ)) : Set (GL (Fin 2) ℚ)) =
+            MulOpposite.op (rightCosetRep D v) •
+              (((Gamma0 N).map (mapGL ℚ) : Subgroup (GL (Fin 2) ℚ)) :
+                Set (GL (Fin 2) ℚ)) :=
+      Finset.filter_congr fun i _ ↦
+        ⟨fun h ↦ h ▸ hg i, fun h ↦ op_rightCosetRep_smul_injective D ((hg i).symm.trans h)⟩
+    have hm := hcard _ (rightCosetRep_mem_doubleCoset D v)
+    rw [Nat.card_eq_fintype_card, Fintype.card_subtype] at hm
+    rw [hfib, hm]
+  · rw [nebentypusWeight_def]
+    exact (smul_slash_eq_of_rightCoset_eq k χ f hf
+      (IsHeckeTriple.mem_of_mem_doubleCoset D.out.2 (hmem i))
+      (rightCosetRep_mem_Delta0 D v) ((Finset.mem_filter.mp hi).2 ▸ hg i)).symm
 
 end HeckeRing.GL2
 
