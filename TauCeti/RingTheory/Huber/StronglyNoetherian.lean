@@ -6,6 +6,7 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Complete
+public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Iterate
 public import TauCeti.Topology.UniformSpace.DiscreteUniformity
 public import Mathlib.RingTheory.Polynomial.Basic
 
@@ -39,6 +40,12 @@ discrete case below is proved through it.
   discrete topology is strongly noetherian — over a discrete ring the restricted series are
   the polynomials, already complete, and the Hilbert basis theorem applies. In particular
   `ℤ`, every field, and every noetherian ring discretely topologised witness the predicate.
+* `TauCeti.Huber.IsStronglyNoetherian.restrictedMvPowerSeriesCompletion`: over a Huber base the
+  predicate passes to `A⟨X₁,…,Xₖ⟩`, so a strongly noetherian ring stays strongly noetherian under
+  the construction. This is the iteration isomorphism `A⟨X⟩⟨Y⟩ ≅ A⟨X,Y⟩` of
+  `TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Iterate` read as a statement about the
+  predicate; `[IsHuberRing A]` is what that isomorphism asks of the base, and the predicate itself
+  does not.
 * `TauCeti.Huber.isNoetherianRing_completion_of_isStronglyNoetherian`: the zero-variable
   *consequence* of the predicate — strong noetherianness quantifies over every `k`, and its
   `k = 0` component says the separated completion `Â` is noetherian. The identification behind it,
@@ -121,6 +128,18 @@ instance IsStronglyNoetherian.of_discreteTopology [DiscreteTopology A] [IsNoethe
     exact isNoetherianRing_of_ringEquiv _
       ((weightedPolynomialEquiv _ isWeightFamily_one_weight).trans
         (restrictedMvPowerSeriesCompletionEquiv k A).symm)
+
+/-! ### The completed polynomial algebra -/
+
+/-- **Strong noetherianity passes to `A⟨X₁,…,Xₖ⟩`.** Over a Huber base, a completed restricted
+power-series algebra over a strongly noetherian ring is again strongly noetherian.
+
+`A⟨X₁,…,Xₖ⟩⟨Y₁,…,Y_m⟩` is `A⟨X₁,…,X_{k+m}⟩` by
+`TauCeti.Huber.iterateRingEquiv`, and the hypothesis on `A` gives the latter noetherian. -/
+instance IsStronglyNoetherian.restrictedMvPowerSeriesCompletion [IsHuberRing A]
+    [IsStronglyNoetherian A] (k : ℕ) :
+    IsStronglyNoetherian (restrictedMvPowerSeriesCompletion k A) where
+  isNoetherianRing m := isNoetherianRing_of_ringEquiv _ (iterateRingEquiv k m A)
 
 /-! ### Zero variables -/
 
