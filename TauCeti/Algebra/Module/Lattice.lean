@@ -494,7 +494,7 @@ theorem IsIntegralLattice.isZLattice_range (i : N →+ V₀)
   refine @IsZLattice.mk ℝ _ V₀ _ _ (LinearMap.range i.toIntLinearMap)
     (IsIntegralLattice.discreteTopology_range i h) ?_
   simpa only [LinearMap.coe_range, AddMonoidHom.coe_toIntLinearMap] using
-    IsIntegralLattice.span_range_eq_top i h
+    h.span_range_eq_top i
 
 /-- Compatibility on additive maps induces a commuting square between their base-change
 equivalences. -/
