@@ -7,7 +7,9 @@ module
 
 public import Mathlib.Algebra.Group.ConjFinite
 public import Mathlib.Data.Set.Card
+public import Mathlib.Data.ZMod.Basic
 public import Mathlib.GroupTheory.Index
+public import Mathlib.GroupTheory.OrderOfElement
 
 /-!
 # Inversion and powers of conjugacy classes, and the size of a class
@@ -49,6 +51,8 @@ conjugation action.
   `ConjClasses.pow_mul`: the identity and composition laws for that power.
 * `ConjClasses.map_mk`: the computation rule for `ConjClasses.map` on representatives,
   with `ConjClasses.map_pow` the consequence that the power is natural in the monoid.
+* `ConjClasses.mk_ne_mk_of_orderOf_ne`: elements of different orders lie in different conjugacy
+  classes.
 
 ## Implementation notes
 
@@ -292,14 +296,32 @@ theorem map_pow {N : Type*} [Monoid N] (f : M →* N) (C : ConjClasses M) (j : �
   -- in `N`.
   rw [mk_pow, map_mk, map_mk, mk_pow, _root_.map_pow]
 
-/-- **A nonidentity square in the cyclic group of order four.** The class of the generator
-squares to the class of the element of order two. A group of exponent two cannot witness this:
-it has no proper nonidentity square, so it cannot tell a correct power operation from one that
-collapses to the identity. -/
+/-- **Elements of different orders are not conjugate.** Conjugation is an automorphism, so it
+preserves the order of an element; hence two elements whose orders differ have distinct conjugacy
+classes. -/
+theorem mk_ne_mk_of_orderOf_ne {G : Type*} [Group G] {a b : G} (h : orderOf a ≠ orderOf b) :
+    ConjClasses.mk a ≠ ConjClasses.mk b := fun hclasses ↦ by
+  obtain ⟨c, hc⟩ := ConjClasses.mk_eq_mk_iff_isConj.mp hclasses
+  exact h (SemiconjBy.orderOf_eq (c : G) hc)
+
+/-- **A nonidentity square in the cyclic group of order four.** The generator has order four, its
+class squares to the class of the element of order two, and those two classes are distinct. A group
+of exponent two cannot witness this: it has no proper nonidentity square, so it cannot tell a
+correct power operation from one that collapses to the identity. -/
 private theorem pow_two_cyclicFour :
-    ConjClasses.mk (Multiplicative.ofAdd (1 : ZMod 4)) ^ 2 =
-      ConjClasses.mk (Multiplicative.ofAdd (2 : ZMod 4)) := by
-  rw [mk_pow, ← ofAdd_nsmul, nsmul_eq_mul, mul_one]
-  norm_cast
+    orderOf (Multiplicative.ofAdd (1 : ZMod 4)) = 4 ∧
+      ConjClasses.mk (Multiplicative.ofAdd (1 : ZMod 4)) ^ 2 =
+        ConjClasses.mk (Multiplicative.ofAdd (2 : ZMod 4)) ∧
+      ConjClasses.mk (Multiplicative.ofAdd (1 : ZMod 4)) ≠
+        ConjClasses.mk (Multiplicative.ofAdd (2 : ZMod 4)) := by
+  have horder : orderOf (Multiplicative.ofAdd (1 : ZMod 4)) = 4 := by
+    rw [orderOf_ofAdd_eq_addOrderOf, ZMod.addOrderOf_one]
+  have hsquare : Multiplicative.ofAdd (1 : ZMod 4) ^ 2 = Multiplicative.ofAdd (2 : ZMod 4) := by
+    rw [← ofAdd_nsmul, nsmul_eq_mul, mul_one]
+    norm_cast
+  have horderSquare : orderOf (Multiplicative.ofAdd (2 : ZMod 4)) = 2 := by
+    rw [← hsquare, orderOf_pow_of_dvd (by decide) (by rw [horder]; decide), horder]
+  exact ⟨horder, by rw [mk_pow, hsquare],
+    mk_ne_mk_of_orderOf_ne (by rw [horder, horderSquare]; decide)⟩
 
 end ConjClasses

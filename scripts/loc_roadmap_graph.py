@@ -42,12 +42,37 @@ MAINTENANCE_TITLE = re.compile(
 )
 
 
+# `gh pr list` returns at most `--limit` pull requests, newest first, and says nothing when it
+# stops. The limit here was 2000 against 5072 merged pull requests, so the chart was built from
+# the newest 2000 and silently lost every band before them -- a cumulative series whose early
+# history simply was not there. This ceiling exists only so a runaway query cannot page forever;
+# reaching it means the chart would be wrong, so reaching it raises instead.
+MERGED_PR_CEILING = 100_000
+
+
 def fetch_gh(repo: str) -> list[dict]:
     out = subprocess.run(
-        ["gh", "pr", "list", "--repo", repo, "--state", "merged", "--limit", "2000",
+        ["gh", "pr", "list", "--repo", repo, "--state", "merged",
+         "--limit", str(MERGED_PR_CEILING),
          "--json", "number,title,labels,mergedAt,additions,deletions"],
         check=True, text=True, stdout=subprocess.PIPE).stdout
-    return json.loads(out)
+    prs = json.loads(out)
+    check_complete(prs)
+    return prs
+
+
+def check_complete(prs: list[dict]) -> None:
+    """Refuse a truncated result rather than drawing a chart that is quietly missing its start.
+
+    A cumulative chart cannot survive losing its oldest rows: every band is shifted by whatever
+    was dropped, and it looks entirely plausible while being wrong. There is no partial answer
+    worth publishing here, so this raises and the caller keeps the previous SVG.
+    """
+    if len(prs) >= MERGED_PR_CEILING:
+        raise RuntimeError(
+            f"gh returned {len(prs)} merged pull requests, at or above the {MERGED_PR_CEILING} "
+            "ceiling, so the oldest ones were probably dropped and the cumulative series would "
+            "start in the wrong place. Raise MERGED_PR_CEILING.")
 
 
 def roadmap_of(pr: dict) -> str | None:

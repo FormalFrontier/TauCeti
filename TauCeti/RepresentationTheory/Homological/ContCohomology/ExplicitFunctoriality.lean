@@ -346,6 +346,23 @@ theorem explicitMap1_mk (φ : H →ₜ* G) (f : M →+ N) (hf : Continuous f)
       (cocyclesMap1 G M H N φ f hf hequiv c : H1 H N) :=
   QuotientAddGroup.map_mk _ _ _ _ c
 
+/-- Equality of compatible pairs gives equality of the induced maps on explicit `H¹`. -/
+theorem explicitMap1_congr_of_eq
+    (φ ψ : H →ₜ* G) (f q : M →+ N) {hf : Continuous f} {hq : Continuous q}
+    {hφ : ∀ (h : H) (m : M), f (φ h • m) = h • f m}
+    {hψ : ∀ (h : H) (m : M), q (ψ h • m) = h • q m}
+    (hφeq : φ = ψ) (hfeq : f = q) :
+    explicitMap1 G M H N φ f hf hφ = explicitMap1 G M H N ψ q hq hψ := by
+  apply AddMonoidHom.ext
+  intro x
+  induction x using QuotientAddGroup.induction_on with
+  | _ c =>
+      rw [explicitMap1_mk, explicitMap1_mk]
+      apply congrArg (fun z : Z1 H N => (z : H1 H N))
+      ext h
+      simp only [cocyclesMap1_coe, cochainsMap1_apply, MonoidHom.coe_coe]
+      rw [hφeq, hfeq]
+
 /-- Pullback by the identity compatible pair is the identity on explicit `H¹`. -/
 @[simp]
 theorem explicitMap1_id (hid : ∀ (g : G) (m : M),

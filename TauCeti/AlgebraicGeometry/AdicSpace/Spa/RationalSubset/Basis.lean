@@ -146,25 +146,6 @@ section TopologicalRing
 
 variable [IsTopologicalRing A]
 
-open Classical in
-/-- If two numerator ideals are open, then so is the ideal spanned by the product of the
-numerator sets after adjoining their respective denominators. This is the admissibility half of
-the intersection formula for rational subsets. -/
-private theorem isOpen_span_insert_mul_insert (P : PairOfDefinition A)
-    {T₁ T₂ : Finset A} {s₁ s₂ : A}
-    (hT₁ : IsOpen (Ideal.span (T₁ : Set A) : Set A))
-    (hT₂ : IsOpen (Ideal.span (T₂ : Set A) : Set A)) :
-    IsOpen (Ideal.span ((insert s₁ T₁ * insert s₂ T₂ : Finset A) : Set A) : Set A) := by
-  classical
-  rw [P.isOpen_iff_le_radical]
-  have hmul :=
-    (isAdmissible_extendedIdealOfDefinition_of_isOpen_span (s := s₁) P hT₁).mul
-      (isAdmissible_extendedIdealOfDefinition_of_isOpen_span (s := s₂) P hT₂)
-  rw [isAdmissible_iff] at hmul
-  have hs : s₁ * s₂ ∈ insert s₁ T₁ * insert s₂ T₂ :=
-    Finset.mul_mem_mul (Finset.mem_insert_self _ _) (Finset.mem_insert_self _ _)
-  rwa [Set.insert_eq_self.mpr (Finset.mem_coe.mpr hs)] at hmul
-
 /-- **Wedhorn Remark 7.30(5).** Rational subsets with open numerator ideal are closed under
 intersection. The set identity is `rationalSubset_inter`; admissibility is multiplicative in
 `Spv(A,IA)`, and adjoining the product denominator turns it back into openness. -/
@@ -176,7 +157,7 @@ theorem inter_mem_spaRationalFamily_of_pairOfDefinition (P : PairOfDefinition A)
   obtain ⟨T₁, s₁, hT₁, rfl⟩ := hU
   obtain ⟨T₂, s₂, hT₂, rfl⟩ := hV
   refine ⟨insert s₁ T₁ * insert s₂ T₂, s₁ * s₂,
-    isOpen_span_insert_mul_insert P hT₁ hT₂, ?_⟩
+    P.isOpen_span_insert_mul_insert hT₁ hT₂, ?_⟩
   rw [← Set.preimage_inter, rationalSubset_inter]
 
 /-- **Wedhorn Remark 7.30(5).** Over a Huber ring, the rational family is closed under binary

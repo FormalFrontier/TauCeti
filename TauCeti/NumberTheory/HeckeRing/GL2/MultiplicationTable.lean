@@ -377,6 +377,18 @@ private lemma mulSupport_pp_subset (k : ℕ)
   exact mulSupport_pp_case_split p hp k a h_det h_dvd
 
 include hp in
+/-- **A coset outside the two possible support cosets has multiplicity zero.** If `A` is
+neither `T(1, p^(k+1))` nor `T(p, pᵏ)`, its multiplicity in `T(1,p) · T(1,pᵏ)` vanishes. -/
+private lemma multiplicity_eq_zero_of_ne_diagCoset (k : ℕ)
+    (A : HeckeCoset (posDetInt 2) (SLnZ 2) (SLnZ 2))
+    (h1 : A ≠ diagCoset ![1, p ^ (k + 1)]) (h2 : A ≠ diagCoset ![p, p ^ k]) :
+    multiplicity (SLnZ 2) (SLnZ 2) (SLnZ 2)
+      (((diagCoset ![1, p]).rep : GL (Fin 2) ℚ))
+      (((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ)) ((A.rep : GL (Fin 2) ℚ)) = 0 := by
+  by_contra h0
+  exact ((mulSupport_pp_subset p hp k A h0).elim h1 h2)
+
+include hp in
 /-- The two support cosets are distinct: their invariant factors differ at the top. -/
 private lemma diagCoset_one_prime_pow_succ_ne (k : ℕ) (hk : 0 < k) :
     diagCoset (![1, p ^ (k + 1)] : Fin 2 → ℕ) ≠ diagCoset (![p, p ^ k] : Fin 2 → ℕ) := by
@@ -459,6 +471,35 @@ private lemma multiplicity_one_prime_pow_succ_pos (k : ℕ) :
   group
 
 include hp in
+/-- The degree balance for `T(1,p) · T(1,pᵏ)` over `ℤ`: the multiplicity-weighted degrees of the
+two output cosets `T(1, p^(k+1))` and `T(p, pᵏ)` sum to the product `(p + 1) · p^(k-1)(p + 1)` of
+the input degrees. -/
+private lemma multiplicity_degree_sum_prime_pow (k : ℕ) (hk : 0 < k) :
+    (multiplicity (SLnZ 2) (SLnZ 2) (SLnZ 2)
+        (((diagCoset ![1, p]).rep : GL (Fin 2) ℚ))
+        (((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ))
+        (((diagCoset ![1, p ^ (k + 1)]).rep : GL (Fin 2) ℚ)) : ℤ) *
+        ((p : ℤ) ^ k * ((p : ℤ) + 1)) +
+      (multiplicity (SLnZ 2) (SLnZ 2) (SLnZ 2)
+        (((diagCoset ![1, p]).rep : GL (Fin 2) ℚ))
+        (((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ))
+        (((diagCoset ![p, p ^ k]).rep : GL (Fin 2) ℚ)) : ℤ) *
+        ((diagCoset (![p, p ^ k] : Fin 2 → ℕ)).degree : ℤ) =
+      ((p : ℤ) + 1) * ((p : ℤ) ^ (k - 1) * ((p : ℤ) + 1)) := by
+  have h_deg := multiplicity_degree_sum_eq (diagCoset ![1, p]) (diagCoset ![1, p ^ k])
+    (diagCoset ![1, p ^ (k + 1)]) (diagCoset ![p, p ^ k])
+    (diagCoset_one_prime_pow_succ_ne p hp k hk) (multiplicity_eq_zero_of_ne_diagCoset p hp k)
+  -- All three degrees are the `i = 0` case of `degree_diagCoset_prime_pow`; `simpa` absorbs
+  -- the `p ^ 0 = 1` and `0 + j = j` normalisations.
+  rw [show (diagCoset (![1, p] : Fin 2 → ℕ)).degree = p + 1 by
+      simpa using degree_diagCoset_prime_pow p hp 0 1 one_pos,
+    show (diagCoset (![1, p ^ k] : Fin 2 → ℕ)).degree = p ^ (k - 1) * (p + 1) by
+      simpa using degree_diagCoset_prime_pow p hp 0 k hk,
+    show (diagCoset (![1, p ^ (k + 1)] : Fin 2 → ℕ)).degree = p ^ k * (p + 1) by
+      simpa using degree_diagCoset_prime_pow p hp 0 (k + 1) (by omega)] at h_deg
+  exact_mod_cast h_deg
+
+include hp in
 /-- The multiplicities in `T(1,p) · T(1,pᵏ)`: the coset `T(1, p^(k+1))` appears once, and
 `T(p, pᵏ)` appears `p + 1` times for `k = 1` and `p` times for `k ≥ 2`. -/
 private lemma multiplicity_values (k : ℕ) (hk : 0 < k) :
@@ -480,26 +521,8 @@ private lemma multiplicity_values (k : ℕ) (hk : 0 < k) :
     (((diagCoset ![1, p]).rep : GL (Fin 2) ℚ))
     (((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ))
     (((diagCoset ![p, p ^ k]).rep : GL (Fin 2) ℚ)) with hm2_def
-  have h_ne := diagCoset_one_prime_pow_succ_ne p hp k hk
-  have h_zero : ∀ A : HeckeCoset (posDetInt 2) (SLnZ 2) (SLnZ 2),
-      A ≠ diagCoset ![1, p ^ (k + 1)] → A ≠ diagCoset ![p, p ^ k] →
-      multiplicity (SLnZ 2) (SLnZ 2) (SLnZ 2)
-        (((diagCoset ![1, p]).rep : GL (Fin 2) ℚ))
-        (((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ)) ((A.rep : GL (Fin 2) ℚ)) = 0 := by
-    intro A h1 h2
-    by_contra h0
-    exact ((mulSupport_pp_subset p hp k A h0).elim h1 h2)
-  have h_deg := multiplicity_degree_sum_eq (diagCoset ![1, p]) (diagCoset ![1, p ^ k])
-    (diagCoset ![1, p ^ (k + 1)]) (diagCoset ![p, p ^ k]) h_ne h_zero
+  have h_deg := multiplicity_degree_sum_prime_pow p hp k hk
   rw [← hm1_def, ← hm2_def] at h_deg
-  -- All three degrees are the `i = 0` case of `degree_diagCoset_prime_pow`; `simpa` absorbs
-  -- the `p ^ 0 = 1` and `0 + j = j` normalisations.
-  rw [show (diagCoset (![1, p] : Fin 2 → ℕ)).degree = p ^ 0 * (p + 1) by
-      simpa using degree_diagCoset_prime_pow p hp 0 1 one_pos,
-    show (diagCoset (![1, p ^ k] : Fin 2 → ℕ)).degree = p ^ (k - 1) * (p + 1) by
-      simpa using degree_diagCoset_prime_pow p hp 0 k hk,
-    show (diagCoset (![1, p ^ (k + 1)] : Fin 2 → ℕ)).degree = p ^ k * (p + 1) by
-      simpa using degree_diagCoset_prime_pow p hp 0 (k + 1) (by omega)] at h_deg
   have hm1_pos : 0 < m1 := multiplicity_one_prime_pow_succ_pos p hp k
   have hp2 : (2 : ℤ) ≤ (p : ℤ) := by exact_mod_cast hp.two_le
   by_cases hk1 : k = 1
@@ -507,14 +530,8 @@ private lemma multiplicity_values (k : ℕ) (hk : 0 < k) :
     -- `![p, p ^ 1]` is the constant vector, so the generic `degree_diagCoset_const` applies.
     rw [show (![p, p ^ 1] : Fin 2 → ℕ) = fun _ ↦ p from by funext i; fin_cases i <;> simp,
       degree_diagCoset_const 2 p] at h_deg
-    have h_degZ : (m1 : ℤ) * ((p : ℤ) ^ 1 * ((p : ℤ) + 1)) + (m2 : ℤ) * 1 =
-        ((p : ℤ) + 1) * ((p : ℤ) + 1) := by
-      have := h_deg
-      push_cast at this ⊢
-      norm_num at this ⊢
-      linarith
     obtain ⟨h1, h2⟩ := m1_eq_one_and_m2_eq_of_eq_one (p : ℤ) (m1 : ℤ) (m2 : ℤ) hp2
-      (by exact_mod_cast hm1_pos) (by positivity) h_degZ
+      (by exact_mod_cast hm1_pos) (by positivity) (by push_cast at h_deg; linarith)
     simp only [ite_true]
     exact ⟨by exact_mod_cast h1, by exact_mod_cast h2⟩
   · have hk2 : 2 ≤ k := by omega
@@ -523,15 +540,8 @@ private lemma multiplicity_values (k : ℕ) (hk : 0 < k) :
         have h := degree_diagCoset_prime_pow p hp 1 (k - 1) (by omega)
         rw [show 1 + (k - 1) = k by omega, pow_one] at h
         rw [h, show k - 1 - 1 = k - 2 by omega]] at h_deg
-    have h_degZ : (m1 : ℤ) * ((p : ℤ) ^ k * ((p : ℤ) + 1)) +
-        (m2 : ℤ) * ((p : ℤ) ^ (k - 2) * ((p : ℤ) + 1)) =
-        ((p : ℤ) + 1) * ((p : ℤ) ^ (k - 1) * ((p : ℤ) + 1)) := by
-      have := h_deg
-      zify at this
-      ring_nf at this ⊢
-      linarith
     obtain ⟨h1, h2⟩ := m1_eq_one_and_m2_eq_of_two_le (p : ℤ) (m1 : ℤ) (m2 : ℤ) k hk2 hp2
-      (by exact_mod_cast hm1_pos) (by positivity) h_degZ
+      (by exact_mod_cast hm1_pos) (by positivity) (by push_cast at h_deg; linarith)
     simp only [hk1, ite_false]
     exact ⟨by exact_mod_cast h1, by exact_mod_cast h2⟩
 
@@ -550,14 +560,6 @@ theorem heckeT_prime_mul_heckeTDiag_one_prime_pow (k : ℕ) :
   classical
   obtain ⟨hm1, hm2⟩ := multiplicity_values p hp k hk
   have hne := diagCoset_one_prime_pow_succ_ne p hp k hk
-  have hzero : ∀ A : HeckeCoset (posDetInt 2) (SLnZ 2) (SLnZ 2),
-      A ≠ diagCoset ![1, p ^ (k + 1)] → A ≠ diagCoset ![p, p ^ k] →
-      multiplicity (SLnZ 2) (SLnZ 2) (SLnZ 2)
-        (((diagCoset ![1, p]).rep : GL (Fin 2) ℚ))
-        (((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ)) ((A.rep : GL (Fin 2) ℚ)) = 0 := by
-    intro A h1 h2
-    by_contra h0
-    exact ((mulSupport_pp_subset p hp k A h0).elim h1 h2)
   rw [heckeT_prime p hp,
     heckeTDiag_eq_diagElem one_pos hp.pos (one_dvd _),
     heckeTDiag_eq_diagElem one_pos (pow_pos hp.pos k) (one_dvd _),
@@ -593,7 +595,8 @@ theorem heckeT_prime_mul_heckeTDiag_one_prime_pow (k : ℕ) :
     · rw [ite_eq_left h2, mul_one, zero_add, ← h2, hm2]
       split_ifs <;> push_cast <;> ring
     · rw [ite_eq_right h2, mul_zero, add_zero,
-        hzero A (fun h ↦ h1 h.symm) (fun h ↦ h2 h.symm), Nat.cast_zero]
+        multiplicity_eq_zero_of_ne_diagCoset p hp k A (fun h ↦ h1 h.symm)
+          (fun h ↦ h2 h.symm), Nat.cast_zero]
 
 end SupportSubset
 

@@ -20,7 +20,7 @@ inverses.
 
 This is the topological analogue of `Equiv.permCongr` (`Mathlib/Logic/Equiv/Defs.lean`), the
 conjugation isomorphism of permutation groups, and is the target of the forgetful naturality of the
-diffeomorphism-level `TauCeti.Diffeomorph.diffCongr` in
+diffeomorphism-level `Diffeomorph.diffCongr` in
 `TauCeti.Geometry.Diffeomorphism.Congr`.
 
 ## Main definitions

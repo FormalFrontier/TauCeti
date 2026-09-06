@@ -9,6 +9,7 @@ public import TauCeti.Analysis.Semigroups.Basic
 public import Mathlib.LinearAlgebra.LinearPMap
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
+import Mathlib.Topology.Algebra.Group.Order
 
 /-!
 # Generators of strongly continuous semigroups
@@ -157,6 +158,22 @@ theorem StronglyContinuousSemigroup.generator_tendsto
   exact Classical.choose_spec x.property
 
 omit [CompleteSpace X] in
+/-- The generator difference quotient, rebased at `s`: the defining quotient of `S.generator` at
+`x` (`generator_tendsto`), precomposed with `u ↦ u - s` so that it approaches `s` from the right
+rather than `0`. -/
+theorem StronglyContinuousSemigroup.generator_tendsto_comp_sub_const
+    (S : StronglyContinuousSemigroup X) (x : S.domain) (s : ℝ) :
+    Filter.Tendsto (fun u : ℝ => (u - s)⁻¹ • (S.realOperator (u - s) (x : X) - (x : X)))
+      (nhdsWithin s (Set.Ioi s))
+      (nhds (S.generator ⟨(x : X), by
+        rw [S.generator_domain]
+        exact x.property⟩)) := by
+  have hshift : Filter.Tendsto (fun u : ℝ => u - s) (nhdsWithin s (Set.Ioi s))
+      (nhdsWithin 0 (Set.Ioi 0)) :=
+    le_of_eq (by rw [Filter.map_subRight_nhdsGT, sub_self])
+  simpa [Function.comp_def, one_div] using (S.generator_tendsto x).comp hshift
+
+omit [CompleteSpace X] in
 /-- Eliminator for the generator: if the difference quotient `(S t x - x)/t` of an
 `x ∈ D(A)` converges to `y`, then `A x = y`. -/
 theorem StronglyContinuousSemigroup.generator_eq_of_tendsto
@@ -253,7 +270,7 @@ private theorem StronglyContinuousSemigroup.local_integral_shift_identity
         exact hu.1
       have h_semigroup_apply :
           S.realOperator h (S.realOperator u x) = S.realOperator (u + h) x := by
-        rw [← ContinuousLinearMap.comp_apply, ← S.realOperator_add h u hh.le hu_nonneg, add_comm]
+        rw [← S.realOperator_add_apply h u hh.le hu_nonneg, add_comm]
       simpa [f] using h_semigroup_apply
   have h_sub :
       (∫ u in h..t + h, f u) - ∫ u in (0 : ℝ)..t, f u =
@@ -340,6 +357,13 @@ theorem StronglyContinuousSemigroup.dense_domain
   · simpa using S.tendsto_average_orbit_zero x
   · filter_upwards [self_mem_nhdsWithin] with t ht
     exact S.domain.smul_mem (1 / t) (S.integral_orbit_mem_domain x ht)
+
+/-- Two continuous linear maps that agree on the (dense) generator domain are equal. -/
+theorem StronglyContinuousSemigroup.continuousLinearMap_ext_of_eqOn_domain
+    (S : StronglyContinuousSemigroup X)
+    {f g : X →L[ℝ] X} (h : ∀ x ∈ S.domain, f x = g x) : f = g :=
+  ContinuousLinearMap.ext_on (R₁ := ℝ) (s := (S.domain : Set X))
+    (by rw [Submodule.span_eq]; exact S.dense_domain) h
 
 end TauCeti.Semigroups
 

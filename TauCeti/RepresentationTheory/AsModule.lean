@@ -25,6 +25,10 @@ theory counts, while the objects being classified are representations.
 
 ## Main results
 
+* `Representation.asModuleEquiv_apply`,
+  `Representation.IntertwiningMap.equivLinearMapAsModule_apply`: evaluation of the two
+  identifications Mathlib leaves definitional, the one of `ρ.asModule` with `V` and the one of an
+  intertwining map with the `k[G]`-linear map it induces.
 * `TauCeti.Representation.equivOfAsModuleLinearEquiv`: a `k[G]`-linear isomorphism
   `ρ.asModule ≃ₗ σ.asModule` is an equivalence of representations.
 * `TauCeti.Representation.asModuleLinearEquivOfEquiv`: the converse.
@@ -51,6 +55,24 @@ namespace Representation
 variable {k G V W : Type*} [CommSemiring k] [Monoid G]
 variable [AddCommMonoid V] [Module k V] [AddCommMonoid W] [Module k W]
 variable {ρ : _root_.Representation k G V} {σ : _root_.Representation k G W}
+
+/-- **Evaluation of the identification of `ρ.asModule` with `V`.** `Representation.asModuleEquiv`
+is the identity map of the underlying type, so it may be erased from an application; naming that
+fact keeps proofs that cross the type synonym from unfolding it. -/
+@[simp]
+theorem _root_.Representation.asModuleEquiv_apply (x : ρ.asModule) :
+    ρ.asModuleEquiv x = (x : V) :=
+  (rfl)
+
+/-- **Evaluation of the `k[G]`-linear map attached to an intertwining map.** The map
+`Representation.IntertwiningMap.equivLinearMapAsModule ρ σ f` is `f` itself on the underlying
+types, so it too may be erased from an application. -/
+@[simp]
+theorem _root_.Representation.IntertwiningMap.equivLinearMapAsModule_apply
+    (f : _root_.Representation.IntertwiningMap ρ σ)
+    (x : ρ.asModule) :
+    _root_.Representation.IntertwiningMap.equivLinearMapAsModule ρ σ f x = (f (x : V) : W) :=
+  (rfl)
 
 /-- **A `k[G]`-linear isomorphism of the attached modules is an equivalence of representations.**
 This reads `Representation.IntertwiningMap.equivLinearMapAsModule` backwards: the `k[G]`-linear map
@@ -89,7 +111,7 @@ theorem asModuleLinearEquivOfEquiv_equivOfAsModuleLinearEquiv
     (f : ρ.asModule ≃ₗ[k[G]] σ.asModule) :
     asModuleLinearEquivOfEquiv (equivOfAsModuleLinearEquiv f) = f := by
   ext x
-  simp
+  rfl
 
 /-- **The two notions of isomorphism agree.** Two representations are equivalent exactly when the
 `k[G]`-modules they carry are isomorphic. -/
