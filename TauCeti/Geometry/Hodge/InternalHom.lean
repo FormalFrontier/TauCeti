@@ -215,7 +215,6 @@ theorem internalHom_proj_apply_apply (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
 
 /-- A map lies in the degree-`p` internal-hom component exactly when it carries every source
 component of degree `a` into the target component of degree `a + p`. -/
-@[simp]
 theorem mem_internalHom_piece_iff (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
     (hs₂ : HodgeStructureOn W₂ ω₂ n₂) {p : ℤ} (f : W₁ →ₗ[ℂ] W₂) :
     f ∈ (hs₁.internalHom hs₂).piece p ↔ ∀ a, ∀ x ∈ hs₁.piece a, f x ∈ hs₂.piece (a + p) := by
@@ -252,7 +251,6 @@ theorem map_mem_F_of_mem_internalHom_F (hs₁ : HodgeStructureOn W₁ ω₁ n₁
 
 /-- A map lies in the `p`-th step of the internal-hom filtration exactly when it sends every
 step `F^q` of the source filtration into the step `F^{p+q}` of the target filtration. -/
-@[simp]
 theorem mem_internalHom_F_iff (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
     (hs₂ : HodgeStructureOn W₂ ω₂ n₂) {p : ℤ} (f : W₁ →ₗ[ℂ] W₂) :
     f ∈ (hs₁.internalHom hs₂).F p ↔ ∀ q, ∀ x ∈ hs₁.F q, f x ∈ hs₂.F (p + q) := by
