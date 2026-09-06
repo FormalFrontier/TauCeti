@@ -17,6 +17,10 @@ the sequence as `M ≃ N × Q`, and in that decomposition the endomorphism is bl
 because it preserves the image of `N`, so `LinearMap.trace_prodMap_add_inl_comp_snd` computes its
 trace from the two diagonal blocks.
 
+The proof generalizes the former private `TauCeti.TensorSquare.trace_eq_add_of_exact`
+implementation in `TauCeti.RepresentationTheory.Tensor.Square`, extracting its split
+exact-sequence argument into reusable linear-algebra API.
+
 Mathlib has the additivity of the trace over an *internal direct sum*
 (`LinearMap.trace_eq_sum_trace_restrict`), which needs the endomorphism to preserve every summand.
 An endomorphism of a short exact sequence only respects the filtration, not any splitting of it, so
