@@ -61,9 +61,9 @@ def fundamentalGroupMulEquiv (x : RealProjectiveSpace 1) :
   (FundamentalGroup.homeomorphMulEquiv homeomorphCircle x).trans
     (homeomorphCircle x).fundamentalGroupMulEquiv
 
-/-- The defining equation of `fundamentalGroupMulEquiv`, whose body is not exposed: it factors
-through the homeomorphism from the real projective line to the circle, followed by the circle
-fundamental-group computation. -/
+/-- `fundamentalGroupMulEquiv` factors as transport along `homeomorphCircle : RP¹ ≃ₜ Circle`,
+followed by the circle fundamental-group computation `Circle.fundamentalGroupMulEquiv` at the
+image basepoint. -/
 theorem fundamentalGroupMulEquiv_def (x : RealProjectiveSpace 1) :
     fundamentalGroupMulEquiv x =
       (FundamentalGroup.homeomorphMulEquiv homeomorphCircle x).trans

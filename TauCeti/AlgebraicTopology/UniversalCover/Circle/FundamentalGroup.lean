@@ -291,9 +291,9 @@ def fundamentalGroupMulEquiv (x : Circle) : FundamentalGroup Circle x ≃* Multi
           (AddCircle.homeomorphCircle_symm_one Real.two_pi_pos.ne')).trans
       (AddCircle.fundamentalGroupMulEquivZero (2 * Real.pi) Real.two_pi_pos.ne'))
 
-/-- The defining equation of `fundamentalGroupMulEquiv`, whose body is not exposed: it factors
-through Mathlib's basepoint-change isomorphism, followed by the canonical-basepoint circle
-computation transported from `AddCircle`. -/
+/-- `fundamentalGroupMulEquiv` factors as Mathlib's basepoint-change isomorphism
+`FundamentalGroup Circle x ≃* FundamentalGroup Circle 1`, followed by the canonical-basepoint
+computation transported from `AddCircle (2 * π)` along `AddCircle.homeomorphCircle`. -/
 theorem fundamentalGroupMulEquiv_def (x : Circle) :
     fundamentalGroupMulEquiv x =
       (FundamentalGroup.fundamentalGroupMulEquivOfPathConnected x 1).trans
