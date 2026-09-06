@@ -25,14 +25,14 @@ the unital maps, and a unital map with the pointedness condition is exactly an `
 carrier is `{0} ⊔ Isogeny W₁ W₂` as a *set*, obtained by weakening unitality rather than by a
 `WithZero` adjunction.
 
-The zero element is a formal tag. No compatibility between it and composition of morphisms is
-claimed: the pullback identity a nonzero morphism satisfies is vacuous at zero, every point
-landing at infinity.
+The zero element is a formal tag: the pullback identity a nonzero morphism satisfies is vacuous
+at zero, every point landing at infinity. Composition is therefore *defined* by cases, with the
+zero map absorbing, rather than derived from a pullback identity that does not hold there.
 
-Addition is not defined here. A sum of multiplicative maps is not multiplicative, so the carrier
-is not an additive subgroup of the linear maps; an additive structure on it has to be built from
-the elliptic-curve group law, which needs the rational addition formulas rather than anything in
-this file.
+Addition is not defined here, so `Hom W W` is a monoid with zero rather than a ring. A sum of
+multiplicative maps is not multiplicative, so the carrier is not an additive subgroup of the
+linear maps; an additive structure on it has to be built from the elliptic-curve group law, which
+needs the rational addition formulas rather than anything in this file.
 
 ## Main definitions
 
@@ -41,12 +41,20 @@ this file.
 * `TauCeti.Isogeny.Hom`: the carrier of `Hom(W₁, W₂)`, with `0` its zero map and
   `TauCeti.Isogeny.Hom.ofIsogeny` its nonzero elements.
 * `TauCeti.Isogeny.Hom.degree`: the degree, extended by the stipulation `degree 0 = 0`.
+* `TauCeti.Isogeny.Hom.comp` and `TauCeti.Isogeny.Hom.id`: composition and the identity, making
+  `Hom W W` a `MonoidWithZero`.
 
 ## Main results
 
 * `TauCeti.Isogeny.Hom.eq_zero_or_exists_ofIsogeny`: every element is the zero map or comes from
   an isogeny.
 * `TauCeti.Isogeny.Hom.degree_eq_zero_iff`: the degree vanishes exactly at the zero map.
+* `TauCeti.Isogeny.Hom.degree_comp`: `deg (g ∘ f) = deg g · deg f` on the whole carrier, the zero
+  map included — which is what the value `degree 0 = 0` is chosen for.
+* `TauCeti.Isogeny.Hom.comp_eq_zero_iff`: a composite vanishes exactly when a factor does, so the
+  endomorphism monoid has no zero divisors.
+* `TauCeti.Isogeny.Hom.instNontrivial`: the carrier has more than one element, which is what
+  lets Mathlib's theory of nontrivial monoids with zero apply to it.
 
 ## Implementation notes
 
@@ -204,6 +212,144 @@ theorem degree_eq_zero_iff (h : Hom W₁ W₂) : h.degree = 0 ↔ h = 0 := by
   · exact hz
   · rw [hφ, degree_ofIsogeny] at hd
     exact absurd hd φ.degree_ne_zero
+
+/-- **Composition on the carrier.** At a zero argument the composite is the zero map: the zero
+morphism composed either way is the zero morphism, and it has no pullback of functions to
+compose with the other side's, so the value there is stipulated rather than derived. -/
+noncomputable def comp (g : Hom W₂ W₃) (f : Hom W₁ W₂) : Hom W₁ W₃ := by
+  classical
+  exact if hg : g = 0 then 0 else if hf : f = 0 then 0 else
+    ofIsogeny ((toIsogeny hg).comp (toIsogeny hf))
+
+/-- **The zero map absorbs on the left.** -/
+@[simp]
+theorem zero_comp (f : Hom W₁ W₂) : (0 : Hom W₂ W₃).comp f = 0 := by
+  classical
+  rw [comp]
+  split
+  · rfl
+  · exact absurd rfl ‹(0 : Hom W₂ W₃) ≠ 0›
+
+/-- **The zero map absorbs on the right.** -/
+@[simp]
+theorem comp_zero (g : Hom W₂ W₃) : g.comp (0 : Hom W₁ W₂) = 0 := by
+  classical
+  rw [comp]
+  split
+  · rfl
+  · split
+    · rfl
+    · exact absurd rfl ‹(0 : Hom W₁ W₂) ≠ 0›
+
+/-- **The embedding carries `Isogeny.comp` to carrier composition.** -/
+@[simp]
+theorem ofIsogeny_comp_ofIsogeny (ψ : Isogeny W₂ W₃) (φ : Isogeny W₁ W₂) :
+    (ofIsogeny ψ).comp (ofIsogeny φ) = ofIsogeny (ψ.comp φ) := by
+  classical
+  rw [comp]
+  split
+  · exact absurd ‹ofIsogeny ψ = 0› (ofIsogeny_ne_zero ψ)
+  · split
+    · exact absurd ‹ofIsogeny φ = 0› (ofIsogeny_ne_zero φ)
+    · rw [toIsogeny_ofIsogeny, toIsogeny_ofIsogeny]
+
+/-- **A composite vanishes exactly when one of its factors does.** -/
+@[simp]
+theorem comp_eq_zero_iff {g : Hom W₂ W₃} {f : Hom W₁ W₂} :
+    g.comp f = 0 ↔ g = 0 ∨ f = 0 := by
+  refine ⟨fun hc => ?_, fun h => h.elim (fun hg => hg ▸ zero_comp f) fun hf => hf ▸ comp_zero g⟩
+  by_contra hn
+  rw [not_or] at hn
+  obtain ⟨hg, hf⟩ := hn
+  obtain ⟨ψ, rfl⟩ := g.eq_zero_or_exists_ofIsogeny.resolve_left hg
+  obtain ⟨φ, rfl⟩ := f.eq_zero_or_exists_ofIsogeny.resolve_left hf
+  rw [ofIsogeny_comp_ofIsogeny] at hc
+  exact ofIsogeny_ne_zero _ hc
+
+/-- **`deg (g ∘ f) = deg g · deg f`, on the whole carrier.** The tower formula holds at the zero
+map too, and that is what the stipulation `degree 0 = 0` buys: both sides are `0` there. -/
+@[simp]
+theorem degree_comp (g : Hom W₂ W₃) (f : Hom W₁ W₂) :
+    (g.comp f).degree = g.degree * f.degree := by
+  rcases g.eq_zero_or_exists_ofIsogeny with rfl | ⟨ψ, rfl⟩
+  · rw [zero_comp, degree_zero, degree_zero, zero_mul]
+  · rcases f.eq_zero_or_exists_ofIsogeny with rfl | ⟨φ, rfl⟩
+    · rw [comp_zero, degree_zero, degree_zero, mul_zero]
+    · rw [ofIsogeny_comp_ofIsogeny, degree_ofIsogeny, degree_ofIsogeny, degree_ofIsogeny,
+        Isogeny.degree_comp]
+
+/-- **Carrier composition is associative**, the zero map included. -/
+@[simp]
+theorem comp_assoc {W₄ : WeierstrassCurve.Affine F} (h : Hom W₃ W₄) (g : Hom W₂ W₃)
+    (f : Hom W₁ W₂) : (h.comp g).comp f = h.comp (g.comp f) := by
+  rcases h.eq_zero_or_exists_ofIsogeny with rfl | ⟨χ, rfl⟩
+  · simp
+  · rcases g.eq_zero_or_exists_ofIsogeny with rfl | ⟨ψ, rfl⟩
+    · simp
+    · rcases f.eq_zero_or_exists_ofIsogeny with rfl | ⟨φ, rfl⟩
+      · simp
+      · simp [Isogeny.comp_assoc]
+
+/-- The identity, as an element of the carrier. -/
+noncomputable def id (W : WeierstrassCurve.Affine F) : Hom W W :=
+  ofIsogeny (Isogeny.id W)
+
+/-- The defining equation of `id`. -/
+-- Needed as a lemma rather than left to unfolding: `id`'s body is not exposed across a module
+-- boundary, so `rw [id]` in a downstream file fails with "Invalid rewrite argument".
+theorem id_def (W : WeierstrassCurve.Affine F) :
+    id W = ofIsogeny (Isogeny.id W) := (rfl)
+
+/-- **The identity is a left unit for composition.** -/
+@[simp]
+theorem id_comp (f : Hom W₁ W₂) : (id W₂).comp f = f := by
+  rcases f.eq_zero_or_exists_ofIsogeny with rfl | ⟨φ, rfl⟩
+  · rw [comp_zero]
+  · rw [id, ofIsogeny_comp_ofIsogeny, Isogeny.id_comp]
+
+/-- **The identity is a right unit for composition.** -/
+@[simp]
+theorem comp_id (f : Hom W₁ W₂) : f.comp (id W₁) = f := by
+  rcases f.eq_zero_or_exists_ofIsogeny with rfl | ⟨φ, rfl⟩
+  · rw [zero_comp]
+  · rw [id, ofIsogeny_comp_ofIsogeny, Isogeny.comp_id]
+
+/-- **The identity has degree one**, its pullback being onto. -/
+@[simp]
+theorem degree_id (W : WeierstrassCurve.Affine F) : (id W).degree = 1 := by
+  rw [id, degree_ofIsogeny, Isogeny.degree_id]
+
+/-- **The endomorphisms of `W` form a monoid with zero** under composition: the identity is its
+unit and the zero map is absorbing. The additive structure that would make it a ring is not
+built here. -/
+noncomputable instance : MonoidWithZero (Hom W₁ W₁) where
+  mul g f := g.comp f
+  one := id W₁
+  mul_assoc h g f := comp_assoc h g f
+  one_mul := id_comp
+  mul_one := comp_id
+  zero_mul := zero_comp
+  mul_zero := comp_zero
+
+/-- **The endomorphism monoid has no zero divisors**: a composite of nonzero endomorphisms is
+nonzero, since a composite of isogenies is an isogeny. -/
+instance : NoZeroDivisors (Hom W₁ W₁) where
+  eq_zero_or_eq_zero_of_mul_eq_zero := comp_eq_zero_iff.mp
+
+/-- The monoid's multiplication is composition. -/
+@[simp]
+theorem mul_def (g f : Hom W₁ W₁) : g * f = g.comp f := (rfl)
+
+/-- The monoid's unit is the identity endomorphism. -/
+@[simp]
+theorem one_def : (1 : Hom W₁ W₁) = id W₁ := (rfl)
+
+/-- **The carrier has more than one element**: the zero map has degree `0` and the identity
+degree `1`. Supplying this makes Mathlib's generic theory of nontrivial monoids with zero apply,
+`not_isUnit_zero` among it. -/
+instance : Nontrivial (Hom W₁ W₁) :=
+  ⟨⟨0, id W₁, fun h => zero_ne_one (α := ℕ) (by rw [← degree_zero (W₁ := W₁) (W₂ := W₁), h,
+    degree_id])⟩⟩
 
 end Hom
 

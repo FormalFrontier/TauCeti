@@ -10,6 +10,7 @@ public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
 import Mathlib.Algebra.EuclideanDomain.Int
 -- `dvd_mul_mul_apply` and `dvd_diag_of_dvd_entries`, used only inside proofs below.
 import TauCeti.LinearAlgebra.Matrix.Divisibility
+import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Equivalence
 import Mathlib.Data.Int.GCD
 import Mathlib.Basic.Sign.Basic
 import Mathlib.LinearAlgebra.Determinant
@@ -827,15 +828,6 @@ private lemma prod_take_dvd_of_mul_diagonal_mul_eq {c d : Fin n → ℤ}
       simp only [Matrix.submatrix_apply, hgeq])
     simp [this]
 
-/-- Inverting a two-sided unimodular transformation. Used both by the uniqueness proof and by
-the content characterisation below, which otherwise repeat the same three lines. -/
-private lemma inv_mul_mul_inv_of_mul_mul_eq {S : Type*} [Semiring S]
-    {A B : Matrix (Fin n) (Fin n) S} (L R : GeneralLinearGroup (Fin n) S)
-    (h : (L : Matrix (Fin n) (Fin n) S) * A * (R : Matrix (Fin n) (Fin n) S) = B) :
-    (↑L⁻¹ : Matrix (Fin n) (Fin n) S) * B * (↑R⁻¹ : Matrix (Fin n) (Fin n) S) = A := by
-  rw [← h]
-  simp [Matrix.mul_assoc]
-
 /-- **Uniqueness of the Smith normal form**: two nonnegative diagonals with divisibility
 chains in the same `GL_n(ℤ)`-equivalence class are equal — including singular forms, whose
 chains vanish from the first zero on.  Together with
@@ -848,7 +840,7 @@ theorem smith_normal_form_unique {c d : Fin n → ℤ} (hc_pos : ∀ i, 0 ≤ c 
       (R : Matrix (Fin n) (Fin n) ℤ) = Matrix.diagonal d) : c = d := by
   have h' : (↑L⁻¹ : Matrix (Fin n) (Fin n) ℤ) * Matrix.diagonal d *
       (↑R⁻¹ : Matrix (Fin n) (Fin n) ℤ) = Matrix.diagonal c :=
-    inv_mul_mul_inv_of_mul_mul_eq L R h
+    L.inv_mul_mul_inv_of_mul_mul_eq R h
   have key : ∀ k (hk : k ≤ n),
       ∏ j : Fin k, c ⟨j.val, by omega⟩ = ∏ j : Fin k, d ⟨j.val, by omega⟩ := fun k hk ↦
     Int.dvd_antisymm
@@ -892,10 +884,7 @@ commit `2baa76f742bdb4fb8ee323fabba41203bd390e08`,
 divisibility directions privately at `Fin 2` as `snf_first_dvd_entry₂` and
 `dvd_snf_first_of_dvd_entries`, proved by entrywise cofactor algebra; the proofs here are a
 re-derivation at general `n`, where inverting the unimodular factors removes the need for that
-algebra. The source's third lemma `snf_mutual_dvd_eq` is **not** ported here: its conclusion follows
-from `Matrix.dvd_diag_of_dvd_entries` applied in both directions together with a determinant
-cancellation — it does *not* go through `Matrix.smith_normal_form_unique` — and it belongs
-with the Atkin–Lehner material that consumes it rather than here. -/
+algebra. -/
 
 /-- **The first entry of a chained diagonal form divides every entry.** If
 `L * A * R = diagonal d` with `L`, `R` unimodular and `d 0` dividing every `d k`, then `d 0`
@@ -909,7 +898,7 @@ theorem invariant_factor_zero_dvd_entries {S : Type*} [CommSemiring S] [NeZero n
     (L R : GeneralLinearGroup (Fin n) S)
     (h : (L : Matrix (Fin n) (Fin n) S) * A * (R : Matrix (Fin n) (Fin n) S) =
       Matrix.diagonal d) (i j : Fin n) : d 0 ∣ A i j := by
-  rw [← inv_mul_mul_inv_of_mul_mul_eq L R h]
+  rw [← L.inv_mul_mul_inv_of_mul_mul_eq R h]
   refine dvd_mul_mul_apply (fun p q ↦ ?_) _ _ i j
   rcases eq_or_ne p q with rfl | hpq
   · simpa using hd0 p

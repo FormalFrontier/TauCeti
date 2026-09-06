@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.Basis
+public import TauCeti.RepresentationTheory.Simple.FDRepClasses
 public import TauCeti.RingTheory.Semisimple.CenterDimension
 
 /-!
@@ -30,10 +31,18 @@ modules are shown to exhaust the simple `ℚ[Sₙ]`-modules in
 `TauCeti/RepresentationTheory/Symmetric/Specht/Completeness.lean`, over `ℚ`, which is not
 algebraically closed.
 
+The two `bijective_of_injective_of_card_conjClasses_le` lemmas package that step once and for all,
+in the module language and in the language of `FDRep k G`, so that a classification only has to
+supply the injection and the count of conjugacy classes.
+
 ## Main results
 
 * `TauCeti.card_simpleSubmoduleClasses_le_card_conjClasses`: over a field with `k[G]` semisimple,
   the isomorphism classes of simple `k[G]`-modules are at most the conjugacy classes of `G`.
+* `TauCeti.SimpleSubmoduleClasses.bijective_of_injective_of_card_conjClasses_le` and
+  `TauCeti.SimpleFDRepClasses.bijective_of_injective_of_card_conjClasses_le`: an injection into the
+  isomorphism classes of simple modules, resp. of simple objects of `FDRep k G`, from a type with
+  at least as many elements as `G` has conjugacy classes, is a bijection.
 
 ## References
 
@@ -62,5 +71,34 @@ theorem card_simpleSubmoduleClasses_le_card_conjClasses :
     Nat.card (SimpleSubmoduleClasses k[G] k[G]) ≤ Nat.card (ConjClasses G) := by
   rw [Nat.card_congr (simpleSubmoduleClassesEquiv k[G] k[G]), ← finrank_center_monoidAlgebra k G]
   exact card_isotypicComponents_le_finrank_center k k[G]
+
+variable {k G}
+
+/-- **Enough pairwise non-isomorphic simple modules are all of them.** An injection into the
+isomorphism classes of simple `k[G]`-modules, from a type with at least as many elements as `G` has
+conjugacy classes, is a bijection: by `TauCeti.card_simpleSubmoduleClasses_le_card_conjClasses`
+there is no room left for a class outside the image. -/
+theorem SimpleSubmoduleClasses.bijective_of_injective_of_card_conjClasses_le {ι : Type*}
+    {f : ι → SimpleSubmoduleClasses k[G] k[G]} (hf : Function.Injective f)
+    (h : Nat.card (ConjClasses G) ≤ Nat.card ι) : Function.Bijective f :=
+  have : Finite (SimpleSubmoduleClasses k[G] k[G]) :=
+    .of_equiv _ (simpleSubmoduleClassesEquiv _ _).symm
+  hf.bijective_of_nat_card_le ((card_simpleSubmoduleClasses_le_card_conjClasses k G).trans h)
+
+/-- **Enough pairwise non-isomorphic simple objects are all of them**, the same count read in
+`FDRep k G`: the isomorphism classes of simple objects inject into the isomorphism classes of the
+`k[G]`-modules they carry (`TauCeti.SimpleFDRepClasses.toSimpleSubmoduleClasses_injective`), so the
+conjugacy classes bound them too. -/
+theorem SimpleFDRepClasses.bijective_of_injective_of_card_conjClasses_le {ι : Type*}
+    {f : ι → SimpleFDRepClasses k G} (hf : Function.Injective f)
+    (h : Nat.card (ConjClasses G) ≤ Nat.card ι) : Function.Bijective f :=
+  have : Finite (SimpleSubmoduleClasses k[G] k[G]) :=
+    .of_equiv _ (simpleSubmoduleClassesEquiv _ _).symm
+  have : Finite (SimpleFDRepClasses k G) :=
+    .of_injective _ SimpleFDRepClasses.toSimpleSubmoduleClasses_injective
+  hf.bijective_of_nat_card_le
+    (((Nat.card_le_card_of_injective _
+      SimpleFDRepClasses.toSimpleSubmoduleClasses_injective).trans
+        (card_simpleSubmoduleClasses_le_card_conjClasses k G)).trans h)
 
 end TauCeti

@@ -192,6 +192,13 @@ theorem degree_comp (ψ : Isogeny W₂ W₃) (φ : Isogeny W₁ W₂) :
   rw [φ.degree_eq_finrank hφ, ψ.degree_eq_finrank hψ, (ψ.comp φ).degree_eq_finrank hc]
   exact (Module.finrank_mul_finrank W₃.FunctionField W₂.FunctionField W₁.FunctionField).symm
 
+/-- **Both factors of an identity composite have degree one.** Degree is multiplicative and the
+identity has degree one, and `1` factors in `ℕ` only as `1 * 1`. -/
+theorem degree_eq_one_of_comp_eq_id {ψ : Isogeny W₂ W₁} {φ : Isogeny W₁ W₂}
+    (h : ψ.comp φ = id W₁) : ψ.degree = 1 ∧ φ.degree = 1 := by
+  have hmul : ψ.degree * φ.degree = 1 := by rw [← degree_comp, h, degree_id]
+  exact ⟨Nat.eq_one_of_mul_eq_one_right hmul, Nat.eq_one_of_mul_eq_one_left hmul⟩
+
 end Isogeny
 
 end TauCeti

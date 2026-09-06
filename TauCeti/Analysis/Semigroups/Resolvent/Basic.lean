@@ -208,10 +208,7 @@ private theorem StronglyContinuousSemigroup.resolvent_shift_identity
         (S.realOperator h) (f t) = Real.exp (lambda * h) • f (t + h) := by
       intro t ht
       simp only [f, ContinuousLinearMap.map_smul]
-      have h_time_add_comm : h + t = t + h := add_comm h t
-      rw [← ContinuousLinearMap.comp_apply,
-          ← S.realOperator_add h t (le_of_lt hh) (le_of_lt (Set.mem_Ioi.mp ht)),
-          h_time_add_comm]
+      rw [← S.realOperator_add_apply h t (le_of_lt hh) (le_of_lt (Set.mem_Ioi.mp ht)), add_comm]
       symm; rw [← mul_smul, ← Real.exp_add]; congr 1; ring_nf
     rw [MeasureTheory.setIntegral_congr_fun measurableSet_Ioi h_eq]
     rw [integral_smul (μ := volume.restrict (Set.Ioi (0 : ℝ)))]

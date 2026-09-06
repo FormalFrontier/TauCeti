@@ -30,28 +30,26 @@ analogues of Mathlib's pointwise-fixer conjugation API
 
 ## Main definitions
 
-* `TauCeti.Diffeomorph.relativeDiffCongrOfImageEq e hst`: the group isomorphism
+* `Diffeomorph.relativeDiffCongrOfImageEq e hst`: the group isomorphism
   `Diff(M, s) ≃* Diff(N, t)` induced by conjugation with `e`, when `hst : e '' s = t`.
-* `TauCeti.Diffeomorph.relativeDiffCongr e s`: the specialization
+* `Diffeomorph.relativeDiffCongr e s`: the specialization
   `Diff(M, s) ≃* Diff(N, e '' s)` induced by conjugation with `e`.
 
 ## Main results
 
-* `TauCeti.Diffeomorph.map_fixingSubgroup_diffCongr_of_image_eq`: conjugation maps the pointwise
+* `Diffeomorph.map_fixingSubgroup_diffCongr_of_image_eq`: conjugation maps the pointwise
   fixer of `s` onto the pointwise fixer of `t`, when `e '' s = t`.
-* `TauCeti.Diffeomorph.map_fixingSubgroup_diffCongr`: conjugation maps the pointwise fixer of
+* `Diffeomorph.map_fixingSubgroup_diffCongr`: conjugation maps the pointwise fixer of
   `s` onto the pointwise fixer of `e '' s`.
-* `TauCeti.Diffeomorph.diffCongr_mem_fixingSubgroup_image`: conjugating a diffeomorphism fixing
+* `Diffeomorph.diffCongr_mem_fixingSubgroup_image`: conjugating a diffeomorphism fixing
   `s` gives one fixing `e '' s`.
-* `TauCeti.Diffeomorph.relativeDiffCongr_apply`: the underlying diffeomorphism is
+* `Diffeomorph.relativeDiffCongr_apply`: the underlying diffeomorphism is
   `Diffeomorph.diffCongr e`.
-* `TauCeti.Diffeomorph.relativeDiffCongr_apply_apply`: pointwise,
+* `Diffeomorph.relativeDiffCongr_apply_apply`: pointwise,
   `relativeDiffCongr e s φ y = e (φ (e.symm y))`.
 -/
 
 public section
-
-namespace TauCeti
 
 open scoped Manifold ContDiff
 
@@ -175,8 +173,9 @@ conjugation by `e.symm`. -/
 theorem relativeDiffCongrOfImageEq_symm_apply (e : M ≃ₘ^n⟮I, J⟯ N) {s : Set M} {t : Set N}
     (hst : e '' s = t) (ψ : fixingSubgroup (I := J) (n := n) t) :
     ((relativeDiffCongrOfImageEq e hst).symm ψ : M ≃ₘ^n⟮I, I⟯ M) = diffCongr e.symm ψ := by
-  ext x
-  rfl
+  have h := relativeDiffCongrOfImageEq_apply e hst ((relativeDiffCongrOfImageEq e hst).symm ψ)
+  rw [MulEquiv.apply_symm_apply] at h
+  rw [h, ← diffCongr_symm, MulEquiv.symm_apply_apply]
 
 /-- Applying the inverse of `relativeDiffCongr` and then forgetting the subgroup is conjugation by
 `e.symm`. -/
@@ -205,5 +204,3 @@ theorem relativeDiffCongr_symm_apply_apply (e : M ≃ₘ^n⟮I, J⟯ N) (s : Set
   exact diffCongr_apply_apply e.symm ψ x
 
 end Diffeomorph
-
-end TauCeti

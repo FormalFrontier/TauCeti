@@ -55,6 +55,10 @@ The genus characters and this relation are classical; see D. A. Cox, *Primes of 
   a prime discriminant, and for a genus character, of a prime-discriminant factorization of `D`.
 * `TauCeti.Multiquadratic.genusCharFun_mod_right'`: a genus character is a character modulo the
   absolute value of the product of its indices.
+* `TauCeti.Multiquadratic.genusCharFun_natCast_eq_legendreSym_prod` and
+  `TauCeti.Multiquadratic.genusCharFun_natCast_eq_legendreSym`: at an odd prime a genus character
+  is the Legendre symbol of the product of its indices, and for a prime-discriminant factorization
+  of `fundamentalDiscriminant d` it is the splitting symbol `legendreSym q d`.
 * `TauCeti.Multiquadratic.genusCharFun_norm_eq_one`: a genus character of `D` is trivial at the
   norm of an algebraic integer of `ℚ(√d)` coprime to the product of its indices, and
   `TauCeti.Multiquadratic.norm_ne_of_genusCharFun_eq_neg_one` is the resulting obstruction;
@@ -283,6 +287,38 @@ theorem genusCharFun_eq_one_of_four_mul_eq_sq_sub_mul_sq {s t : Finset ℤ}
   Finset.prod_eq_one fun _ hP =>
     primeDiscriminantCharFun_eq_one_of_mem_of_four_mul_eq_sq_sub_mul_sq hs heven (hts hP)
       (hcop.of_prod_right _ hP) h
+
+/-! ### Values at an odd prime -/
+
+/-- **A genus character evaluates at an odd prime as a Legendre symbol.** For a set `s` of prime
+discriminants, `genusCharFun s q = legendreSym q (∏ P ∈ s, P)` at every odd prime `q`, since each
+prime-discriminant character is the Legendre symbol of its prime discriminant. -/
+theorem genusCharFun_natCast_eq_legendreSym_prod {s : Finset ℤ}
+    (hs : ∀ P ∈ s, IsPrimeDiscriminant P) {q : ℕ} [Fact q.Prime] (hq : q ≠ 2) :
+    genusCharFun s (q : ℤ) = legendreSym q (∏ P ∈ s, P) := by
+  have hmap : legendreSym q (∏ P ∈ s, P) = ∏ P ∈ s, legendreSym q P :=
+    map_prod (legendreSym.hom q) _ s
+  rw [genusCharFun_def, hmap]
+  exact Finset.prod_congr rfl fun P hP => primeDiscriminantCharFun_eq_legendreSym (hs P hP) hq
+
+/-- **The genus character of a quadratic discriminant is its splitting symbol.** For
+`K = ℚ(√d)` with discriminant `D = ∏ P ∈ s, P`, the genus character indexed by the whole
+factorization agrees at an odd prime `q` with `legendreSym q d`: the fundamental discriminant
+differs from `d` by the square of `1` or `2`, which the symbol does not see. -/
+theorem genusCharFun_natCast_eq_legendreSym {s : Finset ℤ} {d : ℤ}
+    (hs : ∀ P ∈ s, IsPrimeDiscriminant P)
+    (hprod : ∏ P ∈ s, P = fundamentalDiscriminant d)
+    {q : ℕ} [Fact q.Prime] (hq : q ≠ 2) :
+    genusCharFun s (q : ℤ) = legendreSym q d := by
+  obtain ⟨c, hc, hcd⟩ := exists_sq_mul_eq_fundamentalDiscriminant d
+  have hc0 : ((c : ℤ) : ZMod q) ≠ 0 := by
+    rw [Ne, ZMod.intCast_zmod_eq_zero_iff_dvd]
+    rcases hc with rfl | rfl
+    · exact fun h => (Fact.out : q.Prime).ne_one (Nat.dvd_one.mp (by exact_mod_cast h))
+    · exact fun h =>
+        hq ((Nat.prime_dvd_prime_iff_eq Fact.out Nat.prime_two).mp (by exact_mod_cast h))
+  rw [genusCharFun_natCast_eq_legendreSym_prod hs hq, hprod, ← hcd, legendreSym.mul,
+    legendreSym.sq_one' q hc0, one_mul]
 
 /-! ### Genus characters on the norms of a quadratic field -/
 

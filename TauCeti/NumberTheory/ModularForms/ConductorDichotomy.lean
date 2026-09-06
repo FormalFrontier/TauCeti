@@ -123,6 +123,16 @@ private lemma eq_T_mul_mul_T_of_sub_eq {l Nl i j a a' e e' b b' : ℤ} (hNl : Nl
   · ring
   · linear_combination -hj
 
+omit [NeZero N] in
+/-- **The determinant of a Bézout lift, with its lower-left entry factored.** Writing that entry
+as `l * (N / l)` is the only thing the vanishing argument knows about the lift's upper row, and
+both the chosen unit and its partner are read through this identity. -/
+private lemma gamma0TwistOfUnit_det_eq_one {l : ℕ} (hlN : l ∣ N) (v : (ZMod N)ˣ) :
+    gamma0TwistOfUnit v 0 0 * gamma0TwistOfUnit v 1 1 -
+      gamma0TwistOfUnit v 0 1 * ((l : ℤ) * ((N / l : ℕ) : ℤ)) = 1 := by
+  rw [← gamma0TwistOfUnit_apply_one_zero_eq_mul (l := l) hlN v]
+  exact fin_two_mul_sub_mul_eq_one _
+
 /-- **The refactoring step.** For a character not trivial on the kernel, the `diag(l, 1)`-conjugate
 of the Bézout lift of `u` is a translate — on both sides — of the conjugate of the lift of some
 `u'` on which the character takes a *different* value. Since the function the vanishing argument
@@ -139,14 +149,13 @@ private theorem exists_apply_ne_and_eq_T_zpow_mul_conjScale_mul_T_zpow {l : ℕ}
         (gamma0TwistOfUnit_apply_one_zero_eq_mul hlN _) * ModularGroup.T ^ j := by
   -- `l ≠ 0` is forced by `hlN` and `NeZero N`, so it is derived rather than demanded
   have : NeZero l := NeZero.of_dvd hlN
-  -- the separation is `DirichletCharacter.exists_alt_unit_in_coset_with_char_separation`, read
-  -- through `MulChar.ofUnitHom`; `hχ` is the negation of `FactorsThrough` by
-  -- `DirichletCharacter.factorsThrough_iff_ker_unitsMap`, exactly as in the dichotomy below
-  have hnfac : ¬ DirichletCharacter.FactorsThrough (MulChar.ofUnitHom χ) (N / l) := by
-    refine fun hfac ↦ hχ fun v hv ↦ ?_
-    simpa using MonoidHom.mem_ker.mp
-      ((DirichletCharacter.factorsThrough_iff_ker_unitsMap (Nat.div_dvd_of_dvd hlN)).mp hfac
-        (MonoidHom.mem_ker.mpr hv))
+  -- nontriviality on the kernel is non-factorisation, in the form the separation lemma takes
+  have hnfac : ¬ DirichletCharacter.FactorsThrough (MulChar.ofUnitHom χ) (N / l) :=
+    fun hfac ↦ hχ fun v hv ↦ by
+      simpa using MonoidHom.mem_ker.mp ((DirichletCharacter.factorsThrough_iff_ker_unitsMap
+        (Nat.div_dvd_of_dvd hlN)).mp hfac (MonoidHom.mem_ker.mpr hv))
+  -- the separation is `DirichletCharacter.exists_alt_unit_in_coset_with_char_separation`,
+  -- read through `MulChar.ofUnitHom`
   obtain ⟨u', hcoset, hne⟩ :=
     DirichletCharacter.exists_alt_unit_in_coset_with_char_separation
       (Nat.div_dvd_of_dvd hlN) hnfac u
@@ -155,12 +164,8 @@ private theorem exists_apply_ne_and_eq_T_zpow_mul_conjScale_mul_T_zpow {l : ℕ}
   have hNl_ne : Nl ≠ 0 := by
     rw [hNl, Nat.cast_ne_zero]
     exact (Nat.div_pos (Nat.le_of_dvd (Nat.pos_of_neZero N) hlN) (Nat.pos_of_neZero l)).ne'
-  -- the determinant of a lift, read through the factorization `N = l * (N / l)` of its
-  -- lower-left entry: this is the only thing known about the upper row
   have hdet : ∀ v : (ZMod N)ˣ, gamma0TwistOfUnit v 0 0 * gamma0TwistOfUnit v 1 1 -
-      gamma0TwistOfUnit v 0 1 * ((l : ℤ) * Nl) = 1 := fun v => by
-    rw [← gamma0TwistOfUnit_apply_one_zero_eq_mul (l := l) hlN v]
-    exact fin_two_mul_sub_mul_eq_one _
+      gamma0TwistOfUnit v 0 1 * ((l : ℤ) * Nl) = 1 := gamma0TwistOfUnit_det_eq_one hlN
   -- the lower-right entries are the unit values, so the coset congruence is one between them
   have hdvd_e : Nl ∣ gamma0TwistOfUnit u 1 1 - gamma0TwistOfUnit u' 1 1 := by
     rw [gamma0TwistOfUnit_apply_one_one, gamma0TwistOfUnit_apply_one_one]
