@@ -145,8 +145,8 @@ be the split maximal torus of a pinned simply connected Chevalley--Demazure grou
 def geckWeightTorus : (Fin d.rank → d.Closureˣ) →* GeckGroup d :=
   d.dynkinType.geckWeightTorusPoints d.dynkinType_valid d.Closure
 
-/-- The weight torus of an index is that of the pinned Geck carrier of the Dynkin type it names.
-This is its unfolding lemma; the definition itself stays sealed. -/
+/-- The weight torus of an index is the represented weight torus of the pinned Geck carrier of the
+Dynkin type it names, over the algebraic closure of the prime field of the index. -/
 theorem geckWeightTorus_def : d.geckWeightTorus =
     d.dynkinType.geckWeightTorusPoints d.dynkinType_valid d.Closure := by
   rw [geckWeightTorus]

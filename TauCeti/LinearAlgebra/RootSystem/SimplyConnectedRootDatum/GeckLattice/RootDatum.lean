@@ -69,14 +69,13 @@ noncomputable section
 
 variable (t : DynkinType) (ht : t.Valid)
 
-/-! None of the restatements below is a `simp` lemma, at any of the three tiers. Their right-hand
-sides are not `simp`-normal: `TauCeti.DynkinType.root_simpleIndex` rewrites a named simple root
-back to its Bourbaki row of `t.cartanMatrix`, which is also what
-`TauCeti.DynkinType.rootGeneratorWeight_inl` produces from the character on the left. This is the
-policy recorded in `TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/KostantForm.lean`
-beside the substitution these restatements perform: both forms are already `simp`-normal, so
-orienting the identification either way would undo an existing rule. They are stated to be used by
-`exact` and `rw`, as `TauCeti/GroupTheory/SpecificGroups/CFSG/GeckCarrier.lean` uses them. -/
+/-! The character by which a torus point rescales the parameter of the raising subgroup at node `i`
+and the simple root `α_i` of `TauCeti.DynkinType.simplyConnectedRootDatum` are the same element of
+the character lattice, both being row `i` of `t.cartanMatrix`, and the lowering subgroup at node
+`i` is rescaled by `-α_i`. The equations below are the conjugation equations of the carrier in that
+named-root reading, in which the pinned root datum rather than the Cartan matrix is the object the
+equation is about, at the three tiers the carrier offers: on parameters, on schemes, and on the
+points of the group scheme. -/
 
 /-! ## The pointwise conjugation equations -/
 
