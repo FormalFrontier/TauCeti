@@ -237,7 +237,11 @@ base, the exponents `k ≥ 1` with `N(𝔭) ^ k ≤ x` contribute at most `log x
 finitely many `𝔭`.
 
 A counting argument can therefore discard a finite exceptional set of primes — those ramifying in
-an extension, say, or lying above such — at a cost of `O(log x)`. -/
+an extension, say, or lying above such — at a cost of `O(log x)`.
+
+The fibre step is `TauCeti.card_fiber_mul_log_absNorm_le`, which was factored out of
+`TauCeti.higherPrimePowerTheta_le_card_primesLE_mul_log`: that theorem first made this
+exponent-counting argument, for exponents `k ≥ 2`, and both estimates now share it. -/
 theorem primePsi_le_ncard_mul_log (hS : S.Finite) (hx : 1 ≤ x) :
     primePsi K S x ≤ S.ncard * Real.log x := by
   classical
