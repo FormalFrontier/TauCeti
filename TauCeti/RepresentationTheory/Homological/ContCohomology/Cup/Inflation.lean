@@ -50,6 +50,8 @@ variable (G : Type uG) [Group G]
   (μ : M →+ A →+ P)
   (hequiv : ∀ (g : G) (m : M) (a : A), μ (g • m) (g • a) = g • μ m a)
 
+local notation "μᴺ" => fixedPointsPairing N μ (fun n => hequiv (n : G))
+
 /-- **Inflation preserves the `(0,0)` cup product.** -/
 @[simp]
 theorem explicitInfl0_explicitCup00
@@ -58,7 +60,7 @@ theorem explicitInfl0_explicitCup00
     explicitInfl0 G P N
         (explicitCup00 (G ⧸ N) (FixedPoints.addSubgroup N M)
           (FixedPoints.addSubgroup N A) (FixedPoints.addSubgroup N P)
-          (fixedPointsPairing N μ hequiv)
+          μᴺ
           (fixedPointsPairing_quotient_smul N μ hequiv) a b) =
       explicitCup00 G M A P μ hequiv
         (explicitInfl0 G M N a) (explicitInfl0 G A N b) := by
@@ -83,7 +85,7 @@ variable (G : Type uG) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
   (μ : M →+ A →+ P) (hμ : Continuous fun p : M × A => μ p.1 p.2)
   (hequiv : ∀ (g : G) (m : M) (a : A), μ (g • m) (g • a) = g • μ m a)
 
-local notation "μᴺ" => fixedPointsPairing N μ hequiv
+local notation "μᴺ" => fixedPointsPairing N μ (fun n => hequiv (n : G))
 
 include hμ hequiv
 
@@ -97,7 +99,7 @@ theorem explicitInfl1_explicitCup01
     explicitInfl1 G P N
         (explicitCup01 (G ⧸ N) (FixedPoints.addSubgroup N M)
           (FixedPoints.addSubgroup N A) (FixedPoints.addSubgroup N P) μᴺ
-          (continuous_fixedPointsPairing N μ hequiv hμ)
+          (continuous_fixedPointsPairing N μ (fun n => hequiv (n : G)) hμ)
           (fixedPointsPairing_quotient_smul N μ hequiv) a b) =
       explicitCup01 G M A P μ hμ hequiv
         (explicitInfl0 G M N a) (explicitInfl1 G A N b) := by
@@ -117,7 +119,7 @@ theorem explicitInfl1_explicitCup10
     explicitInfl1 G P N
         (explicitCup10 (G ⧸ N) (FixedPoints.addSubgroup N M)
           (FixedPoints.addSubgroup N A) (FixedPoints.addSubgroup N P) μᴺ
-          (continuous_fixedPointsPairing N μ hequiv hμ)
+          (continuous_fixedPointsPairing N μ (fun n => hequiv (n : G)) hμ)
           (fixedPointsPairing_quotient_smul N μ hequiv) a b) =
       explicitCup10 G M A P μ hμ hequiv
         (explicitInfl1 G M N a) (explicitInfl0 G A N b) := by
@@ -137,7 +139,7 @@ theorem explicitInfl2_explicitCup02
     explicitInfl2 G P N
         (explicitCup02 (G ⧸ N) (FixedPoints.addSubgroup N M)
           (FixedPoints.addSubgroup N A) (FixedPoints.addSubgroup N P) μᴺ
-          (continuous_fixedPointsPairing N μ hequiv hμ)
+          (continuous_fixedPointsPairing N μ (fun n => hequiv (n : G)) hμ)
           (fixedPointsPairing_quotient_smul N μ hequiv) a b) =
       explicitCup02 G M A P μ hμ hequiv
         (explicitInfl0 G M N a) (explicitInfl2 G A N b) := by
@@ -156,7 +158,7 @@ theorem explicitInfl2_explicitCup11
     explicitInfl2 G P N
         (explicitCup11 (G ⧸ N) (FixedPoints.addSubgroup N M)
           (FixedPoints.addSubgroup N A) (FixedPoints.addSubgroup N P) μᴺ
-          (continuous_fixedPointsPairing N μ hequiv hμ)
+          (continuous_fixedPointsPairing N μ (fun n => hequiv (n : G)) hμ)
           (fixedPointsPairing_quotient_smul N μ hequiv) a b) =
       explicitCup11 G M A P μ hμ hequiv
         (explicitInfl1 G M N a) (explicitInfl1 G A N b) := by
@@ -180,7 +182,7 @@ theorem explicitInfl2_explicitCup20
     explicitInfl2 G P N
         (explicitCup20 (G ⧸ N) (FixedPoints.addSubgroup N M)
           (FixedPoints.addSubgroup N A) (FixedPoints.addSubgroup N P) μᴺ
-          (continuous_fixedPointsPairing N μ hequiv hμ)
+          (continuous_fixedPointsPairing N μ (fun n => hequiv (n : G)) hμ)
           (fixedPointsPairing_quotient_smul N μ hequiv) a b) =
       explicitCup20 G M A P μ hμ hequiv
         (explicitInfl2 G M N a) (explicitInfl0 G A N b) := by
@@ -193,25 +195,8 @@ theorem explicitInfl2_explicitCup20
             (((((g : G ⧸ N) * (h : G ⧸ N)) •
               (b : FixedPoints.addSubgroup N A)) : FixedPoints.addSubgroup N A) : A) =
               (g * h) • (b : A) := by
-          calc
-            _ = ((((g : G ⧸ N) • ((h : G ⧸ N) •
-                (b : FixedPoints.addSubgroup N A))) : FixedPoints.addSubgroup N A) : A) :=
-              congrArg Subtype.val (mul_smul (g : G ⧸ N) (h : G ⧸ N)
-                (b : FixedPoints.addSubgroup N A))
-            _ = (((g : G) • ((h : G ⧸ N) •
-                (b : FixedPoints.addSubgroup N A))) : FixedPoints.addSubgroup N A) :=
-              congrArg Subtype.val <| coe_quotient_smul_fixedPoints_addSubgroup (H := N) g _
-            _ = g • ((((h : G ⧸ N) •
-                (b : FixedPoints.addSubgroup N A)) : FixedPoints.addSubgroup N A) : A) :=
-              coe_smul_fixedPoints_addSubgroup g _
-            _ = g • (((h : G) •
-                (b : FixedPoints.addSubgroup N A) : FixedPoints.addSubgroup N A) : A) :=
-              congrArg (fun x : A => g • x) <| congrArg Subtype.val <|
-                coe_quotient_smul_fixedPoints_addSubgroup (H := N) h
-                  (b : FixedPoints.addSubgroup N A)
-            _ = g • (h • (b : A)) := congrArg (fun x : A => g • x)
-              (coe_smul_fixedPoints_addSubgroup h (b : FixedPoints.addSubgroup N A))
-            _ = (g * h) • (b : A) := (mul_smul g h (b : A)).symm
+          simpa only [ContinuousMonoidHom.quotientMk_apply, map_mul,
+            AddSubgroup.coe_subtype] using subtype_quotientMk_smul G A N (g * h) b
         simpa [cocyclesMap2_coe] using congrArg (μ (↑((a : (G ⧸ N) × (G ⧸ N) →
           FixedPoints.addSubgroup N M) ((g : G ⧸ N), (h : G ⧸ N))) : M))
             hsmul

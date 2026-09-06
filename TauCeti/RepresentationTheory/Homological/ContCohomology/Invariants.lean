@@ -81,10 +81,11 @@ variable {G : Type*} [Group G]
   {N : Type*} [AddCommGroup N] [TopologicalSpace N] [DistribMulAction G N]
   {P : Type*} [AddCommGroup P] [TopologicalSpace P] [DistribMulAction G P]
 
-/-- Restricting a jointly continuous pairing to invariant coefficients remains jointly
-continuous. -/
+/-- Restricting a jointly continuous `H`-equivariant pairing to invariant coefficients remains
+jointly continuous. -/
 theorem continuous_fixedPointsPairing (H : Subgroup G) (μ : M →+ N →+ P)
-    (hequiv : ∀ (g : G) (m : M) (n : N), μ (g • m) (g • n) = g • μ m n)
+    (hequiv : ∀ (h : H) (m : M) (n : N),
+      μ ((h : G) • m) ((h : G) • n) = (h : G) • μ m n)
     (hμ : Continuous fun p : M × N => μ p.1 p.2) :
     Continuous fun p : FixedPoints.addSubgroup H M × FixedPoints.addSubgroup H N =>
       fixedPointsPairing H μ hequiv p.1 p.2 := by
