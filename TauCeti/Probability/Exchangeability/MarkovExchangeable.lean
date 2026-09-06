@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Combinatorics.Enumerative.TransitionCount
 public import TauCeti.Probability.Exchangeability.Basic
-import Mathlib.MeasureTheory.Measure.Dirac.Basic
 
 /-!
 # Markov exchangeability
@@ -215,8 +214,6 @@ theorem markovExchangeable_iff_prefixLaw_map_perm_eq [Countable α]
   · rintro ⟨hX, h⟩
     classical
     refine MarkovExchangeable.intro hX fun n u v h0 hcount => ?_
-    by_cases huv : u = v
-    · rw [huv]
     let e : Equiv.Perm (Fin (n + 1) → α) := Equiv.swap u v
     have he0 : ∀ w, e w 0 = w 0 := by
       intro w
