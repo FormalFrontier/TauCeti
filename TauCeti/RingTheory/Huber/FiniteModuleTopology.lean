@@ -24,6 +24,13 @@ criterion gives Hausdorffness. Completeness follows from Mathlib's theorem that 
 complete first-countable additive group is complete, transported across the first-isomorphism
 homeomorphism. Nonarchimedeanness descends along the same open quotient.
 
+Only the Hausdorff clause needs `A` to be a noetherian Tate ring. The other three ask of `A`
+exactly what their proofs consume — first countability, nonarchimedeanness, and completeness — so
+they are stated under those hypotheses instead. A Huber ring supplies the first two through
+`TauCeti.Huber.IsHuberRing.isCountablyGenerated_nhds_zero` and
+`TauCeti.Huber.IsHuberRing.toNonarchimedeanRing`, which is why they still belong beside the
+Hausdorff clause: Proposition 6.18(1) is the statement they are assembled for.
+
 Together with `TauCeti.Huber.IsTateRing.isModuleTopology`, these results give the existence and
 uniqueness asserted by Proposition 6.18(1), among the complete Hausdorff first-countable
 nonarchimedean topological module structures occurring in the open-mapping theorem. The topology
@@ -34,12 +41,11 @@ topology on `M` from typeclass search.
 ## Main results
 
 * `TauCeti.Huber.IsTateRing.t2Space_moduleTopology`: the canonical topology is Hausdorff.
-* `TauCeti.Huber.IsHuberRing.firstCountableTopology_moduleTopology`: the canonical topology is
-  first countable.
-* `TauCeti.Huber.IsHuberRing.nonarchimedeanAddGroup_moduleTopology`: the canonical additive group
-  is nonarchimedean.
-* `TauCeti.Huber.IsHuberRing.completeSpace_moduleTopology`: its canonical right uniformity is
-  complete.
+* `TauCeti.Huber.firstCountableTopology_moduleTopology`: the canonical topology is first
+  countable.
+* `TauCeti.Huber.nonarchimedeanAddGroup_moduleTopology`: the canonical additive group is
+  nonarchimedean.
+* `TauCeti.Huber.completeSpace_moduleTopology`: its canonical right uniformity is complete.
 
 ## References
 
@@ -56,10 +62,11 @@ namespace TauCeti.Huber
 variable {A : Type*} [CommRing A]
   {M : Type*} [AddCommGroup M] [Module A M] [Module.Finite A M]
 
-/-- **The module topology on a finite module over a Huber ring is first countable.** This supplies
-the first-countability clause of Wedhorn Proposition 6.18(1). -/
-theorem IsHuberRing.firstCountableTopology_moduleTopology [TopologicalSpace A]
-    [IsTopologicalRing A] [IsHuberRing A] :
+/-- **The module topology on a finite module over a first-countable topological ring is first
+countable.** This supplies the first-countability clause of Wedhorn Proposition 6.18(1), a Huber
+ring being first countable by `TauCeti.Huber.IsHuberRing.isCountablyGenerated_nhds_zero`. -/
+theorem firstCountableTopology_moduleTopology [TopologicalSpace A]
+    [IsTopologicalRing A] [FirstCountableTopology A] :
     @FirstCountableTopology M (moduleTopology A M) := by
   let _ : TopologicalSpace M := moduleTopology A M
   have _ : IsModuleTopology A M := inferInstance
@@ -90,10 +97,12 @@ theorem IsTateRing.t2Space_moduleTopology [UniformSpace A] [IsTopologicalRing A]
   simp only [Set.mem_preimage, Set.mem_ofPred_eq, SetLike.mem_coe, LinearMap.mem_ker, map_sub,
     sub_eq_zero]
 
-/-- **The additive group of a finite module with its module topology is nonarchimedean.** This is
-the nonarchimedean clause of Wedhorn Proposition 6.18(1). -/
-theorem IsHuberRing.nonarchimedeanAddGroup_moduleTopology [TopologicalSpace A]
-    [IsTopologicalRing A] [IsHuberRing A] :
+/-- **The additive group of a finite module over a nonarchimedean topological ring, with its
+module topology, is nonarchimedean.** This is the nonarchimedean clause of Wedhorn Proposition
+6.18(1), a Huber ring being nonarchimedean by
+`TauCeti.Huber.IsHuberRing.toNonarchimedeanRing`. -/
+theorem nonarchimedeanAddGroup_moduleTopology [TopologicalSpace A]
+    [IsTopologicalRing A] [NonarchimedeanAddGroup A] :
     @NonarchimedeanAddGroup M _ (moduleTopology A M) := by
   let _ : TopologicalSpace M := moduleTopology A M
   have _ : IsModuleTopology A M := inferInstance
@@ -104,9 +113,11 @@ theorem IsHuberRing.nonarchimedeanAddGroup_moduleTopology [TopologicalSpace A]
     (IsModuleTopology.isOpenQuotientMap_of_surjective hf).isOpenMap
 
 /-- **The canonical right uniformity of the module topology on a finite module over a complete
-Huber ring is complete.** This supplies the completeness clause of Wedhorn Proposition 6.18(1). -/
-theorem IsHuberRing.completeSpace_moduleTopology [UniformSpace A] [IsTopologicalRing A]
-    [IsUniformAddGroup A] [CompleteSpace A] [IsHuberRing A] :
+first-countable ring is complete.** This supplies the completeness clause of Wedhorn Proposition
+6.18(1), a Huber ring being first countable by
+`TauCeti.Huber.IsHuberRing.isCountablyGenerated_nhds_zero`. -/
+theorem completeSpace_moduleTopology [UniformSpace A] [IsTopologicalRing A]
+    [IsUniformAddGroup A] [CompleteSpace A] [FirstCountableTopology A] :
     letI : TopologicalSpace M := moduleTopology A M
     letI : IsTopologicalAddGroup M := IsModuleTopology.isTopologicalAddGroup A M
     letI : UniformSpace M := IsTopologicalAddGroup.rightUniformSpace M
