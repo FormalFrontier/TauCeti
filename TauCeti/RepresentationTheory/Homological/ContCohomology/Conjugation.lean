@@ -17,9 +17,10 @@ map on the explicit quotient `H¹(N, M)`.  The map is written with the inverse c
 
 The construction is functorial in `g`, hence gives the expected `G`-action.  When `g` belongs to
 `N`, the induced map is the identity: the difference of a cocycle and its conjugate is the
-principal cocycle attached to `c g`.  The file also records the degree-one and degree-two
-components of the corresponding bar homotopy, including the degree-two cocycle identity that
-expresses the conjugation difference as a coboundary.
+principal cocycle attached to `c g`.  The file records the algebraic degree-one and degree-two
+components of the corresponding bar homotopy and specializes their identities to continuous
+cocycles, including the degree-two cocycle identity that expresses the conjugation difference as
+a coboundary.
 -/
 
 public section
@@ -48,6 +49,89 @@ theorem inverseConjugationHom_smul (N : Subgroup G) [N.Normal] (g : G) (n : N) (
     Subgroup.inverseConjugationHom_apply]
   change g • ((g⁻¹ * (n : G) * g) • m) = (n : G) • (g • m)
   simp [smul_smul, mul_assoc]
+
+/-- The degree-one component of the bar homotopy for inverse conjugation. -/
+def inverseConjugationHomotopy1 {K : Type uK} {A : Type uA} (g : K) (c : K → A) : A :=
+  c g
+
+/-- The defining formula for the degree-one inverse-conjugation homotopy component. -/
+@[simp]
+theorem inverseConjugationHomotopy1_apply {K : Type uK} {A : Type uA} (g : K) (c : K → A) :
+    inverseConjugationHomotopy1 g c = c g :=
+  by simp [inverseConjugationHomotopy1]
+
+/-- The degree-two component of the bar homotopy for inverse conjugation. -/
+def inverseConjugationHomotopy2 {K : Type uK} [Group K] {A : Type uA} [Sub A]
+    (g : K) (c : K × K → A) : K → A :=
+  fun n => c (g, g⁻¹ * n * g) - c (n, g)
+
+/-- The defining formula for the degree-two inverse-conjugation homotopy component. -/
+@[simp]
+theorem inverseConjugationHomotopy2_apply {K : Type uK} [Group K] {A : Type uA} [Sub A]
+    (g : K) (c : K × K → A) (n : K) :
+    inverseConjugationHomotopy2 g c n = c (g, g⁻¹ * n * g) - c (n, g) :=
+  by simp [inverseConjugationHomotopy2]
+
+/-- The degree-one algebraic cochain-homotopy identity for inverse conjugation. -/
+theorem inverseConjugationCochainHomotopy1 {K : Type uK} [Group K]
+    {A : Type uA} [AddCommGroup A] [DistribMulAction K A] (g : K) (c : K → A) :
+    cochainsMap1 (MulAut.conj g⁻¹ : K →* K) (DistribSMul.toAddMonoidHom A g) c - c =
+      d0 K A (inverseConjugationHomotopy1 g c) +
+        inverseConjugationHomotopy2 g (d1 K A c) := by
+  ext n
+  simp only [Pi.sub_apply, Pi.add_apply, cochainsMap1_apply, d0_apply, d1_apply,
+    inverseConjugationHomotopy1_apply, inverseConjugationHomotopy2_apply,
+    DistribSMul.toAddMonoidHom_apply]
+  -- The bundled additive hom and the scalar action have the same underlying function here.
+  change g • c ((MulAut.conj g⁻¹ : MulAut K) n) - c n = _
+  simp only [MulAut.conj_apply, inv_inv]
+  have hmul : g * (g⁻¹ * n * g) = n * g := by
+    simp [mul_assoc]
+  rw [hmul]
+  simp only [sub_eq_add_neg]
+  abel_nf
+
+/-- The degree-two component of the bar homotopy for an algebraic inverse conjugation, for a
+degree-two cocycle. -/
+theorem inverseConjugationCochainHomotopy2_of_isCocycle {K : Type uK} [Group K]
+    {A : Type uA} [AddCommGroup A] [DistribMulAction K A] (g : K) (c : K × K → A)
+    (hc : groupCohomology.IsCocycle₂ c) :
+    cochainsMap2 (MulAut.conj g⁻¹ : K →* K) (DistribSMul.toAddMonoidHom A g) c - c =
+      d1 K A (inverseConjugationHomotopy2 g c) := by
+  apply funext
+  rintro ⟨n, k⟩
+  simp only [Pi.sub_apply, cochainsMap2_apply, d1_apply, inverseConjugationHomotopy2_apply,
+    DistribSMul.toAddMonoidHom_apply]
+  -- The cochain map is bundled, so expose its underlying conjugation before using `hc`.
+  change g • c ((MulAut.conj g⁻¹ : MulAut K) n, (MulAut.conj g⁻¹ : MulAut K) k) - c (n, k) = _
+  simp only [MulAut.conj_apply, inv_inv]
+  have hmul : g * (g⁻¹ * n * g) = n * g := by
+    simp [mul_assoc]
+  have hmul' : g * (g⁻¹ * k * g) = k * g := by
+    simp [mul_assoc]
+  have hconjmul : (g⁻¹ * n * g) * (g⁻¹ * k * g) = g⁻¹ * (n * k) * g := by
+    simp [mul_assoc]
+  have h₁ := hc g (g⁻¹ * n * g) (g⁻¹ * k * g)
+  have h₂ := hc n g (g⁻¹ * k * g)
+  have h₃ := hc n k g
+  simp only [hmul, hmul', hconjmul] at h₁ h₂ h₃
+  have h₁' : g • c (g⁻¹ * n * g, g⁻¹ * k * g) =
+      c (n * g, g⁻¹ * k * g) + c (g, g⁻¹ * n * g) - c (g, g⁻¹ * (n * k) * g) := by
+    apply (eq_sub_iff_add_eq).2
+    simpa [add_comm] using h₁.symm
+  have h₂' : n • c (g, g⁻¹ * k * g) =
+      c (n * g, g⁻¹ * k * g) + c (n, g) - c (n, k * g) := by
+    apply (eq_sub_iff_add_eq).2
+    simpa [add_comm] using h₂.symm
+  have h₃' : n • c (k, g) =
+      c (n * k, g) + c (n, k) - c (n, k * g) := by
+    apply (eq_sub_iff_add_eq).2
+    simpa [add_comm] using h₃.symm
+  rw [h₁']
+  simp only [smul_add, smul_neg, sub_eq_add_neg]
+  rw [h₂', h₃']
+  simp only [sub_eq_add_neg, add_assoc]
+  abel
 
 /-- Conjugation by `g`, with the coefficient action of `g`, on explicit `H¹`. -/
 noncomputable def explicitConj1 (N : Subgroup G) [N.Normal] (g : G) : H1 N M →+ H1 N M :=
@@ -105,7 +189,7 @@ theorem inverseConjugationHomotopy1_spec (N : Subgroup G) [N.Normal] (g : N) (c 
   rw [hc] at h
   have hz : inverseConjugationHomotopy2 g (0 : N × N → M) = 0 := by
     funext n
-    simp [inverseConjugationHomotopy2]
+    simp
   rw [hz, add_zero] at h
   ext n
   simp only [Pi.sub_apply]
@@ -218,12 +302,12 @@ theorem explicitConj1_eq_id_of_mem (N : Subgroup G) [N.Normal] (g : N) :
       rw [explicitConj1_apply_eq_smul, smul_mk, AddMonoidHom.id_apply, H1pi_eq_iff]
       refine mem_B1_iff.2 ⟨(c : N → M) g, ?_⟩
       intro n
-      simpa [d0_apply, inverseConjugationHomotopy1] using
+      simpa [d0_apply] using
         congrFun (inverseConjugationHomotopy1_spec N g c) n
 
 /-- An element of the subgroup acts trivially on explicit first cohomology. -/
 @[simp]
-theorem explicitConj1_smul_of_mem (N : Subgroup G) [N.Normal] (g : N) (x : H1 N M) :
+theorem smul_eq_self_of_mem (N : Subgroup G) [N.Normal] (g : N) (x : H1 N M) :
     (g : G) • x = x := by
   -- The installed scalar action is definitionally `explicitConj1`; expose it to use the map-level
   -- inner-triviality theorem.
