@@ -48,8 +48,11 @@ as `Kˣ` enters through an `Additive` adapter.
   subgroup, with `galOfOpenNormalEquiv` identifying its Galois group with `G ⧸ V`.
 * `TauCeti.ClassFieldTheory.NormalLayer.rep`: the coefficient module `A^V` of the layer, as a
   representation of `U ⧸ V`.
-* `TauCeti.ClassFieldTheory.NormalLayer.norm`, `normSubgroup`, `NormQuotient`: the norm of the
-  layer, its image and the norm quotient.
+* `TauCeti.ClassFieldTheory.NormalLayer.H`, `TateH`, `TrivialTateH`: the ordinary and Tate
+  cohomology carriers of the layer, in the coefficient module `A^V` and in trivial integral
+  coefficients.
+* `TauCeti.ClassFieldTheory.NormalLayer.norm`, `normSubgroup`, `NormQuotient`, `normQuotientMk`:
+  the norm of the layer, its image, the norm quotient and the quotient map onto it.
 
 ## Main statements
 
@@ -91,7 +94,7 @@ equal.
 * J.-P. Serre, *Local Fields*, Chapter XI.
 -/
 
-@[expose] public noncomputable section
+public noncomputable section
 
 open CategoryTheory Representation
 
@@ -222,6 +225,12 @@ def galOfOpenNormalEquiv (V : OpenSubgroup G) [V.toSubgroup.Normal] :
     simp only [Subgroup.mem_map]
     exact ⟨fun ⟨_, ha, h⟩ ↦ h ▸ ha, fun hx ↦ ⟨⟨x, trivial⟩, hx, rfl⟩⟩
 
+@[simp]
+theorem galOfOpenNormalEquiv_mk (V : OpenSubgroup G) [V.toSubgroup.Normal]
+    (u : (ofOpenNormal V).ground) :
+    galOfOpenNormalEquiv V (QuotientGroup.mk u) = QuotientGroup.mk (u : G) :=
+  (rfl)
+
 section Finite
 
 /-- The top subgroup is open in the compact ground subgroup, so the Galois group is finite. -/
@@ -313,6 +322,27 @@ theorem groundLevelEquiv_apply_coe (x : (L.rep F).ρ.invariants) :
 
 end Coefficients
 
+/-! ### The cohomology of a layer -/
+
+section Cohomology
+
+variable (F : Formation G)
+
+/-- **Ordinary group cohomology of a finite normal layer**, `H^n(U/V, A^V)`, on Mathlib's carrier.
+The axioms satisfied by a class formation and the fundamental class of a layer are read here. -/
+abbrev H (n : ℕ) : ModuleCat ℤ := groupCohomology (L.rep F) n
+
+/-- **Tate cohomology of a finite normal layer** in its coefficient module, the Tate group
+`H^r(U/V, A^V)` in every integer degree `r`. -/
+abbrev TateH (r : ℤ) : ModuleCat ℤ := tateCohomology (L.rep F) r
+
+/-- **Tate cohomology of a finite normal layer with trivial integral coefficients**, the Tate
+group `H^r(U/V, ℤ)`. Its degree `-2` is the abelianization of the Galois group of the layer, and
+the Artin map of a class formation is a cup product between this carrier and `TateH`. -/
+abbrev TrivialTateH (r : ℤ) : ModuleCat ℤ := tateCohomology (Rep.trivial ℤ L.Gal ℤ) r
+
+end Cohomology
+
 /-! ### The norm of a layer -/
 
 section Norm
@@ -360,9 +390,21 @@ theorem mem_normSubgroup {y : F.level L.ground} :
     y ∈ L.normSubgroup F ↔ ∃ x, L.norm F x = y :=
   Iff.rfl
 
-/-- The **norm quotient** `A^U / N_{U/V}(A^V)` of a finite normal layer. This is the group that
-Artin reciprocity identifies with the abelianization of the Galois group of the layer. -/
+/-- The **norm quotient** `A^U / N_{U/V}(A^V)` of a finite normal layer. It is the group that the
+Artin map of a *class formation* — a formation whose layers satisfy the axioms on `H¹` and `H²`,
+which a bare `Formation` does not assume — identifies with the abelianization of the Galois group
+of the layer. -/
 abbrev NormQuotient : Type := F.level L.ground ⧸ L.normSubgroup F
+
+/-- The canonical map from the ground level onto the norm quotient. The Artin map of a class
+formation is defined on the ground level by composing with this map. -/
+def normQuotientMk : F.level L.ground →ₗ[ℤ] L.NormQuotient F :=
+  (L.normSubgroup F).mkQ
+
+@[simp]
+theorem normQuotientMk_apply (x : F.level L.ground) :
+    L.normQuotientMk F x = Submodule.Quotient.mk x :=
+  (rfl)
 
 /-- The image under `groundLevelEquiv` of the norm image inside the invariants is the norm
 subgroup. -/
@@ -386,10 +428,21 @@ theorem map_groundLevelEquiv_submoduleOf :
 /-- **Degree-zero Tate cohomology of a finite normal layer is its norm quotient.** This is the
 low-degree identification that the Artin map of a class formation is read through. -/
 def tateHZeroEquivNormQuotient :
-    tateCohomology (L.rep F) 0 ≅ ModuleCat.of ℤ (L.NormQuotient F) :=
+    L.TateH F 0 ≅ ModuleCat.of ℤ (L.NormQuotient F) :=
   TateCohomology.H0IsoNormQuotient (L.rep F) ≪≫
     (Submodule.Quotient.equiv _ _ (L.groundLevelEquiv F)
       (L.map_groundLevelEquiv_submoduleOf F)).toModuleIso
+
+/-- The identification of degree-zero Tate cohomology with the norm quotient sends the class of an
+invariant to the class of the corresponding element of the ground level. -/
+@[simp]
+theorem tateHZeroEquivNormQuotient_hom_H0π (x : (L.rep F).ρ.invariants) :
+    (L.tateHZeroEquivNormQuotient F).hom (TateCohomology.H0π (L.rep F) x) =
+      L.normQuotientMk F (L.groundLevelEquiv F x) := by
+  -- The elementwise form of the low-degree identification is bound as a hypothesis first, so
+  -- that it is normalised to the application form the goal uses before it rewrites.
+  have h := TateCohomology.H0π_comp_H0IsoNormQuotient_hom_apply (L.rep F) x
+  simp [tateHZeroEquivNormQuotient, normQuotientMk, h]
 
 end Norm
 
