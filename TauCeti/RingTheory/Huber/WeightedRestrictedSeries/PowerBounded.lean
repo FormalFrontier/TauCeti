@@ -38,8 +38,8 @@ not.
 * `TauCeti.Huber.closure_weightedC_weightedX_le_powerBoundedSubring`: the inclusion itself, as a
   containment of subrings.
 * `TauCeti.Huber.isPowerBounded_coe_weightedX_one_weight`: the variable `Xᵢ` is power-bounded in
-  the completion `A⟨X₁,…,Xₖ⟩`, over a Huber base. This is the form Proposition 5.50 asks for when
-  the completed algebra is the target, and it is unconditional, so it is `@[simp]`.
+  the completion `A⟨X₁,…,Xₖ⟩`. This is the form Proposition 5.50 asks for when the completed
+  algebra is the target. It asks nothing of `i` or of the weights, only that the base be Huber.
 
 ## References
 
@@ -167,11 +167,8 @@ variable [IsHuberRing A]
 -- `isPowerBounded_completion_coe_of_isPowerBounded (isPowerBounded_weightedX hT hi)` or
 -- `… (isPowerBounded_weightedC hT ha)`.
 /-- **The variable `Xᵢ` is power-bounded in `A⟨X₁,…,Xₖ⟩`**, the trivial-weight case, which is the
-one the universal property of the completed algebra is applied at.
-
-`@[simp]` because it is unconditional, matching
-`TauCeti.Huber.isPowerBounded_weightedX_one_weight` on the uncompleted ring: `simp` closes such a
-goal outright rather than rewriting it. -/
+one the universal property of the completed algebra is applied at. Beyond a Huber base it asks
+nothing: neither of `i` nor, the weights being trivial, of the weight family. -/
 @[simp]
 theorem isPowerBounded_coe_weightedX_one_weight (i : Fin k) :
     IsPowerBounded ((weightedX (fun _ : Fin k ↦ ({1} : Set A)) isWeightFamily_one_weight i :

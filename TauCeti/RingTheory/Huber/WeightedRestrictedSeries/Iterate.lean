@@ -73,14 +73,6 @@ a nonarchimedean group being nonarchimedean; and each tuple must be power-bounde
   `TauCeti.Huber.iterateAlgEquiv_toRingEquiv` with its two `_apply` forms says that this changes
   nothing but the bundling.
 
-## The shape of the argument
-
-Joining after splitting is checked on the generators of `A⟨X₁,…,X_{k+m}⟩` directly. Splitting after
-joining needs one step more: its source is an algebra over `A⟨X₁,…,Xₖ⟩`, so agreement on constants
-is agreement of two maps out of `A⟨X₁,…,Xₖ⟩`, which is
-`TauCeti.Huber.iterateSplitHom_comp_iterateFirstBlockHom` — itself a uniqueness argument, one level
-down.
-
 ## References
 
 * [T. Wedhorn, *Adic Spaces*][wedhorn_adic] (arXiv:1910.05934v1), Proposition 5.50, whose
