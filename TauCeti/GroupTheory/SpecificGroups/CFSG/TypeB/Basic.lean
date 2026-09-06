@@ -51,9 +51,26 @@ out of the whole list, at every rank the family has.
 
 Nothing here asserts that the carrier is reductive, that its weight torus is maximal, that it is
 the spin group scheme or the pinned simply connected Chevalley--Demazure group scheme of type `Bₙ`,
-or that any group below is finite, perfect, or simple. In particular, the group constructed here is
-identified with the finite simple group `Bₙ(q)` only along an identification of this carrier with
-that pinned group scheme, which is proved neither here nor in the files this one imports.
+or that any group below is finite, perfect, or simple.
+
+## What this file does not claim
+
+Milestone L0 of `TauCetiRoadmap/CFSGStatement/README.md` asks for the points of the *pinned* simply
+connected Chevalley--Demazure group scheme of `TauCeti.DynkinType.simplyConnectedRootDatum` at the
+diagram the index names, with its root subgroups. **This file does not close L0 on the type-`B`
+branch, and the spin carrier is not offered as a substitute for that pinned group.** The pinned
+group scheme, its pinning, and any identification of a carrier with it are Layer 9 targets of
+`TauCetiRoadmap/ReductiveGroups/README.md` that the CFSG roadmap consumes rather than builds; none
+of them is proved of `TauCeti.TypeBSpinCarrier.groupScheme` here or in the files this one imports.
+What this file supplies is the branch's explicit carrier, its numbered root characters read in the
+type-`Bₙ` root datum, the equation `Frob_q (x_i(u)) = x_i(u ^ q)` that milestone L1 asks of an
+ordinary Frobenius factor, and the milestone L3 recipe run on that Frobenius, each in the shape
+those milestones state it; they transfer to the L0 carrier along that Layer 9 identification, and
+not before. The counterparts on the branches already assembled are
+`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeA.lean`,
+`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeD.lean`,
+`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeE6.lean` and
+`TauCeti/GroupTheory/SpecificGroups/CFSG/Unimodular.lean`.
 
 ## Main declarations
 
@@ -212,9 +229,9 @@ theorem valid_B_carrierRank_add_one : (DynkinType.B (d.carrierRank + 1)).Valid :
 type-`Bₙ` spin Chevalley carrier, at the rank the index names, over the algebraic closure of its
 prime field.
 
-It is infinite, and no finiteness, reductivity, pinning or maximality statement is attached to it;
-in particular it is not claimed to be the points of the pinned simply connected
-Chevalley--Demazure group scheme of type `Bₙ`. -/
+It is infinite, and no finiteness, reductivity, pinning or maximality statement is attached to it,
+and it is not claimed to be the pinned simply connected `Bₙ` group scheme's points that milestone
+L0 asks for, that identification being the Layer 9 target described in the module docstring. -/
 abbrev AmbientGroup : Type := TypeBSpinCarrier.points d.carrierRank d.1.Closure
 
 /-- The classification recipe is run inside this group, so it carries a group structure; the
@@ -334,11 +351,14 @@ theorem mem_fixedSubgroup_steinberg_iff (g : d.AmbientGroup) :
 
 /-! ## The classification candidate -/
 
-/-- **The candidate simple group of the untwisted family `Bₙ(q)`**: the derived subgroup of the
-fixed points of its Steinberg map, modulo the centre of that derived subgroup.
+/-- **The milestone L3 quotient on the type-`B` spin carrier**: the derived subgroup of the fixed
+points of the Steinberg map above, modulo the centre of that derived subgroup.
 
-Nothing below asserts that it is finite, perfect, or simple, nor that the carrier it is formed in
-is the pinned simply connected Chevalley--Demazure group scheme of type `Bₙ`. -/
+This is the shape milestone L3 asks of the untwisted family `Bₙ(q)`, formed on the spin carrier
+rather than on the pinned simply connected Chevalley--Demazure group scheme that milestone L0 asks
+for. It becomes the candidate simple group of that family along the Layer 9 identification of the
+two carriers described in the module docstring, and not before; it is not offered as that candidate
+here. Nothing below asserts that it is finite, perfect, or simple. -/
 abbrev Group : Type := FixedPointCandidate d.steinberg
 
 /-- The classification list asks every branch to carry a group instance; the quotient construction
