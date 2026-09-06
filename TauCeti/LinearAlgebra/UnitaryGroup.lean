@@ -26,8 +26,6 @@ public section
 
 namespace TauCeti
 
-namespace Matrix
-
 variable {n : Type*} [Fintype n] [DecidableEq n] {α : Type*} [CommRing α] [StarRing α]
 
 /-- The conjugate transpose of a special unitary matrix is its adjugate: it is the inverse, and
@@ -42,7 +40,5 @@ theorem _root_.Matrix.specialUnitaryGroup.star_eq_adjugate (g : Matrix.specialUn
         rw [Matrix.adjugate_mul, hmem.2, one_smul, Matrix.one_mul]
     _ = (g : Matrix n n α).adjugate := by
         rw [Matrix.mul_assoc, hmul, Matrix.mul_one]
-
-end Matrix
 
 end TauCeti

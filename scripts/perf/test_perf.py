@@ -4,7 +4,7 @@
 The cases live together because they exercise the gate's cross-cutting safety
 contract: watchdog discovery and termination, instruction/CPU reporting
 thresholds, changed-file manifest construction, and no-follow handling of
-outputs and build trees that untrusted Lean code can modify inside landrun.
+outputs and build trees that untrusted Lean code can modify inside the bwrap sandbox.
 """
 
 from __future__ import annotations

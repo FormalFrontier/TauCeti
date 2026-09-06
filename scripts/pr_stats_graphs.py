@@ -198,6 +198,39 @@ query($owner:String!, $name:String!, $number:Int!, $cursor:String) {
 """
 
 
+# DO NOT batch timeline queries by aliasing several `pullRequest` fields into one request.
+#
+# It is tempting, because GitHub prices a request from the connection sizes it asks for and fifty
+# aliases score the same single point as one. It was tried, and it silently returns INCOMPLETE
+# timelines. Measured against this repository on 2026-09-06: in a 50-alias batch, PR #1556 came
+# back with 2 label events and `hasNextPage: false`, where the paginating single-pull-request
+# query returns 4 -- the missing one being the `ci-failed` that the pull request currently
+# carries. Ten and twenty-five aliases happened to be complete for the same sample, and fifty was
+# not, so the limit depends on the total nodes a query asks for and cannot be pinned to a size.
+#
+# What makes it unusable rather than merely awkward is that `hasNextPage` is computed against the
+# truncated slice, so it reports false. There is no signal in the response to detect the loss
+# from, and `totalCount` counts unfiltered timeline items, so it cannot stand in for one either.
+# Silently dropping label events corrupts every lifecycle number downstream.
+#
+# The consistency guard in fetch_prs caught this within one deploy, which is the only reason it
+# was a failed Pages run rather than quietly wrong statistics. Keep that guard.
+#
+# The saving would have been small in any case. Reuse (see reusable_timelines) already takes a
+# normal run to a few dozen timelines, so batching them into one request saves tens of points out
+# of a run costing hundreds. It is not worth a class of error that has no detector.
+def timeline_from_node(pull: dict) -> dict:
+    """The normalized timeline record, from either the batched or the single-PR query."""
+    return {
+        "merged_at": pull["mergedAt"],
+        "closed_at": pull["closedAt"],
+        "state": pull["state"],
+        "is_draft": pull["isDraft"],
+        "labels": [item["name"] for item in pull["labels"]["nodes"]],
+        "labeled_events": normalized_events(pull["timelineItems"]["nodes"]),
+    }
+
+
 def graphql(query: str, **variables) -> dict:
     args = ["api", "graphql", "-f", f"query={query}"]
     for key, value in variables.items():
@@ -232,28 +265,25 @@ def fetch_timeline(owner: str, name: str, number: int) -> dict:
         timeline = pull["timelineItems"]
         events.extend(timeline["nodes"])
         if not timeline["pageInfo"]["hasNextPage"]:
-            return {
-                "merged_at": pull["mergedAt"],
-                "closed_at": pull["closedAt"],
-                "state": pull["state"],
-                "is_draft": pull["isDraft"],
-                "labels": [item["name"] for item in pull["labels"]["nodes"]],
-                "labeled_events": normalized_events(events),
-            }
+            record = timeline_from_node(pull)
+            # Every page's events, not just the last one's.
+            record["labeled_events"] = normalized_events(events)
+            return record
         cursor = timeline["pageInfo"]["endCursor"]
 
 
 def fetch_timelines(
     owner: str, name: str, numbers: list[int], reusable: dict[int, dict] | None = None,
 ) -> tuple[dict[int, dict], int]:
-    """Fetch current state and timelines independently; batching loses events.
+    """Current state and label timelines, one paginating request per pull request.
 
-    One GraphQL request per pull request, which is the dominant cost of this script and the
-    reason it needs `reusable`: a repository with more open-plus-recently-closed pull requests
-    than the hourly GraphQL budget cannot be walked from scratch at all. `reusable` maps a
-    number to a timeline recorded when the pull request last had a given `updatedAt`; the caller
-    only puts an entry there when that `updatedAt` still holds, so a hit is exact rather than a
-    heuristic. Returns the timelines and how many had to be fetched.
+    One request each is the only shape that has been shown to return complete timelines; see the
+    note above the batch query that used to live here. Cost is kept proportional to the work by
+    `reusable`, which maps a number to a timeline recorded while the pull request had its current
+    `updatedAt`, so nothing that has not moved is fetched at all. On a normal three-hourly run
+    that leaves a few dozen pull requests rather than every one the project has ever had.
+
+    Returns the timelines and how many pull requests had to be fetched.
     """
     reusable = reusable or {}
     result = {}
@@ -382,11 +412,52 @@ def names_scoreboard_for(metas: Iterable[str], pr_number: int) -> bool:
     return False
 
 
+# The comment scan below reads the repository's whole comment history. That is affordable only
+# because it does not have to happen every run, and it will not stay possible at all: GitHub caps
+# this endpoint at 400 pages, and the scan is ASCENDING, so once the repository passes 40,000
+# comments the pages that stop arriving are the newest ones -- precisely the scoreboards that
+# decide whether a pull request may merge. At ~13,600 comments growing by ~150 a day, that is a
+# few months out, and it would arrive as quietly as everything else in this file did.
+#
+# So: scan descending, and normally only since the last scan. Descending means that if the cap is
+# ever reached anyway the oldest comments are lost rather than the newest, which is the survivable
+# direction. `since` filters on updated_at, so an edited comment is re-examined.
+#
+# What an incremental scan cannot see is a comment that was DELETED, or edited to drop its marker;
+# either lingers in the carried-over set. A full rescan every week bounds how long that can last,
+# and costs one run in fifty-six rather than every run.
+SCOREBOARD_FULL_RESCAN_DAYS = 7
+# Re-read a little before the last scan, so a comment written while that scan was running cannot
+# fall into the gap between the two.
+SCOREBOARD_OVERLAP = timedelta(hours=1)
+
+
+def scoreboard_watermark(previous: dict | None, now: datetime) -> datetime | None:
+    """The instant to scan comments from, or None to scan the whole history.
+
+    Returns None whenever the carried-over set cannot be trusted to be merged into: no previous
+    snapshot, one written before this bookkeeping existed, one whose records predate comment ids,
+    or one old enough that deletions may have accumulated behind it.
+    """
+    if not previous:
+        return None
+    scanned = parse_dt(previous.get("scoreboards_scanned_at") or "")
+    if scanned is None:
+        return None
+    if now - scanned > timedelta(days=SCOREBOARD_FULL_RESCAN_DAYS):
+        return None
+    if any("id" not in entry for entry in previous.get("scoreboards") or []):
+        return None
+    return scanned - SCOREBOARD_OVERLAP
+
+
 def fetch_scoreboards(
     repo: str,
     pr_numbers: set[int],
     trusted_logins: set[str],
-) -> tuple[list[dict], Counter]:
+    previous: dict | None = None,
+    now: datetime | None = None,
+) -> tuple[list[dict], dict[str, str], str]:
     """Canonical review scoreboards posted on this repository's pull requests.
 
     The repository issue-comments endpoint also serves ordinary issues and accepts comments
@@ -396,17 +467,32 @@ def fetch_scoreboards(
     works with the read-only Actions token and does not trust requester-dependent
     ``author_association`` values. Parsing runs at gh/jq, so only compact fields reach Python
     rather than memory growing with review prose. Rejections are published by reason.
+
+    Returns the scoreboards, the rejected comments as {id: reason}, and the instant the scan
+    covers up to. Rejections are kept per comment id rather than as bare counts so that a
+    re-examined comment replaces its own earlier verdict instead of being counted twice.
     """
+    now = now or datetime.now(timezone.utc)
+    since = scoreboard_watermark(previous, now)
     marker = json.dumps(SCOREBOARD_MARKER)
+    # Descending, so a future run that does hit GitHub's pagination cap loses the oldest
+    # comments rather than the newest. `--paginate` carries these parameters through the
+    # Link headers it follows.
+    query = "per_page=100&sort=created&direction=desc"
+    if since is not None:
+        query += f"&since={iso_z(since)}"
+        print(f"scanning scoreboard comments updated since {iso_z(since)}", file=sys.stderr)
+    else:
+        print("scanning the full scoreboard comment history", file=sys.stderr)
     raw = run_gh([
         "api", "--paginate",
-        f"repos/{repo}/issues/comments?per_page=100",
+        f"repos/{repo}/issues/comments?{query}",
         "--jq", f'.[] | select((.body // "") | contains({marker}))'
                 ' | . as $comment | ($comment.issue_url | split("/") | last) as $number'
                 ' | ([try ($comment.body | capture("<!--tauceti-meta:v1\\\\s+'
                 '(?<json>\\\\{[\\\\s\\\\S]*\\\\})\\\\s*-->").json'
                 ' | fromjson) catch null][0] // null) as $meta'
-                ' | {number: $number, created_at: $comment.created_at,'
+                ' | {id: $comment.id, number: $number, created_at: $comment.created_at,'
                 '    updated_at: $comment.updated_at, user: $comment.user.login,'
                 '    canonical: (($meta | type == "object")'
                 '      and $meta.kind == "scoreboard"'
@@ -414,31 +500,44 @@ def fetch_scoreboards(
                 '      and (($meta.pr | floor) == $meta.pr)'
                 '      and ($meta.pr == ($number | tonumber)))}',
     ])
-    scoreboards = []
-    rejected = Counter()
+    # An incremental scan starts from what the previous one established and revises it; a full
+    # scan starts from nothing, which is what makes it able to drop deleted comments.
+    kept: dict[str, dict] = {}
+    rejected: dict[str, str] = {}
+    if since is not None:
+        kept = {entry["id"]: entry for entry in previous["scoreboards"]}
+        rejected = dict(previous.get("rejected_scoreboard_comments_by_id") or {})
+
     for line in raw.splitlines():
         comment = json.loads(line)
+        identifier = str(comment.get("id"))
+        # A comment can cross the line in either direction when edited, so a fresh verdict
+        # always displaces the old one rather than being added alongside it.
+        kept.pop(identifier, None)
+        rejected.pop(identifier, None)
         try:
             pr_number = int(comment["number"])
         except (KeyError, TypeError, ValueError):
-            rejected["unparsable_issue_number"] += 1
+            rejected[identifier] = "unparsable_issue_number"
             continue
         if pr_number not in pr_numbers:
-            rejected["not_a_pull_request"] += 1
+            rejected[identifier] = "not_a_pull_request"
             continue
         if comment.get("user") not in trusted_logins:
-            rejected["untrusted_author"] += 1
+            rejected[identifier] = "untrusted_author"
             continue
         if not comment.get("canonical"):
-            rejected["no_canonical_scoreboard_meta"] += 1
+            rejected[identifier] = "no_canonical_scoreboard_meta"
             continue
-        scoreboards.append({
+        kept[identifier] = {
+            "id": identifier,
             "pr": pr_number,
             "created_at": comment["created_at"],
             "updated_at": comment["updated_at"],
             "user": comment.get("user") or "unknown",
-        })
-    return scoreboards, rejected
+        }
+    scoreboards = sorted(kept.values(), key=lambda entry: (entry["created_at"], entry["id"]))
+    return scoreboards, rejected, iso_z(now)
 
 
 def load_previous(path: Path | None, repo: str) -> dict | None:
@@ -476,16 +575,24 @@ def fetch_snapshot(repo: str, previous: dict | None = None) -> dict:
         pr["author"] for pr in prs
         if pr.get("merged_at") and pr.get("author") != "unknown"
     }
-    scoreboards, rejected = fetch_scoreboards(
-        repo, {pr["number"] for pr in prs}, trusted_logins,
+    scoreboards, rejected, scanned_at = fetch_scoreboards(
+        repo, {pr["number"] for pr in prs}, trusted_logins, previous,
     )
     return {
-        "schema_version": 1,
+        # 2: pull requests carry `updated_at` and scoreboards carry `id`, both so that the next
+        # run can tell what it may keep. A version 1 snapshot is still readable -- everything
+        # that reuses it checks for the field it needs and falls back to fetching -- so this
+        # bump records the shape rather than gating on it.
+        "schema_version": 2,
         "repo": repo,
         "fetched_at": iso_z(datetime.now(timezone.utc)),
         "prs": prs,
         "scoreboards": scoreboards,
-        "rejected_scoreboard_comments": dict(sorted(rejected.items())),
+        # Per comment, so that the next incremental scan can revise a single verdict. The
+        # published counts below are derived from it and stay exact across incremental runs.
+        "scoreboards_scanned_at": scanned_at,
+        "rejected_scoreboard_comments_by_id": dict(sorted(rejected.items())),
+        "rejected_scoreboard_comments": dict(sorted(Counter(rejected.values()).items())),
     }
 
 

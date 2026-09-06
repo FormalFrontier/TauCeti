@@ -249,17 +249,6 @@ private theorem prod_beta_gammaMeasure_eq_withDensity (a b r : ℝ) :
       (Probability.measurable_gammaPDF (a + b) r), ← Measure.volume_eq_prod]
   rfl
 
-private theorem ae_mem_gammaBetaSource {a b r : ℝ} (ha : 0 < a) (hb : 0 < b)
-    (hr : 0 < r) :
-    ∀ᵐ z ∂(gammaMeasure a r).prod (gammaMeasure b r), z ∈ gammaBetaSource := by
-  let _ := isProbabilityMeasure_gammaMeasure ha hr
-  let _ := isProbabilityMeasure_gammaMeasure hb hr
-  unfold gammaBetaSource
-  rw [Measure.ae_prod_mem_iff_ae_ae_mem (measurableSet_Ioi.prod measurableSet_Ioi)]
-  filter_upwards [ae_pos_gammaMeasure a r] with x hx
-  filter_upwards [ae_pos_gammaMeasure b r] with y hy
-  exact ⟨hx, hy⟩
-
 private theorem ae_mem_gammaBetaTarget {a b r : ℝ} (ha : 0 < a) (hb : 0 < b)
     (hr : 0 < r) :
     ∀ᵐ z ∂(betaMeasure a b).prod (gammaMeasure (a + b) r), z ∈ gammaBetaTarget := by
@@ -280,9 +269,9 @@ private theorem map_betaGammaMap_prod_beta_gamma {a b r : ℝ} (ha : 0 < a) (hb 
   let _ := isProbabilityMeasure_gammaMeasure ha hr
   let _ := isProbabilityMeasure_gammaMeasure hb hr
   rw [← Measure.restrict_eq_self_of_ae_mem (ae_mem_gammaBetaTarget ha hb hr),
-    ← Measure.restrict_eq_self_of_ae_mem (ae_mem_gammaBetaSource ha hb hr),
+    ← Measure.restrict_eq_self_of_ae_mem (ae_mem_prod_Ioi_gammaMeasure ha hb hr hr),
     prod_beta_gammaMeasure_eq_withDensity, prod_gammaMeasure_eq_withDensity]
-  unfold gammaBetaTarget gammaBetaSource
+  unfold gammaBetaTarget
   rw [restrict_withDensity (measurableSet_Ioo.prod measurableSet_Ioi),
     restrict_withDensity (measurableSet_Ioi.prod measurableSet_Ioi)]
   ext q hq

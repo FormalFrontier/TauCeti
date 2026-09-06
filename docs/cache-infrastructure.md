@@ -121,7 +121,7 @@ so it can rewrite `$HOME/.elan/bin/lake`, prepend a directory to every later ste
 `$GITHUB_PATH`, or set `LD_PRELOAD` or `BASH_ENV` for every later step through `$GITHUB_ENV`.
 Hardening the individual commands that touch the key does not help: any secret placed in a later
 step of that job is a secret placed in reach of code that landed on main. (This is not reachable
-from an unmerged PR, which compiles only under landrun in `pr-build.yml`, with writes confined to
+from an unmerged PR, which compiles only under bwrap in `pr-build.yml`, with writes confined to
 `base/.lake` and no secret in the sandbox's `--env` allowlist.)
 
 So `build` runs `lake cache stage`, which needs no credential and touches no network, and hands

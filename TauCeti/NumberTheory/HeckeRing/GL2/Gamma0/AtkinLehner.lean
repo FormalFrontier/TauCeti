@@ -67,6 +67,7 @@ commutative semiring.
 ## Main definitions
 
 * `HeckeRing.GL2.atkinLehnerAntiInvolution`: the anti-involution of the `Γ₀(N)` Hecke pair.
+* `HeckeRing.GL2.atkinLehnerAutomorphism`: the automorphism `g ↦ ι(g⁻¹)` of the ambient group.
 * `HeckeRing.GL2.commSemiringHeckeRingGamma0`: for nonzero level `N`, the resulting
   commutative-semiring structure on the Hecke ring `R(Γ₀(N), Δ₀(N))`.
 
@@ -171,6 +172,16 @@ private lemma atkinLehnerHom_involutive (g : GL (Fin 2) ℚ) :
     rw [map_inv, MulOpposite.unop_inv, transposeGLEquiv_natDiagGL 2 ![1, N]]
   rw [h_tr, transposeGLEquiv_transposeGLEquiv, transposeGLEquiv_natDiagGL 2 ![1, N], h_inv]
   group
+
+/-- The ambient Atkin–Lehner anti-involution as an equivalence with the opposite group. -/
+private noncomputable def atkinLehnerEquiv : GL (Fin 2) ℚ ≃* (GL (Fin 2) ℚ)ᵐᵒᵖ where
+  toFun := atkinLehnerHom N
+  invFun g := (atkinLehnerHom N g.unop).unop
+  left_inv := atkinLehnerHom_involutive N
+  right_inv g := by
+    apply MulOpposite.unop_injective
+    exact atkinLehnerHom_involutive N g.unop
+  map_mul' := map_mul (atkinLehnerHom N)
 
 /-- The entries of `ι(g)`: `(a, b; N c, e) ↦ (a, c; N b, e)`, as an integral matrix. Gives the
 value lemma, the determinant lemma and the two membership proofs one spelling instead of four
@@ -282,12 +293,70 @@ noncomputable def atkinLehnerAntiInvolution [NeZero N] :
       exact atkinLehnerHom_mem_Gamma0Image N g hg)
     (atkinLehnerHom_mem_Delta0 N)
 
+/-- The automorphism of the ambient group sending `g` to the Atkin–Lehner bar of `g⁻¹`.
+
+Composing two order reversals makes this multiplicative. It is the form of the Atkin–Lehner
+operation used to transport left-coset multiplicities arising from right slash actions. -/
+noncomputable def atkinLehnerAutomorphism : GL (Fin 2) ℚ ≃* GL (Fin 2) ℚ :=
+  (MulEquiv.inv' (GL (Fin 2) ℚ)).trans (atkinLehnerEquiv N).symm
+
+/-- The ambient automorphism is the Atkin–Lehner bar applied after inversion. -/
+-- This is deliberately not a simp lemma: simp rewrites inner applications first, preventing
+-- `atkinLehnerAutomorphism_involutive` from normalizing nested applications. Use `rw` when the
+-- matrix entries are wanted.
+lemma atkinLehnerAutomorphism_apply (x : GL (Fin 2) ℚ) :
+    atkinLehnerAutomorphism N x = natDiagGL 2 ![1, N] *
+      (transposeGLEquiv 2 x⁻¹).unop * (natDiagGL 2 ![1, N])⁻¹ :=
+  (rfl)
+
+/-- Coercing the ambient automorphism to a monoid hom does not change its value. -/
+private lemma atkinLehnerAutomorphism_toMonoidHom_apply (x : GL (Fin 2) ℚ) :
+    (atkinLehnerAutomorphism N : GL (Fin 2) ℚ →* GL (Fin 2) ℚ) x =
+      atkinLehnerAutomorphism N x :=
+  (rfl)
+
+/-- The ambient Atkin–Lehner automorphism is involutive. -/
+@[simp] lemma atkinLehnerAutomorphism_involutive (x : GL (Fin 2) ℚ) :
+    atkinLehnerAutomorphism N (atkinLehnerAutomorphism N x) = x := by
+  rw [atkinLehnerAutomorphism_apply, ← atkinLehnerHom_unop,
+    atkinLehnerAutomorphism_apply, ← atkinLehnerHom_unop]
+  rw [map_inv, MulOpposite.unop_inv, atkinLehnerHom_involutive, inv_inv]
+
+/-- The ambient Atkin–Lehner automorphism is its own inverse. -/
+@[simp] theorem atkinLehnerAutomorphism_symm :
+    (atkinLehnerAutomorphism N).symm = atkinLehnerAutomorphism N :=
+  MulEquiv.ext fun x ↦ (atkinLehnerAutomorphism N).injective <| by
+    rw [(atkinLehnerAutomorphism N).apply_symm_apply, atkinLehnerAutomorphism_involutive]
+
+/-- The ambient Atkin–Lehner automorphism preserves the image of `Γ₀(N)`. -/
+@[simp] theorem atkinLehnerAutomorphism_map_Gamma0 [NeZero N] :
+    ((Gamma0 N).map (mapGL ℚ)).map (atkinLehnerAutomorphism N :
+        GL (Fin 2) ℚ →* GL (Fin 2) ℚ) = (Gamma0 N).map (mapGL ℚ) := by
+  ext x
+  constructor
+  · rintro ⟨y, hy, rfl⟩
+    rw [atkinLehnerAutomorphism_toMonoidHom_apply, atkinLehnerAutomorphism_apply,
+      ← atkinLehnerHom_unop]
+    rw [← Gamma0Image_def] at hy ⊢
+    exact atkinLehnerHom_mem_Gamma0Image N y⁻¹ (inv_mem hy)
+  · intro hx
+    refine ⟨atkinLehnerAutomorphism N x, ?_, atkinLehnerAutomorphism_involutive N x⟩
+    rw [atkinLehnerAutomorphism_apply, ← atkinLehnerHom_unop]
+    rw [← Gamma0Image_def] at hx ⊢
+    exact atkinLehnerHom_mem_Gamma0Image N x⁻¹ (inv_mem hx)
+
 /-- The anti-involution acts by conjugating the transpose by `w`, unfolding the sealed
 definition. -/
 @[simp] lemma atkinLehnerAntiInvolution_bar [NeZero N] {x : GL (Fin 2) ℚ} (hx : x ∈ Delta0 N) :
     (atkinLehnerAntiInvolution N).bar x hx =
       natDiagGL 2 ![1, N] * (transposeGLEquiv 2 x).unop * (natDiagGL 2 ![1, N])⁻¹ :=
   HeckeAntiInvolution.ofAmbient_bar _ _ _ _ x hx
+
+/-- On an inverse from `Δ₀(N)`, the ambient automorphism is the restricted Atkin–Lehner bar. -/
+lemma atkinLehnerAutomorphism_inv_apply [NeZero N] {x : GL (Fin 2) ℚ}
+    (hx : x ∈ Delta0 N) :
+    atkinLehnerAutomorphism N x⁻¹ = (atkinLehnerAntiInvolution N).bar x hx := by
+  rw [atkinLehnerAutomorphism_apply, inv_inv, atkinLehnerAntiInvolution_bar]
 
 /-- **The entrywise action**, on the bundle: `(a, b; N c, e) ↦ (a, c; N b, e)`. This is the
 form a consumer of `Δ₀(N)` elements needs; without it the entries can only be recovered by
