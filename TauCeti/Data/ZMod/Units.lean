@@ -11,9 +11,11 @@ import Mathlib.Algebra.EuclideanDomain.Int
 import Mathlib.Data.ZMod.Units
 
 /-!
-# Coprime lifting from `ZMod d`
+# Units and coprimality over `ZMod d`
 
-Coprime residues modulo `d` lift to coprime integers (`IsCoprime.exists_int_lifts`).
+Two directions of the same correspondence: an integer that is a *unit* mod `d` is coprime to
+`d` (`Int.gcd_eq_one_of_isUnit_intCast`), and coprime residues mod `d` lift to coprime
+integers (`IsCoprime.exists_int_lifts`).
 
 Ported from the AINTLIB `LeanModularForms` project
 (`LeanModularForms/HeckeRIngs/GLn/SL2Surjection.lean`, Chris Birkbeck); the consumer is the
@@ -24,6 +26,14 @@ strong approximation theorem `Matrix.SpecialLinearGroup.map_intCast_zmod_surject
 public section
 
 variable {d : ℕ}
+
+/-- **An integer that is a unit mod `d` is coprime to `d`.** The `Int.gcd` form is what
+consumers of `Nat.Coprime` want; `ZMod.coe_int_isUnit_iff_isCoprime` states the same fact as
+`IsCoprime` over `ℤ`. -/
+theorem Int.gcd_eq_one_of_isUnit_intCast {a : ℤ} (h : IsUnit ((a : ℤ) : ZMod d)) :
+    Int.gcd a d = 1 :=
+  Int.isCoprime_iff_gcd_eq_one.mp
+    (isCoprime_comm.mp ((ZMod.coe_int_isUnit_iff_isCoprime _ _).mp h))
 
 private lemma isCoprime_emod {a₁ c₁ : ℤ}
     (hac : IsCoprime (a₁ : ZMod d) (c₁ : ZMod d)) :
