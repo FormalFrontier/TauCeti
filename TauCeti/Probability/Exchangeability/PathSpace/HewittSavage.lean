@@ -51,8 +51,10 @@ distributed yet has a Dirac path law, under which every event is trivial.
   `P^{⊗ℕ}` itself.
 
 Everything else in this file is `private` proof infrastructure: the block permutation, the
-reindexed-cylinder change of variables, the cylinder approximation, the disjoint-block product
-formula, and the approximation argument.
+reindexed-cylinder change of variables, the cylinder approximation, and the disjoint-block product
+formula. The final approximation squeeze — arbitrarily close factoring approximants force measure
+`0` or `1` — is delegated to the shared zero-one criterion
+`TauCeti.MeasureTheory.measure_eq_zero_or_one_of_forall_approx_factorization`.
 
 ## The argument
 
@@ -223,7 +225,7 @@ private lemma measure_symmDiff_preimage_permReindex {ρ : Measure (ℕ → α)}
 /-- **Zero-one law for exchangeable events**, abstract form: an exchangeable path law in which
 cylinders over disjoint index blocks are independent gives every exchangeable event measure `0`
 or `1`. -/
-theorem measure_eq_zero_or_one_of_exchangeableSigma {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ]
+theorem measure_eq_zero_or_one_of_exchangeableSigma {ρ : Measure (ℕ → α)} [IsFiniteMeasure ρ]
     (hexch : ExchangeableLaw ρ)
     (hprod : ∀ {F G : Finset ℕ}, Disjoint F G → ∀ {S : Set (∀ _i : F, α)}, MeasurableSet S →
       ∀ {T : Set (∀ _j : G, α)}, MeasurableSet T →
