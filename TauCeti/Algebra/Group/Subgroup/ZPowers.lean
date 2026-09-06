@@ -65,6 +65,7 @@ theorem zpowers_inf_top_prod_bot_eq_bot_of_orderOf_dvd {G H : Type*} [Group G] [
 
 Mathlib supplies `IsCyclic ↥(zpowers g)` as an instance but names no generator, so this is what a
 transport along an isomorphism out of `zpowers g` consumes. -/
+@[simp]
 theorem zpowers_mk_self_eq_top {G : Type*} [Group G] (g : G) :
     zpowers (⟨g, mem_zpowers g⟩ : ↥(zpowers g)) = ⊤ := by
   ext ⟨x, hx⟩

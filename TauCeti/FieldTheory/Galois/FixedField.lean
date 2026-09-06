@@ -40,12 +40,6 @@ Galois group of its fixed points, and that fixed-point subfield is the one under
 * `Subgroup.zpowers_toAlgAutMulEquiv_eq_top`
 * `AlgEquiv.isCyclic_fixedField_zpowers`
 * `AlgEquiv.zpowers_toAlgAutMulEquiv_self_eq_top`
-
-## References
-
-The cyclic specialisation is wanted by the Chebotarev roadmap
-(`TauCetiRoadmap/Chebotarev/README.md`, Layer 8.2, the fixed-field fibre count), which opens by
-asking that `L / E` be cyclic with generator the restriction of `σ` for `E = L ^ ⟨σ⟩`.
 -/
 
 public section
@@ -160,13 +154,20 @@ variable {K M : Type*} [Field K] [Field M] [Algebra K M]
 /-- **The field fixed by a cyclic group of automorphisms has cyclic Galois group.** For
 `σ : M ≃ₐ[K] M` generating a finite group, the automorphisms of `M` fixing `M ^ ⟨σ⟩` are cyclic.
 
-Only `Subgroup.zpowers σ` need be finite; `M / K` may be infinite, and need not be Galois. -/
+Only `Subgroup.zpowers σ` need be finite; `M / K` may be infinite, and need not be Galois.
+
+`TauCetiRoadmap/Chebotarev/README.md`, Layer 8.2, the fixed-field fibre count, asks for this
+cyclic specialisation. -/
 theorem isCyclic_fixedField_zpowers (σ : M ≃ₐ[K] M) [Finite (Subgroup.zpowers σ)] :
     IsCyclic (M ≃ₐ[IntermediateField.fixedField (Subgroup.zpowers σ)] M) :=
   Subgroup.isCyclic_fixedField _
 
 /-- **And `σ` is a generator.** Its image under Mathlib's identification of `⟨σ⟩` with
-`Gal(M / M ^ ⟨σ⟩)` generates that Galois group; that image acts on `M` as `σ` does. -/
+`Gal(M / M ^ ⟨σ⟩)` generates that Galois group; that image acts on `M` as `σ` does.
+
+Layer 8.2 of `TauCetiRoadmap/Chebotarev/README.md` asks for the generator specifically, which
+`IsCyclic` alone does not name. -/
+@[simp]
 theorem zpowers_toAlgAutMulEquiv_self_eq_top (σ : M ≃ₐ[K] M)
     [Finite (Subgroup.zpowers σ)] :
     Subgroup.zpowers (FixedPoints.toAlgAutMulEquiv (Subgroup.zpowers σ) M
