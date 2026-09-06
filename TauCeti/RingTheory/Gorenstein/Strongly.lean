@@ -145,30 +145,6 @@ def IsStronglyGorensteinFlat (R : Type u) [CommRing R] (M : Type v)
     letI := S.addGroup; letI := S.moduleInst
     Nonempty (LinearMap.range S.f ≃ₗ[R] M)
 
-/-- Introduction rule for `IsStronglyGorensteinProjective`: a resolution together
-with an isomorphism from its image. Consumers should build the predicate through
-this rather than through the anonymous constructor, so the `∃`/`Nonempty` encoding
-stays an implementation detail. -/
-theorem IsStronglyGorensteinProjective.of_rangeEquiv (M : Type v) [AddCommGroup M] [Module R M]
-    (S : StronglyCompleteProjectiveResolution.{u, v} R)
-    (e : letI := S.addGroup; letI := S.moduleInst; LinearMap.range S.f ≃ₗ[R] M) :
-    IsStronglyGorensteinProjective R M :=
-  ⟨S, ⟨e⟩⟩
-
-/-- Introduction rule for `IsStronglyGorensteinInjective`. -/
-theorem IsStronglyGorensteinInjective.of_rangeEquiv (M : Type v) [AddCommGroup M] [Module R M]
-    (S : StronglyCompleteInjectiveResolution.{u, v} R)
-    (e : letI := S.addGroup; letI := S.moduleInst; LinearMap.range S.f ≃ₗ[R] M) :
-    IsStronglyGorensteinInjective R M :=
-  ⟨S, ⟨e⟩⟩
-
-/-- Introduction rule for `IsStronglyGorensteinFlat`. -/
-theorem IsStronglyGorensteinFlat.of_rangeEquiv (R : Type u) [CommRing R] (M : Type v)
-    [AddCommGroup M] [Module R M] (S : StronglyCompleteFlatResolution.{u, v} R)
-    (e : letI := S.addGroup; letI := S.moduleInst; LinearMap.range S.f ≃ₗ[R] M) :
-    IsStronglyGorensteinFlat R M :=
-  ⟨S, ⟨e⟩⟩
-
 /-! ## Contractible periodic complexes
 
 Every strongly complete resolution needs both an exact complex and a functor
@@ -208,13 +184,6 @@ def prodContraction : M × M →ₗ[R] M × M :=
 
 @[simp] theorem prodContraction_apply (p : M × M) : prodContraction R M p = (0, p.1) := (rfl)
 
-theorem prodShift_prodShift (p : M × M) : prodShift R M (prodShift R M p) = 0 := (rfl)
-
-theorem prodShift_prodContraction_add (p : M × M) :
-    prodShift R M (prodContraction R M p) + prodContraction R M (prodShift R M p) = p := by
-  obtain ⟨x, y⟩ := p
-  exact Prod.ext (add_zero x) (zero_add y)
-
 theorem range_prodShift :
     LinearMap.range (prodShift R M) = LinearMap.range (LinearMap.inl R M M) := by
   rw [prodShift]
@@ -233,20 +202,23 @@ holds for every `Q`, projective or not, because a contraction survives any
 additive functor. -/
 theorem isStronglyGorensteinProjective_of_projective [Module.Projective R M] :
     IsStronglyGorensteinProjective R M := by
-  refine IsStronglyGorensteinProjective.of_rangeEquiv R M
-    { P := M × M, f := prodShift R M, exact := ?_, homExact := ?_ }
-    (rangeProdShiftEquiv R M)
-  · exact exact_of_homotopy (S := prodContraction R M) (prodShift_prodShift R M)
-      (map_zero _) (prodShift_prodContraction_add R M)
+  have hFF : ∀ p : M × M, prodShift R M (prodShift R M p) = 0 := fun p => rfl
+  have hFS : ∀ p : M × M,
+      prodShift R M (prodContraction R M p) + prodContraction R M (prodShift R M p) = p := by
+    rintro ⟨x, y⟩
+    exact Prod.ext (add_zero x) (zero_add y)
+  refine ⟨{ P := M × M, f := prodShift R M, exact := ?_, homExact := ?_ },
+    ⟨rangeProdShiftEquiv R M⟩⟩
+  · exact exact_of_homotopy (S := prodContraction R M) hFF (map_zero _) hFS
   · intro Q _ _ _
     refine exact_of_homotopy (S := fun g : (M × M) →ₗ[R] Q => g.comp (prodContraction R M))
       (fun g => ?_) (LinearMap.zero_comp _) (fun g => ?_)
     · refine LinearMap.ext fun p => ?_
       simp only [LinearMap.comp_apply, LinearMap.zero_apply]
-      rw [prodShift_prodShift, map_zero]
+      rw [hFF, map_zero]
     · refine LinearMap.ext fun p => ?_
       simp only [LinearMap.add_apply, LinearMap.comp_apply]
-      rw [← map_add, add_comm, prodShift_prodContraction_add]
+      rw [← map_add, add_comm, hFS]
 
 /-- A strongly Gorenstein projective module embeds in a projective module,
 being the image of a differential on one. This is what makes the predicate
