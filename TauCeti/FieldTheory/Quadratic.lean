@@ -6,9 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 -- `Algebra.trace` occurs in the statements below, and `Algebra.trace_eq_matrix_trace` computes it.
-public import Mathlib.RingTheory.Trace.Basic
+public import Mathlib.RingTheory.Trace.Defs
 -- `Algebra.norm` occurs in the statements below, and `Algebra.norm_eq_matrix_det` computes it.
-public import Mathlib.RingTheory.Norm.Basic
+public import Mathlib.RingTheory.Norm.Defs
 -- Non-public: the matrix of multiplication by `x` in the basis `(1, x)` is the companion matrix
 -- `TauCeti.companionFinTwo`, whose trace and determinant are already known; used in proofs only.
 import TauCeti.LinearAlgebra.Matrix.RationalCanonicalFormFinTwo

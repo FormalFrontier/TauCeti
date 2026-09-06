@@ -8,10 +8,15 @@ module
 -- The classification of the conjugacy classes of `GL₂` by trace and determinant is what every
 -- normal form below is checked against.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.ConjugacyClasses
--- `TauCeti.diagGL`, `TauCeti.jordanGL` and `TauCeti.GL2NonSplitTorusHom` are the three non-central
--- normal forms, and this module supplies the two facts that the first and the last of them are not
--- scalar.
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Centralizer
+-- `TauCeti.diagGL` is the split semisimple normal form and occurs in the statements below.
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal.Basic
+-- `TauCeti.jordanGL` is the non-semisimple normal form and occurs in the statements below.
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.ScalarUnipotent
+-- `TauCeti.GL2NonSplitTorusHom` is the elliptic normal form and occurs in the statements below.
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.NonSplitTorus
+-- Non-public: the two facts that a diagonal and an elliptic element are not scalar are used only
+-- in proofs, so downstream importers do not pay for the centralizer and counting API.
+import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Centralizer
 -- Non-public: the trace and the norm of a quadratic irrationality, and the existence of one over a
 -- finite field, are what pin the elliptic normal form; used in proofs only.
 import TauCeti.FieldTheory.Quadratic
@@ -198,7 +203,12 @@ theorem exists_isConj_normalForm [Finite F] (E : Type*) [Field E] [Algebra F E]
     have hx0 : x ≠ 0 := by
       rintro rfl
       exact hxF ⟨0, by simp⟩
-    refine Or.inr (Or.inr (Or.inr ⟨Units.mk0 x hx0, hxF, ?_⟩))
-    exact isConj_gl2NonSplitTorusHom_of_trace_of_det hE hg hxF (by simpa using hx2) ht.symm hd.symm
+    -- The elliptic parameter is the unit `Units.mk0 x hx0`, so both hypotheses on `x` have to be
+    -- read back through the coercion `Eˣ → E`, which is `Units.val_mk0`.
+    refine Or.inr (Or.inr (Or.inr ⟨Units.mk0 x hx0, ?_, ?_⟩))
+    · simpa only [Units.val_mk0] using hxF
+    · refine isConj_gl2NonSplitTorusHom_of_trace_of_det hE hg ?_ ?_ ht.symm hd.symm
+      · simpa only [Units.val_mk0] using hxF
+      · simpa only [Units.val_mk0] using hx2
 
 end TauCeti
