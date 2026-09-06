@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+from collections import Counter
 import shutil
 import subprocess
 import tempfile
@@ -90,7 +91,8 @@ class MetricsTest(unittest.TestCase):
                 "labels": {"nodes": [{"name": "awaiting-review"}]}}},
         }
         with patch.object(
-            stats, "graphql", side_effect=[first_page, timeline_page, timeline_extra],
+            stats, "graphql",
+            side_effect=[first_page, timeline_page, timeline_extra],
         ):
             prs = stats.fetch_prs("example/project")
         self.assertEqual(
@@ -145,6 +147,54 @@ class MetricsTest(unittest.TestCase):
             prs = stats.fetch_prs("example/project")
         self.assertEqual(prs[0]["labeled_events"], [])
         self.assertEqual(graphql.call_count, 1)
+
+    # --- timelines are fetched one at a time, on purpose --------------------------------------
+    #
+    # Aliasing several pull requests into one GraphQL request is much cheaper and silently
+    # returns incomplete timelines. Measured on 2026-09-06: in a 50-alias batch PR #1556 came
+    # back with 2 label events and `hasNextPage: false` where the paginating query returns 4,
+    # the missing one being its current `ci-failed`. Smaller batches were complete for that
+    # sample, so the limit follows total requested nodes and cannot be pinned to a size, and
+    # `hasNextPage` is computed against the truncated slice so nothing in the response reveals
+    # the loss. This test exists so the optimisation cannot be reintroduced without meeting it.
+
+    def test_each_pull_request_gets_its_own_query(self):
+        numbers = [1, 2, 3]
+        reply = {"repository": {"pullRequest": {
+            "timelineItems": {"pageInfo": {"hasNextPage": False, "endCursor": None},
+                              "nodes": [{"createdAt": timestamp(2),
+                                         "label": {"name": "awaiting-review"}}]},
+            "mergedAt": None, "closedAt": None, "state": "OPEN", "isDraft": False,
+            "labels": {"nodes": [{"name": "awaiting-review"}]}}}}
+        with patch.object(stats, "graphql", return_value=reply) as graphql:
+            result, fetched = stats.fetch_timelines("o", "n", numbers)
+        self.assertEqual(graphql.call_count, 3)
+        self.assertEqual(fetched, 3)
+        self.assertEqual(len(result), 3)
+        # Each call names exactly one pull request.
+        for call in graphql.call_args_list:
+            self.assertIn("number", call.kwargs)
+
+    def test_the_module_defines_no_alias_batching_helper(self):
+        for name in ("timeline_batch_query", "TIMELINE_BATCH"):
+            self.assertFalse(
+                hasattr(stats, name),
+                f"{name} is back. Aliased batching returns silently truncated timelines with "
+                "hasNextPage false; read the note above fetch_timeline before reinstating it.")
+
+    def test_reused_pull_requests_are_not_fetched(self):
+        numbers = [1, 2, 3]
+        reusable = {1: {"merged_at": None, "closed_at": None, "state": "OPEN",
+                        "is_draft": False, "labels": [], "labeled_events": []}}
+        reply = {"repository": {"pullRequest": {
+            "timelineItems": {"pageInfo": {"hasNextPage": False, "endCursor": None}, "nodes": []},
+            "mergedAt": None, "closedAt": None, "state": "OPEN", "isDraft": False,
+            "labels": {"nodes": []}}}}
+        with patch.object(stats, "graphql", return_value=reply) as graphql:
+            result, fetched = stats.fetch_timelines("o", "n", numbers, reusable)
+        self.assertEqual(graphql.call_count, 2)
+        self.assertEqual(fetched, 2)
+        self.assertEqual(len(result), 3)
 
     # --- incremental snapshots -------------------------------------------------------------
     #
@@ -368,8 +418,11 @@ class MetricsTest(unittest.TestCase):
                 stats.generate(data, Path(temporary))
 
     def test_scoreboards_need_trust_pull_request_and_matching_meta(self):
+        counter = iter(range(1000, 2000))
+
         def comment(number, user, canonical=True, association="MEMBER"):
             return json.dumps({
+                "id": next(counter),
                 "number": str(number), "created_at": timestamp(2),
                 "updated_at": timestamp(2), "user": user, "canonical": canonical,
                 "author_association": association,
@@ -384,19 +437,103 @@ class MetricsTest(unittest.TestCase):
             comment(7, "reviewer-b"),
         ])
         with patch.object(stats, "run_gh", return_value=raw):
-            scoreboards, rejected = stats.fetch_scoreboards(
+            scoreboards, rejected, scanned_at = stats.fetch_scoreboards(
                 "example/project", {7, 9},
                 {"reviewer-a", "reviewer-b", "marker-quoter"},
             )
+        self.assertTrue(scanned_at)
         self.assertEqual(
             [(item["pr"], item["user"]) for item in scoreboards],
             [(7, "reviewer-a"), (7, "reviewer-b")],
         )
+        # Rejections are kept per comment id; the published counts are derived from them.
         self.assertEqual(
-            dict(rejected),
+            dict(Counter(rejected.values())),
             {"not_a_pull_request": 1, "no_canonical_scoreboard_meta": 1,
              "untrusted_author": 1},
         )
+
+    # --- incremental scoreboard scanning -----------------------------------------------------
+    #
+    # The comment scan reads the whole repository history: ~136 pages every three hours, and on
+    # a course to break outright. GitHub caps this endpoint at 400 pages and the scan was
+    # ASCENDING, so once the repository passes 40,000 comments the pages that stop arriving are
+    # the newest -- the scoreboards that decide whether a pull request may merge. Descending plus
+    # `since` fixes both the cost and the direction of that eventual loss.
+
+    @staticmethod
+    def scan(raw, previous=None, now=None):
+        with patch.object(stats, "run_gh", return_value=raw) as run:
+            result = stats.fetch_scoreboards(
+                "example/project", {7}, {"trusted"}, previous,
+                now or datetime(2026, 1, 10, tzinfo=UTC))
+        return result, run.call_args.args[0][2]
+
+    @staticmethod
+    def row(identifier, number=7, user="trusted", canonical=True, day=2):
+        return json.dumps({
+            "id": identifier, "number": str(number), "created_at": timestamp(day),
+            "updated_at": timestamp(day), "user": user, "canonical": canonical,
+        })
+
+    @staticmethod
+    def snapshot(scanned_day=9, entries=(("1", 7, "trusted"),), rejected=None, ids=True):
+        return {
+            "scoreboards_scanned_at": timestamp(scanned_day),
+            "scoreboards": [
+                ({"id": i} if ids else {}) | {
+                    "pr": pr_number, "created_at": timestamp(2),
+                    "updated_at": timestamp(2), "user": user}
+                for i, pr_number, user in entries],
+            "rejected_scoreboard_comments_by_id": dict(rejected or {}),
+        }
+
+    def test_the_scan_is_descending_so_a_future_cap_loses_the_oldest(self):
+        (_, _, _), path = self.scan("")
+        self.assertIn("direction=desc", path)
+
+    def test_no_previous_snapshot_scans_everything(self):
+        (_, _, _), path = self.scan("")
+        self.assertNotIn("since=", path)
+
+    def test_a_recent_snapshot_scans_only_since_it(self):
+        (boards, _, _), path = self.scan(self.row(2), previous=self.snapshot())
+        self.assertIn("since=", path)
+        # The carried-over entry survives alongside the newly seen one.
+        self.assertEqual(sorted(item["id"] for item in boards), ["1", "2"])
+
+    def test_the_since_is_pulled_back_before_the_last_scan(self):
+        # A comment written while the previous scan was running must not fall in the gap.
+        (_, _, _), path = self.scan("", previous=self.snapshot(scanned_day=9))
+        self.assertIn("since=2026-01-08T23", path)
+
+    def test_a_stale_snapshot_forces_a_full_rescan(self):
+        # Deletions are invisible to an incremental scan, so one cannot be carried indefinitely.
+        stale = self.snapshot(scanned_day=1)
+        (boards, _, _), path = self.scan("", previous=stale)
+        self.assertNotIn("since=", path)
+        self.assertEqual(boards, [])
+
+    def test_a_snapshot_without_comment_ids_forces_a_full_rescan(self):
+        # Without ids there is no way to revise one comment's verdict, so nothing may be kept.
+        (boards, _, _), path = self.scan("", previous=self.snapshot(ids=False))
+        self.assertNotIn("since=", path)
+        self.assertEqual(boards, [])
+
+    def test_an_edited_comment_replaces_its_own_earlier_verdict(self):
+        # Edited from a valid scoreboard into something untrusted: it must leave the kept set
+        # and be counted once as rejected, not counted twice or left in both.
+        previous = self.snapshot(entries=(("1", 7, "trusted"),))
+        (boards, rejected, _), _ = self.scan(
+            self.row("1", user="stranger"), previous=previous)
+        self.assertEqual(boards, [])
+        self.assertEqual(rejected, {"1": "untrusted_author"})
+
+    def test_a_rejection_that_becomes_valid_stops_being_counted(self):
+        previous = self.snapshot(entries=(), rejected={"1": "untrusted_author"})
+        (boards, rejected, _), _ = self.scan(self.row("1"), previous=previous)
+        self.assertEqual(rejected, {})
+        self.assertEqual([item["id"] for item in boards], ["1"])
 
     def test_scoreboard_meta_pr_number_is_matched_exactly(self):
         # #185's scoreboard pasted onto #18 shares the prefix `"pr":18`, and a string "18"
@@ -414,6 +551,7 @@ class MetricsTest(unittest.TestCase):
         def fixture(number, user, association, meta):
             body = f'<!--tauceti-scoreboard-->\n<!--tauceti-meta:v1 {json.dumps(meta)} -->'
             return {
+                "id": 5000 + number,
                 "issue_url": f"https://api.github.com/repos/example/project/issues/{number}",
                 "created_at": timestamp(2), "updated_at": timestamp(3),
                 "user": {"login": user}, "author_association": association,
@@ -427,6 +565,7 @@ class MetricsTest(unittest.TestCase):
             fixture(7, "string-pr", "MEMBER", {"kind": "scoreboard", "pr": "7"}),
             fixture(7, "wrong-kind", "MEMBER", {"kind": "claim", "pr": 7}),
             {
+                "id": 5099,
                 "issue_url": "https://api.github.com/repos/example/project/issues/7",
                 "created_at": timestamp(2), "updated_at": timestamp(3),
                 "user": {"login": "missing-meta"}, "author_association": "MEMBER",
@@ -454,11 +593,12 @@ class MetricsTest(unittest.TestCase):
         ]
         with (
             patch.object(stats, "fetch_prs", return_value=prs),
-            patch.object(stats, "fetch_scoreboards", return_value=([], {})) as fetch,
+            patch.object(stats, "fetch_scoreboards",
+                         return_value=([], {}, timestamp(3))) as fetch,
         ):
             stats.fetch_snapshot("example/project")
         fetch.assert_called_once_with(
-            "example/project", {1, 2, 3}, {"merged-author"},
+            "example/project", {1, 2, 3}, {"merged-author"}, None,
         )
 
     def test_thousands_of_contributors_are_bounded(self):
