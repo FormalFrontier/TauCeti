@@ -42,6 +42,8 @@ that is not reduced can be shortened by deleting two of its letters) follow.
   condition**, the case of a simple reflection, where the shortened word is again reduced.
 * `CoxeterSystem.deletionCondition`: **the deletion condition**, that a word which is not reduced
   spells the same element as the word with two of its letters deleted.
+* `CoxeterSystem.exists_isReduced_sublist`: iterating the deletion condition, **every word has a
+  reduced sublist spelling the same element**.
 
 ## References
 
@@ -447,5 +449,33 @@ theorem deletionCondition {ω : List B} (hω : ¬ cs.IsReduced ω) :
     rw [List.eraseIdx_eq_take_drop_succ ω k,
       List.eraseIdx_append_of_lt_length (by rw [hlenk]; exact hj)]
   rw [hera, cs.wordProd_append, ← hje, ← hprod, ← cs.wordProd_append, List.take_append_drop]
+
+/-- **Every word has a reduced sublist spelling the same element.** Deleting the two letters the
+deletion condition supplies leaves a strictly shorter word for the same element, so iterating it
+terminates at a reduced one. -/
+theorem exists_isReduced_sublist (ω : List B) :
+    ∃ σ : List B, σ.Sublist ω ∧ cs.IsReduced σ ∧ π σ = π ω := by
+  suffices H : ∀ n : ℕ, ∀ ω : List B, ω.length ≤ n →
+      ∃ σ : List B, σ.Sublist ω ∧ cs.IsReduced σ ∧ π σ = π ω from H ω.length ω le_rfl
+  intro n
+  induction n with
+  | zero =>
+    intro ω hω
+    -- A word of length zero is empty, hence reduced.
+    exact ⟨ω, List.Sublist.refl ω, show ℓ (π ω) = ω.length from by
+      have := cs.length_wordProd_le ω
+      omega, rfl⟩
+  | succ n ih =>
+    intro ω hω
+    by_cases hred : cs.IsReduced ω
+    · exact ⟨ω, List.Sublist.refl ω, hred, rfl⟩
+    obtain ⟨j, k, -, hk, hprod⟩ := deletionCondition cs hred
+    have hlen : ((ω.eraseIdx k).eraseIdx j).length ≤ n := by
+      have h₁ := (List.eraseIdx_sublist (ω.eraseIdx k) j).length_le
+      have h₂ := List.length_eraseIdx_add_one hk
+      omega
+    obtain ⟨σ, hσ, hσred, hσprod⟩ := ih ((ω.eraseIdx k).eraseIdx j) hlen
+    exact ⟨σ, hσ.trans ((List.eraseIdx_sublist (ω.eraseIdx k) j).trans
+      (List.eraseIdx_sublist ω k)), hσred, by rw [hσprod, ← hprod]⟩
 
 end CoxeterSystem
