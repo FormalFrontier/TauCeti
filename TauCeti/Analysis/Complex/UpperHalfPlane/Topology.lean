@@ -8,24 +8,39 @@ module
 public import Mathlib.Analysis.Complex.UpperHalfPlane.Topology
 
 /-!
-# Periodicity through `ofComplex`
+# Topology of the upper half-plane
+
+Every real point lies in the closure of the open upper half-plane, so limits taken along the
+half-plane at a real point are well posed.
 
 A function on the upper half-plane, extended to `ℂ` by `ofComplex`, is periodic with a real
 period exactly when the original function is invariant under the corresponding translation.
 
 ## Main declarations
 
+* `TauCeti.neBot_nhdsWithin_upperHalfPlaneSet`.
 * `TauCeti.UpperHalfPlane.periodic_comp_ofComplex_iff`.
 
 ## References
 
 * [Mathlib PR #39083](https://github.com/leanprover-community/mathlib4/pull/39083)
-  (Chris Birkbeck) — the upstream draft this file ports onto the current Mathlib pin.
+  (Chris Birkbeck) — the upstream draft the periodicity criterion ports onto the current
+  Mathlib pin.
 -/
 
 public section
 
-open UpperHalfPlane
+open Topology UpperHalfPlane
+
+namespace TauCeti
+
+/-- Every real point is in the closure of the open upper half-plane, so limits along the
+half-plane at a real point are well posed. -/
+theorem neBot_nhdsWithin_upperHalfPlaneSet (x : ℝ) :
+    (𝓝[upperHalfPlaneSet] ((x : ℂ))).NeBot :=
+  mem_closure_iff_nhdsWithin_neBot.mp (by simp [upperHalfPlaneSet])
+
+end TauCeti
 
 namespace TauCeti.UpperHalfPlane
 
