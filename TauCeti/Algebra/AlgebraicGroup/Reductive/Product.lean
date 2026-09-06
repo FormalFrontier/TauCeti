@@ -134,6 +134,58 @@ private theorem injective_of_comp_iso
   simpa only [FiniteTypeCommHopfAlgCat.toBialgHom_comp, BialgHom.comp_apply] using
     congrArg (FiniteTypeCommHopfAlgCat.toBialgHom e.hom) hxy
 
+private theorem baseChangeMap_includeLeft_injective
+    (H K : FiniteTypeCommHopfAlgCat.{u, u} k) :
+    Function.Injective (FiniteTypeCommHopfAlgCat.toBialgHom
+      (FiniteTypeCommHopfAlgCat.baseChangeMap (K := AlgebraicClosure k)
+        (FiniteTypeCommHopfAlgCat.includeLeft H K))) := by
+  let Hbar := FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H
+  let Kbar := FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) K
+  let e := FiniteTypeCommHopfAlgCat.baseChangeTensorProductIso (AlgebraicClosure k) H K
+  apply injective_of_comp_iso _ e (FiniteTypeCommHopfAlgCat.includeLeft Hbar Kbar)
+    (FiniteTypeCommHopfAlgCat.baseChangeMap_includeLeft_comp_baseChangeTensorProductIso_hom
+      (AlgebraicClosure k) H K)
+  exact injective_of_retraction
+    (Bialgebra.TensorProduct.includeLeft
+      (R := AlgebraicClosure k) (H₁ := Hbar) (H₂ := Kbar))
+    (Bialgebra.TensorProduct.projectLeft
+      (R := AlgebraicClosure k) (H₁ := Hbar) (H₂ := Kbar))
+    Bialgebra.TensorProduct.projectLeft_comp_includeLeft
+
+private theorem baseChangeMap_includeRight_injective
+    (H K : FiniteTypeCommHopfAlgCat.{u, u} k) :
+    Function.Injective (FiniteTypeCommHopfAlgCat.toBialgHom
+      (FiniteTypeCommHopfAlgCat.baseChangeMap (K := AlgebraicClosure k)
+        (FiniteTypeCommHopfAlgCat.includeRight H K))) := by
+  let Hbar := FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H
+  let Kbar := FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) K
+  let e := FiniteTypeCommHopfAlgCat.baseChangeTensorProductIso (AlgebraicClosure k) H K
+  apply injective_of_comp_iso _ e (FiniteTypeCommHopfAlgCat.includeRight Hbar Kbar)
+    (FiniteTypeCommHopfAlgCat.baseChangeMap_includeRight_comp_baseChangeTensorProductIso_hom
+      (AlgebraicClosure k) H K)
+  exact injective_of_retraction
+    (Bialgebra.TensorProduct.includeRight
+      (R := AlgebraicClosure k) (H₁ := Hbar) (H₂ := Kbar))
+    (Bialgebra.TensorProduct.projectRight
+      (R := AlgebraicClosure k) (H₁ := Hbar) (H₂ := Kbar))
+    Bialgebra.TensorProduct.projectRight_comp_includeRight
+
+private theorem includeLeft_toAlgHom
+    (H K : FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k)) :
+    (FiniteTypeCommHopfAlgCat.toBialgHom
+      (FiniteTypeCommHopfAlgCat.includeLeft H K)).toAlgHom =
+        Algebra.TensorProduct.includeLeft := by
+  apply AlgHom.ext
+  exact FiniteTypeCommHopfAlgCat.includeLeft_apply H K
+
+private theorem includeRight_toAlgHom
+    (H K : FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k)) :
+    (FiniteTypeCommHopfAlgCat.toBialgHom
+      (FiniteTypeCommHopfAlgCat.includeRight H K)).toAlgHom =
+        Algebra.TensorProduct.includeRight := by
+  apply AlgHom.ext
+  exact FiniteTypeCommHopfAlgCat.includeRight_apply H K
+
 private theorem map_eq_counit_of_ker_eq_augmentation
     {H L : FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k)}
     (f : H ⟶ L)
@@ -180,6 +232,7 @@ theorem tensorProduct (H K : FiniteTypeCommHopfAlgCat.{u, u} k)
   let P := FiniteTypeCommHopfAlgCat.tensorProduct Hbar Kbar
   let e : P₀ ≅ P :=
     FiniteTypeCommHopfAlgCat.baseChangeTensorProductIso (AlgebraicClosure k) H K
+  -- First discharge the smoothness and connectedness fields of reductivity.
   have hsmooth : Algebra.Smooth k (FiniteTypeCommHopfAlgCat.tensorProduct H K) := by
     let smoothH : Algebra.Smooth k H := hH.smooth
     let smoothK : Algebra.Smooth k K := hK.smooth
@@ -198,36 +251,11 @@ theorem tensorProduct (H K : FiniteTypeCommHopfAlgCat.{u, u} k)
     (FiniteTypeCommHopfAlgCat.includeLeft H K)
   let fK := FiniteTypeCommHopfAlgCat.baseChangeMap (K := AlgebraicClosure k)
     (FiniteTypeCommHopfAlgCat.includeRight H K)
+  -- Project the candidate unipotent subgroup to each factor.
   have hfH : Function.Injective (FiniteTypeCommHopfAlgCat.toBialgHom fH) := by
-    have heq : fH ≫ e.hom = FiniteTypeCommHopfAlgCat.includeLeft Hbar Kbar :=
-      FiniteTypeCommHopfAlgCat.baseChangeMap_includeLeft_comp_baseChangeTensorProductIso_hom
-        (AlgebraicClosure k) H K
-    have hincl : Function.Injective
-        (FiniteTypeCommHopfAlgCat.toBialgHom
-          (FiniteTypeCommHopfAlgCat.includeLeft Hbar Kbar)) :=
-      injective_of_retraction
-        (Bialgebra.TensorProduct.includeLeft
-          (R := AlgebraicClosure k) (H₁ := Hbar) (H₂ := Kbar))
-        (Bialgebra.TensorProduct.projectLeft
-          (R := AlgebraicClosure k) (H₁ := Hbar) (H₂ := Kbar))
-        Bialgebra.TensorProduct.projectLeft_comp_includeLeft
-    exact injective_of_comp_iso fH e
-      (FiniteTypeCommHopfAlgCat.includeLeft Hbar Kbar) heq hincl
+    simpa only [fH] using baseChangeMap_includeLeft_injective H K
   have hfK : Function.Injective (FiniteTypeCommHopfAlgCat.toBialgHom fK) := by
-    have heq : fK ≫ e.hom = FiniteTypeCommHopfAlgCat.includeRight Hbar Kbar :=
-      FiniteTypeCommHopfAlgCat.baseChangeMap_includeRight_comp_baseChangeTensorProductIso_hom
-        (AlgebraicClosure k) H K
-    have hincl : Function.Injective
-        (FiniteTypeCommHopfAlgCat.toBialgHom
-          (FiniteTypeCommHopfAlgCat.includeRight Hbar Kbar)) :=
-      injective_of_retraction
-        (Bialgebra.TensorProduct.includeRight
-          (R := AlgebraicClosure k) (H₁ := Hbar) (H₂ := Kbar))
-        (Bialgebra.TensorProduct.projectRight
-          (R := AlgebraicClosure k) (H₁ := Hbar) (H₂ := Kbar))
-        Bialgebra.TensorProduct.projectRight_comp_includeRight
-    exact injective_of_comp_iso fK e
-      (FiniteTypeCommHopfAlgCat.includeRight Hbar Kbar) heq hincl
+    simpa only [fK] using baseChangeMap_includeRight_injective H K
   have hleft : HopfIdeal.ker
       (FiniteTypeCommHopfAlgCat.toBialgHom (fH ≫ q)) =
         HopfIdeal.augmentation (AlgebraicClosure k) Hbar := by
@@ -236,6 +264,8 @@ theorem tensorProduct (H K : FiniteTypeCommHopfAlgCat.{u, u} k)
       (FiniteTypeCommHopfAlgCat.toBialgHom (fK ≫ q)) =
         HopfIdeal.augmentation (AlgebraicClosure k) Kbar := by
     exact ker_projection_eq_augmentation hK fK hfK I hI hsourceConnected hU
+  -- Both restrictions are counits, so the tensor-product universal property identifies the
+  -- quotient map itself with the counit.
   let g : P →ₐ[AlgebraicClosure k] (FiniteTypeCommHopfAlgCat.quotient P₀ I) :=
     (FiniteTypeCommHopfAlgCat.toBialgHom (e.inv ≫ q)).toAlgHom
   let ε : P →ₐ[AlgebraicClosure k] (FiniteTypeCommHopfAlgCat.quotient P₀ I) :=
@@ -250,26 +280,14 @@ theorem tensorProduct (H K : FiniteTypeCommHopfAlgCat.{u, u} k)
   have hleftMap : g.comp Algebra.TensorProduct.includeLeft =
       (Algebra.ofId (AlgebraicClosure k) (FiniteTypeCommHopfAlgCat.quotient P₀ I)).comp
         (Bialgebra.counitAlgHom (AlgebraicClosure k) Hbar) := by
-    have hi : (FiniteTypeCommHopfAlgCat.toBialgHom
-        (FiniteTypeCommHopfAlgCat.includeLeft Hbar Kbar)).toAlgHom =
-        Algebra.TensorProduct.includeLeft := by
-      apply AlgHom.ext
-      intro h
-      exact FiniteTypeCommHopfAlgCat.includeLeft_apply Hbar Kbar h
-    rw [← hi]
+    rw [← includeLeft_toAlgHom]
     simpa only [g] using
       restriction_eq_counit (FiniteTypeCommHopfAlgCat.includeLeft Hbar Kbar)
         (e.inv ≫ q) (fH ≫ q) hleftComp hleft
   have hrightMap : g.comp Algebra.TensorProduct.includeRight =
       (Algebra.ofId (AlgebraicClosure k) (FiniteTypeCommHopfAlgCat.quotient P₀ I)).comp
         (Bialgebra.counitAlgHom (AlgebraicClosure k) Kbar) := by
-    have hi : (FiniteTypeCommHopfAlgCat.toBialgHom
-        (FiniteTypeCommHopfAlgCat.includeRight Hbar Kbar)).toAlgHom =
-        Algebra.TensorProduct.includeRight := by
-      apply AlgHom.ext
-      intro l
-      exact FiniteTypeCommHopfAlgCat.includeRight_apply Hbar Kbar l
-    rw [← hi]
+    rw [← includeRight_toAlgHom]
     simpa only [g] using
       restriction_eq_counit (FiniteTypeCommHopfAlgCat.includeRight Hbar Kbar)
         (e.inv ≫ q) (fK ≫ q) hrightComp hright
@@ -278,6 +296,8 @@ theorem tensorProduct (H K : FiniteTypeCommHopfAlgCat.{u, u} k)
     apply Algebra.TensorProduct.ext'
     intro h l
     rw [Algebra.TensorProduct.productMap_apply_tmul]
+    -- Unfold both maps on a pure tensor: the product map multiplies the factor counits,
+    -- while `ε` uses the tensor-product counit.
     change algebraMap (AlgebraicClosure k) (FiniteTypeCommHopfAlgCat.quotient P₀ I)
         (Coalgebra.counit h) *
         algebraMap (AlgebraicClosure k) (FiniteTypeCommHopfAlgCat.quotient P₀ I)
@@ -308,6 +328,7 @@ theorem tensorProduct (H K : FiniteTypeCommHopfAlgCat.{u, u} k)
   apply SetLike.ext
   intro x
   rw [HopfIdeal.mem_augmentation]
+  -- Expose membership in the underlying ideal, as required by `mkQuotient_eq_zero_iff`.
   change x ∈ I.toIdeal ↔ _
   rw [← FiniteTypeCommHopfAlgCat.mkQuotient_eq_zero_iff P₀ I]
   rw [hq]
