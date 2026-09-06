@@ -514,14 +514,9 @@ noncomputable def taylorComponent
     TensorPower R n.1 M →ₗ[R] M :=
   (letter R M ∘ₗ b) ∘ₗ of R M n
 
-/-- A Taylor arity component as a composite of linear maps. -/
-theorem taylorComponent_def
-    (b : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M) (n : {n : ℕ // 0 < n}) :
-    taylorComponent b n = (letter R M ∘ₗ b) ∘ₗ of R M n :=
-  (rfl)
-
 /-- Evaluation of a Taylor arity component is restriction to words of the specified length
 followed by projection to letters. -/
+@[simp]
 theorem taylorComponent_apply
     (b : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M) (n : {n : ℕ // 0 < n})
     (x : TensorPower R n.1 M) :
@@ -532,14 +527,14 @@ theorem taylorComponent_apply
 @[simp]
 theorem taylorComponent_zero (n : {n : ℕ // 0 < n}) :
     taylorComponent (0 : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M) n = 0 := by
-  rw [taylorComponent_def, LinearMap.comp_zero, LinearMap.zero_comp]
+  rw [taylorComponent, LinearMap.comp_zero, LinearMap.zero_comp]
 
 /-- The arity components of `coderiv F` are the restrictions of `F` to each tensor length. -/
 @[simp]
 theorem taylorComponent_coderiv (F : ReducedTensorWords R M →ₗ[R] M)
     (n : {n : ℕ // 0 < n}) :
     taylorComponent (coderiv R F) n = F ∘ₗ of R M n := by
-  rw [taylorComponent_def, letter_comp_coderiv]
+  rw [taylorComponent, letter_comp_coderiv]
 
 /-- Taking an arity component preserves addition of endomorphisms. -/
 @[simp]
@@ -547,14 +542,14 @@ theorem taylorComponent_add
     (b₁ b₂ : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M)
     (n : {n : ℕ // 0 < n}) :
     taylorComponent (b₁ + b₂) n = taylorComponent b₁ n + taylorComponent b₂ n := by
-  simp only [taylorComponent_def, LinearMap.comp_add, LinearMap.add_comp]
+  simp only [taylorComponent, LinearMap.comp_add, LinearMap.add_comp]
 
 /-- Taking an arity component preserves scalar multiplication of endomorphisms. -/
 @[simp]
 theorem taylorComponent_smul (r : R)
     (b : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M) (n : {n : ℕ // 0 < n}) :
     taylorComponent (r • b) n = r • taylorComponent b n := by
-  simp only [taylorComponent_def, LinearMap.comp_smul, LinearMap.smul_comp]
+  simp only [taylorComponent, LinearMap.comp_smul, LinearMap.smul_comp]
 
 /-- A coderivation vanishes exactly when each of its aritywise Taylor components vanishes. -/
 theorem IsCoderivation.eq_zero_iff_taylorComponent_eq_zero

@@ -706,7 +706,10 @@ Taylor map to words of length `n`. -/
 theorem ReducedTensorWords.taylorComponent_gradedCoderiv (G : InternalGrading R M)
     (F : ReducedTensorWords R M →ₗ[R] M) (q : ℤ) (n : {n : ℕ // 0 < n}) :
     taylorComponent (gradedCoderiv G F q) n = F ∘ₗ of R M n := by
-  rw [taylorComponent_def, letter_comp_gradedCoderiv]
+  apply LinearMap.ext
+  intro x
+  simp only [taylorComponent_apply, LinearMap.comp_apply]
+  rw [← LinearMap.comp_apply (letter R M), letter_comp_gradedCoderiv]
 
 /-- A graded coderivation whose letter component raises degrees by `r` raises degrees by `r`:
 being determined by its letter component, it inherits homogeneity from it. The twist parameter
@@ -723,15 +726,6 @@ theorem ReducedTensorWords.IsGradedCoderivation.isHomogeneous {G : InternalGradi
 end Letter
 
 /-! ### Squares of anticommuting graded coderivations -/
-
-/-- Applying the same Koszul twist twice to every letter of a tensor word is the identity. -/
-@[simp]
-theorem ReducedTensorWords.map_koszulTwist_comp_self (G : InternalGrading R M) (q : ℤ) :
-    ReducedTensorWords.map (R := R) (InternalGrading.koszulTwist G q) ∘ₗ
-        ReducedTensorWords.map (R := R) (InternalGrading.koszulTwist G q) =
-      LinearMap.id := by
-  rw [← ReducedTensorWords.map_comp, InternalGrading.koszulTwist_comp_self,
-    ReducedTensorWords.map_id]
 
 /-- The square of a graded coderivation anticommuting with the letterwise Koszul twist is an
 ordinary coderivation.  The anticommutation relation expresses oddness when `q` is odd.  For even
@@ -787,7 +781,9 @@ theorem ReducedTensorWords.IsGradedCoderivation.isCoderivation_comp_self
             (LinearMap.lTensor (ReducedTensorWords R M) b
               (LinearMap.rTensor (ReducedTensorWords R M) τ w))) =
         LinearMap.lTensor (ReducedTensorWords R M) (b ∘ₗ b) w := by
-    have hτ : τ ∘ₗ τ = LinearMap.id := map_koszulTwist_comp_self G q
+    have hτ : τ ∘ₗ τ = LinearMap.id := by
+      rw [← ReducedTensorWords.map_comp, InternalGrading.koszulTwist_comp_self,
+        ReducedTensorWords.map_id]
     rw [hcommute, ← LinearMap.lTensor_comp_apply, ← LinearMap.rTensor_comp_apply,
       hτ, LinearMap.rTensor_id_apply]
   rw [hfirst, hcrossLeft, hcrossRight, hlast]

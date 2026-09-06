@@ -30,9 +30,9 @@ identity and the hypothesis reduces to `b + b = 0`.
 
 ## Main results
 
-* `TauCeti.ReducedTensorWords.taylorComponent_gradedCoderiv_comp_gradedCoderiv_of_tprod`: the
-  arity formula for a composite of two graded Taylor expansions.
-* `taylorComponent_gradedCoderiv_comp_gradedCoderiv_of_tprod_of_homogeneous`:
+* `TauCeti.ReducedTensorWords.taylorComponent_comp_gradedCoderiv_of_tprod`: the arity formula for
+  composing an endomorphism with a graded Taylor expansion.
+* `taylorComponent_comp_gradedCoderiv_of_tprod_of_homogeneous`:
   the corresponding signed formula on homogeneous letters.
 
 ## References
@@ -55,28 +55,27 @@ section Ring
 
 variable {R : Type uR} {M : Type uM} [CommRing R] [AddCommMonoid M] [Module R M]
 
-/-- The Taylor component of a composite of graded Taylor expansions is obtained by applying the
-outer Taylor map to every signed nonempty one-block collapse made by the inner expansion.  Only
-the inner twist parameter occurs in the resulting formula. -/
-theorem taylorComponent_gradedCoderiv_comp_gradedCoderiv_of_tprod
-    (G : InternalGrading R M)
-    (F₁ : ReducedTensorWords R M →ₗ[R] M) (q₁ : ℤ)
+/-- The Taylor component of an endomorphism composed with a graded Taylor expansion is obtained by
+applying the outer endomorphism's letter component to every signed nonempty one-block collapse
+made by the inner expansion. -/
+theorem taylorComponent_comp_gradedCoderiv_of_tprod
+    (G : InternalGrading R M) (b₁ : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M)
     (F₂ : ReducedTensorWords R M →ₗ[R] M) (q₂ : ℤ)
     {n : ℕ} (hn : 0 < n) (x : Fin n → M) :
-    taylorComponent (gradedCoderiv G F₁ q₁ ∘ₗ gradedCoderiv G F₂ q₂) ⟨n, hn⟩
+    taylorComponent (b₁ ∘ₗ gradedCoderiv G F₂ q₂) ⟨n, hn⟩
         (PiTensorProduct.tprod R x) =
       ∑ p ∈ Finset.range n, ∑ d ∈ Finset.Icc 1 (n - p),
-        F₁ (splice R (InternalGrading.twistedTuple G q₂ x 0 p) 0 n p d
+        (letter R M ∘ₗ b₁) (splice R (InternalGrading.twistedTuple G q₂ x 0 p) 0 n p d
           (F₂ (subword R x p d))) := by
   calc
     _ = ∑ p ∈ Finset.range n, ∑ d ∈ Finset.range (n + 1),
-        F₁ (splice R (InternalGrading.twistedTuple G q₂ x 0 p) 0 n p d
+        (letter R M ∘ₗ b₁) (splice R (InternalGrading.twistedTuple G q₂ x 0 p) 0 n p d
           (F₂ (subword R x p d))) := by
       rw [taylorComponent_apply]
       simp only [LinearMap.comp_apply]
-      rw [← LinearMap.comp_apply (letter R M), letter_comp_gradedCoderiv,
-        gradedCoderiv_of_tprod, map_sum]
-      exact Finset.sum_congr rfl fun p _ ↦ by rw [map_sum]
+      rw [← LinearMap.comp_apply (letter R M), gradedCoderiv_of_tprod, map_sum]
+      exact Finset.sum_congr rfl fun p _ ↦ by
+        simp only [map_sum, LinearMap.comp_apply]
     _ = _ := by
       refine Finset.sum_congr rfl fun p hp ↦ ?_
       apply (Finset.sum_subset ?_ ?_).symm
@@ -92,22 +91,21 @@ theorem taylorComponent_gradedCoderiv_comp_gradedCoderiv_of_tprod
           omega
         rw [splice_eq_zero_of_not_fits R _ _ hfit, map_zero]
 
-/-- On homogeneous inputs, the Taylor component of a composite is an insertion sum with the
+/-- On homogeneous inputs, the Taylor component of such a composite is an insertion sum with the
 Koszul sign contributed by the inner twist and the degrees of the letters preceding the inserted
 operation. -/
-theorem taylorComponent_gradedCoderiv_comp_gradedCoderiv_of_tprod_of_homogeneous
-    (G : InternalGrading R M)
-    (F₁ : ReducedTensorWords R M →ₗ[R] M) (q₁ : ℤ)
+theorem taylorComponent_comp_gradedCoderiv_of_tprod_of_homogeneous
+    (G : InternalGrading R M) (b₁ : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M)
     (F₂ : ReducedTensorWords R M →ₗ[R] M) (q₂ : ℤ)
     {n : ℕ} (hn : 0 < n) (x : Fin n → M) (𝒟 : Fin n → ℤ)
     (hx : ∀ i, x i ∈ G.piece (𝒟 i)) :
-    taylorComponent (gradedCoderiv G F₁ q₁ ∘ₗ gradedCoderiv G F₂ q₂) ⟨n, hn⟩
+    taylorComponent (b₁ ∘ₗ gradedCoderiv G F₂ q₂) ⟨n, hn⟩
         (PiTensorProduct.tprod R x) =
       ∑ p ∈ Finset.range n, ∑ d ∈ Finset.Icc 1 (n - p),
         (((q₂ * ∑ j ∈ Finset.range p,
           if h : j < n then 𝒟 ⟨j, h⟩ else 0).negOnePow : ℤ) : R) •
-          F₁ (splice R x 0 n p d (F₂ (subword R x p d))) := by
-  rw [taylorComponent_gradedCoderiv_comp_gradedCoderiv_of_tprod G F₁ q₁ F₂ q₂ hn x]
+          (letter R M ∘ₗ b₁) (splice R x 0 n p d (F₂ (subword R x p d))) := by
+  rw [taylorComponent_comp_gradedCoderiv_of_tprod G b₁ F₂ q₂ hn x]
   refine Finset.sum_congr rfl fun p _ ↦ ?_
   refine Finset.sum_congr rfl fun d _ ↦ ?_
   rw [splice_twistedTuple_smul G q₂ x 𝒟 hx p d, map_smul]
