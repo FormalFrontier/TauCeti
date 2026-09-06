@@ -31,7 +31,7 @@ multiquadratic roadmap).
 
 The splitting law is then read off at the level of ideals: a completely split rational prime is
 the absolute norm of a prime of `𝓞 K`
-(`NumberField.absNorm_eq_of_ncard_primesOver_eq_finrank`). That is the shape in which the
+(`Ideal.absNorm_eq_of_ncard_primesOver_eq_finrank`). That is the shape in which the
 splitting law enters genus theory, where an ideal of norm `p` is what carries the prescribed
 values of the genus characters.
 
@@ -185,7 +185,7 @@ theory: the genus characters are computed on ideals through their absolute norms
 theorem exists_isPrime_and_absNorm_eq_of_legendreSym_eq_one {θ : 𝓞 K} {d : ℤ}
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
     {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2) (hleg : legendreSym p d = 1) :
-    ∃ 𝔭 : Ideal (𝓞 K), 𝔭.IsPrime ∧ Ideal.absNorm 𝔭 = p := by
+    ∃ 𝔭 : Ideal (𝓞 K), 𝔭.IsPrime ∧ 𝔭.LiesOver (span {(p : ℤ)}) ∧ Ideal.absNorm 𝔭 = p := by
   -- A nonzero value of the Legendre symbol already records that `p ∤ d`.
   have hcop : ¬ (p : ℤ) ∣ d := by
     intro hdvd
@@ -198,6 +198,7 @@ theorem exists_isPrime_and_absNorm_eq_of_legendreSym_eq_one {θ : 𝓞 K} {d : �
     (inferInstance : Nonempty ((span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K)))
   -- `h𝔮` and `hlo` are the prime and lies-over hypotheses of the norm computation; pass them
   -- explicitly rather than installing them as anonymous local instances.
-  exact ⟨𝔮, h𝔮, @absNorm_eq_of_ncard_primesOver_eq_finrank K _ _ p _ 𝔮 h𝔮 hlo hsplit⟩
+  exact ⟨𝔮, h𝔮, hlo,
+    @Ideal.absNorm_eq_of_ncard_primesOver_eq_finrank K _ _ p _ 𝔮 h𝔮 hlo hsplit⟩
 
 end NumberField

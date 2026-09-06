@@ -7,6 +7,7 @@ module
 
 public import TauCeti.NumberTheory.Multiquadratic.Quadratic.GenusCharacter.ElementaryTwoQuotient
 public import TauCeti.NumberTheory.NumberField.Quadratic.Splitting
+import TauCeti.NumberTheory.Multiquadratic.Quadratic.Ramification
 
 /-!
 # Genus characters at a split prime
@@ -52,18 +53,33 @@ namespace TauCeti.Multiquadratic
 
 variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
 
-/-- **The quadratic splitting law in genus-character form.** An odd prime `q` not dividing the
-squarefree radicand `d` splits in `K = ℚ(√d)` exactly when the genus character of the whole
+/-- **The quadratic splitting law in genus-character form.** An odd prime `q` splits in
+`K = ℚ(√d)` for squarefree `d` exactly when the genus character of the whole
 prime-discriminant factorization of `disc K` is trivial at `q`. -/
 theorem ncard_primesOver_eq_finrank_iff_genusCharFun_eq_one {s : Finset ℤ}
     (hs : ∀ P ∈ s, IsPrimeDiscriminant P)
     (hprod : ∏ P ∈ s, P = fundamentalDiscriminant d)
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
-    {q : ℕ} [Fact q.Prime] (hq : q ≠ 2) (hqd : ¬ (q : ℤ) ∣ d) :
+    (hsf : Squarefree d) {q : ℕ} [Fact q.Prime] (hq : q ≠ 2) :
     (Ideal.primesOver (Ideal.span {(q : ℤ)}) (𝓞 K)).ncard = Module.finrank ℚ K ↔
       genusCharFun s (q : ℤ) = 1 := by
-  rw [NumberField.ncard_primesOver_quadratic_iff hmin hgen hq hqd,
-    genusCharFun_natCast_eq_legendreSym hs hprod hq]
+  by_cases hqd : ¬ (q : ℤ) ∣ d
+  · rw [NumberField.ncard_primesOver_quadratic_iff hmin hgen hq hqd,
+      genusCharFun_natCast_eq_legendreSym hs hprod hq]
+  · have hodd : Odd (q : ℤ) := by
+      exact_mod_cast (Fact.out : q.Prime).odd_of_ne_two hq
+    have hdvd : (q : ℤ) ∣ fundamentalDiscriminant d := by
+      rw [dvd_fundamentalDiscriminant_iff (Int.isCoprime_two_right.mpr hodd)]
+      exact not_not.mp hqd
+    have hram : q ∈ NumberField.ramifiedPrimes K :=
+      (mem_ramifiedPrimes_iff_dvd_fundamentalDiscriminant hmin hgen hsf Fact.out).mpr hdvd
+    have hfinrank : Module.finrank ℚ K = 2 := NumberField.finrank_rat_eq_two hmin hgen
+    have hcard := NumberField.ncard_primesOver_eq_one_of_mem_ramifiedPrimes hfinrank hram
+    have hleg : legendreSym q d = 0 :=
+      (legendreSym.eq_zero_iff q d).mpr
+        ((ZMod.intCast_zmod_eq_zero_iff_dvd d q).mpr (not_not.mp hqd))
+    rw [hcard, hfinrank, genusCharFun_natCast_eq_legendreSym hs hprod hq, hleg]
+    norm_num
 
 /-- **The narrow class of a split prime realizes the prescribed character values.**
 Let `D = ∏ P ∈ s, P` be a prime-discriminant factorization of the discriminant of `K = ℚ(√d)`
@@ -84,7 +100,7 @@ theorem exists_forall_genusCharFunNarrowClassGroupHom_eq {s : Finset ℤ}
         primeDiscriminantCharFun P (q : ℤ) := by
   -- The genus character is the splitting symbol, so `q` splits and is an ideal norm.
   have hleg : legendreSym q d = 1 := (genusCharFun_natCast_eq_legendreSym hs hprod hq) ▸ hgc
-  obtain ⟨𝔮, _, hnorm⟩ :=
+  obtain ⟨𝔮, _, _, hnorm⟩ :=
     NumberField.exists_isPrime_and_absNorm_eq_of_legendreSym_eq_one hmin hgen hq hleg
   have h𝔮0 : 𝔮 ∈ (Ideal (𝓞 K))⁰ := by
     rw [← Ideal.absNorm_ne_zero_iff_mem_nonZeroDivisors, hnorm]
