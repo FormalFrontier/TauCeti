@@ -30,7 +30,8 @@ restrictive here: a Huber ring satisfies it, by
 
 ## Main results
 
-* `TauCeti.Huber.surjective_weightedMap_one_weight`.
+* `TauCeti.Huber.weightedMap_one_weight_surjective`, with
+  `TauCeti.Huber.weightedMap_one_weight_surjective_of_isOpenMap` the form taking `IsOpenMap`.
 
 ## References
 
@@ -54,20 +55,24 @@ namespace TauCeti.Huber
 variable {k : ℕ} {A B : Type*} [CommRing A] [TopologicalSpace A] [NonarchimedeanRing A]
   [CommRing B] [TopologicalSpace B] [NonarchimedeanRing B]
 
-/-- **A continuous open surjection stays surjective on restricted series.** Every element of
-`B⟨X₁,…,Xₖ⟩` is the image of one of `A⟨X₁,…,Xₖ⟩`.
+/-- **A continuous surjection carrying neighbourhoods of zero onto neighbourhoods of zero stays
+surjective on restricted series.** Every element of `B⟨X₁,…,Xₖ⟩` is the image of one of
+`A⟨X₁,…,Xₖ⟩`.
+
+The hypothesis is the filter inequality the proof consumes rather than `IsOpenMap φ`, which is
+strictly stronger; `TauCeti.Huber.weightedMap_one_weight_surjective_of_isOpenMap` is the open-map
+form for a caller who holds one.
 
 This is the step Wedhorn's Proposition & Definition 6.36(ii) needs: a ring topologically of finite
 type over `A` is an open quotient of some `A⟨X₁,…,Xₖ⟩`, and adjoining further variables to that
 quotient has to stay a quotient for noetherianity to descend to it. -/
-theorem surjective_weightedMap_one_weight [(𝓝 (0 : A)).IsCountablyGenerated] {φ : A →+* B}
-    (hφ : Continuous φ) (hsurj : Function.Surjective φ) (hopen : IsOpenMap φ)
-    (hTS : ∀ _ : Fin k, φ '' ({1} : Set A) ⊆ ({1} : Set B)) :
+theorem weightedMap_one_weight_surjective [(𝓝 (0 : A)).IsCountablyGenerated] {φ : A →+* B}
+    (hφ : Continuous φ) (hsurj : Function.Surjective φ)
+    (hnhds : 𝓝 (0 : B) ≤ Filter.map φ (𝓝 (0 : A))) :
     Function.Surjective (weightedMap (k := k) hφ isWeightFamily_one_weight
-      isWeightFamily_one_weight hTS) := by
+      isWeightFamily_one_weight fun _ ↦ by simp) := by
   intro g
-  obtain ⟨c, hcg, hc⟩ := TauCeti.exists_lift_tendsto_cofinite_nhds (φ : A → B) hsurj
-    (map_zero φ ▸ hopen.nhds_le 0)
+  obtain ⟨c, hcg, hc⟩ := TauCeti.exists_lift_tendsto_cofinite_nhds (φ : A → B) hsurj hnhds
     (fun ν ↦ MvPowerSeries.coeff ν (g : MvPowerSeries (Fin k) B))
     (isWeightedRestricted_one_weight_iff.mp (mem_weightedRestrictedSubring.mp g.2))
   obtain ⟨f, hf⟩ : ∃ f : MvPowerSeries (Fin k) A, ∀ ν, MvPowerSeries.coeff ν f = c ν :=
@@ -77,6 +82,14 @@ theorem surjective_weightedMap_one_weight [(𝓝 (0 : A)).IsCountablyGenerated] 
   · simpa only [hf] using hc
   · rw [coe_weightedMap, MvPowerSeries.coeff_map, hf]
     exact hcg ν
+
+/-- **The open-map form of `TauCeti.Huber.weightedMap_one_weight_surjective`**, for a caller
+holding `IsOpenMap φ` rather than the neighbourhood inequality. -/
+theorem weightedMap_one_weight_surjective_of_isOpenMap [(𝓝 (0 : A)).IsCountablyGenerated]
+    {φ : A →+* B} (hφ : Continuous φ) (hsurj : Function.Surjective φ) (hopen : IsOpenMap φ) :
+    Function.Surjective (weightedMap (k := k) hφ isWeightFamily_one_weight
+      isWeightFamily_one_weight fun _ ↦ by simp) :=
+  weightedMap_one_weight_surjective hφ hsurj (map_zero φ ▸ hopen.nhds_le 0)
 
 end TauCeti.Huber
 
