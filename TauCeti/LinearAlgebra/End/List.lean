@@ -55,19 +55,24 @@ theorem listProd_indicator_eq_if_eq (l : List I) (hl : ∀ i, i ∈ l) (s t : Fi
   classical
   by_cases hst : s = t
   · subst t
-    simp only [iff_self, ite_true]
-    have hall : l.map (fun _ ↦ (1 : R)) = List.replicate l.length 1 := by
-      apply List.eq_replicate_iff.mpr
-      simp
-    rw [hall, List.prod_replicate, one_pow]
+    induction l with
+    | nil => simp
+    | cons i l ih => simp [ih]
   · obtain ⟨i, hi⟩ : ∃ i, ¬ (i ∈ s ↔ i ∈ t) := by
       contrapose! hst
       exact Finset.ext hst
-    have hzero : (0 : R) ∈ l.map (fun i ↦ if (i ∈ s ↔ i ∈ t) then 1 else 0) := by
-      apply List.mem_map.mpr
-      exact ⟨i, hl i, by simp [hi]⟩
     simp only [hst, ite_false]
-    exact List.prod_eq_zero hzero
+    have hprodzero : ∀ l : List I, i ∈ l →
+        (l.map (fun j ↦ if (j ∈ s ↔ j ∈ t) then (1 : R) else 0)).prod = 0 := by
+      intro l hmem
+      induction l with
+      | nil => simp at hmem
+      | cons j l ih =>
+          simp only [List.map_cons, List.prod_cons]
+          rcases hmem with rfl | hmem
+          · simp [hi]
+          · rw [ih hmem, mul_zero]
+    exact hprodzero l (hl i)
 
 end
 
