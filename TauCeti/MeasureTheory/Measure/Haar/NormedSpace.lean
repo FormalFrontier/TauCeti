@@ -35,8 +35,8 @@ theorem _root_.ContinuousLinearEquiv.quasiMeasurePreserving_addHaar {E F : Type*
     [NormedAddCommGroup E] [NormedSpace ℝ E] [MeasurableSpace E] [BorelSpace E]
     [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
     [MeasurableSpace F] [BorelSpace F]
-    (μ : Measure E) (ν : Measure F) [IsAddHaarMeasure μ] [IsAddHaarMeasure ν]
-    (e : E ≃L[ℝ] F) : QuasiMeasurePreserving e μ ν :=
+    (e : E ≃L[ℝ] F) (μ : Measure E) (ν : Measure F)
+    [IsAddHaarMeasure μ] [IsAddHaarMeasure ν] : QuasiMeasurePreserving e μ ν :=
   ⟨e.continuous.measurable, absolutelyContinuous_isAddHaarMeasure (μ.map e) ν⟩
 
 end TauCeti

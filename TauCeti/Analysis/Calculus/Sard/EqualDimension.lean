@@ -84,7 +84,7 @@ theorem addHaar_image_eq_zero_of_not_surjective_fderivWithin
   have hnull : (addHaar : Measure E) (g '' s) = 0 :=
     addHaar_image_eq_zero_of_det_fderivWithin_eq_zero addHaar hg' hdet
   have hpreimage : ν (e ⁻¹' (g '' s)) = 0 :=
-    (ContinuousLinearEquiv.quasiMeasurePreserving_addHaar ν addHaar e).preimage_null hnull
+    (ContinuousLinearEquiv.quasiMeasurePreserving_addHaar e ν addHaar).preimage_null hnull
   have himage : g '' s = e '' (f '' s) := by
     rw [image_image]
   rw [himage, Set.preimage_image_eq _ e.injective] at hpreimage
