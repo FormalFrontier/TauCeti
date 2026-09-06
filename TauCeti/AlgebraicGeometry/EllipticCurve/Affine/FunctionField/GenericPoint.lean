@@ -10,6 +10,8 @@ public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.BaseChange
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.Point.Basic
 -- Proof-only: evaluation of the coordinate ring, which supplies the equation at the generic point.
 import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.Eval
+-- Proof-only: `polynomialY_ne_zero`, that `W_Y` is a nonzero polynomial once `Δ ≠ 0`.
+import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.Derivative
 
 /-!
 # The generic point of an affine Weierstrass curve
@@ -242,41 +244,12 @@ theorem transcendental_genericX : Transcendental F (genericX W) := by
 theorem genericX_ne_algebraMap (x₁ : F) : genericX W ≠ algebraMap F W.FunctionField x₁ :=
   fun hc ↦ transcendental_genericX W (hc ▸ isAlgebraic_algebraMap _)
 
-/-- The partial derivative `W_Y = 2Y + a₁X + a₃` of the Weierstrass polynomial is a nonzero
-polynomial when `W` is elliptic. In characteristic two the first term vanishes, and it is `Δ ≠ 0`
-that rules out `a₁ = a₃ = 0`. -/
-private lemma polynomialY_ne_zero [W.IsElliptic] : W.polynomialY ≠ 0 := by
-  intro h
-  rw [WeierstrassCurve.Affine.polynomialY] at h
-  have h1 := congr_arg (fun p => p.coeff 1) h
-  have h0 := congr_arg (fun p => p.coeff 0) h
-  simp only [map_add, map_mul, coeff_add, coeff_mul_X, coeff_C, ↓reduceIte, coeff_mul_C,
-    zero_mul, add_zero, coeff_zero, map_eq_zero, mul_coeff_zero, coeff_X, one_ne_zero,
-    mul_zero, zero_add] at h1 h0
-  have ha1 : W.a₁ = 0 := by
-    have := congr_arg (fun p => p.coeff 1) h0
-    simp only [coeff_add, coeff_mul_X, coeff_C_zero, coeff_C_succ, add_zero, coeff_zero] at this
-    exact this
-  have ha3 : W.a₃ = 0 := by
-    have := congr_arg (fun p => p.coeff 0) h0
-    simp only [coeff_add, mul_coeff_zero, coeff_C_zero, coeff_X_zero, mul_zero, zero_add,
-      coeff_zero] at this
-    exact this
-  have hb₂ : WeierstrassCurve.b₂ W = 0 := by
-    simp only [WeierstrassCurve.b₂, ha1]; linear_combination 2 * W.a₂ * h1
-  have hb₄ : WeierstrassCurve.b₄ W = 0 := by
-    simp only [WeierstrassCurve.b₄, ha1, ha3]; linear_combination W.a₄ * h1
-  have hb₆ : WeierstrassCurve.b₆ W = 0 := by
-    simp only [WeierstrassCurve.b₆, ha3]; linear_combination 2 * W.a₆ * h1
-  have hΔ : WeierstrassCurve.Δ W = 0 := by
-    simp only [WeierstrassCurve.Δ]; rw [hb₂, hb₄, hb₆]; ring
-  exact absurd (hΔ ▸ W.isUnit_Δ) not_isUnit_zero
-
 /-- `W_Y` stays nonzero in the coordinate ring: its degree is below `deg W`, so it is not a
 multiple of `W`. -/
 private lemma mk_polynomialY_ne_zero [W.IsElliptic] :
     WeierstrassCurve.Affine.CoordinateRing.mk W W.polynomialY ≠ 0 :=
-  AdjoinRoot.mk_ne_zero_of_natDegree_lt monic_polynomial (polynomialY_ne_zero W) <| by
+  AdjoinRoot.mk_ne_zero_of_natDegree_lt monic_polynomial
+    (polynomialY_ne_zero W.isUnit_Δ.ne_zero) <| by
     rw [natDegree_polynomial, WeierstrassCurve.Affine.polynomialY]
     have : (Polynomial.C (Polynomial.C (2 : F)) * (Y : F[X][Y])).natDegree ≤ 1 :=
       Polynomial.natDegree_mul_le.trans
