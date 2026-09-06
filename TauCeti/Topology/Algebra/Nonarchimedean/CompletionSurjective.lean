@@ -14,15 +14,15 @@ public import TauCeti.Topology.Algebra.OpenMapping.Complete
 
 For nonarchimedean additive groups, a continuous **open** surjection `f : G → H` stays surjective
 after separated completion. Openness is what the statement turns on: a continuous surjection alone
-gives only a dense image in `Ĥ`.
+gives only a dense image in the completion of `H`.
 
 The two halves are separated because they need different hypotheses. Openness alone puts a
 *neighbourhood of zero* inside the range: the closures of the images of an antitone basis of open
-subgroups of `G` are such a basis in `Ĝ`, their images under the induced map have closures that are
-neighbourhoods of zero in `Ĥ` — this is where `f` being open is used — and
-`TauCeti.mem_image_of_mem_closure_image` removes the closure, which is where completeness of `Ĝ`
-and first countability of `G` are used. Surjectivity of `f` is then needed only to make the range
-*dense*; a subgroup that is both dense and open is everything.
+subgroups of `G` are such a basis in `Completion G`, their images under the induced map have
+closures that are neighbourhoods of zero in `Completion H` — this is where `f` being open is used —
+and `TauCeti.mem_image_of_mem_closure_image` removes the closure, which is where completeness of
+`Completion G` and first countability of `G` are used. Surjectivity of `f` is then needed only to
+make the range *dense*; a subgroup that is both dense and open is everything.
 
 ## Main results
 
@@ -87,7 +87,7 @@ private theorem mem_nhds_range_completion [NonarchimedeanAddGroup G]
     ⟨by simpa only [hWcoe] using hasBasis_nhds_zero_closure_image hV.toHasBasis,
       fun _ _ hmn ↦ by simpa only [hWcoe] using closure_mono (Set.image_mono (hV.antitone hmn))⟩
   -- `f` open makes each `f '' V n` an open subgroup of `H`, so the closure of its image is a
-  -- neighbourhood of zero in `Ĥ`
+  -- neighbourhood of zero in `Completion H`
   have himg : ∀ n, closure (((↑) : H → Completion H) '' ((V n : AddSubgroup G).map f : Set H))
       ∈ 𝓝 (0 : Completion H) := fun n ↦
     (isOpen_closure_image_coe
