@@ -30,6 +30,11 @@ Under those identifications:
   orthogonality relation `character_orthonormal_distinct` return the diagonal and off-diagonal
   halves of that same statement.
 
+The list `n ↦ fourierRep T n` is moreover complete among the one-dimensional representations: a
+continuous representation of the circle group on `ℂ` acts by the scalar `π x 1`, which is a
+continuous additive character of `AddCircle T` and therefore a Fourier monomial by
+`TauCeti.exists_fourierAddChar_eq`.
+
 The last two are recorded as anonymous `example`s: they are consistency checks on the general
 theory's normalization, not new API, and naming them would duplicate
 `TauCeti.inner_characterLp_fourierRep`.
@@ -51,6 +56,9 @@ theory's normalization, not new API, and naming them would duplicate
 * `TauCeti.contIntertwiningMap_fourierRep_eq_zero_of_ne`: for `m ≠ n` there is no nonzero
   continuous intertwiner `fourierRep T n → fourierRep T m`, so the Fourier representations are
   pairwise inequivalent.
+* `TauCeti.exists_fourierChar_eq`, `TauCeti.exists_fourierRep_eq`: every continuous linear
+  character, and every one-dimensional continuous representation, of the circle group is a Fourier
+  one.
 * `TauCeti.orthonormal_characterLp_fourierRep`: **the character-orthonormality half of the
   acceptance criterion.** The characters of the `fourierRep T n` are an orthonormal family in `L²`
   of the circle group for normalized Haar measure; this is `AddCircle.orthonormal_fourier` read
@@ -74,9 +82,10 @@ which is what lets `inner_characterLp_fourierRep` end in Mathlib's orthonormalit
 
 What is *not* done here is the full Peter-Weyl half of the roadmap's circle acceptance criterion —
 identifying `peterWeylBasis` with `AddCircle.fourierBasis` under the indexing equivalence
-`Σ π, Fin 1 × Fin 1 ≃ ℤ`. That needs the exhaustion of the irreducibles of the circle, which is not
-proved here: the statements below say that the `fourierRep T n` are pairwise inequivalent
-irreducibles with orthonormal characters, not that there are no others.
+`Σ π, Fin 1 × Fin 1 ≃ ℤ`. Exhaustion is available in dimension one
+(`TauCeti.exists_fourierRep_eq`), but the step from there to *every* finite-dimensional
+irreducible — that an irreducible representation of an abelian group over an algebraically closed
+field is one-dimensional — is not proved here.
 
 This is the circle bullet of the `## Worked examples (acceptance criteria)` section of the
 [compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md),
@@ -249,5 +258,47 @@ example {m n : ℤ} (h : m ≠ n) :
       ContRepresentation.characterLp (fourierRep T n) (continuous_fourierRep T n)⟫_ℂ = 0 :=
   ContRepresentation.character_orthonormal_distinct _ _ _ _ (isUnitary_fourierRep T m)
     (contIntertwiningMap_fourierRep_eq_zero_of_ne T hT.out.ne' h)
+
+include hT in
+/-- **Every continuous linear character of the circle group is a Fourier character.** This is
+`TauCeti.exists_fourierAddChar_eq`, the classification of the continuous additive characters of
+`AddCircle T`, read for the `ℂˣ`-valued multiplicative characters that
+`Representation.ofLinearCharacter` consumes. -/
+theorem exists_fourierChar_eq (χ : Multiplicative (AddCircle T) →* ℂˣ)
+    (hχ : Continuous fun x : Multiplicative (AddCircle T) => (χ x : ℂ)) :
+    ∃ n : ℤ, fourierChar T n = χ := by
+  obtain ⟨n, hn⟩ := exists_fourierAddChar_eq (T := T)
+    { toFun := fun x : AddCircle T => (χ (Multiplicative.ofAdd x) : ℂ)
+      map_zero_eq_one' := by simp
+      map_add_eq_mul' := fun x y => by simp [← Units.val_mul] } hχ
+  exact ⟨n, MonoidHom.ext fun x =>
+    Units.ext (by simpa using DFunLike.congr_fun hn (Multiplicative.toAdd x))⟩
+
+include hT in
+/-- **Every one-dimensional continuous representation of the circle group is a Fourier
+representation.** A representation on `ℂ` is multiplication by the scalar `π x 1`, and that scalar
+is a continuous additive character of `AddCircle T`, hence a Fourier monomial by
+`TauCeti.exists_fourierAddChar_eq`.
+
+With `TauCeti.contIntertwiningMap_fourierRep_eq_zero_of_ne` this says that `n ↦ fourierRep T n`
+lists the one-dimensional continuous representations of the circle group exactly once. Passing from
+here to *all* finite-dimensional irreducibles needs the separate fact that an irreducible
+representation of an abelian group over an algebraically closed field is one-dimensional, which is
+not proved here. -/
+theorem exists_fourierRep_eq (π : ContRepresentation ℂ (Multiplicative (AddCircle T)) ℂ)
+    (hπ : Continuous π) : ∃ n : ℤ, fourierRep T n = π := by
+  have hsmul (x : Multiplicative (AddCircle T)) (z : ℂ) : π x z = z * π x 1 := by
+    simpa using (π x).map_smul z (1 : ℂ)
+  obtain ⟨n, hn⟩ := exists_fourierAddChar_eq (T := T)
+    { toFun := fun x : AddCircle T => π (Multiplicative.ofAdd x) 1
+      map_zero_eq_one' := by simp
+      map_add_eq_mul' := fun x y => by
+        rw [show Multiplicative.ofAdd (x + y)
+            = Multiplicative.ofAdd x * Multiplicative.ofAdd y from rfl, map_mul]
+        simpa [mul_comm] using hsmul (Multiplicative.ofAdd x) (π (Multiplicative.ofAdd y) 1) }
+    ((ContinuousLinearMap.apply ℂ ℂ (1 : ℂ)).continuous.comp hπ)
+  refine ⟨n, DFunLike.ext _ _ fun x => ContinuousLinearMap.ext fun z => ?_⟩
+  rw [fourierRep_apply, hsmul x z, mul_comm]
+  exact congrArg (z * ·) (by simpa using DFunLike.congr_fun hn (Multiplicative.toAdd x))
 
 end TauCeti

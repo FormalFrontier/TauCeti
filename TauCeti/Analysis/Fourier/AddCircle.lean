@@ -8,30 +8,65 @@ module
 public import Mathlib.Analysis.Fourier.AddCircle
 
 /-!
-# Distinct Fourier monomials
+# The continuous characters of the circle are the Fourier monomials
 
 Mathlib's `fourier n : C(AddCircle T, ℂ)` is developed as a family of `L²` monomials: the lemmas
 about it record how it behaves in the *index* `n` (`fourier_add`, `fourier_neg`) and what it
-contributes to the Fourier basis. Read the other way, as a family of characters of `AddCircle T`
-indexed by `n`, the first thing a representation-theoretic consumer needs is that the family is
-*faithful*: distinct indices give distinct characters, so the corresponding one-dimensional
-representations are pairwise inequivalent.
+contributes to the Fourier basis. Read the other way, as a family of *characters* of the group
+`AddCircle T` indexed by `n`, the two facts a representation-theoretic consumer needs are that the
+family is **faithful** (distinct indices give distinct characters, so the corresponding
+one-dimensional representations are pairwise inequivalent) and that it is **exhaustive** (there are
+no other continuous characters). This file proves both, and packages them as an equivalence
+between `ℤ` and the continuous additive characters of the circle.
 
-That is the single fact recorded here. Multiplicativity in the circle argument needs no lemma of
-its own: it is Mathlib's `AddCircle.toCircle_addChar`, the bundled additive character underlying
-`fourier`.
+Faithfulness is elementary: two monomials already differ at the point `T / 2 / (m - n)`.
+Exhaustiveness is where analysis enters. A continuous character `χ` is in particular a nonzero
+continuous function, so some Fourier coefficient `fourierCoeff χ n` is nonzero — that is Mathlib's
+`fourierBasis`, a Hilbert basis of `L²`, together with the injectivity of the map
+`C(AddCircle T, ℂ) → L²`. Translating that coefficient by `y` and using that both `fourier (-n)`
+and `χ` turn a sum into a product rewrites `fourierCoeff χ n` as
+`fourier (-n) y * χ y * fourierCoeff χ n`, whence `fourier (-n) y * χ y = 1`, and therefore
+`χ y = fourier n y`.
+
+Nothing here assumes that `χ` takes values in the unit circle: on a compact group that is
+automatic, and here it comes out as a corollary, since a continuous character *is* a Fourier
+monomial.
+
+`TauCeti/RepresentationTheory/Compact/Circle.lean` reads this classification for the circle group
+`Multiplicative (AddCircle T)`, where it says that the one-dimensional continuous representations
+of the circle are exactly the Fourier ones.
+
+## Main definitions
+
+* `TauCeti.fourierAddChar`: the `n`-th Fourier monomial as a bundled additive character
+  `AddChar (AddCircle T) ℂ`.
+* `TauCeti.fourierAddCharEquiv`: the resulting equivalence between `ℤ` and the continuous additive
+  characters of `AddCircle T`.
 
 ## Main statements
 
 * `TauCeti.fourier_injective`: `n ↦ fourier n` is injective, so distinct indices give distinct
   characters.
+* `TauCeti.eq_zero_of_forall_fourierCoeff_eq_zero`: a continuous function on the circle all of
+  whose Fourier coefficients vanish is the zero function.
+* `TauCeti.exists_fourierAddChar_eq`: **every continuous additive character of the circle is a
+  Fourier monomial.**
+* `TauCeti.norm_apply_eq_one_of_continuous_addChar`: consequently a continuous additive character
+  of the circle takes values of modulus one.
+
+## References
+
+* [Compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md),
+  the worked example "The circle `S¹` and Fourier series are Peter-Weyl".
 
 ## Tags
 
-Fourier, additive circle, character
+Fourier, additive circle, character, Pontryagin dual
 -/
 
 public section
+
+open MeasureTheory AddCircle
 
 namespace TauCeti
 
@@ -61,5 +96,125 @@ theorem fourier_injective (hT : T ≠ 0) : Function.Injective (fourier (T := T))
           rw [← Complex.exp_sub, he]
       _ = 1 := by rw [hx, div_self (Complex.exp_ne_zero _)]
   norm_num at hcontra
+
+/-- **Fourier monomials are multiplicative in the circle variable.** Mathlib's `fourier_add`
+records multiplicativity in the *index*; this is the other variable, and it is what makes
+`fourier n` a character of `AddCircle T`. -/
+theorem fourier_apply_add (n : ℤ) (x y : AddCircle T) :
+    fourier n (x + y) = fourier n x * fourier n y := by
+  simp_rw [fourier_apply, smul_add, toCircle_add, Circle.coe_mul]
+
+/-- **The `n`-th Fourier monomial as a bundled additive character of the circle.** -/
+noncomputable def fourierAddChar (n : ℤ) : AddChar (AddCircle T) ℂ where
+  toFun := fourier n
+  map_zero_eq_one' := fourier_eval_zero n
+  map_add_eq_mul' := fourier_apply_add n
+
+@[simp]
+theorem fourierAddChar_apply (n : ℤ) (x : AddCircle T) :
+    fourierAddChar n x = fourier n x := (rfl)
+
+theorem continuous_fourierAddChar (n : ℤ) : Continuous (fourierAddChar (T := T) n) :=
+  (fourier n).continuous
+
+/-- Distinct indices give distinct additive characters: `TauCeti.fourier_injective` again. -/
+theorem fourierAddChar_injective (hT : T ≠ 0) :
+    Function.Injective (fourierAddChar (T := T)) := fun _ _ h =>
+  fourier_injective hT (ContinuousMap.ext fun x => DFunLike.congr_fun h x)
+
+section Classification
+
+variable [Fact (0 < T)]
+
+/-- **A continuous function on the circle with vanishing Fourier coefficients is zero.** The
+Fourier coefficients are the coordinates of the function in Mathlib's Hilbert basis `fourierBasis`
+of `L²`, so they determine its class in `L²`, and a continuous function on the circle is determined
+by that class because normalized Haar measure is positive on nonempty open sets. -/
+theorem eq_zero_of_forall_fourierCoeff_eq_zero (F : C(AddCircle T, ℂ))
+    (h : ∀ n : ℤ, fourierCoeff (⇑F) n = 0) : F = 0 := by
+  have hzero : ∀ n : ℤ,
+      fourierBasis.repr (ContinuousMap.toLp (E := ℂ) 2 haarAddCircle ℂ F) n = 0 := fun n => by
+    rw [fourierBasis_repr, fourierCoeff_toLp, h n]
+  have hsum := fourierBasis.hasSum_repr (ContinuousMap.toLp (E := ℂ) 2 haarAddCircle ℂ F)
+  simp only [hzero, zero_smul] at hsum
+  refine ContinuousMap.toLp_injective (𝕜 := ℂ) (p := 2) haarAddCircle ?_
+  rw [map_zero]
+  exact (hasSum_zero.unique hsum).symm
+
+/-- **Every continuous additive character of the circle is a Fourier monomial.** Together with
+`TauCeti.fourierAddChar_injective` this identifies the continuous characters of `AddCircle T` with
+`ℤ`.
+
+Some Fourier coefficient `c = fourierCoeff χ n` is nonzero, because `χ 0 = 1` makes `χ` a nonzero
+continuous function. Normalized Haar measure is translation invariant, so translating the integral
+defining `c` by `y` leaves it unchanged; expanding both `fourier (-n)` and `χ` on the translated
+sum turns that integral into `(fourier (-n) y * χ y) * c`, so `fourier (-n) y * χ y = 1`. Since
+also `fourier (-n) y * fourier n y = fourier 0 y = 1`, and `fourier (-n) y ≠ 0`, the two values
+agree. -/
+theorem exists_fourierAddChar_eq (χ : AddChar (AddCircle T) ℂ) (hχ : Continuous χ) :
+    ∃ n : ℤ, fourierAddChar n = χ := by
+  have hcoeff : ∀ n : ℤ, fourierCoeff (⇑(⟨χ, hχ⟩ : C(AddCircle T, ℂ))) n
+      = ∫ x : AddCircle T, fourier (-n) x * χ x ∂haarAddCircle := fun _ => rfl
+  have hFne : (⟨χ, hχ⟩ : C(AddCircle T, ℂ)) ≠ 0 := by
+    intro h
+    have hzero := DFunLike.congr_fun h (0 : AddCircle T)
+    simp at hzero
+  obtain ⟨n, hn⟩ : ∃ n : ℤ, ∫ x : AddCircle T, fourier (-n) x * χ x ∂haarAddCircle ≠ 0 := by
+    by_contra hcon
+    refine hFne (eq_zero_of_forall_fourierCoeff_eq_zero ⟨χ, hχ⟩ fun n => ?_)
+    rw [hcoeff n]
+    by_contra hne
+    exact hcon ⟨n, hne⟩
+  refine ⟨n, AddChar.ext _ _ fun y => ?_⟩
+  have hfactor : (∫ x : AddCircle T, fourier (-n) x * χ x ∂haarAddCircle)
+      = (fourier (-n) y * χ y) * ∫ x : AddCircle T, fourier (-n) x * χ x ∂haarAddCircle :=
+    calc (∫ x : AddCircle T, fourier (-n) x * χ x ∂haarAddCircle)
+        = ∫ x : AddCircle T, fourier (-n) (x + y) * χ (x + y) ∂haarAddCircle :=
+          (integral_add_right_eq_self _ y).symm
+      _ = ∫ x : AddCircle T, (fourier (-n) y * χ y) * (fourier (-n) x * χ x) ∂haarAddCircle :=
+          integral_congr_ae (Filter.Eventually.of_forall fun x => by
+            simp only [fourier_apply_add, AddChar.map_add_eq_mul]; ring)
+      _ = (fourier (-n) y * χ y) * ∫ x : AddCircle T, fourier (-n) x * χ x ∂haarAddCircle :=
+          integral_const_mul _ _
+  have hone : fourier (-n) y * χ y = 1 :=
+    mul_right_cancel₀ hn (by rw [one_mul]; exact hfactor.symm)
+  have hprod : fourier (-n) y * fourier n y = 1 := by
+    rw [← fourier_add, neg_add_cancel]
+    exact fourier_zero
+  have hne0 : fourier (-n) y ≠ 0 := by
+    rw [fourier_apply]
+    exact Circle.coe_ne_zero _
+  exact mul_left_cancel₀ hne0 (hprod.trans hone.symm)
+
+/-- The Fourier index of a continuous additive character of the circle is unique. -/
+theorem existsUnique_fourierAddChar_eq (χ : AddChar (AddCircle T) ℂ) (hχ : Continuous χ) :
+    ∃! n : ℤ, fourierAddChar n = χ := by
+  obtain ⟨n, hn⟩ := exists_fourierAddChar_eq χ hχ
+  exact ⟨n, hn, fun m hm =>
+    fourierAddChar_injective (Fact.out (p := (0 < T))).ne' (hm.trans hn.symm)⟩
+
+/-- **A continuous additive character of the circle takes values of modulus one.** No unitarity
+hypothesis is needed anywhere above: continuity alone forces the character to be a Fourier
+monomial, and `fourier n` is valued in the unit circle. -/
+theorem norm_apply_eq_one_of_continuous_addChar (χ : AddChar (AddCircle T) ℂ) (hχ : Continuous χ)
+    (x : AddCircle T) : ‖χ x‖ = 1 := by
+  obtain ⟨n, rfl⟩ := exists_fourierAddChar_eq χ hχ
+  rw [fourierAddChar_apply, fourier_apply]
+  exact Circle.norm_coe _
+
+/-- **The Fourier monomials index the continuous characters of the circle**, that is, the
+Pontryagin dual of `AddCircle T` is `ℤ`. This is the indexing under which the compact-group
+Peter-Weyl basis of `L²(AddCircle T)` becomes Mathlib's `AddCircle.fourierBasis`. -/
+noncomputable def fourierAddCharEquiv :
+    ℤ ≃ {χ : AddChar (AddCircle T) ℂ // Continuous χ} :=
+  Equiv.ofBijective (fun n => ⟨fourierAddChar n, continuous_fourierAddChar n⟩)
+    ⟨fun _ _ h => fourierAddChar_injective (Fact.out (p := (0 < T))).ne' (congrArg Subtype.val h),
+      fun χ => (exists_fourierAddChar_eq χ.1 χ.2).imp fun _ hn => Subtype.ext hn⟩
+
+@[simp]
+theorem fourierAddCharEquiv_apply (n : ℤ) :
+    (fourierAddCharEquiv (T := T) n : AddChar (AddCircle T) ℂ) = fourierAddChar n := (rfl)
+
+end Classification
 
 end TauCeti
