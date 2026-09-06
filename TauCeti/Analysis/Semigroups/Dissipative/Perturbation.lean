@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.Normed.Operator.LinearPMap.Shift
+public import TauCeti.LinearAlgebra.LinearPMap.Shift
 public import TauCeti.Analysis.Normed.Operator.Resolvent.Perturbation
 public import TauCeti.Analysis.Semigroups.Dissipative.Basic
 
