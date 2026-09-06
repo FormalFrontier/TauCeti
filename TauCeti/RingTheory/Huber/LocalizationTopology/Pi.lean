@@ -8,16 +8,20 @@ module
 public import TauCeti.RingTheory.Huber.LocalizationTopology.Completion
 
 /-!
-# The structure map into a standard rational cover
+# The structure map into a family of rational localisations
 
 For a finite set `T` of numerators, the rational localisations `A⟨T/t⟩` for `t ∈ T` carry a single
 structure map out of `A` apiece. This file bundles them into one ring homomorphism
-`A →+* ∀ t : T, A⟨T/t⟩` and records that it is continuous.
+`A →+* ∀ t : T, A⟨T/t⟩` and records that it is continuous. No hypothesis relating the members of
+`T` is needed for either, so none is imposed: what is defined here is the product map for an
+arbitrary finite `T`.
 
-When `T` generates the unit ideal the family `(R(T/t))_{t ∈ T}` is a cover of `Spa(A,A⁺)`, by
-`TauCeti.ValuationSpectrum.spa_eq_biUnion_rationalSubset_of_span_eq_top`, and this map is the
-comparison whose faithful flatness and injectivity Wedhorn's Corollary 8.32 asserts. Neither of
-those is proved here; this is the map they are about.
+The family `(R(T/t))_{t ∈ T}` is a cover of `Spa(A,A⁺)` — a *standard rational cover* — precisely
+when `T` generates the unit ideal, by
+`TauCeti.ValuationSpectrum.spa_eq_biUnion_rationalSubset_of_span_eq_top`. Under that hypothesis
+this map is the comparison whose faithful flatness and injectivity Wedhorn's Corollary 8.32
+asserts. Neither the hypothesis nor those conclusions appear below; this is the map they are
+about.
 
 ## Implementation notes
 
@@ -31,9 +35,9 @@ all.
 
 ## Main results
 
-* `TauCeti.Huber.PairOfDefinition.coverStructureHom`, with
-  `TauCeti.Huber.PairOfDefinition.coverStructureHom_apply` its computation rule and
-  `TauCeti.Huber.PairOfDefinition.continuous_coverStructureHom` its continuity.
+* `TauCeti.Huber.PairOfDefinition.rationalLocalizationPiHom`, with
+  `TauCeti.Huber.PairOfDefinition.rationalLocalizationPiHom_apply` its computation rule and
+  `TauCeti.Huber.PairOfDefinition.continuous_rationalLocalizationPiHom` its continuity.
 
 ## References
 
@@ -50,9 +54,10 @@ variable {A : Type*} [CommRing A] [TopologicalSpace A] [IsTopologicalRing A]
   [∀ t : T, Algebra A (S t)] [∀ t : T, IsLocalization.Away (t : A) (S t)]
   (hden : ∀ t : T, HasDenominatorPower P T (t : A) (S t))
 
-/-- **The structure map into a standard rational cover**: the tuple of the structure maps
-`A → A⟨T/t⟩`, one for each numerator `t ∈ T`. -/
-noncomputable def coverStructureHom :
+/-- **The structure map into a family of rational localisations**: the tuple of the structure maps
+`A → A⟨T/t⟩`, one for each numerator `t ∈ T`. The family is a standard rational cover exactly when
+`Ideal.span (T : Set A) = ⊤`, which nothing here requires. -/
+noncomputable def rationalLocalizationPiHom :
     letI : ∀ t : T, UniformSpace (S t) := fun t ↦ locUniformSpace P T (t : A) (S t) (hden t)
     letI : ∀ t : T, IsUniformAddGroup (S t) := fun t ↦
       isUniformAddGroup_locUniformSpace P T (t : A) (S t) (hden t)
@@ -66,27 +71,27 @@ noncomputable def coverStructureHom :
     isTopologicalRing_locUniformSpace P T (t : A) (S t) (hden t)
   RingHom.pi fun t ↦ toCompletionLoc P T (t : A) (S t) (hden t)
 
-/-- Each component of `TauCeti.Huber.PairOfDefinition.coverStructureHom` is the structure map into
-that rational localisation. The body is not exported, so this is how a consumer computes with
-it. -/
+/-- Each component of `TauCeti.Huber.PairOfDefinition.rationalLocalizationPiHom` is the structure
+map into that rational localisation. The body is not exported, so this is how a consumer computes
+with it. -/
 @[simp]
-theorem coverStructureHom_apply (a : A) (t : T) :
+theorem rationalLocalizationPiHom_apply (a : A) (t : T) :
     letI : ∀ t : T, UniformSpace (S t) := fun t ↦ locUniformSpace P T (t : A) (S t) (hden t)
     letI : ∀ t : T, IsUniformAddGroup (S t) := fun t ↦
       isUniformAddGroup_locUniformSpace P T (t : A) (S t) (hden t)
     letI : ∀ t : T, IsTopologicalRing (S t) := fun t ↦
       isTopologicalRing_locUniformSpace P T (t : A) (S t) (hden t)
-    coverStructureHom P T S hden a t = toCompletionLoc P T (t : A) (S t) (hden t) a := (rfl)
+    rationalLocalizationPiHom P T S hden a t = toCompletionLoc P T (t : A) (S t) (hden t) a := (rfl)
 
-/-- **The structure map into a standard rational cover is continuous**, the product topology on the
-codomain being the one each factor carries. -/
-theorem continuous_coverStructureHom :
+/-- **The structure map into a family of rational localisations is continuous**, the product
+topology on the codomain being the one each factor carries. -/
+theorem continuous_rationalLocalizationPiHom :
     letI : ∀ t : T, UniformSpace (S t) := fun t ↦ locUniformSpace P T (t : A) (S t) (hden t)
     letI : ∀ t : T, IsUniformAddGroup (S t) := fun t ↦
       isUniformAddGroup_locUniformSpace P T (t : A) (S t) (hden t)
     letI : ∀ t : T, IsTopologicalRing (S t) := fun t ↦
       isTopologicalRing_locUniformSpace P T (t : A) (S t) (hden t)
-    Continuous (coverStructureHom P T S hden) :=
+    Continuous (rationalLocalizationPiHom P T S hden) :=
   continuous_pi fun t ↦ continuous_toCompletionLoc P T (t : A) (S t) (hden t)
 
 end TauCeti.Huber.PairOfDefinition
