@@ -32,6 +32,12 @@ Detectors (each names the infra failure it implies):
   5. dead-scheduler  A scheduled workflow is missing, disabled, or its last
                      SCHEDULED run is older than its cadence + slack. GitHub
                      disabled the cron (60-day inactivity), or it errors at dispatch.
+  5b. failing-scheduler
+                     A scheduled workflow whose cron fires on time and whose last
+                     few runs all FAILED. dead-scheduler reads only when runs
+                     started, never how they ended, so on its own it cannot tell a
+                     healthy job from one that has been red for days -- which is
+                     exactly how pages.yml served a stale site unnoticed.
   6. main-red        The newest conclusive CI run on main is red, with no newer
                      successful run. The "main is always green" invariant is broken.
   7. stale-fkb       An open first-known-bad issue (label `dependency-incompatibility`)
@@ -102,6 +108,7 @@ import, so send/find target this topic.
 
 import base64
 import datetime
+import itertools
 import json
 import os
 import re
@@ -148,6 +155,12 @@ SCHEDULERS = {
     # routinely delays a scheduled run well past its cadence.
     "merge-conflicts.yml":   ("merge-conflict labels",     2),
 }
+# How many consecutive failed scheduled runs make a workflow "failing" rather than
+# flaky, and how many recent runs to read to decide. Two is one full cadence of
+# breakage for every workflow in the table above, and enough that a lone network
+# blip never posts.
+FAILING_SCHEDULER_RUNS = 2
+SCHEDULER_RUN_WINDOW = 10
 # A PR carrying any of these labels is intentionally parked; never "stranded".
 HOLD_LABELS = {"keep", "hold", "wip", "human", "do-not-close", "blocked"}
 # The downstream-reports first-known-bad tracking issue carries this label
@@ -618,6 +631,68 @@ def _sched_alert(wf, name, problem, fix):
     }
 
 
+def detect_failing_schedulers():
+    """A cron that fires on time and fails every time.
+
+    dead-scheduler above proves only that runs are STARTING. It reads a run's created_at and
+    never its conclusion, so a workflow that fires punctually and fails punctually looks
+    perfectly healthy to it. That gap is not hypothetical: pages.yml failed on all ten of its
+    scheduled runs between 2026-09-05 and 2026-09-06 while the site served content from the last
+    success, and nothing said a word, because a red scheduled run notifies nobody and the one
+    watchdog that looks at pages.yml was satisfied that it had run.
+
+    Consecutive failures, rather than the newest one, are what is alerted: these jobs are long
+    and touch the network, so a single red run is noise. Requiring the whole recent streak to be
+    red keeps the topic worth reading, and any real breakage produces that streak within one
+    cadence anyway.
+    """
+    out = []
+    for wf, (name, _max_hours) in SCHEDULERS.items():
+        try:
+            out.extend(_check_scheduler_health(wf, name))
+        except Exception as exc:
+            # As in detect_dead_schedulers: one workflow's transient error must not mark every
+            # other scheduler unknown for the run.
+            zp.log(f"scheduler health check for {wf} failed (non-fatal): {exc}")
+    return out
+
+
+def _check_scheduler_health(wf, name):
+    runs = gh_stream(
+        f"/repos/{REPO}/actions/workflows/{wf}/runs?event=schedule"
+        f"&per_page={SCHEDULER_RUN_WINDOW}",
+        jq='.workflow_runs[] | {status: (.status // ""), conclusion: (.conclusion // ""), '
+           'created_at: (.created_at // ""), url: (.html_url // "")}',
+        paginate=False)
+    # Queued, in-progress and cancelled runs are evidence of nothing: they are skipped rather
+    # than breaking the streak, so a run cancelled by a concurrency policy cannot mask a streak
+    # of genuine failures behind it.
+    conclusive = [r for r in runs
+                  if r.get("status") == "completed"
+                  and r.get("conclusion") in CONCLUSIVE_CI]
+    streak = list(itertools.takewhile(
+        lambda r: r.get("conclusion") in RED_CONCLUSIONS, conclusive))
+    if len(streak) < FAILING_SCHEDULER_RUNS:
+        return []
+    # Only report a streak we have actually seen the end of. A window entirely of failures may
+    # be a longer streak, which is still worth alerting -- but say so honestly.
+    bounded = "" if len(streak) < len(conclusive) else " (at least; the whole window is red)"
+    oldest = streak[-1].get("created_at") or ""
+    since = f"{hours_since(oldest):.0f}h" if oldest else "an unknown period"
+    return [{
+        "key": f"failing-scheduler/{wf}",
+        "title": f"Scheduler failing — {name}",
+        "body": (
+            f"`{wf}`'s last {len(streak)} scheduled runs all failed{bounded}, over the past "
+            f"{since}. The cron is firing, so dead-scheduler cannot see this: whatever the job "
+            f"publishes has been stale since the last success.\n\n"
+            f"Newest failure: {streak[0].get('url') or 'see the Actions tab'}\n\n"
+            f"**Fix:** read that run's log and repair the job. If the failure is expected for "
+            f"now, disable the schedule rather than leaving it red, so this topic keeps meaning "
+            f"something."),
+    }]
+
+
 def detect_main_red():
     tip = gh_scalar(f"/repos/{REPO}/commits/main", jq='.sha // ""')
     if not tip:
@@ -693,6 +768,7 @@ DETECTORS = [
     ("diverged-head", detect_diverged_head),
     ("review-stuck", detect_review_stuck),
     ("dead-scheduler", detect_dead_schedulers),
+    ("failing-scheduler", detect_failing_schedulers),
     ("main-red", detect_main_red),
     ("stale-fkb", detect_stale_fkb),
 ]

@@ -11,6 +11,7 @@ import unittest
 import xml.etree.ElementTree as ET
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import chart_style
@@ -43,6 +44,7 @@ def pr(number, created_day, *, state="CLOSED", merged_day=None, author="alice",
     return {
         "number": number,
         "created_at": timestamp(created_day),
+        "updated_at": timestamp(merged_day or 14, 12),
         "merged_at": timestamp(merged_day, 12) if merged_day else None,
         "closed_at": timestamp(merged_day, 12) if merged_day else None,
         "state": state,
@@ -63,7 +65,8 @@ class MetricsTest(unittest.TestCase):
             "repository": {"pullRequests": {
                 "pageInfo": {"hasNextPage": False, "endCursor": None},
                 "nodes": [{
-                    "number": 42, "createdAt": timestamp(1), "mergedAt": None,
+                    "number": 42, "createdAt": timestamp(1), "updatedAt": timestamp(3),
+                    "mergedAt": None,
                     "closedAt": None, "state": "OPEN", "isDraft": False,
                     "author": {"login": "alice"}, "labels": {"nodes": []},
                 }],
@@ -101,7 +104,8 @@ class MetricsTest(unittest.TestCase):
             "repository": {"pullRequests": {
                 "pageInfo": {"hasNextPage": False, "endCursor": None},
                 "nodes": [{
-                    "number": 42, "createdAt": timestamp(1), "mergedAt": None,
+                    "number": 42, "createdAt": timestamp(1), "updatedAt": timestamp(3),
+                    "mergedAt": None,
                     "closedAt": timestamp(14), "state": "CLOSED", "isDraft": False,
                     "author": {"login": "alice"},
                     "labels": {"nodes": [{"name": "roadmap/PDE"}]},
@@ -130,7 +134,8 @@ class MetricsTest(unittest.TestCase):
             "repository": {"pullRequests": {
                 "pageInfo": {"hasNextPage": False, "endCursor": None},
                 "nodes": [{
-                    "number": 42, "createdAt": timestamp(1), "mergedAt": timestamp(2),
+                    "number": 42, "createdAt": timestamp(1), "updatedAt": timestamp(2),
+                    "mergedAt": timestamp(2),
                     "closedAt": timestamp(2), "state": "MERGED", "isDraft": False,
                     "author": {"login": "alice"}, "labels": {"nodes": []},
                 }],
@@ -140,6 +145,120 @@ class MetricsTest(unittest.TestCase):
             prs = stats.fetch_prs("example/project")
         self.assertEqual(prs[0]["labeled_events"], [])
         self.assertEqual(graphql.call_count, 1)
+
+    # --- incremental snapshots -------------------------------------------------------------
+    #
+    # One GraphQL request per pull request, against an hourly budget of 5000 points, is a wall
+    # this repository walked into: by September 2026 a full pass needed about 4600 requests and
+    # the charts ahead of it in the Pages job spent the rest, so the snapshot stopped being
+    # written at all and the published pipeline-health.json simply never appeared. Reuse is what
+    # keeps a run proportional to what changed rather than to how big the project has become, so
+    # these tests pin down both that it happens and that it cannot serve stale events.
+
+    OPEN_PAGE = {
+        "repository": {"pullRequests": {
+            "pageInfo": {"hasNextPage": False, "endCursor": None},
+            "nodes": [{
+                "number": 42, "createdAt": timestamp(1), "updatedAt": timestamp(3),
+                "mergedAt": None, "closedAt": None, "state": "OPEN", "isDraft": False,
+                "author": {"login": "alice"},
+                "labels": {"nodes": [{"name": "awaiting-review"}]},
+            }],
+        }},
+    }
+
+    def snapshot_with(self, updated_at, events):
+        return {"repo": "example/project", "fetched_at": timestamp(3), "prs": [{
+            "number": 42, "updated_at": updated_at, "merged_at": None, "closed_at": None,
+            "state": "OPEN", "is_draft": False, "labels": ["awaiting-review"],
+            "labeled_events": events,
+        }]}
+
+    def test_unchanged_pr_reuses_its_recorded_timeline(self):
+        events = [{"created_at": timestamp(2), "label": "awaiting-review"}]
+        previous = self.snapshot_with(timestamp(3), events)
+        with patch.object(stats, "graphql", side_effect=[self.OPEN_PAGE]) as graphql:
+            prs = stats.fetch_prs("example/project", previous)
+        # One call: the page query. The timeline query never ran.
+        self.assertEqual(graphql.call_count, 1)
+        self.assertEqual(prs[0]["labeled_events"], events)
+
+    def test_touched_pr_is_refetched(self):
+        # The snapshot was taken when the PR last changed on day 2; it has changed since.
+        previous = self.snapshot_with(
+            timestamp(2), [{"created_at": timestamp(2), "label": "awaiting-review"}])
+        direct = {"repository": {"pullRequest": {
+            "timelineItems": {"pageInfo": {"hasNextPage": False, "endCursor": None},
+                              "nodes": [{"createdAt": timestamp(3),
+                                         "label": {"name": "awaiting-review"}}]},
+            "mergedAt": None, "closedAt": None, "state": "OPEN", "isDraft": False,
+            "labels": {"nodes": [{"name": "awaiting-review"}]}}}}
+        with patch.object(stats, "graphql", side_effect=[self.OPEN_PAGE, direct]) as graphql:
+            prs = stats.fetch_prs("example/project", previous)
+        self.assertEqual(graphql.call_count, 2)
+        self.assertEqual(prs[0]["labeled_events"],
+                         [{"created_at": timestamp(3), "label": "awaiting-review"}])
+
+    def test_reuse_keeps_the_current_labels_not_the_recorded_ones(self):
+        # A reused entry supplies only the event list. Its state fields come from this run's
+        # page query, which was read later. Here the recorded copy disagrees, and must lose.
+        previous = self.snapshot_with(
+            timestamp(3), [{"created_at": timestamp(2), "label": "awaiting-review"}])
+        previous["prs"][0]["labels"] = ["ready-to-merge"]
+        previous["prs"][0]["state"] = "MERGED"
+        with patch.object(stats, "graphql", side_effect=[self.OPEN_PAGE]):
+            prs = stats.fetch_prs("example/project", previous)
+        self.assertEqual(prs[0]["labels"], ["awaiting-review"])
+        self.assertEqual(prs[0]["state"], "OPEN")
+
+    def test_snapshot_without_update_times_is_not_reused(self):
+        # A snapshot written before updated_at was recorded carries no certificate that its
+        # events are current, so it must fall back to a full walk rather than be trusted.
+        previous = self.snapshot_with(timestamp(3), [])
+        del previous["prs"][0]["updated_at"]
+        self.assertEqual(stats.reusable_timelines(previous, [
+            {"number": 42, "updated_at": timestamp(3), "merged_at": None, "closed_at": None,
+             "state": "OPEN", "is_draft": False, "labels": []}]), {})
+
+    def test_snapshot_from_another_repository_is_ignored(self):
+        previous = self.snapshot_with(timestamp(3), [])
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "snapshot.json"
+            path.write_text(json.dumps(previous))
+            self.assertIsNone(stats.load_previous(path, "someone/else"))
+            self.assertIsNotNone(stats.load_previous(path, "example/project"))
+
+    def test_a_missing_or_corrupt_snapshot_is_not_fatal(self):
+        with tempfile.TemporaryDirectory() as directory:
+            missing = Path(directory) / "absent.json"
+            self.assertIsNone(stats.load_previous(missing, "example/project"))
+            corrupt = Path(directory) / "corrupt.json"
+            corrupt.write_text("{not json")
+            self.assertIsNone(stats.load_previous(corrupt, "example/project"))
+
+    def test_run_gh_waits_for_the_budget_instead_of_failing(self):
+        # Three retries one, two and four seconds apart cannot refill an hourly budget, so the
+        # original behaviour turned "wait a while" into "this run produces nothing".
+        results = [
+            SimpleNamespace(returncode=1, stdout="",
+                            stderr="gh: API rate limit already exceeded for site ID installation."),
+            SimpleNamespace(returncode=0, stdout="done", stderr=""),
+        ]
+        with patch.object(stats.subprocess, "run", side_effect=results) as run:
+            with patch.object(stats, "rate_limit_reset_wait", return_value=42.0):
+                with patch.object(stats.time, "sleep") as sleep:
+                    self.assertEqual(stats.run_gh(["api", "graphql"]), "done")
+        self.assertEqual(run.call_count, 2)
+        sleep.assert_called_once_with(42.0)
+
+    def test_run_gh_gives_up_when_the_budget_will_not_refill(self):
+        limited = SimpleNamespace(
+            returncode=1, stdout="", stderr="gh: API rate limit already exceeded")
+        with patch.object(stats.subprocess, "run", return_value=limited):
+            with patch.object(stats, "rate_limit_reset_wait", return_value=None):
+                with self.assertRaises(RuntimeError) as caught:
+                    stats.run_gh(["api", "graphql"])
+        self.assertIn("--since-data", str(caught.exception))
 
     def test_review_cycles_use_label_transitions_and_reach_seven(self):
         prs = [
