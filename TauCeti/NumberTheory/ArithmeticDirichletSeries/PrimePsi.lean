@@ -40,8 +40,10 @@ system does not get that hypothesis for free; what it has to supply is the domin
 * `TauCeti.primePowerSummatory_indicator_sub_primeTheta` splits the exponent-one part off the
   standard weight restricted to any set of prime powers containing exactly the primes of `S`.
 * `TauCeti.primePsi_sub_primeTheta` identifies `ψ - ϑ` with the higher-prime-power sum.
-* `TauCeti.primePsi_isLittleO_of_finite`: a finite set of primes is negligible for `ψ`, the form
-  the Chebotarev roadmap's Layer 11.3 third discard estimate consumes.
+* `TauCeti.primePsi_le_ncard_mul_log`: a finite set of primes contributes at most `#S · log x` to
+  `ψ`, which is the Chebotarev roadmap's Layer 11.3 third discard estimate as stated there, with
+  `TauCeti.primePsi_isBigO_log_of_finite` and `TauCeti.primePsi_isLittleO_of_finite` its
+  asymptotic forms.
 * `TauCeti.standardPrimePowerRemoval` proves `HasNegligibleHigherPrimePowers K S` for every `S`,
   from the Layer 5 estimate `ψ(x) - ϑ(x) = O(√x log² x)`.
 * `TauCeti.primeTheta_asymptotic_of_primePsi` and
@@ -231,18 +233,99 @@ theorem standardPrimePowerRemoval (K : Type*) [Field K] [NumberField K]
   rw [hasNegligibleHigherPrimePowers_iff]
   simpa only [primePsi_sub_primeTheta] using primePowerSummatory_indicator_isLittleO K S
 
-open Asymptotics Filter in
-/-- **A finite set of primes carries a negligible weight in `ψ` too.** Unlike `ϑ`, the sum does not
-become constant — higher powers of a fixed prime keep entering as the cutoff grows — but the whole
-higher-power tail is `o(x)` for any set at all, so the two estimates add.
+/-- The prime powers of a fixed base `v` and norm at most `x` carry total weight at most `log x`:
+their exponents are distinct and each is at most `log x / log N(v)`. -/
+private theorem card_fiber_mul_log_le (v : HeightOneSpectrum (𝓞 K)) (hx : 1 ≤ x)
+    {F : Finset (IdealPrimePower K)}
+    (hF : ∀ A ∈ F, ((Ideal.absNorm v.asIdeal : ℝ)) ^ primePowerExponent A ≤ x)
+    (hbase : ∀ A ∈ F, primePowerBase A = v) :
+    (F.card : ℝ) * Real.log (Ideal.absNorm v.asIdeal) ≤ Real.log x := by
+  classical
+  have hlogx : 0 ≤ Real.log x := Real.log_nonneg hx
+  have hLpos : 0 < Real.log (Ideal.absNorm v.asIdeal) :=
+    Real.log_pos (by linarith [two_le_absNorm_asIdeal_real v])
+  have hexpbound : ∀ A ∈ F,
+      primePowerExponent A ∈ Finset.Icc 1 ⌊Real.log x / Real.log (Ideal.absNorm v.asIdeal)⌋₊ := by
+    intro A hA
+    have hlog : (primePowerExponent A : ℝ) * Real.log (Ideal.absNorm v.asIdeal) ≤ Real.log x := by
+      have := Real.log_le_log
+        (pow_pos (by linarith [two_le_absNorm_asIdeal_real v]) _) (hF A hA)
+      rwa [Real.log_pow] at this
+    exact Finset.mem_Icc.mpr
+      ⟨primePowerExponent_pos A, Nat.le_floor ((le_div_iff₀ hLpos).mpr hlog)⟩
+  have hcard : F.card ≤ ⌊Real.log x / Real.log (Ideal.absNorm v.asIdeal)⌋₊ := by
+    refine le_trans (Finset.card_le_card_of_injOn primePowerExponent hexpbound ?_) ?_
+    · exact fun A hA B hB h ↦
+        idealPrimePower_eq_of_base_eq_of_exponent_eq ((hbase A hA).trans (hbase B hB).symm) h
+    · rw [Nat.card_Icc]; omega
+  calc (F.card : ℝ) * Real.log (Ideal.absNorm v.asIdeal)
+      ≤ (⌊Real.log x / Real.log (Ideal.absNorm v.asIdeal)⌋₊ : ℝ)
+        * Real.log (Ideal.absNorm v.asIdeal) :=
+        mul_le_mul_of_nonneg_right (by exact_mod_cast hcard) hLpos.le
+    _ ≤ Real.log x := by
+        rw [← le_div_iff₀ hLpos]
+        exact Nat.floor_le (by positivity)
 
-This is the `ψ` form the Chebotarev roadmap's Layer 11.3 asks for in its third discard estimate,
-where the exceptional set is `ramifiedPrimes`, the primes of an intermediate field above it, or the
-primes ramified in a compositum but not below. `TauCeti.primeTheta_isLittleO_of_finite` is the `ϑ`
-companion. -/
+/-- **A finite set of primes contributes at most `#S · log x` to `ψ`.** Fibring over the prime
+base, the exponents `k ≥ 1` with `N(𝔭) ^ k ≤ x` contribute at most `log x` in total for each of the
+finitely many `𝔭`.
+
+This is the third of the four discard estimates the Chebotarev roadmap's Layer 11.3 asks for, in
+the form stated there: `∑_{𝔭 ∈ T} ∑_{N𝔭^j ≤ x} log N𝔭 ≤ #T · log x`. Its exceptional sets are
+`ramifiedPrimes`, the primes of an intermediate field above them, and the primes ramified in a
+compositum but not below. -/
+theorem primePsi_le_ncard_mul_log (hS : S.Finite) (hx : 1 ≤ x) :
+    primePsi K S x ≤ S.ncard * Real.log x := by
+  classical
+  have hx0 : (0 : ℝ) < x := lt_of_lt_of_le zero_lt_one hx
+  have hlogx : 0 ≤ Real.log x := Real.log_nonneg hx
+  set T := (primePowersLE K x).filter (fun A ↦ primePowerBase A ∈ S) with hTdef
+  have hmemT : ∀ A ∈ T, ((Ideal.absNorm (primePowerBase A).asIdeal : ℝ)) ^ primePowerExponent A
+      ≤ x ∧ primePowerBase A ∈ S := by
+    intro A hA
+    rw [hTdef, Finset.mem_filter, mem_normLE] at hA
+    refine ⟨?_, hA.2⟩
+    rw [← Nat.cast_pow, ← absNorm_eq_absNorm_primePowerBase_pow]
+    exact hA.1
+  have hsub : T ⊆ primePowersLE K x := Finset.filter_subset _ _
+  have hzero : ∀ A ∈ primePowersLE K x, A ∉ T →
+      {A : IdealPrimePower K | primePowerBase A ∈ S}.indicator primePowerWeight A = 0 := by
+    intro A hA hAT
+    refine Set.indicator_of_notMem ?_ _
+    intro hmem
+    exact hAT (Finset.mem_filter.mpr ⟨hA, hmem⟩)
+  have hsum : primePsi K S x = ∑ A ∈ T, Real.log (Ideal.absNorm (primePowerBase A).asIdeal) := by
+    rw [primePsi_apply, ← Finset.sum_subset hsub hzero]
+    exact Finset.sum_congr rfl fun A hA ↦
+      Set.indicator_of_mem (by simpa using (hmemT A hA).2) _
+  have hmaps : ∀ A ∈ T, primePowerBase A ∈ hS.toFinset := fun A hA ↦ by
+    simpa using (hmemT A hA).2
+  rw [hsum, ← Finset.sum_fiberwise_of_maps_to' hmaps
+    (fun v ↦ Real.log (Ideal.absNorm v.asIdeal))]
+  refine (Finset.sum_le_card_nsmul _ _ (Real.log x) ?_).trans ?_
+  · intro v _
+    rw [Finset.sum_const, nsmul_eq_mul]
+    exact card_fiber_mul_log_le v hx (fun A hA ↦ by
+      obtain ⟨hle, -⟩ := hmemT A (Finset.mem_of_mem_filter _ hA)
+      rwa [(Finset.mem_filter.mp hA).2] at hle)
+      (fun A hA ↦ (Finset.mem_filter.mp hA).2)
+  · rw [nsmul_eq_mul, Set.ncard_eq_toFinset_card S hS]
+
+open Asymptotics in
+/-- **A finite set of primes is `O(log x)` for `ψ`**, the asymptotic form of the bound above. -/
+theorem primePsi_isBigO_log_of_finite (hS : S.Finite) :
+    primePsi K S =O[atTop] Real.log := by
+  refine IsBigO.of_bound S.ncard ?_
+  filter_upwards [eventually_ge_atTop (1 : ℝ)] with x hx
+  rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (primePsi_nonneg _ _),
+    abs_of_nonneg (Real.log_nonneg hx)]
+  exact primePsi_le_ncard_mul_log hS hx
+
+open Asymptotics in
+/-- **A finite set of primes is negligible for `ψ`**, the form the total discard estimate sums. -/
 theorem primePsi_isLittleO_of_finite (hS : S.Finite) :
-    primePsi K S =o[atTop] fun x : ℝ ↦ x := by
-  simpa using (standardPrimePowerRemoval K S).add (primeTheta_isLittleO_of_finite hS)
+    primePsi K S =o[atTop] fun x : ℝ ↦ x :=
+  (primePsi_isBigO_log_of_finite hS).trans_isLittleO Real.isLittleO_log_id_atTop
 
 /-- **Transfer of a linear asymptotic from `ψ` to `ϑ`.**  If the higher prime powers of `S` are
 negligible and `ψ(x) = δ x + o(x)`, then `ϑ(x) = δ x + o(x)`. -/
