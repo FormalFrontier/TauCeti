@@ -522,7 +522,6 @@ theorem taylorComponent_def
 
 /-- Evaluation of a Taylor arity component is restriction to words of the specified length
 followed by projection to letters. -/
-@[simp]
 theorem taylorComponent_apply
     (b : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M) (n : {n : ℕ // 0 < n})
     (x : TensorPower R n.1 M) :

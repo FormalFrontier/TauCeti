@@ -806,29 +806,6 @@ theorem ReducedTensorWords.IsGradedCoderivation.isCoderivation_comp_self
         LinearMap.lTensor (ReducedTensorWords R M) (b ∘ₗ b) w := by
       rw [hcross, add_zero]
 
-/-- Under anticommutation with the letterwise Koszul twist, a graded coderivation squares to zero
-exactly when all Taylor arity component maps of its square vanish. -/
-theorem ReducedTensorWords.IsGradedCoderivation.comp_self_eq_zero_iff_taylorComponent_eq_zero
-    {G : InternalGrading R M} {q : ℤ}
-    {b : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M}
-    (hb : IsGradedCoderivation G q b)
-    (hanti : b ∘ₗ ReducedTensorWords.map (R := R) (InternalGrading.koszulTwist G q) +
-        ReducedTensorWords.map (R := R) (InternalGrading.koszulTwist G q) ∘ₗ b = 0) :
-    b ∘ₗ b = 0 ↔ ∀ n, taylorComponent (b ∘ₗ b) n = 0 :=
-  (hb.isCoderivation_comp_self hanti).eq_zero_iff_taylorComponent_eq_zero
-
-/-- Under anticommutation with the letterwise Koszul twist, a graded coderivation squares to zero
-exactly when all Taylor arity components of its square vanish on pure tensors. -/
-theorem ReducedTensorWords.IsGradedCoderivation.comp_self_eq_zero_iff_taylorComponent_tprod_eq_zero
-    {G : InternalGrading R M} {q : ℤ}
-    {b : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M}
-    (hb : IsGradedCoderivation G q b)
-    (hanti : b ∘ₗ ReducedTensorWords.map (R := R) (InternalGrading.koszulTwist G q) +
-        ReducedTensorWords.map (R := R) (InternalGrading.koszulTwist G q) ∘ₗ b = 0) :
-    b ∘ₗ b = 0 ↔ ∀ n (x : Fin n.1 → M),
-      taylorComponent (b ∘ₗ b) n (PiTensorProduct.tprod R x) = 0 :=
-  (hb.isCoderivation_comp_self hanti).eq_zero_iff_taylorComponent_tprod_eq_zero
-
 /-! ### Twist parameter zero -/
 
 /-- A `0`-twisted graded coderivation is a coderivation: the twist of parameter zero is the
