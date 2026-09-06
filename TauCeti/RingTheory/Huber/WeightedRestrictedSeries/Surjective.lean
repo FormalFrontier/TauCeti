@@ -8,7 +8,7 @@ module
 public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Basic
 
 import Mathlib.Data.Finsupp.Encodable
-import TauCeti.Topology.LiftTendstoCofinite
+import TauCeti.RingTheory.Huber.Restricted.PowerSeries
 
 /-!
 # `A⟨X₁,…,Xₖ⟩ → B⟨X₁,…,Xₖ⟩` is surjective along an open surjection
@@ -24,14 +24,16 @@ choice is made, and this file is its transcription into the weighted language, a
 weight family where restrictedness *is* convergence to zero
 (`TauCeti.Huber.isWeightedRestricted_one_weight_iff`).
 
-Countable generation of `𝓝 (0 : A)` is what supplies the family to draw from. It is not
-restrictive here: a Huber ring satisfies it, by
-`TauCeti.Huber.IsHuberRing.isCountablyGenerated_nhds_zero`.
+**Countable generation of `𝓝 (0 : A)` is a hypothesis of every result here**, not a background
+assumption: it is what supplies the shrinking family the lifted coefficients are drawn from, and a
+general `NonarchimedeanRing` need not have it. It is not restrictive in the intended application —
+a Huber ring satisfies it, by `TauCeti.Huber.IsHuberRing.isCountablyGenerated_nhds_zero`.
 
 ## Main results
 
 * `TauCeti.Huber.weightedMap_one_weight_surjective`, with
-  `TauCeti.Huber.weightedMap_one_weight_surjective_of_isOpenMap` the form taking `IsOpenMap`.
+  `TauCeti.Huber.weightedMap_one_weight_surjective_of_isOpenQuotientMap` the form taking the
+  bundled `IsOpenQuotientMap`.
 
 ## References
 
@@ -56,8 +58,8 @@ variable {k : ℕ} {A B : Type*} [CommRing A] [TopologicalSpace A] [Nonarchimede
   [CommRing B] [TopologicalSpace B] [NonarchimedeanRing B]
 
 /-- **A continuous surjection carrying neighbourhoods of zero onto neighbourhoods of zero stays
-surjective on restricted series.** Every element of `B⟨X₁,…,Xₖ⟩` is the image of one of
-`A⟨X₁,…,Xₖ⟩`.
+surjective on restricted series**, provided `𝓝 (0 : A)` is countably generated. Every element of
+`B⟨X₁,…,Xₖ⟩` is then the image of one of `A⟨X₁,…,Xₖ⟩`.
 
 The hypothesis is the filter inequality the proof consumes rather than `IsOpenMap φ`, which is
 strictly stronger; `TauCeti.Huber.weightedMap_one_weight_surjective_of_isOpenMap` is the open-map
@@ -76,24 +78,34 @@ theorem weightedMap_one_weight_surjective [(𝓝 (0 : A)).IsCountablyGenerated] 
     Function.Surjective (weightedMap (k := k) hφ isWeightFamily_one_weight
       isWeightFamily_one_weight fun _ ↦ by simp) := by
   intro g
-  obtain ⟨c, hcg, hc⟩ := TauCeti.exists_lift_tendsto_cofinite_nhds (φ : A → B) hsurj hnhds
-    (fun ν ↦ MvPowerSeries.coeff ν (g : MvPowerSeries (Fin k) B))
-    (isWeightedRestricted_one_weight_iff.mp (mem_weightedRestrictedSubring.mp g.2))
-  obtain ⟨f, hf⟩ : ∃ f : MvPowerSeries (Fin k) A, ∀ ν, MvPowerSeries.coeff ν f = c ν :=
-    ⟨c, fun ν ↦ MvPowerSeries.coeff_apply c ν⟩
-  refine ⟨⟨f, mem_weightedRestrictedSubring.mpr (isWeightedRestricted_one_weight_iff.mpr ?_)⟩,
+  obtain ⟨f, hf⟩ := restrictedMvPowerSeriesSubmoduleMap_surjective (k := k)
+    φ.toAddMonoidHom.toIntLinearMap hφ.continuousAt hsurj hnhds
+    ⟨(g : MvPowerSeries (Fin k) B), mem_restrictedMvPowerSeriesSubmodule.mpr
+      (isRestricted_iff_coeff.mpr
+        (isWeightedRestricted_one_weight_iff.mp (mem_weightedRestrictedSubring.mp g.2)))⟩
+  refine ⟨⟨(f : MvPowerSeries (Fin k) A),
+      mem_weightedRestrictedSubring.mpr (isWeightedRestricted_one_weight_iff.mpr
+        (isRestricted_iff_coeff.mp (mem_restrictedMvPowerSeriesSubmodule.mp f.2)))⟩,
     Subtype.ext (MvPowerSeries.ext fun ν ↦ ?_)⟩
-  · simpa only [hf] using hc
-  · rw [coe_weightedMap, MvPowerSeries.coeff_map, hf]
-    exact hcg ν
+  have h := congrArg (fun x : restrictedMvPowerSeriesSubmodule k ℤ B ↦
+    ((x : MvPowerSeries (Fin k) B) : (Fin k →₀ ℕ) → B) ν) hf
+  have key := coeff_restrictedMvPowerSeriesSubmoduleMap φ.toAddMonoidHom.toIntLinearMap
+    hφ.continuousAt f ν
+  rw [coe_weightedMap, MvPowerSeries.coeff_map]
+  exact key.symm.trans h
 
-/-- **The open-map form of `TauCeti.Huber.weightedMap_one_weight_surjective`**, for a caller
-holding `IsOpenMap φ` rather than the neighbourhood inequality. -/
-theorem weightedMap_one_weight_surjective_of_isOpenMap [(𝓝 (0 : A)).IsCountablyGenerated]
-    {φ : A →+* B} (hφ : Continuous φ) (hsurj : Function.Surjective φ) (hopen : IsOpenMap φ) :
-    Function.Surjective (weightedMap (k := k) hφ isWeightFamily_one_weight
+/-- **The open-quotient form of `TauCeti.Huber.weightedMap_one_weight_surjective`**, for a caller
+holding the bundled `IsOpenQuotientMap φ`.
+
+That is the interface finite-type presentations come in — `TauCeti.Huber`
+`.IsStrictlyTopologicallyFiniteType` produces one — so it is the form a consumer actually has,
+and it bundles exactly the continuity, surjectivity and openness the filter-level theorem needs. -/
+theorem weightedMap_one_weight_surjective_of_isOpenQuotientMap
+    [(𝓝 (0 : A)).IsCountablyGenerated] {φ : A →+* B} (hq : IsOpenQuotientMap φ) :
+    Function.Surjective (weightedMap (k := k) hq.continuous isWeightFamily_one_weight
       isWeightFamily_one_weight fun _ ↦ by simp) :=
-  weightedMap_one_weight_surjective hφ hsurj (map_zero φ ▸ hopen.nhds_le 0)
+  weightedMap_one_weight_surjective hq.continuous hq.surjective
+    (map_zero φ ▸ hq.isOpenMap.nhds_le 0)
 
 end TauCeti.Huber
 
