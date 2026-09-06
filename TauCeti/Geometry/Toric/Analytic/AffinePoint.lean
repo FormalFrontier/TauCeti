@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.MonoidAlgebra.Basic
+public import Mathlib.Algebra.Group.Submonoid.Finsupp
 public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.GroupTheory.Finiteness
 
@@ -99,20 +100,6 @@ theorem exists_addGeneratingFamily (S : Type*) [AddCommMonoid S] [AddMonoid.FG S
       = Set.range ((↑) : {x // x ∈ T} → S) from T.equivFin.symm.surjective.range_comp _]
   simpa using hT
 
-/-- Every element of the monoid is an `ℕ`-combination of a generating family. -/
-theorem AddGeneratingFamily.exists_eq_sum_nsmul (g : AddGeneratingFamily S r) (s : S) :
-    ∃ a : Fin r → ℕ, s = ∑ j, a j • g.toFun j := by
-  have hs : s ∈ AddSubmonoid.closure (Set.range g.toFun) := by rw [g.spans]; trivial
-  induction hs using AddSubmonoid.closure_induction with
-  | mem y hy =>
-    obtain ⟨j, rfl⟩ := hy
-    exact ⟨Pi.single j 1, by simp [Pi.single_apply, ite_smul, Finset.sum_ite_eq']⟩
-  | zero => exact ⟨0, by simp⟩
-  | add y z _ _ ihy ihz =>
-    obtain ⟨b, hb⟩ := ihy
-    obtain ⟨c, hc⟩ := ihz
-    exact ⟨b + c, by rw [hb, hc]; simp [add_smul, Finset.sum_add_distrib]⟩
-
 /-- Evaluation of the affine complex points of `S` on a finite generating family. -/
 noncomputable def monomialEmbedding (g : AddGeneratingFamily S r) :
     AffineSemigroupComplexPoint S → Fin r → ℂ :=
@@ -138,7 +125,9 @@ theorem monomialEmbedding_injective (g : AddGeneratingFamily S r) :
     Function.Injective (monomialEmbedding g) := by
   intro x y hxy
   refine (MonoidAlgebra.lift ℂ ℂ (Multiplicative S)).symm.injective (MonoidHom.ext fun m ↦ ?_)
-  obtain ⟨a, ha⟩ := g.exists_eq_sum_nsmul (toAdd m)
+  obtain ⟨a, ha⟩ := AddSubmonoid.exists_of_mem_closure_range g.toFun (toAdd m) (by
+    rw [g.spans]
+    trivial)
   have hm : m = ofAdd (∑ j, a j • g.toFun j) := congrArg ofAdd ha
   rw [MonoidAlgebra.lift_symm_apply, MonoidAlgebra.lift_symm_apply, hm,
     apply_single_eq_prod_monomialEmbedding g rfl, apply_single_eq_prod_monomialEmbedding g rfl,
@@ -157,7 +146,9 @@ theorem range_monomialEmbedding (g : AddGeneratingFamily S r) :
     rw [← apply_single_eq_prod_monomialEmbedding g rfl x,
       ← apply_single_eq_prod_monomialEmbedding g rfl x, hab]
   · intro hz
-    choose a ha using g.exists_eq_sum_nsmul
+    choose a ha using fun s ↦ AddSubmonoid.exists_of_mem_closure_range g.toFun s (by
+      rw [g.spans]
+      trivial)
     -- The relations satisfied by `z` make `s ↦ ∏ j, z j ^ a s j` a well-defined character.
     have hprod : ∀ b : Fin r → ℕ, ∀ s : S, s = ∑ j, b j • g.toFun j →
         ∏ j, z j ^ a s j = ∏ j, z j ^ b j := fun b s hs ↦ hz _ _ (by rw [← ha s, ← hs])
@@ -219,7 +210,9 @@ theorem continuous_apply_single (g : AddGeneratingFamily S r) (s : S) :
       fun x : AffineSemigroupComplexPoint S ↦ x (MonoidAlgebra.single (ofAdd s) 1) := by
   -- install the induced topology as an instance so that the continuity combinators apply
   let _ := affinePointTopology g
-  obtain ⟨a, ha⟩ := g.exists_eq_sum_nsmul s
+  obtain ⟨a, ha⟩ := AddSubmonoid.exists_of_mem_closure_range g.toFun s (by
+    rw [g.spans]
+    trivial)
   simp only [apply_single_eq_prod_monomialEmbedding g ha]
   exact continuous_finsetProd _ fun k _ ↦
     ((continuous_apply k).comp (continuous_monomialEmbedding g)).pow _
