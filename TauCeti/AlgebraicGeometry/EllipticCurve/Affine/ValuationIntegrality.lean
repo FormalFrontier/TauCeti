@@ -41,6 +41,8 @@ the `IsDedekindDomain.HeightOneSpectrum.valuation` of a varying prime, which can
 
 * `WeierstrassCurve.Affine.valuation_a₁_le_one` and its `a₂`, `a₃`, `a₄`, `a₆` companions: the
   coefficients of a curve with an integral model are integral, over any value group.
+* `WeierstrassCurve.Affine.valuation_y_sq_eq_valuation_x_cube`: at a pole of `x`, the two
+  coordinates have poles in ratio two to three, over any value group.
 * `WeierstrassCurve.Affine.valuation_x_le_one_and_valuation_y_le_one_of_valuation_x_lt_exp_two`:
   an affine point whose `x`-coordinate has a pole of order less than two has both coordinates
   integral.
@@ -201,6 +203,23 @@ private lemma valuation_lhs_le {x y : F} {C : Γ₀} (hxC : v x ≤ C) (hyC : v 
     calc v W.a₃ * v y ≤ 1 * C := mul_le_mul' (valuation_a₃_le_one v) hyC
       _ = C := one_mul C
       _ ≤ C ^ 2 := le_self_pow h1C (by lia)
+
+/-- **A pole of `x` forces one of `y`, of three halves the order.** On a point of the curve whose
+`x`-coordinate is not integral, `v(y)² = v(x)³`: writing the valuations additively, `x` has a pole
+of order `2e` and `y` one of order `3e`. Neither coordinate can dominate the other by any other
+ratio, because the two sides of the Weierstrass equation must agree. -/
+theorem valuation_y_sq_eq_valuation_x_cube {x y : F} (hxy : W.Equation x y) (hx : 1 < v x) :
+    v y ^ 2 = v x ^ 3 := by
+  -- `y` strictly dominates: otherwise `v x` bounds both coordinates, so the left-hand side is at
+  -- most `v x ^ 2` while the right-hand side is exactly `v x ^ 3`.
+  have hlt : v x < v y := by
+    by_contra hle
+    rw [not_lt] at hle
+    have hbound := valuation_lhs_le (W := W) v le_rfl hle hx.le
+    rw [valuation_lhs_eq_rhs v hxy, valuation_rhs_eq (W := W) v hx] at hbound
+    exact absurd hbound (not_le.2 (pow_lt_pow_right₀ hx (by lia)))
+  rw [← valuation_lhs_eq (W := W) v hlt (hx.trans hlt), valuation_lhs_eq_rhs v hxy,
+    valuation_rhs_eq (W := W) v hx]
 
 end Integral
 
