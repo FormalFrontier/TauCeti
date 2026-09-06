@@ -45,6 +45,8 @@ The construction follows Jürgen Neukirch, *Algebraic Number Theory*, Chapter VI
 
 ## Main results
 
+* `TauCeti.NumberFieldArithmetic.artinHomAway_apply`: the value at an ideal is the product of the
+  local Artin automorphisms with the multiplicities of the ideal as exponents.
 * `TauCeti.NumberFieldArithmetic.artinHomAway_apply_prime`: the value at a prime outside `S` is
   the Frobenius there.
 * `TauCeti.NumberFieldArithmetic.artinHomAway_eq_of_apply_prime`: those values determine the map.
@@ -139,6 +141,15 @@ noncomputable def artinHomAway : idealsAway (K := K) S →* (L ≃ₐ[K] L) :=
       rw [Subgroup.coe_mul, Units.val_mul,
         FractionalIdeal.count_mul K v (Units.ne_zero _) (Units.ne_zero _), zpow_add]
 
+/-- **The Artin map is the product of the local Artin automorphisms, with the multiplicities of
+the ideal as exponents.** The product is over all finite places of `K`, all but finitely many
+factors being trivial. The instance argument is the bundled form of `hab`, which the product on
+the right needs in order to be stated; `⟨⟨fun σ τ ↦ (hab σ τ).eq⟩⟩` supplies it. -/
+theorem artinHomAway_apply [IsMulCommutative (L ≃ₐ[K] L)] (I : idealsAway (K := K) S) :
+    artinHomAway (L := L) hab S hur I = ∏ᶠ v : HeightOneSpectrum (𝓞 K),
+      artinElementAway hab S hur v ^ FractionalIdeal.count K v
+        ((I : (FractionalIdeal (𝓞 K)⁰ K)ˣ) : FractionalIdeal (𝓞 K)⁰ K) := (rfl)
+
 /-- **The value of the Artin map at a prime outside `S` is the Frobenius there.** -/
 theorem artinHomAway_apply_prime (I : idealsAway (K := K) S) (v : HeightOneSpectrum (𝓞 K))
     (hv : v ∉ S)
@@ -148,12 +159,9 @@ theorem artinHomAway_apply_prime (I : idealsAway (K := K) S) (v : HeightOneSpect
     (hσ : IsArithFrobAt (𝓞 K) σ Q) :
     artinHomAway (L := L) hab S hur I = σ := by
   have : IsMulCommutative (L ≃ₐ[K] L) := ⟨⟨fun a b ↦ (hab a b).eq⟩⟩
-  -- Unfold the map to its defining product; only the factor at `v` survives.
-  have hval : artinHomAway (L := L) hab S hur I = ∏ᶠ w : HeightOneSpectrum (𝓞 K),
-      artinElementAway hab S hur w ^ FractionalIdeal.count K w
-        ((I : (FractionalIdeal (𝓞 K)⁰ K)ˣ) : FractionalIdeal (𝓞 K)⁰ K) := rfl
-  rw [hval, finprod_eq_single _ v, hI, FractionalIdeal.count_self, zpow_one,
-    artinElementAway_eq_of_isArithFrobAt hab S hur hv Q hσ]
+  -- Only the factor at `v` survives the product of `artinHomAway_apply`.
+  rw [artinHomAway_apply hab S hur I, finprod_eq_single _ v, hI, FractionalIdeal.count_self,
+    zpow_one, artinElementAway_eq_of_isArithFrobAt hab S hur hv Q hσ]
   intro w hw
   rw [hI, FractionalIdeal.count_maximal_coprime K w (Ne.symm hw), zpow_zero]
 
@@ -243,6 +251,14 @@ variable {L : Type*} [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
 ideals divisible by no prime of `S`; this is the shape the classical statements take. -/
 noncomputable def artinHomAwayIntegral : integralIdealsAway (K := K) S →* (L ≃ₐ[K] L) :=
   (artinHomAway (L := L) hab S hur).comp (integralIdealsAwayHom S)
+
+/-- **The integral Artin homomorphism is the Artin map read through the inclusion of the integral
+ideals prime to `S` into `idealsAway S`.** -/
+@[simp]
+theorem artinHomAwayIntegral_apply (I : integralIdealsAway (K := K) S) :
+    artinHomAwayIntegral (L := L) hab S hur I =
+      artinHomAway (L := L) hab S hur (integralIdealsAwayHom S I) :=
+  (rfl)
 
 /-- **The value of the integral Artin homomorphism at a prime outside `S` is the Frobenius
 there.** -/

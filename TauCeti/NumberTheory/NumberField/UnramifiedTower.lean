@@ -64,9 +64,10 @@ theorem isUnramifiedAt_of_intermediateExtension {M L : Type*} [Field M] [NumberF
   exact Algebra.IsUnramifiedAt.of_liesOver (𝓞 K) P Q.1
 
 /-- **Unramifiedness outside a finite set of finite places descends to an intermediate field.**
-This is `isUnramifiedAt_of_intermediateExtension` applied at each prime outside `S`; it is what
-makes the unramified hypothesis for a subextension a consequence of the one for the top field
-rather than a second assumption. -/
+If every prime of `L` above a place of `K` outside `S` is unramified over `K`, then so is every
+prime of an intermediate field `M` above such a place. This is what makes the unramified
+hypothesis for a subextension a consequence of the one for the top field rather than a second
+assumption. -/
 theorem isUnramifiedAway_of_intermediateField {L : Type*} [Field L] [NumberField L] [Algebra K L]
     (M : IntermediateField K L) (S : Finset (HeightOneSpectrum (𝓞 K)))
     (hur : ∀ v : HeightOneSpectrum (𝓞 K), v ∉ S →
