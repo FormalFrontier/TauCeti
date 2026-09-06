@@ -54,8 +54,7 @@ the forgetful naturality below, lives in `TauCeti.Topology.Algebra.Homeomorph.Co
 * `Diffeomorph.toHomeomorphHom_comp_diffCongr` and
   `Diffeomorph.toPerm_comp_diffCongr`: naturality of `diffCongr` against the forgetful
   homomorphisms `toHomeomorphHom` and `toPerm`, as commutative squares of group homomorphisms
-  intertwining `diffCongr` with `TauCeti.Homeomorph.homeoCongr` and `Equiv.permCongrHom`
-  respectively.
+  intertwining `diffCongr` with `Homeomorph.homeoCongr` and `Equiv.permCongrHom` respectively.
 * `Diffeomorph.toHomeomorph_diffCongr` and `Diffeomorph.toPerm_diffCongr`: the
   elementwise shadows of those squares.
 -/
@@ -132,11 +131,11 @@ theorem diffCongr_symm (e : M ≃ₘ^n⟮I, J⟯ N) : (diffCongr e).symm = diffC
 /-- Naturality of `diffCongr` against the forgetful homomorphism to self-homeomorphisms, as a
 commutative square of group homomorphisms: conjugating diffeomorphisms by `e` and then forgetting
 smoothness equals forgetting smoothness and then conjugating homeomorphisms by `e` through
-`TauCeti.Homeomorph.homeoCongr`. This is the naturality of `diffCongr` against the stronger
-forgetful homomorphism `Diffeomorph.toHomeomorphHom`, refining `toPerm_comp_diffCongr`. -/
+`Homeomorph.homeoCongr`. This is the naturality of `diffCongr` against the stronger forgetful
+homomorphism `Diffeomorph.toHomeomorphHom`, refining `toPerm_comp_diffCongr`. -/
 theorem toHomeomorphHom_comp_diffCongr (e : M ≃ₘ^n⟮I, J⟯ N) :
     toHomeomorphHom.comp (diffCongr e).toMonoidHom =
-      (TauCeti.Homeomorph.homeoCongr e.toHomeomorph).toMonoidHom.comp toHomeomorphHom := by
+      (Homeomorph.homeoCongr e.toHomeomorph).toMonoidHom.comp toHomeomorphHom := by
   ext φ x
   simp [toHomeomorphHom_apply]
 
