@@ -165,11 +165,23 @@ variable [IsDomain S] [IsDomain Sₘ]
 
 omit [IsTorsionFree R S] [IsTorsionFree Rₘ Sₘ] in
 /-- The trace-dual fractional ideal commutes with localization. -/
-theorem extendedHom_dual_one_eq_dual_one
-    (h : S⁰ ≤ Submonoid.comap (algebraMap S Sₘ) Sₘ⁰) :
-    FractionalIdeal.extendedHom' L h
+theorem extendedHom'_dual_one_eq_dual_one :
+    FractionalIdeal.extendedHom' L
+        (nonZeroDivisors_le_comap_nonZeroDivisors_of_injective _
+          (IsLocalization.injective Sₘ
+            (show Algebra.algebraMapSubmonoid S M ≤ S⁰ from
+              map_le_nonZeroDivisors_of_injective _
+                (algebraMap_injective_of_field_isFractionRing R S K L) hM)))
         (FractionalIdeal.dual R K (1 : FractionalIdeal S⁰ L)) =
       FractionalIdeal.dual Rₘ K (1 : FractionalIdeal Sₘ⁰ L) := by
+  let hMS : Algebra.algebraMapSubmonoid S M ≤ S⁰ :=
+    map_le_nonZeroDivisors_of_injective _
+      (algebraMap_injective_of_field_isFractionRing R S K L) hM
+  let h : S⁰ ≤ Submonoid.comap (algebraMap S Sₘ) Sₘ⁰ :=
+    nonZeroDivisors_le_comap_nonZeroDivisors_of_injective _
+      (IsLocalization.injective Sₘ hMS)
+  change FractionalIdeal.extendedHom' L h
+      (FractionalIdeal.dual R K (1 : FractionalIdeal S⁰ L)) = _
   rw [FractionalIdeal.extendedHom'_apply]
   apply FractionalIdeal.coeToSubmodule_injective
   refine (FractionalIdeal.coe_extended_eq_span L h _).trans ?_
@@ -230,9 +242,9 @@ theorem map_differentIdeal_eq_differentIdeal :
     ← FractionalIdeal.extended_coeIdeal_eq_map (K := L) L h,
     ← FractionalIdeal.extendedHom'_apply]
   rw [coeIdeal_differentIdeal R K L S, coeIdeal_differentIdeal Rₘ K L Sₘ, map_inv₀,
-    extendedHom_dual_one_eq_dual_one (R := R) (Rₘ := Rₘ) (S := S)
+    extendedHom'_dual_one_eq_dual_one (R := R) (Rₘ := Rₘ) (S := S)
       (Sₘ := Sₘ)
-      (K := K) (L := L) (M := M) hM h]
+      (K := K) (L := L) (M := M) hM]
 
 end TauCeti
 
