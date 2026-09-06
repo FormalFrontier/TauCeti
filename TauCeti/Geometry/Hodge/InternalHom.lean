@@ -5,9 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.Contraction
 public import TauCeti.Geometry.Hodge.Dual
 public import TauCeti.Geometry.Hodge.TensorProduct
+public import TauCeti.LinearAlgebra.Contraction
 
 /-!
 # Internal homs of pure Hodge structures
@@ -52,14 +52,6 @@ universe u v
 variable {W₁ : Type u} {W₂ : Type v}
 variable [AddCommGroup W₁] [Module ℂ W₁]
 variable [AddCommGroup W₂] [Module ℂ W₂]
-
-/-- Mathlib records `dualTensorHomEquivOfBasis_apply` for the basis-dependent contraction
-equivalence, but states no `apply` lemma for `dualTensorHomEquiv`; its forward map is the
-contraction `dualTensorHom` itself. -/
-private theorem dualTensorHomEquiv_apply [FiniteDimensional ℂ W₁]
-    (z : Module.Dual ℂ W₁ ⊗[ℂ] W₂) :
-    dualTensorHomEquiv ℂ W₁ W₂ z = dualTensorHom ℂ W₁ W₂ z :=
-  (rfl)
 
 namespace Conjugation
 
