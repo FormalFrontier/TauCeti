@@ -59,6 +59,13 @@ attribute [local instance] Fintype.ofFinite
 local notation "Γ₀Q(" N ")" => Subgroup.map (mapGL ℚ) (Gamma0 N)
 local notation "Coset₀(" N ")" => HeckeCoset (Delta0 N) (Γ₀Q(N)) (Γ₀Q(N))
 
+/-- The Atkin-Lehner bar of a coset's chosen representative stays inside that coset. -/
+private lemma bar_out_mem_doubleCoset_rep (D : Coset₀(N)) :
+    ((atkinLehnerAntiInvolution N).bar D.out D.out.2 : GL (Fin 2) ℚ) ∈
+      doubleCoset (D.rep : GL (Fin 2) ℚ) (Γ₀Q(N)) (Γ₀Q(N)) := by
+  rw [HeckeCoset.rep_def]
+  exact atkinLehnerAntiInvolution_bar_mem_doubleCoset N D.out D.out.2
+
 /-- The reversed, inverted multiplicity from a right slash action is the ordinary `Γ₀(N)`
 Hecke-ring structure constant. -/
 theorem multiplicity_inv_reverse_eq (D₁ D₂ D : Coset₀(N)) :
@@ -81,18 +88,6 @@ theorem multiplicity_inv_reverse_eq (D₁ D₂ D : Coset₀(N)) :
         multiplicity (Γ₀Q(N)) (Γ₀Q(N)) (Γ₀Q(N))
           (c : GL (Fin 2) ℚ) (a : GL (Fin 2) ℚ) (d : GL (Fin 2) ℚ) :=
     ι.multiplicity_comm hfix a c d
-  have hb₁ : (b₁ : GL (Fin 2) ℚ) ∈
-      doubleCoset (D₁.rep : GL (Fin 2) ℚ) (Γ₀Q(N)) (Γ₀Q(N)) := by
-    rw [HeckeCoset.rep_def]
-    exact atkinLehnerAntiInvolution_bar_mem_doubleCoset N D₁.out D₁.out.2
-  have hb₂ : (b₂ : GL (Fin 2) ℚ) ∈
-      doubleCoset (D₂.rep : GL (Fin 2) ℚ) (Γ₀Q(N)) (Γ₀Q(N)) := by
-    rw [HeckeCoset.rep_def]
-    exact atkinLehnerAntiInvolution_bar_mem_doubleCoset N D₂.out D₂.out.2
-  have hb : (b : GL (Fin 2) ℚ) ∈
-      doubleCoset (D.rep : GL (Fin 2) ℚ) (Γ₀Q(N)) (Γ₀Q(N)) := by
-    rw [HeckeCoset.rep_def]
-    exact atkinLehnerAntiInvolution_bar_mem_doubleCoset N D.out D.out.2
   rw [atkinLehnerAutomorphism_map_Gamma0] at hmap
   rw [atkinLehnerAutomorphism_inv_apply N D₂.out.2,
     atkinLehnerAutomorphism_inv_apply N D₁.out.2,
@@ -102,21 +97,21 @@ theorem multiplicity_inv_reverse_eq (D₁ D₂ D : Coset₀(N)) :
         (b₂ : GL (Fin 2) ℚ) (b₁ : GL (Fin 2) ℚ) (b : GL (Fin 2) ℚ) := hmap.symm
     _ = multiplicity (Γ₀Q(N)) (Γ₀Q(N)) (Γ₀Q(N))
         (b₂ : GL (Fin 2) ℚ) (b₁ : GL (Fin 2) ℚ) (D.rep : GL (Fin 2) ℚ) :=
-      multiplicity_doubleCoset_congr _ _ hb
+      multiplicity_doubleCoset_congr _ _ (bar_out_mem_doubleCoset_rep D)
     _ = multiplicity (Γ₀Q(N)) (Γ₀Q(N)) (Γ₀Q(N))
         (b₁ : GL (Fin 2) ℚ) (b₂ : GL (Fin 2) ℚ) (D.rep : GL (Fin 2) ℚ) :=
       hcomm b₂ b₁ D.rep
     _ = multiplicity (Γ₀Q(N)) (Γ₀Q(N)) (Γ₀Q(N))
         (b₁ : GL (Fin 2) ℚ) (D₂.rep : GL (Fin 2) ℚ) (D.rep : GL (Fin 2) ℚ) :=
       multiplicity_doubleCoset_congr_second (Γ₀Q(N)) (Γ₀Q(N)) (Γ₀Q(N))
-        b₁ D.rep hb₂
+        b₁ D.rep (bar_out_mem_doubleCoset_rep D₂)
     _ = multiplicity (Γ₀Q(N)) (Γ₀Q(N)) (Γ₀Q(N))
         (D₂.rep : GL (Fin 2) ℚ) (b₁ : GL (Fin 2) ℚ) (D.rep : GL (Fin 2) ℚ) :=
       (hcomm D₂.rep b₁ D.rep).symm
     _ = multiplicity (Γ₀Q(N)) (Γ₀Q(N)) (Γ₀Q(N))
         (D₂.rep : GL (Fin 2) ℚ) (D₁.rep : GL (Fin 2) ℚ) (D.rep : GL (Fin 2) ℚ) :=
       multiplicity_doubleCoset_congr_second (Γ₀Q(N)) (Γ₀Q(N)) (Γ₀Q(N))
-        D₂.rep D.rep hb₁
+        D₂.rep D.rep (bar_out_mem_doubleCoset_rep D₁)
     _ = _ := hcomm D₂.rep D₁.rep D.rep
 
 open Classical in
