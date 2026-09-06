@@ -7,10 +7,8 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Frobenius.GeneralLinear
 public import TauCeti.Algebra.Lie.E7.Minuscule.PointsFunctor
--- The endomorphism power law and the toral-closure Frobenius are used only inside the proofs of
--- `frobenius_pow` and `frobenius_weightTorusPoints`, so they are imported privately rather than
--- re-exported to consumers of this module.
-import TauCeti.Algebra.Group.Hom.End
+-- The toral-closure Frobenius is used only inside the proof of `frobenius_weightTorusPoints`, so
+-- it is imported privately rather than re-exported to consumers of this module.
 import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Frobenius
 
 /-!
@@ -136,12 +134,12 @@ theorem frobenius_add (m : ℕ) :
 Frobenius of the type-`E₇` minuscule carrier, in the endomorphism monoid of its points, is its
 `p ^ (k * m)`-power Frobenius. -/
 -- `Monoid.End` is definitionally a bundled `MonoidHom`; the `show` picks its composition monoid
--- structure before the power is elaborated. `frobenius_zero` and `frobenius_add` are exactly the
--- hypotheses of the carrier-independent law `TauCeti.pow_eq_of_id_of_comp`.
+-- structure before the power is elaborated.
 theorem frobenius_pow (m : ℕ) :
-    (show Monoid.End _ from frobenius p k A) ^ m = frobenius p (k * m) A :=
-  pow_eq_of_id_of_comp (fun i => frobenius p i A) (frobenius_zero p A)
-    (fun i j => frobenius_add p i A j) k m
+    (show Monoid.End _ from frobenius p k A) ^ m = frobenius p (k * m) A := by
+  induction m with
+  | zero => rw [pow_zero, Nat.mul_zero, frobenius_zero]; rfl
+  | succ m ih => rw [pow_succ, ih, Nat.mul_succ, frobenius_add p (k * m) A k]; rfl
 
 /-- A type-`E₇` minuscule carrier point is fixed by Frobenius exactly when all of its matrix
 entries lie in the Frobenius-fixed subring. -/
