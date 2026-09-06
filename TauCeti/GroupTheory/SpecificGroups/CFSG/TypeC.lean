@@ -19,7 +19,7 @@ the Kostant toral closure of the standard representation of `sp_(2n)` inside `GL
 This file attaches that carrier to a validated type-`C` index and runs the classification recipe on
 it: the group of algebraic-closure-valued points of the carrier at the index's rank, its
 Bourbaki-numbered simple root subgroups, the reading of their root characters in the type-`C` root
-datum the index names, the Steinberg endomorphism of the family, and the candidate group
+datum the index names, the Steinberg endomorphism of the family, and the milestone L3 quotient
 
 ```text
 H_d = fixedSubgroup d.steinberg,        d.Group = [H_d, H_d] / Z([H_d, H_d]).
@@ -50,7 +50,7 @@ acquires the swap of the two Bourbaki nodes.
 
 Nothing here asserts that the carrier is reductive, that its weight torus is maximal, that it is
 the symplectic group scheme or the pinned simply connected Chevalley--Demazure group scheme of type
-`Cₙ`, or that its point group is finite.
+`Cₙ`, or that any group below is finite, perfect, or simple.
 
 ## Main declarations
 
@@ -66,8 +66,9 @@ the symplectic group scheme or the pinned simply connected Chevalley--Demazure g
   `Frob_q (x_i(u)) = x_i(u ^ q)`, and
   `TauCeti.TypeCLieIndex.mem_fixedSubgroup_steinberg_iff` describing the points it fixes as those
   whose matrix entries lie in the field of definition `𝔽_q`.
-* `TauCeti.TypeCLieIndex.Group`: the candidate group of `Cₙ(q)`, the derived subgroup of those
-  fixed points modulo its centre.
+* `TauCeti.TypeCLieIndex.Group`: the milestone L3 quotient of the untwisted family `Cₙ(q)`, the
+  derived subgroup of those fixed points modulo its centre, formed on the standard symplectic
+  carrier rather than on the pinned group milestone L0 asks for.
 
 ## References
 
@@ -199,7 +200,10 @@ theorem rootGeneratorWeight_carrierNode_eq_root_simpleIndex (i j : Fin d.1.rank)
 /-- **The Steinberg endomorphism of a validated type-`C` index**: the `q`-power Frobenius of the
 ambient group, `q` being the field order the index records. The family is untwisted, so no diagram
 automorphism and no half-Frobenius enters; `TauCeti.TypeCLieIndex.diagramPerm_eq_one` is the check
-that its diagram permutation is trivial. -/
+that its diagram permutation is trivial.
+
+It is the Steinberg map of `Cₙ(q)` on the pinned carrier milestone L0 asks for only along the
+Layer 9 identification of the two carriers described in the module docstring, and not before. -/
 def steinberg : d.AmbientGroup →* d.AmbientGroup :=
   SpStd.frobenius d.carrierRank d.1.characteristic d.1.fieldExponent d.1.Closure
 
@@ -260,14 +264,16 @@ theorem mem_fixedSubgroup_steinberg_iff (g : d.AmbientGroup) :
   simp only [mem_frobeniusFixedSubring, ValidLieTypeIndex.mem_fixedField,
     d.1.fieldOrder_eq_characteristic_pow]
 
-/-! ## The classification candidate -/
+/-! ## The milestone L3 quotient -/
 
-/-- **The candidate simple group of the untwisted family `Cₙ(q)`**: the derived subgroup of the
-fixed points of its Steinberg map, modulo the centre of that derived subgroup.
+/-- **The milestone L3 quotient on the standard symplectic carrier**: the derived subgroup of the
+fixed points of the Steinberg map above, modulo the centre of that derived subgroup.
 
-This is the milestone L3 recipe on the `C` branch, run on the standard symplectic carrier. Nothing
-below asserts that it is finite, perfect, or simple, nor that the carrier is the one milestone L0
-asks for. -/
+This is the shape milestone L3 asks of the untwisted family `Cₙ(q)`, formed on the standard
+symplectic carrier rather than on the pinned simply connected Chevalley--Demazure group scheme that
+milestone L0 asks for. It becomes the candidate simple group of that family along the Layer 9
+identification of the two carriers described in the module docstring, and not before; it is not
+offered as that candidate here. Nothing below asserts that it is finite, perfect, or simple. -/
 abbrev Group : Type := FixedPointCandidate d.steinberg
 
 /-- Milestone L3 asks every valid branch to carry a group instance; the quotient construction
