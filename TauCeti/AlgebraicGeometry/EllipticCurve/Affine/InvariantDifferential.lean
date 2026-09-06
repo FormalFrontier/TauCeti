@@ -41,11 +41,11 @@ Weierstrass polynomial evaluated at the generic point.
 * `WeierstrassCurve.Affine.polynomialX_smul_D_genericX_add_polynomialY_smul_D_genericY_eq_zero`:
   the chain rule `W_X · dx + W_Y · dy = 0`.
 * `WeierstrassCurve.Affine.invariantDifferentialDenom_ne_zero`: the denominator is nonzero.
-* `WeierstrassCurve.Affine.D_mem_span_D_genericX`,
-  `WeierstrassCurve.Affine.span_D_genericX_eq_top`: `dx` spans `Ω[K(E)/F]`.
-* `WeierstrassCurve.Affine.D_genericX_ne_zero`: `dx ≠ 0` in `Ω[K(E)/F]`.
-* `WeierstrassCurve.Affine.finrank_kaehlerDifferential`: `Ω[K(E)/F]` is one-dimensional
-  over `K(E)`.
+* `WeierstrassCurve.Affine.isSeparable_adjoin_genericX`: `K(E)` is separable over `F(x)`, so
+  that `x` is a separating element. This is what makes the general separating-element results
+  of `TauCeti.FieldTheory.FunctionField.Differential.Kaehler` applicable to `K(E)`: they give
+  `dx ≠ 0`, that `dx` spans, and that `Ω[K(E)/F]` is one-dimensional, and are used here in
+  that form rather than restated.
 * `WeierstrassCurve.Affine.existsUnique_smul_invariantDifferential`: every differential is
   `c • ω` for a unique `c`.
 
@@ -74,8 +74,8 @@ also dropped. Its direct span-of-`dx` proof is replaced by the general separatin
 `TauCeti.FieldTheory.FunctionField.Differential.Kaehler`; the curve-specific input here is that
 the Weierstrass quadratic has nonzero derivative `W_Y` at `y`. The Weierstrass relation itself,
 which the source re-derives inside `AdjoinRoot`, is the existing `equation_genericX_genericY`.
-The chain rule, the spanning statement, the basis and the uniqueness statement are stated here
-and are not in the source, which proves only `Module.finrank = 1`.
+The chain rule, the basis and the uniqueness statement are stated here and are not in the
+source, which proves only `Module.finrank = 1`.
 
 Sources swept for the same material and not carrying it:
 `github.com/MichaelStollBayreuth/EllipticCurves` @ `449c7b936813` and
@@ -335,42 +335,17 @@ private theorem isSeparable_genericY [E.IsElliptic] :
   exact invariantDifferentialDenom_ne_zero E
     ((invariantDifferentialDenom_def E).trans (hqder.symm.trans hz))
 
-/-- The function field is separable over `F(genericX)`. -/
-private instance isSeparable_adjoin_genericX [E.IsElliptic] :
+/-- **The function field is separable over `F(genericX)`**, so that `genericX` is a separating
+element of `K(E)/F`. Together with `transcendental_genericX` this is the curve-specific input to
+the general separating-element API of `TauCeti.FieldTheory.FunctionField.Differential.Kaehler`:
+`TauCeti.finrank_kaehlerDifferential_eq_one_of_separating (transcendental_genericX E)` says that
+`Ω[K(E)/F]` is one-dimensional, `TauCeti.span_D_eq_top_of_separating` that `dx` spans it, and
+`TauCeti.D_ne_zero_of_separating` that `dx ≠ 0`. -/
+instance isSeparable_adjoin_genericX [E.IsElliptic] :
     Algebra.IsSeparable F⟮genericX E⟯ E.FunctionField := by
   rw [← IntermediateField.isSeparable_top, ← adjoin_genericY_eq_top E]
   exact (IntermediateField.isSeparable_adjoin_simple_iff_isSeparable _ _).2
     (isSeparable_genericY E)
-
-/-! ### The differentials of the function field are spanned by `dx` -/
-
-/-- **Every differential of `K(E)` is a multiple of `dx`.** The generic coordinate `x` is a
-separating element, so this is the general separating-element spanning theorem. -/
-theorem D_mem_span_D_genericX [E.IsElliptic] (s : E.FunctionField) :
-    KaehlerDifferential.D F E.FunctionField s ∈
-      Submodule.span E.FunctionField
-        {KaehlerDifferential.D F E.FunctionField (genericX E)} := by
-  rw [TauCeti.span_D_eq_top_of_separating (transcendental_genericX E)]
-  trivial
-
-/-- **`dx` spans `Ω[K(E)/F]`.** -/
-theorem span_D_genericX_eq_top [E.IsElliptic] :
-    Submodule.span E.FunctionField
-      {KaehlerDifferential.D F E.FunctionField (genericX E)} = ⊤ := by
-  exact TauCeti.span_D_eq_top_of_separating (transcendental_genericX E)
-
-/-- **The differential of `x` is nonzero.** This is the nonvanishing theorem for the separating
-element `genericX`. -/
-@[simp]
-theorem D_genericX_ne_zero [E.IsElliptic] :
-    KaehlerDifferential.D F E.FunctionField (genericX E) ≠ 0 := by
-  exact TauCeti.D_ne_zero_of_separating (transcendental_genericX E)
-
-/-- **`Ω[K(E)/F]` is a one-dimensional `K(E)`-vector space**, spanned by the nonzero
-element `dx` (Silverman III.1.5 for the sharper divisor statement). -/
-theorem finrank_kaehlerDifferential [E.IsElliptic] :
-    Module.finrank E.FunctionField (KaehlerDifferential F E.FunctionField) = 1 := by
-  exact TauCeti.finrank_kaehlerDifferential_eq_one_of_separating (transcendental_genericX E)
 
 /-! ### The invariant differential -/
 
@@ -394,7 +369,8 @@ an inverse of the nonzero denominator with `dx`, both nonzero. -/
 @[simp]
 theorem invariantDifferential_ne_zero [E.IsElliptic] : invariantDifferential E ≠ 0 := by
   rw [invariantDifferential_def]
-  exact smul_ne_zero (inv_ne_zero (invariantDifferentialDenom_ne_zero E)) (D_genericX_ne_zero E)
+  exact smul_ne_zero (inv_ne_zero (invariantDifferentialDenom_ne_zero E))
+    (TauCeti.D_ne_zero_of_separating (transcendental_genericX E))
 
 /-- **The invariant differential spans `Ω[K(E)/F]`**: it differs from `dx` by an invertible
 scalar. -/
@@ -403,7 +379,7 @@ theorem span_invariantDifferential_eq_top [E.IsElliptic] :
   rw [invariantDifferential_def,
     Submodule.span_singleton_smul_eq
       (IsUnit.mk0 _ (inv_ne_zero (invariantDifferentialDenom_ne_zero E))),
-    span_D_genericX_eq_top E]
+    TauCeti.span_D_eq_top_of_separating (transcendental_genericX E)]
 
 /-- **`ω` is a basis of `Ω[K(E)/F]`**, the module being one-dimensional and `ω` nonzero. -/
 noncomputable def invariantDifferentialBasis [E.IsElliptic] :
