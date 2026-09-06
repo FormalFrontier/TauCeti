@@ -14,10 +14,10 @@ import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Smooth.Dimension
 # Existence of Borel subgroups
 
 A Borel subgroup of an affine algebraic group over an algebraically closed field is a maximal
-smooth connected solvable closed subgroup. This file proves existence by maximizing Lie dimension.
-More precisely, every smooth geometrically connected solvable closed subgroup is contained in a
-maximal one. Applying this on the geometric fibre of a group over an arbitrary field constructs a
-Borel subgroup there.
+smooth, geometrically connected, geometrically solvable closed subgroup. This file proves existence
+by maximizing Lie dimension. More precisely, every Borel candidate is contained in a maximal one.
+Applying this on the geometric fibre of a group over an arbitrary field constructs a Borel subgroup
+there.
 
 The identity subgroup makes the family of candidates nonempty. For the relative statement, a
 candidate containing a prescribed one is again a nonempty family. Lie dimensions of closed
@@ -37,8 +37,7 @@ on the group. No conjugacy statement is proved here.
   field has a maximal Borel candidate.
 * `TauCeti.HopfIdeal.exists_geometricBorel`: the geometric fibre of every finite-type affine
   group has a Borel subgroup.
-* `TauCeti.HopfIdeal.exists_minimal_isBorelCandidate_le_of_torus`: every torus is contained in a
-  maximal Borel candidate.
+* `TauCeti.HopfIdeal.IsBorelCandidate.of_torus`: every torus is a Borel candidate.
 
 ## References
 
@@ -72,11 +71,12 @@ theorem isBorelCandidate_augmentation (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
     IsBorelCandidate k H (augmentation k H) :=
   (isSolvableRadicalCandidate_augmentation H).isBorelCandidate
 
-/-- **Every smooth connected solvable closed subgroup is contained in a maximal one.**
+/-- **Every smooth, geometrically connected, geometrically solvable closed subgroup is contained
+in a maximal one.**
 
 In Hopf-ideal order the inequality `J ≤ I` says that the closed subgroup cut out by `J` contains
-the one cut out by `I`. Thus the returned minimal Borel candidate is a maximal smooth connected
-solvable subgroup containing the prescribed candidate. -/
+the one cut out by `I`. Thus the returned minimal Borel candidate is a maximal smooth,
+geometrically connected, geometrically solvable subgroup containing the prescribed candidate. -/
 theorem exists_minimal_isBorelCandidate_le
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) {I : HopfIdeal k H}
     (hI : IsBorelCandidate k H I) :
@@ -107,14 +107,15 @@ theorem exists_minimal_isBorelCandidate
 /-- **The geometric fibre of every finite-type affine group has a Borel subgroup.**
 
 The conclusion is stated directly on the base-changed coordinate Hopf algebra. Since the base
-field there is algebraically closed, a minimal Borel candidate is precisely a maximal smooth
-connected solvable closed subgroup. -/
+field there is algebraically closed, `IsBorelOverAlgClosed` is precisely minimality among smooth,
+geometrically connected, geometrically solvable closed subgroups. -/
 theorem exists_geometricBorel (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
     let K := AlgebraicClosure k
     let H' := FiniteTypeCommHopfAlgCat.baseChange (K := K) H
-    ∃ I : HopfIdeal K H', Minimal (IsBorelCandidate K H') I := by
-  exact exists_minimal_isBorelCandidate
+    ∃ I : HopfIdeal K H', IsBorelOverAlgClosed K H' I := by
+  obtain ⟨I, hI⟩ := exists_minimal_isBorelCandidate
     (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H)
+  exact ⟨I, (isBorelOverAlgClosed_iff _ _ _).mpr ⟨inferInstance, hI⟩⟩
 
 /-- Every torus closed subgroup is a Borel candidate. -/
 theorem IsBorelCandidate.of_torus
@@ -126,16 +127,6 @@ theorem IsBorelCandidate.of_torus
   exact IsBorelCandidate.mk hI.smooth hI.geometricallyConnected
     (geometricallySolvablePointsCommHopfAlgProperty_of_isCocomm k
       (FiniteTypeCommHopfAlgCat.quotient H I).obj)
-
-/-- **Every torus is contained in a maximal smooth connected solvable closed subgroup.**
-
-Over an algebraically closed field the subgroup produced is a Borel containing the torus. This is
-the containment form used when choosing a Borel compatible with a prescribed maximal torus. -/
-theorem exists_minimal_isBorelCandidate_le_of_torus
-    (H : FiniteTypeCommHopfAlgCat.{u, u} k) {I : HopfIdeal k H}
-    (hI : torusCommHopfAlgProperty k (FiniteTypeCommHopfAlgCat.quotient H I)) :
-    ∃ J : HopfIdeal k H, J ≤ I ∧ Minimal (IsBorelCandidate k H) J :=
-  exists_minimal_isBorelCandidate_le H (IsBorelCandidate.of_torus hI)
 
 end HopfIdeal
 
