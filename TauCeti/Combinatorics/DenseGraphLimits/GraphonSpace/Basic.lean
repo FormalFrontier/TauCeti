@@ -76,7 +76,6 @@ theorem dist_graphonSpace_mk_mk (U W : Graphon Ω μ) :
 
 /-- Two representatives determine the same point of graphon space exactly when their coupling cut
 distance vanishes. -/
-@[simp]
 theorem graphonSpace_mk_eq_mk_iff (U W : Graphon Ω μ) :
     SeparationQuotient.mk U = SeparationQuotient.mk W ↔ cutDist U W = 0 := by
   rw [SeparationQuotient.mk_eq_mk, Metric.inseparable_iff]
