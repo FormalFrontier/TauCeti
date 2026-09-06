@@ -23,7 +23,7 @@ The criterion used is Mathlib's `not_dvd_differentIdeal_of_intTrace_not_mem`: to
 `I` with `I * Q = p · B` does not divide `𝔡(B/A)` it is enough to produce `x ∈ Q` whose integral
 trace is a unit mod `p`.  Taking `I = P ^ e` and `Q` the prime-to-`P` part of `p · B`, the Chinese
 remainder theorem turns that into the requirement that the trace form of the `A ⧸ p`-algebra
-`B ⧸ P ^ e` be nonzero, and `Algebra.trace_quotient_pow` evaluates it: the trace of a residue is
+`B ⧸ P ^ e` be nonzero, and `Algebra.trace_quotient_pow_mk` evaluates it: the trace of a residue is
 `e` times its trace in `B ⧸ P`.  Separability of the residue extension makes the latter trace
 nonzero somewhere, and tameness keeps the factor `e` from killing it.  Both hypotheses are needed:
 in the wild case `e` is zero in `A ⧸ p` and the trace of `B ⧸ P ^ e` vanishes identically, and
@@ -91,7 +91,7 @@ theorem not_pow_dvd_differentIdeal_of_isCoprime_of_isSeparable
     simpa [LinearMap.ext_iff] using Algebra.trace_ne_zero (A ⧸ p) (B ⧸ P)
   obtain ⟨z, rfl⟩ := Ideal.Quotient.mk_surjective w
   have hx : Algebra.trace (A ⧸ p) (B ⧸ P ^ e) (Ideal.Quotient.mk _ z) ≠ 0 := by
-    rw [Algebra.trace_quotient_pow hPbot e z, nsmul_eq_mul]
+    rw [Algebra.trace_quotient_pow_mk hPbot e z, nsmul_eq_mul]
     exact mul_ne_zero he hw
   -- the Chinese remainder decomposition of `B ⧸ pB`
   let ee : (B ⧸ Ideal.map (algebraMap A B) p) ≃ₐ[A ⧸ p] ((B ⧸ P ^ e) × B ⧸ Q) :=

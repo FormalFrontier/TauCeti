@@ -40,7 +40,7 @@ computation for `B ⧸ p · B`, `Algebra.trace_quotient_eq_of_isDedekindDomain`)
 
 ## Main results
 
-* `Algebra.trace_quotient_pow`: the trace formula `Tr_{B ⧸ P ^ n} = n · Tr_{B ⧸ P}`.
+* `Algebra.trace_quotient_pow_mk`: the trace formula `Tr_{B ⧸ P ^ n} = n · Tr_{B ⧸ P}`.
 -/
 
 public section
@@ -62,7 +62,7 @@ times its trace in the residue field `B ⧸ P`.
 The two `IsScalarTower` hypotheses pin the algebra structures to the ones induced by `A → B`;
 they are what `Ideal.Quotient.algebraQuotientOfLEComap` provides, and they hold for `B ⧸ P ^ n`
 exactly when `p · B ⊆ P ^ n`. -/
-theorem trace_quotient_pow [Module.Finite A B] (hP : P ≠ ⊥) (n : ℕ)
+theorem trace_quotient_pow_mk [Module.Finite A B] (hP : P ≠ ⊥) (n : ℕ)
     [instA : Algebra (A ⧸ p) (B ⧸ P ^ n)] [instT : IsScalarTower A (A ⧸ p) (B ⧸ P ^ n)]
     [Algebra (A ⧸ p) (B ⧸ P)] [IsScalarTower A (A ⧸ p) (B ⧸ P)] (z : B) :
     Algebra.trace (A ⧸ p) (B ⧸ P ^ n) (Ideal.Quotient.mk _ z) =

@@ -16,7 +16,7 @@ finite-dimensional, has `trace f = trace fN + trace fQ`.
 
 The typical use is a filtration whose graded pieces are known: iterating the identity along
 `M ⊇ M₁ ⊇ ⋯` expresses `trace f` as the sum of the traces on the successive quotients.  That is how
-`Algebra.trace_quotient_pow` computes the trace of `B ⧸ P ^ n` from the trace of `B ⧸ P`.
+`Algebra.trace_quotient_pow_mk` computes the trace of `B ⧸ P ^ n` from the trace of `B ⧸ P`.
 
 ## Main results
 
@@ -33,11 +33,13 @@ namespace LinearMap
 variable {K M N Q : Type*} [Field K]
 variable [AddCommGroup M] [Module K M] [AddCommGroup N] [Module K N] [AddCommGroup Q] [Module K Q]
 
+-- Provenance: the argument below is the one carried by the private
+-- `TauCeti.TensorSquare.trace_eq_add_of_exact` of
+-- `TauCeti/RepresentationTheory/Tensor/Square.lean`, generalized here to an arbitrary short exact
+-- sequence and consumed there.
 /-- **The trace is additive along a short exact sequence.** If `0 → N --i--> M --π--> Q → 0` is
 exact and the endomorphisms `fN`, `f`, `fQ` commute with `i` and `π`, then
-`trace f = trace fN + trace fQ`.
-
-This generalizes the former private `TauCeti.TensorSquare.trace_eq_add_of_exact` implementation. -/
+`trace f = trace fN + trace fQ`. -/
 theorem trace_eq_add_of_exact [FiniteDimensional K M] {i : N →ₗ[K] M} {π : M →ₗ[K] Q}
     (hi : Function.Injective i) (hπ : Function.Surjective π) (hex : Function.Exact i π)
     {f : M →ₗ[K] M} {fN : N →ₗ[K] N} {fQ : Q →ₗ[K] Q}
