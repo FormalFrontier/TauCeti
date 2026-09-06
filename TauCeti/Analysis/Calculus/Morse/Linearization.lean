@@ -5,9 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Analysis.Calculus.FDeriv.Symmetric
 public import Mathlib.Analysis.Calculus.Gradient.Basic
 public import Mathlib.Analysis.InnerProductSpace.Adjoint
-public import TauCeti.Analysis.Calculus.Morse.Index
+public import TauCeti.Analysis.Calculus.Morse.Basic
 
 /-!
 # Linearization of the negative-gradient field at a Morse critical point
@@ -32,11 +33,13 @@ results that identify the operator as the derivative of the gradient and prove s
 ## Main declarations
 
 * `TauCeti.hessianOperator`: the Riesz-represented Hessian as an endomorphism of the Hilbert space.
+* `TauCeti.hessianOperator_congr_of_eventuallyEq`: the operator depends only on the germ of the
+  function at the point.
 * `ContDiffAt.isSelfAdjoint_hessianOperator`: symmetry of the second derivative becomes
   self-adjointness of the Hessian operator.
 * `ContDiffAt.hasFDerivAt_neg_gradient`: the derivative of `-∇ f` is the negative Hessian
   operator.
-* `TauCeti.IsNondegenerateCriticalPoint.neg_gradient_sub_linearization_isLittleO`: the nonlinear
+* `ContDiffAt.neg_gradient_sub_linearization_isLittleO`: at a `C²` critical point the nonlinear
   remainder after subtracting the linearization is little-o of the displacement.
 * `TauCeti.isNondegenerateCriticalPoint_iff_neg_gradient_linearization`: nondegenerate critical
   points are exactly the equilibria with invertible negative-gradient linearization, under `C²`
@@ -46,13 +49,11 @@ results that identify the operator as the derivative of the gradient and prove s
 
 * M. Audin and M. Damian, *Morse Theory and Floer Homology*, Springer Universitext, 2014,
   Chapter 2.
-* [Heegaard Floer homology roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/HeegaardFloer/README.md),
-  Lane M, "Morse homology".
 -/
 
 public section
 
-open InnerProductSpace
+open InnerProductSpace Topology
 open scoped Gradient
 
 noncomputable section
@@ -60,7 +61,7 @@ noncomputable section
 namespace TauCeti
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
-  {f : E → ℝ} {x : E}
+  {f g : E → ℝ} {x : E}
 
 /-- The Hessian of `f` at `x`, represented as an endomorphism of the Hilbert space using the Riesz
 equivalence. Its inner product with `w` is the second derivative of `f` evaluated on `v, w`.
@@ -84,10 +85,14 @@ theorem toDual_hessianOperator (f : E → ℝ) (x : E) :
 @[simp]
 theorem inner_hessianOperator_left (f : E → ℝ) (x v w : E) :
     ⟪hessianOperator f x v, w⟫_ℝ = fderiv ℝ (fderiv ℝ f) x v w := by
-  rw [← InnerProductSpace.toDual_apply_apply]
-  change ((InnerProductSpace.toDual ℝ E).toContinuousLinearEquiv.toContinuousLinearMap ∘L
-    hessianOperator f x) v w = _
-  rw [toDual_hessianOperator]
+  simp only [hessianOperator, ContinuousLinearMap.comp_apply,
+    ContinuousLinearEquiv.coe_coe, LinearIsometryEquiv.coe_toContinuousLinearEquiv]
+  exact InnerProductSpace.toDual_symm_apply
+
+/-- The Hessian operator depends only on the germ of the function at the point. -/
+theorem hessianOperator_congr_of_eventuallyEq (hfg : f =ᶠ[𝓝 x] g) :
+    hessianOperator f x = hessianOperator g x := by
+  rw [hessianOperator, hessianOperator, hfg.fderiv.fderiv_eq]
 
 end TauCeti
 
@@ -119,16 +124,30 @@ theorem hasFDerivAt_gradient (hf : ContDiffAt ℝ 2 f x) :
   have hfd : HasFDerivAt (fderiv ℝ f) (fderiv ℝ (fderiv ℝ f) x) x :=
     (hf.fderiv_right (m := 1) (by norm_num)).differentiableAt one_ne_zero |>.hasFDerivAt
   have h := (InnerProductSpace.toDual ℝ E).symm.toContinuousLinearEquiv.hasFDerivAt.comp x hfd
-  convert h using 1
-  · ext y
-    rfl
-  · rfl
+  -- The composed function is the gradient, by the defining property `toDual_gradient` of `∇ f`.
+  have hfun : ⇑(InnerProductSpace.toDual ℝ E).symm.toContinuousLinearEquiv ∘ fderiv ℝ f = ∇ f := by
+    funext y
+    simp only [Function.comp_apply, LinearIsometryEquiv.coe_toContinuousLinearEquiv]
+    exact ((InnerProductSpace.toDual ℝ E).eq_symm_apply.2 toDual_gradient).symm
+  rw [hfun] at h
+  -- The composed derivative is the Hessian operator, by its definition.
+  rw [hessianOperator]
+  exact h
 
 /-- The negative-gradient vector field is differentiable at a twice continuously differentiable
 point, with derivative minus the Hessian operator. -/
 theorem hasFDerivAt_neg_gradient (hf : ContDiffAt ℝ 2 f x) :
     HasFDerivAt (-∇ f) (-hessianOperator f x) x :=
   (hasFDerivAt_gradient hf).neg
+
+/-- At a critical point of a twice continuously differentiable function, the negative-gradient
+field differs from its linearization by a term of order `o(‖y - x‖)`. This is the nonlinear
+remainder controlled in the local stable-manifold argument. -/
+theorem neg_gradient_sub_linearization_isLittleO (hf : ContDiffAt ℝ 2 f x) (hgrad : ∇ f x = 0) :
+    (fun y ↦ (-∇ f) y + hessianOperator f x (y - x)) =o[nhds x]
+      (fun y ↦ y - x) := by
+  have hrem := (hasFDerivAt_neg_gradient hf).isLittleO
+  simpa only [Pi.neg_apply, hgrad, neg_zero, sub_zero, neg_apply, sub_neg_eq_add] using hrem
 
 end ContDiffAt
 
@@ -173,16 +192,12 @@ theorem IsNondegenerateCriticalPoint.isInvertible_neg_hessianOperator
     (h : IsNondegenerateCriticalPoint f x) : (-hessianOperator f x).IsInvertible :=
   isInvertible_neg_hessianOperator_iff.2 h.isInvertible_hessianOperator
 
-/-- At a nondegenerate critical point, the negative-gradient field differs from its linearization
-by a term of order `o(‖y - x‖)`. This is the nonlinear remainder controlled in the local
-stable-manifold argument. -/
+/-- The nonlinear-remainder estimate at a nondegenerate critical point. -/
 theorem IsNondegenerateCriticalPoint.neg_gradient_sub_linearization_isLittleO
     (h : IsNondegenerateCriticalPoint f x) :
     (fun y ↦ (-∇ f) y + hessianOperator f x (y - x)) =o[nhds x]
-      (fun y ↦ y - x) := by
-  have hrem := (ContDiffAt.hasFDerivAt_neg_gradient h.contDiffAt).isLittleO
-  simpa only [Pi.neg_apply, h.gradient_eq_zero, neg_zero, sub_zero, neg_apply,
-    sub_neg_eq_add] using hrem
+      (fun y ↦ y - x) :=
+  h.contDiffAt.neg_gradient_sub_linearization_isLittleO h.gradient_eq_zero
 
 /-- On a real Hilbert space, nondegeneracy can be read entirely from the gradient and its Hessian
 operator. -/
