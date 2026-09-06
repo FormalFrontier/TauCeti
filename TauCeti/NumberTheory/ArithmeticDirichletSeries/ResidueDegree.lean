@@ -183,11 +183,7 @@ This is the count `o(x / log x)` above, weighted by Chebyshev's `log x` per prim
 estimate a contraction between two number fields discards: the norms satisfy
 `𝔑_{E/ℚ}𝔓 = (𝔑_{K/ℚ}𝔭)^{f(𝔓/𝔭)}`, so a term of `ϑ` moves to a different value of `n` unless the
 relative residue degree is one, and `f(𝔓/𝔭) ≥ 2` forces `f(𝔓/p) ≥ 2`, which is what this absolute
-statement covers.
-
-The need for this as a separately named theorem comes from the Chebotarev roadmap
-(`Chebotarev/README.md` Layer 11.3, second discard estimate), which states it in exactly this
-form. -/
+statement covers. -/
 theorem primeTheta_higherDegreePrimes_isLittleO (K : Type*) [Field K] [NumberField K] :
     primeTheta K (higherDegreePrimes K) =o[atTop] fun x : ℝ ↦ x := by
   refine IsBigO.trans_isLittleO (IsBigO.of_bound 1 (.of_forall fun x ↦ ?_))

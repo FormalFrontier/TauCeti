@@ -250,6 +250,47 @@ theorem higherPrimePowerTheta_mono (K : Type*) [Field K] [NumberField K] :
 
 /-! ### The `O(√x log² x)` estimate -/
 
+/-- **A fixed prime base contributes at most `log x`.** For a finset `F` of prime powers all of
+base `v` and of absolute norm at most `x`, the total weight `#F · log N(v)` is at most `log x`:
+distinct members of `F` have distinct exponents, and every exponent is at most
+`log x / log N(v)`.
+
+This is the counting core shared by the two weighted estimates over a prime fibre, which differ
+only in which prime powers they collect. It was factored out of
+`TauCeti.higherPrimePowerTheta_le_card_primesLE_mul_log` below, whose proof first made the
+argument for exponents `k ≥ 2`; `TauCeti.primePsi_le_ncard_mul_log` needs the same count with
+`k ≥ 1`, and both now go through here. -/
+theorem card_fiber_mul_log_absNorm_le (hx : 1 ≤ x) {v : HeightOneSpectrum (𝓞 K)}
+    {F : Finset (IdealPrimePower K)}
+    (hF : ∀ A ∈ F, ((Ideal.absNorm v.asIdeal : ℝ)) ^ primePowerExponent A ≤ x)
+    (hbase : ∀ A ∈ F, primePowerBase A = v) :
+    (F.card : ℝ) * Real.log (Ideal.absNorm v.asIdeal) ≤ Real.log x := by
+  classical
+  have hlogx : 0 ≤ Real.log x := Real.log_nonneg hx
+  have hLpos : 0 < Real.log (Ideal.absNorm v.asIdeal) :=
+    Real.log_pos (by linarith [two_le_absNorm_asIdeal_real v])
+  have hexpbound : ∀ A ∈ F,
+      primePowerExponent A ∈ Finset.Icc 1 ⌊Real.log x / Real.log (Ideal.absNorm v.asIdeal)⌋₊ := by
+    intro A hA
+    have hlog : (primePowerExponent A : ℝ) * Real.log (Ideal.absNorm v.asIdeal) ≤ Real.log x := by
+      have := Real.log_le_log
+        (pow_pos (by linarith [two_le_absNorm_asIdeal_real v]) _) (hF A hA)
+      rwa [Real.log_pow] at this
+    exact Finset.mem_Icc.mpr
+      ⟨primePowerExponent_pos A, Nat.le_floor ((le_div_iff₀ hLpos).mpr hlog)⟩
+  have hcard : F.card ≤ ⌊Real.log x / Real.log (Ideal.absNorm v.asIdeal)⌋₊ := by
+    refine le_trans (Finset.card_le_card_of_injOn primePowerExponent hexpbound ?_) ?_
+    · exact fun A hA B hB h ↦
+        idealPrimePower_eq_of_base_eq_of_exponent_eq ((hbase A hA).trans (hbase B hB).symm) h
+    · rw [Nat.card_Icc]; omega
+  calc (F.card : ℝ) * Real.log (Ideal.absNorm v.asIdeal)
+      ≤ (⌊Real.log x / Real.log (Ideal.absNorm v.asIdeal)⌋₊ : ℝ)
+        * Real.log (Ideal.absNorm v.asIdeal) :=
+        mul_le_mul_of_nonneg_right (by exact_mod_cast hcard) hLpos.le
+    _ ≤ Real.log x := by
+        rw [← le_div_iff₀ hLpos]
+        exact Nat.floor_le (by positivity)
+
 /-- Fibring the higher prime powers over their prime base: for a fixed prime `𝔭`, the exponents
 `k ≥ 2` with `N(𝔭) ^ k ≤ x` contribute at most `log x` in total, and only primes of norm at most
 `√x` occur at all. -/
@@ -289,36 +330,12 @@ theorem higherPrimePowerTheta_le_card_primesLE_mul_log
     (fun v ↦ Real.log (Ideal.absNorm v.asIdeal))]
   refine (Finset.sum_le_card_nsmul _ _ (Real.log x) ?_).trans_eq (by rw [nsmul_eq_mul])
   intro v _
-  have hLpos : 0 < Real.log (Ideal.absNorm v.asIdeal) :=
-    Real.log_pos (by linarith [two_le_absNorm_asIdeal_real v])
   rw [Finset.sum_const, nsmul_eq_mul]
-  have hexpbound : ∀ A ∈ T.filter (fun A ↦ primePowerBase A = v),
-      primePowerExponent A ∈ Finset.Icc 2 ⌊Real.log x / Real.log (Ideal.absNorm v.asIdeal)⌋₊ := by
-    intro A hA
-    have hbase : primePowerBase A = v := (Finset.mem_filter.mp hA).2
-    obtain ⟨hle, hexp⟩ := hmemT A (Finset.mem_of_mem_filter _ hA)
-    rw [hbase] at hle
-    have hlog : (primePowerExponent A : ℝ) * Real.log (Ideal.absNorm v.asIdeal) ≤ Real.log x := by
-      have := Real.log_le_log
-        (pow_pos (by linarith [two_le_absNorm_asIdeal_real v]) _) hle
-      rwa [Real.log_pow] at this
-    exact Finset.mem_Icc.mpr ⟨hexp, Nat.le_floor ((le_div_iff₀ hLpos).mpr hlog)⟩
-  have hcard : (T.filter (fun A ↦ primePowerBase A = v)).card
-      ≤ ⌊Real.log x / Real.log (Ideal.absNorm v.asIdeal)⌋₊ := by
-    refine le_trans (Finset.card_le_card_of_injOn primePowerExponent hexpbound ?_) ?_
-    · intro A hA B hB h
-      exact idealPrimePower_eq_of_base_eq_of_exponent_eq
-        (((Finset.mem_filter.mp hA).2).trans ((Finset.mem_filter.mp hB).2).symm) h
-    · rw [Nat.card_Icc]
-      omega
-  calc ((T.filter (fun A ↦ primePowerBase A = v)).card : ℝ)
-        * Real.log (Ideal.absNorm v.asIdeal)
-      ≤ (⌊Real.log x / Real.log (Ideal.absNorm v.asIdeal)⌋₊ : ℝ)
-        * Real.log (Ideal.absNorm v.asIdeal) :=
-        mul_le_mul_of_nonneg_right (by exact_mod_cast hcard) hLpos.le
-    _ ≤ Real.log x := by
-        rw [← le_div_iff₀ hLpos]
-        exact Nat.floor_le (by positivity)
+  exact card_fiber_mul_log_absNorm_le hx
+    (fun A hA ↦ by
+      obtain ⟨hle, -⟩ := hmemT A (Finset.mem_of_mem_filter _ hA)
+      rwa [(Finset.mem_filter.mp hA).2] at hle)
+    (fun A hA ↦ (Finset.mem_filter.mp hA).2)
 
 /-- The **higher prime powers are negligible**, with an explicit constant:
 `ψ(x) - ϑ(x) ≤ [K:ℚ] / (2 log 2) · √x log² x` for `x ≥ 1`. -/

@@ -65,9 +65,7 @@ show that finite changes do not affect a density. In the same spirit,
 `TauCeti.primeTheta_isLittleO_of_finite` records that a finite set of primes contributes an
 eventually constant amount to `ϑ_K`, hence `o(x)`: an exceptional set can be discarded from a
 counting argument outright, not merely from a density. Its `ψ` companion is
-`TauCeti.primePsi_isLittleO_of_finite`. Both are consumed by the Chebotarev roadmap
-(`Chebotarev/README.md` Layer 11.3, the discard estimates), which is where the need for them as
-separately named theorems comes from.
+`TauCeti.primePsi_isLittleO_of_finite`.
 
 ## Roadmap role
 
@@ -676,6 +674,9 @@ theorem primeTheta_isLittleO_of_finite (hS : S.Finite) :
       (fun v : HeightOneSpectrum (𝓞 K) ↦ Ideal.absNorm v.asIdeal)
       (S.indicator fun v ↦ Real.log (Ideal.absNorm v.asIdeal : ℝ)) hS.toFinset
       fun v hv ↦ Set.indicator_of_notMem (by simpa using hv) _] with x hx
+  -- `primeTheta` is `primeSummatory` of the indicator weight, and that is `summatory` along the
+  -- absolute norm; naming both keeps the step independent of how the wrappers are defined.
+  simp only [primeTheta, primeSummatory]
   exact hx.symm
 
 /-- If two prime sets have finite symmetric difference, their logarithmically weighted counts

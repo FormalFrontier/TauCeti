@@ -41,8 +41,7 @@ system does not get that hypothesis for free; what it has to supply is the domin
   standard weight restricted to any set of prime powers containing exactly the primes of `S`.
 * `TauCeti.primePsi_sub_primeTheta` identifies `ψ - ϑ` with the higher-prime-power sum.
 * `TauCeti.primePsi_le_ncard_mul_log`: a finite set of primes contributes at most `#S · log x` to
-  `ψ`, which is the Chebotarev roadmap's Layer 11.3 third discard estimate as stated there, with
-  `TauCeti.primePsi_isBigO_log_of_finite` and `TauCeti.primePsi_isLittleO_of_finite` its
+  `ψ`, with `TauCeti.primePsi_isBigO_log_of_finite` and `TauCeti.primePsi_isLittleO_of_finite` its
   asymptotic forms.
 * `TauCeti.standardPrimePowerRemoval` proves `HasNegligibleHigherPrimePowers K S` for every `S`,
   from the Layer 5 estimate `ψ(x) - ϑ(x) = O(√x log² x)`.
@@ -233,47 +232,12 @@ theorem standardPrimePowerRemoval (K : Type*) [Field K] [NumberField K]
   rw [hasNegligibleHigherPrimePowers_iff]
   simpa only [primePsi_sub_primeTheta] using primePowerSummatory_indicator_isLittleO K S
 
-/-- The prime powers of a fixed base `v` and norm at most `x` carry total weight at most `log x`:
-their exponents are distinct and each is at most `log x / log N(v)`. -/
-private theorem card_fiber_mul_log_le (v : HeightOneSpectrum (𝓞 K)) (hx : 1 ≤ x)
-    {F : Finset (IdealPrimePower K)}
-    (hF : ∀ A ∈ F, ((Ideal.absNorm v.asIdeal : ℝ)) ^ primePowerExponent A ≤ x)
-    (hbase : ∀ A ∈ F, primePowerBase A = v) :
-    (F.card : ℝ) * Real.log (Ideal.absNorm v.asIdeal) ≤ Real.log x := by
-  classical
-  have hlogx : 0 ≤ Real.log x := Real.log_nonneg hx
-  have hLpos : 0 < Real.log (Ideal.absNorm v.asIdeal) :=
-    Real.log_pos (by linarith [two_le_absNorm_asIdeal_real v])
-  have hexpbound : ∀ A ∈ F,
-      primePowerExponent A ∈ Finset.Icc 1 ⌊Real.log x / Real.log (Ideal.absNorm v.asIdeal)⌋₊ := by
-    intro A hA
-    have hlog : (primePowerExponent A : ℝ) * Real.log (Ideal.absNorm v.asIdeal) ≤ Real.log x := by
-      have := Real.log_le_log
-        (pow_pos (by linarith [two_le_absNorm_asIdeal_real v]) _) (hF A hA)
-      rwa [Real.log_pow] at this
-    exact Finset.mem_Icc.mpr
-      ⟨primePowerExponent_pos A, Nat.le_floor ((le_div_iff₀ hLpos).mpr hlog)⟩
-  have hcard : F.card ≤ ⌊Real.log x / Real.log (Ideal.absNorm v.asIdeal)⌋₊ := by
-    refine le_trans (Finset.card_le_card_of_injOn primePowerExponent hexpbound ?_) ?_
-    · exact fun A hA B hB h ↦
-        idealPrimePower_eq_of_base_eq_of_exponent_eq ((hbase A hA).trans (hbase B hB).symm) h
-    · rw [Nat.card_Icc]; omega
-  calc (F.card : ℝ) * Real.log (Ideal.absNorm v.asIdeal)
-      ≤ (⌊Real.log x / Real.log (Ideal.absNorm v.asIdeal)⌋₊ : ℝ)
-        * Real.log (Ideal.absNorm v.asIdeal) :=
-        mul_le_mul_of_nonneg_right (by exact_mod_cast hcard) hLpos.le
-    _ ≤ Real.log x := by
-        rw [← le_div_iff₀ hLpos]
-        exact Nat.floor_le (by positivity)
-
 /-- **A finite set of primes contributes at most `#S · log x` to `ψ`.** Fibring over the prime
 base, the exponents `k ≥ 1` with `N(𝔭) ^ k ≤ x` contribute at most `log x` in total for each of the
 finitely many `𝔭`.
 
-This is the third of the four discard estimates the Chebotarev roadmap's Layer 11.3 asks for, in
-the form stated there: `∑_{𝔭 ∈ T} ∑_{N𝔭^j ≤ x} log N𝔭 ≤ #T · log x`. Its exceptional sets are
-`ramifiedPrimes`, the primes of an intermediate field above them, and the primes ramified in a
-compositum but not below. -/
+A counting argument can therefore discard a finite exceptional set of primes — those ramifying in
+an extension, say, or lying above such — at a cost of `O(log x)`. -/
 theorem primePsi_le_ncard_mul_log (hS : S.Finite) (hx : 1 ≤ x) :
     primePsi K S x ≤ S.ncard * Real.log x := by
   classical
@@ -305,7 +269,7 @@ theorem primePsi_le_ncard_mul_log (hS : S.Finite) (hx : 1 ≤ x) :
   refine (Finset.sum_le_card_nsmul _ _ (Real.log x) ?_).trans ?_
   · intro v _
     rw [Finset.sum_const, nsmul_eq_mul]
-    exact card_fiber_mul_log_le v hx (fun A hA ↦ by
+    exact card_fiber_mul_log_absNorm_le hx (fun A hA ↦ by
       obtain ⟨hle, -⟩ := hmemT A (Finset.mem_of_mem_filter _ hA)
       rwa [(Finset.mem_filter.mp hA).2] at hle)
       (fun A hA ↦ (Finset.mem_filter.mp hA).2)
