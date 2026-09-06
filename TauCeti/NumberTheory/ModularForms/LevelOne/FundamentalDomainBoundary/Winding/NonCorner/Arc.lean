@@ -418,11 +418,13 @@ private lemma truncated_integral_spec_arc (hH : 1 < H) (hnorm : ‖w‖ = 1)
       exact norm_sub_arc_le_of_near ⟨by linarith [hs.1, ht₀.1], by linarith [hs.2, ht₀.2]⟩
         ⟨ht₀.1.le, ht₀.2.le⟩ (by linarith [ht₀.1, ht₀.2])
         (abs_le.mpr ⟨by linarith [hs.1], by linarith [hs.2]⟩))
+  -- the arc spans twice the corner's angular unit, so the half-width scales by `π / 6`
+  have hδ6 : δ * (Real.pi / 6) = 2 * Real.arcsin (ε / 2) := by
+    rw [← fdBoundaryArcExcisionHalfWidth_mul_pi_div_twelve ε, hδ_def]
+    ring
   refine ⟨hint, ?_⟩
   rw [hval, ← hw, log_sub_log_arc ⟨ht₀.1.le, ht₀.2.le⟩ hδ0 (by linarith [ht₀.1])
-    (by linarith [ht₀.2]),
-    show δ * (Real.pi / 6) = 2 * Real.arcsin (ε / 2) by
-      rw [← fdBoundaryArcExcisionHalfWidth_mul_pi_div_twelve ε, hδ_def]; ring]
+    (by linarith [ht₀.2]), hδ6]
   push_cast
   ring
 
