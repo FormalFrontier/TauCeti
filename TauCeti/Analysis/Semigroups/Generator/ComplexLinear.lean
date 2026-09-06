@@ -283,7 +283,7 @@ theorem isComplexLinear_of_generator_eq_restrictScalars (S : StronglyContinuousS
       Subtype.ext (by rw [Submodule.coe_smul]; exact Complex.smulIEquiv_apply x)
     rw [LinearPMap.congr_fun_restrictScalars ℝ hA _ hIxA,
       LinearPMap.congr_fun_restrictScalars ℝ hA hx hxA, hmk, A.map_smul, Complex.smulIEquiv_apply]
-  have h := S.apply_apply_eq_apply_apply_of_generator_comm (Complex.smulIEquiv X) hdom hcomm t x
+  have h := S.map_comm_of_generator_comm (Complex.smulIEquiv X) hdom hcomm t x
   rwa [Complex.smulIEquiv_apply, Complex.smulIEquiv_apply] at h
 
 omit [CompleteSpace X] in

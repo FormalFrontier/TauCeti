@@ -27,7 +27,7 @@ with `S`; this is how complex linearity of a semigroup is read off its generator
 * `TauCeti.Semigroups.StronglyContinuousSemigroup.similar_generator_apply`: the transported
   generator is `e ∘ A ∘ e⁻¹`.
 * `TauCeti.Semigroups.StronglyContinuousSemigroup.similar_eq_self_of_generator_comm` and
-  `apply_apply_eq_apply_apply_of_generator_comm`: the commutation criterion, `S.similar e = S`
+  `map_comm_of_generator_comm`: the commutation criterion, `S.similar e = S`
   when `e` commutes with the generator, so `S t` commutes with `e`.
 
 ## References
@@ -108,7 +108,7 @@ theorem similar_eq_self_of_generator_comm [CompleteSpace X] (S : StronglyContinu
 
 /-- The operators of a C₀-semigroup commute with an invertible operator that commutes with the
 generator. -/
-theorem apply_apply_eq_apply_apply_of_generator_comm [CompleteSpace X]
+theorem map_comm_of_generator_comm [CompleteSpace X]
     (S : StronglyContinuousSemigroup X) (e : X ≃L[ℝ] X) (hdom : ∀ x, e x ∈ S.domain ↔ x ∈ S.domain)
     (hcomm : ∀ (x : X) (hx : x ∈ S.generator.domain),
       S.generator ⟨e x, by rw [S.generator_domain, hdom, ← S.generator_domain]; exact hx⟩ =
