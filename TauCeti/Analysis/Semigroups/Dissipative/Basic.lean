@@ -108,9 +108,7 @@ theorem IsDissipative.norm_le_of_smul_sub_eq {A : X →ₗ.[ℝ] X} (hA : IsDiss
 theorem IsDissipative.smul_sub_injective {A : X →ₗ.[ℝ] X} (hA : IsDissipative A)
     {lambda : ℝ} (hlambda : 0 < lambda) :
     Function.Injective fun x : A.domain => lambda • (x : X) - A x :=
-  LinearPMap.smul_sub_injective_of_norm_le (K := (lambda⁻¹).toNNReal) fun x => by
-    rw [Real.coe_toNNReal _ (inv_nonneg.mpr hlambda.le), le_inv_mul_iff₀ hlambda]
-    exact hA lambda hlambda x
+  LinearPMap.smul_sub_injective_of_norm_le hlambda (hA lambda hlambda)
 
 /-- Dissipativity passes to restrictions: if `A ≤ B` as unbounded operators and `B` is
 dissipative, then so is `A`. -/

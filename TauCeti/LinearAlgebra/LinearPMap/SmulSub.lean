@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.LinearPMap
+public import TauCeti.LinearAlgebra.LinearPMap.Shift
 
 /-!
 # The shift `c • x - A x` of a partial linear map as a linear map on its domain
@@ -15,14 +16,15 @@ linear map from the domain of `A` to `E`.  Bundling it (`LinearPMap.smulSub`) gi
 `LinearMap` API, in particular to its range as a submodule, for arguments about resolvents,
 deficiency shifts and dissipativity, where surjectivity or density of this range is the question.
 Up to sign it is the scalar shift `TauCeti.LinearPMap.subScalar A c = A - c • 1` of
-`TauCeti.Analysis.Normed.Operator.LinearPMap.Shift`, regarded as a linear map on the domain; the
-relation is recorded next to that file, in
-`TauCeti.Analysis.Normed.Operator.LinearPMap.SmulSub` (`smulSub_apply_eq_neg_subScalar`).
+`TauCeti.LinearAlgebra.LinearPMap.Shift`, regarded as a linear map on the domain
+(`smulSub_apply_eq_neg_subScalar`), so results about the range of either form transfer to the
+other.
 
 ## Main declarations
 
 * `LinearPMap.smulSub`: the bundled shift `x ↦ c • x - A x` on the domain of `A`.
 * `LinearPMap.smulSub_apply` and `LinearPMap.coe_range_smulSub`: its values and its range.
+* `LinearPMap.smulSub_apply_eq_neg_subScalar`: `smulSub c A` is `-(subScalar A c)` pointwise.
 -/
 
 public section
@@ -39,6 +41,13 @@ def smulSub (c : R) (A : E →ₗ.[R] E) : A.domain →ₗ[R] E :=
 theorem smulSub_apply (c : R) (A : E →ₗ.[R] E) (x : A.domain) :
     A.smulSub c x = c • (x : E) - A x :=
   (rfl)
+
+/-- The bundled shift `c • x - A x` is the negative of the scalar shift `subScalar A c = A - c • 1`
+of the same domain, pointwise. -/
+theorem smulSub_apply_eq_neg_subScalar (c : R) (A : E →ₗ.[R] E) (x : A.domain) :
+    A.smulSub c x = -TauCeti.LinearPMap.subScalar A c
+      ⟨x, (TauCeti.LinearPMap.subScalar_domain A c).symm ▸ x.property⟩ := by
+  rw [A.smulSub_apply, TauCeti.LinearPMap.subScalar_apply, neg_sub]
 
 /-- The range of the bundled shift is the range of the shift. -/
 theorem coe_range_smulSub (c : R) (A : E →ₗ.[R] E) :

@@ -9,7 +9,6 @@ public import Mathlib.Analysis.Normed.Module.Basic
 public import Mathlib.Analysis.Normed.Operator.ContinuousLinearMap
 public import Mathlib.Topology.Algebra.Module.LinearPMap
 public import TauCeti.LinearAlgebra.LinearPMap.SmulSub
-public import TauCeti.Analysis.Normed.Operator.LinearPMap.Shift
 
 /-!
 # Shifts of a partial linear map on a normed space
@@ -22,15 +21,8 @@ is then an antilipschitz map on the complete graph of `A`.  These are the common
 injectivity of `λ - A` for a dissipative `A` and of the closed-range property of the nonreal
 shifts of a closed symmetric `A`.
 
-The bundled shift `LinearPMap.smulSub c A` is, up to sign, the scalar shift
-`TauCeti.LinearPMap.subScalar A c = A - c • 1` of the neighbouring file
-`TauCeti.Analysis.Normed.Operator.LinearPMap.Shift`, regarded as a linear map on the domain
-(`LinearPMap.smulSub_apply_eq_neg_subScalar`, a purely algebraic identity), so results about the
-range of either form transfer to the other.
-
 ## Main results
 
-* `LinearPMap.smulSub_apply_eq_neg_subScalar`: `smulSub c A` is `-(subScalar A c)` pointwise.
 * `LinearPMap.smul_sub_injective_of_norm_le`: a shift bounded below by a multiple of `‖x‖` is
   injective.
 * `LinearPMap.graphSmulSub`: the shift as a continuous linear map on the graph of `A`, with
@@ -45,29 +37,17 @@ open scoped NNReal
 
 namespace LinearPMap
 
-section SubScalar
-
-variable {R E : Type*} [CommRing R] [AddCommGroup E] [Module R E]
-
-/-- The bundled shift `c • x - A x` is the negative of the scalar shift `subScalar A c = A - c • 1`
-of the same domain, pointwise. -/
-theorem smulSub_apply_eq_neg_subScalar (c : R) (A : E →ₗ.[R] E) (x : A.domain) :
-    A.smulSub c x = -TauCeti.LinearPMap.subScalar A c
-      ⟨x, (TauCeti.LinearPMap.subScalar_domain A c).symm ▸ x.property⟩ := by
-  rw [A.smulSub_apply, TauCeti.LinearPMap.subScalar_apply, neg_sub]
-
-end SubScalar
-
 section Injective
 
 variable {𝕜 E : Type*} [CommRing 𝕜] [NormedAddCommGroup E] [Module 𝕜 E]
 
-/-- A shift `x ↦ c • x - A x` with `‖x‖ ≤ K * ‖c • x - A x‖` is injective, being antilipschitz. -/
-theorem smul_sub_injective_of_norm_le {A : E →ₗ.[𝕜] E} {c : 𝕜} {K : ℝ≥0}
-    (h : ∀ x : A.domain, ‖(x : E)‖ ≤ K * ‖c • (x : E) - A x‖) :
+/-- A shift `x ↦ c • x - A x` dominating `K * ‖x‖` for some `K > 0` is injective, being
+antilipschitz. -/
+theorem smul_sub_injective_of_norm_le {A : E →ₗ.[𝕜] E} {c : 𝕜} {K : ℝ} (hK : 0 < K)
+    (h : ∀ x : A.domain, K * ‖(x : E)‖ ≤ ‖c • (x : E) - A x‖) :
     Function.Injective fun x : A.domain => c • (x : E) - A x := fun x y hxy =>
-  (AddMonoidHomClass.antilipschitz_of_bound (A.smulSub c) fun x => by
-    rw [A.smulSub_apply]
+  (AddMonoidHomClass.antilipschitz_of_bound (A.smulSub c) (K := K⁻¹.toNNReal) fun x => by
+    rw [A.smulSub_apply, Real.coe_toNNReal _ (inv_nonneg.mpr hK.le), le_inv_mul_iff₀ hK]
     exact h x).injective (by rwa [A.smulSub_apply, A.smulSub_apply])
 
 end Injective

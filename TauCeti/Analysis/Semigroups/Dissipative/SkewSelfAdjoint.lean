@@ -65,7 +65,7 @@ theorem IsFormalAdjoint.isDissipative_smul_restrictScalars {A : E →ₗ.[ℂ] E
   apply (TauCeti.Semigroups.isDissipative_iff_real_inner_nonpos _).mpr
   intro x
   rw [real_inner_eq_re_inner, (c • A).restrictScalars_apply ℝ x, LinearPMap.smul_apply,
-    RCLike.re_to_complex, hA.re_inner_smul_apply_self c, hc, zero_mul]
+    hA.re_inner_smul_apply_self c, RCLike.re_to_complex, hc, zero_mul]
 
 /-- The range condition for a nonreal multiple `c • A` of a self-adjoint partial linear map:
 `1 - c • A = c • (c⁻¹ - A)` is surjective because the nonreal shift `c⁻¹ - A` is. -/
