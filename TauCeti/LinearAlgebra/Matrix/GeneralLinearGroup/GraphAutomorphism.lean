@@ -388,9 +388,11 @@ elementary transvection `x_{ij}(c)` to `x_{rev j, rev i}(ε c)` with the sign
 
 The reversal of the two indices is the reversal of the Bourbaki numbering, and the sign is the one
 forced by the Chevalley structure constants once the pinning has normalized the parameters on the
-simple root subgroups. It cannot be normalized away: the sum `i + j` is odd on a simple root, where
-`TauCeti.typeAGraphAutomorphism_transvectionUnit` records the sign-free equation, but even on some
-other roots, for instance on `ε_0 - ε_2` once the rank is at least two. -/
+simple root subgroups. In this pinning the sign is not always `1`: the sum `i + j` is odd on a
+simple root, where `TauCeti.typeAGraphAutomorphism_transvectionUnit` records the sign-free equation,
+but even on some other roots, for instance on `ε_0 - ε_2` once the rank is at least two. Whether
+some other parametrization of the root subgroups makes every sign trivial at once is a question
+about the Chevalley commutator constants, and is not addressed here. -/
 theorem typeAGraphAutomorphism_transvectionUnit_of_ne (r : ℕ) {i j : Fin (r + 1)}
     (hij : i ≠ j) (c : A) :
     typeAGraphAutomorphism r A (transvectionUnit hij c) =
