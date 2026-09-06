@@ -74,7 +74,7 @@ theorem map_scaled_div_gammaMeasure {a b r : ℝ} (ha : 0 < a) (hb : 0 < b) (hr 
         filter_upwards [ae_mem_prod_Ioi_gammaMeasure ha hb hr hr] with z hz
         have hz1 : 0 < z.1 := hz.1
         have hz2 : 0 < z.2 := hz.2
-        exact fisherSnedecorMap_div_add ha2.ne' hb2.ne' hz2.ne' (add_pos hz1 hz2).ne'
+        exact fisherSnedecorMap_div_add (add_pos hz1 hz2).ne'
     _ = (((gammaMeasure a r).prod (gammaMeasure b r)).map (fun z ↦ z.1 / (z.1 + z.2))).map
           (fisherSnedecorMap (2 * a) (2 * b)) := by
         rw [Measure.map_map (measurable_fisherSnedecorMap _ _) (by fun_prop)]

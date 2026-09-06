@@ -193,18 +193,18 @@ theorem fisherSnedecorMap_mapInv (hm : m ≠ 0) (hn : n ≠ 0) {x : ℝ}
   field_simp [hm, hn, hden]
   ring
 
-/-- Away from the zeros of the denominators involved, the beta-to-F transformation with `m` and
-`n` degrees of freedom sends the ratio-to-sum `u / (u + v)` to the variance ratio
-`(u / m) / (v / n)`; equivalently, it inverts the passage from a variance ratio to the fraction of
-the total that its numerator carries. -/
-theorem fisherSnedecorMap_div_add (hm : m ≠ 0) (hn : n ≠ 0) {u v : ℝ} (hv : v ≠ 0)
-    (huv : u + v ≠ 0) :
+/-- If `u + v ≠ 0`, the beta-to-F transformation with `m` and `n` degrees of freedom sends the
+ratio-to-sum `u / (u + v)` to the variance ratio `(u / m) / (v / n)`; equivalently, it inverts the
+passage from a variance ratio to the fraction of the total that its numerator carries. -/
+@[simp]
+theorem fisherSnedecorMap_div_add {u v : ℝ} (huv : u + v ≠ 0) :
     fisherSnedecorMap m n (u / (u + v)) = u / m / (v / n) := by
   have hsub : 1 - u / (u + v) = v / (u + v) := by
     field_simp
     ring
-  rw [fisherSnedecorMap_def, hsub]
-  field_simp
+  rw [fisherSnedecorMap_def, hsub, mul_div_assoc, div_div_div_cancel_right₀ huv]
+  simp only [div_eq_mul_inv, mul_inv, inv_inv]
+  ring
 
 /-- For positive degrees of freedom, the inverse transformation maps `Ioi 0` into `Ioo 0 1`. -/
 theorem fisherSnedecorMapInv_mem_Ioo (hm : 0 < m) (hn : 0 < n) {x : ℝ} (hx : 0 < x) :
