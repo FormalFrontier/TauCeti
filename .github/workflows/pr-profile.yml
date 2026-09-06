@@ -298,11 +298,53 @@ jobs:
           # the fixed package is taken from the archive pool; it needs libc6 >= 2.38 and noble has
           # 2.39.
           deb="bubblewrap_${BWRAP_VER}_amd64.deb"
-          curl -sSL --fail "https://archive.ubuntu.com/ubuntu/pool/main/b/bubblewrap/${deb}" -o bwrap.deb \
-            || curl -sSL --fail "https://security.ubuntu.com/ubuntu/pool/main/b/bubblewrap/${deb}" -o bwrap.deb
-          echo "${BWRAP_DEB_SHA256}  bwrap.deb" | sha256sum -c -
+          if ! curl -sSL --fail "https://archive.ubuntu.com/ubuntu/pool/main/b/bubblewrap/${deb}" -o bwrap.deb \
+             && ! curl -sSL --fail "https://security.ubuntu.com/ubuntu/pool/main/b/bubblewrap/${deb}" -o bwrap.deb; then
+            echo "::error::bubblewrap ${BWRAP_VER} is gone from the Ubuntu pool. The sandbox cannot be installed, so no PR can build until the pin is moved."
+            printf '%s\n' \
+              '' \
+              "WHAT HAPPENED: BWRAP_VER is pinned to ${BWRAP_VER}, which Ubuntu published in its" \
+              "development suite. Those pool entries are deleted once a newer bubblewrap is" \
+              "uploaded, so this pin expires on Ubuntu's schedule, not ours. Expect months," \
+              "not years." \
+              '' \
+              'HOW TO FIX IT. Find the current version in any suite whose bubblewrap is 0.12.0' \
+              'or newer:' \
+              '' \
+              '  suite=stonking' \
+              '  curl -s "https://archive.ubuntu.com/ubuntu/dists/$suite/main/binary-amd64/Packages.gz" \' \
+              "    | gunzip | awk '/^Package: bubblewrap\$/{f=1} f&&/^Version:/{print \$2; exit}'" \
+              '' \
+              'Download it and take both hashes:' \
+              '' \
+              '  curl -sSLO "https://archive.ubuntu.com/ubuntu/pool/main/b/bubblewrap/bubblewrap_${ver}_amd64.deb"' \
+              '  sha256sum "bubblewrap_${ver}_amd64.deb"   # BWRAP_DEB_SHA256' \
+              '  sudo dpkg -i "bubblewrap_${ver}_amd64.deb"' \
+              '  sha256sum /usr/bin/bwrap                  # BWRAP_SHA256' \
+              '' \
+              'Set BWRAP_VER, BWRAP_DEB_SHA256 and BWRAP_SHA256 in all three of' \
+              '.github/workflows/{pr-build,pr-profile,nightly-verify}.yml. They must agree;' \
+              'scripts/test_bwrap_pin.py fails if they do not.' \
+              '' \
+              'DO NOT PIN BELOW 0.12.0. Earlier versions let a symlink in a candidate checkout' \
+              'redirect the files bwrap creates while setting the sandbox up' \
+              '(GHSA-pxhw-h44j-8pfx), which is exactly what these policies do.' \
+              '' \
+              'BETTER FIX: host a copy of the vetted .deb somewhere we control, or build' \
+              'bubblewrap from a pinned source tag, so the sandbox stops depending on how long' \
+              "Ubuntu keeps a development suite's pool entries." \
+              '' >&2
+            exit 1
+          fi
+          if ! echo "${BWRAP_DEB_SHA256}  bwrap.deb" | sha256sum -c -; then
+            echo "::error::bubblewrap ${BWRAP_VER} downloaded but does not match BWRAP_DEB_SHA256. Ubuntu does not rewrite published packages, so either the pin is wrong or the download was tampered with. Re-derive the hashes rather than relaxing this check."
+            exit 1
+          fi
           sudo dpkg -i bwrap.deb >/dev/null
-          echo "${BWRAP_SHA256}  /usr/bin/bwrap" | sha256sum -c -
+          if ! echo "${BWRAP_SHA256}  /usr/bin/bwrap" | sha256sum -c -; then
+            echo "::error::the installed /usr/bin/bwrap does not match BWRAP_SHA256, so the binary that would run is not the one that was vetted. Re-derive it with: sudo dpkg -i ${deb} && sha256sum /usr/bin/bwrap"
+            exit 1
+          fi
           rm -f bwrap.deb
           /usr/bin/bwrap --version
 
