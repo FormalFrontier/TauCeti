@@ -14,10 +14,12 @@ public import Mathlib.Analysis.SpecialFunctions.Complex.CircleAddChar
 /-!
 # The circle group: Fourier monomials are its irreducible characters
 
-The circle `AddCircle T` is a compact abelian group, so every irreducible representation of it is
-one-dimensional and its own character. This file builds those representations from Mathlib's
-Fourier monomials and checks that the general compact-group theory, specialized to the circle,
-returns Mathlib's Fourier analysis on the nose.
+The circle `AddCircle T` is a compact abelian group. This file builds its continuous
+representations on `ℂ` from Mathlib's Fourier monomials, shows that they exhaust the
+representations carried by `ℂ`, and checks that the general compact-group theory, specialized to
+the circle, returns Mathlib's Fourier analysis on the nose. That every irreducible representation
+of a compact abelian group is one-dimensional — the theorem that would promote this to a
+classification of *all* irreducibles — is not proved here; see the implementation notes.
 
 Concretely, `fourierRep T n` is the continuous representation of the circle on `ℂ` in which the
 group element `x` acts by multiplication by `fourier n x`. It is one-dimensional, hence
