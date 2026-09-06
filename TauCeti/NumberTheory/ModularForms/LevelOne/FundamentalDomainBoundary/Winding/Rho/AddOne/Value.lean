@@ -342,6 +342,18 @@ private lemma norm_le_of_near_rho_add_one {δL δR : ℝ} (hH : Real.sqrt 3 / 2 
     exact norm_fdBoundary_sub_rho_add_one_arc_le H ⟨h1.le, by linarith [ht.2]⟩
       (by linarith) (by linarith [ht.2])
 
+/-- **The vertical excision half-width.** On the left leg the excision parameter `ε` is
+converted into a parameter half-width by dividing by the leg's length `H - √3/2`; the three
+facts the excision argument needs are that it is positive, at most `1`, and undoes the
+division. The companion on the arc is
+`fdBoundaryArcExcisionHalfWidth_pos_and_lt_one_and_two_mul_sin_eq`. -/
+private lemma verticalExcisionHalfWidth_pos_and_le_one_and_mul_eq (hε : 0 < ε)
+    (hεH : ε < H - Real.sqrt 3 / 2) :
+    0 < ε / (H - Real.sqrt 3 / 2) ∧ ε / (H - Real.sqrt 3 / 2) ≤ 1 ∧
+      ε / (H - Real.sqrt 3 / 2) * (H - Real.sqrt 3 / 2) = ε := by
+  have hHpos : (0 : ℝ) < H - Real.sqrt 3 / 2 := hε.trans hεH
+  exact ⟨div_pos hε hHpos, (div_le_one hHpos).2 hεH.le, div_mul_cancel₀ ε hHpos.ne'⟩
+
 /-- **The excision collapse at `ρ + 1`**: for small `ε`, the `ε`-excised index integrand
 of the boundary contour about `ρ + 1` is interval integrable, and its integral is
 exactly `-πi/3 - arcsin(ε/2)·i`. -/
@@ -359,11 +371,8 @@ private lemma truncated_integral_spec_rho_add_one (hH : Real.sqrt 3 / 2 < H) (h�
   obtain ⟨hδR_pos, hδR_lt, h2sin⟩ :=
     fdBoundaryArcExcisionHalfWidth_pos_and_lt_one_and_two_mul_sin_eq hε hε₃
   set δR := fdBoundaryArcExcisionHalfWidth ε with hδR_def
-  have hHpos : (0 : ℝ) < H - Real.sqrt 3 / 2 := by linarith
+  obtain ⟨hδL_pos, hδL_le, hlin⟩ := verticalExcisionHalfWidth_pos_and_le_one_and_mul_eq hε hεH
   set δL := ε / (H - Real.sqrt 3 / 2) with hδL_def
-  have hδL_pos : 0 < δL := div_pos hε hHpos
-  have hδL_le : δL ≤ 1 := (div_le_one hHpos).2 hεH.le
-  have hlin : δL * (H - Real.sqrt 3 / 2) = ε := div_mul_cancel₀ ε hHpos.ne'
   obtain ⟨hi_left, hi_right, hval⟩ :=
     ftc_logDeriv_telescope_rho_add_one H hH hδL_pos hδL_le hδR_pos hδR_lt
   have hae_left := Contour.ae_logDeriv_sub_eq_truncated (γ := fdBoundary H)
@@ -382,9 +391,6 @@ private lemma truncated_integral_spec_rho_add_one (hH : Real.sqrt 3 / 2 < H) (h�
   have hi02 := hi_left.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr hae_left)
   have hi25 := hi_right.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr hae_right)
   refine ⟨(hi02.trans himid).trans hi25, ?_⟩
-  have hδ12 : δR * (Real.pi / 12) = Real.arcsin (ε / 2) := by
-    simp only [hδR_def, fdBoundaryArcExcisionHalfWidth_def]
-    field_simp
   rw [← intervalIntegral.integral_add_adjacent_intervals (hi02.trans himid) hi25,
     ← intervalIntegral.integral_add_adjacent_intervals hi02 himid,
     hmid0, add_zero,
@@ -392,7 +398,7 @@ private lemma truncated_integral_spec_rho_add_one (hH : Real.sqrt 3 / 2 < H) (h�
     ← intervalIntegral.integral_congr_ae hae_right,
     hval, log_fdBoundary_one_sub_sub_rho_add_one hH hδL_pos hδL_le,
     log_fdBoundary_one_add_sub_rho_add_one H hδR_pos (hδR_lt.le.trans one_le_two), hlin,
-    h2sin, hδ12]
+    h2sin, hδR_def, fdBoundaryArcExcisionHalfWidth_mul_pi_div_twelve]
   push_cast
   ring
 
