@@ -39,15 +39,15 @@ monomial maps really is a different function off that locus.
 * `TauCeti.Toric.mixedChartDomain`: the open locus where all torus coordinates are invertible.
 * `TauCeti.Toric.mixedMonomialMap`: the ambient coordinate formula.
 * `TauCeti.Toric.mixedMonomialMap_mapsTo`: a mixed monomial map preserves the mixed-chart locus.
-* `TauCeti.Toric.mixedMonomialMap_contDiffAt` and
-  `TauCeti.Toric.mixedMonomialMap_differentiableOn`: a mixed monomial map is holomorphic on the
+* `TauCeti.Toric.contDiffAt_mixedMonomialMap` and
+  `TauCeti.Toric.differentiableOn_mixedMonomialMap`: a mixed monomial map is holomorphic on the
   mixed-chart locus.
 * `TauCeti.Toric.MixedExponent.comp` and `TauCeti.Toric.mixedMonomialMap_comp`: composition of
   exponent data is a product of block matrices, and it computes the composite map on the
   mixed-chart locus. `TauCeti.Toric.MixedExponent.id_comp`,
   `TauCeti.Toric.MixedExponent.comp_id` and `TauCeti.Toric.MixedExponent.comp_assoc` are the
   associated category laws.
-* `TauCeti.Toric.MixedExponent.prod`, `TauCeti.Toric.mixedChartProdEquiv`, and
+* `TauCeti.Toric.MixedExponent.prod`, `TauCeti.Toric.mixedChartProdHomeomorph`, and
   `TauCeti.Toric.mixedMonomialMap_prod`: products of exponent data act componentwise on products
   of mixed charts.
 * `TauCeti.Toric.hasDerivAt_mixedMonomialMap_fst_boundary`,
@@ -57,14 +57,14 @@ monomial maps really is a different function off that locus.
   coordinates.
 * `TauCeti.Toric.mixedMonomialOpenPartialHomeomorph`: a two-sided inverse pair of exponent data
   gives a biholomorphism between the two mixed-chart loci, holomorphic in both directions by
-  `TauCeti.Toric.mixedMonomialOpenPartialHomeomorph_contDiffOn` and
-  `TauCeti.Toric.mixedMonomialOpenPartialHomeomorph_symm_contDiffOn`.
+  `TauCeti.Toric.contDiffOn_mixedMonomialOpenPartialHomeomorph` and
+  `TauCeti.Toric.contDiffOn_mixedMonomialOpenPartialHomeomorph_symm`.
 * `TauCeti.Toric.MixedExponent.ofTorusBlock` and
   `TauCeti.Toric.basisChangeOpenPartialHomeomorph`: the exponent data that keeps the boundary
   coordinates and acts on the torus coordinates by an integral matrix, and the biholomorphism it
   induces when that matrix is unimodular, holomorphic in both directions by
-  `TauCeti.Toric.basisChangeOpenPartialHomeomorph_contDiffOn` and
-  `TauCeti.Toric.basisChangeOpenPartialHomeomorph_symm_contDiffOn`. This is the shape of a change
+  `TauCeti.Toric.contDiffOn_basisChangeOpenPartialHomeomorph` and
+  `TauCeti.Toric.contDiffOn_basisChangeOpenPartialHomeomorph_symm`. This is the shape of a change
   of the basis extending the primitive ray generators of a regular cone.
 
 ## References
@@ -305,50 +305,57 @@ theorem mixedMonomialMap_comp (B : MixedExponent k' l' k'' l'') (A : MixedExpone
 
 /-- Splitting the boundary and torus coordinates identifies the mixed chart of the sum of two
 dimensions with the product of the two mixed charts. -/
-def mixedChartProdEquiv {k₁ l₁ k₂ l₂ : ℕ} :
-    ((Fin (k₁ + k₂) → ℂ) × (Fin (l₁ + l₂) → ℂ)) ≃
-      (((Fin k₁ → ℂ) × (Fin l₁ → ℂ)) × ((Fin k₂ → ℂ) × (Fin l₂ → ℂ))) where
-  toFun := fun z ↦
-    (((fun i ↦ z.1 (Fin.castAdd k₂ i)), fun i ↦ z.2 (Fin.castAdd l₂ i)),
-      ((fun i ↦ z.1 (Fin.natAdd k₁ i)), fun i ↦ z.2 (Fin.natAdd l₁ i)))
-  invFun := fun z ↦ (Fin.addCases z.1.1 z.2.1, Fin.addCases z.1.2 z.2.2)
-  left_inv z := by
-    apply Prod.ext <;> funext i
-    · refine Fin.addCases ?_ ?_ i <;> simp
-    · refine Fin.addCases ?_ ?_ i <;> simp
-  right_inv z := by
-    ext i <;> simp
+noncomputable def mixedChartProdHomeomorph {k₁ l₁ k₂ l₂ : ℕ} :
+    ((Fin (k₁ + k₂) → ℂ) × (Fin (l₁ + l₂) → ℂ)) ≃ₜ
+      (((Fin k₁ → ℂ) × (Fin l₁ → ℂ)) × ((Fin k₂ → ℂ) × (Fin l₂ → ℂ))) :=
+  ((Fin.appendHomeomorph (X := ℂ) k₁ k₂).symm.prodCongr
+    (Fin.appendHomeomorph (X := ℂ) l₁ l₂).symm).trans
+      (Homeomorph.prodProdProdComm _ _ _ _)
 
 @[simp]
-theorem mixedChartProdEquiv_apply {k₁ l₁ k₂ l₂ : ℕ}
+theorem mixedChartProdHomeomorph_apply {k₁ l₁ k₂ l₂ : ℕ}
     (z : (Fin (k₁ + k₂) → ℂ) × (Fin (l₁ + l₂) → ℂ)) :
-    mixedChartProdEquiv z =
+    mixedChartProdHomeomorph z =
       (((fun i ↦ z.1 (Fin.castAdd k₂ i)), fun i ↦ z.2 (Fin.castAdd l₂ i)),
         ((fun i ↦ z.1 (Fin.natAdd k₁ i)), fun i ↦ z.2 (Fin.natAdd l₁ i))) := (rfl)
 
 @[simp]
-theorem mixedChartProdEquiv_symm_apply {k₁ l₁ k₂ l₂ : ℕ}
+theorem mixedChartProdHomeomorph_symm_apply {k₁ l₁ k₂ l₂ : ℕ}
     (z : ((Fin k₁ → ℂ) × (Fin l₁ → ℂ)) × ((Fin k₂ → ℂ) × (Fin l₂ → ℂ))) :
-    mixedChartProdEquiv.symm z = (Fin.addCases z.1.1 z.2.1, Fin.addCases z.1.2 z.2.2) := (rfl)
+    mixedChartProdHomeomorph.symm z =
+      (Fin.addCases z.1.1 z.2.1, Fin.addCases z.1.2 z.2.2) := (rfl)
+
+/-- The canonical coordinate splitting identifies a summed mixed-chart domain with the product of
+the two mixed-chart domains. -/
+@[simp]
+theorem mixedChartProdHomeomorph_mem_prod {k₁ l₁ k₂ l₂ : ℕ}
+    (z : (Fin (k₁ + k₂) → ℂ) × (Fin (l₁ + l₂) → ℂ)) :
+    mixedChartProdHomeomorph z ∈ mixedChartDomain k₁ l₁ ×ˢ mixedChartDomain k₂ l₂ ↔
+      z ∈ mixedChartDomain (k₁ + k₂) (l₁ + l₂) := by
+  simp only [Set.mem_prod, mem_mixedChartDomain, mixedChartProdHomeomorph_apply]
+  constructor
+  · rintro ⟨h₁, h₂⟩ j
+    exact Fin.addCases h₁ h₂ j
+  · intro h
+    exact ⟨fun i ↦ h (Fin.castAdd l₂ i), fun i ↦ h (Fin.natAdd l₁ i)⟩
 
 /-- The mixed monomial map of block diagonal product exponent data is the product of the two
 mixed monomial maps, under the canonical splitting of mixed-chart coordinates. -/
 theorem mixedMonomialMap_prod {k₁ l₁ k₁' l₁' k₂ l₂ k₂' l₂' : ℕ}
     (A : MixedExponent k₁ l₁ k₁' l₁') (B : MixedExponent k₂ l₂ k₂' l₂')
     (z : (Fin (k₁ + k₂) → ℂ) × (Fin (l₁ + l₂) → ℂ)) :
-    mixedChartProdEquiv (mixedMonomialMap (A.prod B) z) =
-      (mixedMonomialMap A (mixedChartProdEquiv z).1,
-        mixedMonomialMap B (mixedChartProdEquiv z).2) := by
+    mixedChartProdHomeomorph (mixedMonomialMap (A.prod B) z) =
+      (mixedMonomialMap A (mixedChartProdHomeomorph z).1,
+        mixedMonomialMap B (mixedChartProdHomeomorph z).2) := by
   ext i <;>
-    simp [mixedChartProdEquiv, mixedMonomialMap, MixedExponent.prod, Fin.prod_univ_add,
-      Matrix.fromBlocks]
+    simp [mixedMonomialMap, MixedExponent.prod, Fin.prod_univ_add, Matrix.fromBlocks]
 
 /-! ### Holomorphy -/
 
 variable {n : WithTop ℕ∞}
 
 /-- A mixed monomial map is holomorphic at every point of the mixed-chart locus, to any order. -/
-theorem mixedMonomialMap_contDiffAt (A : MixedExponent k l k' l')
+theorem contDiffAt_mixedMonomialMap (A : MixedExponent k l k' l')
     {z : (Fin k → ℂ) × (Fin l → ℂ)} (hz : z ∈ mixedChartDomain k l) :
     ContDiffAt ℂ n (mixedMonomialMap A) z := by
   have hx : ∀ b, ContDiffAt ℂ n (fun w : (Fin k → ℂ) × (Fin l → ℂ) ↦ w.1 b) z :=
@@ -361,14 +368,14 @@ theorem mixedMonomialMap_contDiffAt (A : MixedExponent k l k' l')
   · exact contDiffAt_prod fun b _ ↦ (hy b).zpow (Or.inl (hz b))
 
 /-- A mixed monomial map is holomorphic on the mixed-chart locus, to any order. -/
-theorem mixedMonomialMap_contDiffOn (A : MixedExponent k l k' l') :
+theorem contDiffOn_mixedMonomialMap (A : MixedExponent k l k' l') :
     ContDiffOn ℂ n (mixedMonomialMap A) (mixedChartDomain k l) :=
-  fun _ hz ↦ (mixedMonomialMap_contDiffAt A hz).contDiffWithinAt
+  fun _ hz ↦ (contDiffAt_mixedMonomialMap A hz).contDiffWithinAt
 
 /-- A mixed monomial map is complex differentiable on the mixed-chart locus. -/
-theorem mixedMonomialMap_differentiableOn (A : MixedExponent k l k' l') :
+theorem differentiableOn_mixedMonomialMap (A : MixedExponent k l k' l') :
     DifferentiableOn ℂ (mixedMonomialMap A) (mixedChartDomain k l) :=
-  fun _ hz ↦ ((mixedMonomialMap_contDiffAt (n := 1) A hz).differentiableAt
+  fun _ hz ↦ ((contDiffAt_mixedMonomialMap (n := 1) A hz).differentiableAt
     one_ne_zero).differentiableWithinAt
 
 /-! ### Jacobian entries -/
@@ -382,15 +389,15 @@ theorem hasDerivAt_mixedMonomialMap_fst_boundary (A : MixedExponent k l k' l')
       ((A.boundaryBoundary a b : ℂ) * z.1 b ^ (A.boundaryBoundary a b - 1) *
         ((∏ c ∈ univ \ {b}, z.1 c ^ A.boundaryBoundary a c) *
           ∏ c, z.2 c ^ A.boundaryTorus a c)) (z.1 b) := by
-  rw [show (fun t ↦ (mixedMonomialMap A (Function.update z.1 b t, z.2)).1 a) =
-      fun t ↦ t ^ A.boundaryBoundary a b *
+  have hfun : (fun t ↦ (mixedMonomialMap A (Function.update z.1 b t, z.2)).1 a) =
+      (fun t ↦ t ^ A.boundaryBoundary a b *
         ((∏ c ∈ univ \ {b}, z.1 c ^ A.boundaryBoundary a c) *
-          ∏ c, z.2 c ^ A.boundaryTorus a c) by
+          ∏ c, z.2 c ^ A.boundaryTorus a c)) := by
     funext t
     simp only [mixedMonomialMap_fst_apply]
-    rw [show (∏ c, Function.update z.1 b t c ^ A.boundaryBoundary a c) = _ from by
-      simpa using prod_update_pow univ z.1 (A.boundaryBoundary a) (mem_univ b) t]
-    simp only [mul_assoc]]
+    rw [prod_update_pow univ z.1 (A.boundaryBoundary a) (mem_univ b) t]
+    simp only [mul_assoc]
+  rw [hfun]
   exact (hasDerivAt_pow (A.boundaryBoundary a b) (z.1 b)).mul_const
     ((∏ c ∈ univ \ {b}, z.1 c ^ A.boundaryBoundary a c) *
       ∏ c, z.2 c ^ A.boundaryTorus a c)
@@ -405,14 +412,14 @@ theorem hasDerivAt_mixedMonomialMap_fst_torus (A : MixedExponent k l k' l')
       ((A.boundaryTorus a b : ℂ) * z.2 b ^ (A.boundaryTorus a b - 1) *
         ((∏ c, z.1 c ^ A.boundaryBoundary a c) *
           ∏ c ∈ univ \ {b}, z.2 c ^ A.boundaryTorus a c)) (z.2 b) := by
-  rw [show (fun t ↦ (mixedMonomialMap A (z.1, Function.update z.2 b t)).1 a) =
-      fun t ↦ (∏ c, z.1 c ^ A.boundaryBoundary a c) *
+  have hfun : (fun t ↦ (mixedMonomialMap A (z.1, Function.update z.2 b t)).1 a) =
+      (fun t ↦ (∏ c, z.1 c ^ A.boundaryBoundary a c) *
         (t ^ A.boundaryTorus a b *
-          ∏ c ∈ univ \ {b}, z.2 c ^ A.boundaryTorus a c) by
+          ∏ c ∈ univ \ {b}, z.2 c ^ A.boundaryTorus a c)) := by
     funext t
     simp only [mixedMonomialMap_fst_apply]
-    rw [show (∏ c, Function.update z.2 b t c ^ A.boundaryTorus a c) = _ from by
-      simpa using prod_update_zpow univ z.2 (A.boundaryTorus a) (mem_univ b) t]]
+    rw [prod_update_zpow univ z.2 (A.boundaryTorus a) (mem_univ b) t]
+  rw [hfun]
   simpa only [mul_assoc, mul_left_comm, mul_comm] using
     ((hasDerivAt_zpow (A.boundaryTorus a b) (z.2 b) (Or.inl (hz b))).mul_const
       (∏ c ∈ univ \ {b}, z.2 c ^ A.boundaryTorus a c)).const_mul
@@ -434,19 +441,21 @@ theorem hasDerivAt_mixedMonomialMap_snd_torus (A : MixedExponent k l k' l')
       (fun t ↦ (mixedMonomialMap A (z.1, Function.update z.2 b t)).2 a)
       ((A.torusTorus a b : ℂ) * z.2 b ^ (A.torusTorus a b - 1) *
         ∏ c ∈ univ \ {b}, z.2 c ^ A.torusTorus a c) (z.2 b) := by
-  rw [show (fun t ↦ (mixedMonomialMap A (z.1, Function.update z.2 b t)).2 a) =
-      fun t ↦ t ^ A.torusTorus a b * ∏ c ∈ univ \ {b}, z.2 c ^ A.torusTorus a c by
+  have hfun : (fun t ↦ (mixedMonomialMap A (z.1, Function.update z.2 b t)).2 a) =
+      (fun t ↦ t ^ A.torusTorus a b *
+        ∏ c ∈ univ \ {b}, z.2 c ^ A.torusTorus a c) := by
     funext t
     simp only [mixedMonomialMap_snd_apply]
-    simpa using prod_update_zpow univ z.2 (A.torusTorus a) (mem_univ b) t]
+    rw [prod_update_zpow univ z.2 (A.torusTorus a) (mem_univ b) t]
+  rw [hfun]
   exact (hasDerivAt_zpow (A.torusTorus a b) (z.2 b) (Or.inl (hz b))).mul_const
     (∏ c ∈ univ \ {b}, z.2 c ^ A.torusTorus a c)
 
 /-! ### Biholomorphisms between mixed charts -/
 
 /-- A two-sided inverse pair of exponent data induces a homeomorphism between the two mixed-chart
-loci. It is a biholomorphism by `mixedMonomialOpenPartialHomeomorph_contDiffOn` and
-`mixedMonomialOpenPartialHomeomorph_symm_contDiffOn`. -/
+loci. It is a biholomorphism by `contDiffOn_mixedMonomialOpenPartialHomeomorph` and
+`contDiffOn_mixedMonomialOpenPartialHomeomorph_symm`. -/
 noncomputable def mixedMonomialOpenPartialHomeomorph (A : MixedExponent k l k' l')
     (B : MixedExponent k' l' k l) (hBA : B.comp A = MixedExponent.id k l)
     (hAB : A.comp B = MixedExponent.id k' l') :
@@ -467,8 +476,8 @@ noncomputable def mixedMonomialOpenPartialHomeomorph (A : MixedExponent k l k' l
     exact h.symm
   open_source := isOpen_mixedChartDomain
   open_target := isOpen_mixedChartDomain
-  continuousOn_toFun := (mixedMonomialMap_differentiableOn A).continuousOn
-  continuousOn_invFun := (mixedMonomialMap_differentiableOn B).continuousOn
+  continuousOn_toFun := (differentiableOn_mixedMonomialMap A).continuousOn
+  continuousOn_invFun := (differentiableOn_mixedMonomialMap B).continuousOn
 
 section
 
@@ -493,19 +502,19 @@ theorem mixedMonomialOpenPartialHomeomorph_target :
 
 /-- An inverse pair of exponent data induces a biholomorphism: the induced homeomorphism is
 holomorphic, to any order. -/
-theorem mixedMonomialOpenPartialHomeomorph_contDiffOn :
+theorem contDiffOn_mixedMonomialOpenPartialHomeomorph :
     ContDiffOn ℂ n (mixedMonomialOpenPartialHomeomorph A B hBA hAB)
       (mixedMonomialOpenPartialHomeomorph A B hBA hAB).source := by
   simpa only [mixedMonomialOpenPartialHomeomorph_coe, mixedMonomialOpenPartialHomeomorph_source]
-    using mixedMonomialMap_contDiffOn A
+    using contDiffOn_mixedMonomialMap A
 
 /-- An inverse pair of exponent data induces a biholomorphism: the inverse of the induced
 homeomorphism is holomorphic, to any order. -/
-theorem mixedMonomialOpenPartialHomeomorph_symm_contDiffOn :
+theorem contDiffOn_mixedMonomialOpenPartialHomeomorph_symm :
     ContDiffOn ℂ n (mixedMonomialOpenPartialHomeomorph A B hBA hAB).symm
       (mixedMonomialOpenPartialHomeomorph A B hBA hAB).target := by
   simpa only [mixedMonomialOpenPartialHomeomorph_symm_coe,
-    mixedMonomialOpenPartialHomeomorph_target] using mixedMonomialMap_contDiffOn B
+    mixedMonomialOpenPartialHomeomorph_target] using contDiffOn_mixedMonomialMap B
 
 end
 
@@ -590,19 +599,19 @@ theorem basisChangeOpenPartialHomeomorph_target :
 
 /-- A unimodular change of the extending basis induces a biholomorphism: the induced homeomorphism
 is holomorphic, to any order. -/
-theorem basisChangeOpenPartialHomeomorph_contDiffOn :
+theorem contDiffOn_basisChangeOpenPartialHomeomorph :
     ContDiffOn ℂ n (basisChangeOpenPartialHomeomorph C D hD)
       (basisChangeOpenPartialHomeomorph C D hD).source := by
   simpa only [basisChangeOpenPartialHomeomorph_coe, basisChangeOpenPartialHomeomorph_source]
-    using mixedMonomialMap_contDiffOn (MixedExponent.ofTorusBlock C D)
+    using contDiffOn_mixedMonomialMap (MixedExponent.ofTorusBlock C D)
 
 /-- A unimodular change of the extending basis induces a biholomorphism: the inverse of the induced
 homeomorphism is holomorphic, to any order. -/
-theorem basisChangeOpenPartialHomeomorph_symm_contDiffOn :
+theorem contDiffOn_basisChangeOpenPartialHomeomorph_symm :
     ContDiffOn ℂ n (basisChangeOpenPartialHomeomorph C D hD).symm
       (basisChangeOpenPartialHomeomorph C D hD).target := by
   simpa only [basisChangeOpenPartialHomeomorph_symm_coe, basisChangeOpenPartialHomeomorph_target]
-    using mixedMonomialMap_contDiffOn (MixedExponent.ofTorusBlock (-(C * D⁻¹)) D⁻¹)
+    using contDiffOn_mixedMonomialMap (MixedExponent.ofTorusBlock (-(C * D⁻¹)) D⁻¹)
 
 end
 

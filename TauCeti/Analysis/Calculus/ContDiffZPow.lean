@@ -18,26 +18,30 @@ for a nonnegative exponent. The hypothesis is the one carried by Mathlib's
 
 ## Main results
 
-* `ContDiffAt.zpow`: `fun z ↦ f z ^ (m : ℤ)` is `C^n` at a point where `f` is `C^n` and either
-  `f` does not vanish or `m` is nonnegative.
+* `ContDiffWithinAt.zpow`: `fun z ↦ f z ^ (m : ℤ)` is `C^n` within a set at a point where
+  `f` is `C^n` and either `f` does not vanish or `m` is nonnegative.
+* `ContDiffAt.zpow`: the corresponding pointwise statement.
 -/
 
 public section
 
-namespace ContDiffAt
-
 variable {𝕜 E 𝕜' : Type*} [NontriviallyNormedField 𝕜] [NormedAddCommGroup E] [NormedSpace 𝕜 E]
-  [NormedField 𝕜'] [NormedAlgebra 𝕜 𝕜'] {f : E → 𝕜'} {x : E} {m : ℤ} {n : WithTop ℕ∞}
+  [NormedField 𝕜'] [NormedAlgebra 𝕜 𝕜'] {f : E → 𝕜'} {s : Set E} {x : E} {m : ℤ}
+  {n : WithTop ℕ∞}
 
-/-- An integral power of a `C^n` function is `C^n` at a point where the function does not vanish,
-and also, whatever the value there, for a nonnegative exponent. -/
-theorem zpow (hf : ContDiffAt 𝕜 n f x) (h : f x ≠ 0 ∨ 0 ≤ m) :
-    ContDiffAt 𝕜 n (fun z ↦ f z ^ m) x := by
+/-- An integral power of a `C^n` function is `C^n` within a set at a point where the function does
+not vanish, and also, whatever the value there, for a nonnegative exponent. -/
+theorem ContDiffWithinAt.zpow (hf : ContDiffWithinAt 𝕜 n f s x) (h : f x ≠ 0 ∨ 0 ≤ m) :
+    ContDiffWithinAt 𝕜 n (fun z ↦ f z ^ m) s x := by
   obtain ⟨i, rfl | rfl⟩ := m.eq_nat_or_neg
   · simpa [zpow_natCast] using hf.pow i
   · rcases eq_or_ne i 0 with rfl | hi
-    · simpa using contDiffAt_const
+    · simpa using (contDiffWithinAt_const : ContDiffWithinAt 𝕜 n (fun _ : E ↦ (1 : 𝕜')) s x)
     · have hx : f x ≠ 0 := h.resolve_right fun hm ↦ hi (by omega)
       simpa [zpow_neg, zpow_natCast, Pi.inv_def] using (hf.pow i).inv (pow_ne_zero _ hx)
 
-end ContDiffAt
+/-- An integral power of a `C^n` function is `C^n` at a point where the function does not vanish,
+and also, whatever the value there, for a nonnegative exponent. -/
+theorem ContDiffAt.zpow (hf : ContDiffAt 𝕜 n f x) (h : f x ≠ 0 ∨ 0 ≤ m) :
+    ContDiffAt 𝕜 n (fun z ↦ f z ^ m) x :=
+  hf.contDiffWithinAt.zpow h
