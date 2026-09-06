@@ -28,6 +28,8 @@ needs pointedness of the result, and neither is established here.
 
 ## Main results
 
+* `TauCeti.CoordinatePullback.add_of_X` and `TauCeti.CoordinatePullback.add_root`: the sum's
+  values on the two coordinate functions of `W₂`.
 * `TauCeti.CoordinatePullback.tautologicalPoint_add`: the defining property — the tautological
   point of the sum is the sum of the tautological points.
 * `TauCeti.CoordinatePullback.eq_add_of_tautologicalPoint_eq`: that property characterises the
@@ -67,6 +69,22 @@ evaluation of the coordinate ring of `W₂` at the sum of those points. -/
 noncomputable def add (p q : CoordinatePullback W₁ W₂)
     (h : p.tautologicalPoint + q.tautologicalPoint ≠ 0) : CoordinatePullback W₁ W₂ :=
   CoordinateRing.evalAlgHom (Point.nonsingular_coords h).left
+
+/-- The sum sends the coordinate function `x` of `W₂` to the `x`-coordinate of the sum point. -/
+@[simp]
+theorem add_of_X (p q : CoordinatePullback W₁ W₂)
+    (h : p.tautologicalPoint + q.tautologicalPoint ≠ 0) :
+    add p q h (AdjoinRoot.of W₂.polynomial X) =
+      Point.xCoord (p.tautologicalPoint + q.tautologicalPoint) := by
+  rw [add, CoordinateRing.evalAlgHom_of_X]
+
+/-- The sum sends the coordinate function `y` of `W₂` to the `y`-coordinate of the sum point. -/
+@[simp]
+theorem add_root (p q : CoordinatePullback W₁ W₂)
+    (h : p.tautologicalPoint + q.tautologicalPoint ≠ 0) :
+    add p q h (AdjoinRoot.root W₂.polynomial) =
+      Point.yCoord (p.tautologicalPoint + q.tautologicalPoint) := by
+  rw [add, CoordinateRing.evalAlgHom_root]
 
 /-- **The defining property of the sum**: its tautological point is the sum of the tautological
 points. -/
