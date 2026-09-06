@@ -14,6 +14,11 @@ public import Mathlib.RingTheory.Localization.Integer
 This file proves that trace duals and different ideals commute with localization.  This is the
 localization input needed to read the transitivity theorem for different ideals coefficientwise at
 a tower of discrete valuations.
+
+## References
+
+- [AlgebraicCurves roadmap, Layer 7](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/AlgebraicCurves/README.md#layer-7-the-different-and-the-hurwitz-genus-formula)
+- H. Stichtenoth, *Algebraic Function Fields and Codes*, 2nd ed., Sections III.4–III.5.
 -/
 
 public section
@@ -99,11 +104,12 @@ private theorem exists_smul_mem_traceDual_of_mem_traceDual {x : L}
   have haN : a ∈ N := hN.symm ▸ Submodule.mem_top
   exact Submodule.mem_one.mp (Submodule.mem_comap.mp haN)
 
-omit [IsDomain Rₘ] [IsFractionRing Rₘ K] in
+omit [IsDomain R] [IsDomain Rₘ] [IsFractionRing Rₘ K] in
 /-- The trace dual of a finite algebra commutes with localization. -/
 theorem span_traceDual_one_eq_traceDual_one :
     Submodule.span Sₘ (Submodule.traceDual R K (1 : Submodule S L) : Set L) =
       Submodule.traceDual Rₘ K (1 : Submodule Sₘ L) := by
+  let _ : Nontrivial R := (algebraMap R K).domain_nontrivial
   apply le_antisymm
   -- Extension of scalars sends an integral trace value to its localized image.
   · rw [Submodule.span_le]
@@ -136,7 +142,7 @@ theorem span_traceDual_one_eq_traceDual_one :
         _ = _ := hr.symm
     refine ⟨IsLocalization.mk' Rₘ r ⟨m, hm⟩, ?_⟩
     apply mul_right_cancel₀ (IsFractionRing.to_map_eq_zero_iff.ne.mpr
-      (mem_nonZeroDivisors_iff_ne_zero.mp (hM hm)))
+      (nonZeroDivisors.ne_zero (hM hm)))
     rw [IsScalarTower.algebraMap_apply R Rₘ K, ← map_mul, IsLocalization.mk'_spec]
     simpa only [IsScalarTower.algebraMap_apply R Rₘ K] using htrace.symm
   -- Conversely, clear one denominator for trace values on a finite set of algebra generators.
@@ -159,6 +165,16 @@ variable [IsIntegralClosure S R L] [IsIntegralClosure Sₘ Rₘ L]
 variable [FiniteDimensional K L] [Algebra.IsSeparable K L]
 variable [IsTorsionFree R S] [IsTorsionFree Rₘ Sₘ]
 
+omit M [Module.Finite R S] [IsTorsionFree R S] [IsTorsionFree Rₘ Sₘ] hM in
+private theorem coe_dual_one [IsDomain S] :
+    (↑(FractionalIdeal.dual R K (1 : FractionalIdeal S⁰ L)) : Submodule S L) =
+      Submodule.traceDual R K (1 : Submodule S L) := by
+  -- Mathlib's public coercion lemma is Dedekind-scoped; unfold once here to expose the
+  -- domain-level definitional equality needed by the more general localization theorem.
+  set_option backward.isDefEq.respectTransparency.types false in
+    rw [FractionalIdeal.dual, dite_eq_right one_ne_zero, FractionalIdeal.coe_mk,
+      FractionalIdeal.coe_one]
+
 section
 
 variable [IsDomain S] [IsDomain Sₘ]
@@ -180,6 +196,8 @@ theorem extendedHom'_dual_one_eq_dual_one :
   let h : S⁰ ≤ Submonoid.comap (algebraMap S Sₘ) Sₘ⁰ :=
     nonZeroDivisors_le_comap_nonZeroDivisors_of_injective _
       (IsLocalization.injective Sₘ hMS)
+  -- `extendedHom'` takes the inclusion proof explicitly, so proof irrelevance identifies the
+  -- canonical proof in the statement with the named proof `h` used throughout this proof.
   change FractionalIdeal.extendedHom' L h
       (FractionalIdeal.dual R K (1 : FractionalIdeal S⁰ L)) = _
   rw [FractionalIdeal.extendedHom'_apply]
@@ -191,29 +209,16 @@ theorem extendedHom'_dual_one_eq_dual_one :
     rw [IsLocalization.map_eq, RingHom.id_apply, IsScalarTower.algebraMap_apply S Sₘ L]
   rw [hmap]
   simp only [RingHom.id_apply, Set.image_id']
-  -- Mathlib's coercion lemma for `dual 1` is Dedekind-scoped, although this definitional
-  -- reduction only needs a domain.
-  have hdualS :
-      (↑(FractionalIdeal.dual R K (1 : FractionalIdeal S⁰ L)) : Submodule S L) =
-        Submodule.traceDual R K (1 : Submodule S L) := by
-    set_option backward.isDefEq.respectTransparency.types false in
-      rw [FractionalIdeal.dual, dite_eq_right one_ne_zero, FractionalIdeal.coe_mk,
-        FractionalIdeal.coe_one]
-  have hdualSₘ :
-      (↑(FractionalIdeal.dual Rₘ K (1 : FractionalIdeal Sₘ⁰ L)) : Submodule Sₘ L) =
-        Submodule.traceDual Rₘ K (1 : Submodule Sₘ L) := by
-    set_option backward.isDefEq.respectTransparency.types false in
-      rw [FractionalIdeal.dual, dite_eq_right one_ne_zero, FractionalIdeal.coe_mk,
-        FractionalIdeal.coe_one]
   calc
     Submodule.span Sₘ
         ((↑(FractionalIdeal.dual R K (1 : FractionalIdeal S⁰ L)) : Submodule S L) : Set L) =
         Submodule.span Sₘ (Submodule.traceDual R K (1 : Submodule S L) : Set L) :=
-      congrArg (Submodule.span Sₘ) (congrArg (fun N : Submodule S L ↦ (N : Set L)) hdualS)
+      congrArg (Submodule.span Sₘ)
+        (congrArg (fun N : Submodule S L ↦ (N : Set L)) coe_dual_one)
     _ = Submodule.traceDual Rₘ K (1 : Submodule Sₘ L) :=
       span_traceDual_one_eq_traceDual_one (M := M) hM
     _ = (↑(FractionalIdeal.dual Rₘ K (1 : FractionalIdeal Sₘ⁰ L)) : Submodule Sₘ L) :=
-      hdualSₘ.symm
+      (coe_dual_one (R := Rₘ) (S := Sₘ)).symm
 
 end
 
