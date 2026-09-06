@@ -92,7 +92,7 @@ theorem exists_minimal_isBorelCandidate_le
   exact hJmin ⟨hK, hKJ.trans hJI⟩ hKJ
 
 /-- **Every finite-type affine group over a field has a maximal smooth geometrically connected
-solvable closed subgroup.**
+geometrically solvable closed subgroup.**
 
 Over an algebraically closed field this is a Borel subgroup. Over a general field it is only
 maximal among candidates defined over that field; `exists_geometricBorel` below applies the result
