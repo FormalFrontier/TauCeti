@@ -6,7 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.Algebra.Lie.Symplectic.StandardCarrier.Generation
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Symplectic.TorusGeneration
+import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Symplectic.TorusGeneration
 
 /-!
 # Field-valued points of the type-C full-weight carrier
