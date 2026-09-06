@@ -70,6 +70,18 @@ the `ℚ ∪ {∞}` bijection through any framing's coordinate isomorphism.
   a value comes from the slope whose coordinates are the corresponding reduced pair.
 * `TauCeti.FramedBoundaryTorus.coord_symm_apply`: a pair of coordinates `(p, q)` names the class
   `p · μ + q · λ`, so the filling class of a slope is reachable without unfolding `coord`.
+* `TauCeti.intersectionForm_apply` and companions: the algebraic intersection form
+  `(p, q), (p', q') ↦ p·q' - p'·q` is antisymmetric and odd in each argument.
+* `TauCeti.eq_or_eq_neg_of_intersectionForm_eq_zero`: two primitive `ℤ × ℤ` classes with vanishing
+  intersection form agree up to sign.
+* `TauCeti.Slope.dist_mk_mk`: the geometric intersection number of two standard-lattice slopes is
+  the absolute value of the intersection form on any two primitive representatives.
+* `TauCeti.Slope.dist_comm` and `TauCeti.Slope.dist_self`: the intersection number is symmetric and
+  vanishes on any slope against itself.
+* `TauCeti.Slope.dist_eq_zero_iff`: two standard-lattice slopes have intersection number zero
+  exactly when they are equal.
+* `TauCeti.FramedBoundaryTorus.dist_meridian_longitude`: the meridian and longitude of a framing
+  are at intersection distance one, pinning the convention against the standard homology basis.
 
 `ℚ ∪ {∞}` is Mathlib's one-point extension `OnePoint ℚ` from
 `Mathlib/Topology/Compactification/OnePoint/Basic.lean`; the reduced-fraction bookkeeping reuses
@@ -336,6 +348,144 @@ theorem slopeEquivStd_apply (s : Slope (ℤ × ℤ)) : slopeEquivStd s = Slope.v
 @[simp]
 theorem slopeEquivStd_symm_apply (x : OnePoint ℚ) : slopeEquivStd.symm x = slopeOfValue x := (rfl)
 
+/-! ### The geometric intersection number of two slopes
+
+The **geometric intersection number** of two slopes on a boundary torus counts how many
+transverse intersections a pair of representative simple closed curves must have. On the standard
+lattice `ℤ × ℤ` it is the absolute value of the algebraic intersection form
+`(p, q), (p', q') ↦ p·q' - p'·q`, the ordinary `2 × 2` determinant coming from Poincaré duality
+on the torus (Rolfsen, *Knots and Links*, Chapter 9). The form is antisymmetric and negated by the
+sign action `v ↦ -v` in either argument, so its absolute value descends from primitive classes to
+slopes.
+
+The nontrivial content is `TauCeti.eq_or_eq_neg_of_intersectionForm_eq_zero`: two primitive classes
+with vanishing intersection form are parallel, hence agree up to sign. That fact gives the
+intersection number its separating power (`TauCeti.Slope.dist_eq_zero_iff`) — two slopes on the
+standard lattice are at intersection distance zero exactly when they coincide.
+
+The framed distance function `TauCeti.FramedBoundaryTorus.dist` reads the two slopes in the
+framing's coordinates and applies the standard-lattice distance; the meridian and longitude of a
+framing then have distance one, matching the convention that they generate the boundary torus's
+homology as an ordered symplectic basis.
+-/
+
+/-- The **algebraic intersection form** on `ℤ × ℤ`: the standard `2 × 2` determinant
+`p · q' - p' · q`. On the standard homology basis of the torus this is Poincaré's intersection
+pairing, and its absolute value gives the geometric intersection number of the underlying slopes
+(`TauCeti.Slope.dist`). -/
+@[expose]
+def intersectionForm (v w : ℤ × ℤ) : ℤ := v.1 * w.2 - w.1 * v.2
+
+@[simp]
+theorem intersectionForm_apply (a b c d : ℤ) :
+    intersectionForm (a, b) (c, d) = a * d - c * b := rfl
+
+@[simp]
+theorem intersectionForm_self (v : ℤ × ℤ) : intersectionForm v v = 0 := by
+  simp [intersectionForm]
+
+/-- The intersection form is antisymmetric, so swapping its arguments negates its value. -/
+theorem intersectionForm_swap (v w : ℤ × ℤ) :
+    intersectionForm v w = -intersectionForm w v := by
+  simp only [intersectionForm]; ring
+
+@[simp]
+theorem intersectionForm_neg_left (v w : ℤ × ℤ) :
+    intersectionForm (-v) w = -intersectionForm v w := by
+  simp only [intersectionForm, Prod.fst_neg, Prod.snd_neg]; ring
+
+@[simp]
+theorem intersectionForm_neg_right (v w : ℤ × ℤ) :
+    intersectionForm v (-w) = -intersectionForm v w := by
+  simp only [intersectionForm, Prod.fst_neg, Prod.snd_neg]; ring
+
+/-- Two primitive `ℤ × ℤ` classes with vanishing intersection form agree up to sign. This is the
+number-theoretic content that gives the geometric intersection number its separating power
+(`TauCeti.Slope.dist_eq_zero_iff`): from `p · q' = p' · q` and coprimality of each pair, the two
+pairs are equal or opposite. -/
+theorem eq_or_eq_neg_of_intersectionForm_eq_zero {v w : ℤ × ℤ}
+    (hv : IsPrimitive v) (hw : IsPrimitive w) (h : intersectionForm v w = 0) :
+    v = w ∨ v = -w := by
+  obtain ⟨p, q⟩ := v
+  obtain ⟨p', q'⟩ := w
+  simp only [intersectionForm_apply, sub_eq_zero] at h
+  -- `h : p * q' = p' * q`
+  have hpq : IsCoprime p q := isPrimitive_prod_iff.mp hv
+  have hp'q' : IsCoprime p' q' := isPrimitive_prod_iff.mp hw
+  have hpp' : p ∣ p' := hpq.dvd_of_dvd_mul_right ⟨q', h.symm⟩
+  have hp'p : p' ∣ p := hp'q'.dvd_of_dvd_mul_right ⟨q, h⟩
+  have hnat : p.natAbs = p'.natAbs :=
+    Nat.dvd_antisymm (Int.natAbs_dvd_natAbs.mpr hpp') (Int.natAbs_dvd_natAbs.mpr hp'p)
+  rcases Int.natAbs_eq_natAbs_iff.mp hnat with hpp | hpp
+  · subst hpp
+    by_cases hp : p = 0
+    · subst hp
+      -- `(0, q)` and `(0, q')` are both primitive, so `q, q' ∈ {1, -1}`.
+      have hqU : IsUnit q := isCoprime_zero_left.mp hpq
+      have hq'U : IsUnit q' := isCoprime_zero_left.mp hp'q'
+      rcases Int.isUnit_iff.mp hqU with hq | hq <;>
+        rcases Int.isUnit_iff.mp hq'U with hq' | hq' <;> subst hq <;> subst hq' <;> decide
+    · -- Cancelling the nonzero `p` from `p * q' = p * q` gives `q = q'`.
+      have hqq' : q' = q := mul_left_cancel₀ hp h
+      subst hqq'
+      exact Or.inl rfl
+  · -- `p = -p'`, so `h` becomes `-p' * q' = p' * q`.
+    subst hpp
+    by_cases hp' : p' = 0
+    · subst hp'
+      -- After substitution the pair `(-p', q)` becomes `(-0, q)`.
+      have hqU : IsUnit q := isCoprime_zero_left.mp (by simpa using hpq)
+      have hq'U : IsUnit q' := isCoprime_zero_left.mp hp'q'
+      rcases Int.isUnit_iff.mp hqU with hq | hq <;>
+        rcases Int.isUnit_iff.mp hq'U with hq' | hq' <;> subst hq <;> subst hq' <;> decide
+    · -- Cancelling the nonzero `p'` from `-p' * q' = p' * q` gives `q = -q'`.
+      have hqq' : q = -q' := by
+        have h₁ : p' * q = p' * (-q') := by linarith [h]
+        exact mul_left_cancel₀ hp' h₁
+      subst hqq'
+      right; rfl
+
+/-- The **geometric intersection number** of two standard-lattice slopes: the absolute value of the
+algebraic intersection form on any two primitive representatives, well-defined because the form is
+odd in each argument. On a boundary torus with a chosen framing the same recipe gives a
+framing-dependent distance (`TauCeti.FramedBoundaryTorus.dist`). -/
+def Slope.dist : Slope (ℤ × ℤ) → Slope (ℤ × ℤ) → ℕ :=
+  Quotient.lift₂ (fun v w => (intersectionForm v.1 w.1).natAbs) <| by
+    rintro a₁ a₂ b₁ b₂ (ha | ha) (hb | hb) <;>
+      simp only [ha, hb, intersectionForm_neg_left, intersectionForm_neg_right, Int.natAbs_neg,
+        neg_neg]
+
+@[simp]
+theorem Slope.dist_mk_mk (v w : ℤ × ℤ) (hv : IsPrimitive v) (hw : IsPrimitive w) :
+    Slope.dist (Slope.mk v hv) (Slope.mk w hw) = (intersectionForm v w).natAbs := (rfl)
+
+/-- Swapping the two arguments of the intersection distance does not change its value. -/
+theorem Slope.dist_comm (s t : Slope (ℤ × ℤ)) : Slope.dist s t = Slope.dist t s := by
+  induction s using Slope.induction_on with
+  | h v hv =>
+    induction t using Slope.induction_on with
+    | h w hw =>
+      simp only [Slope.dist_mk_mk, intersectionForm_swap w v, Int.natAbs_neg]
+
+/-- The intersection distance of any slope to itself is zero. -/
+@[simp]
+theorem Slope.dist_self (s : Slope (ℤ × ℤ)) : Slope.dist s s = 0 := by
+  induction s using Slope.induction_on with
+  | h v hv => simp [Slope.dist_mk_mk]
+
+/-- **The intersection distance separates slopes.** Two standard-lattice slopes are at intersection
+distance zero exactly when they are equal — a consequence of
+`TauCeti.eq_or_eq_neg_of_intersectionForm_eq_zero` on primitive representatives. -/
+theorem Slope.dist_eq_zero_iff {s t : Slope (ℤ × ℤ)} :
+    Slope.dist s t = 0 ↔ s = t := by
+  induction s using Slope.induction_on with
+  | h v hv =>
+    induction t using Slope.induction_on with
+    | h w hw =>
+      simp only [Slope.dist_mk_mk, Int.natAbs_eq_zero, Slope.mk_eq_mk_iff]
+      exact ⟨eq_or_eq_neg_of_intersectionForm_eq_zero hv hw, by
+        rintro (rfl | rfl) <;> simp [intersectionForm]⟩
+
 /-! ### Boundary tori and framings
 
 A framing supplies the coordinate isomorphism `H₁(T; ℤ) ≃ ℤ × ℤ` that turns the basis-free `Slope`
@@ -460,6 +610,41 @@ theorem value_longitude : T.value T.longitude = (0 : ℚ) := by
   unfold value longitude
   rw [Slope.congr_mk, Slope.value_mk, T.coord_basis_one, slopeValue_of_snd_ne_zero one_ne_zero]
   norm_num
+
+/-- The **framed intersection distance** of two slopes on a boundary torus: the geometric
+intersection number of their `(μ, λ)`-coordinates. On a fixed framing this is symmetric, vanishes on
+the diagonal, and separates slopes; the meridian and longitude are at distance one
+(`TauCeti.FramedBoundaryTorus.dist_meridian_longitude`), fixing the convention against the standard
+homology basis. -/
+noncomputable def dist (s t : Slope T.H) : ℕ :=
+  Slope.dist (Slope.congr T.coord s) (Slope.congr T.coord t)
+
+theorem dist_mk_mk (v w : T.H) (hv : IsPrimitive v) (hw : IsPrimitive w) :
+    T.dist (Slope.mk v hv) (Slope.mk w hw) = (intersectionForm (T.coord v) (T.coord w)).natAbs := by
+  simp [dist]
+
+/-- The framed intersection distance is symmetric in its two arguments. -/
+theorem dist_comm (s t : Slope T.H) : T.dist s t = T.dist t s := by
+  unfold dist
+  exact Slope.dist_comm _ _
+
+/-- Any framed slope is at intersection distance zero from itself. -/
+@[simp]
+theorem dist_self (s : Slope T.H) : T.dist s s = 0 := by
+  unfold dist
+  exact Slope.dist_self _
+
+/-- The framed intersection distance separates slopes: it vanishes exactly on the diagonal. -/
+theorem dist_eq_zero_iff {s t : Slope T.H} : T.dist s t = 0 ↔ s = t := by
+  unfold dist
+  rw [Slope.dist_eq_zero_iff, (Slope.congr T.coord).injective.eq_iff]
+
+/-- **The convention-fixing distance identity.** The meridian and longitude of a framing are at
+intersection distance one, matching the standard symplectic basis of the standard torus. -/
+@[simp]
+theorem dist_meridian_longitude : T.dist T.meridian T.longitude = 1 := by
+  unfold dist meridian longitude
+  simp [Slope.dist_mk_mk, intersectionForm]
 
 end FramedBoundaryTorus
 
