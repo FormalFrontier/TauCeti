@@ -33,10 +33,10 @@ invariant form and being self-dual are the same condition.
 
 ## Main results
 
-* `TauCeti.LieModule.dualCoannihilator`: the Lie submodule of `M` annihilated by every functional
+* `LieSubmodule.dualCoannihilator`: the Lie submodule of `M` annihilated by every functional
   in a Lie submodule of `M*`, refining `Submodule.dualCoannihilator`.
-* `TauCeti.LieModule.lieInvariant_coe_lieModuleHom`: a morphism `M → M*`, read as a bilinear form
-  on `M`, is invariant.
+* `LieModuleHom.lieInvariant_coe`: a morphism `M → M*`, read as a bilinear form on `M`, is
+  invariant.
 * `TauCeti.LieModule.exists_ne_zero_lieInvariant_iff_exists_ne_zero_lieModuleHom`: a nonzero
   invariant bilinear form on `M` is a nonzero morphism `M → M*`, over any commutative ring.
 * `TauCeti.LieModule.isIrreducible_dual`: **the dual of a finite-dimensional irreducible Lie module
@@ -53,19 +53,17 @@ invariant form and being self-dual are the same condition.
 
 public section
 
-namespace TauCeti.LieModule
-
 open Module (Dual finrank)
 
 universe u v w
 
 /-! ### Annihilators of Lie submodules of the dual -/
 
-section CommRing
+namespace LieSubmodule
 
 variable {R : Type u} {L : Type v} {M : Type w}
 variable [CommRing R] [LieRing L] [LieAlgebra R L]
-variable [AddCommGroup M] [Module R M] [LieRingModule L M] [_root_.LieModule R L M]
+variable [AddCommGroup M] [Module R M] [LieRingModule L M] [LieModule R L M]
 
 /-- The vectors of `M` annihilated by every functional in a Lie submodule `N` of the dual. It is a
 Lie submodule because `N` is: if `f m = 0` for every `f ∈ N`, then `f ⁅x, m⁆ = -⁅x, f⁆ m = 0`,
@@ -82,35 +80,53 @@ def dualCoannihilator (N : LieSubmodule R L (Dual R M)) : LieSubmodule R L M whe
 
 @[simp]
 theorem mem_dualCoannihilator {N : LieSubmodule R L (Dual R M)} {m : M} :
-    m ∈ dualCoannihilator N ↔ ∀ f ∈ N, f m = 0 := by
+    m ∈ N.dualCoannihilator ↔ ∀ f ∈ N, f m = 0 := by
   simp [dualCoannihilator, ← LieSubmodule.mem_toSubmodule, Submodule.mem_dualCoannihilator]
 
 @[simp]
 theorem dualCoannihilator_toSubmodule (N : LieSubmodule R L (Dual R M)) :
-    (dualCoannihilator N).toSubmodule = N.toSubmodule.dualCoannihilator := by
+    N.dualCoannihilator.toSubmodule = N.toSubmodule.dualCoannihilator := by
   ext m
   simp [Submodule.mem_dualCoannihilator]
 
 /-- Only the zero submodule of the dual annihilates all of `M`. -/
 theorem eq_bot_of_dualCoannihilator_eq_top {N : LieSubmodule R L (Dual R M)}
-    (h : dualCoannihilator N = ⊤) : N = ⊥ := by
-  have hall : ∀ m : M, m ∈ dualCoannihilator N := by simp [h]
-  refine eq_bot_iff.mpr fun f hf => ?_
+    (h : N.dualCoannihilator = ⊤) : N = ⊥ := by
+  have hall : ∀ m : M, m ∈ N.dualCoannihilator := by simp [h]
+  refine _root_.eq_bot_iff.mpr fun f hf => ?_
   have hf0 : f = 0 := LinearMap.ext fun m => mem_dualCoannihilator.mp (hall m) f hf
   simp [hf0]
 
+end LieSubmodule
+
 /-! ### Invariant bilinear forms as morphisms to the dual -/
+
+namespace LieModuleHom
+
+variable {R : Type u} {L : Type v} {M : Type w}
+variable [CommRing R] [LieRing L] [LieAlgebra R L]
+variable [AddCommGroup M] [Module R M] [LieRingModule L M] [LieModule R L M]
 
 /-- **A morphism `M → M*` is an invariant bilinear form.** A morphism of Lie modules lies in the
 maximal trivial submodule of the space of linear maps
 (`LieModule.maxTrivLinearMapEquivLieModuleHom`), and for a linear map `M → M*`, that is a bilinear
 form on `M`, membership of the maximal trivial submodule is invariance
 (`LinearMap.BilinForm.lieInvariant_iff`). -/
-theorem lieInvariant_coe_lieModuleHom (f : M →ₗ⁅R,L⁆ Dual R M) :
+theorem lieInvariant_coe (f : M →ₗ⁅R,L⁆ Dual R M) :
     LinearMap.BilinForm.lieInvariant L (f : LinearMap.BilinForm R M) := by
   rw [LinearMap.BilinForm.lieInvariant_iff,
-    ← _root_.LieModule.toLinearMap_maxTrivLinearMapEquivLieModuleHom_symm f]
-  exact (_root_.LieModule.maxTrivLinearMapEquivLieModuleHom.symm f).2
+    ← LieModule.toLinearMap_maxTrivLinearMapEquivLieModuleHom_symm f]
+  exact (LieModule.maxTrivLinearMapEquivLieModuleHom.symm f).2
+
+end LieModuleHom
+
+namespace TauCeti.LieModule
+
+section CommRing
+
+variable {R : Type u} {L : Type v} {M : Type w}
+variable [CommRing R] [LieRing L] [LieAlgebra R L]
+variable [AddCommGroup M] [Module R M] [LieRingModule L M] [_root_.LieModule R L M]
 
 /-- **A nonzero invariant bilinear form is a nonzero morphism to the dual.** A bilinear form on `M`
 is a linear map `M → M*`, invariance of the form is membership of the maximal trivial submodule
@@ -127,7 +143,7 @@ theorem exists_ne_zero_lieInvariant_iff_exists_ne_zero_lieModuleHom :
     simpa [Submodule.mk_eq_zero] using hΦ0
   · rintro ⟨f, hf0⟩
     refine ⟨(f : LinearMap.BilinForm R M), fun h => hf0 (LieModuleHom.ext fun m => ?_),
-      lieInvariant_coe_lieModuleHom f⟩
+      f.lieInvariant_coe⟩
     simpa using congrArg (fun Φ : LinearMap.BilinForm R M => Φ m) h
 
 end CommRing
@@ -151,12 +167,12 @@ theorem isIrreducible_dual : _root_.LieModule.IsIrreducible K L (Dual K M) := by
   have _j : Nontrivial (Dual K M) :=
     Module.nontrivial_of_finrank_pos (R := K) (by rwa [Subspace.dual_finrank_eq])
   refine _root_.LieModule.IsIrreducible.mk fun N hN => ?_
-  have hbot : dualCoannihilator N = ⊥ :=
+  have hbot : N.dualCoannihilator = ⊥ :=
     (IsSimpleOrder.eq_bot_or_eq_top _).resolve_right fun h =>
-      hN (eq_bot_of_dualCoannihilator_eq_top h)
+      hN (LieSubmodule.eq_bot_of_dualCoannihilator_eq_top h)
   have hrank : finrank K N.toSubmodule = finrank K (Dual K M) := by
     have h := Subspace.finrank_add_finrank_dualCoannihilator_eq (K := K) (V := M) N.toSubmodule
-    rw [← dualCoannihilator_toSubmodule, hbot] at h
+    rw [← LieSubmodule.dualCoannihilator_toSubmodule, hbot] at h
     simpa [Subspace.dual_finrank_eq] using h
   rw [← LieSubmodule.toSubmodule_eq_top]
   exact Submodule.eq_top_of_finrank_eq hrank
