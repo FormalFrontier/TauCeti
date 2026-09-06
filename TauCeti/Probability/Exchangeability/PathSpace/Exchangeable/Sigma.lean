@@ -63,11 +63,6 @@ theorem exchangeableSigma_le :
   intro s hs
   exact (mem_exchangeableSigma_iff.mp hs).1
 
-/-- An `exchangeableSigma`-measurable set is ambient-measurable. -/
-theorem MeasurableSet.ambient_of_exchangeableSigma {s : Set (ℕ → α)}
-    (hs : MeasurableSet[exchangeableSigma α] s) : MeasurableSet s :=
-  exchangeableSigma_le s hs
-
 /-- An ambient-measurable event fixed by every finitely supported time permutation is measurable
 for the exchangeable σ-algebra. -/
 theorem measurableSet_exchangeableSigma_of_forall_permReindex {s : Set (ℕ → α)}

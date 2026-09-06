@@ -300,7 +300,7 @@ private theorem measureReal_sq_of_exchangeableSigma {ρ : Measure (ℕ → α)} 
         = ρ (cylinder (α := fun _ : ℕ => α) F S) * ρ (cylinder (α := fun _ : ℕ => α) G T))
     {s : Set (ℕ → α)} (hs : MeasurableSet[exchangeableSigma α] s) :
     ρ.real s = ρ.real s * ρ.real s := by
-  have hs_meas : MeasurableSet s := MeasurableSet.ambient_of_exchangeableSigma hs
+  have hs_meas : MeasurableSet s := exchangeableSigma_le s hs
   by_contra hne
   set q := ρ.real s with hq
   set d := |q - q * q| with hd
@@ -349,7 +349,7 @@ theorem measure_eq_zero_or_one_of_exchangeableSigma {ρ : Measure (ℕ → α)} 
         = ρ (cylinder (α := fun _ : ℕ => α) F S) * ρ (cylinder (α := fun _ : ℕ => α) G T))
     {s : Set (ℕ → α)} (hs : MeasurableSet[exchangeableSigma α] s) :
     ρ s = 0 ∨ ρ s = 1 := by
-  have hs_meas : MeasurableSet s := MeasurableSet.ambient_of_exchangeableSigma hs
+  have hs_meas : MeasurableSet s := exchangeableSigma_le s hs
   have hsq := measureReal_sq_of_exchangeableSigma hexch hprod hs
   have htop : ρ s ≠ ⊤ := measure_ne_top ρ s
   have hE : ρ (s ∩ s) = ρ s * ρ s := by
