@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Analysis.InnerProductSpace.LinearPMap
 public import TauCeti.Analysis.Semigroups.Group.Generator
+public import TauCeti.Analysis.Semigroups.Group.InverseSemigroups
 public import TauCeti.Analysis.Semigroups.Generator.ComplexLinear
 -- Non-public: differentiation of the inner product turns preservation by the group into
 -- skew-symmetry of the generator.
@@ -49,7 +50,9 @@ completes the generator direction of Stone's theorem; the converse construction 
 * `TauCeti.Semigroups.StronglyContinuousGroup.complexGenerator`: the generator as a complex
   `LinearPMap`.
 * `TauCeti.Semigroups.StronglyContinuousGroup.isUnitary_of_isComplexLinear_of_opNorm_le_one`:
-  a contractive C₀-group whose forward semigroup is complex linear is unitary.
+  a contractive C₀-group whose forward semigroup is complex linear is unitary;
+  `isUnitary_toGroupOfInverse`: a complex-linear contraction semigroup and an inverse
+  contraction semigroup glue into a unitary group.
 * `TauCeti.Semigroups.StronglyContinuousGroup.complexGenerator_restrictScalars`,
   `complexGenerator_eq_of_generator_eq_restrictScalars` and `eq_of_complexGenerator_eq`: the
   real generator is the real restriction of the complex one, which is therefore determined by
@@ -176,6 +179,25 @@ theorem isUnitary_of_isComplexLinear_of_opNorm_le_one (U : StronglyContinuousGro
           map_smul' := hsmul t }
       norm_map' := U.norm_map_apply_eq_of_norm_le_one t (h t) (h (-t)) }
   exact L.inner_map_map x y
+
+/-- A complex-linear contraction semigroup and an inverse contraction semigroup glue into a
+unitary C₀-group (complex linearity of the inverse half follows from the group law). -/
+theorem isUnitary_toGroupOfInverse (S T : ContractionSemigroup H)
+    (hS : S.toStronglyContinuousSemigroup.IsComplexLinear)
+    (hST : ∀ t, (S.toStronglyContinuousSemigroup t).comp (T.toStronglyContinuousSemigroup t) =
+      ContinuousLinearMap.id ℝ H)
+    (hTS : ∀ t, (T.toStronglyContinuousSemigroup t).comp (S.toStronglyContinuousSemigroup t) =
+      ContinuousLinearMap.id ℝ H) :
+    (S.toStronglyContinuousSemigroup.toGroupOfInverse T.toStronglyContinuousSemigroup hST
+      hTS).IsUnitary := by
+  refine isUnitary_of_isComplexLinear_of_opNorm_le_one _ ?_ fun t => ?_
+  · rw [StronglyContinuousSemigroup.toGroupOfInverse_toSemigroup]
+    exact hS
+  · rcases le_or_gt 0 t with ht | ht
+    · rw [StronglyContinuousSemigroup.toGroupOfInverse_apply_of_nonneg _ _ _ _ ht]
+      exact S.contracting_real t ht
+    · rw [StronglyContinuousSemigroup.toGroupOfInverse_apply_of_nonpos _ _ _ _ ht.le]
+      exact T.contracting_real (-t) (neg_nonneg.mpr ht.le)
 
 /-- The generator domain of a unitary strongly continuous group, regarded as a complex submodule:
 the complex generator domain of its forward semigroup. Its carrier is the real generator domain. -/

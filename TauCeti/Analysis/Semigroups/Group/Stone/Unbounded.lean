@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Semigroups.Group.Unitary
-public import TauCeti.Analysis.Semigroups.Group.InverseSemigroups
 import TauCeti.Analysis.Semigroups.Generator.Neg
 import TauCeti.Analysis.Semigroups.Dissipative.SkewSelfAdjoint
 import TauCeti.Analysis.InnerProductSpace.LinearPMap.SelfAdjoint
@@ -37,8 +36,6 @@ generator.
 
 ## Main results
 
-* `TauCeti.Semigroups.StronglyContinuousGroup.isUnitary_toGroupOfInverse`: a complex-linear
-  contraction semigroup and an inverse contraction semigroup glue into a unitary group.
 * `IsSelfAdjoint.existsUnique_isUnitary_complexGenerator_eq_I_smul`: **Stone's theorem, converse
   direction**: a self-adjoint operator `A` has exactly one unitary C₀-group with complex
   generator `i • A`.
@@ -64,25 +61,6 @@ namespace TauCeti.Semigroups
 namespace StronglyContinuousGroup
 
 variable {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℂ H]
-
-/-- A complex-linear contraction semigroup and an inverse contraction semigroup glue into a
-unitary C₀-group (complex linearity of the inverse half follows from the group law). -/
-theorem isUnitary_toGroupOfInverse (S T : ContractionSemigroup H)
-    (hS : S.toStronglyContinuousSemigroup.IsComplexLinear)
-    (hST : ∀ t, (S.toStronglyContinuousSemigroup t).comp (T.toStronglyContinuousSemigroup t) =
-      ContinuousLinearMap.id ℝ H)
-    (hTS : ∀ t, (T.toStronglyContinuousSemigroup t).comp (S.toStronglyContinuousSemigroup t) =
-      ContinuousLinearMap.id ℝ H) :
-    (S.toStronglyContinuousSemigroup.toGroupOfInverse T.toStronglyContinuousSemigroup hST
-      hTS).IsUnitary := by
-  refine isUnitary_of_isComplexLinear_of_opNorm_le_one _ ?_ fun t => ?_
-  · rw [StronglyContinuousSemigroup.toGroupOfInverse_toSemigroup]
-    exact hS
-  · rcases le_or_gt 0 t with ht | ht
-    · rw [StronglyContinuousSemigroup.toGroupOfInverse_apply_of_nonneg _ _ _ _ ht]
-      exact S.contracting_real t ht
-    · rw [StronglyContinuousSemigroup.toGroupOfInverse_apply_of_nonpos _ _ _ _ ht.le]
-      exact T.contracting_real (-t) (neg_nonneg.mpr ht.le)
 
 variable [CompleteSpace H]
 
