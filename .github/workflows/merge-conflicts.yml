@@ -36,6 +36,18 @@ name: Merge conflicts
 # labelled. scripts/pr_status/conflicts.py skips an unknown PR and keeps going.
 
 on:
+  # The base moving is what creates a conflict, so react to it rather than only
+  # waiting for the next quarter hour. This is also the cheapest possible trigger:
+  # a run that finds nothing costs one GraphQL query.
+  #
+  # It does NOT replace the cron. A push is the WORST moment to read mergeability
+  # -- GitHub has just invalidated it for every open PR, so most come back UNKNOWN
+  # and are deliberately skipped -- and scheduled dispatches have been observed
+  # dropping for hours at a time, so neither trigger can be relied on alone. The
+  # push gives promptness and still fires when a scheduled dispatch is dropped;
+  # the cron gives the settled read the push cannot.
+  push:
+    branches: [main]
   schedule:
     # Every 15 minutes, on the quarter -- the offsets furthest from pr-labels
     # (:05), housekeeping (:20), merge-sweep (:40) and stuck-alerts (:50). The gap
