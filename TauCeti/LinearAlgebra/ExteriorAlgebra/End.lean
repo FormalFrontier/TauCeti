@@ -115,8 +115,9 @@ private theorem basisProjection_basis {n : ℕ}
       if s = t then b.ExteriorAlgebra t else 0 := by
   rw [basisProjection]
   rw [listProd_basisFactor_apply]
-  rw [TauCeti.Module.End.listProd_indicator_eq_if_eq (l := List.ofFn fun i : Fin n ↦ i)
-    (fun i ↦ List.mem_ofFn.mpr ⟨i, rfl⟩) s t]
+  have hprod := TauCeti.Module.End.listProd_indicator_eq_if_eq (l := List.ofFn fun i : Fin n ↦ i)
+    (fun i ↦ List.mem_ofFn.mpr ⟨i, rfl⟩) s t
+  simpa only [eq_iff_iff] using hprod
   simp
 
 private noncomputable def create {n : ℕ} (b : Module.Basis (Fin n) K W)

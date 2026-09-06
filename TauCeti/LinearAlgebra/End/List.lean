@@ -51,7 +51,7 @@ variable [CommRing R] [DecidableEq I]
 /-- A list containing every element of the index type has indicator product one exactly when two
 finite labels agree, and zero otherwise. -/
 theorem listProd_indicator_eq_if_eq (l : List I) (hl : ∀ i, i ∈ l) (s t : Finset I) :
-    (l.map fun i ↦ if (i ∈ s ↔ i ∈ t) then (1 : R) else 0).prod = if s = t then 1 else 0 := by
+    (l.map fun i ↦ if (i ∈ s) = (i ∈ t) then (1 : R) else 0).prod = if s = t then 1 else 0 := by
   classical
   by_cases hst : s = t
   · subst t
@@ -61,12 +61,12 @@ theorem listProd_indicator_eq_if_eq (l : List I) (hl : ∀ i, i ∈ l) (s t : Fi
       | nil => simp
       | cons i l ih => simp only [List.map_cons, List.prod_cons, one_mul, ih]
     simpa using hones l
-  · obtain ⟨i, hi⟩ : ∃ i, ¬ (i ∈ s ↔ i ∈ t) := by
+  · obtain ⟨i, hi⟩ : ∃ i, ¬ (i ∈ s) = (i ∈ t) := by
       contrapose! hst
-      exact Finset.ext hst
+      exact Finset.ext fun i ↦ eq_iff_iff.mp (hst i)
     simp only [hst, ite_false]
     have hprodzero : ∀ l : List I, i ∈ l →
-        (l.map (fun j ↦ if (j ∈ s ↔ j ∈ t) then (1 : R) else 0)).prod = 0 := by
+        (l.map (fun j ↦ if (j ∈ s) = (j ∈ t) then (1 : R) else 0)).prod = 0 := by
       intro l hmem
       induction l with
       | nil => simp at hmem
