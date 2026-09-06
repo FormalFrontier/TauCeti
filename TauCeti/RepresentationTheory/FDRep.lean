@@ -31,7 +31,7 @@ being a commutative ring throughout otherwise.
 
 Finally it records the structural properties of the character that Mathlib's
 `RepresentationTheory/Character.lean` leaves out beside `FDRep.char_iso` and `FDRep.char_tensor`:
-the character is **additive on biproducts**, and unbundled on products of representations, the
+the character is **additive on biproducts** (and, unbundled, on products of representations), the
 character of the **tensor unit** is the constant function `1`, and the character is **constant on
 the cosets of its kernel**. The first two are what
 is still missing before the character can be read as a ring homomorphism out of the representation
@@ -79,11 +79,9 @@ theorem char_trivial {k : Type u} {G : Type v} {V : Type w} [Field k] [Monoid G]
     LinearMap.ext fun v => by rw [trivial_apply, Module.End.one_apply]
   rw [character, hone, LinearMap.trace_one]
 
-/-- **The character is additive on products of representations.** A group element acts on a product
-of representations by the product of the two actions, and the trace of a product map is the sum of
-the two traces. This is the unbundled counterpart of `FDRep.char_biprod`, and it is what reads a
-splitting `ρ ≃ ρ₁ × ρ₂` -- the shape `TauCeti.Subrepresentation.equivProdOfIsCompl` produces -- off
-the two characters. -/
+/-- **The character is additive on products of representations.** This is the unbundled counterpart
+of `FDRep.char_biprod`, and it is what reads a splitting `ρ ≃ ρ₁ × ρ₂` -- the shape
+`TauCeti.Subrepresentation.equivProdOfIsCompl` produces -- off the two characters. -/
 @[simp]
 theorem char_prod {k : Type u} {G : Type v} {V W : Type*} [Field k] [Monoid G]
     [AddCommGroup V] [Module k V] [FiniteDimensional k V]

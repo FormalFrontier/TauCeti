@@ -52,10 +52,9 @@ theorem finrank_indFDRep_ofLinearCharacter (χ : N →* kˣ) :
 
 /-- **Inducing the restriction of a linear character of the ambient group multiplies the
 permutation character by that character**: the character of `Ind_N^G (Res_N χ)` at `g` is `χ g`
-times the character of `Ind_N^G 1` at `g`, for every `χ : G →* kˣ` and every `g`. A linear
-character of `G` is in particular a class function on `G`, so this is the projection formula
-`TauCeti.indClassFun_comp_subtype_mul` read on it and on the constant function `1`, and it inherits
-that formula's absence of hypotheses on the characteristic. -/
+times the character of `Ind_N^G 1` at `g`, for every `χ : G →* kˣ` and every `g`. This is the
+character-level form of the projection formula, and like it holds over any field and for any
+subgroup of finite index, with no hypothesis on the characteristic. -/
 theorem character_indFDRep_ofLinearCharacter_comp_subtype (χ : G →* kˣ) (g : G) :
     (indFDRep (FDRep.ofLinearCharacter (χ.comp N.subtype))).character g =
       (χ g : k) * (indFDRep (FDRep.of (Representation.trivial k N k))).character g := by

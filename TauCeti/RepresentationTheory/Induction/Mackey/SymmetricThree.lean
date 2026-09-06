@@ -108,12 +108,11 @@ theorem not_simple_indFDRep_stabilizer_perm_fin_three (a : Fin 3)
 
 /-! ### The decomposition of the induced sign character -/
 
-omit [IsAlgClosed k] in
-/-- **The sign character of a point stabilizer of `S₃` is nontrivial.** The stabilizer is generated
-by a transposition, on which the sign character takes the value `-1`, and `-1 ≠ 1` because the
-coefficient field has characteristic zero. So the representation induced below is not the
-permutation representation of the trivial character under another name. -/
-theorem signLinearCharacter_comp_stabilizer_subtype_ne_one (a : Fin 3) :
+omit [IsAlgClosed k] [CharZero k] in
+/-- **The sign character of a point stabilizer of `S₃` is nontrivial**, over any field in which
+`2 ≠ 0`. So the representation induced below is not the permutation representation of the trivial
+character under another name. -/
+theorem signLinearCharacter_comp_stabilizer_subtype_ne_one [NeZero (2 : k)] (a : Fin 3) :
     (signLinearCharacter k (Fin 3)).comp
       (MulAction.stabilizer (Equiv.Perm (Fin 3)) a).subtype ≠ 1 := by
   have hne : (a + 1 : Fin 3) ≠ a + 2 := by revert a; decide
@@ -128,19 +127,7 @@ theorem signLinearCharacter_comp_stabilizer_subtype_ne_one (a : Fin 3) :
   have h2 : (2 : k) = 0 := by
     rw [Units.val_neg, Units.val_one] at hval
     linear_combination -hval
-  exact two_ne_zero h2
-
-omit [IsAlgClosed k] [CharZero k] in
-/-- The field-valued form of `TauCeti.sign_eq_one_or_card_fixedPoints_eq_one_perm_fin_three`:
-writing `F` for the number of points fixed by `σ`, one has `sgn σ · F = sgn σ + F - 1` in `k`.
-Either alternative of the disjunction gives it: if `sgn σ = 1` both sides are `F`, and if `F = 1`
-both sides are `sgn σ`. -/
-private theorem sign_mul_card_fixedPoints_fin_three (σ : Equiv.Perm (Fin 3)) :
-    ((Equiv.Perm.sign σ : ℤ) : k) * (Nat.card {x : Fin 3 // σ • x = x} : k)
-      = ((Equiv.Perm.sign σ : ℤ) : k) + (Nat.card {x : Fin 3 // σ • x = x} : k) - 1 := by
-  rcases sign_eq_one_or_card_fixedPoints_eq_one_perm_fin_three σ with h | h
-  · rw [h]; push_cast; ring
-  · rw [h]; push_cast; ring
+  exact NeZero.ne (2 : k) h2
 
 omit [IsAlgClosed k] [CharZero k] in
 /-- **The character of `Ind_{C₂}^{S₃}(sign)` is `sgn + χ_standard`**, at every `σ` and over any
