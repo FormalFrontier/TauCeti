@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.MeasureTheory.Measure.Typeclasses.ZeroOne
+import TauCeti.Algebra.Order.Ring.Abs
 import Mathlib.MeasureTheory.Measure.Real
 
 /-!
@@ -25,8 +26,13 @@ countable power of `ℝ≥0∞`.
 
 ## Main results
 
-* `TauCeti.MeasureTheory.measure_eq_zero_or_one_of_forall_approx_factorization`: a null-measurable
-  event is trivial when it admits arbitrarily close pairs whose intersection mass factors;
+* `TauCeti.MeasureTheory.measure_eq_zero_or_one_of_forall_approx_factorization`: under a finite
+  measure, a null-measurable event admitting arbitrarily close pairs whose intersection mass
+  factors has mass `0` or `1`;
+* `TauCeti.MeasureTheory.abs_measureReal_inter_sub_lt` and
+  `TauCeti.MeasureTheory.abs_measureReal_sub_mul_self_le_of_symmDiff_lt`: the symmetric-difference
+  estimates behind it — two events within `e` of `s` have intersection within `2e` of `s`, and a
+  factoring pair within `e ≤ 1` of `s` bounds `|μ s - (μ s)²|` by `e (2 μ s + 3)`;
 * `TauCeti.MeasureTheory.IsZeroOneMeasure.exists_ae_eq_const`: under a zero-one measure, an
   almost-everywhere measurable map into a standard Borel space agrees almost everywhere with a
   single value.
@@ -44,21 +50,8 @@ namespace TauCeti
 
 namespace MeasureTheory
 
-/-- `|x y - q²| ≤ e (2q + e)` when `x` and `y` are within `e` of `q ≥ 0` and `y ≥ 0`. -/
-private theorem abs_mul_sub_mul_self_le {x y q e : ℝ} (hx : |x - q| ≤ e) (hy : |y - q| ≤ e)
-    (hy0 : 0 ≤ y) (hq0 : 0 ≤ q) (he : 0 ≤ e) :
-    |x * y - q * q| ≤ e * (2 * q + e) := by
-  have heq : x * y - q * q = (x - q) * y + q * (y - q) := by ring
-  have hyq : y ≤ q + e := by linarith [(abs_le.1 hy).2]
-  calc |x * y - q * q| ≤ |(x - q) * y| + |q * (y - q)| := by
-        rw [heq]; exact abs_add_le _ _
-    _ = |x - q| * y + q * |y - q| := by
-        rw [abs_mul, abs_mul, abs_of_nonneg hy0, abs_of_nonneg hq0]
-    _ ≤ e * (q + e) + q * e := by gcongr
-    _ = e * (2 * q + e) := by ring
-
 /-- Two events within `e` of `s` have intersection within `2e` of `s`. -/
-private theorem abs_measureReal_inter_sub_lt {Ω : Type*} [MeasurableSpace Ω]
+theorem abs_measureReal_inter_sub_lt {Ω : Type*} [MeasurableSpace Ω]
     {μ : Measure Ω} [IsFiniteMeasure μ] {A B s : Set Ω}
     (hA : NullMeasurableSet A μ) (hB : NullMeasurableSet B μ) (hs : NullMeasurableSet s μ)
     {e : ℝ} (h1 : μ.real (symmDiff A s) < e) (h2 : μ.real (symmDiff B s) < e) :
@@ -74,7 +67,7 @@ private theorem abs_measureReal_inter_sub_lt {Ω : Type*} [MeasurableSpace Ω]
   exact lt_of_le_of_lt (abs_measureReal_sub_le_measureReal_symmDiff (hA.inter hB) hs) hIS
 
 /-- With `e ≤ 1`, the two-sided approximation forces `|μ s - (μ s)²| ≤ e (2 μ s + 3)`. -/
-private theorem abs_measureReal_sub_mul_self_le_of_symmDiff_lt
+theorem abs_measureReal_sub_mul_self_le_of_symmDiff_lt
     {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsFiniteMeasure μ]
     {t t' s : Set Ω} (ht : NullMeasurableSet t μ) (ht' : NullMeasurableSet t' μ)
     (hs : NullMeasurableSet s μ) {e : ℝ} (he : e ≤ 1) (h1 : μ.real (symmDiff t s) < e)
@@ -89,7 +82,7 @@ private theorem abs_measureReal_sub_mul_self_le_of_symmDiff_lt
   have hbi : |μ.real (t ∩ t') - μ.real s| < 2 * e :=
     abs_measureReal_inter_sub_lt ht ht' hs h1 h2
   have hprod : |μ.real t * μ.real t' - μ.real s * μ.real s| ≤ e * (2 * μ.real s + e) :=
-    abs_mul_sub_mul_self_le hbt hbt' measureReal_nonneg measureReal_nonneg he0
+    TauCeti.abs_mul_sub_mul_self_le hbt hbt' measureReal_nonneg measureReal_nonneg he0
   rw [hinter] at hbi
   have hsplit : μ.real s - μ.real s * μ.real s =
       (μ.real s - μ.real t * μ.real t') + (μ.real t * μ.real t' - μ.real s * μ.real s) := by ring
