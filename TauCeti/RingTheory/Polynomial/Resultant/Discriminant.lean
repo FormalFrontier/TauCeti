@@ -484,15 +484,14 @@ theorem _root_.Polynomial.Monic.discr_ne_zero_iff {K : Type*} [Field K] {f : K[X
 
 /-- A separable monic polynomial has nonzero discriminant, so the product of its root differences
 is nonzero. -/
-theorem _root_.Polynomial.Monic.discrSqrt_ne_zero {F E : Type*} [Field F] [CommRing E] [IsDomain E]
+theorem _root_.Polynomial.Monic.discrSqrt_ne_zero {F E : Type*} [CommRing F] [CommRing E]
+    [IsDomain E]
     [Algebra F E] {f : F[X]} (hf : f.Monic) (hsep : f.Separable)
     (e : Fin f.natDegree ≃ f.rootSet E) :
     discrSqrt e ≠ 0 := by
   intro h
-  have h0 : algebraMap F E f.discr = 0 := by
-    rw [← hf.discrSqrt_sq hsep e, h, zero_pow two_ne_zero]
-  exact (hf.discr_ne_zero_iff.mpr hsep)
-    ((map_eq_zero_iff _ (algebraMap F E).injective).mp h0)
+  apply ((hf.isUnit_discr_iff.mpr hsep).map (algebraMap F E)).ne_zero
+  rw [← hf.discrSqrt_sq hsep e, h, zero_pow two_ne_zero]
 
 /-- Over a domain, the discriminant of a monic polynomial is nonzero exactly when the polynomial
 becomes separable over the fraction field: over a domain the separability criterion is the one
