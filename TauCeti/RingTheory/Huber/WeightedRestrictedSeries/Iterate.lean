@@ -8,6 +8,9 @@ module
 public import TauCeti.RingTheory.Huber.WeightedEval.Completion
 public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.PowerBounded
 
+import TauCeti.RingTheory.Huber.Completion
+import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.PairOfDefinition
+
 /-!
 # Comparing `A⟨X₁,…,X_{k+m}⟩` with `A⟨X₁,…,Xₖ⟩⟨Y₁,…,Y_m⟩`
 
@@ -104,8 +107,9 @@ theorem isPowerBounded_iterateVar (i : Fin (k + m)) :
     IsPowerBounded (iterateVar k m A i) := by
   refine Fin.addCases (fun i ↦ ?_) (fun j ↦ ?_) i
   · rw [iterateVar, Fin.addCases_left]
-    exact isPowerBounded_coe_weightedC isWeightFamily_one_weight
-      (isPowerBounded_coe_weightedX_one_weight i)
+    exact isPowerBounded_completion_coe_of_isPowerBounded
+      (isPowerBounded_weightedC isWeightFamily_one_weight
+        (isPowerBounded_coe_weightedX_one_weight i))
   · rw [iterateVar, Fin.addCases_right]
     exact isPowerBounded_coe_weightedX_one_weight j
 
