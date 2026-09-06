@@ -106,15 +106,23 @@ jobs:
           persist-credentials: false
           fetch-depth: 100
 
-      # `.lake` is the sandbox's only writable mount point and the destination for the trusted
-      # cache restore, and it sits inside a checkout whose contents the candidate controls. A
-      # committed symlink there is followed by `mkdir -p`, by the cache restore, and by bwrap
-      # while it builds the sandbox, each of which would then write outside the checkout as the
-      # runner user. Replace it with a real, empty directory before anything reads or writes it.
+      # `.lake` sits inside a checkout whose contents the candidate controls, and a symlink
+      # committed there gets followed by everything that later writes to that path, each of
+      # which then writes outside the checkout as the runner user. Replacing it with a real,
+      # empty directory first stops that. `rm -rf` unlinks a symlink rather than following it,
+      # which is what makes this work; the absent trailing slash is what keeps it true.
       #
-      # `rm -rf` unlinks a symlink rather than following it, so the hostile case is handled; the
-      # absent trailing slash is what keeps that true. This is also what makes the pinned
-      # bubblewrap version below safe, so the two have to move together.
+      # There are two reasons this step exists, and they expire differently.
+      #
+      # The first is the pinned bubblewrap. Noble ships 0.9.0, which follows such a symlink
+      # while creating the sandbox's mount point (GHSA-pxhw-h44j-8pfx). Upstream fixed that in
+      # 0.12.0, so THIS REASON GOES AWAY once noble carries 0.12.0 or newer and the pin below
+      # moves to it.
+      #
+      # The second does not. `mkdir -p <tree>/.lake/tmp` and the Mathlib cache restore both run
+      # in the trusted phase, before any sandbox exists, and both follow the symlink themselves.
+      # No bubblewrap version fixes that, because bubblewrap is not involved. So this step stays
+      # after the pin moves, unless those two callers are made symlink-safe at the same time.
       - name: Normalise the reference tree's .lake before anything touches it
         run: |
           set -euo pipefail
@@ -156,9 +164,11 @@ jobs:
           # and closes the same hole for `mkdir -p` and the cache restore, neither of which the
           # upstream fix would have covered.
           #
-          # This is our own reasoning, not upstream's fix. If that normalisation step is ever
-          # dropped or moved after the cache restore, this pin has to go to >= 0.12.0.
-          # scripts/test_bwrap_pin.py checks the step is still there and still comes first.
+          # So this pin is safe because of that step, not because 0.9.0 is fixed. Moving to
+          # 0.12.0 when noble carries it would make the sandbox safe on its own and retire that
+          # half of the step's job; the trusted-phase half stays either way. Until then the step
+          # is load-bearing, and scripts/test_bwrap_pin.py checks it is still present and still
+          # runs before anything that touches a candidate `.lake`.
           deb="bubblewrap_${BWRAP_VER}_amd64.deb"
           if ! curl -sSL --fail "https://archive.ubuntu.com/ubuntu/pool/main/b/bubblewrap/${deb}" -o bwrap.deb \
              && ! curl -sSL --fail "https://security.ubuntu.com/ubuntu/pool/main/b/bubblewrap/${deb}" -o bwrap.deb; then
@@ -188,10 +198,12 @@ jobs:
               '.github/workflows/{pr-build,pr-profile,nightly-verify}.yml. They must agree;' \
               'scripts/test_bwrap_pin.py fails if they do not.' \
               '' \
-              'IF YOU PIN BELOW 0.12.0, the "Normalise ... .lake" step is what keeps that safe:' \
-              'earlier bubblewrap lets a symlink in a candidate checkout redirect the files it' \
-              'creates while setting the sandbox up (GHSA-pxhw-h44j-8pfx). Check that step still' \
-              'runs before the cache restore, or move the pin to 0.12.0 or newer.' \
+              'ON VERSIONS: 0.12.0 or newer is safe on its own. Below that, the' \
+              '"Normalise ... .lake" step is what keeps it safe, because earlier bubblewrap' \
+              'follows a symlink in a candidate checkout while creating the sandbox mount point' \
+              '(GHSA-pxhw-h44j-8pfx). If you pin below 0.12.0, check that step still runs before' \
+              'anything else touches .lake. Keep the step either way: the trusted-phase callers' \
+              'follow the symlink themselves and no bubblewrap version fixes that.' \
               '' >&2
             exit 1
           fi

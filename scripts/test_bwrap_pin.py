@@ -148,12 +148,13 @@ class BwrapPin(unittest.TestCase):
     def test_lake_is_normalised_before_anything_touches_it(self):
         """The step that makes the pinned bubblewrap version safe.
 
-        `.lake` is the only path where these policies create a mount point inside a checkout
-        the candidate controls, so a symlink committed there is the one way the pinned 0.9.0's
-        unfixed symlink handling (GHSA-pxhw-h44j-8pfx) could be reached. The same symlink would
-        also be followed by `mkdir -p` and by the trusted Mathlib cache restore, neither of
-        which the upstream fix covers. Replacing it with a real directory first is what closes
-        all three, so it has to exist and has to come before every other step that names it.
+        Two reasons, expiring differently. The pinned bubblewrap is noble's 0.9.0, which
+        follows a symlink committed at `.lake` while creating the sandbox mount point
+        (GHSA-pxhw-h44j-8pfx); upstream fixed that in 0.12.0, so that reason retires when the
+        pin can move. The other does not: `mkdir -p` and the trusted Mathlib cache restore
+        follow the same symlink themselves, before any sandbox exists, and no bubblewrap
+        version fixes that. Either way the step has to exist and has to come before every other
+        step that names a candidate `.lake`.
         """
         import yaml
         for workflow in WORKFLOWS:
