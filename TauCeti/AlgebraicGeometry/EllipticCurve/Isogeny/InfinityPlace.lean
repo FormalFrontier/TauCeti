@@ -51,6 +51,9 @@ Neither direction uses ellipticity, separability, or the degree of an isogeny.
 * `TauCeti.Isogeny.comap_infinityPlace_apply_algebraMap`: the restricted valuation, evaluated on
   the image of the target coordinate ring, is `v_∞ ∘ φ` — the computation rule the other two are
   stated through.
+* `TauCeti.CoordinatePullback.mapsInfinity_iff_one_lt_infinityPlace`: **pointedness is exactly a
+  pole of `x` at infinity**, the form in which a construction can establish it by one valuation
+  computation.
 * `TauCeti.CoordinatePullback.mapsInfinity_iff_isEquiv_comap_infinityPlace`: **the pointedness
   criterion**, `MapsInfinity σ ↔ σ_*(O₁) = O₂`, for an embedding `σ` of function fields.
 
@@ -237,6 +240,18 @@ theorem mapsInfinity_of_one_lt_infinityPlace (σ : W₂.FunctionField →ₐ[F] 
   refine isIntegral_trans (A := C) _ (IsIntegral.tower_top (R := F[X]) ?_)
   exact (Algebra.IsIntegral.isIntegral (R := F[X]) z).map
     (IsScalarTower.toAlgHom F[X] W₁.CoordinateRing W₁.FunctionField)
+
+/-- **Pointedness is exactly a pole of `x` at infinity.** An embedding of function fields
+restricts to a pointed coordinate pullback precisely when it sends the target's coordinate `x` to
+a function with a pole at the source's point at infinity, so a construction can establish
+pointedness by a single valuation computation. -/
+theorem mapsInfinity_iff_one_lt_infinityPlace (σ : W₂.FunctionField →ₐ[F] W₁.FunctionField) :
+    MapsInfinity (σ.comp (IsScalarTower.toAlgHom F W₂.CoordinateRing W₂.FunctionField)) ↔
+      1 < infinityPlace W₁ (σ (algebraMap F[X] W₂.FunctionField X)) := by
+  refine ⟨fun hσ => ?_, mapsInfinity_of_one_lt_infinityPlace σ⟩
+  rw [IsScalarTower.algebraMap_apply F[X] W₂.CoordinateRing W₂.FunctionField]
+  exact Isogeny.one_lt_infinityPlace_pullback_X ({ pullback := _, mapsInfinity := hσ } :
+    Isogeny W₁ W₂)
 
 /-- **The pointedness criterion.** An embedding `σ : F(W₂) → F(W₁)` restricts to a coordinate
 pullback which maps infinity to infinity exactly when the source's place at infinity restricts
