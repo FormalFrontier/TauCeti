@@ -298,14 +298,10 @@ operation used to transport left-coset multiplicities arising from right slash a
 noncomputable def atkinLehnerAutomorphism : GL (Fin 2) ℚ ≃* GL (Fin 2) ℚ :=
   (MulEquiv.inv' (GL (Fin 2) ℚ)).trans (atkinLehnerEquiv N).symm
 
-/-- The ambient automorphism is the Atkin–Lehner bar applied after inversion.
-
-Deliberately not a `simp` lemma: the simp-normal form of this automorphism is the abstract
-one given by `atkinLehnerAutomorphism_involutive` and `atkinLehnerAutomorphism_symm`. Simp
-rewrites innermost first, so with this lemma in the default set the inner application in
-`f (f x)` unfolds to the matrix conjugation before the involutivity lemma can fire, and
-`simpNF` rejects the pair. Use `rw [atkinLehnerAutomorphism_apply]` where the entries are
-what is wanted. -/
+/-- The ambient automorphism is the Atkin–Lehner bar applied after inversion. -/
+-- This is deliberately not a simp lemma: simp rewrites inner applications first, preventing
+-- `atkinLehnerAutomorphism_involutive` from normalizing nested applications. Use `rw` when the
+-- matrix entries are wanted.
 lemma atkinLehnerAutomorphism_apply (x : GL (Fin 2) ℚ) :
     atkinLehnerAutomorphism N x = natDiagGL 2 ![1, N] *
       (transposeGLEquiv 2 x⁻¹).unop * (natDiagGL 2 ![1, N])⁻¹ :=

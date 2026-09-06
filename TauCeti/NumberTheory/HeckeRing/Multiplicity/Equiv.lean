@@ -35,7 +35,7 @@ namespace DoubleCoset
 variable {G K : Type*} [Group G] [Group K]
 
 /-- Membership in a double coset is preserved by a group equivalence. -/
-lemma mem_doubleCoset_map_equiv_iff (e : G ≃* K) (H₁ H₂ : Subgroup G) (g x : G) :
+@[simp] lemma mem_doubleCoset_map_equiv_iff (e : G ≃* K) (H₁ H₂ : Subgroup G) (g x : G) :
     (e : G →* K) x ∈ doubleCoset ((e : G →* K) g) (H₁.map (e : G →* K))
         (H₂.map (e : G →* K)) ↔
       x ∈ doubleCoset g H₁ H₂ := by
@@ -73,7 +73,7 @@ noncomputable def decompQuotientEquivMap (e : G ≃* K) (H₁ H₂ : Subgroup G)
   simp only [map_inv, map_mul]
 
 /-- The image of a decomposition class represented by `x` is represented by `e x`. -/
-lemma decompQuotientEquivMap_mk (e : G ≃* K) (H₁ H₂ : Subgroup G) (g : G) (x : H₁) :
+@[simp] lemma decompQuotientEquivMap_mk (e : G ≃* K) (H₁ H₂ : Subgroup G) (g : G) (x : H₁) :
     decompQuotientEquivMap e H₁ H₂ g (QuotientGroup.mk x) =
       QuotientGroup.mk (e.subgroupMap H₁ x) :=
   (rfl)
@@ -98,7 +98,7 @@ lemma decompQuotientEquivMap_out (e : G ≃* K) (H₁ H₂ : Subgroup G) (g : G)
 
 /-- Shimura's multiplicity is unchanged when all of its data are transported along a group
 equivalence, without any finiteness hypothesis. -/
-theorem multiplicity_map_equiv (e : G ≃* K) (H₁ H₂ H₃ : Subgroup G) (g h d : G) :
+@[simp] theorem multiplicity_map_equiv (e : G ≃* K) (H₁ H₂ H₃ : Subgroup G) (g h d : G) :
     multiplicity (H₁.map (e : G →* K)) (H₂.map (e : G →* K)) (H₃.map (e : G →* K))
         (e g) (e h) (e d) =
       multiplicity H₁ H₂ H₃ g h d := by

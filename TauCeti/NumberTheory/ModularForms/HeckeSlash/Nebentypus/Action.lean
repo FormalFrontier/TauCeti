@@ -234,7 +234,7 @@ noncomputable def twistedHeckeSlashModularFormCharLinearMap :
     (HeckeCosetModule.sum_single_index ℤ (zero_smul _ _))
 
 /-- On underlying functions, the modular-form extension is the function-space extension. -/
-lemma coe_twistedHeckeSlashModularFormCharLinearMap
+@[simp] lemma coe_twistedHeckeSlashModularFormCharLinearMap
     (T : 𝕋 (Delta0 N) (Γ₀Q(N)) ℤ) (f : modFormCharSpace k χ) :
     ⇑((twistedHeckeSlashModularFormCharLinearMap k χ T f :
         ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) =
@@ -266,7 +266,7 @@ lemma coe_twistedHeckeSlashModularFormCharLinearMap
     twistedHeckeSlashModularFormCharLinearMap k χ 1 = 1 := by
   refine LinearMap.ext fun f ↦ Subtype.ext (ModularForm.ext fun τ ↦ ?_)
   have h := congrFun (coe_twistedHeckeSlashModularFormCharLinearMap k χ 1 f) τ
-  simpa using h
+  simpa only [twistedHeckeSlashRingCharLinearMap_one, Module.End.one_apply] using h
 
 /-- The modular-form extension is multiplicative. -/
 theorem twistedHeckeSlashModularFormCharLinearMap_map_mul
@@ -291,8 +291,7 @@ theorem twistedHeckeSlashModularFormCharLinearMap_map_mul
         twistedHeckeSlashRingCharLinearMap k χ T) f₀ : ℍ → ℂ) τ := by
       rw [twistedHeckeSlashRingCharLinearMap_map_mul]
     _ = (twistedHeckeSlashRingCharLinearMap k χ S Tf₀ : ℍ → ℂ) τ := by
-      rw [hT]
-      rfl
+      rw [hT, Module.End.mul_apply]
     _ = _ := (congrFun
       (coe_twistedHeckeSlashModularFormCharLinearMap k χ S Tf) τ).symm
 
@@ -324,7 +323,7 @@ noncomputable def twistedHeckeSlashCuspFormCharLinearMap :
     (HeckeCosetModule.sum_single_index ℤ (zero_smul _ _))
 
 /-- On underlying functions, the cusp-form extension is the function-space extension. -/
-lemma coe_twistedHeckeSlashCuspFormCharLinearMap
+@[simp] lemma coe_twistedHeckeSlashCuspFormCharLinearMap
     (T : 𝕋 (Delta0 N) (Γ₀Q(N)) ℤ) (f : cuspFormCharSpace k χ) :
     ⇑((twistedHeckeSlashCuspFormCharLinearMap k χ T f :
         CuspForm ((Gamma1 N).map (mapGL ℝ)) k)) =
@@ -361,7 +360,7 @@ lemma coe_twistedHeckeSlashCuspFormCharLinearMap
     twistedHeckeSlashCuspFormCharLinearMap k χ 1 = 1 := by
   refine LinearMap.ext fun f ↦ Subtype.ext (CuspForm.ext fun τ ↦ ?_)
   have h := congrFun (coe_twistedHeckeSlashCuspFormCharLinearMap k χ 1 f) τ
-  simpa using h
+  simpa only [twistedHeckeSlashRingCharLinearMap_one, Module.End.one_apply] using h
 
 /-- The cusp-form extension is multiplicative. -/
 theorem twistedHeckeSlashCuspFormCharLinearMap_map_mul
@@ -392,8 +391,7 @@ theorem twistedHeckeSlashCuspFormCharLinearMap_map_mul
         twistedHeckeSlashRingCharLinearMap k χ T) f₀ : ℍ → ℂ) τ := by
       rw [twistedHeckeSlashRingCharLinearMap_map_mul]
     _ = (twistedHeckeSlashRingCharLinearMap k χ S Tf₀ : ℍ → ℂ) τ := by
-      rw [hT]
-      rfl
+      rw [hT, Module.End.mul_apply]
     _ = _ := (congrFun
       (coe_twistedHeckeSlashCuspFormCharLinearMap k χ S Tf) τ).symm
 
