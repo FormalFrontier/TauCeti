@@ -28,7 +28,7 @@ change, and negation commutes with the restriction.
   membership and evaluation agree with those of the original map.
 * `LinearPMap.restrictScalars_neg` and `LinearPMap.restrictScalars_smul`: restriction of scalars
   commutes with negation and with scalar multiplication of the map.
-* `LinearPMap.restrictScalars_graph` and `LinearPMap.apply_of_eq_restrictScalars`: the graph is the
+* `LinearPMap.restrictScalars_graph` and `LinearPMap.congr_fun_restrictScalars`: the graph is the
   restriction of scalars of the graph, and a map equal to a restriction takes the restricted map's
   values.
 -/
@@ -101,10 +101,10 @@ theorem restrictScalars_coe_graph (A : E →ₗ.[R] F) :
 
 /-- A partial linear map equal to a restriction of scalars takes the values of the restricted
 map. -/
-theorem apply_of_eq_restrictScalars {B : E →ₗ.[S] F} {A : E →ₗ.[R] F}
+theorem congr_fun_restrictScalars {B : E →ₗ.[S] F} {A : E →ₗ.[R] F}
     (h : B = A.restrictScalars S) {x : E} (hx : x ∈ B.domain) (hxA : x ∈ A.domain) :
     B ⟨x, hx⟩ = A ⟨x, hxA⟩ :=
-  (apply_of_eq h hx ((A.mem_restrictScalars_domain S).mpr hxA)).trans
+  (congr_fun h hx ((A.mem_restrictScalars_domain S).mpr hxA)).trans
     (A.restrictScalars_apply S _)
 
 end LinearPMap

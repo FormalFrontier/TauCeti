@@ -206,9 +206,9 @@ theorem complexGenerator_apply (U : StronglyContinuousGroup H) (hU : U.IsUnitary
     rw [U.toSemigroup.generator_domain, ← U.toSemigroup.mem_complexDomain_iff hU.isComplexLinear,
       ← U.toSemigroup.complexGenerator_domain hU.isComplexLinear]
     exact hx'
-  rw [LinearPMap.apply_of_eq (U.complexGenerator_def hU) hx hx',
+  rw [LinearPMap.congr_fun (U.complexGenerator_def hU) hx hx',
     U.toSemigroup.complexGenerator_apply hU.isComplexLinear ⟨x, hx'⟩,
-    LinearPMap.apply_of_eq U.generator_def _ hxr]
+    LinearPMap.congr_fun U.generator_def _ hxr]
 
 /-- Membership in the complex generator domain implies membership in the original real generator
 domain; the two domains have the same carrier. -/
@@ -238,7 +238,7 @@ theorem inner_complexGenerator_eq_neg (hU : U.IsUnitary)
         U.toSemigroup.generator ⟨(z : H), by
           rw [U.toSemigroup.generator_domain, ← U.domain_def]
           exact z.property⟩ := by
-    simpa only using LinearPMap.apply_of_eq U.generator_def
+    simpa only using LinearPMap.congr_fun U.generator_def
       (by rw [U.generator_domain]; exact z.property)
       (by rw [U.toSemigroup.generator_domain, ← U.domain_def]; exact z.property)
   have hgenx := generator_eq_toSemigroup xr

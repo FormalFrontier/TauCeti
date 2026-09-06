@@ -75,7 +75,7 @@ private theorem inv_smul_tsum_pow_mul_sub (A : X →L[ℝ] X) {lambda : ℝ} (hl
               rw [generator_domain]
               exact (ofBounded A).resolvent_mem_domain
                 (ofBounded_hasGrowthBound A) lambda hlambda x⟩ = A (R x) := by
-      simpa using LinearPMap.apply_of_eq (ofBounded_generator A)
+      simpa using LinearPMap.congr_fun (ofBounded_generator A)
         (by
           rw [generator_domain]
           exact (ofBounded A).resolvent_mem_domain

@@ -127,7 +127,7 @@ private theorem hasDerivWithinAt_interpolate {S T : StronglyContinuousSemigroup 
   have hyT' : y ∈ T.generator.domain := by rw [T.generator_domain]; exact hyT
   have hyS' : y ∈ S.generator.domain := by rw [S.generator_domain, hdom]; exact hyT
   set a : X := T.generator ⟨y, hyT'⟩
-  have hSa : S.generator ⟨y, hyS'⟩ = a := LinearPMap.apply_of_eq hgen hyS' hyT'
+  have hSa : S.generator ⟨y, hyS'⟩ = a := LinearPMap.congr_fun hgen hyS' hyT'
   -- The outer factor: the orbit of `y ∈ D(A)` read backwards from the fixed time `t`.
   have hrho : HasDerivAt (fun u : ℝ => S.realOperator (t - u) y)
       (-(S.realOperator (t - s) a)) s :=

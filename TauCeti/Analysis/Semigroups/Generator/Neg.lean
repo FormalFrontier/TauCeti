@@ -67,7 +67,7 @@ private theorem hasDerivWithinAt_productOrbit {S T : StronglyContinuousSemigroup
   have hyS' : y ∈ S.generator.domain := by rw [S.generator_domain]; exact hyS
   set a : X := S.generator ⟨y, hyS'⟩
   have hTa : T.generator ⟨y, hyT'⟩ = -a := by
-    have h := LinearPMap.apply_of_eq hgen hyT'
+    have h := LinearPMap.congr_fun hgen hyT'
       ((LinearPMap.neg_domain S.generator).symm ▸ hyS')
     simpa only [LinearPMap.neg_apply, a] using h
   have hquot : Tendsto (fun u : ℝ => (u - s)⁻¹ • (T.realOperator (u - s) y - y))
