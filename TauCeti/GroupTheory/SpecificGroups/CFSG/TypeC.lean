@@ -32,7 +32,7 @@ index names.
 The rank-two member of the same carrier family is *not* reached from here. `TauCeti.DynkinType.C 2`
 is not a valid Dynkin type, the rank-two root system being carried by `B 2`, and correspondingly a
 validated type-`C` index has rank at least three. The rank-two carrier serves the Suzuki family
-instead, in `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeB2.lean`, where the node correspondence
+instead, in `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeB/Two.lean`, where the node correspondence
 acquires the swap of the two Bourbaki nodes.
 
 Nothing here asserts that the carrier is reductive, that its weight torus is maximal, that it is
