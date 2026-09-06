@@ -126,32 +126,45 @@ universe v v'
 
 noncomputable section
 
-variable (n : ℕ) (hn : 4 ≤ n)
+variable (n : ℕ)
 
 /-! ## The fork exchange on the numbered generators and on the coordinate basis -/
 
 /-- The fork exchange on the numbered type-`Dₙ` root generators: the permutation
 `TauCeti.graphPermD` of the Bourbaki nodes, acting the same way on the raising and on the lowering
 half of the numbering. -/
-def graphRootPerm : Equiv.Perm (Fin n ⊕ Fin n) :=
+def graphRootPerm (hn : 2 ≤ n) : Equiv.Perm (Fin n ⊕ Fin n) :=
   Equiv.sumCongr (graphPermD n (by omega)) (graphPermD n (by omega))
 
+-- Deliberately not `@[simp]`: unfolding `graphRootPerm` to `Sum.map` erases it as a head symbol,
+-- which takes `graphRootPerm_apply_apply` and `rootSubgroup_comp_graphAut_inv` below out of simp
+-- normal form.
 /-- The fork exchange acts on the numbered root generators by the same node permutation on each
 half of the numbering. -/
-theorem graphRootPerm_apply (k : Fin n ⊕ Fin n) :
+theorem graphRootPerm_apply (hn : 2 ≤ n) (k : Fin n ⊕ Fin n) :
     graphRootPerm n hn k =
       Sum.map (graphPermD n (by omega)) (graphPermD n (by omega)) k := by
   rw [graphRootPerm]
   exact Equiv.sumCongr_apply _ _ k
 
+/-- **The fork exchange on the numbered root generators is an involution**, matching the
+involutivity of the fork exchange on the diagram. -/
+@[simp]
+theorem graphRootPerm_apply_apply (hn : 2 ≤ n) (k : Fin n ⊕ Fin n) :
+    graphRootPerm n hn (graphRootPerm n hn k) = k := by
+  rw [graphRootPerm_apply, graphRootPerm_apply]
+  cases k with
+  | inl j => rw [Sum.map_inl, Sum.map_inl, graphPermD_apply_apply]
+  | inr j => rw [Sum.map_inr, Sum.map_inr, graphPermD_apply_apply]
+
 /-- The involution of the spin coordinate basis realizing the fork exchange: it toggles the final
 sign of the sign set indexing a basis vector. -/
-def graphBasisPerm : Equiv.Perm (Fin (dimension n)) :=
+def graphBasisPerm (hn : 1 ≤ n) : Equiv.Perm (Fin (dimension n)) :=
   (Fintype.equivFin (Finset (Fin n))).permCongr (DynkinType.typeDSpinGraphPerm n (by omega))
 
 /-- The sign set of a graph-permuted basis index is the toggle of the original sign set. -/
 @[simp]
-theorem signSet_graphBasisPerm (i : Fin (dimension n)) :
+theorem signSet_graphBasisPerm (hn : 1 ≤ n) (i : Fin (dimension n)) :
     signSet n (graphBasisPerm n hn i) =
       DynkinType.typeDSpinGraphPerm n (by omega) (signSet n i) := by
   rw [graphBasisPerm, signSet, signSet, Equiv.permCongr_apply, Equiv.symm_apply_apply]
@@ -159,7 +172,7 @@ theorem signSet_graphBasisPerm (i : Fin (dimension n)) :
 /-- **The graph operator of the split type-`Dₙ` spin module**: creation at the final coordinate
 minus annihilation at it, the spin action of the Clifford generator of
 `TauCeti.SpinPolarizationData.typeDGraphVector`. -/
-abbrev graphOperator :
+abbrev graphOperator (hn : 2 ≤ n) :
     ExteriorAlgebra ℚ (polarization n).W ≃ₗ[ℚ] ExteriorAlgebra ℚ (polarization n).W :=
   (polarization n).typeDGraphOperator (polarizationBasis n) (by omega)
 
@@ -167,7 +180,7 @@ abbrev graphOperator :
 vector.** It is a sign: the shuffle sign that moves the final coordinate to the front, negated on
 the basis vectors whose sign set already carries that coordinate, where the annihilating half of
 the graph operator acts. -/
-def graphBasisScale (i : Fin (dimension n)) : ℤ :=
+def graphBasisScale (hn : 1 ≤ n) (i : Fin (dimension n)) : ℤ :=
   if (⟨n - 1, by omega⟩ : Fin n) ∈ signSet n i then
     -(TauCeti.ExteriorAlgebra.basisEraseSign (⟨n - 1, by omega⟩ : Fin n) (signSet n i) : ℤ)
   else
@@ -177,10 +190,10 @@ def graphBasisScale (i : Fin (dimension n)) : ℤ :=
 /-- **The graph operator acts monomially on the spin coordinate basis**: it carries the basis
 vector at `i` to a sign times the one at `TauCeti.TypeDSpinCarrier.graphBasisPerm i`. This is the
 hypothesis under which a numbered symmetry descends to the Kostant toral closure. -/
-theorem graphOperator_latticeBasis (i : Fin (dimension n)) :
+theorem graphOperator_latticeBasis (hn : 2 ≤ n) (i : Fin (dimension n)) :
     graphOperator n hn ((latticeBasis n i : (lattice n).toAddSubgroup) :
         ExteriorAlgebra ℚ (polarization n).W) =
-      ((graphBasisScale n hn i • latticeBasis n (graphBasisPerm n hn i) :
+      ((graphBasisScale n (by omega) i • latticeBasis n (graphBasisPerm n (by omega) i) :
         (lattice n).toAddSubgroup) : ExteriorAlgebra ℚ (polarization n).W) := by
   rw [coe_latticeBasis, AddSubgroup.coe_zsmul, coe_latticeBasis, graphBasisScale,
     signSet_graphBasisPerm]
@@ -193,7 +206,7 @@ theorem graphOperator_latticeBasis (i : Fin (dimension n)) :
 /-- **The final-sign toggle is an involution of the coordinate basis**, matching the involutivity
 of the fork exchange on the diagram. -/
 @[simp]
-theorem graphBasisPerm_apply_apply (i : Fin (dimension n)) :
+theorem graphBasisPerm_apply_apply (hn : 1 ≤ n) (i : Fin (dimension n)) :
     graphBasisPerm n hn (graphBasisPerm n hn i) = i := by
   apply (Fintype.equivFin (Finset (Fin n))).symm.injective
   rw [← signSet, ← signSet, signSet_graphBasisPerm, signSet_graphBasisPerm,
@@ -201,7 +214,8 @@ theorem graphBasisPerm_apply_apply (i : Fin (dimension n)) :
 
 /-- **The two signs at a graph-exchanged pair of basis vectors multiply to `-1`**, which is the
 coordinate reading of the graph operator squaring to `-1`. -/
-theorem graphBasisScale_graphBasisPerm_mul (i : Fin (dimension n)) :
+@[simp]
+theorem graphBasisScale_graphBasisPerm_mul (hn : 1 ≤ n) (i : Fin (dimension n)) :
     graphBasisScale n hn (graphBasisPerm n hn i) * graphBasisScale n hn i = -1 := by
   have hunit : ∀ u : ℤˣ, (u : ℤ) * (u : ℤ) = 1 := fun u => by
     rw [← Units.val_mul, Int.units_mul_self, Units.val_one]
@@ -219,25 +233,28 @@ theorem graphBasisScale_graphBasisPerm_mul (i : Fin (dimension n)) :
 /-- **The final-sign toggle of the spin weights is equivariant for the fork exchange of the
 Bourbaki nodes.** This is the compatibility between the coordinate involution and the diagram
 symmetry that lets the graph operator descend to the carrier. -/
-theorem basisWeight_graphBasisPerm (i : Fin (dimension n)) (k : Fin n) :
-    basisWeight n (graphBasisPerm n hn i) (graphPermD n (by omega) k) = basisWeight n i k := by
+theorem basisWeight_graphBasisPerm (hn : 2 ≤ n) (i : Fin (dimension n)) (k : Fin n) :
+    basisWeight n (graphBasisPerm n (by omega) i) (graphPermD n (by omega) k) =
+      basisWeight n i k := by
   rw [basisWeight, signSet_graphBasisPerm,
     DynkinType.typeDSpinWeight_typeDSpinGraphPerm_apply (by omega)]
   exact congrArg (DynkinType.typeDSpinWeight (signSet n i)) (graphPermD_apply_apply n (by omega) k)
 
 /-! ## The graph automorphism of the carrier -/
 
+variable (hn : 4 ≤ n)
+
 /-- The graph operator intertwines the represented numbered root generators along the fork
 exchange, stated through `UniversalEnvelopingAlgebra.ι` as the numbered Kostant symmetry
 construction takes that hypothesis. -/
 private theorem graphOperator_rep_rootGenerator :
     ∀ (k : Fin n ⊕ Fin n) (x : ExteriorAlgebra ℚ (polarization n).W),
-      graphOperator n hn
+      graphOperator n (by omega)
           (rep n hn (_root_.UniversalEnvelopingAlgebra.ι ℚ
             (TauCeti.serreRootGenerator (CartanMatrix.D n) k)) x) =
         rep n hn (_root_.UniversalEnvelopingAlgebra.ι ℚ
-            (TauCeti.serreRootGenerator (CartanMatrix.D n) (graphRootPerm n hn k)))
-          (graphOperator n hn x) := by
+            (TauCeti.serreRootGenerator (CartanMatrix.D n) (graphRootPerm n (by omega) k)))
+          (graphOperator n (by omega) x) := by
   intro k x
   rw [graphRootPerm_apply]
   exact (polarization n).typeDGraphOperator_typeDSpinRep_rootGenerator
@@ -249,7 +266,7 @@ construction takes its lattice hypothesis in. The content is
 `TauCeti.SpinPolarizationData.typeDGraphOperator_mem_integralLattice_iff`. -/
 private theorem graphOperator_mem_lattice_iff :
     ∀ x : ExteriorAlgebra ℚ (polarization n).W,
-      graphOperator n hn x ∈ (lattice n).toAddSubgroup ↔ x ∈ (lattice n).toAddSubgroup :=
+      graphOperator n (by omega) x ∈ (lattice n).toAddSubgroup ↔ x ∈ (lattice n).toAddSubgroup :=
   fun x => (polarization n).typeDGraphOperator_mem_integralLattice_iff
     (polarizationBasis n) (by omega)
 
@@ -265,13 +282,13 @@ private def toralGraphAut :
     (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
     (rep_kostantForm_mem_lattice n hn)
     (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n)
-    ⇑(graphRootPerm n hn) (graphOperator n hn)
+    ⇑(graphRootPerm n (by omega)) (graphOperator n (by omega))
     (graphOperator_mem_lattice_iff n hn)
     (graphOperator_rep_rootGenerator n hn)
-    (graphRootPerm n hn).surjective
-    (graphBasisPerm n hn) (graphBasisScale n hn)
-    (graphOperator_latticeBasis n hn)
-    (graphPermD n (by omega)) (basisWeight_graphBasisPerm n hn)
+    (graphRootPerm n (by omega)).surjective
+    (graphBasisPerm n (by omega)) (graphBasisScale n (by omega))
+    (graphOperator_latticeBasis n (by omega))
+    (graphPermD n (by omega)) (basisWeight_graphBasisPerm n (by omega))
 
 /-- **The graph automorphism of the type-`Dₙ` spin carrier**: the automorphism realizing the fork
 exchange of the two final Bourbaki nodes. It renumbers the pinned root subgroups by that exchange
@@ -296,7 +313,7 @@ that pins a graph automorphism, on the type-`Dₙ` spin carrier. -/
 @[reassoc (attr := simp)]
 theorem rootSubgroup_comp_graphAut_hom (k : Fin n ⊕ Fin n) :
     rootSubgroup n hn k ≫ (graphAut n hn).hom =
-      rootSubgroup n hn (graphRootPerm n hn k) := by
+      rootSubgroup n hn (graphRootPerm n (by omega) k) := by
   rw [graphAut_hom, rootSubgroup_def, rootSubgroup_def, Category.assoc,
     eqToHom_trans_assoc, eqToHom_refl, Category.id_comp, toralGraphAut, ← Category.assoc,
     kostantRootSubgroupToToral_comp_numberedSymmetryIso_hom]
@@ -304,7 +321,7 @@ theorem rootSubgroup_comp_graphAut_hom (k : Fin n ⊕ Fin n) :
 /-- The inverse graph automorphism restores the original numbering of a pinned root subgroup. -/
 @[reassoc (attr := simp)]
 theorem rootSubgroup_comp_graphAut_inv (k : Fin n ⊕ Fin n) :
-    rootSubgroup n hn (graphRootPerm n hn k) ≫ (graphAut n hn).inv =
+    rootSubgroup n hn (graphRootPerm n (by omega) k) ≫ (graphAut n hn).inv =
       rootSubgroup n hn k := by
   rw [← rootSubgroup_comp_graphAut_hom n hn k, Category.assoc,
     (graphAut n hn).hom_inv_id, Category.comp_id]
@@ -326,13 +343,9 @@ theorem weightTorus_comp_graphAut_hom :
 of the fork exchange of the diagram. -/
 @[simp]
 theorem graphAut_sq : graphAut n hn ^ 2 = 1 := by
-  have hrootIter : (⇑(graphRootPerm n hn))^[2] = id := by
+  have hrootIter : (⇑(graphRootPerm n (by omega)))^[2] = id := by
     funext k
-    rw [Function.iterate_succ_apply, Function.iterate_one, graphRootPerm_apply,
-      graphRootPerm_apply, id_eq]
-    cases k with
-    | inl j => rw [Sum.map_inl, Sum.map_inl, graphPermD_apply_apply n (by omega) j]
-    | inr j => rw [Sum.map_inr, Sum.map_inr, graphPermD_apply_apply n (by omega) j]
+    rw [Function.iterate_succ_apply, Function.iterate_one, graphRootPerm_apply_apply, id_eq]
   have htoral : toralGraphAut n hn ^ 2 = 1 :=
     kostantToralNumberedSymmetryIso_pow_eq_one _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 2
       hrootIter (graphPermD_sq n (by omega))
@@ -347,31 +360,35 @@ points of the graph automorphism of the carrier. -/
 def graphAutMatrix (A : Type v) [CommRing A] :
     Matrix.GeneralLinearGroup (Fin (dimension n)) A :=
   kostantNumberedSymmetryMatrix (lattice n).toAddSubgroup (latticeBasis n)
-    (graphOperator n hn) (graphOperator_mem_lattice_iff n hn) A
+    (graphOperator n (by omega)) (graphOperator_mem_lattice_iff n hn) A
 
 /-- The entries of the graph matrix: the `j`-th column carries the sign at `j` in the row
 `graphBasisPerm j` and vanishes elsewhere. -/
 theorem coe_graphAutMatrix_apply (A : Type v) [CommRing A] (i j : Fin (dimension n)) :
     (graphAutMatrix n hn A : Matrix (Fin (dimension n)) (Fin (dimension n)) A) i j =
-      if i = graphBasisPerm n hn j then algebraMap ℤ A (graphBasisScale n hn j) else 0 := by
+      if i = graphBasisPerm n (by omega) j then
+        algebraMap ℤ A (graphBasisScale n (by omega) j)
+      else 0 := by
   rw [graphAutMatrix]
   exact coe_kostantNumberedSymmetryMatrix_apply_of_monomial (lattice n).toAddSubgroup
-    (latticeBasis n) (graphOperator n hn) (graphOperator_mem_lattice_iff n hn)
-    (graphBasisPerm n hn) (graphBasisScale n hn) (graphOperator_latticeBasis n hn) A i j
+    (latticeBasis n) (graphOperator n (by omega)) (graphOperator_mem_lattice_iff n hn)
+    (graphBasisPerm n (by omega)) (graphBasisScale n (by omega))
+    (graphOperator_latticeBasis n (by omega)) A i j
 
 /-- **The graph matrix squares to the scalar `-1`.** Its two signs at a graph-exchanged pair of
 coordinates multiply to `-1`, and `-1` is central, so conjugation by it is nonetheless an
 involution. -/
+@[simp]
 theorem graphAutMatrix_mul_self (A : Type v) [CommRing A] :
     graphAutMatrix n hn A * graphAutMatrix n hn A = -1 := by
   refine Units.ext ?_
   rw [Units.val_mul, Units.val_neg, Units.val_one]
   ext i j
   rw [Matrix.mul_apply, Matrix.neg_apply, Matrix.one_apply,
-    Finset.sum_eq_single (graphBasisPerm n hn j)]
+    Finset.sum_eq_single (graphBasisPerm n (by omega) j)]
   · rw [coe_graphAutMatrix_apply, coe_graphAutMatrix_apply, graphBasisPerm_apply_apply]
     rcases eq_or_ne i j with rfl | hij
-    · rw [ite_eq_left (rfl : graphBasisPerm n hn i = graphBasisPerm n hn i),
+    · rw [ite_eq_left (rfl : graphBasisPerm n (by omega) i = graphBasisPerm n (by omega) i),
         ite_eq_left (rfl : i = i), ← map_mul, graphBasisScale_graphBasisPerm_mul,
         map_neg, map_one, ite_eq_left (rfl : i = i)]
     · rw [ite_eq_right hij, ite_eq_right hij, zero_mul, neg_zero]
@@ -410,13 +427,13 @@ theorem map_points_conj_graphAutMatrix (A : Type v) [CommRing A] :
     (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
     (rep_kostantForm_mem_lattice n hn)
     (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n)
-    ⇑(graphRootPerm n hn) (graphOperator n hn)
+    ⇑(graphRootPerm n (by omega)) (graphOperator n (by omega))
     (graphOperator_mem_lattice_iff n hn)
     (graphOperator_rep_rootGenerator n hn)
-    (graphRootPerm n hn).surjective
-    (graphBasisPerm n hn) (graphBasisScale n hn)
-    (graphOperator_latticeBasis n hn)
-    (graphPermD n (by omega)) (basisWeight_graphBasisPerm n hn) A
+    (graphRootPerm n (by omega)).surjective
+    (graphBasisPerm n (by omega)) (graphBasisScale n (by omega))
+    (graphOperator_latticeBasis n (by omega))
+    (graphPermD n (by omega)) (basisWeight_graphBasisPerm n (by omega)) A
 
 /-- The graph matrix, as an element of the normalizer of the carrier points. -/
 private def graphAutNormalizer (A : Type v) [CommRing A] :
@@ -474,13 +491,13 @@ theorem schemePointsMulEquiv_graphAut_comp_carrierι (A : Type) [CommRing A]
       (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
       (rep_kostantForm_mem_lattice n hn)
       (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n)
-      ⇑(graphRootPerm n hn) (graphOperator n hn)
+      ⇑(graphRootPerm n (by omega)) (graphOperator n (by omega))
       (graphOperator_mem_lattice_iff n hn)
       (graphOperator_rep_rootGenerator n hn)
-      (graphRootPerm n hn).surjective
-      (graphBasisPerm n hn) (graphBasisScale n hn)
-      (graphOperator_latticeBasis n hn)
-      (graphPermD n (by omega)) (basisWeight_graphBasisPerm n hn) A
+      (graphRootPerm n (by omega)).surjective
+      (graphBasisPerm n (by omega)) (graphBasisScale n (by omega))
+      (graphOperator_latticeBasis n (by omega))
+      (graphPermD n (by omega)) (basisWeight_graphBasisPerm n (by omega)) A
       (p ≫ (eqToHom (groupScheme_eq_kostantToralGroupScheme n hn)).hom.hom)
 
 /-- **The graph automorphism renumbers the pinned root subgroups on matrix-valued points**,
@@ -490,14 +507,14 @@ pins a graph automorphism, read on the points of the carrier. -/
 theorem graphAutPoints_rootSubgroupPoints (A : Type v) [CommRing A] (k : Fin n ⊕ Fin n)
     (u : Multiplicative A) :
     graphAutPoints n hn A (rootSubgroupPoints n hn k A u) =
-      rootSubgroupPoints n hn (graphRootPerm n hn k) A u := by
+      rootSubgroupPoints n hn (graphRootPerm n (by omega) k) A u := by
   refine Subtype.ext ?_
   rw [coe_graphAutPoints, coe_rootSubgroupPoints, coe_rootSubgroupPoints, graphAutMatrix]
   exact kostantNumberedSymmetryMatrix_conj_kostantRootSubgroupMatrix
     (TauCeti.serreRootGenerator (CartanMatrix.D n))
     (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
     (rep_kostantForm_mem_lattice n hn) (isNilpotent_rep_rootGenerator n hn)
-    (latticeBasis n) ⇑(graphRootPerm n hn) (graphOperator n hn)
+    (latticeBasis n) ⇑(graphRootPerm n (by omega)) (graphOperator n (by omega))
     (graphOperator_mem_lattice_iff n hn) (graphOperator_rep_rootGenerator n hn) A k _
 
 /-- **The graph automorphism relabels the coordinates of a spin weight-torus point** by the fork
@@ -508,15 +525,15 @@ theorem graphAutPoints_weightTorusPoints (A : Type v) [CommRing A] (s : Fin n �
     graphAutPoints n hn A (weightTorusPoints n hn A s) =
       weightTorusPoints n hn A (fun k => s (graphPermD n (by omega) k)) := by
   have hchar : ∀ i : Fin (dimension n),
-      torusCharacter s (basisWeight n ((graphBasisPerm n hn)⁻¹ i)) =
+      torusCharacter s (basisWeight n ((graphBasisPerm n (by omega))⁻¹ i)) =
         torusCharacter (fun k => s (graphPermD n (by omega) k)) (basisWeight n i) := by
     intro i
-    have hperm : (graphBasisPerm n hn)⁻¹ i = graphBasisPerm n hn i := by
+    have hperm : (graphBasisPerm n (by omega))⁻¹ i = graphBasisPerm n (by omega) i := by
       rw [Equiv.Perm.inv_def, Equiv.symm_apply_eq, graphBasisPerm_apply_apply]
-    have hwt : basisWeight n (graphBasisPerm n hn i) =
+    have hwt : basisWeight n (graphBasisPerm n (by omega) i) =
         basisWeight n i ∘ graphPermD n (by omega) := by
       funext k
-      have := basisWeight_graphBasisPerm n hn i (graphPermD n (by omega) k)
+      have := basisWeight_graphBasisPerm n (by omega) i (graphPermD n (by omega) k)
       rwa [graphPermD_apply_apply n (by omega)] at this
     rw [hperm, hwt, ← torusCharacter_mulEquivArrowCongr]
     exact congrArg (fun z => torusCharacter z (basisWeight n i))
@@ -526,8 +543,9 @@ theorem graphAutPoints_weightTorusPoints (A : Type v) [CommRing A] (s : Fin n �
   rw [coe_graphAutPoints, coe_weightTorusPoints, coe_weightTorusPoints, kostantTorusMatrix_apply,
     kostantTorusMatrix_apply, graphAutMatrix,
     kostantNumberedSymmetryMatrix_conj_diagGL (lattice n).toAddSubgroup (latticeBasis n)
-      (graphOperator n hn) (graphOperator_mem_lattice_iff n hn) (graphBasisPerm n hn)
-      (graphBasisScale n hn) (graphOperator_latticeBasis n hn) A]
+      (graphOperator n (by omega)) (graphOperator_mem_lattice_iff n hn)
+      (graphBasisPerm n (by omega)) (graphBasisScale n (by omega))
+      (graphOperator_latticeBasis n (by omega)) A]
   exact congrArg diagGL (funext hchar)
 
 /-- **The graph automorphism on points is an involution.** The graph matrix squares to the central

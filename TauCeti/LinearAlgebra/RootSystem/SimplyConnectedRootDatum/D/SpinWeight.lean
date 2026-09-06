@@ -205,12 +205,14 @@ private theorem symmDiff_singleton_eq_erase_or_insert {α : Type*} [DecidableEq 
   by_cases ha : a ∈ s <;> simp [Finset.mem_symmDiff, ha] <;> aesop
 
 /-- **Toggling the final sign of a sign set that carries the final index erases it.** -/
+@[simp]
 theorem typeDSpinGraphPerm_of_mem (n : ℕ) (hn : 1 ≤ n) {s : Finset (Fin n)}
     (hs : (⟨n - 1, by omega⟩ : Fin n) ∈ s) :
     typeDSpinGraphPerm n hn s = s.erase (⟨n - 1, by omega⟩ : Fin n) := by
   rw [typeDSpinGraphPerm_apply, symmDiff_singleton_eq_erase_or_insert, ite_eq_left hs]
 
 /-- **Toggling the final sign of a sign set that lacks the final index inserts it.** -/
+@[simp]
 theorem typeDSpinGraphPerm_of_notMem (n : ℕ) (hn : 1 ≤ n) {s : Finset (Fin n)}
     (hs : (⟨n - 1, by omega⟩ : Fin n) ∉ s) :
     typeDSpinGraphPerm n hn s = insert (⟨n - 1, by omega⟩ : Fin n) s := by
@@ -297,19 +299,18 @@ private theorem typeDSpinWeight_typeDSpinGraphPerm_fork {n : ℕ} (hn : 2 ≤ n)
     apply Fin.ext
     dsimp only
     omega
-  have hpen_not_last : n - 2 + 1 ≠ n := by omega
-  have hlast_is_last : n - 1 + 1 = n := Nat.sub_add_cancel (by omega)
+  have hpen_ne_last : n - 2 ≠ n - 1 := by omega
   constructor
   · rw [typeDSpinWeight_apply, dite_eq_left hpen_lt, hnext,
       typeDSpinWeight_apply, dite_eq_right hlast_not_lt, hprev]
     by_cases hp : (⟨n - 2, by omega⟩ : Fin n) ∈ s <;>
       by_cases hl : (⟨n - 1, by omega⟩ : Fin n) ∈ s <;>
-      simp [mem_typeDSpinGraphPerm_iff, hpen_not_last, hlast_is_last, hp, hl]
+      simp [hpen_ne_last, hp, hl]
   · rw [typeDSpinWeight_apply, dite_eq_right hlast_not_lt, hprev,
       typeDSpinWeight_apply, dite_eq_left hpen_lt, hnext]
     by_cases hp : (⟨n - 2, by omega⟩ : Fin n) ∈ s <;>
       by_cases hl : (⟨n - 1, by omega⟩ : Fin n) ∈ s <;>
-      simp [mem_typeDSpinGraphPerm_iff, hpen_not_last, hlast_is_last, hp, hl]
+      simp [hpen_ne_last, hp, hl]
 
 /-- **The final-sign toggle realizes the type-`D` graph automorphism on spin weights.** Applying
 the fork-node permutation to the fundamental-weight coordinates of a spin weight gives the weight
