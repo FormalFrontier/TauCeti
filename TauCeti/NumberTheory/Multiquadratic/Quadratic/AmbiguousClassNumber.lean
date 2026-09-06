@@ -15,9 +15,9 @@ import TauCeti.NumberTheory.NumberField.Quadratic.InfinitePlace
 /-!
 # The ambiguous class number formula for a quadratic field
 
-Let `K = ℚ(√d)` with `d` squarefree, and let `t` be the number of rational primes that ramify in
-`K`. An ideal class is *ambiguous* when it is fixed by the quadratic conjugation `σ`; since `σ` acts
-on `Cl(K)` by inversion, the ambiguous classes are exactly the `2`-torsion classes
+Let `K = ℚ(√d)` with `d` squarefree and `1 < |d|`, and let `t` be the number of rational primes that
+ramify in `K`. An ideal class is *ambiguous* when it is fixed by the quadratic conjugation `σ`;
+since `σ` acts on `Cl(K)` by inversion, the ambiguous classes are exactly the `2`-torsion classes
 (`NumberField.mulEquiv_ringOfIntegersQuadraticConj_apply_eq_self_iff`), and for an imaginary field
 each of them is the class of an *ambiguous ideal* `I = σI`
 (`NumberField.sq_eq_one_iff_exists_map_ringOfIntegersQuadraticConj_eq_self`). In the narrow class
@@ -49,9 +49,10 @@ and the clean formula `2 ^ (t - 1)` is a statement about the narrow class group.
 * `TauCeti.Multiquadratic.natCard_exists_map_ringOfIntegersQuadraticConj_eq_self_eq_two_pow`: the
   same count for the classes of ambiguous ideals.
 * `TauCeti.Multiquadratic.natCard_narrowClassGroup_sq_eq_one_eq_two_pow`: a quadratic field of
-  either signature has exactly `2 ^ (t - 1)` narrow ideal classes of order dividing `2`.
-* `TauCeti.Multiquadratic.natCard_narrowClassGroup_exists_map_conj_eq_self_eq_two_pow` counts the
-  same narrow classes as narrow classes of ambiguous ideals.
+  either signature with `1 < |d|` has exactly `2 ^ (t - 1)` narrow ideal classes of order
+  dividing `2`.
+* `natCard_narrowClassGroup_exists_map_ringOfIntegersQuadraticConj_eq_self_eq_two_pow` (same
+  namespace) counts the same narrow classes as narrow classes of ambiguous ideals.
 -/
 
 public section
@@ -118,7 +119,7 @@ theorem natCard_narrowClassGroup_sq_eq_one_eq_two_pow
 with `d` squarefree and `1 < |d|`, of either signature, exactly `2 ^ (t - 1)` narrow ideal classes
 are represented by an ideal fixed by the quadratic conjugation, where `t` is the number of rational
 primes ramifying in `K`. -/
-theorem natCard_narrowClassGroup_exists_map_conj_eq_self_eq_two_pow
+theorem natCard_narrowClassGroup_exists_map_ringOfIntegersQuadraticConj_eq_self_eq_two_pow
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
     (hsf : Squarefree d) (hd : 1 < d.natAbs) :
     Nat.card {C : NarrowClassGroup K // ∃ I : (Ideal (𝓞 K))⁰,
