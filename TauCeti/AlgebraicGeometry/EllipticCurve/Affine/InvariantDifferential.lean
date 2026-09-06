@@ -21,10 +21,6 @@ The imported function-field API proves that `x` is a separating element of `K(E)
 separating-element API then says that `dx` is a basis of the Kähler differentials; rescaling it
 by `W_Y⁻¹` gives the invariant-differential basis.
 
-The file also records the **chain rule** obtained by differentiating the Weierstrass relation:
-`W_X · dx + W_Y · dy = 0`, where the coefficients are the two partial derivatives of the
-Weierstrass polynomial evaluated at the generic point.
-
 ## Main definitions
 
 * `WeierstrassCurve.Affine.invariantDifferentialDenom`: the denominator `2y + a₁x + a₃`.
@@ -34,8 +30,6 @@ Weierstrass polynomial evaluated at the generic point.
 
 ## Main results
 
-* `WeierstrassCurve.Affine.polynomialX_smul_D_genericX_add_polynomialY_smul_D_genericY_eq_zero`:
-  the chain rule `W_X · dx + W_Y · dy = 0`.
 * `WeierstrassCurve.Affine.invariantDifferentialDenom_ne_zero`: the denominator is nonzero.
 * `WeierstrassCurve.Affine.existsUnique_smul_invariantDifferential`: every differential is
   `c • ω` for a unique `c`.
@@ -86,7 +80,7 @@ theorem invariantDifferentialDenom_def :
   (rfl)
 
 /-- **The denominator is `W_Y` at the generic point.** This is the reading that makes it the
-denominator of `ω = dx / W_Y`, and it is the form the chain rule below produces. -/
+denominator of `ω = dx / W_Y`. -/
 theorem invariantDifferentialDenom_eq_evalEval_polynomialY :
     invariantDifferentialDenom E =
       (E⁄E.FunctionField).toAffine.polynomialY.evalEval (genericX E) (genericY E) := by
@@ -102,61 +96,6 @@ theorem invariantDifferentialDenom_ne_zero [E.IsElliptic] :
     invariantDifferentialDenom E ≠ 0 := by
   rw [invariantDifferentialDenom_eq_evalEval_polynomialY]
   exact evalEval_polynomialY_genericX_genericY_ne_zero E
-
-/-! ### The chain rule -/
-
-/-- The differential of the quadratic side `y² + a₁xy + a₃y` of the Weierstrass relation. -/
-private lemma D_quadratic_side :
-    KaehlerDifferential.D F E.FunctionField
-        (genericY E ^ 2 + algebraMap F E.FunctionField E.a₁ * genericX E * genericY E +
-          algebraMap F E.FunctionField E.a₃ * genericY E) =
-      (2 * genericY E + algebraMap F E.FunctionField E.a₁ * genericX E +
-          algebraMap F E.FunctionField E.a₃) •
-          KaehlerDifferential.D F E.FunctionField (genericY E) +
-        (algebraMap F E.FunctionField E.a₁ * genericY E) •
-          KaehlerDifferential.D F E.FunctionField (genericX E) := by
-  simp only [map_add, Derivation.leibniz, Derivation.leibniz_pow, Derivation.map_algebraMap,
-    smul_zero, add_zero, Nat.cast_ofNat, Nat.add_one_sub_one, pow_one, smul_smul,
-    ← Nat.cast_smul_eq_nsmul E.FunctionField]
-  rw [mul_comm (genericY E) (algebraMap F E.FunctionField E.a₁), add_smul, add_smul]
-  abel
-
-/-- The differential of the cubic side `x³ + a₂x² + a₄x + a₆` of the Weierstrass relation. -/
-private lemma D_cubic_side :
-    KaehlerDifferential.D F E.FunctionField
-        (genericX E ^ 3 + algebraMap F E.FunctionField E.a₂ * genericX E ^ 2 +
-          algebraMap F E.FunctionField E.a₄ * genericX E + algebraMap F E.FunctionField E.a₆) =
-      (3 * genericX E ^ 2 + 2 * algebraMap F E.FunctionField E.a₂ * genericX E +
-          algebraMap F E.FunctionField E.a₄) •
-        KaehlerDifferential.D F E.FunctionField (genericX E) := by
-  simp only [map_add, Derivation.leibniz, Derivation.leibniz_pow, Derivation.map_algebraMap,
-    smul_zero, add_zero, Nat.cast_ofNat, Nat.add_one_sub_one, pow_one, smul_smul,
-    ← Nat.cast_smul_eq_nsmul E.FunctionField]
-  rw [← add_smul, ← add_smul]
-  congr 1
-  ring
-
-/-- **The chain rule for the Weierstrass relation**: `W_X · dx + W_Y · dy = 0` in `Ω[K(E)/F]`,
-the two coefficients being the partial derivatives of the Weierstrass polynomial evaluated at
-the generic point. It holds for every Weierstrass curve, singular ones included: it is the
-differential of the relation `equation_genericX_genericY`, which needs no hypothesis.
-
-Ellipticity enters only afterwards, through `invariantDifferentialDenom_ne_zero`, which is what
-lets the identity be solved for `dy`. -/
-theorem polynomialX_smul_D_genericX_add_polynomialY_smul_D_genericY_eq_zero :
-    (E⁄E.FunctionField).toAffine.polynomialX.evalEval (genericX E) (genericY E) •
-        KaehlerDifferential.D F E.FunctionField (genericX E) +
-      (E⁄E.FunctionField).toAffine.polynomialY.evalEval (genericX E) (genericY E) •
-        KaehlerDifferential.D F E.FunctionField (genericY E) = 0 := by
-  have h := equation_genericX_genericY E
-  rw [WeierstrassCurve.Affine.equation_iff] at h
-  rw [evalEval_polynomialX, evalEval_polynomialY]
-  simp only [WeierstrassCurve.baseChange, WeierstrassCurve.map_a₁, WeierstrassCurve.map_a₂,
-    WeierstrassCurve.map_a₃, WeierstrassCurve.map_a₄, WeierstrassCurve.map_a₆] at h ⊢
-  have key := congrArg (KaehlerDifferential.D F E.FunctionField) h
-  rw [D_quadratic_side, D_cubic_side] at key
-  rw [sub_smul, ← key]
-  abel
 
 /-! ### The invariant differential -/
 
