@@ -19,12 +19,12 @@ classical ratio it is named for: for independent chi-squared variables `U` and `
 `n` degrees of freedom, the variance ratio `(U / m) / (V / n)` has the law
 `fisherSnedecorMeasure m n`.
 
-The proof needs no new analysis.  Two independent gamma variables with a common rate already have
-a beta-distributed ratio-to-sum `U / (U + V)`, by `TauCeti.map_div_add_gammaMeasure`, and on the
-positive quadrant the beta-to-F transformation turns that ratio-to-sum back into the scaled
-quotient `U / V`.  Composing the two pushforwards is therefore enough.  Since a chi-squared law
-with `k` degrees of freedom is the gamma law of shape `k / 2` and rate `1 / 2`, the statement for
-gamma variables of shapes `a` and `b` carries `2 * a` and `2 * b` degrees of freedom.
+The identification is stated in two parametrizations.  A chi-squared law with `k` degrees of
+freedom is the gamma law of shape `k / 2` and rate `1 / 2`, and a ratio is unchanged by a common
+scaling of its two arguments, so the gamma form `map_div_prod_gammaMeasure` covers all gamma
+variables with a common rate, at the price of writing the degrees of freedom as `2 * a` and
+`2 * b`.  The chi-squared form `map_div_prod_chiSquaredMeasure` is its specialisation to the
+classical parameters, and is the statement to use for a variance ratio.
 
 ## Main results
 
@@ -57,14 +57,14 @@ variable {m n : ℝ}
 
 /-! ### The pointwise identity -/
 
-/-- On the positive quadrant, the beta-to-F transformation with `2 * a` and `2 * b` degrees of
-freedom sends the ratio-to-sum `u / (u + v)` to the variance ratio `(u / (2 * a)) / (v / (2 * b))`.
-
-This is the only computation behind the identification of Fisher's F law with a ratio of
-independent chi-squared variables. -/
-theorem fisherSnedecorMap_div_add {a b u v : ℝ} (ha : 0 < a) (hb : 0 < b) (hu : 0 < u)
-    (hv : 0 < v) :
-    fisherSnedecorMap (2 * a) (2 * b) (u / (u + v)) = u / (2 * a) / (v / (2 * b)) := by
+/-- On the positive quadrant, the beta-to-F transformation with `m` and `n` degrees of freedom
+sends the ratio-to-sum `u / (u + v)` to the variance ratio `(u / m) / (v / n)`; equivalently, it
+inverts the passage from a variance ratio to the fraction of the total that its numerator
+carries. -/
+theorem fisherSnedecorMap_div_add (hm : 0 < m) (hn : 0 < n) {u v : ℝ} (hu : 0 < u) (hv : 0 < v) :
+    fisherSnedecorMap m n (u / (u + v)) = u / m / (v / n) := by
+  have hm' : m ≠ 0 := hm.ne'
+  have hn' : n ≠ 0 := hn.ne'
   have huv : (0 : ℝ) < u + v := by linarith
   have hsub : 1 - u / (u + v) = v / (u + v) := by
     field_simp
@@ -73,16 +73,6 @@ theorem fisherSnedecorMap_div_add {a b u v : ℝ} (ha : 0 < a) (hb : 0 < b) (hu 
   field_simp
 
 /-! ### The pushforward of a product of gamma laws -/
-
-/-- Almost every point of a product of two gamma laws lies in the open positive quadrant. -/
-private theorem ae_mem_prod_Ioi_gammaMeasure {a b r : ℝ} (ha : 0 < a) (hb : 0 < b) (hr : 0 < r) :
-    ∀ᵐ z ∂(gammaMeasure a r).prod (gammaMeasure b r), z ∈ Ioi (0 : ℝ) ×ˢ Ioi (0 : ℝ) := by
-  let _ := isProbabilityMeasure_gammaMeasure ha hr
-  let _ := isProbabilityMeasure_gammaMeasure hb hr
-  rw [Measure.ae_prod_mem_iff_ae_ae_mem (measurableSet_Ioi.prod measurableSet_Ioi)]
-  filter_upwards [ae_pos_gammaMeasure a r] with x hx
-  filter_upwards [ae_pos_gammaMeasure b r] with y hy
-  exact ⟨hx, hy⟩
 
 /-- The variance ratio of two independent gamma variables with a common positive rate has Fisher's
 F law with twice their shape parameters as degrees of freedom.  The common rate cancels, so it
@@ -101,7 +91,7 @@ theorem map_div_prod_gammaMeasure {a b r : ℝ} (ha : 0 < a) (hb : 0 < b) (hr : 
         (fun z ↦ fisherSnedecorMap (2 * a) (2 * b) (z.1 / (z.1 + z.2))) := by
         refine (Measure.map_congr ?_).symm
         filter_upwards [ae_mem_prod_Ioi_gammaMeasure ha hb hr] with z hz
-        exact fisherSnedecorMap_div_add ha hb hz.1 hz.2
+        exact fisherSnedecorMap_div_add ha2 hb2 hz.1 hz.2
     _ = (((gammaMeasure a r).prod (gammaMeasure b r)).map (fun z ↦ z.1 / (z.1 + z.2))).map
           (fisherSnedecorMap (2 * a) (2 * b)) := by
         rw [Measure.map_map (measurable_fisherSnedecorMap _ _) (by fun_prop)]
