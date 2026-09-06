@@ -5,8 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.NumberTheory.NumberField.Completion.FinitePlace
-
 public import TauCeti.RingTheory.DedekindDomain.AdicValuation.ValuativeRel
 
 /-!
