@@ -142,20 +142,20 @@ private lemma heckeT_prime_pow_recurrence_step (k : ℕ) (hk_pos : 0 < k)
   linear_combination (norm := module) -h5
 
 include hp in
-/-- The prime-power recurrence at `k = 1`: `T(p²) = T(p)² − p · T(p,p)`. The base case is
-separate because the telescoping identity behind the general step degenerates here — the
-coefficient of `T(p,p)` arrives as `p + 1` rather than `p`, the extra unit cancelling against
-`T(p⁰) = 1`. -/
-private lemma heckeT_prime_pow_recurrence_base_one :
+/-- The prime-power recurrence at `k = 1`: `T(p²) = T(p)² − p · T(p,p)`. -/
+private lemma heckeT_prime_pow_recurrence_one :
     heckeT ⟨p ^ (1 + 1), pow_pos hp.pos (1 + 1)⟩ =
       heckeT ⟨p, hp.pos⟩ * heckeT ⟨p ^ 1, pow_pos hp.pos 1⟩ -
         (p : ℤ) • (heckeTScalar p * heckeT ⟨p ^ (1 - 1), pow_pos hp.pos (1 - 1)⟩) := by
   have h5 := heckeT_prime_mul_heckeTDiag_one_prime_pow p hp 1
   rw [heckeTDiag_p_prime_pow_eq p 1 (by omega)] at h5
   have h2 := heckeTDiag_one_prime_pow_eq p hp (1 + 1) (by omega)
+  -- `heckeTDiag_one_prime_pow_eq` spells the exponent `(k + 1) - 2`, while `h5` and the goal
+  -- carry it as `k - 1`. Equal, but not syntactically so: normalising either side to the
+  -- numeral instead leaves the `rw [h2] at h5` below with no matching pattern.
   conv at h2 => rhs; rw [show (1 + 1) - 2 = 1 - 1 by omega]
   rw [h2] at h5
-  simp only [show (1 : ℕ) - 1 = 0 from rfl, ite_true] at h5 ⊢
+  simp only [Nat.sub_self, ite_true] at h5 ⊢
   rw [heckeT_prime_pow_zero p hp, pow_zero, heckeTDiag_one_one, mul_one] at h5
   rw [heckeT_prime_pow_zero p hp, mul_one, heckeT_prime_pow_one p hp]
   rw [heckeTDiag_one_prime_pow_one, heckeT_prime p hp] at h5
@@ -164,22 +164,25 @@ private lemma heckeT_prime_pow_recurrence_base_one :
   linear_combination (norm := module) -h5
 
 include hp in
-/-- The prime-power recurrence at `k = 2`: `T(p³) = T(p) · T(p²) − p · T(p,p) · T(p)`. Still
-separate from the general step, because the telescoped difference bottoms out at `T(p⁰)` and
-the scalar operator has to be commuted past `T(1,p)` by hand. -/
-private lemma heckeT_prime_pow_recurrence_base_two :
+/-- The prime-power recurrence at `k = 2`: `T(p³) = T(p) · T(p²) − p · T(p,p) · T(p)`. -/
+private lemma heckeT_prime_pow_recurrence_two :
     heckeT ⟨p ^ (2 + 1), pow_pos hp.pos (2 + 1)⟩ =
       heckeT ⟨p, hp.pos⟩ * heckeT ⟨p ^ 2, pow_pos hp.pos 2⟩ -
         (p : ℤ) • (heckeTScalar p * heckeT ⟨p ^ (2 - 1), pow_pos hp.pos (2 - 1)⟩) := by
   have h5 := heckeT_prime_mul_heckeTDiag_one_prime_pow p hp 2
   rw [heckeTDiag_p_prime_pow_eq p 2 (by omega)] at h5
   have h2 := heckeTDiag_one_prime_pow_eq p hp (2 + 1) (by omega)
+  -- as at `k = 1`: the exponent must be respelled the way `h5` writes it, since normalising
+  -- to the numeral leaves the `rw [h2] at h5` below with no matching pattern.
   conv at h2 => rhs; rw [show (2 + 1) - 2 = 2 - 1 by omega]
   rw [h2] at h5
+  -- the multiplicity carries an `if k = 1` guard that has to be discharged before the
+  -- exponent can be reduced; the numeral simprocs (`Nat.reduceSub`, `reduceIte`) do both at
+  -- once and over-reduce, leaving the closing `linear_combination` shapes `ring` cannot match
   simp only [show (2 : ℕ) ≠ 1 by omega, ite_false, show (2 : ℕ) - 1 = 1 by omega] at h5 ⊢
   rw [heckeTDiag_one_prime_pow_eq p hp 2 (by omega)] at h5
   rw [mul_sub] at h5
-  simp only [show 2 - 2 = 0 from rfl] at h5 ⊢
+  simp only [Nat.sub_self] at h5 ⊢
   rw [heckeT_prime_pow_zero p hp, mul_one, heckeTDiag_one_prime_pow_one, heckeT_prime p hp] at h5
   rw [heckeT_prime_pow_one p hp] at h5 ⊢
   rw [heckeT_prime p hp] at h5 ⊢
@@ -202,9 +205,9 @@ theorem heckeT_prime_pow_recurrence : ∀ k : ℕ, 0 < k →
   rcases k with _ | k
   · omega
   rcases k with _ | k
-  · exact heckeT_prime_pow_recurrence_base_one p hp
+  · exact heckeT_prime_pow_recurrence_one p hp
   rcases k with _ | k
-  · exact heckeT_prime_pow_recurrence_base_two p hp
+  · exact heckeT_prime_pow_recurrence_two p hp
   · exact heckeT_prime_pow_recurrence_step p hp (k + 1) (by omega) ih
 
 section Centrality
