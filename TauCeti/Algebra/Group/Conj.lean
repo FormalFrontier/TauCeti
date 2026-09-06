@@ -41,6 +41,8 @@ conjugation action.
   `Nat.card` form.
 * `TauCeti.ConjClasses.ncard_carrier_mk_of_mem_center`: the class of a central element is a single
   point.
+* `ConjClasses.mk_eq_one_iff`: a class is the identity class exactly when a representative is
+  the identity.
 * `TauCeti.ConjClasses.card_carrier_dvd_card`: the size of a conjugacy class divides the order of
   the group, with `TauCeti.ConjClasses.card_carrier_cast_ne_zero` the consequence that the size of
   a class is nonzero in any semiring where the group order is.
@@ -295,6 +297,14 @@ theorem map_pow {N : Type*} [Monoid N] (f : M →* N) (C : ConjClasses M) (j : �
   -- the map on representatives, after which `mk_pow` handles both powers and `map_pow` finishes
   -- in `N`.
   rw [mk_pow, map_mk, map_mk, mk_pow, _root_.map_pow]
+
+/-- **A conjugacy class is trivial exactly when a representative is.** Only the identity is
+conjugate to the identity, so `mk a` is the identity class precisely when `a = 1`.
+
+The attribute is deliberately omitted: this is a good `simp` normalisation, but promoting it
+belongs in a change whose subject is this API rather than in a consumer. -/
+theorem mk_eq_one_iff {G : Type*} [Group G] {a : G} : ConjClasses.mk a = 1 ↔ a = 1 := by
+  rw [ConjClasses.one_eq_mk_one, ConjClasses.mk_eq_mk_iff_isConj, isConj_one_left]
 
 /-- **Elements of different orders are not conjugate.** Conjugation is an automorphism, so it
 preserves the order of an element; hence two elements whose orders differ have distinct conjugacy

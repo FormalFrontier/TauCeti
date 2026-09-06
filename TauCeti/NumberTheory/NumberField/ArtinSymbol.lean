@@ -194,7 +194,7 @@ variable {L : Type*} [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
 an unramified `𝔭`, the Artin symbol of `𝔭` is the identity class if and only if `f(Q/𝔭) = 1`.
 
 The symbol is `ConjClasses.mk σ` for an arithmetic Frobenius `σ` at `Q`, a class is trivial
-exactly when its representative is, and `orderOf σ = f(Q/𝔭)`. -/
+exactly when a representative is (`ConjClasses.mk_eq_one_iff`), and `orderOf σ = f(Q/𝔭)`. -/
 theorem artinSymbol_eq_one_iff_inertiaDeg_eq_one (𝔭 : Ideal (𝓞 K)) [𝔭.IsMaximal]
     (hur : ∀ (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver 𝔭], Algebra.IsUnramifiedAt (𝓞 K) Q)
     (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver 𝔭] :
@@ -202,9 +202,8 @@ theorem artinSymbol_eq_one_iff_inertiaDeg_eq_one (𝔭 : Ideal (𝓞 K)) [𝔭.I
   have hQ : Q ≠ ⊥ := Ideal.ne_bot_of_liesOver_of_ne_bot (NeZero.ne 𝔭) Q
   have : Algebra.IsUnramifiedAt (𝓞 K) Q := hur Q
   obtain ⟨σ, hσ⟩ := exists_isArithFrobAt K Q hQ
-  rw [artinSymbol_eq_mk_of_isArithFrobAt 𝔭 hur Q σ hσ, ConjClasses.one_eq_mk_one,
-    ConjClasses.mk_eq_mk_iff_isConj, isConj_one_left, ← orderOf_eq_one_iff,
-    orderOf_eq_inertiaDeg_of_isArithFrobAt Q hQ hσ]
+  rw [artinSymbol_eq_mk_of_isArithFrobAt 𝔭 hur Q σ hσ, ConjClasses.mk_eq_one_iff,
+    ← orderOf_eq_one_iff, orderOf_eq_inertiaDeg_of_isArithFrobAt Q hQ hσ]
 
 /-- **The Artin symbol is trivial exactly at the completely split primes.** For `𝔭` unramified in
 `L`, the Artin symbol of `𝔭` is the identity class if and only if `𝔭` splits completely, that is,
