@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.NumberTheory.LocalField.Basic
 public import Mathlib.RingTheory.Ideal.Norm.AbsNorm
 public import Mathlib.Topology.Algebra.Valued.ValuativeRel
 
@@ -28,6 +29,8 @@ and the residue field of the valuative relation with the ones `K_v` already has.
   quotient representative.
 * `IsDedekindDomain.HeightOneSpectrum.natCard_residueField_adicCompletion_eq_absNorm`: that residue
   field has `Ideal.absNorm v.asIdeal` elements.
+* `IsDedekindDomain.HeightOneSpectrum.isNonarchimedeanLocalField_adicCompletion`: an adic
+  completion with finite residue field is a nonarchimedean local field.
 
 ## Implementation notes
 
@@ -43,7 +46,7 @@ valuative relation is added here.
 public section
 noncomputable section
 
-open ValuativeRel
+open ValuativeRel Valued.integer
 
 open scoped WithZero
 
@@ -107,16 +110,18 @@ theorem residueFieldEquivAdicCompletion_apply_mk (a : R) :
         v.algebraMap_mem_integer_adicCompletion (K := K) a⟩ : 𝒪[v.adicCompletion K]) := by
   let e : v.adicCompletionIntegers K ≃+* 𝒪[v.adicCompletion K] :=
     (RingEquiv.subringCongr (integer_eq_adicCompletionIntegers v)).symm
-  let x : IsLocalRing.ResidueField (v.adicCompletionIntegers K) := by
-    change v.adicCompletionIntegers K ⧸ IsLocalRing.maximalIdeal _
-    exact v.residueFieldEquivAdicCompletionIntegers (K := K)
-      (Ideal.Quotient.mk v.asIdeal a)
-  have hx : x = IsLocalRing.residue _ (algebraMap R (v.adicCompletionIntegers K) a) := by
-    change v.residueFieldEquivAdicCompletionIntegers (K := K)
-      (Ideal.Quotient.mk v.asIdeal a) = _
-    exact v.residueFieldEquivAdicCompletionIntegers_apply_mk (K := K) a
-  change IsLocalRing.ResidueField.mapEquiv e x = _
-  rw [IsLocalRing.ResidueField.mapEquiv_apply, hx, IsLocalRing.ResidueField.map_residue]
+  have hcomp : v.residueFieldEquivAdicCompletion (K := K)
+      (Ideal.Quotient.mk v.asIdeal a) =
+      IsLocalRing.ResidueField.mapEquiv e
+        (v.residueFieldEquivAdicCompletionIntegers (K := K)
+          (Ideal.Quotient.mk v.asIdeal a)) :=
+    RingEquiv.trans_apply _ _ _
+  have hx : v.residueFieldEquivAdicCompletionIntegers (K := K)
+      (Ideal.Quotient.mk v.asIdeal a) =
+      IsLocalRing.residue _ (algebraMap R (v.adicCompletionIntegers K) a) :=
+    v.residueFieldEquivAdicCompletionIntegers_apply_mk (K := K) a
+  rw [hcomp, hx, IsLocalRing.ResidueField.mapEquiv_apply,
+    IsLocalRing.ResidueField.map_residue]
   apply congrArg (IsLocalRing.residue _)
   apply Subtype.ext
   dsimp only [e]
@@ -132,6 +137,30 @@ theorem natCard_residueField_adicCompletion_eq_absNorm [Infinite R] :
     Nat.card 𝓀[v.adicCompletion K] = Ideal.absNorm v.asIdeal := by
   rw [Ideal.absNorm_apply, Submodule.cardQuot_apply]
   exact (Nat.card_congr (residueFieldEquivAdicCompletion v).toEquiv).symm
+
+/-- An adic completion with finite residue field is a nonarchimedean local field. -/
+instance isNonarchimedeanLocalField_adicCompletion [Finite (R ⧸ v.asIdeal)] :
+    IsNonarchimedeanLocalField (v.adicCompletion K) := by
+  -- The discrete valuation admits a rank-one normalization; its chosen base does not affect the
+  -- topology.
+  let _ : (Valued.v : Valuation (v.adicCompletion K) ℤᵐ⁰).RankOne :=
+    Valuation.IsRankOneDiscrete.rankOne _ (by norm_num : (1 : NNReal) < 2)
+  let _ : NormedField (v.adicCompletion K) :=
+    Valued.toNormedField (v.adicCompletion K) ℤᵐ⁰
+  -- The residue field of `𝒪_v` is `R ⧸ v`, which is finite.
+  let _ : Finite (IsLocalRing.ResidueField (v.adicCompletionIntegers K)) :=
+    Finite.of_equiv _ (v.residueFieldEquivAdicCompletionIntegers (K := K)).toEquiv
+  -- Local compactness comes from Mathlib's criterion for the `Valued` structure of `K_v`. That
+  -- criterion is stated for `Valued.integer`, which unfolds to `v.adicCompletionIntegers K`, so
+  -- its two inputs are supplied by `inferInstanceAs` at the latter.
+  let _ : ProperSpace (v.adicCompletion K) :=
+    (@properSpace_iff_completeSpace_and_isDiscreteValuationRing_integer_and_finite_residueField
+      (v.adicCompletion K) ℤᵐ⁰ _ _
+      (inferInstance : Valued (v.adicCompletion K) ℤᵐ⁰) inferInstance).mpr
+      ⟨inferInstance,
+        inferInstanceAs (IsDiscreteValuationRing (v.adicCompletionIntegers K)),
+        inferInstanceAs (Finite (IsLocalRing.ResidueField (v.adicCompletionIntegers K)))⟩
+  exact ⟨⟩
 
 end IsDedekindDomain.HeightOneSpectrum
 
