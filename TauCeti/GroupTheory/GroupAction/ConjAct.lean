@@ -17,19 +17,20 @@ commutative group that is the value again.
 
 ## Main statements
 
-* `TauCeti.map_conjNormal_val`: a homomorphism from a normal subgroup to a commutative group is
+* `MonoidHom.map_conjNormal_val`: a homomorphism from a normal subgroup to a commutative group is
   unchanged by conjugation by an element of that subgroup.
 -/
 
 public section
 
-namespace TauCeti
+namespace MonoidHom
 
 variable {G M : Type*} [Group G] [CommGroup M] {N : Subgroup G} [N.Normal]
 
 /-- **Conjugation by an element of a normal subgroup does not move a homomorphism from that
 subgroup to a commutative group**: it conjugates the value, which is the value. -/
+@[simp]
 theorem map_conjNormal_val (ψ : N →* M) (a x : N) : ψ (MulAut.conjNormal (a : G) x) = ψ x := by
   simp [MulAut.conjNormal_val, MulAut.conj_apply]
 
-end TauCeti
+end MonoidHom
