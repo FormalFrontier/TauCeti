@@ -50,7 +50,9 @@ from pr_lifecycle import (  # noqa: E402
     iso_z,
     parse_dt,
 )
-from pr_stats_graphs import atomic_write, fetch_snapshot, percentile  # noqa: E402
+from pr_stats_graphs import (  # noqa: E402
+    atomic_write, fetch_snapshot, load_previous, percentile,
+)
 
 OWNED_BY_PROJECT = [s for s in STAGE_ORDER if s not in STATE_AUTHOR_ACTION]
 
@@ -382,6 +384,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--repo", default="TauCetiProject/TauCeti")
     parser.add_argument("--data", type=Path, help="replay a normalized offline snapshot")
     parser.add_argument("--dump-data", type=Path, help="write the fetched snapshot")
+    parser.add_argument("--since-data", type=Path,
+                        help="an earlier snapshot; pull requests untouched since it was "
+                             "written keep their recorded timeline rather than being "
+                             "walked again. Walking every timeline costs one request per "
+                             "pull request and no longer fits in an hour's API budget.")
     parser.add_argument("--out", type=Path, help="write the JSON result here")
     parser.add_argument("--window", type=float, default=24.0, help="recent window, hours")
     parser.add_argument("--baseline", type=float, default=14 * 24.0, help="baseline, hours")
@@ -390,7 +397,8 @@ def main(argv: list[str] | None = None) -> int:
                         help="analyse as at this instant (default: the snapshot's fetched_at)")
     args = parser.parse_args(argv)
 
-    snapshot = json.loads(args.data.read_text()) if args.data else fetch_snapshot(args.repo)
+    snapshot = (json.loads(args.data.read_text()) if args.data
+                else fetch_snapshot(args.repo, load_previous(args.since_data, args.repo)))
     if args.dump_data:
         args.dump_data.write_text(json.dumps(snapshot, indent=1))
 

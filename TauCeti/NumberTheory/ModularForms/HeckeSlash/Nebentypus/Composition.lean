@@ -12,27 +12,19 @@ public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Nebentypus.Independen
 /-!
 # The composite of two nebentypus-twisted slash sums
 
-`HeckeSlash/Composition.lean` computes the composite of two *unweighted* slash sums, first over the
-representatives they are defined with and then over free families, and collapses it onto a single
-double coset. This file is the weighted counterpart of that development, up to and including the
-operator statement: for a single pair of double cosets whose product set is a third, the twisted
-operators of `D₁` and `D₂` compose to the operator of `D₃` on the character space. It then reads
-that operator statement at the ring level, on basis elements, through the extension of
-`Nebentypus/CharRing.lean`.
+`HeckeSlash/Composition.lean` computes the composite of two *unweighted* slash sums. This file is
+the weighted counterpart. It first proves the general multiplicity-weighted formula, by
+partitioning all products according to the double coset they meet, and then specialises to a
+product supported on a single double coset. The statements are bundled both for functions and as
+endomorphisms of the character space.
 
-⚠ That is a *generator-level* statement, and it is **not** the multiplicativity
-`HeckeSlash/Nebentypus/Ring.lean` records as missing. That gap is about
-`twistedHeckeSlashRingLinearMap : 𝕋 … →ₗ[ℤ] Module.End ℂ (ℍ → ℂ)`, over arbitrary elements of the
-Hecke ring and on all of `ℍ → ℂ`; this file proves only the single-double-coset case, only on
-`functionCharSpace k χ`, and only under the per-triple hypotheses `hD₃` and `hinj₃`. That map is
-untouched here and remains merely `ℤ`-linear. As in the untwisted file, the general
-multiplicity-weighted composite `∑_D m(D₁, D₂; D) · T_D` — and with it the ring homomorphism
-`𝕋 → Module.End` — is not proved here. Its two counting ingredients are now available:
-`DoubleCoset.card_pairs_mem_rightCoset_eq_multiplicity` is the left/right handedness
-reconciliation that `DoubleCoset.multiplicity` requires, and
-`DoubleCoset.card_pairs_mem_rightCoset_congr` the count that each right coset of a fixed `D` is
-hit by the same number of pairs. What is missing is the assembly, together with the twisted
-weights it has to carry.
+⚠ The multiplicity in the general formula is
+`m(D₂⁻¹, D₁⁻¹; D⁻¹)`, because the slash sum uses right cosets whereas the Hecke-ring structure
+constants use left cosets. Consequently the formula is not by itself a ring homomorphism from the
+existing Hecke ring: identifying this right-coset coefficient with the relevant structure
+constant is a further step. Nor can the unrestricted `twistedHeckeSlashRingLinearMap` on all of
+`ℍ → ℂ` be multiplicative, since the composition identity requires the input to lie in
+`functionCharSpace k χ`.
 
 ## Why the weights multiply, and why that is the whole point
 
@@ -71,6 +63,10 @@ This file introduces no definitions; the extension it reads the composition theo
   representatives on the right, the weights riding along unchanged.
 * `HeckeRing.GL2.twistedHeckeSlashSum_twistedHeckeSlashSum`: the composite of two twisted sums, as
   a double sum over products of representatives weighted by the character of the product.
+* `HeckeRing.GL2.twistedHeckeSlashSum_twistedHeckeSlashSum_eq_sum_nsmul`: the general composite,
+  grouped by output double coset and weighted by Shimura's multiplicity.
+* `HeckeRing.GL2.twistedHeckeSlashSumCharEnd_mul_eq_sum_nsmul`: the same formula bundled on the
+  character space.
 * `HeckeRing.GL2.twistedHeckeSlashSum_twistedHeckeSlashSum_eq_sum_of_rightCosets`: the same
   composite over *any* families of representatives of the right cosets.
 * `HeckeRing.GL2.twistedHeckeSlashSum_twistedHeckeSlashSum_eq_twistedHeckeSlashSum`: the collapse
@@ -117,11 +113,14 @@ multiplies by composition, so `D₁` acts first — exactly as the untwisted
 `heckeSlashGamma1ModularFormEnd_mul_of_doubleCoset_eq_mul` does, and the hypothesis has nothing
 left to do.
 
+The multiplicity-weighted theorem corresponds to AINTLIB's
+`twistedHeckeSlashGen_comp_eq_m_sum` in the same file.
+
 ⚠ Not adapted, so that the source line numbers are not read as a wider claim:
 `twisted_weighted_slash_product_eq` (`:494`) is a per-pair step that carries a summand into a third
 double coset under an assumed twisted invariance of `f`; the route here goes through
-representative-independence instead. The source's fibre block (`:629`, `:661`, `:710`) is not
-adapted either — that bookkeeping is already on main, untwisted and more general, in
+representative-independence instead. The source's correction-map fibre block (`:629`, `:661`,
+`:710`) is not adapted either — its bookkeeping is already available untwisted and more generally in
 `HeckeSlash/Composition.lean` with the `HeckeRing/Multiplicity` module.
 
 ## References
@@ -197,6 +196,63 @@ theorem twistedHeckeSlashSum_twistedHeckeSlashSum (f : ℍ → ℂ) :
     map_mul, Units.val_mul, mul_comm]
 
 end Composite
+
+section Assembly
+
+variable
+  (D₁ D₂ : HeckeCoset (Delta0 N) ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)))
+
+open Classical in
+/-- **The multiplicity-weighted composite of two twisted slash sums.** On a `χ`-eigenfunction,
+the composite is the sum over the double cosets met by products of representatives, with each
+twisted slash sum scaled by the common number of times its right cosets occur:
+
+`T_{D₂}(T_{D₁} f) = ∑_D m(D₂⁻¹, D₁⁻¹; D⁻¹) • T_D f`.
+
+The reversed and inverted arguments are forced by the right-coset convention of the slash sum:
+inversion turns its collision count into the left-coset count defining
+`DoubleCoset.multiplicity`. This is the weighted counterpart of
+`heckeSlashSum_heckeSlashSum_eq_sum_nsmul`; the character weight is constant on each right coset
+only after it is paired with the slash, by `smul_slash_eq_of_rightCoset_eq`. -/
+theorem twistedHeckeSlashSum_twistedHeckeSlashSum_eq_sum_nsmul
+    (f : ℍ → ℂ) (hf : f ∈ functionCharSpace k χ) :
+    twistedHeckeSlashSum k χ D₂ (twistedHeckeSlashSum k χ D₁ f) =
+      ∑ D ∈ Finset.univ.image (pairCoset D₁ D₂),
+        DoubleCoset.multiplicity ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ))
+          ((Gamma0 N).map (mapGL ℚ)) (D₂.out : GL (Fin 2) ℚ)⁻¹
+          (D₁.out : GL (Fin 2) ℚ)⁻¹ (D.out : GL (Fin 2) ℚ)⁻¹ •
+            twistedHeckeSlashSum k χ D f := by
+  rw [twistedHeckeSlashSum_twistedHeckeSlashSum, ← Fintype.sum_prod_type',
+    ← Finset.sum_fiberwise_of_maps_to (g := pairCoset D₁ D₂)
+      (fun p _ ↦ Finset.mem_image_of_mem _ (Finset.mem_univ p))]
+  refine Finset.sum_congr rfl fun D _ ↦ ?_
+  rw [Finset.sum_subtype (p := fun q ↦ pairCoset D₁ D₂ q = D)
+    (Finset.univ.filter fun q ↦ pairCoset D₁ D₂ q = D) (fun q ↦ by simp)
+    fun q ↦ (delta0NebentypusChar N χ
+      ⟨rightCosetRep D₁ q.1 * rightCosetRep D₂ q.2,
+        mul_mem (rightCosetRep_mem_Delta0 D₁ q.1) (rightCosetRep_mem_Delta0 D₂ q.2)⟩ : ℂ) •
+          (f ∣[k] (rightCosetRep D₁ q.1 * rightCosetRep D₂ q.2))]
+  exact sum_nebentypus_smul_slash_eq_nsmul_twistedHeckeSlashSum k χ D _ _
+    (fun i ↦ pairCoset_eq_iff.mp i.2)
+    (fun _ hx ↦ card_pairs_pairCoset_rightCoset_eq_multiplicity hx) f hf
+
+open Classical in
+/-- **The multiplicity-weighted composition law on the character space.** This is
+`twistedHeckeSlashSum_twistedHeckeSlashSum_eq_sum_nsmul` bundled as an equality of endomorphisms
+of `functionCharSpace k χ`. The order on the left records that `D₁` acts first. -/
+theorem twistedHeckeSlashSumCharEnd_mul_eq_sum_nsmul :
+    twistedHeckeSlashSumCharEnd k χ D₂ * twistedHeckeSlashSumCharEnd k χ D₁ =
+      ∑ D ∈ Finset.univ.image (pairCoset D₁ D₂),
+        DoubleCoset.multiplicity ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ))
+          ((Gamma0 N).map (mapGL ℚ)) (D₂.out : GL (Fin 2) ℚ)⁻¹
+          (D₁.out : GL (Fin 2) ℚ)⁻¹ (D.out : GL (Fin 2) ℚ)⁻¹ •
+            twistedHeckeSlashSumCharEnd k χ D := by
+  ext f x
+  have h := congrFun
+    (twistedHeckeSlashSum_twistedHeckeSlashSum_eq_sum_nsmul k χ D₁ D₂ f f.2) x
+  simpa [Module.End.mul_apply] using h
+
+end Assembly
 
 section Free
 

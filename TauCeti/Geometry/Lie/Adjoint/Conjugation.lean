@@ -84,7 +84,7 @@ def conj : G →* TauCeti.Diff I G n where
     simp
   map_mul' g h := by
     ext x
-    simp only [TauCeti.Diffeomorph.mul_apply, conjDiffeomorph_apply]
+    simp only [Diffeomorph.mul_apply, conjDiffeomorph_apply]
     group
 
 @[simp]
