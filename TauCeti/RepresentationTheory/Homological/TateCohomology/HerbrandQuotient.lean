@@ -6,7 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.RepresentationTheory.Homological.TateCohomology.LowDegree
-public import Mathlib.RepresentationTheory.Homological.GroupHomology.FiniteCyclic
+public import Mathlib.RepresentationTheory.Homological.FiniteCyclic
 
 /-!
 # Herbrand quotients of finite cyclic group representations
@@ -58,12 +58,20 @@ sense for any finite group; periodicity makes it useful for cyclic groups. -/
 def herbrandQuotient (M : Rep R G) : ℚ :=
   Nat.card (tateCohomology M 0) / Nat.card (tateCohomology M (-1))
 
+/-- The Herbrand quotient is the ratio of the orders of degree zero and degree `-1` Tate
+cohomology. -/
+@[simp]
+theorem herbrandQuotient_def (M : Rep R G) :
+    herbrandQuotient M =
+      Nat.card (tateCohomology M 0) / Nat.card (tateCohomology M (-1)) := by
+  simp [herbrandQuotient]
+
 /-- The Herbrand quotient vanishes exactly when one of its two defining Tate groups is infinite. -/
 @[simp]
 theorem herbrandQuotient_eq_zero_iff {M : Rep R G} :
     herbrandQuotient M = 0 ↔
       Infinite (tateCohomology M 0) ∨ Infinite (tateCohomology M (-1)) := by
-  simp [herbrandQuotient, Nat.card_eq_zero]
+  simp [Nat.card_eq_zero]
 
 /-- The Herbrand quotient of a finite representation of a finite cyclic group is one. -/
 @[simp]
@@ -144,7 +152,7 @@ theorem herbrandQuotient_eq_one_of_finite [IsCyclic G] (M : Rep R G) [Finite M] 
     Finite.of_surjective (Submodule.mkQ _ ) (Submodule.mkQ_surjective _)
   have hfiniteNegOne : Finite (tateCohomology M (-1)) :=
     (HNegOneIsoNormKernelQuotient M).toLinearEquiv.toEquiv.finite_iff.mpr hfiniteQuotient
-  rw [herbrandQuotient, hcard]
+  rw [herbrandQuotient_def, hcard]
   exact div_self (Nat.cast_ne_zero.mpr (Nat.card_ne_zero.mpr ⟨⟨0⟩, hfiniteNegOne⟩))
 
 section TrivialInt
@@ -157,7 +165,7 @@ group. -/
 theorem herbrandQuotient_trivial_int_eq_card :
     herbrandQuotient (Rep.trivial ℤ H ℤ) = Nat.card H := by
   let hsub := subsingleton_tateCohomology_negOne_trivial_int H
-  rw [herbrandQuotient, natCard_tateCohomology_zero_trivial_int_eq_card]
+  rw [herbrandQuotient_def, natCard_tateCohomology_zero_trivial_int_eq_card]
   rw [@Nat.card_of_subsingleton _ 0 hsub]
   simp
 

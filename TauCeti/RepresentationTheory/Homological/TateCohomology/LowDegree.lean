@@ -248,9 +248,9 @@ theorem HNegOne_induction_on {M : Rep R G} {C : tateCohomology M (-1) → Prop}
     ((Representation.Coinvariants.ker M.ρ).submoduleOf (ker M.ρ.norm))
     ((HNegOneIsoNormKernelQuotient M).hom x)
   have hx : HNegOneπ M y = x := by
-    rw [HNegOneπ]
-    change (HNegOneIsoNormKernelQuotient M).inv (Submodule.mkQ _ y) = x
-    rw [hy, Iso.hom_inv_id_apply]
+    apply (ModuleCat.mono_iff_injective (HNegOneIsoNormKernelQuotient M).hom).1 inferInstance
+    rw [HNegOneπ_comp_HNegOneIsoNormKernelQuotient_hom_apply]
+    simpa only [Submodule.mkQ_apply] using hy
   exact hx ▸ h y
 
 variable (A : Rep R G) [A.IsTrivial]
