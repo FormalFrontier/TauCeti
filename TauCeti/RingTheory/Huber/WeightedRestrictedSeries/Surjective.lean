@@ -62,8 +62,8 @@ surjective on restricted series**, provided `𝓝 (0 : A)` is countably generate
 `B⟨X₁,…,Xₖ⟩` is then the image of one of `A⟨X₁,…,Xₖ⟩`.
 
 The hypothesis is the filter inequality the proof consumes rather than `IsOpenMap φ`, which is
-strictly stronger; `TauCeti.Huber.weightedMap_one_weight_surjective_of_isOpenMap` is the open-map
-form for a caller who holds one.
+strictly stronger; `TauCeti.Huber.weightedMap_one_weight_surjective_of_isOpenQuotientMap` is the
+form for a caller holding the bundled open-quotient structure.
 
 This is the step Wedhorn's Proposition & Definition 6.36(ii) needs: a ring *strictly*
 topologically of finite type over `A` is an open quotient of some `A⟨X₁,…,Xₖ⟩`
