@@ -284,6 +284,7 @@ theorem mixedMonomialMap_id : mixedMonomialMap (MixedExponent.id k l) = id := by
 /-- Composing two mixed monomial maps multiplies their exponent data, on the locus where the torus
 coordinates are invertible. No such formula is claimed at ambient points with a vanishing torus
 coordinate. -/
+@[simp]
 theorem mixedMonomialMap_comp (B : MixedExponent k' l' k'' l'') (A : MixedExponent k l k' l')
     {z : (Fin k → ℂ) × (Fin l → ℂ)} (hz : z ∈ mixedChartDomain k l) :
     mixedMonomialMap (B.comp A) z = mixedMonomialMap B (mixedMonomialMap A z) := by
@@ -558,6 +559,7 @@ theorem ofTorusBlock_zero_one : ofTorusBlock (0 : Matrix (Fin k) (Fin l) ℤ) 1 
 
 /-- Composing the torus-block data `(C, D)` followed by `(C', D')` gives boundary twist
 `C + C' * D` and torus block `D' * D`. -/
+@[simp]
 theorem ofTorusBlock_comp_ofTorusBlock (C C' : Matrix (Fin k) (Fin l) ℤ)
     (D D' : Matrix (Fin l) (Fin l) ℤ) :
     (ofTorusBlock C' D').comp (ofTorusBlock C D) = ofTorusBlock (C + C' * D) (D' * D) :=
@@ -567,7 +569,7 @@ theorem ofTorusBlock_comp_ofTorusBlock (C C' : Matrix (Fin k) (Fin l) ℤ)
 theorem ofTorusBlock_comp_eq_id_of_mul_eq_one (C : Matrix (Fin k) (Fin l) ℤ)
     {D D' : Matrix (Fin l) (Fin l) ℤ} (h : D' * D = 1) :
     (ofTorusBlock (-(C * D')) D').comp (ofTorusBlock C D) = MixedExponent.id k l := by
-  simp [ofTorusBlock_comp_ofTorusBlock, Matrix.mul_assoc, h]
+  simp [Matrix.mul_assoc, h]
 
 end MixedExponent
 
@@ -580,7 +582,7 @@ noncomputable def basisChangeOpenPartialHomeomorph (C : Matrix (Fin k) (Fin l) �
   mixedMonomialOpenPartialHomeomorph (MixedExponent.ofTorusBlock C D)
     (MixedExponent.ofTorusBlock (-(C * D⁻¹)) D⁻¹)
     (MixedExponent.ofTorusBlock_comp_eq_id_of_mul_eq_one C (Matrix.nonsing_inv_mul D hD))
-    (by simp [MixedExponent.ofTorusBlock_comp_ofTorusBlock, Matrix.mul_nonsing_inv D hD])
+    (by simp [Matrix.mul_nonsing_inv D hD])
 
 section
 
