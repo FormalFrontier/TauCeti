@@ -86,9 +86,10 @@ The same construction on the other branches already built is in
   the Steinberg endomorphism and its fixed points.
 * N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Plate III, for the numbering of the
   type-`C` diagram that the root subgroups below are indexed by.
-* The signatures realized here follow the human-authored formal skeleton
-  `TauCetiRoadmap/CFSGStatement/Suggested.lean`.
 -/
+
+-- The signatures realized here follow the human-authored formal skeleton
+-- `TauCetiRoadmap/CFSGStatement/Suggested.lean`.
 
 public section
 
