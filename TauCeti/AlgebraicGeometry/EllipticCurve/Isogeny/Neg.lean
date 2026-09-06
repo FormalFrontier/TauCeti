@@ -118,7 +118,7 @@ theorem tautologicalPoint_negPullback [W.IsElliptic] :
       xCoord_genericPoint, yCoord_genericPoint,
       negPullback_apply, conj_mk_Y, ← evalEval_genericX_genericY,
       ← map_negPolynomial, evalEval_negPolynomial]
-    rfl
+    simp only [WeierstrassCurve.baseChange]
 
 namespace Hom
 
