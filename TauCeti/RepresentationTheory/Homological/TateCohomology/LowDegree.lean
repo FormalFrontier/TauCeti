@@ -221,15 +221,6 @@ theorem HNegOneπ_comp_HNegOneIsoNormKernelQuotient_hom (M : Rep R G) :
           ((Representation.Coinvariants.ker M.ρ).submoduleOf (ker M.ρ.norm))) := by
   simp [HNegOneπ]
 
-/-- Composing the quotient map by the augmentation submodule with the inverse of the degree `-1`
-identification is the map from norm-zero representatives to degree `-1` Tate cohomology. -/
-@[reassoc (attr := simp), elementwise (attr := simp)]
-theorem mkQ_comp_HNegOneIsoNormKernelQuotient_inv (M : Rep R G) :
-    ModuleCat.ofHom
-        (Submodule.mkQ ((Representation.Coinvariants.ker M.ρ).submoduleOf (ker M.ρ.norm))) ≫
-      (HNegOneIsoNormKernelQuotient M).inv = HNegOneπ M :=
-  (Iso.comp_inv_eq _).2 (HNegOneπ_comp_HNegOneIsoNormKernelQuotient_hom M).symm
-
 /-- A norm-zero element represents zero in degree `-1` Tate cohomology exactly when it belongs to
 the augmentation submodule. -/
 @[simp]
@@ -257,8 +248,9 @@ theorem HNegOne_induction_on {M : Rep R G} {C : tateCohomology M (-1) → Prop}
     ((Representation.Coinvariants.ker M.ρ).submoduleOf (ker M.ρ.norm))
     ((HNegOneIsoNormKernelQuotient M).hom x)
   have hx : HNegOneπ M y = x := by
-    rw [← mkQ_comp_HNegOneIsoNormKernelQuotient_inv_apply, ← Submodule.mkQ_apply, hy,
-      Iso.hom_inv_id_apply]
+    rw [HNegOneπ]
+    change (HNegOneIsoNormKernelQuotient M).inv (Submodule.mkQ _ y) = x
+    rw [hy, Iso.hom_inv_id_apply]
   exact hx ▸ h y
 
 variable (A : Rep R G) [A.IsTrivial]
@@ -375,6 +367,19 @@ def H0LinearEquivTrivialIntZModCard :
   rw [he, Submodule.submoduleOf, Submodule.map_comap_eq_of_surjective hsurjective,
     range_norm_trivial_int]
 
+/-- The degree-zero equivalence sends an invariant representative to its residue class modulo the
+order of the group. -/
+@[simp]
+theorem H0LinearEquivTrivialIntZModCard_H0π
+    (x : (Rep.trivial ℤ H ℤ).ρ.invariants) :
+    H0LinearEquivTrivialIntZModCard H (H0π (Rep.trivial ℤ H ℤ) x) = (x : ℤ) := by
+  have hx : (H0IsoNormQuotient (Rep.trivial ℤ H ℤ)).toLinearEquiv
+      (H0π (Rep.trivial ℤ H ℤ) x) = Submodule.Quotient.mk x :=
+    H0π_comp_H0IsoNormQuotient_hom_apply _ _
+  simp only [H0LinearEquivTrivialIntZModCard, LinearEquiv.trans_apply]
+  rw [hx, Submodule.Quotient.equiv_apply, Submodule.mapQ_apply]
+  rfl
+
 /-- The order of degree-zero Tate cohomology with trivial integral coefficients is the order of
 the group. -/
 @[simp]
@@ -383,7 +388,7 @@ theorem natCard_tateCohomology_zero_trivial_int_eq_card :
   rw [Nat.card_congr (H0LinearEquivTrivialIntZModCard H).toEquiv, Nat.card_zmod]
 
 /-- Degree `-1` Tate cohomology with trivial integral coefficients is trivial. -/
-theorem subsingleton_tateCohomology_negOne_trivial_int :
+instance subsingleton_tateCohomology_negOne_trivial_int :
     Subsingleton (tateCohomology (Rep.trivial ℤ H ℤ) (-1)) := by
   let Q := ker (Rep.trivial ℤ H ℤ).ρ.norm ⧸
     (Representation.Coinvariants.ker (Rep.trivial ℤ H ℤ).ρ).submoduleOf

@@ -65,13 +65,6 @@ theorem herbrandQuotient_eq_zero_iff {M : Rep R G} :
       Infinite (tateCohomology M 0) ∨ Infinite (tateCohomology M (-1)) := by
   simp [herbrandQuotient, Nat.card_eq_zero]
 
-/-- The Herbrand quotient is nonzero exactly when its two defining Tate groups are finite. This is
-not `@[simp]`: `herbrandQuotient_eq_zero_iff` already normalizes the negated form. -/
-theorem herbrandQuotient_ne_zero_iff {M : Rep R G} :
-    herbrandQuotient M ≠ 0 ↔
-      Finite (tateCohomology M 0) ∧ Finite (tateCohomology M (-1)) := by
-  simp [herbrandQuotient, Nat.card_eq_zero]
-
 /-- The Herbrand quotient of a finite representation of a finite cyclic group is one. -/
 @[simp]
 theorem herbrandQuotient_eq_one_of_finite [IsCyclic G] (M : Rep R G) [Finite M] :
@@ -119,19 +112,15 @@ theorem herbrandQuotient_eq_one_of_finite [IsCyclic G] (M : Rep R G) [Finite M] 
           exact LinearMap.range_le_ker_iff.mpr
             (ModuleCat.hom_ext_iff.mp (Rep.comp_eq_zero M)))).toEquiv,
           ← Nat.card_congr (HNegOneIsoNormKernelQuotient M).toLinearEquiv.toEquiv]
-  have hnorm :
-      Nat.card M = Nat.card (ker M.ρ.norm) * Nat.card (range M.ρ.norm) := by
+  have hcard (f : Module.End R M) :
+      Nat.card M = Nat.card (ker f) * Nat.card (range f) := by
     calc
-      Nat.card M = Nat.card (ker M.ρ.norm) * Nat.card (M ⧸ ker M.ρ.norm) :=
+      Nat.card M = Nat.card (ker f) * Nat.card (M ⧸ ker f) :=
         Submodule.card_eq_card_quotient_mul_card _
-      _ = Nat.card (ker M.ρ.norm) * Nat.card (range M.ρ.norm) := by
-        rw [Nat.card_congr M.ρ.norm.quotKerEquivRange.toEquiv]
-  have hdiff : Nat.card M = Nat.card (ker D) * Nat.card (range D) := by
-    calc
-      Nat.card M = Nat.card (ker D) * Nat.card (M ⧸ ker D) :=
-        Submodule.card_eq_card_quotient_mul_card _
-      _ = Nat.card (ker D) * Nat.card (range D) := by
-        rw [Nat.card_congr D.quotKerEquivRange.toEquiv]
+      _ = Nat.card (ker f) * Nat.card (range f) := by
+        rw [Nat.card_congr f.quotKerEquivRange.toEquiv]
+  have hnorm := hcard M.ρ.norm
+  have hdiff := hcard D
   have hrangeNorm : 0 < Nat.card (range M.ρ.norm) :=
     Nat.card_pos_iff.mpr ⟨⟨0⟩, inferInstance⟩
   have hrangeDiff : 0 < Nat.card (range D) :=
