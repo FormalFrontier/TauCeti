@@ -61,7 +61,7 @@ class MetricsTest(unittest.TestCase):
         self.assertIn("pullRequests(first:100", stats.PR_PAGE_QUERY)
         self.assertNotIn("timelineItems", stats.PR_PAGE_QUERY)
 
-    def test_a_timeline_too_deep_for_the_batch_falls_back_to_paging(self):
+    def test_direct_label_timeline_pagination_is_not_truncated(self):
         first_page = {
             "repository": {"pullRequests": {
                 "pageInfo": {"hasNextPage": False, "endCursor": None},
@@ -72,16 +72,6 @@ class MetricsTest(unittest.TestCase):
                     "author": {"login": "alice"}, "labels": {"nodes": []},
                 }],
             }},
-        }
-        # The batch answers for #42 but says there is more, so it must be re-fetched with the
-        # paginating query rather than silently keeping this first page.
-        batch = {
-            "repository": {"p42": {"timelineItems": {
-                "pageInfo": {"hasNextPage": True},
-                "nodes": [{"createdAt": timestamp(2),
-                           "label": {"name": "truncated-and-must-not-be-used"}}],
-            }, "mergedAt": None, "closedAt": None, "state": "OPEN",
-                "isDraft": False, "labels": {"nodes": []}}},
         }
         timeline_page = {
             "repository": {"pullRequest": {"timelineItems": {
@@ -102,7 +92,7 @@ class MetricsTest(unittest.TestCase):
         }
         with patch.object(
             stats, "graphql",
-            side_effect=[first_page, batch, timeline_page, timeline_extra],
+            side_effect=[first_page, timeline_page, timeline_extra],
         ):
             prs = stats.fetch_prs("example/project")
         self.assertEqual(
@@ -125,8 +115,8 @@ class MetricsTest(unittest.TestCase):
             }},
         }
         direct = {
-            "repository": {"p42": {"timelineItems": {
-                "pageInfo": {"hasNextPage": False},
+            "repository": {"pullRequest": {"timelineItems": {
+                "pageInfo": {"hasNextPage": False, "endCursor": None},
                 "nodes": [
                     {"createdAt": timestamp(min(index + 1, 14)),
                      "label": {"name": "awaiting-review"}}
@@ -158,67 +148,53 @@ class MetricsTest(unittest.TestCase):
         self.assertEqual(prs[0]["labeled_events"], [])
         self.assertEqual(graphql.call_count, 1)
 
-    # --- batched timeline fetching -----------------------------------------------------------
+    # --- timelines are fetched one at a time, on purpose --------------------------------------
     #
-    # GitHub prices a GraphQL request from the connection sizes it asks for, so fifty aliased
-    # pull requests cost the same one point as a single one. That is the difference between a
-    # full walk of this repository costing ~4600 points against an hourly budget of 5000, and
-    # costing under a hundred. These tests hold the batching to its two obligations: actually
-    # batch, and never silently truncate a timeline that did not fit.
+    # Aliasing several pull requests into one GraphQL request is much cheaper and silently
+    # returns incomplete timelines. Measured on 2026-09-06: in a 50-alias batch PR #1556 came
+    # back with 2 label events and `hasNextPage: false` where the paginating query returns 4,
+    # the missing one being its current `ci-failed`. Smaller batches were complete for that
+    # sample, so the limit follows total requested nodes and cannot be pinned to a size, and
+    # `hasNextPage` is computed against the truncated slice so nothing in the response reveals
+    # the loss. This test exists so the optimisation cannot be reintroduced without meeting it.
 
-    @staticmethod
-    def batch_reply(numbers, events=1, has_next=False):
-        return {"repository": {f"p{n}": {
-            "mergedAt": None, "closedAt": None, "state": "OPEN", "isDraft": False,
-            "labels": {"nodes": []},
-            "timelineItems": {"pageInfo": {"hasNextPage": has_next},
+    def test_each_pull_request_gets_its_own_query(self):
+        numbers = [1, 2, 3]
+        reply = {"repository": {"pullRequest": {
+            "timelineItems": {"pageInfo": {"hasNextPage": False, "endCursor": None},
                               "nodes": [{"createdAt": timestamp(2),
-                                         "label": {"name": "awaiting-review"}}] * events},
-        } for n in numbers}}
-
-    def test_timelines_are_fetched_in_batches_not_one_by_one(self):
-        numbers = list(range(1, 121))
-        replies = [self.batch_reply(numbers[i:i + stats.TIMELINE_BATCH])
-                   for i in range(0, len(numbers), stats.TIMELINE_BATCH)]
-        with patch.object(stats, "graphql", side_effect=replies) as graphql:
+                                         "label": {"name": "awaiting-review"}}]},
+            "mergedAt": None, "closedAt": None, "state": "OPEN", "isDraft": False,
+            "labels": {"nodes": [{"name": "awaiting-review"}]}}}}
+        with patch.object(stats, "graphql", return_value=reply) as graphql:
             result, fetched = stats.fetch_timelines("o", "n", numbers)
-        # 120 pull requests in batches of 50 is three requests, not 120.
         self.assertEqual(graphql.call_count, 3)
-        self.assertEqual(fetched, 120)
-        self.assertEqual(len(result), 120)
+        self.assertEqual(fetched, 3)
+        self.assertEqual(len(result), 3)
+        # Each call names exactly one pull request.
+        for call in graphql.call_args_list:
+            self.assertIn("number", call.kwargs)
 
-    def test_reused_pull_requests_are_left_out_of_the_batches(self):
-        numbers = list(range(1, 61))
-        reusable = {n: {"merged_at": None, "closed_at": None, "state": "OPEN",
-                        "is_draft": False, "labels": [], "labeled_events": []}
-                    for n in numbers[:55]}
-        with patch.object(stats, "graphql",
-                          side_effect=[self.batch_reply(numbers[55:])]) as graphql:
+    def test_the_module_defines_no_alias_batching_helper(self):
+        for name in ("timeline_batch_query", "TIMELINE_BATCH"):
+            self.assertFalse(
+                hasattr(stats, name),
+                f"{name} is back. Aliased batching returns silently truncated timelines with "
+                "hasNextPage false; read the note above fetch_timeline before reinstating it.")
+
+    def test_reused_pull_requests_are_not_fetched(self):
+        numbers = [1, 2, 3]
+        reusable = {1: {"merged_at": None, "closed_at": None, "state": "OPEN",
+                        "is_draft": False, "labels": [], "labeled_events": []}}
+        reply = {"repository": {"pullRequest": {
+            "timelineItems": {"pageInfo": {"hasNextPage": False, "endCursor": None}, "nodes": []},
+            "mergedAt": None, "closedAt": None, "state": "OPEN", "isDraft": False,
+            "labels": {"nodes": []}}}}
+        with patch.object(stats, "graphql", return_value=reply) as graphql:
             result, fetched = stats.fetch_timelines("o", "n", numbers, reusable)
-        # Five left to fetch, so one batch -- not two, and not one per pull request.
-        self.assertEqual(graphql.call_count, 1)
-        self.assertEqual(fetched, 5)
-        self.assertEqual(len(result), 60)
-
-    def test_the_batch_query_aliases_every_number_and_asks_for_full_depth(self):
-        query = stats.timeline_batch_query([7, 9])
-        self.assertIn("p7: pullRequest(number:7)", query)
-        self.assertIn("p9: pullRequest(number:9)", query)
-        self.assertIn(f"timelineItems(first:{stats.TIMELINE_FIRST}", query)
-        # Owner and name stay variables; only the numbers are interpolated.
-        self.assertIn("$owner:String!", query)
-
-    def test_the_batch_query_refuses_anything_but_an_int(self):
-        # The query is built by string formatting, so this is the one place that can check.
-        for bad in ["1", 1.0, True, -1, None]:
-            with self.subTest(value=bad):
-                with self.assertRaises(TypeError):
-                    stats.timeline_batch_query([bad])
-
-    def test_a_missing_alias_is_an_error_not_a_silently_dropped_pr(self):
-        with patch.object(stats, "graphql", return_value={"repository": {"p1": None}}):
-            with self.assertRaisesRegex(RuntimeError, "no timeline for PR #1"):
-                stats.fetch_timelines("o", "n", [1])
+        self.assertEqual(graphql.call_count, 2)
+        self.assertEqual(fetched, 2)
+        self.assertEqual(len(result), 3)
 
     # --- incremental snapshots -------------------------------------------------------------
     #
@@ -261,8 +237,8 @@ class MetricsTest(unittest.TestCase):
         # The snapshot was taken when the PR last changed on day 2; it has changed since.
         previous = self.snapshot_with(
             timestamp(2), [{"created_at": timestamp(2), "label": "awaiting-review"}])
-        direct = {"repository": {"p42": {
-            "timelineItems": {"pageInfo": {"hasNextPage": False},
+        direct = {"repository": {"pullRequest": {
+            "timelineItems": {"pageInfo": {"hasNextPage": False, "endCursor": None},
                               "nodes": [{"createdAt": timestamp(3),
                                          "label": {"name": "awaiting-review"}}]},
             "mergedAt": None, "closedAt": None, "state": "OPEN", "isDraft": False,
