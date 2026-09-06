@@ -64,29 +64,19 @@ namespace Probability
 variable {Ω ι : Type*} {mΩ : MeasurableSpace Ω} [Fintype ι] [Nonempty ι] {P : Measure Ω}
   {μ : Measure ℝ} {X : ι → Ω → ℝ} {r : ℝ}
 
-/-- The coordinatewise spelling of the maximum of the family is its lattice supremum. -/
-private theorem sup'_coord_eq (X : ι → Ω → ℝ) :
-    (fun ω => Finset.univ.sup' Finset.univ_nonempty fun i => X i ω)
-      = Finset.univ.sup' (Finset.univ_nonempty (α := ι)) X :=
-  funext fun ω => (Finset.sup'_apply _ X ω).symm
-
-/-- The coordinatewise spelling of the minimum of the family is its lattice infimum. -/
-private theorem inf'_coord_eq (X : ι → Ω → ℝ) :
-    (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω)
-      = Finset.univ.inf' (Finset.univ_nonempty (α := ι)) X :=
-  funext fun ω => (Finset.inf'_apply _ X ω).symm
-
 /-- The maximum of an almost-everywhere measurable finite family is almost everywhere
-measurable: `TauCeti.Finset.aemeasurable_sup'` in the coordinatewise spelling. -/
+measurable: `Finset.aemeasurable_sup'` in the coordinatewise spelling. -/
 private theorem aemeasurable_max (hX : ∀ i, AEMeasurable (X i) P) :
-    AEMeasurable (fun ω => Finset.univ.sup' Finset.univ_nonempty fun i => X i ω) P := by
-  rw [sup'_coord_eq]; exact TauCeti.Finset.aemeasurable_sup' _ fun i _ => hX i
+    AEMeasurable (fun ω => Finset.univ.sup' Finset.univ_nonempty fun i => X i ω) P :=
+  (Finset.aemeasurable_sup' Finset.univ_nonempty fun i _ => hX i).congr
+    (Filter.Eventually.of_forall fun ω => Finset.sup'_apply _ X ω)
 
 /-- The minimum of an almost-everywhere measurable finite family is almost everywhere
-measurable: `TauCeti.Finset.aemeasurable_inf'` in the coordinatewise spelling. -/
+measurable: `Finset.aemeasurable_inf'` in the coordinatewise spelling. -/
 private theorem aemeasurable_min (hX : ∀ i, AEMeasurable (X i) P) :
-    AEMeasurable (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω) P := by
-  rw [inf'_coord_eq]; exact TauCeti.Finset.aemeasurable_inf' _ fun i _ => hX i
+    AEMeasurable (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω) P :=
+  (Finset.aemeasurable_inf' Finset.univ_nonempty fun i _ => hX i).congr
+    (Filter.Eventually.of_forall fun ω => Finset.inf'_apply _ X ω)
 
 /-- The maximum of a finite family is at most `x` exactly when every member is. -/
 private theorem setOf_max_le (X : ι → Ω → ℝ) (x : ℝ) :
