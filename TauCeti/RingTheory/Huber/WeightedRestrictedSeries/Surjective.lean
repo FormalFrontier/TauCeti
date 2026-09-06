@@ -54,6 +54,16 @@ namespace TauCeti.Huber
 variable {k : ℕ} {A B : Type*} [CommRing A] [TopologicalSpace A] [NonarchimedeanRing A]
   [CommRing B] [TopologicalSpace B] [NonarchimedeanRing B]
 
+omit [TopologicalSpace A] [NonarchimedeanRing A] [TopologicalSpace B] [NonarchimedeanRing B] in
+/-- A ring homomorphism carries the trivial weight `{1}` to itself, so it carries the trivial
+weight *family* to itself.
+
+Named rather than discharged inline because it appears in the *statement* of every result below,
+where a tactic block would bake its elaborated proof term into the type. -/
+theorem image_one_weight (φ : A →+* B) :
+    φ '' ({1} : Set A) = ({1} : Set B) := by
+  rw [Set.image_singleton, map_one]
+
 /-- **A continuous surjection carrying neighbourhoods of zero onto neighbourhoods of zero stays
 surjective on restricted series**, provided `𝓝 (0 : A)` is countably generated. Every element of
 `B⟨X₁,…,Xₖ⟩` is then the image of one of `A⟨X₁,…,Xₖ⟩`.
@@ -73,7 +83,7 @@ theorem weightedMap_one_weight_surjective [(𝓝 (0 : A)).IsCountablyGenerated] 
     (hφ : Continuous φ) (hsurj : Function.Surjective φ)
     (hnhds : 𝓝 (0 : B) ≤ Filter.map φ (𝓝 (0 : A))) :
     Function.Surjective (weightedMap (k := k) hφ isWeightFamily_one_weight
-      isWeightFamily_one_weight fun _ ↦ by simp) := by
+      isWeightFamily_one_weight fun _ ↦ (image_one_weight φ).le) := by
   intro g
   obtain ⟨f, hf⟩ := restrictedMvPowerSeriesSubmoduleMap_surjective (k := k)
     φ.toAddMonoidHom.toIntLinearMap hφ.continuousAt hsurj hnhds
@@ -100,7 +110,7 @@ and it bundles exactly the continuity, surjectivity and openness the filter-leve
 theorem _root_.IsOpenQuotientMap.weightedMap_one_weight_surjective
     [(𝓝 (0 : A)).IsCountablyGenerated] {φ : A →+* B} (hq : IsOpenQuotientMap φ) :
     Function.Surjective (weightedMap (k := k) hq.continuous isWeightFamily_one_weight
-      isWeightFamily_one_weight fun _ ↦ by simp) :=
+      isWeightFamily_one_weight fun _ ↦ (image_one_weight φ).le) :=
   TauCeti.Huber.weightedMap_one_weight_surjective hq.continuous hq.surjective
     (map_zero φ ▸ hq.isOpenMap.nhds_le 0)
 
