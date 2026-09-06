@@ -56,7 +56,7 @@ representation of a group, from the eigenvalues alone, with no invariant inner p
 * `TauCeti.FDRep.char_mem_adjoin_of_isPrimitiveRoot`: over `ℂ` they lie in `ℤ[ζ_e]`, for `ζ_e`
   a primitive root of unity of order the exponent of the group.
 * `TauCeti.FDRep.norm_char_le_finrank`: over `ℂ`, `‖χ(g)‖ ≤ χ(1)`.
-* `TauCeti.Representation.exists_apply_eq_smul_of_norm_char_eq_finrank`: the equality case of that
+* `Representation.exists_apply_eq_smul_of_norm_char_eq_finrank`: the equality case of that
   bound, `‖χ(g)‖ = χ(1)`, which forces `ρ g` to be a root of unity times the identity.
 * `TauCeti.FDRep.conj_char`: over `ℂ`, **inversion conjugates character values**,
   `conj (χ g) = χ g⁻¹`. This is what makes the character pairing agree with the Hermitian inner
@@ -203,7 +203,8 @@ theorem norm_char_le_finrank (ρ : Representation ℂ G V) {g : G} {n : ℕ} (hn
 `n`-th root of unity: the character value is a sum of `finrank ℂ V` many roots of unity, so it can
 have that absolute value only if they all coincide, and then `ρ g` is diagonalizable with a single
 eigenvalue. The bound itself is `TauCeti.Representation.norm_char_le_finrank`. -/
-theorem exists_apply_eq_smul_of_norm_char_eq_finrank (ρ : Representation ℂ G V) {g : G} {n : ℕ}
+theorem _root_.Representation.exists_apply_eq_smul_of_norm_char_eq_finrank
+    (ρ : Representation ℂ G V) {g : G} {n : ℕ}
     (hn : n ≠ 0) (hg : g ^ n = 1) (h : ‖ρ.character g‖ = (finrank ℂ V : ℝ)) :
     ∃ μ : ℂ, μ ^ n = 1 ∧ ρ g = μ • 1 :=
   End.exists_eq_smul_of_norm_trace_eq_finrank hn (by rw [← map_pow, hg, map_one]) h

@@ -33,7 +33,7 @@ irreducible character `χ ≠ 1` has `χ(g) ≠ 0` and degree prime to `p`.
 Its degree is then coprime to the class size, so Burnside's vanishing theorem
 (`TauCeti.Representation.char_eq_zero_or_norm_char_eq_finrank`) applies and gives `‖χ(g)‖ = χ(1)`.
 That is the equality case of the bound on a character value, so the affording representation sends
-`g` to a scalar (`TauCeti.Representation.exists_apply_eq_smul_of_norm_char_eq_finrank`). Its kernel
+`g` to a scalar (`Representation.exists_apply_eq_smul_of_norm_char_eq_finrank`). Its kernel
 is normal, hence trivial or everything: if it is everything the character is constant and row
 orthogonality against the trivial character makes its degree `0`, which is absurd; and if it is
 trivial the representation is faithful, so `g` commutes with everything and its class is a single
