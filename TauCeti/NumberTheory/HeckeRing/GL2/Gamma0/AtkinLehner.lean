@@ -600,25 +600,14 @@ private lemma gcd_eq_one_of_eq_mul_of_dvd_pow {x : ℤ} {N m b c : ℕ} (hbc : m
     (((Int.isCoprime_iff_gcd_eq_one.mpr hxN).pow_right (n := m)).of_isCoprime_of_dvd_right
         (by exact_mod_cast hb) |>.mul_right (Int.isCoprime_iff_gcd_eq_one.mpr hxc))
 
-/-- **The criterion survives scaling.** If `x` is the multiple `d • x₀` of an element of `Δ₀(N)`
-whose double coset the bar fixes, then the bar fixes the double coset of `x` as well. Neither
-positivity of `d` nor coprimality of `d` to `N` is assumed: both are consequences of `x` lying
-in `Δ₀(N)`. -/
--- The scalar `d` is central in `GL₂(ℚ)`, and the bar fixes it: its integral witness is diagonal,
--- and the entry swap of `atkinLehnerAntiInvolution_bar_val` moves nothing on a diagonal matrix.
--- So this is `HeckeAntiInvolution.bar_mem_doubleCoset_self_mul_of_mem_centralizer` at that
--- scalar, a central element lying in every centralizer.
---
--- The two dropped hypotheses come from `hx`: the witness of `x` is `d • A₀`, so its upper-left
--- entry is `d * A₀ 0 0`, and that entry being a unit mod `N` forces `d` coprime to `N`; while
--- `d = 0` would collapse `x` to the zero matrix, against `0 < det x`.
-theorem atkinLehnerAntiInvolution_bar_mem_doubleCoset_of_smul [NeZero N] (d : ℕ)
-    (x x₀ : GL (Fin 2) ℚ) (hx : x ∈ Delta0 N) (hx₀ : x₀ ∈ Delta0 N)
-    (hsmul : (x : Matrix (Fin 2) (Fin 2) ℚ) = (d : ℚ) • (x₀ : Matrix (Fin 2) (Fin 2) ℚ))
-    (hfix : (atkinLehnerAntiInvolution N).bar x₀ hx₀ ∈
-      DoubleCoset.doubleCoset x₀ ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ))) :
-    (atkinLehnerAntiInvolution N).bar x hx ∈
-      DoubleCoset.doubleCoset x ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)) := by
+/-- **A scalar relating two `Δ₀(N)` elements is positive and coprime to the level.** These are
+exactly what `atkinLehnerAntiInvolution_bar_mem_doubleCoset_of_smul` asks of its scalar `d`
+before it can form `diag(d, d)` in `Δ₀(N)`, and both come free from `x ∈ Δ₀(N)` — which is why
+that theorem assumes neither. -/
+private lemma pos_and_coprime_of_coe_eq_smul (d : ℕ) (x x₀ : GL (Fin 2) ℚ)
+    (hx : x ∈ Delta0 N) (hx₀ : x₀ ∈ Delta0 N)
+    (hsmul : (x : Matrix (Fin 2) (Fin 2) ℚ) = (d : ℚ) • (x₀ : Matrix (Fin 2) (Fin 2) ℚ)) :
+    0 < d ∧ Nat.Coprime d N := by
   obtain ⟨A, hA, hxdet, -, hAunit⟩ := (mem_Delta0_iff N).mp hx
   obtain ⟨A₀, hA₀, -, -, -⟩ := (mem_Delta0_iff N).mp hx₀
   have hmat : A.map (Int.cast : ℤ → ℚ) = (d : ℚ) • A₀.map (Int.cast : ℤ → ℚ) := by
@@ -627,19 +616,37 @@ theorem atkinLehnerAntiInvolution_bar_mem_doubleCoset_of_smul [NeZero N] (d : �
     have h := congrFun (congrFun hmat 0) 0
     simp only [Matrix.map_apply, Matrix.smul_apply, smul_eq_mul] at h
     exact_mod_cast h
-  have hd : 0 < d := by
-    rcases Nat.eq_zero_or_pos d with rfl | h
+  refine ⟨?_, ?_⟩
+  -- `d = 0` would collapse `x` to the zero matrix, against `0 < det x`
+  · rcases Nat.eq_zero_or_pos d with rfl | h
     · rw [hsmul] at hxdet
       simp at hxdet
     · exact h
-  have hdN : Nat.Coprime d N := by
-    rw [← ZMod.isUnit_iff_coprime]
+  -- the upper-left entry of `x`'s witness is `d * A₀ 0 0`, and it is a unit mod `N`
+  · rw [← ZMod.isUnit_iff_coprime]
     have hsplit : ((A 0 0 : ℤ) : ZMod N) = (d : ZMod N) * ((A₀ 0 0 : ℤ) : ZMod N) := by
       rw [hA00]
       push_cast
       ring
     rw [hsplit] at hAunit
     exact isUnit_of_mul_isUnit_left hAunit
+
+/-- **The criterion survives scaling.** If `x` is the multiple `d • x₀` of an element of `Δ₀(N)`
+whose double coset the bar fixes, then the bar fixes the double coset of `x` as well. Neither
+positivity of `d` nor coprimality of `d` to `N` is assumed: both are consequences of `x` lying
+in `Δ₀(N)`. -/
+-- The scalar `d` is central in `GL₂(ℚ)`, and the bar fixes it: its integral witness is diagonal,
+-- and the entry swap of `atkinLehnerAntiInvolution_bar_val` moves nothing on a diagonal matrix.
+-- So this is `HeckeAntiInvolution.bar_mem_doubleCoset_self_mul_of_mem_centralizer` at that
+-- scalar, a central element lying in every centralizer.
+theorem atkinLehnerAntiInvolution_bar_mem_doubleCoset_of_smul [NeZero N] (d : ℕ)
+    (x x₀ : GL (Fin 2) ℚ) (hx : x ∈ Delta0 N) (hx₀ : x₀ ∈ Delta0 N)
+    (hsmul : (x : Matrix (Fin 2) (Fin 2) ℚ) = (d : ℚ) • (x₀ : Matrix (Fin 2) (Fin 2) ℚ))
+    (hfix : (atkinLehnerAntiInvolution N).bar x₀ hx₀ ∈
+      DoubleCoset.doubleCoset x₀ ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ))) :
+    (atkinLehnerAntiInvolution N).bar x hx ∈
+      DoubleCoset.doubleCoset x ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)) := by
+  obtain ⟨hd, hdN⟩ := pos_and_coprime_of_coe_eq_smul N d x x₀ hx hx₀ hsmul
   set s : GL (Fin 2) ℚ := natDiagGL 2 (fun _ ↦ d) with hs_def
   have hs : s ∈ Delta0 N := natDiagGL_mem_Delta0_of_coprime N _ fun _ ↦ hdN
   have hs_wit : (s : Matrix (Fin 2) (Fin 2) ℚ) =
