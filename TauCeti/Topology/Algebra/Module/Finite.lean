@@ -47,7 +47,7 @@ open scoped Uniformity
 
 namespace TauCeti
 
-variable {A : Type*} [CommRing A]
+variable {A : Type*} [Ring A]
   {M : Type*} [AddCommGroup M] [Module A M] [Module.Finite A M]
 
 /-- **The module topology on a finite module over a first-countable topological ring is first
