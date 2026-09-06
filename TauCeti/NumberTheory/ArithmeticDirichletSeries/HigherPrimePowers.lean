@@ -271,10 +271,8 @@ theorem card_fiber_mul_log_absNorm_le (hx : 1 ≤ x) {v : HeightOneSpectrum (�
   have hexpbound : ∀ A ∈ F,
       primePowerExponent A ∈ Finset.Icc 1 ⌊Real.log x / Real.log (Ideal.absNorm v.asIdeal)⌋₊ := by
     intro A hA
-    have hlog : (primePowerExponent A : ℝ) * Real.log (Ideal.absNorm v.asIdeal) ≤ Real.log x := by
-      have := Real.log_le_log
-        (pow_pos (by linarith [two_le_absNorm_asIdeal_real v]) _) (hF A hA)
-      rwa [Real.log_pow] at this
+    have hlog : (primePowerExponent A : ℝ) * Real.log (Ideal.absNorm v.asIdeal) ≤ Real.log x :=
+      Real.le_log_of_pow_le (by linarith [two_le_absNorm_asIdeal_real v]) (hF A hA)
     exact Finset.mem_Icc.mpr
       ⟨primePowerExponent_pos A, Nat.le_floor ((le_div_iff₀ hLpos).mpr hlog)⟩
   have hcard : F.card ≤ ⌊Real.log x / Real.log (Ideal.absNorm v.asIdeal)⌋₊ := by
