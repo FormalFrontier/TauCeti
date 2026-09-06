@@ -298,8 +298,15 @@ operation used to transport left-coset multiplicities arising from right slash a
 noncomputable def atkinLehnerAutomorphism : GL (Fin 2) ℚ ≃* GL (Fin 2) ℚ :=
   (MulEquiv.inv' (GL (Fin 2) ℚ)).trans (atkinLehnerEquiv N).symm
 
-/-- The ambient automorphism is the Atkin–Lehner bar applied after inversion. -/
-@[simp] lemma atkinLehnerAutomorphism_apply (x : GL (Fin 2) ℚ) :
+/-- The ambient automorphism is the Atkin–Lehner bar applied after inversion.
+
+Deliberately not a `simp` lemma: the simp-normal form of this automorphism is the abstract
+one given by `atkinLehnerAutomorphism_involutive` and `atkinLehnerAutomorphism_symm`. Simp
+rewrites innermost first, so with this lemma in the default set the inner application in
+`f (f x)` unfolds to the matrix conjugation before the involutivity lemma can fire, and
+`simpNF` rejects the pair. Use `rw [atkinLehnerAutomorphism_apply]` where the entries are
+what is wanted. -/
+lemma atkinLehnerAutomorphism_apply (x : GL (Fin 2) ℚ) :
     atkinLehnerAutomorphism N x = natDiagGL 2 ![1, N] *
       (transposeGLEquiv 2 x⁻¹).unop * (natDiagGL 2 ![1, N])⁻¹ :=
   (rfl)
@@ -311,11 +318,17 @@ private lemma atkinLehnerAutomorphism_toMonoidHom_apply (x : GL (Fin 2) ℚ) :
   (rfl)
 
 /-- The ambient Atkin–Lehner automorphism is involutive. -/
-lemma atkinLehnerAutomorphism_involutive (x : GL (Fin 2) ℚ) :
+@[simp] lemma atkinLehnerAutomorphism_involutive (x : GL (Fin 2) ℚ) :
     atkinLehnerAutomorphism N (atkinLehnerAutomorphism N x) = x := by
   rw [atkinLehnerAutomorphism_apply, ← atkinLehnerHom_unop,
     atkinLehnerAutomorphism_apply, ← atkinLehnerHom_unop]
   rw [map_inv, MulOpposite.unop_inv, atkinLehnerHom_involutive, inv_inv]
+
+/-- The ambient Atkin–Lehner automorphism is its own inverse. -/
+@[simp] theorem atkinLehnerAutomorphism_symm :
+    (atkinLehnerAutomorphism N).symm = atkinLehnerAutomorphism N :=
+  MulEquiv.ext fun x ↦ (atkinLehnerAutomorphism N).injective <| by
+    rw [(atkinLehnerAutomorphism N).apply_symm_apply, atkinLehnerAutomorphism_involutive]
 
 /-- The ambient Atkin–Lehner automorphism preserves the image of `Γ₀(N)`. -/
 @[simp] theorem atkinLehnerAutomorphism_map_Gamma0 [NeZero N] :
