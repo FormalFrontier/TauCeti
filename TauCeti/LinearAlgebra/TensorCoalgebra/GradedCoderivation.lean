@@ -705,10 +705,10 @@ Taylor map to words of length `n`. -/
 @[simp]
 theorem ReducedTensorWords.taylorComponent_gradedCoderiv (G : InternalGrading R M)
     (F : ReducedTensorWords R M →ₗ[R] M) (q : ℤ) (n : {n : ℕ // 0 < n}) :
-    taylorComponent (gradedCoderiv G F q) n = F ∘ₗ of R M n := by
+    (gradedCoderiv G F q).taylorComponent n = F ∘ₗ of R M n := by
   apply LinearMap.ext
   intro x
-  simp only [taylorComponent_apply, LinearMap.comp_apply]
+  simp only [LinearMap.taylorComponent_apply, LinearMap.comp_apply]
   rw [← LinearMap.comp_apply (letter R M), letter_comp_gradedCoderiv]
 
 /-- A graded coderivation whose letter component raises degrees by `r` raises degrees by `r`:

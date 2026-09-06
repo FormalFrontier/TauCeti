@@ -11,8 +11,8 @@ public import TauCeti.LinearAlgebra.TensorCoalgebra.GradedCoderivation
 # Taylor components of composites of graded Taylor expansions
 
 For the reduced tensor coalgebra `Tᶜ(M)`, the arity-`n` Taylor component of an endomorphism,
-defined in `TauCeti.LinearAlgebra.TensorCoalgebra.Coderivation`, is its restriction to words of
-length `n`, followed by projection to words of length one.
+`LinearMap.taylorComponent`, is its restriction to words of length `n`, followed by projection to
+words of length one.
 
 This file computes the Taylor components of a composite of two graded Taylor expansions.  On
 homogeneous letters, specializing both expansions to the same Taylor map gives the square formula
@@ -62,7 +62,7 @@ theorem taylorComponent_comp_gradedCoderiv_of_tprod
     (G : InternalGrading R M) (b₁ : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M)
     (F₂ : ReducedTensorWords R M →ₗ[R] M) (q₂ : ℤ)
     {n : ℕ} (hn : 0 < n) (x : Fin n → M) :
-    taylorComponent (b₁ ∘ₗ gradedCoderiv G F₂ q₂) ⟨n, hn⟩
+    (b₁ ∘ₗ gradedCoderiv G F₂ q₂).taylorComponent ⟨n, hn⟩
         (PiTensorProduct.tprod R x) =
       ∑ p ∈ Finset.range n, ∑ d ∈ Finset.Icc 1 (n - p),
         (letter R M ∘ₗ b₁) (splice R (InternalGrading.twistedTuple G q₂ x 0 p) 0 n p d
@@ -71,7 +71,7 @@ theorem taylorComponent_comp_gradedCoderiv_of_tprod
     _ = ∑ p ∈ Finset.range n, ∑ d ∈ Finset.range (n + 1),
         (letter R M ∘ₗ b₁) (splice R (InternalGrading.twistedTuple G q₂ x 0 p) 0 n p d
           (F₂ (subword R x p d))) := by
-      rw [taylorComponent_apply]
+      rw [LinearMap.taylorComponent_apply]
       simp only [LinearMap.comp_apply]
       rw [← LinearMap.comp_apply (letter R M), gradedCoderiv_of_tprod, map_sum]
       exact Finset.sum_congr rfl fun p _ ↦ by
@@ -99,7 +99,7 @@ theorem taylorComponent_comp_gradedCoderiv_of_tprod_of_homogeneous
     (F₂ : ReducedTensorWords R M →ₗ[R] M) (q₂ : ℤ)
     {n : ℕ} (hn : 0 < n) (x : Fin n → M) (𝒟 : Fin n → ℤ)
     (hx : ∀ i, x i ∈ G.piece (𝒟 i)) :
-    taylorComponent (b₁ ∘ₗ gradedCoderiv G F₂ q₂) ⟨n, hn⟩
+    (b₁ ∘ₗ gradedCoderiv G F₂ q₂).taylorComponent ⟨n, hn⟩
         (PiTensorProduct.tprod R x) =
       ∑ p ∈ Finset.range n, ∑ d ∈ Finset.Icc 1 (n - p),
         (((q₂ * ∑ j ∈ Finset.range p,
