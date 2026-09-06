@@ -414,9 +414,21 @@ private lemma T_elem_p_ppow_eval_at_one_ppow_succ_zero (p : ℕ) (hp : 1 < p) {n
   simp only [Matrix.cons_val_zero] at this
   have := hp; omega
 
-/-- `(T(1,p) · T(1, pⁿ))` evaluated at the leading coset `T(1, p^{n+1})` equals `1`. -/
+/-- **The structure constant of `T(1,p) · T(1, pⁿ)` at the leading coset `T(1, p^(n+1))` is
+`1`.** This is the companion of `T_ad_one_p_mul_supp_ne_leading_eval_zero`, which gives `0` at
+every other coset in the support. -/
 private lemma T_ad_one_p_mul_T_ad_one_ppow_eval_leading (p : ℕ) (hp : p.Prime) (n : ℕ) :
-    (heckeTDiag 1 p * heckeTDiag 1 (p ^ n)) (diagCoset (![1, p ^ (n + 1)] : Fin 2 → ℕ)) = 1 := by
+    (HeckeCosetModule.structureConstants ℤ (SLnZ 2) (SLnZ 2) (SLnZ 2)
+      (HeckeCoset.rep (diagCoset (![1, p] : Fin 2 → ℕ)))
+      (HeckeCoset.rep (diagCoset (![1, p ^ n] : Fin 2 → ℕ))))
+      (diagCoset (![1, p ^ (n + 1)] : Fin 2 → ℕ)) = 1 := by
+  rw [← diagElem_mul_diagElem,
+    show diagElem (![1, p] : Fin 2 → ℕ) = heckeTDiag 1 p from
+      (heckeTDiag_eq_diagElem Nat.one_pos hp.pos (one_dvd _)).symm,
+    -- `![…]` literals that are only extensionally equal do not unify syntactically, so the
+    -- intended spelling is stated here for the following rewrite to match.
+    show diagElem (![1, p ^ n] : Fin 2 → ℕ) = heckeTDiag 1 (p ^ n) from
+      (heckeTDiag_eq_diagElem Nat.one_pos (pow_pos hp.pos n) (one_dvd _)).symm]
   classical
   rcases eq_or_ne n 0 with hn | hn
   · subst hn
@@ -492,23 +504,6 @@ private lemma T_ad_one_p_mul_supp_ne_leading_eval_zero (p : ℕ) (hp : p.Prime) 
   rw [T_elem_ppow_factor p hp.pos i (n - i) hi_le_sub, ← mul_assoc]
   exact T_mul_T_pp_pow_eval_at_one_zero p hp.one_lt i (p ^ (n + 1)) hi_ge (pow_pos hp.pos _) _
 
-/-- The structure constant of `T(1,p) · T(1,pⁿ)` at the leading coset `T(1, p^(n+1))` is `1`.
-This is the companion of `T_ad_one_p_mul_supp_ne_leading_eval_zero`, which gives `0` at every
-other coset in the support. -/
-private lemma T_ad_one_p_mul_leading_eval_one (p : ℕ) (hp : p.Prime) (n : ℕ) :
-    (HeckeCosetModule.structureConstants ℤ (SLnZ 2) (SLnZ 2) (SLnZ 2)
-      (HeckeCoset.rep (diagCoset (![1, p] : Fin 2 → ℕ)))
-      (HeckeCoset.rep (diagCoset (![1, p ^ n] : Fin 2 → ℕ))))
-      (diagCoset (![1, p ^ (n + 1)] : Fin 2 → ℕ)) = 1 := by
-  rw [← diagElem_mul_diagElem,
-    show diagElem (![1, p] : Fin 2 → ℕ) = heckeTDiag 1 p from
-      (heckeTDiag_eq_diagElem Nat.one_pos hp.pos (one_dvd _)).symm,
-    -- `![…]` literals that are only extensionally equal do not unify syntactically, so the
-    -- intended spelling is stated here for the following rewrite to match.
-    show diagElem (![1, p ^ n] : Fin 2 → ℕ) = heckeTDiag 1 (p ^ n) from
-      (heckeTDiag_eq_diagElem Nat.one_pos (pow_pos hp.pos n) (one_dvd _)).symm]
-  exact T_ad_one_p_mul_T_ad_one_ppow_eval_leading p hp n
-
 /-- Leading coefficient of `T(1,p)^a`: `(heckeTDiag 1 p)^a` evaluated at the leading coset
 `diagCoset ![1, p^a]` equals 1. -/
 private lemma T_ad_one_p_pow_eval_leading (p : ℕ) (hp : p.Prime) (a : ℕ) :
@@ -544,7 +539,7 @@ private lemma T_ad_one_p_pow_eval_leading (p : ℕ) (hp : p.Prime) (a : ℕ) :
             (diagCoset (![1, p] : Fin 2 → ℕ)).rep D_leading.rep) D_target :=
         HeckeCosetModule.smul_apply _ _ _
       rw [hs, ih, one_mul]
-      exact T_ad_one_p_mul_leading_eval_one p hp n
+      exact T_ad_one_p_mul_T_ad_one_ppow_eval_leading p hp n
     -- Every other coset in the support contributes nothing, so only the leading term survives.
     refine (Finset.sum_eq_single_of_mem D_leading h_leading_in_supp ?_).trans h_leading_eq
     intro D₂ hD₂ hne
