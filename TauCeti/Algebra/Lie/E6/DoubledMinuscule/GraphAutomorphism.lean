@@ -569,23 +569,19 @@ theorem map_points_conj_graphAutomorphismMatrix (A : Type v) [CommRing A] :
     graphMatrixPerm graphMatrixScale graphModuleEquiv_matrixBasis graphPermE6
     matrixWeight_graphMatrixPerm A
 
-private noncomputable def graphAutomorphismNormalizer (A : Type v) [CommRing A] :
-    Subgroup.normalizer
-      (points A : Set (Matrix.GeneralLinearGroup (Fin 54) A)) :=
-  ⟨graphAutomorphismMatrix A, Subgroup.mem_normalizer_iff_map_conj_eq.mpr
-    (map_points_conj_graphAutomorphismMatrix A)⟩
-
 /-- **The graph automorphism on matrix-valued points of the doubled carrier**, given by
 conjugation by its signed monomial matrix. -/
 noncomputable def graphAutomorphismPoints (A : Type v) [CommRing A] : MulAut (points A) :=
-  (points A).normalizerMonoidHom (graphAutomorphismNormalizer A)
+  kostantNumberedSymmetryPoints lattice.toAddSubgroup matrixBasis graphModuleEquiv
+    graphModuleEquiv_mem_lattice_iff A (points A) (map_points_conj_graphAutomorphismMatrix A)
 
 /-- On matrices, the graph automorphism of points is conjugation by its signed monomial matrix. -/
 @[simp]
 theorem coe_graphAutomorphismPoints (A : Type v) [CommRing A] (g : points A) :
     (graphAutomorphismPoints A g : Matrix.GeneralLinearGroup (Fin 54) A) =
       graphAutomorphismMatrix A * g * (graphAutomorphismMatrix A)⁻¹ :=
-  (rfl)
+  coe_kostantNumberedSymmetryPoints lattice.toAddSubgroup matrixBasis graphModuleEquiv
+    graphModuleEquiv_mem_lattice_iff A (points A) (map_points_conj_graphAutomorphismMatrix A) g
 
 /-- The graph automorphism on points renumbers every pinned positive and negative simple-root
 subgroup without changing its additive parameter. -/
@@ -659,22 +655,19 @@ with every iterated Frobenius map. -/
 theorem pointsMap_comp_graphAutomorphismPoints {A : Type v} {B : Type v'}
     [CommRing A] [CommRing B] (f : A →+* B) :
     (pointsMap f).comp (graphAutomorphismPoints A).toMonoidHom =
-      (graphAutomorphismPoints B).toMonoidHom.comp (pointsMap f) := by
-  refine MonoidHom.ext fun g => Subtype.ext ?_
-  rw [MonoidHom.comp_apply, MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom,
-    MulEquiv.coe_toMonoidHom, coe_pointsMap, coe_graphAutomorphismPoints,
-    coe_graphAutomorphismPoints, coe_pointsMap, map_mul, map_mul, map_inv,
-    map_graphAutomorphismMatrix]
+      (graphAutomorphismPoints B).toMonoidHom.comp (pointsMap f) :=
+  comp_kostantNumberedSymmetryPoints lattice.toAddSubgroup matrixBasis graphModuleEquiv
+    graphModuleEquiv_mem_lattice_iff
+    (points A) (map_points_conj_graphAutomorphismMatrix A)
+    (points B) (map_points_conj_graphAutomorphismMatrix B) f (pointsMap f) (coe_pointsMap f)
 
 /-- **The graph automorphism on matrix-valued points is an involution.** -/
 @[simp]
 theorem graphAutomorphismPoints_sq (A : Type v) [CommRing A] :
-    graphAutomorphismPoints A ^ 2 = 1 := by
-  have hnormalizer : graphAutomorphismNormalizer A ^ 2 = 1 :=
-    Subtype.ext (by
-      rw [Subgroup.coe_pow]
-      exact graphAutomorphismMatrix_sq A)
-  rw [graphAutomorphismPoints, ← map_pow, hnormalizer, map_one]
+    graphAutomorphismPoints A ^ 2 = 1 :=
+  kostantNumberedSymmetryPoints_pow_eq_one lattice.toAddSubgroup matrixBasis graphModuleEquiv
+    graphModuleEquiv_mem_lattice_iff A (points A) (map_points_conj_graphAutomorphismMatrix A)
+    (graphAutomorphismMatrix_sq A)
 
 /-- Applying the graph automorphism twice to a matrix-valued point is the identity. -/
 @[simp]
