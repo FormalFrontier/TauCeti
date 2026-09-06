@@ -21,7 +21,7 @@ choice is made, and this file is its transcription into the weighted language, a
 weight family where restrictedness *is* convergence to zero
 (`TauCeti.Huber.isWeightedRestricted_one_weight_iff`).
 
-**Countable generation of `𝓝 (0 : A)` is a hypothesis of every result here**, not a background
+**Countable generation of `𝓝 (0 : A)` is a hypothesis of both results here**, not a background
 assumption: it is what supplies the shrinking family the lifted coefficients are drawn from, and a
 general `NonarchimedeanRing` need not have it. It is not restrictive in the intended application —
 a Huber ring satisfies it, by `TauCeti.Huber.IsHuberRing.isCountablyGenerated_nhds_zero`.
@@ -53,16 +53,6 @@ namespace TauCeti.Huber
 
 variable {k : ℕ} {A B : Type*} [CommRing A] [TopologicalSpace A] [NonarchimedeanRing A]
   [CommRing B] [TopologicalSpace B] [NonarchimedeanRing B]
-
-omit [TopologicalSpace A] [NonarchimedeanRing A] [TopologicalSpace B] [NonarchimedeanRing B] in
-/-- A ring homomorphism carries the trivial weight `{1}` to itself, so it carries the trivial
-weight *family* to itself.
-
-Named rather than discharged inline because it appears in the *statement* of every result below,
-where a tactic block would bake its elaborated proof term into the type. -/
-theorem image_one_weight (φ : A →+* B) :
-    φ '' ({1} : Set A) = ({1} : Set B) := by
-  rw [Set.image_singleton, map_one]
 
 /-- **A continuous surjection carrying neighbourhoods of zero onto neighbourhoods of zero stays
 surjective on restricted series**, provided `𝓝 (0 : A)` is countably generated. Every element of

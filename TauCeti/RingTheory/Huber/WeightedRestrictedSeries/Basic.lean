@@ -91,7 +91,8 @@ counterexample in `IsWeightFamily`'s docstring shows the hypothesis is not autom
   stated for an arbitrary `T : Fin 0 → Set A` and take no weight-family hypothesis:
   `TauCeti.Huber.isWeightFamily_fin_zero` supplies it, the condition being a statement about each
   index and there being none.
-* `TauCeti.Huber.IsWeightedRestricted.map`, with `weightMul_map_le` and `image_weightPow`:
+* `TauCeti.Huber.IsWeightedRestricted.map`, with `weightMul_map_le`, `image_weightPow` and
+  `image_one_weight`:
   restrictedness is preserved by a continuous ring map carrying each `T i` into `S i`. This is
   what `weightedMap` is built from; `weightedMap_weightedX` says it fixes the variables, while
   `weightedMap_weightedC` says it acts as `φ` on constants — the constants are moved, not fixed.
@@ -1257,6 +1258,12 @@ omit [TopologicalSpace A] [TopologicalSpace B] in
 theorem image_weightPow (φ : A →+* B) (T : Fin k → Set A) (ν : Fin k →₀ ℕ) :
     φ '' weightPow T ν = weightPow (fun i ↦ φ '' T i) ν := by
   simp only [weightPow_def, Set.image_finsetProd, Set.image_pow]
+
+omit [TopologicalSpace A] [TopologicalSpace B] in
+/-- A ring map carries the trivial weight `{1}` to itself, hence carries the trivial weight
+*family* to itself. -/
+theorem image_one_weight (φ : A →+* B) : φ '' ({1} : Set A) = ({1} : Set B) := by
+  rw [Set.image_singleton, map_one]
 
 omit [TopologicalSpace A] [TopologicalSpace B] in
 /-- **`weightMul` is functorial**: a ring map carrying each `T i` into `S i` and `U` into `V`
