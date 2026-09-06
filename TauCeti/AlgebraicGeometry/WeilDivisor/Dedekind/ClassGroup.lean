@@ -27,7 +27,7 @@ an isomorphism of quotients
 
 `classGroupAddEquiv : (OrderSystem.ofDedekindDomain R K).ClassGroup ≃+ Additive (ClassGroup R)`,
 
-the Weil-divisor divisor class group of the affine Dedekind curve identified with Mathlib's ideal
+the Weil divisor class group of the affine Dedekind curve identified with Mathlib's ideal
 class group `ClassGroup R`. It is characterized by sending the class of the Weil divisor of an
 invertible fractional ideal `I` to the ideal class of `I`, and its inverse sends the ideal class
 of `I` back to the divisor class of the divisor of `I`; in particular the class of the point
@@ -73,7 +73,7 @@ private lemma map_toPrincipalIdeal_range :
 
 /-- **The divisor class group of the affine Dedekind curve is the ideal class group.**
 
-For a Dedekind domain `R` with fraction field `K`, the Weil-divisor divisor class group
+For a Dedekind domain `R` with fraction field `K`, the Weil divisor class group
 `(OrderSystem.ofDedekindDomain R K).ClassGroup` of the height-one spectrum is isomorphic to the
 ideal class group `ClassGroup R`, via the isomorphism `fractionalIdealDivisorAddEquiv R K` of
 invertible fractional ideals with Weil divisors descended to the quotient by principal
@@ -164,3 +164,22 @@ end WeilDivisor
 end AlgebraicGeometry
 
 end TauCeti
+
+namespace IsDedekindDomain.HeightOneSpectrum
+
+variable {R K : Type*} [CommRing R] [IsDedekindDomain R]
+    [Field K] [Algebra R K] [IsFractionRing R K]
+
+/-- The inverse of the class group isomorphism sends the ideal class of a height-one prime `v` to
+the class of its point divisor `[v]`. -/
+@[simp]
+lemma classGroupAddEquiv_symm_apply_classGroupMk (v : HeightOneSpectrum R) :
+    (TauCeti.AlgebraicGeometry.WeilDivisor.classGroupAddEquiv R K).symm
+        (Additive.ofMul v.classGroupMk) =
+      (TauCeti.AlgebraicGeometry.WeilDivisor.OrderSystem.ofDedekindDomain R K).divisorClass
+        (TauCeti.AlgebraicGeometry.WeilDivisor.ofPoint v) :=
+  (TauCeti.AlgebraicGeometry.WeilDivisor.classGroupAddEquiv R K).symm_apply_eq.mpr
+    (TauCeti.AlgebraicGeometry.WeilDivisor.classGroupAddEquiv_divisorClass_ofPoint
+      (K := K) v).symm
+
+end IsDedekindDomain.HeightOneSpectrum
