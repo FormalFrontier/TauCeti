@@ -7,7 +7,6 @@ module
 
 public import Mathlib.NumberTheory.LocalField.Basic
 public import Mathlib.RingTheory.Ideal.Norm.AbsNorm
-public import Mathlib.Topology.Algebra.Valued.ValuativeRel
 
 public import TauCeti.RingTheory.DedekindDomain.AdicValuation.Completion
 
