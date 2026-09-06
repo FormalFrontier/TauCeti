@@ -60,8 +60,11 @@ theorem measurePreserving_symmetricCoordinates_symm (p : ℕ) :
 
 /-- The upper-triangular coordinates map `symmetricLebesgue` to product Lebesgue measure. -/
 theorem measurePreserving_symmetricCoordinates (p : ℕ) :
-    MeasurePreserving (symmetricCoordinates p) (symmetricLebesgue p) volume :=
-  (measurePreserving_symmetricCoordinates_symm p).symm (symmetricCoordinatesMeasurableEquiv p).symm
+    MeasurePreserving (symmetricCoordinates p) (symmetricLebesgue p) volume := by
+  have h := measurePreserving_symmetricCoordinates_symm p
+  rw [← symmetricCoordinatesMeasurableEquiv_symm_coe] at h
+  have h' := h.symm (symmetricCoordinatesMeasurableEquiv p).symm
+  rwa [MeasurableEquiv.symm_symm, symmetricCoordinatesMeasurableEquiv_coe] at h'
 
 /-- `symmetricLebesgue` is an additive Haar measure, as required by Mathlib's Jacobian API. -/
 instance isAddHaarMeasure_symmetricLebesgue (p : ℕ) :

@@ -6,6 +6,7 @@ Authors: Claude
 module
 
 public import TauCeti.MeasureTheory.Measure.SymmetricMatrix.Lebesgue
+public import Mathlib.LinearAlgebra.Matrix.Bilinear
 public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
 public import Mathlib.LinearAlgebra.Matrix.Transvection
 
@@ -50,29 +51,22 @@ variable {p : ℕ}
 
 /-- Congruence `A ↦ M * A * Mᵀ` by an arbitrary square matrix, as a linear endomorphism of the
 symmetric subspace. -/
--- `@[expose]` is required by the module system, for the public `rfl` theorem
--- `Matrix.coe_symmetricCongruenceLinearMap_apply`.
-@[expose]
 def symmetricCongruenceLinearMap (M : Matrix (Fin p) (Fin p) ℝ) :
     selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) →ₗ[ℝ]
-      selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) where
-  toFun A :=
-    ⟨M * (A : Matrix (Fin p) (Fin p) ℝ) * Mᵀ, by
+      selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) :=
+  LinearMap.codRestrict _
+    (mulRightLinearMap (Fin p) ℝ Mᵀ ∘ₗ mulLeftLinearMap (Fin p) ℝ M ∘ₗ
+      (selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)).subtype)
+    fun A => by
       have h := Matrix.isHermitian_mul_mul_conjTranspose M (isHermitian_coe A)
-      rwa [Matrix.conjTranspose_eq_transpose_of_trivial] at h⟩
-  map_add' A B := by
-    refine Subtype.ext ?_
-    simp [Matrix.mul_add, Matrix.add_mul]
-  map_smul' c A := by
-    refine Subtype.ext ?_
-    simp
+      rwa [Matrix.conjTranspose_eq_transpose_of_trivial] at h
 
 @[simp]
 theorem coe_symmetricCongruenceLinearMap_apply (M : Matrix (Fin p) (Fin p) ℝ)
     (A : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)) :
     (symmetricCongruenceLinearMap M A : Matrix (Fin p) (Fin p) ℝ) =
       M * (A : Matrix (Fin p) (Fin p) ℝ) * Mᵀ :=
-  rfl
+  (rfl)
 
 theorem symmetricCongruenceLinearMap_mul (M N : Matrix (Fin p) (Fin p) ℝ) :
     symmetricCongruenceLinearMap (M * N) =
@@ -309,10 +303,6 @@ namespace GeneralLinearGroup
 
 /-- Congruence `A ↦ C * A * Cᵀ` by an invertible matrix, as a continuous linear automorphism
 of the symmetric subspace. -/
--- `@[expose]` is required by the module system, for the public `rfl` theorems
--- `Matrix.GeneralLinearGroup.coe_symmetricCongruence_apply` and
--- `Matrix.GeneralLinearGroup.symmetricCongruence_toLinearMap`.
-@[expose]
 def symmetricCongruence (C : Matrix.GeneralLinearGroup (Fin p) ℝ) :
     selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) ≃L[ℝ]
       selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) :=
@@ -329,14 +319,21 @@ theorem coe_symmetricCongruence_apply (C : Matrix.GeneralLinearGroup (Fin p) ℝ
     (symmetricCongruence C A : Matrix (Fin p) (Fin p) ℝ) =
       (C : Matrix (Fin p) (Fin p) ℝ) * (A : Matrix (Fin p) (Fin p) ℝ) *
         (C : Matrix (Fin p) (Fin p) ℝ)ᵀ :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem symmetricCongruence_toLinearMap (C : Matrix.GeneralLinearGroup (Fin p) ℝ) :
     ((symmetricCongruence C).toLinearMap :
         selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) →ₗ[ℝ] _) =
       symmetricCongruenceLinearMap (C : Matrix (Fin p) (Fin p) ℝ) :=
-  rfl
+  (rfl)
+
+/-- Undoing congruence by `C` is congruence by `C⁻¹`. -/
+@[simp]
+theorem symmetricCongruence_symm (C : Matrix.GeneralLinearGroup (Fin p) ℝ) :
+    (symmetricCongruence C).symm = symmetricCongruence C⁻¹ := by
+  refine DFunLike.ext _ _ fun A => (symmetricCongruence C).symm_apply_eq.2 (Subtype.ext ?_)
+  simp [Matrix.mul_assoc, ← Matrix.transpose_mul]
 
 /-- In the upper-triangular coordinates, congruence by `C` has determinant `(det C) ^ (p + 1)`. -/
 theorem det_symmetricCongruence (C : Matrix.GeneralLinearGroup (Fin p) ℝ) :

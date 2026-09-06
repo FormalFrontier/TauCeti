@@ -21,7 +21,9 @@ polynomial conditions, such as nonsingularity, hold almost everywhere.
 
 ## Main declarations
 
-* `TauCeti.MvPolynomial.volume_setOfPred_eval_eq_zero` — the zero locus of a nonzero
+* `MvPolynomial.measurableSet_setOfPred_eval_eq_zero` — the zero locus of an
+  `MvPolynomial ι ℝ` is measurable in `ι → ℝ`.
+* `MvPolynomial.volume_setOfPred_eval_eq_zero` — the zero locus of a nonzero
   `MvPolynomial ι ℝ` is `volume`-null in `ι → ℝ`.
 -/
 
@@ -33,16 +35,11 @@ open MeasureTheory
 
 namespace MvPolynomial
 
-/-- Polynomial evaluation is continuous, so its zero locus is closed, hence measurable. -/
-private theorem measurableSet_setOfPred_eval_eq_zero {ι : Type*} [Countable ι]
+/-- The zero locus of a multivariate real polynomial is measurable: polynomial evaluation is
+continuous, so the locus is closed. -/
+theorem measurableSet_setOfPred_eval_eq_zero {ι : Type*} [Countable ι]
     (P : MvPolynomial ι ℝ) : MeasurableSet {x : ι → ℝ | MvPolynomial.eval x P = 0} :=
   (isClosed_eq (MvPolynomial.continuous_eval P) continuous_const).measurableSet
-
-end MvPolynomial
-
-namespace TauCeti
-
-namespace MvPolynomial
 
 /-- The zero locus of a nonzero real polynomial in `n` variables is Lebesgue-null. -/
 private theorem volume_setOfPred_eval_eq_zero_fin :
@@ -70,7 +67,7 @@ private theorem volume_setOfPred_eval_eq_zero_fin :
       {x : Fin (n + 1) → ℝ | MvPolynomial.eval x P = 0} with hTdef
     have hT : MeasurableSet T :=
       (MeasurableEquiv.piFinSuccAbove (fun _ : Fin (n + 1) => ℝ) 0).symm.measurable
-        (_root_.MvPolynomial.measurableSet_setOfPred_eval_eq_zero P)
+        (measurableSet_setOfPred_eval_eq_zero P)
     have hslice : ∀ s : Fin n → ℝ, ((fun y : ℝ => (y, s)) ⁻¹' T) =
         {y : ℝ | Polynomial.eval y (Polynomial.map (MvPolynomial.eval s) Q) = 0} := by
       intro s
@@ -94,7 +91,7 @@ private theorem volume_setOfPred_eval_eq_zero_fin :
     simp
 
 /-- The zero locus of a nonzero multivariate real polynomial is Lebesgue-null. -/
-theorem volume_setOfPred_eval_eq_zero {ι : Type*} [Fintype ι] {P : MvPolynomial ι ℝ} (hP : P ≠ 0) :
+theorem volume_setOfPred_eval_eq_zero {ι : Type*} [Fintype ι] (P : MvPolynomial ι ℝ) (hP : P ≠ 0) :
     volume {x : ι → ℝ | MvPolynomial.eval x P = 0} = 0 := by
   have hφ : MeasurePreserving
       (MeasurableEquiv.piCongrLeft (fun _ : ι => ℝ) (Fintype.equivFin ι).symm) volume volume :=
@@ -115,5 +112,3 @@ theorem volume_setOfPred_eval_eq_zero {ι : Type*} [Fintype ι] {P : MvPolynomia
     hP (MvPolynomial.rename_injective _ (Fintype.equivFin ι).injective (by rw [h, map_zero]))
 
 end MvPolynomial
-
-end TauCeti

@@ -170,10 +170,6 @@ variable (p : ℕ)
 symmetric matrix. Its inverse reconstructs the matrix by reflecting them across the diagonal.
 
 This coordinate system fixes the normalization of `TauCeti.symmetricLebesgue`. -/
--- `@[expose]` is required by the module system: the defining equation
--- `TauCeti.symmetricCoordinates_apply` is a public `rfl` theorem, which can only be exported
--- when the body it unfolds is exposed.
-@[expose]
 def symmetricCoordinates :
     (selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)) ≃L[ℝ] (upperTriangle p → ℝ) :=
   LinearEquiv.toContinuousLinearEquiv
@@ -209,7 +205,7 @@ def symmetricCoordinates :
 theorem symmetricCoordinates_apply (A : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ))
     (ij : upperTriangle p) :
     symmetricCoordinates p A ij = (A : Matrix (Fin p) (Fin p) ℝ) ij.1.1 ij.1.2 :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem coe_symmetricCoordinates_symm_apply_of_le (x : upperTriangle p → ℝ) {i j : Fin p}
@@ -227,9 +223,6 @@ theorem coe_symmetricCoordinates_symm_apply_of_ge (x : upperTriangle p → ℝ) 
   · exact dite_eq_right h'
 
 /-- The measurable equivalence induced by `TauCeti.symmetricCoordinates`. -/
--- `@[expose]` is required by the module system, for the public `rfl` theorem
--- `TauCeti.symmetricCoordinatesMeasurableEquiv_coe`.
-@[expose]
 def symmetricCoordinatesMeasurableEquiv :
     (selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)) ≃ᵐ (upperTriangle p → ℝ) :=
   (symmetricCoordinates p).toHomeomorph.toMeasurableEquiv
@@ -238,7 +231,13 @@ def symmetricCoordinatesMeasurableEquiv :
 theorem symmetricCoordinatesMeasurableEquiv_coe :
     (symmetricCoordinatesMeasurableEquiv p : _ → upperTriangle p → ℝ) =
       symmetricCoordinates p :=
-  rfl
+  (rfl)
+
+@[simp]
+theorem symmetricCoordinatesMeasurableEquiv_symm_coe :
+    ((symmetricCoordinatesMeasurableEquiv p).symm : (upperTriangle p → ℝ) → _) =
+      (symmetricCoordinates p).symm :=
+  (rfl)
 
 /-- The symmetric subspace has dimension `p * (p + 1) / 2`. -/
 theorem finrank_symmetricMatrix :

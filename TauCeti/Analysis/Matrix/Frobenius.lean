@@ -43,9 +43,9 @@ variable {m n : Type*} [Fintype m] [Fintype n]
 compatible with the Frobenius norm of `Matrix.frobeniusNormedAddCommGroup`. Not declared as a
 global instance because there are several natural choices of norm on matrices; it is available
 through `open scoped Matrix.Norms.Frobenius`. -/
--- `@[expose]` is required by the module system: the defining equation
--- `Matrix.frobenius_inner_def` is a public `rfl` theorem, which can only be exported when the
--- body it unfolds is exposed.
+-- `@[expose]` is required by the module system: inducing this structure onto a submodule, as
+-- `TauCeti.symmetricMatrixInnerProductSpace` does, unifies the induced normed structure with
+-- the submodule's own, which needs the body here.
 @[expose, instance_reducible]
 def frobeniusInnerProductSpace :
     letI : NormedAddCommGroup (Matrix m n ℝ) := Matrix.frobeniusNormedAddCommGroup

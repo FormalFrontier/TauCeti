@@ -40,6 +40,8 @@ def symmetricDetPolynomial (p : ℕ) : MvPolynomial (upperTriangle p) ℝ :=
     if h : i ≤ j then MvPolynomial.X ⟨(i, j), h⟩
     else MvPolynomial.X ⟨(j, i), le_of_not_ge h⟩).det
 
+/-- Evaluating the determinant polynomial at a coordinate vector gives the determinant of the
+symmetric matrix that those coordinates reconstruct. -/
 theorem eval_symmetricDetPolynomial (p : ℕ) (x : upperTriangle p → ℝ) :
     MvPolynomial.eval x (symmetricDetPolynomial p) =
       ((symmetricCoordinates p).symm x : Matrix (Fin p) (Fin p) ℝ).det := by
@@ -63,6 +65,8 @@ private theorem coe_symmetricCoordinates_symm_one (p : ℕ) :
   · rw [coe_symmetricCoordinates_symm_apply_of_ge p _ (le_of_not_ge h), Matrix.one_apply]
     exact if_congr eq_comm rfl rfl
 
+/-- The determinant polynomial is nonzero, witnessed by the identity matrix, whose determinant is
+one. This nondegeneracy is what lets the zero-locus theorem apply. -/
 theorem symmetricDetPolynomial_ne_zero (p : ℕ) : symmetricDetPolynomial p ≠ 0 := by
   intro h
   have hval := eval_symmetricDetPolynomial p
@@ -91,6 +95,6 @@ theorem symmetricLebesgue_setOf_det_eq_zero (p : ℕ) :
     ext x
     simp only [Set.mem_preimage, Set.mem_ofPred_eq, eval_symmetricDetPolynomial]
   rw [hpre]
-  exact MvPolynomial.volume_setOfPred_eval_eq_zero (symmetricDetPolynomial_ne_zero p)
+  exact (symmetricDetPolynomial p).volume_setOfPred_eval_eq_zero (symmetricDetPolynomial_ne_zero p)
 
 end TauCeti
