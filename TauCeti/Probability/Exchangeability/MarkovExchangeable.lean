@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Combinatorics.Enumerative.TransitionCount
 public import TauCeti.Probability.Exchangeability.Basic
+import Mathlib.MeasureTheory.Measure.Dirac.Basic
 
 /-!
 # Markov exchangeability
@@ -43,6 +44,11 @@ strict is witnessed by the deterministic 3-cycle, in
 
 * `TauCeti.Probability.Exchangeable.markovExchangeable`: an exchangeable process is Markov
   exchangeable.
+* `TauCeti.Probability.markovExchangeable_iff_map_prefixLaw_perm_eq`: Markov exchangeability is
+  invariance of each prefix law under every permutation preserving the initial state and transition
+  counts.
+* `TauCeti.Probability.MarkovExchangeable.prefixLaw_apply_eq_of_equiv`: more generally, two sets
+  of finite paths have the same mass when a transition-count-preserving equivalence pairs them.
 * `TauCeti.Probability.markovExchangeable_of_prefixLaw_singleton_eq`: a process whose finite path
   probabilities factor as an initial weight times a product of transition weights — a Markov chain
   — is Markov exchangeable.
@@ -122,6 +128,65 @@ theorem MarkovExchangeable.prefixLaw_singleton_eq {μ : Measure Ω} {X : ℕ →
   rw [MarkovExchangeable] at h
   exact h.2.2.2 n u v h0 hcount
 
+/-- **Equinumerous Markov-equivalence classes have equal prefix-law mass.** More precisely, an
+equivalence between two sets of finite paths preserves their mass when it pairs paths with the same
+initial state and directed transition counts.
+
+This is the form used by finite last-exit reconstruction: the reconstruction gives an equivalence
+between two collections of admissible prefixes, rather than a permutation of every finite path. -/
+theorem MarkovExchangeable.prefixLaw_apply_eq_of_equiv {μ : Measure Ω} {X : ℕ → Ω → α}
+    (h : MarkovExchangeable μ X) (n : ℕ) {s t : Set (Fin (n + 1) → α)} (e : s ≃ t)
+    (h0 : ∀ w, (e w).1 0 = w.1 0)
+    (hcount : ∀ w a b, transitionCount (e w).1 a b = transitionCount w.1 a b) :
+    prefixLaw μ X (n + 1) s = prefixLaw μ X (n + 1) t := by
+  let _ : Countable α := h.countable
+  have : MeasurableSingletonClass α := h.measurableSingletonClass
+  let θ := prefixLaw μ X (n + 1)
+  have hs : (∑' w : s, θ ({w.1} : Set (Fin (n + 1) → α))) = θ s := by
+    simpa only [Set.preimage_id, id_eq] using
+      tsum_measure_preimage_singleton (μ := θ) (s := s) (Set.to_countable s)
+        (f := id) (fun w _ => measurableSet_singleton w)
+  have ht : (∑' w : t, θ ({w.1} : Set (Fin (n + 1) → α))) = θ t := by
+    simpa only [Set.preimage_id, id_eq] using
+      tsum_measure_preimage_singleton (μ := θ) (s := t) (Set.to_countable t)
+        (f := id) (fun w _ => measurableSet_singleton w)
+  calc
+    prefixLaw μ X (n + 1) s = ∑' w : s, θ ({w.1} : Set (Fin (n + 1) → α)) := hs.symm
+    _ = ∑' w : s, θ ({(e w).1} : Set (Fin (n + 1) → α)) := by
+      apply tsum_congr
+      intro w
+      exact h.prefixLaw_singleton_eq n w.1 (e w).1 (h0 w).symm fun a b =>
+        (hcount w a b).symm
+    _ = ∑' w : t, θ ({w.1} : Set (Fin (n + 1) → α)) :=
+      e.tsum_eq (fun w : t => θ ({w.1} : Set (Fin (n + 1) → α)))
+    _ = prefixLaw μ X (n + 1) t := ht
+
+/-- **A transition-count-preserving permutation preserves a Markov-exchangeable prefix law.**
+The permutation may rearrange finite paths in any way, provided it preserves their initial state
+and every directed transition count. This is the setwise form of Markov exchangeability used when
+a deterministic reconstruction permutes all paths in a finite Markov-exchangeability class. -/
+theorem MarkovExchangeable.map_prefixLaw_perm_eq {μ : Measure Ω} {X : ℕ → Ω → α}
+    (h : MarkovExchangeable μ X) (n : ℕ)
+    (e : Equiv.Perm (Fin (n + 1) → α)) (h0 : ∀ w, e w 0 = w 0)
+    (hcount : ∀ w a b, transitionCount (e w) a b = transitionCount w a b) :
+    Measure.map (α := Fin (n + 1) → α) (β := Fin (n + 1) → α) e
+      (prefixLaw (α := α) μ X (n + 1)) = prefixLaw (α := α) μ X (n + 1) := by
+  let _ : Countable α := h.countable
+  have : MeasurableSingletonClass α := h.measurableSingletonClass
+  rw [Measure.ext_iff_singleton]
+  intro w
+  rw [Measure.map_apply_of_aemeasurable
+    (Measurable.of_discrete : Measurable (e : (Fin (n + 1) → α) → Fin (n + 1) → α)).aemeasurable
+    (measurableSet_singleton w)]
+  have hpre : e ⁻¹' ({w} : Set (Fin (n + 1) → α)) = {e.symm w} := by
+    ext v
+    exact e.eq_symm_apply.symm
+  rw [hpre]
+  apply h.prefixLaw_singleton_eq n (e.symm w) w
+  · rw [← h0 (e.symm w), e.apply_symm_apply]
+  · intro a b
+    rw [← hcount (e.symm w) a b, e.apply_symm_apply]
+
 /-- Simp normal form for `MarkovExchangeable`. -/
 @[simp]
 theorem markovExchangeable_iff [Countable α] [MeasurableSingletonClass α]
@@ -133,6 +198,66 @@ theorem markovExchangeable_iff [Countable α] [MeasurableSingletonClass α]
             prefixLaw μ X (n + 1) {u} = prefixLaw μ X (n + 1) {v} :=
   ⟨fun h => ⟨h.aemeasurable, fun n u v => h.prefixLaw_singleton_eq n u v⟩,
     fun h => MarkovExchangeable.intro h.1 h.2⟩
+
+/-- **Permutation-invariance characterization of Markov exchangeability.** A measurable process
+is Markov exchangeable exactly when each finite prefix law is invariant under every permutation of
+path words that preserves the initial state and every directed transition count.
+
+This is stronger as an interface than equality of singleton masses: it transports arbitrary
+events at once. Conversely, swapping any two words in one Markov-exchangeability class recovers the
+defining singleton equality. -/
+theorem markovExchangeable_iff_map_prefixLaw_perm_eq [Countable α]
+    [MeasurableSingletonClass α] {μ : Measure Ω} {X : ℕ → Ω → α}
+    (hX : ∀ i, AEMeasurable (X i) μ) :
+    MarkovExchangeable μ X ↔
+      ∀ (n : ℕ) (e : Equiv.Perm (Fin (n + 1) → α)),
+        (∀ w, e w 0 = w 0) →
+        (∀ w a b, transitionCount (e w) a b = transitionCount w a b) →
+          Measure.map (α := Fin (n + 1) → α) (β := Fin (n + 1) → α) e
+            (prefixLaw (α := α) μ X (n + 1)) = prefixLaw (α := α) μ X (n + 1) := by
+  constructor
+  · intro h n e h0 hcount
+    exact h.map_prefixLaw_perm_eq n e h0 hcount
+  · intro h
+    classical
+    refine MarkovExchangeable.intro hX fun n u v h0 hcount => ?_
+    by_cases huv : u = v
+    · rw [huv]
+    let e : Equiv.Perm (Fin (n + 1) → α) := Equiv.swap u v
+    have he0 : ∀ w, e w 0 = w 0 := by
+      intro w
+      by_cases hwu : w = u
+      · subst w
+        rw [show e u = v by simp [e]]
+        exact h0.symm
+      by_cases hwv : w = v
+      · subst w
+        rw [show e v = u by simp [e]]
+        exact h0
+      rw [show e w = w by exact Equiv.swap_apply_of_ne_of_ne hwu hwv]
+    have hecount : ∀ w a b, transitionCount (e w) a b = transitionCount w a b := by
+      intro w a b
+      by_cases hwu : w = u
+      · subst w
+        rw [show e u = v by simp [e]]
+        exact (hcount a b).symm
+      by_cases hwv : w = v
+      · subst w
+        rw [show e v = u by simp [e]]
+        exact hcount a b
+      rw [show e w = w by exact Equiv.swap_apply_of_ne_of_ne hwu hwv]
+    have hinv := h n e he0 hecount
+    have hset := congrArg
+      (fun θ : Measure (Fin (n + 1) → α) => θ ({v} : Set (Fin (n + 1) → α))) hinv
+    rw [Measure.map_apply_of_aemeasurable
+      (Measurable.of_discrete : Measurable
+        (e : (Fin (n + 1) → α) → Fin (n + 1) → α)).aemeasurable
+      (measurableSet_singleton v)] at hset
+    have hpre : e ⁻¹' ({v} : Set (Fin (n + 1) → α)) = {u} := by
+      ext w
+      simp only [Set.mem_preimage, Set.mem_singleton_iff, e]
+      rw [Equiv.swap_apply_eq_iff, Equiv.swap_apply_right]
+    rwa [hpre] at hset
 
 /-- **An exchangeable process is Markov exchangeable.** Two paths with a common start and common
 transition counts are rearrangements of each other, so exchangeability already equates them. -/
