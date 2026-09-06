@@ -95,9 +95,8 @@ constructions below apply to every finitely generated additive monoid. -/
 theorem exists_addGeneratingFamily (S : Type*) [AddCommMonoid S] [AddMonoid.FG S] :
     ∃ r, Nonempty (AddGeneratingFamily S r) := by
   obtain ⟨T, hT⟩ := AddMonoid.FG.fg_top (M := S)
-  refine ⟨T.card, ⟨⟨fun j ↦ (T.equivFin.symm j : S), ?_⟩⟩⟩
-  rw [show (Set.range fun j ↦ ((T.equivFin.symm j : {x // x ∈ T}) : S))
-      = Set.range ((↑) : {x // x ∈ T} → S) from T.equivFin.symm.surjective.range_comp _]
+  refine ⟨T.card, ⟨⟨((↑) : {x // x ∈ T} → S) ∘ T.equivFin.symm, ?_⟩⟩⟩
+  rw [T.equivFin.symm.surjective.range_comp]
   simpa using hT
 
 /-- Evaluation of the affine complex points of `S` on a finite generating family. -/
@@ -216,6 +215,28 @@ theorem continuous_apply_single (g : AddGeneratingFamily S r) (s : S) :
   simp only [apply_single_eq_prod_monomialEmbedding g ha]
   exact continuous_finsetProd _ fun k _ ↦
     ((continuous_apply k).comp (continuous_monomialEmbedding g)).pow _
+
+/-- Evaluation at a fixed element of the coordinate ring is continuous for the
+monomial-embedding topology: such an element is a finite linear combination of monomials, and
+evaluation at each monomial is continuous. -/
+theorem continuous_eval_const (g : AddGeneratingFamily S r)
+    (f : MonoidAlgebra ℂ (Multiplicative S)) :
+    Continuous[affinePointTopology g, inferInstance]
+      fun x : AffineSemigroupComplexPoint S ↦ x f := by
+  let _ := affinePointTopology g
+  have hf : ∀ x : AffineSemigroupComplexPoint S,
+      x f = ∑ m ∈ f.coeff.support, f.coeff m * x (MonoidAlgebra.single m 1) := by
+    intro x
+    conv_lhs => rw [← MonoidAlgebra.sum_coeff_single f]
+    rw [Finsupp.sum, map_sum]
+    refine Finset.sum_congr rfl fun m _ ↦ ?_
+    have hsingle : MonoidAlgebra.single m (f.coeff m) =
+        f.coeff m • MonoidAlgebra.single (R := ℂ) m 1 := by
+      rw [MonoidAlgebra.smul_single', mul_one]
+    rw [hsingle, map_smul, smul_eq_mul]
+  simp only [hf]
+  exact continuous_finsetSum _ fun m _ ↦
+    continuous_const.mul (continuous_apply_single g (toAdd m))
 
 /-- The monomial-embedding topology is the coarsest one making evaluation at every monomial
 continuous. This description mentions no generating family, so it identifies the topologies
