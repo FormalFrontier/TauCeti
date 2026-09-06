@@ -5,8 +5,12 @@ Authors: Chris Birkbeck
 -/
 module
 
+public import TauCeti.RingTheory.Huber.Basic
 public import TauCeti.RingTheory.Huber.WeightedEval.Completion
+public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Completion
 public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.PowerBounded
+
+import TauCeti.RingTheory.Huber.Completion
 
 import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.PairOfDefinition
 
@@ -31,8 +35,9 @@ gives `A⟨X₁,…,Xₖ⟩ → A⟨X₁,…,X_{k+m}⟩`, and over that map the 
 
 Two hypotheses make the applications legitimate and neither is automatic. The target must be a
 *complete Hausdorff nonarchimedean* ring, which for an iterated algebra rests on the completion of
-a nonarchimedean group being nonarchimedean; and each tuple must be power-bounded, which is
-`isPowerBounded_coe_weightedC` and `isPowerBounded_coe_weightedX_one_weight`.
+a nonarchimedean group being nonarchimedean; and each tuple must be power-bounded, which
+`isPowerBounded_completion_coe_iff` reduces to power-boundedness in the uncompleted ring, where
+`isPowerBounded_weightedX_one_weight` and `isPowerBounded_weightedC` settle it.
 
 ## Main definitions
 
@@ -132,10 +137,9 @@ theorem isPowerBounded_iterateVar (i : Fin (k + m)) :
   refine Fin.addCases (fun i ↦ ?_) (fun j ↦ ?_) i
   · rw [iterateVar_castAdd]
     exact isPowerBounded_completion_coe_of_isPowerBounded
-      (isPowerBounded_weightedC isWeightFamily_one_weight
-        (isPowerBounded_coe_weightedX_one_weight i))
+      (isPowerBounded_weightedC isWeightFamily_one_weight (by simp))
   · rw [iterateVar_natAdd]
-    exact isPowerBounded_coe_weightedX_one_weight j
+    simp
 
 /-- The structure map `A → A⟨X₁,…,Xₖ⟩⟨Y₁,…,Y_m⟩`, the composite of the two structure maps the
 iterated algebra is built from. -/
@@ -194,7 +198,7 @@ noncomputable def iterateFirstBlockHom :
   weightedEvalHomCompletion isWeightFamily_one_weight
     (continuous_algebraMap_restrictedMvPowerSeriesCompletion (k + m) A).continuousAt
     ((isWeightBounded_one_weight_iff_forall_isPowerBounded _ _).mpr fun i ↦
-      isPowerBounded_coe_weightedX_one_weight (Fin.castAdd m i))
+      isPowerBounded_completion_coe_iff.mpr (isPowerBounded_weightedX_one_weight (Fin.castAdd m i)))
 
 /-- The inclusion of the first block of variables is continuous. -/
 theorem continuous_iterateFirstBlockHom : Continuous (iterateFirstBlockHom k m A) :=
@@ -209,7 +213,7 @@ noncomputable def iterateJoinHom :
   weightedEvalHomCompletion isWeightFamily_one_weight
     (continuous_iterateFirstBlockHom k m A).continuousAt
     ((isWeightBounded_one_weight_iff_forall_isPowerBounded _ _).mpr fun j ↦
-      isPowerBounded_coe_weightedX_one_weight (Fin.natAdd k j))
+      isPowerBounded_completion_coe_iff.mpr (isPowerBounded_weightedX_one_weight (Fin.natAdd k j)))
 
 /-- The join map is continuous. -/
 theorem continuous_iterateJoinHom : Continuous (iterateJoinHom k m A) :=
