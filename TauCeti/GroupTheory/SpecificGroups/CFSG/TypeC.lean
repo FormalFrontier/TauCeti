@@ -87,9 +87,7 @@ The same construction on the other branches already built is in
 * N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Plate III, for the numbering of the
   type-`C` diagram that the root subgroups below are indexed by.
 * The signatures realized here follow the human-authored formal skeleton
-  `TauCetiRoadmap/CFSGStatement/Suggested.lean`: the ambient group, the numbered simple root
-  subgroup, the Steinberg map with its pinned equation, and the fixed-point candidate, all taken on
-  a validated-index subtype.
+  `TauCetiRoadmap/CFSGStatement/Suggested.lean`.
 -/
 
 public section
@@ -197,11 +195,12 @@ identification of that group with this carrier, which is not proved here. -/
 def steinberg : d.AmbientGroup →* d.AmbientGroup :=
   SpStd.frobenius d.carrierRank d.1.characteristic d.1.fieldExponent d.1.Closure
 
--- Deliberately not a `simp` lemma: `steinberg_simpleRootSubgroup` and `coe_steinberg_apply` are
--- the normal forms the pinned equations of this file are stated against, and unfolding to
--- `TauCeti.SpStd.frobenius` would keep them from firing.
-/-- The Steinberg map of a type-`C` index is the carrier's Frobenius at the exponent the index
-records. This is its unfolding lemma; the definition itself stays sealed. -/
+-- The unfolding lemma of a sealed definition, and deliberately not a `simp` lemma:
+-- `steinberg_simpleRootSubgroup` and `coe_steinberg_apply` are the normal forms the pinned
+-- equations of this file are stated against, and unfolding to `TauCeti.SpStd.frobenius` would keep
+-- them from firing.
+/-- The Steinberg map of a type-`C` index is the Frobenius of the standard symplectic carrier at
+the characteristic and field exponent that the index records. -/
 theorem steinberg_def :
     d.steinberg = SpStd.frobenius d.carrierRank d.1.characteristic d.1.fieldExponent d.1.Closure :=
   (rfl)
