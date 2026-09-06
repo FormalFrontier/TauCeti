@@ -231,9 +231,10 @@ theorem geckFrobenius_pow (m : ℕ) :
         d.Closure := by
   rw [geckFrobenius_def, DynkinType.geckFrobenius_pow]
 
-/-- The `m`-th power of the Frobenius acts as that Frobenius, the pointwise form of
-`geckFrobenius_pow`. It is what reads a power of the sealed `geckFrobenius` at a point, where the
-bundled equation cannot be rewritten under the application. -/
+/-- **The `m`-th power of the Frobenius sends a point to its image under the Frobenius at `m` times
+the exponent recorded by the index**, the pointwise form of `geckFrobenius_pow`. -/
+-- This is what reads a power of the sealed `geckFrobenius` at a point: the bundled equation
+-- `geckFrobenius_pow` cannot be rewritten underneath the application.
 theorem geckFrobenius_pow_apply (m : ℕ) (g : GeckGroup d) :
     ((show Monoid.End _ from d.geckFrobenius) ^ m) g =
       d.dynkinType.geckFrobenius d.dynkinType_valid d.characteristic (d.fieldExponent * m)

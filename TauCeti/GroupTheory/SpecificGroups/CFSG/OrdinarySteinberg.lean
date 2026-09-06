@@ -286,9 +286,10 @@ theorem geckSteinberg_eq_geckFrobenius_of_diagramPerm_eq_one (h : d.diagramPerm 
 /-! ## The powers of the Steinberg map
 
 The iterates of the Steinberg map are its powers in the endomorphism monoid of the carrier, as they
-are at the layer below in `TauCeti.DynkinType.geckTwistedFrobenius_pow`. `Monoid.End` is
-definitionally a bundled `MonoidHom`, and the `show` in each statement below picks its composition
-monoid structure before the power is elaborated. -/
+are at the layer below in `TauCeti.DynkinType.geckTwistedFrobenius_pow`. -/
+
+-- `Monoid.End` is definitionally a bundled `MonoidHom`, and the `show` in each statement below
+-- picks its composition monoid structure before the power is elaborated.
 
 /-- **The `m`-th power of the graph automorphism renumbers the root subgroups by the `m`-th power
 of the diagram permutation**, again leaving their parameters alone. -/
