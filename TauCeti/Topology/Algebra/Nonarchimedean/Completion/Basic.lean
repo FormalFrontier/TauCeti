@@ -69,7 +69,7 @@ namespace UniformSpace.Completion
 
 section AddGroup
 
-variable {A : Type*} [AddCommGroup A] [UniformSpace A] [IsUniformAddGroup A]
+variable {A : Type*} [AddGroup A] [UniformSpace A] [IsUniformAddGroup A]
 
 /-- The closure in the completion of the image of an open additive subgroup is open. Only the
 additive structure is involved. -/
