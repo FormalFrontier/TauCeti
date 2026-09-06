@@ -41,6 +41,8 @@ prime `τ • Q` gives the other.
 
 * `Ideal.isUnramifiedAt_iff_inertia_eq_bot`: unramifiedness at `Q` is triviality of the
   inertia subgroup of `Q` in `Gal(L/K)`.
+* `Ideal.eq_of_smul_sub_smul_mem_of_isUnramifiedAt`: an element of the decomposition group of an
+  unramified prime is determined by its action on the residue field.
 * `Ideal.stabilizerHom_eq_frobeniusAlgEquivOfAlgebraic`: a Frobenius element at `Q` acts on
   the residue field `𝓞 L ⧸ Q` as the residue Frobenius.
 * `Ideal.orderOf_eq_inertiaDeg_of_isArithFrobAt`: a Frobenius element at an unramified `Q`
@@ -104,6 +106,27 @@ theorem stabilizerHom_injective_of_isUnramifiedAt (Q : Ideal (𝓞 L)) [Q.IsPrim
   have hσ' : (σ : L ≃ₐ[K] L) ∈ Q.inertia (L ≃ₐ[K] L) := Ideal.coe_mem_inertia.mpr hσ
   rw [(isUnramifiedAt_iff_inertia_eq_bot Q).mp ‹_›, Subgroup.mem_bot] at hσ'
   exact Subgroup.mem_bot.mpr (Subtype.ext hσ')
+
+/-- **An element of the decomposition group is determined by its residue action.** At a prime `Q`
+unramified over `𝓞 K`, two elements of `Gal(L/K)` that stabilize `Q` and satisfy
+`σ x ≡ τ x (mod Q)` for every `x : 𝓞 L` are equal.
+
+This is `Ideal.stabilizerHom_injective_of_isUnramifiedAt` in the form a caller comparing two
+automorphisms meets it: the hypothesis is a congruence on `𝓞 L`, not an equality of automorphisms
+of the residue field. Unlike `NumberField.isArithFrobAt_eq_of_isUnramifiedAt` it does not assume
+that either element is a Frobenius, so it also compares elements whose common residue action is a
+power of the residue Frobenius. -/
+theorem eq_of_smul_sub_smul_mem_of_isUnramifiedAt (Q : Ideal (𝓞 L)) [Q.IsPrime]
+    [Algebra.IsUnramifiedAt (𝓞 K) Q] {σ τ : L ≃ₐ[K] L}
+    (hσ : σ ∈ MulAction.stabilizer (L ≃ₐ[K] L) Q)
+    (hτ : τ ∈ MulAction.stabilizer (L ≃ₐ[K] L) Q)
+    (h : ∀ x : 𝓞 L, σ • x - τ • x ∈ Q) : σ = τ := by
+  have key : Ideal.Quotient.stabilizerHom Q (Q.under (𝓞 K)) (L ≃ₐ[K] L) ⟨σ, hσ⟩ =
+      Ideal.Quotient.stabilizerHom Q (Q.under (𝓞 K)) (L ≃ₐ[K] L) ⟨τ, hτ⟩ := by
+    ext x
+    obtain ⟨x, rfl⟩ := Ideal.Quotient.mk_surjective x
+    simpa [MulAction.subgroup_smul_def, Ideal.Quotient.eq] using h x
+  exact congrArg Subtype.val (stabilizerHom_injective_of_isUnramifiedAt Q key)
 
 /-- **The decomposition group of an unramified prime is the residue Galois group.** Mathlib's
 `Ideal.Quotient.stabilizerHom` is always surjective for an invariant extension, and at an
