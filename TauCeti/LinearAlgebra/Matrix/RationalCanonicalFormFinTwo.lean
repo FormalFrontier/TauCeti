@@ -76,7 +76,7 @@ def companionFinTwo : Matrix (Fin 2) (Fin 2) R := !![0, -d; 1, t]
 
 /-- The companion matrix, spelled out. The body of `TauCeti.companionFinTwo` is not exposed, so
 this is what lets a downstream file read off an entry of it. -/
-theorem companionFinTwo_eq : companionFinTwo t d = !![0, -d; 1, t] := (rfl)
+theorem companionFinTwo_def : companionFinTwo t d = !![0, -d; 1, t] := (rfl)
 
 @[simp]
 theorem det_companionFinTwo : (companionFinTwo t d).det = d := by

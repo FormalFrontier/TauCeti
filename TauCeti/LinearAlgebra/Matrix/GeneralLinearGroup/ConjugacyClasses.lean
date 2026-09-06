@@ -15,6 +15,9 @@ public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
 public import Mathlib.LinearAlgebra.Matrix.Trace
 -- `ConjClasses` occurs in the statements below.
 public import Mathlib.Algebra.Group.Conj
+-- Non-public: `Matrix.GeneralLinearGroup.center_eq_range_scalar` turns a scalar element of `GL₂`
+-- into the scalar matrix of a unit, in a proof only.
+import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Basic
 -- Non-public: `Nat.card_units`, `Nat.card_sum` and `Nat.card_prod` are used only in the final
 -- count.
 import Mathlib.Algebra.GroupWithZero.Units.Fintype
@@ -62,8 +65,6 @@ describing the centralizer of a non-scalar matrix rather than its conjugacy clas
 * `TauCeti.eq_of_mem_range_scalar_of_isConj`: a scalar element of `GL n R` is alone in its class.
 * `TauCeti.isConj_iff_of_notMem_range_scalar`: **the classification**, two non-scalar elements of
   `GL₂(F)` are conjugate exactly when they have the same trace and the same determinant.
-* `TauCeti.exists_scalar_eq_of_mem_range_scalar`: a scalar element of `GL n F` over a field is the
-  scalar matrix of a unit.
 * `TauCeti.card_conjClasses_GL2`: `GL₂(𝔽_q)` has `q² - 1` conjugacy classes.
 
 ## References
@@ -108,21 +109,6 @@ theorem eq_of_mem_range_scalar_of_isConj {g h : GL n R}
   rw [← hc, hcomm, mul_assoc, mul_inv_cancel, mul_one]
 
 end Invariants
-
-/-- **A scalar element of `GL n F` over a field is a scalar matrix of a unit.** The scalar is
-nonzero because the matrix is invertible. -/
-theorem exists_scalar_eq_of_mem_range_scalar {n : Type*} [Fintype n] [DecidableEq n] [Nonempty n]
-    {F : Type*} [Field F] {g : GL n F}
-    (hg : (g : Matrix n n F) ∈ Set.range (Matrix.scalar n)) :
-    ∃ a : Fˣ, Matrix.GeneralLinearGroup.scalar n a = g := by
-  obtain ⟨a, ha⟩ := hg
-  have ha0 : a ≠ 0 := by
-    rintro rfl
-    have h1 : (g : Matrix n n F) * ((g⁻¹ : GL n F) : Matrix n n F) = 1 := by
-      rw [← Units.val_mul, mul_inv_cancel, Units.val_one]
-    rw [← ha, map_zero, zero_mul] at h1
-    exact zero_ne_one h1
-  exact ⟨Units.mk0 a ha0, Units.ext ha⟩
 
 /-! ### The classification in `GL₂` -/
 
@@ -254,7 +240,10 @@ theorem bijective_mk_conjRepGLFinTwo :
   · intro C
     obtain ⟨g, rfl⟩ := ConjClasses.exists_rep C
     by_cases hg : (g : Matrix (Fin 2) (Fin 2) F) ∈ Set.range (Matrix.scalar (Fin 2))
-    · obtain ⟨a, ha⟩ := exists_scalar_eq_of_mem_range_scalar hg
+    · obtain ⟨a, ha⟩ : ∃ a : Fˣ, Matrix.GeneralLinearGroup.scalar (Fin 2) a = g := by
+        refine MonoidHom.mem_range.1 ?_
+        rw [← Matrix.GeneralLinearGroup.center_eq_range_scalar]
+        exact Matrix.GeneralLinearGroup.mem_center_iff_val_mem_range_scalar.2 hg
       exact ⟨Sum.inl a, congrArg ConjClasses.mk ha⟩
     · exact ⟨Sum.inr ((g : Matrix (Fin 2) (Fin 2) F).trace, Matrix.GeneralLinearGroup.det g),
         ConjClasses.mk_eq_mk_iff_isConj.2 (isConj_companionGL hg).symm⟩

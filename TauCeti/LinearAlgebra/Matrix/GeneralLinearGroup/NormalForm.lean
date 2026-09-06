@@ -12,13 +12,12 @@ public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.ConjugacyClasses
 -- normal forms, and this module supplies the two facts that the first and the last of them are not
 -- scalar.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Centralizer
--- Non-public: the extension theory of finite fields supplies the root of an irreducible quadratic,
--- inside a proof only.
-import Mathlib.FieldTheory.Finite.Extension
--- Non-public: a quadratic without a root is irreducible, used only to build `AdjoinRoot`.
-import Mathlib.Algebra.Polynomial.SpecificDegree
--- Non-public: `AdjoinRoot` and its power basis are the source of that root.
-import Mathlib.RingTheory.AdjoinRoot
+-- Non-public: the trace and the norm of a quadratic irrationality, and the existence of one over a
+-- finite field, are what pin the elliptic normal form; used in proofs only.
+import TauCeti.FieldTheory.Quadratic
+-- Non-public: `Matrix.GeneralLinearGroup.center_eq_range_scalar` turns a scalar element of `GL₂`
+-- into the scalar matrix of a unit, in a proof only.
+import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Basic
 
 /-!
 # The four conjugacy normal forms of `GL₂` over a finite field
@@ -50,14 +49,11 @@ thing that distinguishes them — two distinct roots give `diagGL`, a repeated r
 The elliptic case is the one that needs a quadratic extension, and it is where the finiteness of
 `F` enters. Multiplication by `x : E` has trace `Tr_{E/F} x` and determinant `N_{E/F} x`
 (`TauCeti.GL2NonSplitTorus.trace_gl2NonSplitTorusHom` and
-`TauCeti.GL2NonSplitTorus.val_det_gl2NonSplitTorusHom`), so the normal form is pinned by
-`TauCeti.trace_eq_of_mul_self_eq` and `TauCeti.norm_eq_of_mul_self_eq`: for `x` outside `F`
-satisfying `x² = t x - d`, the pair `(1, x)` is an `F`-basis of `E` in which multiplication by `x`
-*is* the companion matrix `TauCeti.companionFinTwo t d`, so its trace is `t` and its norm is `d`.
-Producing such an `x` is `TauCeti.exists_mul_self_eq_of_finite`: over a finite field a quadratic
-without a root in `F` is irreducible, `AdjoinRoot` of it is a degree-`2` extension, and any two
-extensions of a finite field of the same degree are isomorphic
-(`FiniteField.algEquivExtension`), so the supplied `E` already contains a root.
+`TauCeti.GL2NonSplitTorus.val_det_gl2NonSplitTorusHom`), so the normal form is pinned by the
+quadratic-extension lemmas of `TauCeti/FieldTheory/Quadratic.lean`:
+`TauCeti.Algebra.trace_eq_of_mul_self_eq` and `TauCeti.Algebra.norm_eq_of_mul_self_eq` identify
+those with `t` and `d` for an `x` outside `F` satisfying `x² = t x - d`, and
+`TauCeti.exists_mul_self_eq_of_finite` supplies such an `x` over a finite field.
 
 Uniqueness — that the four families are pairwise disjoint and that the parameters are determined up
 to the evident symmetries `(a, b) ↦ (b, a)` and `x ↦ x^q` — is a separate statement and is not
@@ -68,11 +64,6 @@ proved here; `TauCeti.conjClassesGLFinTwoEquiv` already indexes the classes with
 * `TauCeti.isConj_diagGL_of_trace_of_det`, `TauCeti.isConj_jordanGL_one_of_trace_of_det` and
   `TauCeti.isConj_gl2NonSplitTorusHom_of_trace_of_det`: **the three non-central normal forms**, each
   characterized by its trace and determinant among the non-scalar elements.
-* `TauCeti.trace_eq_of_mul_self_eq` and `TauCeti.norm_eq_of_mul_self_eq`: the trace and the norm of
-  an element `x` of a degree-`2` extension satisfying `x² = t x - d`, and lying outside the base
-  field, are `t` and `d`.
-* `TauCeti.exists_mul_self_eq_of_finite`: over a finite field, a quadratic with no root in `F` has a
-  root in every degree-`2` extension.
 * `TauCeti.exists_isConj_normalForm`: **every element of `GL₂(F)`, for `F` finite with a degree-`2`
   extension `E`, is conjugate to one of the four normal forms.**
 
@@ -88,7 +79,7 @@ proved here; `TauCeti.conjClassesGLFinTwoEquiv` already indexes the classes with
 
 public section
 
-open Matrix Polynomial
+open Matrix
 
 namespace TauCeti
 
@@ -124,78 +115,6 @@ theorem isConj_jordanGL_one_of_trace_of_det {g : GL (Fin 2) F}
   · rw [hdet, coe_jordanGL, Matrix.det_fin_two_of]
     ring
 
-/-! ### The trace and the norm of a quadratic irrationality -/
-
-section Quadratic
-
-variable {E : Type*} [Field E] [Algebra F E]
-
-/-- An element of `E` outside `F` is linearly independent from `1` over `F`. -/
-private theorem linearIndependent_one_root {x : E} (hx : x ∉ Set.range (algebraMap F E)) :
-    LinearIndependent F ![(1 : E), x] := by
-  rw [LinearIndependent.pair_iff]
-  intro s t hst
-  have hst' : algebraMap F E s + algebraMap F E t * x = 0 := by
-    simpa [Algebra.smul_def] using hst
-  rcases eq_or_ne t 0 with rfl | ht
-  · exact ⟨(algebraMap F E).injective (by simpa using hst'), rfl⟩
-  · have ht' : algebraMap F E t ≠ 0 := fun h =>
-      ht ((algebraMap F E).injective (by simpa using h))
-    refine absurd ⟨-(s / t), ?_⟩ hx
-    rw [map_neg, map_div₀]
-    field_simp
-    linear_combination -hst'
-
-/-- The `F`-basis `(1, x)` of a degree-`2` extension `E/F` attached to an element `x` outside `F`.
-It is used only to compute the trace and the norm of `x`, both of which are basis independent. -/
-private noncomputable def oneRootBasis (hE : Module.finrank F E = 2) {x : E}
-    (hx : x ∉ Set.range (algebraMap F E)) : Module.Basis (Fin 2) F E :=
-  have : FiniteDimensional F E := Module.finite_of_finrank_eq_succ (n := 1) hE
-  basisOfLinearIndependentOfCardEqFinrank (b := ![1, x]) (linearIndependent_one_root hx)
-    (by simp [hE])
-
-private theorem coe_oneRootBasis (hE : Module.finrank F E = 2) {x : E}
-    (hx : x ∉ Set.range (algebraMap F E)) : ⇑(oneRootBasis hE hx) = ![1, x] := by
-  simp [oneRootBasis]
-
-/-- In the basis `(1, x)`, multiplication by `x` **is** the companion matrix of the monic quadratic
-that `x` satisfies. -/
-private theorem leftMulMatrix_oneRootBasis (hE : Module.finrank F E = 2) {x : E}
-    (hx : x ∉ Set.range (algebraMap F E)) {t d : F}
-    (hx2 : x * x = algebraMap F E t * x - algebraMap F E d) :
-    Algebra.leftMulMatrix (oneRootBasis hE hx) x = companionFinTwo t d := by
-  have hb := coe_oneRootBasis hE hx
-  have e0 : x * oneRootBasis hE hx 0 = oneRootBasis hE hx 1 := by
-    simp [hb]
-  have e1 : x * oneRootBasis hE hx 1
-      = (-d) • oneRootBasis hE hx 0 + t • oneRootBasis hE hx 1 := by
-    simp only [hb, Matrix.cons_val_zero, Matrix.cons_val_one, Algebra.smul_def, mul_one, map_neg]
-    linear_combination hx2
-  rw [companionFinTwo_eq]
-  ext i j
-  rw [Algebra.leftMulMatrix_eq_repr_mul]
-  fin_cases j <;> fin_cases i <;> simp [e0, e1]
-
-/-- **The trace of a quadratic irrationality.** If `E/F` has degree `2` and `x : E` lies outside
-`F` and satisfies `x² = t x - d`, then `Tr_{E/F} x = t`. -/
-theorem trace_eq_of_mul_self_eq (hE : Module.finrank F E = 2) {x : E}
-    (hx : x ∉ Set.range (algebraMap F E)) {t d : F}
-    (hx2 : x * x = algebraMap F E t * x - algebraMap F E d) :
-    Algebra.trace F E x = t := by
-  rw [Algebra.trace_eq_matrix_trace (oneRootBasis hE hx), leftMulMatrix_oneRootBasis hE hx hx2,
-    trace_companionFinTwo]
-
-/-- **The norm of a quadratic irrationality.** If `E/F` has degree `2` and `x : E` lies outside `F`
-and satisfies `x² = t x - d`, then `N_{E/F} x = d`. -/
-theorem norm_eq_of_mul_self_eq (hE : Module.finrank F E = 2) {x : E}
-    (hx : x ∉ Set.range (algebraMap F E)) {t d : F}
-    (hx2 : x * x = algebraMap F E t * x - algebraMap F E d) :
-    Algebra.norm F x = d := by
-  rw [Algebra.norm_eq_matrix_det (oneRootBasis hE hx), leftMulMatrix_oneRootBasis hE hx hx2,
-    det_companionFinTwo]
-
-end Quadratic
-
 /-! ### The elliptic normal form -/
 
 section Elliptic
@@ -214,46 +133,12 @@ theorem isConj_gl2NonSplitTorusHom_of_trace_of_det (hE : Module.finrank F E = 2)
     IsConj g (GL2NonSplitTorusHom F E hE x) := by
   refine (isConj_iff_of_notMem_range_scalar hg
     (GL2NonSplitTorus.notMem_range_scalar_gl2NonSplitTorusHom hE hx)).2 ⟨?_, ?_⟩
-  · rw [htrace, GL2NonSplitTorus.trace_gl2NonSplitTorusHom, trace_eq_of_mul_self_eq hE hx hx2]
+  · rw [htrace, GL2NonSplitTorus.trace_gl2NonSplitTorusHom,
+      Algebra.trace_eq_of_mul_self_eq hE hx hx2]
   · rw [hdet, ← Matrix.GeneralLinearGroup.val_det_apply,
-      GL2NonSplitTorus.val_det_gl2NonSplitTorusHom, norm_eq_of_mul_self_eq hE hx hx2]
+      GL2NonSplitTorus.val_det_gl2NonSplitTorusHom, Algebra.norm_eq_of_mul_self_eq hE hx hx2]
 
 end Elliptic
-
-/-! ### A root of the characteristic polynomial in the quadratic extension -/
-
-/-- **Over a finite field a quadratic without a root has a root in every degree-`2` extension.**
-A quadratic with no root in `F` is irreducible, so `AdjoinRoot` of it is a degree-`2` extension of
-`F`; over a finite field any two extensions of the same degree are isomorphic, so the supplied `E`
-already contains a root. -/
-theorem exists_mul_self_eq_of_finite [Finite F] (E : Type*) [Field E] [Algebra F E]
-    (hE : Module.finrank F E = 2) {t d : F} (hroot : ∀ a : F, a * a ≠ t * a - d) :
-    ∃ x : E, x * x = algebraMap F E t * x - algebraMap F E d := by
-  classical
-  have key : ∃ y : E, (Polynomial.aeval y) (X ^ 2 - C t * X + C d : F[X]) = 0 := by
-    set p : F[X] := X ^ 2 - C t * X + C d with hpdef
-    have hdeg : p.natDegree = 2 := by rw [hpdef]; compute_degree!
-    have hmonic : p.Monic := by rw [hpdef]; monicity!
-    have hirr : Irreducible p := by
-      refine Polynomial.irreducible_of_degree_le_three_of_not_isRoot (by simp [hdeg]) fun a ha => ?_
-      refine hroot a ?_
-      rw [Polynomial.IsRoot, hpdef] at ha
-      simp only [eval_add, eval_sub, eval_pow, eval_mul, eval_C, eval_X] at ha
-      linear_combination ha
-    have : Fact (Irreducible p) := ⟨hirr⟩
-    have hfr : Module.finrank F (AdjoinRoot p) = 2 := by
-      rw [PowerBasis.finrank (AdjoinRoot.powerBasis hmonic.ne_zero), AdjoinRoot.powerBasis_dim,
-        hdeg]
-    obtain ⟨q, hq⟩ := CharP.exists F
-    have : Fact q.Prime := ⟨CharP.char_is_prime F q⟩
-    let e : AdjoinRoot p ≃ₐ[F] E :=
-      (FiniteField.algEquivExtension F q 2 (AdjoinRoot p) hfr).trans
-        (FiniteField.algEquivExtension F q 2 E hE).symm
-    refine ⟨e (AdjoinRoot.root p), ?_⟩
-    rw [Polynomial.aeval_algHom_apply e, AdjoinRoot.aeval_eq, AdjoinRoot.mk_self, map_zero]
-  obtain ⟨y, hy⟩ := key
-  simp only [map_add, map_sub, map_pow, map_mul, aeval_C, aeval_X] at hy
-  exact ⟨y, by linear_combination hy⟩
 
 /-! ### The classification -/
 
@@ -273,7 +158,9 @@ theorem exists_isConj_normalForm [Finite F] (E : Type*) [Field E] [Algebra F E]
         IsConj g (GL2NonSplitTorusHom F E hE x)) := by
   classical
   by_cases hg : (g : Matrix (Fin 2) (Fin 2) F) ∈ Set.range (Matrix.scalar (Fin 2))
-  · exact Or.inl (exists_scalar_eq_of_mem_range_scalar hg)
+  · refine Or.inl (MonoidHom.mem_range.1 ?_)
+    rw [← Matrix.GeneralLinearGroup.center_eq_range_scalar]
+    exact Matrix.GeneralLinearGroup.mem_center_iff_val_mem_range_scalar.2 hg
   set t := (g : Matrix (Fin 2) (Fin 2) F).trace with ht
   set d := (g : Matrix (Fin 2) (Fin 2) F).det with hd
   have hd0 : d ≠ 0 := by
