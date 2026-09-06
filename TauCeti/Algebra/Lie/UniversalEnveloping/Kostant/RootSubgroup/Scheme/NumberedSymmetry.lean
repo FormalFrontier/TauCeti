@@ -147,12 +147,9 @@ rational linear equivalence. -/
 theorem kostantNumberedSymmetryMatrix_pow_eq_one (A : Type v) [CommRing A] {m : ℕ}
     (hm : ∀ x, (θ ^ m) x = x) :
     kostantNumberedSymmetryMatrix M b θ hθM A ^ m = 1 := by
-  have hm' : ∀ x, (θ.toAddEquiv.toIntLinearEquiv ^ m) x = x := by
-    intro x
-    -- the integral-linear view of `θ` has the same underlying function as `θ` itself
-    rw [LinearEquiv.pow_apply, show ⇑(θ.toAddEquiv.toIntLinearEquiv) = ⇑θ from rfl,
-      ← LinearEquiv.pow_apply]
-    exact hm x
+  have hm' : ∀ x, (θ.toAddEquiv.toIntLinearEquiv ^ m) x = x := fun x =>
+    (AddEquiv.toIntLinearEquiv_pow_apply θ.toAddEquiv m x).trans
+      ((LinearEquiv.pow_apply θ m x).symm.trans (hm x))
   have hunit := AddEquiv.baseChangeInvariantRestrictUnit_pow_eq_one
     (R := A) θ.toAddEquiv M hθM hm'
   have hmatrix := congrArg
