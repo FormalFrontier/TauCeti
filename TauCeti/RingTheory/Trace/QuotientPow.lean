@@ -8,6 +8,7 @@ module
 public import Mathlib.RingTheory.DedekindDomain.Ideal.Lemmas
 public import Mathlib.RingTheory.Trace.Basic
 public import TauCeti.LinearAlgebra.Trace.Exact
+import Mathlib.RingTheory.Ideal.Norm.AbsNorm
 
 /-!
 # The trace of a quotient by a power of a prime
@@ -28,7 +29,7 @@ time, through the short exact sequence
 
 where `a` is any element of `P ^ n` not in `P ^ (n + 1)`; injectivity of multiplication by `a` and
 exactness in the middle are the two Dedekind facts
-`Ideal.IsPrime.mem_pow_mul` and `Ideal.span_singleton_sup_pow_succ`, and the trace
+`Ideal.IsPrime.mem_pow_mul` and `Ideal.exists_mul_add_mem_pow_succ`, and the trace
 identity is `LinearMap.trace_eq_add_of_exact`.
 
 The formula is what makes the tame case of Dedekind's different theorem work: it produces an
@@ -40,43 +41,12 @@ characteristic of `κ` does not divide `e` (see
 
 ## Main results
 
-* `Ideal.span_singleton_sup_pow_succ`: in a Dedekind domain, an element of `P ^ n` outside
-  `P ^ (n + 1)` generates `P ^ n` modulo `P ^ (n + 1)`.
 * `Algebra.trace_quotient_pow`: the trace formula `Tr_{B ⧸ P ^ n} = n · Tr_{B ⧸ P}`.
-
-## References
-
-Mathlib already proves the ideal equality `Ideal.span_singleton_sup_pow_succ` below, as the
-`suffices` step inside the proof of `Ideal.exists_mul_add_mem_pow_succ` in
-`Mathlib.RingTheory.Ideal.Norm.AbsNorm`, on the way to the element-wise form of that statement;
-Mathlib credits it to [J. Neukirch, *Algebraic Number Theory*][Neukirch1992], Proposition 6.1.
-The theorem below states that step on its own, with the proof adapted from Mathlib's, because it
-is the ideal-level form — not the element-wise one — that the filtration argument here needs.
 -/
 
 public section
 
 open Module
-
-namespace Ideal
-
-variable {B : Type*} [CommRing B] [IsDedekindDomain B] (P : Ideal B) [P.IsPrime]
-
-/-- In a Dedekind domain, an element of `P ^ n` that is not in `P ^ (n + 1)` generates `P ^ n`
-modulo `P ^ (n + 1)`.
-
-This equality is extracted from the proof of Mathlib's `Ideal.exists_mul_add_mem_pow_succ`
-(`Mathlib.RingTheory.Ideal.Norm.AbsNorm`), where it appears as an internal `suffices` step, and
-the proof below is adapted from that one; Mathlib credits it to
-[J. Neukirch, *Algebraic Number Theory*][Neukirch1992], Proposition 6.1. -/
-theorem span_singleton_sup_pow_succ (hP : P ≠ ⊥) {n : ℕ} {a : B} (ha : a ∈ P ^ n)
-    (ha' : a ∉ P ^ (n + 1)) : Ideal.span {a} ⊔ P ^ (n + 1) = P ^ n := by
-  refine Ideal.eq_prime_pow_of_succ_lt_of_le hP (lt_of_le_of_ne le_sup_right fun h ↦ ha' ?_)
-    (sup_le (Ideal.span_le.mpr (Set.singleton_subset_iff.mpr ha))
-      (Ideal.pow_le_pow_right n.le_succ))
-  exact h ▸ (le_sup_left : Ideal.span {a} ≤ _) (Ideal.mem_span_singleton_self a)
-
-end Ideal
 
 namespace Ideal.Quotient
 
@@ -168,12 +138,11 @@ theorem trace_quotient_pow [Module.Finite A B] (hP : P ≠ ⊥) (n : ℕ)
         rw [hpi_apply, Ideal.Quotient.eq_zero_iff_mem]
         constructor
         · intro hu
-          rw [← Ideal.span_singleton_sup_pow_succ P hP ha ha'] at hu
-          obtain ⟨v, hv, w, hw, rfl⟩ := Submodule.mem_sup.mp hu
-          obtain ⟨x, rfl⟩ := Ideal.mem_span_singleton'.mp hv
+          obtain ⟨x, w, hw, rfl⟩ :=
+            Ideal.exists_mul_add_mem_pow_succ hP a u ha ha' hu
           refine ⟨Ideal.Quotient.mk P x, ?_⟩
           rw [hi_apply, Ideal.Quotient.mk_eq_mk_iff_sub_mem,
-            show a * x - (x * a + w) = -w by ring]
+            show a * x - (a * x + w) = -w by ring]
           exact neg_mem hw
         · rintro ⟨y, hy⟩
           obtain ⟨x, rfl⟩ := Ideal.Quotient.mk_surjective y
