@@ -53,22 +53,17 @@ open scoped Uniformity
 
 namespace TauCeti.Huber
 
-variable {A : Type*} [CommRing A] [UniformSpace A] [IsTopologicalRing A]
+variable {A : Type*} [CommRing A]
   {M : Type*} [AddCommGroup M] [Module A M] [Module.Finite A M]
 
-/-- **The module topology on a finite module over a Huber ring is first countable**, when the ring
-has its compatible uniform additive-group structure. A finite spanning family gives an open
-quotient `Aⁿ → M`; the image of a countably generated neighbourhood filter is countably
-generated. -/
-theorem IsHuberRing.firstCountableTopology_moduleTopology [IsUniformAddGroup A] [IsHuberRing A] :
+/-- **The module topology on a finite module over a Huber ring is first countable.** This supplies
+the first-countability clause of Wedhorn Proposition 6.18(1). -/
+theorem IsHuberRing.firstCountableTopology_moduleTopology [TopologicalSpace A]
+    [IsTopologicalRing A] [IsHuberRing A] :
     @FirstCountableTopology M (moduleTopology A M) := by
   let _ : TopologicalSpace M := moduleTopology A M
   have _ : IsModuleTopology A M := inferInstance
-  have _ : (𝓤 A).IsCountablyGenerated := IsUniformAddGroup.uniformity_countably_generated
-  obtain ⟨n, g, hspan⟩ := Module.Finite.exists_fin (R := A) (M := M)
-  let f : (Fin n → A) →ₗ[A] M := Fintype.linearCombination A g
-  have hf : Function.Surjective f :=
-    span_range_eq_top_iff_surjective_fintypeLinearCombination A g |>.mp hspan
+  obtain ⟨n, f, hf⟩ := Module.Finite.exists_fin' A M
   have hquot : IsOpenQuotientMap f := IsModuleTopology.isOpenQuotientMap_of_surjective hf
   refine ⟨fun y ↦ ?_⟩
   obtain ⟨x, rfl⟩ := hf y
@@ -76,18 +71,14 @@ theorem IsHuberRing.firstCountableTopology_moduleTopology [IsUniformAddGroup A] 
   infer_instance
 
 /-- **The module topology on a finite module over a complete noetherian Tate ring is
-Hausdorff.** For a finite free presentation `f : Aⁿ → M`, equality of two images is equivalent to
-their difference lying in `ker f`. This kernel is closed by noetherianity, so the equivalence
-relation of the open quotient is closed. -/
-theorem IsTateRing.t2Space_moduleTopology [IsUniformAddGroup A] [CompleteSpace A] [T2Space A]
-    [IsTateRing A] [IsNoetherianRing A] : @T2Space M (moduleTopology A M) := by
+Hausdorff.** This supplies the separatedness clause of Wedhorn Proposition 6.18(1). -/
+theorem IsTateRing.t2Space_moduleTopology [UniformSpace A] [IsTopologicalRing A]
+    [IsUniformAddGroup A] [CompleteSpace A] [T2Space A] [IsTateRing A] [IsNoetherianRing A] :
+    @T2Space M (moduleTopology A M) := by
   let _ : TopologicalSpace M := moduleTopology A M
   have _ : IsModuleTopology A M := inferInstance
   have _ : (𝓤 A).IsCountablyGenerated := IsUniformAddGroup.uniformity_countably_generated
-  obtain ⟨n, g, hspan⟩ := Module.Finite.exists_fin (R := A) (M := M)
-  let f : (Fin n → A) →ₗ[A] M := Fintype.linearCombination A g
-  have hf : Function.Surjective f :=
-    span_range_eq_top_iff_surjective_fintypeLinearCombination A g |>.mp hspan
+  obtain ⟨n, f, hf⟩ := Module.Finite.exists_fin' A M
   have hquot : IsOpenQuotientMap f := IsModuleTopology.isOpenQuotientMap_of_surjective hf
   rw [t2Space_iff_of_isOpenQuotientMap hquot]
   have hker : IsClosed ((LinearMap.ker f : Submodule A (Fin n → A)) : Set (Fin n → A)) :=
@@ -96,31 +87,26 @@ theorem IsTateRing.t2Space_moduleTopology [IsUniformAddGroup A] [CompleteSpace A
     continuous_fst.sub continuous_snd
   convert hker.preimage hsub using 1
   ext q
-  change f q.1 = f q.2 ↔ f (q.1 - q.2) = 0
-  rw [map_sub, sub_eq_zero]
+  simp only [Set.mem_preimage, Set.mem_ofPred_eq, SetLike.mem_coe, LinearMap.mem_ker, map_sub,
+    sub_eq_zero]
 
-/-- **The additive group of a finite module with its module topology is nonarchimedean.** It is
-the open image of a finite power of the nonarchimedean additive group of the Huber ring. -/
-theorem IsHuberRing.nonarchimedeanAddGroup_moduleTopology [IsHuberRing A] :
+/-- **The additive group of a finite module with its module topology is nonarchimedean.** This is
+the nonarchimedean clause of Wedhorn Proposition 6.18(1). -/
+theorem IsHuberRing.nonarchimedeanAddGroup_moduleTopology [TopologicalSpace A]
+    [IsTopologicalRing A] [IsHuberRing A] :
     @NonarchimedeanAddGroup M _ (moduleTopology A M) := by
   let _ : TopologicalSpace M := moduleTopology A M
   have _ : IsModuleTopology A M := inferInstance
   let _ : IsTopologicalAddGroup M := IsModuleTopology.isTopologicalAddGroup A M
-  obtain ⟨n, g, hspan⟩ := Module.Finite.exists_fin (R := A) (M := M)
-  let f : (Fin n → A) →ₗ[A] M := Fintype.linearCombination A g
-  have hf : Function.Surjective f :=
-    span_range_eq_top_iff_surjective_fintypeLinearCombination A g |>.mp hspan
+  obtain ⟨n, f, hf⟩ := Module.Finite.exists_fin' A M
   exact NonarchimedeanAddGroup.nonarchimedean_of_isOpenMap f.toAddMonoidHom
     (IsModuleTopology.continuous_of_linearMap f).continuousAt
     (IsModuleTopology.isOpenQuotientMap_of_surjective hf).isOpenMap
 
 /-- **The canonical right uniformity of the module topology on a finite module over a complete
-Huber ring is complete.** A finite free presentation identifies `M` homeomorphically with the
-quotient of `Aⁿ` by its kernel. Mathlib's additive quotient-completeness theorem makes that
-quotient complete; the additive homeomorphism is automatically a uniform equivalence for the
-canonical group uniformities. -/
-theorem IsHuberRing.completeSpace_moduleTopology [IsUniformAddGroup A] [CompleteSpace A]
-    [IsHuberRing A] :
+Huber ring is complete.** This supplies the completeness clause of Wedhorn Proposition 6.18(1). -/
+theorem IsHuberRing.completeSpace_moduleTopology [UniformSpace A] [IsTopologicalRing A]
+    [IsUniformAddGroup A] [CompleteSpace A] [IsHuberRing A] :
     letI : TopologicalSpace M := moduleTopology A M
     letI : IsTopologicalAddGroup M := IsModuleTopology.isTopologicalAddGroup A M
     letI : UniformSpace M := IsTopologicalAddGroup.rightUniformSpace M
@@ -130,10 +116,7 @@ theorem IsHuberRing.completeSpace_moduleTopology [IsUniformAddGroup A] [Complete
   let _ : UniformSpace M := IsTopologicalAddGroup.rightUniformSpace M
   have _ : IsUniformAddGroup M := isUniformAddGroup_of_addCommGroup
   have _ : (𝓤 A).IsCountablyGenerated := IsUniformAddGroup.uniformity_countably_generated
-  obtain ⟨n, g, hspan⟩ := Module.Finite.exists_fin (R := A) (M := M)
-  let f : (Fin n → A) →ₗ[A] M := Fintype.linearCombination A g
-  have hf : Function.Surjective f :=
-    span_range_eq_top_iff_surjective_fintypeLinearCombination A g |>.mp hspan
+  obtain ⟨n, f, hf⟩ := Module.Finite.exists_fin' A M
   let Q := (Fin n → A) ⧸ LinearMap.ker f
   let _ : UniformSpace Q := IsTopologicalAddGroup.rightUniformSpace Q
   have _ : IsUniformAddGroup Q := isUniformAddGroup_of_addCommGroup
