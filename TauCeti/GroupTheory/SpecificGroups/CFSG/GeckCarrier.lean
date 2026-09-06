@@ -166,10 +166,10 @@ the numbered raising subgroup at Bourbaki node `i` by a weight-torus point `s` r
 parameter by `α_i(s)`, where `α_i` is the simple root of the pinned simply connected root datum of
 the Dynkin type the index names, at the same node.
 
-The character is read in that root datum rather than as a row of the Cartan matrix because the
-whole numbered interface of this roadmap is indexed through
-`TauCeti.ValidLieTypeIndex.dynkinType`, so a consumer meets the simple roots and never the
-matrix. -/
+The character is read in that root datum rather than as a row of the Cartan matrix: the datum is
+the one attached to `TauCeti.ValidLieTypeIndex.dynkinType`, so it carries the Bourbaki node
+numbering that numbers the root subgroups here, and node `i` on either side is the same node. -/
+@[simp]
 theorem geckWeightTorus_conj_geckRootSubgroup_root_simpleIndex (i : Fin d.rank)
     (s : Fin d.rank → d.Closureˣ) (u : Multiplicative d.Closure) :
     d.geckWeightTorus s * d.geckRootSubgroup (.inl i) u * (d.geckWeightTorus s)⁻¹ =
@@ -185,6 +185,7 @@ theorem geckWeightTorus_conj_geckRootSubgroup_root_simpleIndex (i : Fin d.rank)
 
 /-- **The pinning equation of the Geck carrier of an index, at the negative of a named simple
 root.** -/
+@[simp]
 theorem geckWeightTorus_conj_geckRootSubgroup_neg_root_simpleIndex (i : Fin d.rank)
     (s : Fin d.rank → d.Closureˣ) (u : Multiplicative d.Closure) :
     d.geckWeightTorus s * d.geckRootSubgroup (.inr i) u * (d.geckWeightTorus s)⁻¹ =

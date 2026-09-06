@@ -64,8 +64,8 @@ group is finite, perfect, or simple.
 * `TauCeti.UnimodularExceptionalIndex.steinberg_geckRootSubgroup` and
   `TauCeti.UnimodularExceptionalIndex.steinberg_geckWeightTorus`: the Steinberg map raises the
   parameter of every numbered root subgroup, and every coordinate of a weight-torus point, to the
-  `q`-th power, the shape of the equations milestone L1 asks of the untwisted families, proved on
-  this carrier.
+  `q`-th power, which is how the Steinberg map of an untwisted index acts on both halves of the
+  pinned data of this carrier.
 * `TauCeti.UnimodularExceptionalIndex.mem_fixedSubgroup_steinberg_iff`: the fixed points of that
   map are the points of the carrier whose matrix entries lie in the field of definition `𝔽_q`
   recorded by `TauCeti.ValidLieTypeIndex.fixedField`.
