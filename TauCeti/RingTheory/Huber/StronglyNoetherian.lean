@@ -69,8 +69,9 @@ discrete case below is proved through it.
   `UniformSpace.Completion.mapRingHom`, which induces nothing on completions from a
   discontinuous map.
 
-Neither the iteration `A⟨X⟩⟨Y⟩ ≅ A⟨X,Y⟩` nor the stability of noetherianness under quotients is
-proved here; those belong to the later roadmap milestones of Layer 0.5.
+What is not here is the other half of that stability: that a ring topologically of finite type
+over a strongly noetherian `A` — an open quotient of some `A⟨X₁,…,Xₖ⟩` — is again strongly
+noetherian.
 
 ## Provenance
 
