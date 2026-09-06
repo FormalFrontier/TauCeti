@@ -56,6 +56,8 @@ by `isHomogeneous_gradedCoderiv` and `IsGradedCoderivation.isHomogeneous`.
   coderivation with letter component `F`.
 * `TauCeti.ReducedTensorWords.IsGradedCoderivation.eq_of_letter_comp_eq`: a graded coderivation is
   determined by its letter component.
+* `TauCeti.ReducedTensorWords.IsGradedCoderivation.isCoderivation_comp_self`: a graded coderivation
+  anticommuting with its letterwise Koszul twist has an ordinary coderivation as its square.
 * `TauCeti.ReducedTensorWords.isHomogeneous_gradedCoderiv`: if `F` raises degrees by `r` then so
   does `gradedCoderiv G F q`, independently of the twist parameter.
 * `TauCeti.ReducedTensorWords.gradedCoderivEquivTaylor`: the `q`-twisted coderivations form a
@@ -698,6 +700,17 @@ theorem ReducedTensorWords.letter_comp_gradedCoderiv (G : InternalGrading R M)
     · exact letter_splice_self R (twistedTuple G q x 0 0)
         (F (subword R x 0 n)) hn (by omega)
 
+/-- The arity-`n` component of a graded Taylor expansion is the restriction of its defining
+Taylor map to words of length `n`. -/
+@[simp]
+theorem ReducedTensorWords.taylorComponent_gradedCoderiv (G : InternalGrading R M)
+    (F : ReducedTensorWords R M →ₗ[R] M) (q : ℤ) (n : {n : ℕ // 0 < n}) :
+    (gradedCoderiv G F q).taylorComponent n = F ∘ₗ of R M n := by
+  apply LinearMap.ext
+  intro x
+  simp only [LinearMap.taylorComponent_apply, LinearMap.comp_apply]
+  rw [← LinearMap.comp_apply (letter R M), letter_comp_gradedCoderiv]
+
 /-- A graded coderivation whose letter component raises degrees by `r` raises degrees by `r`:
 being determined by its letter component, it inherits homogeneity from it. The twist parameter
 `q` of the co-Leibniz identity is independent of this shift. -/
@@ -711,6 +724,82 @@ theorem ReducedTensorWords.IsGradedCoderivation.isHomogeneous {G : InternalGradi
   exact isHomogeneous_gradedCoderiv G (letter R M ∘ₗ b) q r hhom
 
 end Letter
+
+/-! ### Squares of anticommuting graded coderivations -/
+
+/-- The square of a graded coderivation anticommuting with the letterwise Koszul twist is an
+ordinary coderivation.  The anticommutation relation expresses oddness when `q` is odd.  For even
+`q`, the twist is the identity and the hypothesis instead reduces to `b + b = 0`. -/
+theorem ReducedTensorWords.IsGradedCoderivation.isCoderivation_comp_self
+    {G : InternalGrading R M} {q : ℤ}
+    {b : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M}
+    (hb : IsGradedCoderivation G q b)
+    (hodd : b ∘ₗ ReducedTensorWords.map (R := R) (InternalGrading.koszulTwist G q) +
+        ReducedTensorWords.map (R := R) (InternalGrading.koszulTwist G q) ∘ₗ b = 0) :
+    IsCoderivation R (b ∘ₗ b) := by
+  rw [isCoderivation_iff]
+  apply LinearMap.ext
+  intro z
+  simp only [LinearMap.comp_apply, LinearMap.add_apply]
+  rw [hb.deconcatenation_apply (b z), hb.deconcatenation_apply z]
+  simp only [map_add]
+  let τ := ReducedTensorWords.map (R := R) (InternalGrading.koszulTwist G q)
+  let w := deconcatenation R M z
+  have hfirst :
+      LinearMap.rTensor (ReducedTensorWords R M) b
+          (LinearMap.rTensor (ReducedTensorWords R M) b w) =
+        LinearMap.rTensor (ReducedTensorWords R M) (b ∘ₗ b) w := by
+    rw [← LinearMap.rTensor_comp_apply]
+  have hcrossLeft :
+      LinearMap.rTensor (ReducedTensorWords R M) b
+          (LinearMap.lTensor (ReducedTensorWords R M) b
+            (LinearMap.rTensor (ReducedTensorWords R M) τ w)) =
+        TensorProduct.map (b ∘ₗ τ) b w := by
+    rw [← LinearMap.comp_apply, LinearMap.rTensor_comp_lTensor, LinearMap.map_rTensor]
+  have hcrossRight :
+      LinearMap.lTensor (ReducedTensorWords R M) b
+          (LinearMap.rTensor (ReducedTensorWords R M) τ
+            (LinearMap.rTensor (ReducedTensorWords R M) b w)) =
+        TensorProduct.map (τ ∘ₗ b) b w := by
+    rw [← LinearMap.rTensor_comp_apply, ← LinearMap.comp_apply,
+      LinearMap.lTensor_comp_rTensor]
+  have hcross :
+      TensorProduct.map (b ∘ₗ τ) b w + TensorProduct.map (τ ∘ₗ b) b w = 0 := by
+    have hodd' : b ∘ₗ τ + τ ∘ₗ b = 0 := hodd
+    rw [← LinearMap.add_apply, ← TensorProduct.map_add_left,
+      hodd', TensorProduct.map_zero_left, LinearMap.zero_apply]
+  have hcommute (y : ReducedTensorWords R M ⊗[R] ReducedTensorWords R M) :
+      LinearMap.rTensor (ReducedTensorWords R M) τ
+          (LinearMap.lTensor (ReducedTensorWords R M) b y) =
+        LinearMap.lTensor (ReducedTensorWords R M) b
+          (LinearMap.rTensor (ReducedTensorWords R M) τ y) := by
+    rw [← LinearMap.comp_apply, LinearMap.rTensor_comp_lTensor,
+      ← LinearMap.comp_apply, LinearMap.lTensor_comp_rTensor]
+  have hlast :
+      LinearMap.lTensor (ReducedTensorWords R M) b
+          (LinearMap.rTensor (ReducedTensorWords R M) τ
+            (LinearMap.lTensor (ReducedTensorWords R M) b
+              (LinearMap.rTensor (ReducedTensorWords R M) τ w))) =
+        LinearMap.lTensor (ReducedTensorWords R M) (b ∘ₗ b) w := by
+    have hτ : τ ∘ₗ τ = LinearMap.id := by
+      rw [← ReducedTensorWords.map_comp, InternalGrading.koszulTwist_comp_self,
+        ReducedTensorWords.map_id]
+    rw [hcommute, ← LinearMap.lTensor_comp_apply, ← LinearMap.rTensor_comp_apply,
+      hτ, LinearMap.rTensor_id_apply]
+  rw [hfirst, hcrossLeft, hcrossRight, hlast]
+  calc
+    (LinearMap.rTensor (ReducedTensorWords R M) (b ∘ₗ b) w +
+          TensorProduct.map (b ∘ₗ τ) b w) +
+        (TensorProduct.map (τ ∘ₗ b) b w +
+          LinearMap.lTensor (ReducedTensorWords R M) (b ∘ₗ b) w) =
+      LinearMap.rTensor (ReducedTensorWords R M) (b ∘ₗ b) w +
+          (TensorProduct.map (b ∘ₗ τ) b w +
+            TensorProduct.map (τ ∘ₗ b) b w) +
+        LinearMap.lTensor (ReducedTensorWords R M) (b ∘ₗ b) w := by
+          ac_rfl
+    _ = LinearMap.rTensor (ReducedTensorWords R M) (b ∘ₗ b) w +
+        LinearMap.lTensor (ReducedTensorWords R M) (b ∘ₗ b) w := by
+      rw [hcross, add_zero]
 
 /-! ### Twist parameter zero -/
 
