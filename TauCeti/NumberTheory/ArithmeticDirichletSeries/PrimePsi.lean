@@ -40,9 +40,9 @@ system does not get that hypothesis for free; what it has to supply is the domin
 * `TauCeti.primePowerSummatory_indicator_sub_primeTheta` splits the exponent-one part off the
   standard weight restricted to any set of prime powers containing exactly the primes of `S`.
 * `TauCeti.primePsi_sub_primeTheta` identifies `ψ - ϑ` with the higher-prime-power sum.
-* `TauCeti.primePsi_le_ncard_mul_log`: a finite set of primes contributes at most `#S · log x` to
-  `ψ`, with `TauCeti.primePsi_isBigO_log_of_finite` and `TauCeti.primePsi_isLittleO_of_finite` its
-  asymptotic forms.
+* `TauCeti.primePsi_le_ncard_mul_log`: for `x ≥ 1`, a finite set of primes contributes at most
+  `#S · log x` to `ψ`, with `TauCeti.primePsi_isBigO_log_of_finite` and
+  `TauCeti.primePsi_isLittleO_of_finite` its asymptotic forms.
 * `TauCeti.standardPrimePowerRemoval` proves `HasNegligibleHigherPrimePowers K S` for every `S`,
   from the Layer 5 estimate `ψ(x) - ϑ(x) = O(√x log² x)`.
 * `TauCeti.primeTheta_asymptotic_of_primePsi` and
@@ -232,15 +232,15 @@ theorem standardPrimePowerRemoval (K : Type*) [Field K] [NumberField K]
   rw [hasNegligibleHigherPrimePowers_iff]
   simpa only [primePsi_sub_primeTheta] using primePowerSummatory_indicator_isLittleO K S
 
-/-- **A finite set of primes contributes at most `#S · log x` to `ψ`.** Fibring over the prime
-base, the exponents `k ≥ 1` with `N(𝔭) ^ k ≤ x` contribute at most `log x` in total for each of the
-finitely many `𝔭`.
+/-- **For `x ≥ 1`, a finite set of primes contributes at most `#S · log x` to `ψ`.** Fibring over
+the prime base, the exponents `k ≥ 1` with `N(𝔭) ^ k ≤ x` contribute at most `log x` in total for
+each of the finitely many `𝔭`.
 
 A counting argument can therefore discard a finite exceptional set of primes — those ramifying in
 an extension, say, or lying above such — at a cost of `O(log x)`.
 
-The fibre step is `TauCeti.card_fiber_mul_log_absNorm_le`, which bounds the total weight of the
-prime powers over a single base by `log x`. -/
+The fibre step is `TauCeti.card_mul_log_absNorm_le_of_pow_le_of_base_eq`, which bounds the total
+weight of the prime powers over a single base by `log x`. -/
 theorem primePsi_le_ncard_mul_log (hS : S.Finite) (hx : 1 ≤ x) :
     primePsi K S x ≤ S.ncard * Real.log x := by
   classical
@@ -270,7 +270,7 @@ theorem primePsi_le_ncard_mul_log (hS : S.Finite) (hx : 1 ≤ x) :
   refine (Finset.sum_le_card_nsmul _ _ (Real.log x) ?_).trans ?_
   · intro v _
     rw [Finset.sum_const, nsmul_eq_mul]
-    exact card_fiber_mul_log_absNorm_le hx (fun A hA ↦ by
+    exact card_mul_log_absNorm_le_of_pow_le_of_base_eq hx (fun A hA ↦ by
       obtain ⟨hle, -⟩ := hmemT A (Finset.mem_of_mem_filter _ hA)
       rwa [(Finset.mem_filter.mp hA).2] at hle)
       (fun A hA ↦ (Finset.mem_filter.mp hA).2)

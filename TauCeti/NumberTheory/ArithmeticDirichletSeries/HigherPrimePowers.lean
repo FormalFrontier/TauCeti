@@ -259,7 +259,7 @@ This is the counting core shared by the two weighted estimates over a prime fibr
 only in which prime powers they collect: `TauCeti.higherPrimePowerTheta_le_card_primesLE_mul_log`
 takes the exponents `k ≥ 2`, `TauCeti.primePsi_le_ncard_mul_log` all `k ≥ 1`. Only `1 ≤ x` and a
 common base are needed. -/
-theorem card_fiber_mul_log_absNorm_le (hx : 1 ≤ x) {v : HeightOneSpectrum (𝓞 K)}
+theorem card_mul_log_absNorm_le_of_pow_le_of_base_eq (hx : 1 ≤ x) {v : HeightOneSpectrum (𝓞 K)}
     {F : Finset (IdealPrimePower K)}
     (hF : ∀ A ∈ F, ((Ideal.absNorm v.asIdeal : ℝ)) ^ primePowerExponent A ≤ x)
     (hbase : ∀ A ∈ F, primePowerBase A = v) :
@@ -328,7 +328,7 @@ theorem higherPrimePowerTheta_le_card_primesLE_mul_log
   refine (Finset.sum_le_card_nsmul _ _ (Real.log x) ?_).trans_eq (by rw [nsmul_eq_mul])
   intro v _
   rw [Finset.sum_const, nsmul_eq_mul]
-  exact card_fiber_mul_log_absNorm_le hx
+  exact card_mul_log_absNorm_le_of_pow_le_of_base_eq hx
     (fun A hA ↦ by
       obtain ⟨hle, -⟩ := hmemT A (Finset.mem_of_mem_filter _ hA)
       rwa [(Finset.mem_filter.mp hA).2] at hle)
