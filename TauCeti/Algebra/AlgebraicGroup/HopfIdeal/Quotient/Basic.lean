@@ -30,8 +30,6 @@ the finite-type coordinate-Hopf-algebra category.
 ## Main declarations
 
 * `TauCeti.CommHopfAlgCat.quotient`: the quotient object in `CommHopfAlgCat`.
-* `TauCeti.CommHopfAlgCat.quotientRingEquiv`: its underlying ring is the corresponding ideal
-  quotient.
 * `TauCeti.CommHopfAlgCat.mkQuotient_surjective`: the quotient morphism is surjective.
 * `TauCeti.CommHopfAlgCat.mkQuotient_hom_ext`: morphisms out of a quotient are determined
   after precomposition with the quotient morphism.
@@ -122,12 +120,6 @@ Hopf algebra. -/
 noncomputable abbrev quotient (H : _root_.CommHopfAlgCat.{v} R) (I : HopfIdeal R H) :
     _root_.CommHopfAlgCat.{v} R :=
   _root_.CommHopfAlgCat.of R (H ⧸ I.toIdeal)
-
-/-- The underlying ring of a commutative Hopf-algebra quotient is the corresponding ideal
-quotient. -/
-def quotientRingEquiv (H : _root_.CommHopfAlgCat.{v} R) (I : HopfIdeal R H) :
-    ((quotient H I : _root_.CommHopfAlgCat.{v} R) : Type v) ≃+* (H ⧸ I.toIdeal) :=
-  RingEquiv.refl _
 
 /-- The quotient morphism `H ⟶ H ⧸ I` in `CommHopfAlgCat`. -/
 noncomputable abbrev mkQuotient (H : _root_.CommHopfAlgCat.{v} R) (I : HopfIdeal R H) :

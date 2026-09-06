@@ -45,9 +45,7 @@ theorem isReduced_quotient_reduction
       rw [reduction_toIdeal]
       exact Ideal.radical_isRadical ⊥)
   exact isReduced_of_injective
-    (CommHopfAlgCat.quotientRingEquiv
-      (_root_.CommHopfAlgCat.of R H) (reduction R H)).toRingHom
-    (CommHopfAlgCat.quotientRingEquiv
-      (_root_.CommHopfAlgCat.of R H) (reduction R H)).injective
+    (RingEquiv.refl (H ⧸ (reduction R H).toIdeal)).toRingHom
+    (RingEquiv.refl (H ⧸ (reduction R H).toIdeal)).injective
 
 end TauCeti.HopfIdeal
