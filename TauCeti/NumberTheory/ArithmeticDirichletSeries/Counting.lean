@@ -61,7 +61,10 @@ prime carrier below `2`.
 Modifying a weight on a finite set, or a prime set on a finite symmetric difference, changes a
 summatory function by a quantity that is eventually the *constant* total discrepancy; this is
 `TauCeti.eventually_summatory_sub_eq` and its two prime specializations. Layer 7 uses these to
-show that finite changes do not affect a density.
+show that finite changes do not affect a density. In the same spirit,
+`TauCeti.primeTheta_isLittleO_of_finite` records that a finite set of primes contributes only
+`O(log x)` to `ϑ_K`, hence `o(x)`: an exceptional set can be discarded from a counting argument
+outright, not merely from a density.
 
 ## Roadmap role
 
@@ -653,6 +656,22 @@ theorem eventually_primeCount_eq_card (hS : S.Finite) :
     Finset.sum_congr rfl fun v hv ↦
     Set.indicator_of_mem (hS.mem_toFinset.mp hv) _, Set.ncard_eq_toFinset_card S hS]
   simp
+
+open Asymptotics Filter in
+/-- **A finite set of primes carries a negligible weight.** Its contribution to `ϑ_K` is `o(x)` —
+in fact `O(log x)`, since each of the finitely many primes contributes at most `log x`.
+
+This is what lets a counting argument discard an exceptional set outright: the ramified primes of
+an extension, or the primes of an intermediate field lying above them. -/
+theorem primeTheta_isLittleO_of_finite (hS : S.Finite) :
+    primeTheta K S =o[atTop] fun x : ℝ ↦ x := by
+  refine IsBigO.trans_isLittleO (IsBigO.of_bound 1 ?_)
+    (Real.isLittleO_log_id_atTop.const_mul_left (S.ncard : ℝ))
+  filter_upwards [eventually_primeCount_eq_card hS] with x hx
+  rw [one_mul, Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (primeTheta_nonneg _ _)]
+  calc primeTheta K S x ≤ primeCount K S x * Real.log x := primeTheta_le_primeCount_mul_log _ x
+    _ = (S.ncard : ℝ) * Real.log x := by rw [hx]
+    _ ≤ |(S.ncard : ℝ) * Real.log x| := le_abs_self _
 
 /-- If two prime sets have finite symmetric difference, their logarithmically weighted counts
 differ eventually by the fixed total discrepancy on that symmetric difference. -/
