@@ -13,14 +13,17 @@ import Mathlib.Data.ZMod.Units
 /-!
 # Units and coprimality over `ZMod d`
 
-Two directions of the same correspondence: an integer that is a *unit* mod `d` is coprime to
-`d` (`Int.gcd_eq_one_of_isUnit_intCast`), and coprime residues mod `d` lift to coprime
-integers (`IsCoprime.exists_int_lifts`).
+Two results connecting unit and coprimality data over `ZMod d`, independent of one another:
 
-Ported from the AINTLIB `LeanModularForms` project
-(`LeanModularForms/HeckeRIngs/GLn/SL2Surjection.lean`, Chris Birkbeck); the consumer is the
-strong approximation theorem `Matrix.SpecialLinearGroup.map_intCast_zmod_surjective` in
-`TauCeti/LinearAlgebra/Matrix/SpecialLinearGroup/Basic.lean`.
+* `Int.gcd_eq_one_of_isUnit_intCast` — an integer that is a *unit* mod `d` is coprime to `d`.
+  Its consumers are the Atkin-Lehner and bad-prime double-coset arguments in
+  `TauCeti/NumberTheory/HeckeRing/GL2/Gamma0/`, which need the `Int.gcd` form of the
+  unit condition carried by membership of `Δ₀(N)`.
+* `IsCoprime.exists_int_lifts` — a *pair* of coprime residues mod `d` lifts to a coprime pair
+  of integers. Ported from the AINTLIB `LeanModularForms` project
+  (`LeanModularForms/HeckeRIngs/GLn/SL2Surjection.lean`, Chris Birkbeck); its consumer is the
+  strong approximation theorem `Matrix.SpecialLinearGroup.map_intCast_zmod_surjective` in
+  `TauCeti/LinearAlgebra/Matrix/SpecialLinearGroup/Basic.lean`.
 -/
 
 public section
