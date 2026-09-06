@@ -237,7 +237,8 @@ division rather than a truncated one, which is why a fibre count needs it separa
 finiteness is assumed here: for an infinite group `Nat.card G` is `0`, and every natural number
 divides `0`.
 
-The fibre count wanting it is `TauCetiRoadmap/Chebotarev/README.md`, Layer 8.2. -/
+Adapted from `TauCetiRoadmap/Chebotarev/Suggested.lean`, which pins this name, argument
+structure and conclusion. -/
 theorem card_carrier_mul_orderOf_dvd {G : Type*} [Group G] (C : ConjClasses G) (σ : G)
     (hσ : σ ∈ C.carrier) :
     Nat.card C.carrier * orderOf σ ∣ Nat.card G := by
