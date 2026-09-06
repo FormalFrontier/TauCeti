@@ -31,7 +31,7 @@ variable [CommSemiring R] [AddCommMonoid M] [Module R M]
 
 /-- A list product of endomorphisms acts by the product of its eigenvalues on a common
 eigenvector. -/
-theorem listProd_apply_eq_smul (f : I → Module.End R M) (c : I → R) (x : M) (l : List I)
+theorem list_prod_apply_eq_smul (f : I → Module.End R M) (c : I → R) (x : M) (l : List I)
     (h : ∀ i ∈ l, f i x = c i • x) :
     (l.map f).prod x = (l.map c).prod • x := by
   induction l with
@@ -50,7 +50,7 @@ variable [CommRing R] [DecidableEq I]
 
 /-- A list containing every element of the index type has indicator product one exactly when two
 finite labels agree, and zero otherwise. -/
-theorem listProd_indicator_eq_if_eq (l : List I) (hl : ∀ i, i ∈ l) (s t : Finset I) :
+theorem list_prod_indicator_eq_if_eq (l : List I) (hl : ∀ i, i ∈ l) (s t : Finset I) :
     (l.map fun i ↦ if (i ∈ s) = (i ∈ t) then (1 : R) else 0).prod = if s = t then 1 else 0 := by
   classical
   by_cases hst : s = t

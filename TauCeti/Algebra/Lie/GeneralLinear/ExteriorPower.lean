@@ -51,10 +51,10 @@ while Layer 8 uses the `sl₉` action on `⋀³(K⁹)` in the Vinberg model of `
 ## References
 
 Goodman--Wallach, especially §§5.5 and 9.1, and Fulton--Harris §15.5 provide the
-characteristic-zero representation-theoretic background. The matrix-unit path and diagonal
-projector arguments here establish cyclicity over a commutative ring and irreducibility over an
-arbitrary field. The diagonal-factor and list-product projector proof plan follows the
-occupation/vacancy projector construction in `TauCeti.LinearAlgebra.ExteriorAlgebra.End`.
+characteristic-zero representation-theoretic background. The matrix-unit and diagonal-projector
+arguments here establish cyclicity over a commutative ring and irreducibility over an arbitrary
+field. The diagonal-factor construction is shared with
+`TauCeti.LinearAlgebra.ExteriorAlgebra.End`.
 -/
 
 public section
@@ -616,7 +616,7 @@ private theorem diagonalProjector_apply (d : ℕ)
         (u.map fun i ↦ if (i ∈ s.1) = (i ∈ t.1) then (1 : K) else 0).prod •
           ιMulti_family K d (Pi.basisFun K ι) t := by
     intro u
-    apply TauCeti.Module.End.listProd_apply_eq_smul (R := K)
+    apply TauCeti.Module.End.list_prod_apply_eq_smul (R := K)
     intro i _
     rw [diagonalFactor_apply]
     by_cases h : (i ∈ s.1) = (i ∈ t.1)
@@ -624,7 +624,7 @@ private theorem diagonalProjector_apply (d : ℕ)
     · simp only [h, ite_false, zero_smul]
   rw [diagonalProjector]
   rw [hprod]
-  rw [TauCeti.Module.End.listProd_indicator_eq_if_eq (l := Finset.univ.toList)
+  rw [TauCeti.Module.End.list_prod_indicator_eq_if_eq (l := Finset.univ.toList)
     (fun i ↦ by simp) s.1 t.1]
   simp [Subtype.ext_iff]
 
@@ -710,8 +710,7 @@ variable {K : Type*} [Field K]
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
 /-- Over a field, the standard general-linear action on the `d`-th exterior power is
-irreducible for a finite index type `ι` when `d ≤ Fintype.card ι`; an auxiliary order is
-chosen internally for the path argument. -/
+irreducible for a finite index type `ι` when `d ≤ Fintype.card ι`. -/
 theorem isIrreducible_glLieModule (d : ℕ) (h : d ≤ Fintype.card ι) :
     letI : LieRingModule (Matrix ι ι K) (⋀[K]^d (ι → K)) :=
       glLieRingModule (K := K) (n := ι) d

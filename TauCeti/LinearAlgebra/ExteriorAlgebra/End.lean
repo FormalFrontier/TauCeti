@@ -105,7 +105,7 @@ private theorem listProd_basisFactor_apply {n : ℕ}
         (b.ExteriorAlgebra t) =
       (List.prod (l.map (fun i ↦ (if (i ∈ s ↔ i ∈ t) then 1 else 0 : K))) •
         b.ExteriorAlgebra t) := by
-  apply TauCeti.Module.End.listProd_apply_eq_smul (R := K)
+  apply TauCeti.Module.End.list_prod_apply_eq_smul (R := K)
   intro i hi
   simpa using (basisFactor_apply b s t i)
 
@@ -115,7 +115,7 @@ private theorem basisProjection_basis {n : ℕ}
       if s = t then b.ExteriorAlgebra t else 0 := by
   rw [basisProjection]
   rw [listProd_basisFactor_apply]
-  have hprod := TauCeti.Module.End.listProd_indicator_eq_if_eq (R := K)
+  have hprod := TauCeti.Module.End.list_prod_indicator_eq_if_eq (R := K)
     (l := List.ofFn fun i : Fin n ↦ i)
     (fun i ↦ List.mem_ofFn.mpr ⟨i, rfl⟩) s t
   have hprod_iff :
