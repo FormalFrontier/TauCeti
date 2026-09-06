@@ -6,7 +6,6 @@ Authors: Codex
 module
 
 public import TauCeti.Algebra.Lie.Symplectic.StandardCarrier.AlternatingForm
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Symplectic.Basic
 
 /-!
 # Root-subgroup generation data for the type-C full-weight carrier
