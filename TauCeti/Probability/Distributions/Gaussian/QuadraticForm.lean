@@ -240,7 +240,7 @@ theorem mem_integrableExpSet_inner_toEuclideanLin_multivariateGaussian_iff (S : 
   simp only [integrableExpSet, Set.mem_ofPred_eq]
   rw [integrable_map_measure (by fun_prop) (Measurable.aemeasurable (by fun_prop)),
     Function.comp_def]
-  simp only [inner_toEuclideanLin_toEuclideanCLM (Matrix.isHermitian_sqrt S)]
+  simp only [inner_toEuclideanLin_toEuclideanCLM (Matrix.LE.le.posSemidef (CFC.sqrt_nonneg S)).1]
 
 /-- On its exponential-integrability domain, the moment-generating function of the quadratic
 form `x ↦ ⟪x, Θ x⟫` of a real symmetric matrix `Θ` under the centred multivariate Gaussian
@@ -253,7 +253,7 @@ theorem mgf_inner_toEuclideanLin_multivariateGaussian (hS : S.PosSemidef) (hΘ :
   have ht' : ∀ j, 2 * t * hB.eigenvalues j < 1 := (hB.posDef_one_sub_smul_iff (2 * t)).1 ht
   rw [multivariateGaussian_zero_eq_map_sqrt,
     mgf_map (Measurable.aemeasurable (by fun_prop)) (by fun_prop), Function.comp_def]
-  simp only [inner_toEuclideanLin_toEuclideanCLM (Matrix.isHermitian_sqrt S)]
+  simp only [inner_toEuclideanLin_toEuclideanCLM (Matrix.LE.le.posSemidef (CFC.sqrt_nonneg S)).1]
   rw [mgf_inner_toEuclideanLin_stdGaussian hB ht',
     Real.finsetProd_rpow _ _ (fun j _ ↦ by linarith [ht' j]) _,
     ← hB.det_one_sub_smul (2 * t), Matrix.det_one_sub_smul_sqrt_mul_mul_sqrt hS Θ (2 * t)]
