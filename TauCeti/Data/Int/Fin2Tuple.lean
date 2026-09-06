@@ -7,7 +7,6 @@ module
 
 public import Mathlib.Algebra.EuclideanDomain.Int
 
-import Mathlib.Data.Fin.VecNotation
 import Mathlib.Data.Fintype.Fin
 import Mathlib.Tactic.FinCases
 

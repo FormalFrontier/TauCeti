@@ -7,8 +7,6 @@ module
 
 public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
 
-import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
-
 /-!
 # Two-sided invertible equivalence of matrices
 
