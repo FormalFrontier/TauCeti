@@ -252,7 +252,7 @@ theorem iterateFirstBlockHom_coe_weightedC (a : A) :
 /-! ### The two maps are mutually inverse -/
 
 /-- The structure map of the iterated algebra is the constant series of a constant series. -/
-theorem iterateStructureHom_eq (a : A) :
+theorem iterateStructureHom_apply (a : A) :
     iterateStructureHom k m A a
       = ((weightedC (fun _ : Fin m ↦ ({1} : Set (restrictedMvPowerSeriesCompletion k A)))
           isWeightFamily_one_weight
@@ -273,7 +273,7 @@ theorem iterateJoinHom_comp_iterateSplitHom :
     ((continuous_iterateJoinHom k m A).comp (continuous_iterateSplitHom k m A)) continuous_id
     (fun a ↦ ?_) fun i ↦ ?_
   · simp only [RingHom.coe_comp, Function.comp_apply, RingHom.id_apply,
-      iterateSplitHom_coe_weightedC, iterateStructureHom_eq, iterateJoinHom_coe_weightedC,
+      iterateSplitHom_coe_weightedC, iterateStructureHom_apply, iterateJoinHom_coe_weightedC,
       iterateFirstBlockHom_coe_weightedC,
       algebraMap_completion_weightedRestrictedSubring_apply _ _ isWeightFamily_one_weight]
   · simp only [RingHom.coe_comp, Function.comp_apply, RingHom.id_apply,
@@ -295,7 +295,7 @@ theorem iterateSplitHom_comp_iterateFirstBlockHom :
       (restrictedMvPowerSeriesCompletion k A)) (fun a ↦ ?_) fun i ↦ ?_
   · simp only [RingHom.coe_comp, Function.comp_apply, iterateFirstBlockHom_coe_weightedC,
       algebraMap_completion_weightedRestrictedSubring_apply _ _ isWeightFamily_one_weight,
-      iterateSplitHom_coe_weightedC, iterateStructureHom_eq]
+      iterateSplitHom_coe_weightedC, iterateStructureHom_apply]
   · simp only [RingHom.coe_comp, Function.comp_apply, iterateFirstBlockHom_coe_weightedX,
       iterateSplitHom_coe_weightedX, iterateVar_castAdd,
       algebraMap_completion_weightedRestrictedSubring_apply _ _ isWeightFamily_one_weight]
