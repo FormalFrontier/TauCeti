@@ -287,7 +287,12 @@ detail and should not be unfolded. -/
 theorem residueFieldEquivAdicCompletionIntegers_apply_mk (a : R) :
     v.residueFieldEquivAdicCompletionIntegers (K := K) (Ideal.Quotient.mk v.asIdeal a) =
       Ideal.Quotient.mk (IsLocalRing.maximalIdeal (v.adicCompletionIntegers K))
-        (algebraMap R (v.adicCompletionIntegers K) a) := (rfl)
+        (algebraMap R (v.adicCompletionIntegers K) a) := by
+  change Ideal.quotientMap (IsLocalRing.maximalIdeal (v.adicCompletionIntegers K))
+    (algebraMap R (v.adicCompletionIntegers K))
+      (le_of_eq (v.under_maximalIdeal_adicCompletionIntegers (K := K)).symm)
+      (Ideal.Quotient.mk v.asIdeal a) = _
+  exact Ideal.quotientMap_mk
 
 end SingleCompletion
 

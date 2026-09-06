@@ -27,8 +27,8 @@ and the residue field of the valuative relation with the ones `K_v` already has.
 * `IsDedekindDomain.HeightOneSpectrum.residueFieldEquivAdicCompletion`: the residue field of the
   valuative relation is `R ⧸ v`; `residueFieldEquivAdicCompletion_apply_mk` describes it on a
   quotient representative.
-* `IsDedekindDomain.HeightOneSpectrum.natCard_residueField_adicCompletion_eq_absNorm`: that residue
-  field has `Ideal.absNorm v.asIdeal` elements.
+* `IsDedekindDomain.HeightOneSpectrum.natCard_residueField_adicCompletion_eq_absNorm`: when `R` is
+  infinite, that residue field has `Ideal.absNorm v.asIdeal` elements.
 * `IsDedekindDomain.HeightOneSpectrum.isNonarchimedeanLocalField_adicCompletion`: an adic
   completion with finite residue field is a nonarchimedean local field.
 
@@ -134,7 +134,7 @@ theorem residueFieldEquivAdicCompletion_apply_mk (a : R) :
     _ = _ := IsScalarTower.algebraMap_apply R (v.adicCompletionIntegers K)
       (v.adicCompletion K) a
 
-/-- The residue field of `K_v` has cardinality the absolute norm of `v`. -/
+/-- If `R` is infinite, the residue field of `K_v` has cardinality the absolute norm of `v`. -/
 theorem natCard_residueField_adicCompletion_eq_absNorm [Infinite R] :
     Nat.card 𝓀[v.adicCompletion K] = Ideal.absNorm v.asIdeal := by
   rw [Ideal.absNorm_apply, Submodule.cardQuot_apply]
