@@ -88,6 +88,9 @@ addition, exactly as in the ring case.
   radical is the set of **non-isomorphisms**; `TauCeti.jacobsonRadical_eq_top` is the case of two
   non-isomorphic such objects, and `TauCeti.mem_jacobsonRadical_self_iff_not_isUnit` the case of
   one object, where it recovers the non-units of `End X`.
+* `TauCeti.not_isSplitMono_of_mem_jacobsonRadical` and
+  `TauCeti.not_isSplitEpi_of_mem_jacobsonRadical`: a radical morphism splits on neither side, as
+  soon as the identity of the relevant end is nonzero — no locality needed.
 * `TauCeti.mem_jacobsonRadical_iff_not_isSplitMono`: out of an object with a local endomorphism
   ring the radical is the set of morphisms that are not split monomorphisms, with no hypothesis on
   the target, and dually `TauCeti.mem_jacobsonRadical_iff_not_isSplitEpi` into such an object.
@@ -303,6 +306,25 @@ theorem not_isIso_of_mem_jacobsonRadical {X Y : C} {f : X ⟶ Y} (hX : 𝟙 X �
     (hf : f ∈ jacobsonRadical X Y) : ¬ IsIso f :=
   fun _ => hX (id_eq_zero_of_isIso_of_mem_jacobsonRadical hf)
 
+/-- **A radical morphism out of an object with a nonzero identity is not a split
+monomorphism**, the sharpening of `TauCeti.not_isIso_of_mem_jacobsonRadical` that only asks for a
+retraction: absorbing the retraction into the radical morphism exhibits `𝟙 X` itself as radical,
+and an invertible radical morphism has a zero identity on its source. -/
+theorem not_isSplitMono_of_mem_jacobsonRadical {X Y : C} {f : X ⟶ Y} (hX : 𝟙 X ≠ 0)
+    (hf : f ∈ jacobsonRadical X Y) : ¬ IsSplitMono f := fun _ => by
+  refine hX (id_eq_zero_of_isIso_of_mem_jacobsonRadical (f := 𝟙 X) ?_)
+  rw [← IsSplitMono.id f]
+  exact comp_mem_jacobsonRadical_right hf (retraction f)
+
+/-- **A radical morphism into an object with a nonzero identity is not a split epimorphism**,
+the dual of `TauCeti.not_isSplitMono_of_mem_jacobsonRadical`: a section of it would exhibit `𝟙 Y`
+as radical. -/
+theorem not_isSplitEpi_of_mem_jacobsonRadical {X Y : C} {f : X ⟶ Y} (hY : 𝟙 Y ≠ 0)
+    (hf : f ∈ jacobsonRadical X Y) : ¬ IsSplitEpi f := fun _ => by
+  refine hY (id_eq_zero_of_isIso_of_mem_jacobsonRadical (f := 𝟙 Y) ?_)
+  rw [← IsSplitEpi.id f]
+  exact comp_mem_jacobsonRadical_left (section_ f) hf
+
 /-! ### Objects with local endomorphism rings -/
 
 /-- **The identity of an object with a local endomorphism ring is nonzero.** It is the `1` of that
@@ -327,19 +349,15 @@ non-split `f` every `f ≫ g` is a nonunit and `𝟙 X - f ≫ g` is invertible 
 retraction of a radical `f` exhibits `𝟙 X` itself as radical, which forces `𝟙 X = 0`. -/
 theorem mem_jacobsonRadical_iff_not_isSplitMono {f : X ⟶ Y} :
     f ∈ jacobsonRadical X Y ↔ ¬ IsSplitMono f := by
-  refine ⟨fun hf hsm => ?_, fun hf g => ?_⟩
-  · have hmem : 𝟙 X ∈ jacobsonRadical X X := by
-      rw [← IsSplitMono.id f]
-      exact comp_mem_jacobsonRadical_right hf (retraction f)
-    exact id_ne_zero X (id_eq_zero_of_isIso_of_mem_jacobsonRadical hmem)
-  · obtain ⟨e, he⟩ : ∃ e : End X, e = f ≫ g := ⟨f ≫ g, rfl⟩
-    have hnu : ¬ IsUnit e := fun hu => by
-      have : IsIso (f ≫ g) := he ▸ (isUnit_iff_isIso e).1 hu
-      exact hf (IsSplitMono.mk'
-        ⟨g ≫ inv (f ≫ g), by rw [← Category.assoc, IsIso.hom_inv_id]⟩)
-    have hiso : IsIso ((1 : End X) - e) :=
-      (isUnit_iff_isIso _).1 (IsLocalRing.isUnit_one_sub_self_of_mem_nonunits e hnu)
-    rwa [End.one_def, he] at hiso
+  refine ⟨not_isSplitMono_of_mem_jacobsonRadical (id_ne_zero X), fun hf g => ?_⟩
+  obtain ⟨e, he⟩ : ∃ e : End X, e = f ≫ g := ⟨f ≫ g, rfl⟩
+  have hnu : ¬ IsUnit e := fun hu => by
+    have : IsIso (f ≫ g) := he ▸ (isUnit_iff_isIso e).1 hu
+    exact hf (IsSplitMono.mk'
+      ⟨g ≫ inv (f ≫ g), by rw [← Category.assoc, IsIso.hom_inv_id]⟩)
+  have hiso : IsIso ((1 : End X) - e) :=
+    (isUnit_iff_isIso _).1 (IsLocalRing.isUnit_one_sub_self_of_mem_nonunits e hnu)
+  rwa [End.one_def, he] at hiso
 
 omit [IsLocalRing (End X)] in
 /-- **Into an object with a local endomorphism ring the radical is the set of morphisms that are
@@ -348,19 +366,16 @@ the target is constrained, and the defining condition is read in its left-hand f
 `TauCeti.mem_jacobsonRadical_iff_isIso_id_sub_comp_left`, with `g ≫ f` an endomorphism of `Y`. -/
 theorem mem_jacobsonRadical_iff_not_isSplitEpi {f : X ⟶ Y} :
     f ∈ jacobsonRadical X Y ↔ ¬ IsSplitEpi f := by
-  refine ⟨fun hf hse => ?_, fun hf => mem_jacobsonRadical_iff_isIso_id_sub_comp_left.2 fun g => ?_⟩
-  · have hmem : 𝟙 Y ∈ jacobsonRadical Y Y := by
-      rw [← IsSplitEpi.id f]
-      exact comp_mem_jacobsonRadical_left (section_ f) hf
-    exact id_ne_zero Y (id_eq_zero_of_isIso_of_mem_jacobsonRadical hmem)
-  · obtain ⟨e, he⟩ : ∃ e : End Y, e = g ≫ f := ⟨g ≫ f, rfl⟩
-    have hnu : ¬ IsUnit e := fun hu => by
-      have : IsIso (g ≫ f) := he ▸ (isUnit_iff_isIso e).1 hu
-      exact hf (IsSplitEpi.mk'
-        ⟨inv (g ≫ f) ≫ g, by rw [Category.assoc, IsIso.inv_hom_id]⟩)
-    have hiso : IsIso ((1 : End Y) - e) :=
-      (isUnit_iff_isIso _).1 (IsLocalRing.isUnit_one_sub_self_of_mem_nonunits e hnu)
-    rwa [End.one_def, he] at hiso
+  refine ⟨not_isSplitEpi_of_mem_jacobsonRadical (id_ne_zero Y),
+    fun hf => mem_jacobsonRadical_iff_isIso_id_sub_comp_left.2 fun g => ?_⟩
+  obtain ⟨e, he⟩ : ∃ e : End Y, e = g ≫ f := ⟨g ≫ f, rfl⟩
+  have hnu : ¬ IsUnit e := fun hu => by
+    have : IsIso (g ≫ f) := he ▸ (isUnit_iff_isIso e).1 hu
+    exact hf (IsSplitEpi.mk'
+      ⟨inv (g ≫ f) ≫ g, by rw [Category.assoc, IsIso.inv_hom_id]⟩)
+  have hiso : IsIso ((1 : End Y) - e) :=
+    (isUnit_iff_isIso _).1 (IsLocalRing.isUnit_one_sub_self_of_mem_nonunits e hnu)
+  rwa [End.one_def, he] at hiso
 
 /-- **Between objects with local endomorphism rings the radical is the set of
 non-isomorphisms.** This is the description of `rad(X, Y)` for indecomposable `X` and `Y` under
