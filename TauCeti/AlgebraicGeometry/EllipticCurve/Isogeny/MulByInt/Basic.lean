@@ -84,6 +84,11 @@ is `WeierstrassCurve.Affine`'s, in `Affine/FunctionField/GenericPoint.lean`.
   `mulByIntPullback`'s hypothesis; neither subsumes the other.
 * `TauCeti.Isogeny.phiFunctionField_eq_algebraMap`: `Φₙ` at the generic point is the image of
   the univariate `Φₙ`, the companion of `psiFunctionField_sq` for the numerator.
+* `TauCeti.Isogeny.smulEval_genericPoint_X`, `TauCeti.Isogeny.smulEval_genericPoint_Y` and
+  `TauCeti.Isogeny.smulEval_genericPoint_Z`: the three coordinates of the Jacobian triple of
+  `[n]` at the generic point are `φₙ`, `ωₙ` and `ψₙ`. They are what `equation_mulByInt` is
+  assembled from, and what identifies the tautological point of `[n]` with `n • ` the generic
+  point.
 * `TauCeti.Isogeny.mulByIntX_mul_aeval_ΨSq`: the coordinate identity `[n]*x · ΨSqₙ(x) = Φₙ(x)`
   at the generic point, where `ψₙ` does not vanish.
 * `TauCeti.Isogeny.mulByIntPullback_mk`: the pullback of an arbitrary class, as evaluation of a
@@ -174,11 +179,10 @@ theorem mulByIntY_def (n : ℤ) :
 
 /-- The `Z`-coordinate of the Jacobian triple of `[n]` at the generic point is `ψₙ`.
 
-Private, like the two below: all three are `rw`-lemmas for `equation_mulByInt`, which is the
-public statement of what they add up to. They are not `@[simp]` either — `smulEval` is an
-`abbrev`, so `simp` unfolds the left-hand side through `Function.comp_apply` and `map_ψ` before
-these could fire, and `simpNF` rejects them. -/
-private theorem smulEval_genericPoint_Z (n : ℤ) :
+Not `@[simp]`, like the two below: `smulEval` is an `abbrev`, so `simp` unfolds the left-hand
+side through `Function.comp_apply` and `map_ψ` before these could fire, and `simpNF` rejects
+them. -/
+theorem smulEval_genericPoint_Z (n : ℤ) :
   smulEval (W⁄W.FunctionField).toAffine W.genericX W.genericY n 2 =
       psiFunctionField W n := by
   dsimp only [smulEval, Function.comp_def]
@@ -188,7 +192,7 @@ private theorem smulEval_genericPoint_Z (n : ℤ) :
   exact Affine.evalEval_genericX_genericY W (W.ψ n)
 
 /-- The `X`-coordinate of the Jacobian triple of `[n]` at the generic point is `φₙ`. -/
-private theorem smulEval_genericPoint_X (n : ℤ) :
+theorem smulEval_genericPoint_X (n : ℤ) :
     smulEval (W⁄W.FunctionField).toAffine W.genericX W.genericY n 0 =
       phiFunctionField W n := by
   dsimp only [smulEval, Function.comp_def]
@@ -198,7 +202,7 @@ private theorem smulEval_genericPoint_X (n : ℤ) :
   exact Affine.evalEval_genericX_genericY W (W.φ n)
 
 /-- The `Y`-coordinate of the Jacobian triple of `[n]` at the generic point is `ωₙ`. -/
-private theorem smulEval_genericPoint_Y (n : ℤ) :
+theorem smulEval_genericPoint_Y (n : ℤ) :
     smulEval (W⁄W.FunctionField).toAffine W.genericX W.genericY n 1 =
       omegaFunctionField W n := by
   dsimp only [smulEval, Function.comp_def]
