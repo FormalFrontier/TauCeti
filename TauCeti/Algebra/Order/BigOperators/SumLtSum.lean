@@ -81,11 +81,7 @@ theorem sum_lt_sum_image_sdiff [DecidableEq α] (f : α → M) {X A : Finset α}
     have hmem := Finset.mem_sdiff.mpr ⟨hmemX k (hAX hk), hnot⟩
     rwa [hXA] at hmem
   -- so the two differ, and what the image gains lies in `A`, above everything it loses
-  have hUV : (((X \ A).image σ) \ (X \ A)).card = ((X \ A) \ ((X \ A).image σ)).card := by
-    have h1 := Finset.card_sdiff_add_card_inter ((X \ A).image σ) (X \ A)
-    have h2 := Finset.card_sdiff_add_card_inter (X \ A) ((X \ A).image σ)
-    rw [Finset.inter_comm] at h2
-    omega
+  have hUV := Finset.card_sdiff_comm hcard
   have hUne : (((X \ A).image σ) \ (X \ A)).Nonempty := by
     rw [Finset.sdiff_nonempty]
     exact fun hsub => hne (Finset.eq_of_subset_of_card_le hsub (le_of_eq hcard.symm))

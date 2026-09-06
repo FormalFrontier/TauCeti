@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.Basis.Basic
 public import Mathlib.LinearAlgebra.Dimension.StrongRankCondition
 public import TauCeti.RepresentationTheory.Symmetric.Specht.Straightening
 
@@ -67,8 +66,6 @@ definition, so the standard ones already do.
 
 * [G. D. James, *The Representation Theory of the Symmetric Groups*][james1978], Sections 7 and 8.
 * [B. E. Sagan, *The Symmetric Group*][sagan2001], Sections 2.5 and 2.6.
-* [Schur--Weyl roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SchurWeyl/README.md),
-  Layer 5, "The standard basis", whose basis and dimension of the Specht module this proves.
 -/
 
 public section
@@ -349,6 +346,7 @@ theorem coe_standardPolytabloidBasis (μ : YoungDiagram) (T : StandardYoungTable
 
 /-- **The dimension of the Specht module is the number of standard Young tableaux**, `dim S^μ =
 f^μ`. -/
+@[simp]
 theorem finrank_spechtSubrepresentation (μ : YoungDiagram) :
     Module.finrank ℚ (spechtSubrepresentation μ).toSubmodule = standardCount μ := by
   rw [standardCount_def]
@@ -356,6 +354,7 @@ theorem finrank_spechtSubrepresentation (μ : YoungDiagram) :
 
 /-- **The dimension of the Specht module `S^μ` of a partition `μ` of `n` is the number `f^μ` of
 standard Young tableaux of shape `μ`.** -/
+@[simp]
 theorem finrank_spechtModule {n : ℕ} (μ : n.Partition) :
     Module.finrank ℚ (spechtModule μ) = standardCount (diagramOf μ) :=
   finrank_spechtSubrepresentation (diagramOf μ)
