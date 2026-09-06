@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.Map
+public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.MapsInfinity
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.FunctionField
 
 /-!
@@ -195,27 +196,14 @@ theorem isIntegral_map (φ : CoordinatePullback W₁ W₂) (f : F →+* K) {z : 
   rw [RingHom.algebraMap_toAlgebra, RingHom.algebraMap_toAlgebra]
   exact map_comp_coordinateRingMap φ f
 
-/-- **Pointedness survives base change.** The two coordinates of `W₁` stay integral over the
-pulled-back coordinate ring of `W₂`, and they generate. -/
+/-- **Pointedness survives base change.** The `x`-coordinate of `W₁` stays integral over the
+pulled-back coordinate ring of `W₂`, which is all pointedness asks. -/
 theorem MapsInfinity.map {φ : CoordinatePullback W₁ W₂} (hφ : φ.MapsInfinity) (f : F →+* K) :
     (φ.map f).MapsInfinity := by
-  rw [mapsInfinity_iff] at hφ ⊢
-  let _ := (φ.map f).toRingHom.toAlgebra
-  have : IsScalarTower K (W₂.map f).CoordinateRing (W₁.map f).FunctionField :=
-    IsScalarTower.of_algebraMap_eq fun a ↦ by
-      rw [RingHom.algebraMap_toAlgebra]
-      exact ((φ.map f).commutes a).symm
-  have hX : IsIntegral (W₂.map f).CoordinateRing (W₁.map f).genericX := by
-    have h := isIntegral_map φ f (hφ (CoordinateRing.mk W₁ (C X)))
-    rwa [← genericX_def, FunctionField.map_genericX] at h
-  have hY : IsIntegral (W₂.map f).CoordinateRing (W₁.map f).genericY := by
-    have h := isIntegral_map φ f (hφ (CoordinateRing.mk W₁ Y))
-    rwa [← genericY_def, FunctionField.map_genericY] at h
-  have hle : Algebra.adjoin K
-        ({(W₁.map f).genericX, (W₁.map f).genericY} : Set (W₁.map f).FunctionField) ≤
-      (integralClosure (W₂.map f).CoordinateRing (W₁.map f).FunctionField).restrictScalars K :=
-    Algebra.adjoin_le (by rintro w (rfl | rfl); exacts [hX, hY])
-  exact fun z ↦ hle (algebraMap_mem_adjoin_genericX_genericY (W₁.map f) z)
+  rw [mapsInfinity_iff] at hφ
+  rw [mapsInfinity_iff_isIntegralElem_genericX]
+  have h := isIntegral_map φ f (hφ (CoordinateRing.mk W₁ (C X)))
+  rwa [← genericX_def, FunctionField.map_genericX] at h
 
 end CoordinatePullback
 
