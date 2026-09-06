@@ -232,8 +232,8 @@ lemma hasFiniteSupport_weightedOrderOfVanishingOnSubgroupOrbit [Γ.FiniteIndex]
 
 /-- **The `Γ`-orbits carrying mass are covered by the fibres above the `SL(2, ℤ)`-orbits they
 lie in.** Restricting the unrestricted sum to that union changes nothing, which is what lets the
-sum be reindexed by `SL(2, ℤ)`-orbits. The fibres are pairwise disjoint
-(`pairwiseDisjoint_preimage_slOrbitOfSubgroupOrbit`), so the reindexing is a partition. -/
+sum be reindexed by `SL(2, ℤ)`-orbits. Those fibres are pairwise disjoint by
+`Set.pairwiseDisjoint_fiber`, so the reindexing is a partition. -/
 private lemma finsum_eq_finsum_mem_biUnion_preimage_slOrbitOfSubgroupOrbit
     [ModularFormClass F (Γ : Subgroup (GL (Fin 2) ℝ)) k] (f : F) :
     (∑ᶠ o : orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ,
@@ -248,15 +248,6 @@ private lemma finsum_eq_finsum_mem_biUnion_preimage_slOrbitOfSubgroupOrbit
         slOrbitOfSubgroupOrbit (Γ := Γ) ⁻¹' {P} :=
     fun o ho ↦ Set.mem_biUnion ⟨o, ho, rfl⟩ rfl
   rw [finsum_mem_def, Set.indicator_eq_self.mpr hsub]
-
-/-- **Distinct `SL(2, ℤ)`-orbits have disjoint fibres.** A `Γ`-orbit lies above exactly one
-`SL(2, ℤ)`-orbit, so the fibres of `slOrbitOfSubgroupOrbit` partition whatever they cover. -/
-private lemma pairwiseDisjoint_preimage_slOrbitOfSubgroupOrbit
-    (I : Set (orbitRel.Quotient SL(2, ℤ) ℍ)) :
-    I.PairwiseDisjoint (fun P ↦ slOrbitOfSubgroupOrbit (Γ := Γ) ⁻¹' {P}) := by
-  intro a _ b _ hab
-  simp only [Function.onFun, Set.disjoint_left, Set.mem_preimage, Set.mem_singleton_iff]
-  exact fun o h1 h2 ↦ hab (h1 ▸ h2)
 
 /-- **The interior mass of the norm, redistributed over the `Γ`-orbits.** The level-one weighted
 divisor sum of `ModularForm.norm 𝒮ℒ f` is the general-level weighted divisor sum of `f`.
@@ -276,7 +267,8 @@ theorem finsum_weightedOrderOfVanishingOnSubgroupOrbit_eq_finsum_norm [Γ.Finite
   set I := slOrbitOfSubgroupOrbit (Γ := Γ) ''
     Function.support (weightedOrderOfVanishingOnSubgroupOrbit (Γ := Γ) (k := k) f) with hIdef
   rw [finsum_eq_finsum_mem_biUnion_preimage_slOrbitOfSubgroupOrbit f,
-    finsum_mem_biUnion (pairwiseDisjoint_preimage_slOrbitOfSubgroupOrbit I) (hsupp.image _)
+    finsum_mem_biUnion (Set.pairwiseDisjoint_fiber (slOrbitOfSubgroupOrbit (Γ := Γ)) I)
+      (hsupp.image _)
       fun P _ ↦ finite_preimage_slOrbitOfSubgroupOrbit P,
     finsum_mem_congr rfl fun P _ ↦
       (weightedOrderOfVanishingOnOrbit_norm_eq_finsum_mem f hf P).symm, finsum_mem_def]
