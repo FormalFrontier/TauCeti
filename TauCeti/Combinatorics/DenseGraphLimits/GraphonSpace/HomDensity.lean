@@ -54,16 +54,17 @@ variable {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasu
 /-- The homomorphism density of a finite graph, as a function on graphon space. -/
 def homDensityOnSpace (n : ℕ) (F : SimpleGraph (Fin n)) [DecidableRel F.Adj] :
     GraphonSpace Ω μ → ℝ :=
-  GraphonSpace.lift (homDensity F) fun U W h =>
-    forall_homDensity_eq_of_cutDist_eq_zero U W h n F
+  SeparationQuotient.lift (homDensity F) fun U W h =>
+    forall_homDensity_eq_of_cutDist_eq_zero U W (Metric.inseparable_iff.mp h) n F
 
 /-- Homomorphism density on graphon space computes as the original density on representatives. -/
 @[simp]
 theorem homDensityOnSpace_mk (n : ℕ) (F : SimpleGraph (Fin n)) [DecidableRel F.Adj]
     (W : Graphon Ω μ) :
-    homDensityOnSpace (μ := μ) n F (GraphonSpace.mk W) = homDensity F W :=
-  GraphonSpace.lift_mk (homDensity F)
-    (fun U W h => forall_homDensity_eq_of_cutDist_eq_zero U W h n F) W
+    homDensityOnSpace (μ := μ) n F (SeparationQuotient.mk W) = homDensity F W :=
+  SeparationQuotient.lift_mk
+    (fun U W h => forall_homDensity_eq_of_cutDist_eq_zero U W
+      (Metric.inseparable_iff.mp h) n F) W
 
 /-- Homomorphism density on graphon space is Lipschitz with constant the number of edges of the
 finite graph. -/
@@ -71,14 +72,11 @@ theorem lipschitzWith_homDensityOnSpace (n : ℕ) (F : SimpleGraph (Fin n))
     [DecidableRel F.Adj] :
     LipschitzWith (F.edgeFinset.card : NNReal) (homDensityOnSpace (μ := μ) n F) := by
   refine LipschitzWith.of_dist_le_mul ?_
+  refine SeparationQuotient.surjective_mk.forall₂.2 ?_
   intro U W
-  induction U using GraphonSpace.inductionOn with
-  | mk U =>
-    induction W using GraphonSpace.inductionOn with
-    | mk W =>
-      rw [Real.dist_eq, homDensityOnSpace_mk, homDensityOnSpace_mk,
-        dist_graphonSpace_mk_mk, NNReal.coe_natCast]
-      exact abs_homDensity_sub_le_cutDist F U W
+  rw [Real.dist_eq, homDensityOnSpace_mk, homDensityOnSpace_mk,
+    SeparationQuotient.dist_mk, NNReal.coe_natCast]
+  exact abs_homDensity_sub_le_cutDist F U W
 
 /-- Every finite-graph homomorphism density is continuous on graphon space. -/
 theorem continuous_homDensityOnSpace (n : ℕ) (F : SimpleGraph (Fin n))
