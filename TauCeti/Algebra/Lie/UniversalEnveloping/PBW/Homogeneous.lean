@@ -6,15 +6,16 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.PBW.AssociatedGraded
-public import TauCeti.LinearAlgebra.SymmetricAlgebra.Grading
+public import TauCeti.LinearAlgebra.SymmetricAlgebra.Homogeneous
 
 /-!
 # Homogeneous pieces of the PBW map
 
 The degree-`n` piece of a symmetric algebra is defined to be the `n`-th power of the range of its
 canonical generator map. When the underlying module of a Lie algebra `L` over a commutative ring
-`R` is free, these pieces form an internal direct sum by
-`TauCeti.SymmetricAlgebra.isInternal_homogeneousSubmodule`. The canonical map
+`R` is free, these pieces form an internal direct sum; that is proved in
+`TauCeti/LinearAlgebra/SymmetricAlgebra/Grading.lean`, which this file does not need. The
+canonical map
 
 `SymmetricAlgebra R L →ₐ[R] gr U(L)`
 
