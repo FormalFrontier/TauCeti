@@ -45,8 +45,6 @@ not defined using them.
 
 ## References
 
-* `TauCetiRoadmap/AnalyticToricGeometry/Suggested.lean`,
-  "Affine complex points and an independent topology".
 * D. Cox, J. Little and H. Schenck, *Toric Varieties*, §§1.1–1.3.
 * W. Fulton, *Introduction to Toric Varieties*, §1.2.
 -/
@@ -64,18 +62,6 @@ variable {S : Type*} [AddCommMonoid S] {r r' : ℕ}
 carrier; no topology is part of the data. -/
 abbrev AffineSemigroupComplexPoint (S : Type*) [AddCommMonoid S] :=
   MonoidAlgebra ℂ (Multiplicative S) →ₐ[ℂ] ℂ
-
-/-- Evaluating an affine complex point at the monomial of an `ℕ`-combination `∑ j, a j • v j`
-gives the corresponding monomial in the evaluations at the `v j`. -/
-theorem apply_single_ofAdd_sum (v : Fin r → S) (a : Fin r → ℕ)
-    (x : AffineSemigroupComplexPoint S) :
-    x (MonoidAlgebra.single (ofAdd (∑ j, a j • v j)) 1) =
-      ∏ j, x (MonoidAlgebra.single (ofAdd (v j)) 1) ^ a j := by
-  have key : ∀ s : S, x (MonoidAlgebra.single (ofAdd s) 1) =
-      (MonoidAlgebra.lift ℂ ℂ (Multiplicative S)).symm x (ofAdd s) := fun s =>
-    (MonoidAlgebra.lift_symm_apply x (ofAdd s)).symm
-  simp only [key]
-  simp only [ofAdd_sum, ofAdd_nsmul, map_prod, map_pow]
 
 /-- A finite family generating a commutative additive monoid. The affine complex points of `S`
 are topologized through evaluation on such a family, so the chosen indexed family, and not just
@@ -118,8 +104,12 @@ exponents given by any expression of the monoid element through the generating f
 theorem apply_single_eq_prod_monomialEmbedding (g : AddGeneratingFamily S r) {s : S}
     {a : Fin r → ℕ} (ha : s = ∑ j, a j • g.toFun j) (x : AffineSemigroupComplexPoint S) :
     x (MonoidAlgebra.single (ofAdd s) 1) = ∏ j, monomialEmbedding g x j ^ a j := by
-  rw [ha, apply_single_ofAdd_sum]
-  simp
+  have key : ∀ t : S, x (MonoidAlgebra.single (ofAdd t) 1) =
+      (MonoidAlgebra.lift ℂ ℂ (Multiplicative S)).symm x (ofAdd t) := fun t =>
+    (MonoidAlgebra.lift_symm_apply x (ofAdd t)).symm
+  rw [ha]
+  simp only [monomialEmbedding_apply, key]
+  simp only [ofAdd_sum, ofAdd_nsmul, map_prod, map_pow]
 
 /-- An affine complex point is determined by its values on a finite generating family. -/
 theorem monomialEmbedding_injective (g : AddGeneratingFamily S r) :
