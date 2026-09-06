@@ -72,8 +72,11 @@ theorem IndepFun.hasLaw_sub_expMeasure {X Y : Ω → ℝ} {b : ℝ} (hindep : In
   funext t
   have hneg :
       charFun (P.map (-Y)) t = charFun (expMeasure b⁻¹) (-t) := by
-    rw [show (-Y) = fun ω => (-1 : ℝ) * Y ω by funext ω; simp,
-      charFun_map_mul_comp hY.aemeasurable, hY.map_eq]
+    -- `charFun_map_mul_comp` expresses scalar negation as multiplication by `-1`.
+    have hneg_eq_mul : (-Y) = fun ω => (-1 : ℝ) * Y ω := by
+      funext ω
+      simp
+    rw [hneg_eq_mul, charFun_map_mul_comp hY.aemeasurable, hY.map_eq]
     congr 1
     ring
   simp only [sub_eq_add_neg]
@@ -102,21 +105,6 @@ theorem IndepFun.hasLaw_sub_expMeasure {X Y : Ω → ℝ} {b : ℝ} (hindep : In
   ring
 
 /-! ### Sums of geometric variables -/
-
-/-- For nonzero success probability, the geometric law is the negative-binomial law of shape
-one. -/
-theorem geometricMeasure_eq_negativeBinomialMeasure_one (p : unitInterval) (hp : p ≠ 0) :
-    geometricMeasure p = negativeBinomialMeasure 1 p := by
-  have hpR : (0 : ℝ) < p := by grind
-  let _ : IsProbabilityMeasure (negativeBinomialMeasure 1 p) :=
-    isProbabilityMeasure_negativeBinomialMeasure zero_le_one hpR p.2.2
-  refine Measure.ext_of_measureReal_singleton fun k => ?_
-  rw [geometricMeasure_real_singleton hp,
-    negativeBinomialMeasure_real_singleton zero_le_one hpR p.2.2,
-    negativeBinomialWeightReal_eq_coeff zero_lt_one]
-  rw [show (p : ℝ).rpow 1 = p by simp]
-  simp only [Ring.multichoose_one, one_mul]
-  ring
 
 /-- A finite sum of independent geometric variables with success probability `p ≠ 0` has the
 negative-binomial law whose shape is the cardinality of the family. This includes the empty family
