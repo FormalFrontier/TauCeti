@@ -65,6 +65,9 @@ datum for the type-`D` spin representation and the permutation `TauCeti.graphPer
 * `TauCeti.SpinPolarizationData.typeDGraphOperator_eq_wedge_sub_contract`: the operator is
   creation at the last coordinate minus annihilation at it.
 * `TauCeti.SpinPolarizationData.typeDGraphOperator_apply_apply`: it squares to `-1`.
+* `TauCeti.SpinPolarizationData.typeDGraphOperator_basis_of_notMem` and
+  `TauCeti.SpinPolarizationData.typeDGraphOperator_basis_of_mem`: it acts on an exterior basis
+  vector by inserting or erasing the final coordinate of its index set, up to a sign.
 * `TauCeti.SpinPolarizationData.typeDGraphOperator_spinAction_typeDSimpleRootBivector`, its
   negative counterpart, and
   `TauCeti.SpinPolarizationData.typeDGraphOperator_spinAction_typeDSimpleCorootBivector`: the same
@@ -461,6 +464,37 @@ theorem typeDGraphOperator_eq_wedge_sub_contract (hn : 2 ≤ n) (x : ExteriorAlg
       P.wedge (b ⟨n - 1, by omega⟩) x - P.contract (P.dualVector b ⟨n - 1, by omega⟩) x := by
   rw [typeDGraphOperator_apply, typeDGraphVector_def, map_sub, map_sub, LinearMap.sub_apply,
     spinAction_ι, spinAction_ι, P.cliffordOperator_coe_W, P.cliffordOperator_coe_W']
+
+/-! ### The graph operator on the exterior basis -/
+
+/-- **The graph operator creates the final coordinate in an exterior basis vector that lacks
+it**, with the shuffle sign that moves that coordinate to the front. Only the creation half of the
+operator contributes, the annihilation half killing a basis vector whose index set misses the
+coordinate it annihilates. -/
+theorem typeDGraphOperator_basis_of_notMem (hn : 2 ≤ n) {s : Finset (Fin n)}
+    (hs : (⟨n - 1, by omega⟩ : Fin n) ∉ s) :
+    P.typeDGraphOperator b hn (b.ExteriorAlgebra s) =
+      (TauCeti.ExteriorAlgebra.basisEraseSign (⟨n - 1, by omega⟩ : Fin n)
+          (insert (⟨n - 1, by omega⟩ : Fin n) s) : ℤ) •
+        b.ExteriorAlgebra (insert (⟨n - 1, by omega⟩ : Fin n) s) := by
+  rw [typeDGraphOperator_eq_wedge_sub_contract, P.wedge_apply, P.contract_apply,
+    pairingEquiv_dualVector, TauCeti.ExteriorAlgebra.ι_mul_basis,
+    TauCeti.ExteriorAlgebra.contractLeft_coord_basis, ite_eq_right hs, ite_eq_right hs, sub_zero,
+    Units.smul_def]
+
+/-- **The graph operator annihilates the final coordinate of an exterior basis vector that
+carries it**, with the shuffle sign that moves that coordinate to the front and the minus sign of
+the graph vector's second summand. Only the annihilation half of the operator contributes, a
+repeated generator squaring to zero. -/
+theorem typeDGraphOperator_basis_of_mem (hn : 2 ≤ n) {s : Finset (Fin n)}
+    (hs : (⟨n - 1, by omega⟩ : Fin n) ∈ s) :
+    P.typeDGraphOperator b hn (b.ExteriorAlgebra s) =
+      (-(TauCeti.ExteriorAlgebra.basisEraseSign (⟨n - 1, by omega⟩ : Fin n) s : ℤ)) •
+        b.ExteriorAlgebra (s.erase (⟨n - 1, by omega⟩ : Fin n)) := by
+  rw [typeDGraphOperator_eq_wedge_sub_contract, P.wedge_apply, P.contract_apply,
+    pairingEquiv_dualVector, TauCeti.ExteriorAlgebra.ι_mul_basis,
+    TauCeti.ExteriorAlgebra.contractLeft_coord_basis, ite_eq_left hs, ite_eq_left hs, zero_sub,
+    Units.smul_def, neg_smul]
 
 /-- The graph operator squares to `-1`. -/
 @[simp]

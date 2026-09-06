@@ -128,6 +128,11 @@ two `Dₙ` fork nodes. -/
 @[simp] theorem graphPermD_sq (n : ℕ) (hn : 2 ≤ n) : graphPermD n hn ^ 2 = 1 := by
   simp [graphPermD, pow_two]
 
+/-- Applying the final-index swap twice returns an index to itself. -/
+@[simp] theorem graphPermD_apply_apply (n : ℕ) (hn : 2 ≤ n) (i : Fin n) :
+    graphPermD n hn (graphPermD n hn i) = i := by
+  simp [graphPermD]
+
 /-- The two swapped indices are distinct, so the swap is not the identity. -/
 theorem graphPermD_ne_one (n : ℕ) (hn : 2 ≤ n) : graphPermD n hn ≠ 1 := by
   rw [graphPermD, ne_eq, Equiv.swap_eq_one_iff]

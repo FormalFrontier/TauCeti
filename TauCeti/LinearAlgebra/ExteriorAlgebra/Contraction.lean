@@ -16,6 +16,11 @@ onto the exterior basis vectors containing that coordinate. This is the occupati
 projection used by both scalar detection in Clifford algebras and the matrix-unit construction
 from creation and annihilation operators.
 
+Each of the two halves acts on an exterior basis vector by a single coordinate move, up to the
+shuffle sign that carries the moved coordinate to the front: contraction erases the coordinate
+from the index set, and left multiplication inserts it, each vanishing when the index set is on
+the wrong side of that move.
+
 The grade involution is diagonal for the exterior basis as well: it multiplies an exterior
 monomial, and so the basis vector indexed by `s`, by the parity of its degree.
 -/
@@ -128,6 +133,24 @@ theorem basis_singleton_mul_basis_erase {I : Type w} [LinearOrder I]
   have hprod := ExteriorAlgebra.basis_mul_of_disjoint b u t hdisj
   rw [hunion] at hprod
   simpa [basisEraseSign, u, t] using hprod
+
+/-- **Creating a basis coordinate inserts it into the index set**, with the shuffle sign that
+moves it to the front; it is zero when the coordinate is already present, since a repeated
+generator squares to zero. -/
+@[simp]
+theorem ι_mul_basis {I : Type w} [LinearOrder I]
+    (b : Module.Basis I R M) (i : I) (s : Finset I) :
+    ExteriorAlgebra.ι R (b i) * b.ExteriorAlgebra s =
+      if i ∈ s then 0
+        else basisEraseSign i (insert i s) • b.ExteriorAlgebra (insert i s) := by
+  classical
+  rw [← basis_singleton]
+  split_ifs with hi
+  · exact ExteriorAlgebra.basis_mul_of_not_disjoint b
+      (⟨{i}, Finset.card_singleton i⟩ : Set.powersetCard I 1) (⟨s, rfl⟩ : Set.powersetCard I s.card)
+      (by simp [hi])
+  · have h := basis_singleton_mul_basis_erase b i (insert i s) (Finset.mem_insert_self i s)
+    rwa [Finset.erase_insert hi] at h
 
 /-- Contracting an exterior-basis vector erases the contracted coordinate, with the shuffle sign
 that moves that coordinate to the front; it is zero when the coordinate is absent. -/
