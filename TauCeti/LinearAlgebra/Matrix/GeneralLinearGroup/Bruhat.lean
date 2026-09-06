@@ -330,15 +330,15 @@ triangular or a product `b₁ w b₂` of two upper-triangular matrices with the 
 the generation axiom of the `(B, N)`-pair of `GL₂`. -/
 theorem closure_insert_gl2WeylElement_eq_top :
     Subgroup.closure (insert (GL2WeylElement F) (GL2Borel F : Set (GL (Fin 2) F))) = ⊤ := by
-  exact closure_insert_eq_top_of_notMem_imp_mem_doubleCoset (GL2Borel F) (GL2WeylElement F)
-    mem_doubleCoset_weyl_of_notMem
+  exact Subgroup.closure_insert_eq_top_of_notMem_imp_mem_doubleCoset
+    (GL2Borel F) (GL2WeylElement F) mem_doubleCoset_weyl_of_notMem
 
 /-- Every solvable subgroup of `GL₂(F)` that contains the upper-triangular subgroup is contained
 in it if `F` has a nonzero element whose square is not one. -/
 theorem le_of_isSolvable (hF : ∃ a : F, a ≠ 0 ∧ a ^ 2 ≠ 1)
     (P : Subgroup (GL (Fin 2) F)) [Group.IsSolvable P]
     (hBP : GL2Borel F ≤ P) : P ≤ GL2Borel F := by
-  exact le_of_isSolvable_of_not_isSolvable_of_notMem_imp_mem_doubleCoset
+  exact Subgroup.le_of_isSolvable_of_not_isSolvable_of_notMem_imp_mem_doubleCoset
     (GL2Borel F) P (GL2WeylElement F) (Matrix.GeneralLinearGroup.not_isSolvable_fin_two F hF)
     mem_doubleCoset_weyl_of_notMem hBP
 
@@ -347,7 +347,7 @@ subgroup is contained in it. -/
 theorem le_of_isSolvable_of_infinite [Infinite F]
     (P : Subgroup (GL (Fin 2) F)) [Group.IsSolvable P]
     (hBP : GL2Borel F ≤ P) : P ≤ GL2Borel F := by
-  exact le_of_isSolvable_of_not_isSolvable_of_notMem_imp_mem_doubleCoset
+  exact Subgroup.le_of_isSolvable_of_not_isSolvable_of_notMem_imp_mem_doubleCoset
     (GL2Borel F) P (GL2WeylElement F)
     (Matrix.GeneralLinearGroup.not_isSolvable_fin_two_of_infinite F)
     mem_doubleCoset_weyl_of_notMem hBP

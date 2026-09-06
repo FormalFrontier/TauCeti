@@ -17,15 +17,15 @@ generate the ambient group. When that group is nonsolvable, every solvable subgr
 
 ## Main statements
 
-* `TauCeti.closure_insert_eq_top_of_notMem_imp_mem_doubleCoset`: a subgroup and a representative
+* `Subgroup.closure_insert_eq_top_of_notMem_imp_mem_doubleCoset`: a subgroup and a representative
   generate the ambient group when their two double cosets cover it.
-* `TauCeti.le_of_isSolvable_of_not_isSolvable_of_notMem_imp_mem_doubleCoset`: in a nonsolvable
+* `Subgroup.le_of_isSolvable_of_not_isSolvable_of_notMem_imp_mem_doubleCoset`: in a nonsolvable
   group, that subgroup contains every solvable overgroup.
 -/
 
 public section
 
-namespace TauCeti
+namespace Subgroup
 
 variable {G : Type*} [Group G]
 
@@ -72,4 +72,4 @@ theorem le_of_isSolvable_of_not_isSolvable_of_notMem_imp_mem_doubleCoset
   rw [hPtop]
   exact Subgroup.mem_top g
 
-end TauCeti
+end Subgroup

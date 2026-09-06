@@ -177,7 +177,7 @@ theorem closure_insert_modularGroup_S_eq_top :
     Subgroup.closure
         (insert (((ModularGroup.S : SL(2, ℤ)) : SL(2, F)))
           (SL2Borel F : Set SL(2, F))) = ⊤ := by
-  exact closure_insert_eq_top_of_notMem_imp_mem_doubleCoset (SL2Borel F)
+  exact Subgroup.closure_insert_eq_top_of_notMem_imp_mem_doubleCoset (SL2Borel F)
     ((ModularGroup.S : SL(2, ℤ)) : SL(2, F)) mem_doubleCoset_modularGroup_S_of_notMem
 
 /-- Every solvable subgroup of `SL₂(F)` that contains the standard Borel is contained in it if
@@ -185,7 +185,7 @@ theorem closure_insert_modularGroup_S_eq_top :
 theorem le_of_isSolvable (hF : ∃ a : F, a ≠ 0 ∧ a ^ 2 ≠ 1)
     (P : Subgroup SL(2, F)) [Group.IsSolvable P]
     (hBP : SL2Borel F ≤ P) : P ≤ SL2Borel F := by
-  exact le_of_isSolvable_of_not_isSolvable_of_notMem_imp_mem_doubleCoset
+  exact Subgroup.le_of_isSolvable_of_not_isSolvable_of_notMem_imp_mem_doubleCoset
     (SL2Borel F) P ((ModularGroup.S : SL(2, ℤ)) : SL(2, F))
     (Matrix.SpecialLinearGroup.not_isSolvable_fin_two F hF)
     mem_doubleCoset_modularGroup_S_of_notMem hBP
@@ -195,7 +195,7 @@ is contained in it. -/
 theorem le_of_isSolvable_of_infinite [Infinite F]
     (P : Subgroup SL(2, F)) [Group.IsSolvable P]
     (hBP : SL2Borel F ≤ P) : P ≤ SL2Borel F := by
-  exact le_of_isSolvable_of_not_isSolvable_of_notMem_imp_mem_doubleCoset
+  exact Subgroup.le_of_isSolvable_of_not_isSolvable_of_notMem_imp_mem_doubleCoset
     (SL2Borel F) P ((ModularGroup.S : SL(2, ℤ)) : SL(2, F))
     (Matrix.SpecialLinearGroup.not_isSolvable_fin_two_of_infinite F)
     mem_doubleCoset_modularGroup_S_of_notMem hBP
