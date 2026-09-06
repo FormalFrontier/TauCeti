@@ -106,16 +106,16 @@ points instead of on the root datum.
 * `TauCeti.GraphTwistedIndex.geckSteinberg_eq_geckFrobenius_of_diagramPerm_eq_one`: on an untwisted
   family it is the Frobenius.
 * `TauCeti.GraphTwistedIndex.geckSteinberg_pow_eq_geckGraphAut_pow_comp`,
-  `TauCeti.GraphTwistedIndex.geckSteinberg_pow_eq_geckFrobeniusPow_comp` and
+  `TauCeti.GraphTwistedIndex.geckSteinberg_pow_eq_geckFrobenius_pow_comp` and
   `TauCeti.GraphTwistedIndex.geckSteinberg_pow_geckRootSubgroup`: a power separates, in either
   order, into a power of the graph automorphism and an iterate of the Frobenius, and so renumbers a
   root subgroup by `σ ^ m` and raises its parameter to the `q ^ m`-th power.
-* `TauCeti.GraphTwistedIndex.geckSteinberg_pow_twistOrder_eq_geckFrobeniusPow`: the order
+* `TauCeti.GraphTwistedIndex.geckSteinberg_pow_twistOrder_eq_geckFrobenius_pow`: the order
   relation `F ^ e = Frob_(q ^ e)` on the Steinberg map itself.
 * `TauCeti.GraphTwistedIndex.mem_fixedSubgroup_geckSteinberg_iff`: a point is Steinberg-fixed
   exactly when its entrywise Frobenius image is its conjugate by the matrix of the pinned
   coordinate permutation.
-* `TauCeti.GraphTwistedIndex.fixedSubgroup_geckSteinberg_le_fixedSubgroup_geckFrobeniusPow` and
+* `TauCeti.GraphTwistedIndex.fixedSubgroup_geckSteinberg_le_fixedSubgroup_geckFrobenius_pow` and
   `TauCeti.GraphTwistedIndex.mem_frobeniusFixedSubfield_of_mem_fixedSubgroup_geckSteinberg`: the
   Steinberg-fixed points lie among the points over `𝔽_(q ^ e)`, entrywise.
 * `TauCeti.GraphTwistedIndex.fixedSubgroup_inf_fixedSubgroup_le_fixedSubgroup_geckSteinberg`: a
@@ -308,18 +308,20 @@ the commutation `geckGraphAut_comp_geckFrobenius` of the two factors; without it
 be an alternating word in them. -/
 theorem geckSteinberg_pow_eq_geckGraphAut_pow_comp (m : ℕ) :
     (show Monoid.End _ from d.geckSteinberg) ^ m =
-      (d.geckGraphAut ^ m).toMonoidHom.comp (d.1.geckFrobeniusPow m) := by
-  rw [ValidLieTypeIndex.geckFrobeniusPow_def, geckSteinberg_def, geckGraphAut_def]
+      (d.geckGraphAut ^ m).toMonoidHom.comp
+        ((show Monoid.End _ from d.1.geckFrobenius) ^ m) := by
+  rw [ValidLieTypeIndex.geckFrobenius_pow, geckSteinberg_def, geckGraphAut_def]
   exact DynkinType.geckTwistedFrobenius_pow d.1.dynkinType_valid
     d.diagramPerm_mem_diagramSymmetry d.1.characteristic d.1.fieldExponent d.1.Closure m
 
 /-- **The powers of the ordinary Steinberg map separate in the other order too**, since its two
 factors commute: `(γ ∘ Frob_q) ^ m = Frob_(q ^ m) ∘ γ ^ m`. This is the power form of
 `geckSteinberg_eq_geckFrobenius_comp`. -/
-theorem geckSteinberg_pow_eq_geckFrobeniusPow_comp (m : ℕ) :
+theorem geckSteinberg_pow_eq_geckFrobenius_pow_comp (m : ℕ) :
     (show Monoid.End _ from d.geckSteinberg) ^ m =
-      (d.1.geckFrobeniusPow m).comp (d.geckGraphAut ^ m).toMonoidHom := by
-  rw [ValidLieTypeIndex.geckFrobeniusPow_def, geckSteinberg_def, geckGraphAut_def]
+      ((show Monoid.End _ from d.1.geckFrobenius) ^ m).comp
+        (d.geckGraphAut ^ m).toMonoidHom := by
+  rw [ValidLieTypeIndex.geckFrobenius_pow, geckSteinberg_def, geckGraphAut_def]
   exact DynkinType.geckTwistedFrobenius_pow_eq_geckFrobenius_comp d.1.dynkinType_valid
     d.diagramPerm_mem_diagramSymmetry d.1.characteristic d.1.fieldExponent d.1.Closure m
 
@@ -332,20 +334,19 @@ itself, and it is the group-layer counterpart of
 analogue of the power relation which defines a Steinberg endomorphism, some positive iterate being
 a Frobenius; that this carrier is the group on which Steinberg's definition is read needs its
 identification with the pinned simply connected group, and is not claimed here. On an untwisted
-family the twist order is `1` and the relation is `pow_one` together with
-`TauCeti.ValidLieTypeIndex.geckFrobeniusPow_one`. -/
+family the twist order is `1` and the relation is `pow_one` on both sides. -/
 @[simp]
-theorem geckSteinberg_pow_twistOrder_eq_geckFrobeniusPow :
+theorem geckSteinberg_pow_twistOrder_eq_geckFrobenius_pow :
     (show Monoid.End _ from d.geckSteinberg) ^ d.twistOrder =
-      d.1.geckFrobeniusPow d.twistOrder := by
-  rw [ValidLieTypeIndex.geckFrobeniusPow_def, geckSteinberg_def]
+      (show Monoid.End _ from d.1.geckFrobenius) ^ d.twistOrder := by
+  rw [ValidLieTypeIndex.geckFrobenius_pow, geckSteinberg_def]
   exact DynkinType.geckTwistedFrobenius_pow_eq_geckFrobenius d.1.dynkinType_valid
     d.diagramPerm_mem_diagramSymmetry d.1.characteristic d.1.fieldExponent d.1.Closure
     d.diagramPerm_pow_twistOrder
 
 /-- **The `m`-th power of the Steinberg map renumbers a root subgroup by the `m`-th power of the
 diagram permutation and raises its parameter to the `q ^ m`-th power.** At the twist order the
-renumbering disappears, which is `geckSteinberg_pow_twistOrder_eq_geckFrobeniusPow` read on the
+renumbering disappears, which is `geckSteinberg_pow_twistOrder_eq_geckFrobenius_pow` read on the
 root subgroups. -/
 @[simp]
 theorem geckSteinberg_pow_geckRootSubgroup (m : ℕ) (i : Fin d.1.rank ⊕ Fin d.1.rank)
@@ -364,12 +365,10 @@ theorem geckSteinberg_pow_geckRootSubgroup (m : ℕ) (i : Fin d.1.rank ⊕ Fin d
 `q`-power Frobenius image is its conjugate by the matrix of the pinned coordinate permutation.**
 This is the graph-twisted form of the descent condition that
 `TauCeti.ValidLieTypeIndex.mem_fixedSubgroup_geckFrobenius_iff` records on the nine untwisted
-families, where the matrix is the identity and the condition is that every entry lies in `𝔽_q`.
-
-As for that lemma, this is deliberately not a `simp` lemma: `TauCeti.fixedSubgroup` is
-`MonoidHom.eqLocus` against the identity, so `simp` rewrites its left-hand side to
-`d.geckSteinberg g = g` through the Mathlib `simp` lemma `MonoidHom.mem_eqLocus`, and the `simpNF`
-linter rejects the annotation. -/
+families, where the matrix is the identity and the condition is that every entry lies in `𝔽_q`. -/
+-- As for that lemma, this is not a `simp` lemma: `TauCeti.fixedSubgroup` is `MonoidHom.eqLocus`
+-- against the identity, so `simp` rewrites its left-hand side to `d.geckSteinberg g = g` through
+-- the Mathlib `simp` lemma `MonoidHom.mem_eqLocus`, and the `simpNF` linter rejects the annotation.
 theorem mem_fixedSubgroup_geckSteinberg_iff (g : ValidLieTypeIndex.GeckGroup d.1) :
     g ∈ fixedSubgroup d.geckSteinberg ↔
       Matrix.GeneralLinearGroup.map
@@ -390,9 +389,10 @@ theorem mem_fixedSubgroup_geckSteinberg_iff (g : ValidLieTypeIndex.GeckGroup d.1
 graph-twisted family this is the containment of the points fixed by `F` in the points fixed by
 `Frob_(q ^ e)`, those whose entries lie in the degree-`e` extension of the field of definition. No
 reverse inequality is stated. -/
-theorem fixedSubgroup_geckSteinberg_le_fixedSubgroup_geckFrobeniusPow :
-    fixedSubgroup d.geckSteinberg ≤ fixedSubgroup (d.1.geckFrobeniusPow d.twistOrder) := by
-  rw [geckSteinberg_def, ValidLieTypeIndex.geckFrobeniusPow_def]
+theorem fixedSubgroup_geckSteinberg_le_fixedSubgroup_geckFrobenius_pow :
+    fixedSubgroup d.geckSteinberg ≤
+      fixedSubgroup ((show Monoid.End _ from d.1.geckFrobenius) ^ d.twistOrder) := by
+  rw [geckSteinberg_def, ValidLieTypeIndex.geckFrobenius_pow]
   exact DynkinType.fixedSubgroup_geckTwistedFrobenius_le_fixedSubgroup_geckFrobenius
     d.1.dynkinType_valid d.diagramPerm_mem_diagramSymmetry d.1.characteristic d.1.fieldExponent
     d.1.Closure d.diagramPerm_pow_twistOrder
@@ -411,8 +411,8 @@ theorem mem_frobeniusFixedSubfield_of_mem_fixedSubgroup_geckSteinberg
         (Fin (d.1.dynkinType.geckDim d.1.dynkinType_valid)) d.1.Closure) r c ∈
       frobeniusFixedSubfield d.1.Closure d.1.characteristic
         (d.1.fieldExponent * d.twistOrder) :=
-  (ValidLieTypeIndex.mem_fixedSubgroup_geckFrobeniusPow_iff _ _ _).mp
-    (d.fixedSubgroup_geckSteinberg_le_fixedSubgroup_geckFrobeniusPow hg) r c
+  (ValidLieTypeIndex.mem_fixedSubgroup_geckFrobenius_pow_iff _ _ _).mp
+    (d.fixedSubgroup_geckSteinberg_le_fixedSubgroup_geckFrobenius_pow hg) r c
 
 /-- **A point fixed by both the Frobenius and the graph automorphism is fixed by the Steinberg
 map.** No converse is stated: a point fixed by the composite is not shown to be fixed by either
