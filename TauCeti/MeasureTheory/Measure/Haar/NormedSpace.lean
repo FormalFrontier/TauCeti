@@ -19,7 +19,7 @@ which is again an additive Haar measure.
 
 ## Main results
 
-* `TauCeti.ContinuousLinearEquiv.quasiMeasurePreserving_addHaar`: a continuous linear equivalence
+* `ContinuousLinearEquiv.quasiMeasurePreserving_addHaar`: a continuous linear equivalence
   is quasi measure preserving for additive Haar measures on its source and target.
 -/
 
@@ -31,7 +31,7 @@ namespace TauCeti
 
 /-- A continuous linear equivalence is nonsingular for any additive Haar measures on its source
 and target. -/
-theorem ContinuousLinearEquiv.quasiMeasurePreserving_addHaar {E F : Type*}
+theorem _root_.ContinuousLinearEquiv.quasiMeasurePreserving_addHaar {E F : Type*}
     [NormedAddCommGroup E] [NormedSpace ℝ E] [MeasurableSpace E] [BorelSpace E]
     [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
     [MeasurableSpace F] [BorelSpace F]
