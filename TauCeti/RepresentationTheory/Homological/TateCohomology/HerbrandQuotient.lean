@@ -28,7 +28,7 @@ The proofs are adapted to Mathlib's current Tate complex from the corresponding 
 ## Main definitions
 
 * `TauCeti.TateCohomology.herbrandQuotient` is the Herbrand quotient.
-* `TauCeti.TateCohomology.herbrandQuotient_of_finite` computes it for a finite module.
+* `TauCeti.TateCohomology.herbrandQuotient_eq_one_of_finite` computes it for a finite module.
 * `TauCeti.TateCohomology.herbrandQuotient_trivial_int_eq_card` computes it for trivial integral
   coefficients.
 
@@ -57,19 +57,21 @@ def herbrandQuotient (M : Rep R G) : ℚ :=
   Nat.card (tateCohomology M 0) / Nat.card (tateCohomology M (-1))
 
 /-- The Herbrand quotient vanishes exactly when one of its two defining Tate groups is infinite. -/
+@[simp]
 theorem herbrandQuotient_eq_zero_iff {M : Rep R G} :
     herbrandQuotient M = 0 ↔
       Infinite (tateCohomology M 0) ∨ Infinite (tateCohomology M (-1)) := by
   simp [herbrandQuotient, Nat.card_eq_zero]
 
-/-- The Herbrand quotient is nonzero exactly when its two defining Tate groups are finite. -/
+/-- The Herbrand quotient is nonzero exactly when its two defining Tate groups are finite. This is
+not `@[simp]`: `herbrandQuotient_eq_zero_iff` already normalizes the negated form. -/
 theorem herbrandQuotient_ne_zero_iff {M : Rep R G} :
     herbrandQuotient M ≠ 0 ↔
       Finite (tateCohomology M 0) ∧ Finite (tateCohomology M (-1)) := by
   simp [herbrandQuotient, Nat.card_eq_zero]
 
 /-- The Herbrand quotient of a finite representation of a finite cyclic group is one. -/
-theorem herbrandQuotient_of_finite [IsCyclic G] (M : Rep R G) [Finite M] :
+theorem herbrandQuotient_eq_one_of_finite [IsCyclic G] (M : Rep R G) [Finite M] :
     herbrandQuotient M = 1 := by
   let hgen := isCyclic_iff_exists_zpowers_eq_top.mp (inferInstance : IsCyclic G)
   let g := hgen.choose
@@ -180,7 +182,8 @@ def H0LinearEquivTrivialIntZModCard :
 
 /-- The order of degree-zero Tate cohomology with trivial integral coefficients is the order of
 the group. -/
-theorem natCard_tateCohomology_zero_trivial_int :
+@[simp]
+theorem natCard_tateCohomology_zero_trivial_int_eq_card :
     Nat.card (tateCohomology (Rep.trivial ℤ H ℤ) 0) = Nat.card H := by
   rw [Nat.card_congr (H0LinearEquivTrivialIntZModCard H).toEquiv, Nat.card_zmod]
 
@@ -205,10 +208,11 @@ theorem subsingleton_tateCohomology_negOne_trivial_int :
 
 /-- The Herbrand quotient of the trivial integral representation is the order of the finite
 group. -/
+@[simp]
 theorem herbrandQuotient_trivial_int_eq_card :
     herbrandQuotient (Rep.trivial ℤ H ℤ) = Nat.card H := by
   let hsub := subsingleton_tateCohomology_negOne_trivial_int H
-  rw [herbrandQuotient, natCard_tateCohomology_zero_trivial_int]
+  rw [herbrandQuotient, natCard_tateCohomology_zero_trivial_int_eq_card]
   rw [@Nat.card_of_subsingleton _ 0 hsub]
   simp
 
