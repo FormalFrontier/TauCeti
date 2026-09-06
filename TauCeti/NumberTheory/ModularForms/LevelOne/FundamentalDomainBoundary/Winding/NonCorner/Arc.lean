@@ -422,7 +422,7 @@ private lemma truncated_integral_spec_arc (hH : 1 < H) (hnorm : ‖w‖ = 1)
   rw [hval, ← hw, log_sub_log_arc ⟨ht₀.1.le, ht₀.2.le⟩ hδ0 (by linarith [ht₀.1])
     (by linarith [ht₀.2]),
     show δ * (Real.pi / 6) = 2 * Real.arcsin (ε / 2) by
-      rw [hδ_def, fdBoundaryArcExcisionHalfWidth_def]; field_simp; ring]
+      rw [← fdBoundaryArcExcisionHalfWidth_mul_pi_div_twelve ε, hδ_def]; ring]
   push_cast
   ring
 

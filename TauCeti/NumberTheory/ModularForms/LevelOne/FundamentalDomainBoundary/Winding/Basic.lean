@@ -217,13 +217,24 @@ noncomputable def fdBoundaryArcExcisionHalfWidth (ε : ℝ) : ℝ := 12 / Real.p
     fdBoundaryArcExcisionHalfWidth ε = 12 / Real.pi * Real.arcsin (ε / 2) := (rfl)
 
 /-- The half-width is exactly the angle `arcsin (ε / 2)` once scaled by the corner's angular
-unit `π / 12`. This is the shape in which the half-width enters both the sine identity below
-and the excised integral at `ρ + 1`. -/
+unit `π / 12`. This is the shape in which the half-width enters the sine identity below, the
+excised arc away from the corners, and the excised integrals at `ρ` and `ρ + 1`.
+
+AINTLIB gives the same fact its own name at the corner `i`, where the angular unit is
+`5π / 12`: `half_angle_arcsinDelta` in `LeanModularForms/ForMathlib/CrossingAtI.lean`
+(github.com/CBirkbeck/AINTLIB, Apache-2.0). No code is transcribed; the statement here is
+against this repository's own `fdBoundaryArcExcisionHalfWidth`. -/
 lemma fdBoundaryArcExcisionHalfWidth_mul_pi_div_twelve (ε : ℝ) :
     fdBoundaryArcExcisionHalfWidth ε * (Real.pi / 12) = Real.arcsin (ε / 2) := by
   rw [fdBoundaryArcExcisionHalfWidth_def]
   field_simp
 
+/-- **The chord-matched excision half-width does what it is for.** For an excision radius `ε`
+below the corner chord `2·sin(π/12)`, the half-width lies strictly between `0` and `1` and
+reproduces `ε` as its own chord: `2·sin(δ·π/12) = ε`.
+
+This is the trigonometric content shared by the excision constructions at `i`, at `ρ` and at
+`ρ + 1`; it needs no upper bound on `ε` beyond the chord bound. -/
 lemma fdBoundaryArcExcisionHalfWidth_pos_and_lt_one_and_two_mul_sin_eq {ε : ℝ} (hε : 0 < ε)
     (hε₃ : ε < 2 * Real.sin (Real.pi / 12)) :
     0 < fdBoundaryArcExcisionHalfWidth ε ∧ fdBoundaryArcExcisionHalfWidth ε < 1 ∧
