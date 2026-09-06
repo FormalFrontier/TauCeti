@@ -28,13 +28,19 @@ The Frobenius keeps each root subgroup and raises the parameter, exactly as on a
 graph automorphism reverses the two matrix indices, which is the reversal of the Bourbaki
 numbering, and rescales the parameter by a sign, which is `1` exactly when `i + j` is odd.
 
-That sign is a consequence of the construction rather than a defect of the pinning: it is forced by
-the Chevalley structure constants, and the signs cannot all be normalized to one at once. The sum
-`i + j` is odd on every numbered simple root, by `TauCeti.SlStd.odd_rootTarget_add_rootSource`,
-which is why the pinned equation `TauCeti.SlStd.graphAutomorphismPoints_rootSubgroupPoints` carries
-no sign; but as soon as the rank is at least two the root `ε_0 - ε_2` has even index sum, and the
-automorphism inverts its parameter. The sign does not move the subgroup itself, only the parameter
-inside it, which is `TauCeti.SlStd.map_graphAutomorphismPoints_range_rootSubgroupPointsOfPair`.
+That sign is a consequence of the construction rather than a defect of the pinning. The sum `i + j`
+is odd on every numbered simple root, by `TauCeti.SlStd.odd_rootTarget_add_rootSource`, which is why
+the pinned equation `TauCeti.SlStd.graphAutomorphismPoints_rootSubgroupPoints` carries no sign; but
+as soon as the rank is at least two the root `ε_0 - ε_2` has even index sum, and the automorphism
+inverts its parameter there. That inversion is a genuine departure from the sign-free equation
+whenever `-1 ≠ 1` in the coefficient ring, which is
+`TauCeti.SlStd.exists_graphAutomorphismPoints_rootSubgroupPointsOfPair_ne`; over a ring where
+`-1 = 1`, such as `ZMod 2`, the sign is invisible and no such witness exists. Nothing here claims
+the stronger statement that no reparametrization of the root subgroups makes this particular `γ`
+sign-free on every root at once: that is a statement about compatibility with the Chevalley
+commutator constants, and is not proved in this file. The sign does not move the subgroup itself,
+only the parameter inside it, which is
+`TauCeti.SlStd.map_graphAutomorphismPoints_range_rootSubgroupPointsOfPair`.
 
 Nothing here asserts that the carrier is the pinned simply connected Chevalley--Demazure group
 scheme, nor that any of the groups below is finite.
@@ -47,7 +53,10 @@ scheme, nor that any of the groups below is finite.
   the root subgroup at `ε_i - ε_j` to the one at `ε_{rev j} - ε_{rev i}`, rescaling the parameter
   by `(-1) ^ (i + j + 1)`; `..._of_odd` and `..._of_even` split the two cases.
 * `TauCeti.SlStd.exists_graphAutomorphismPoints_rootSubgroupPointsOfPair_eq_inv`: from rank two on,
-  some root is not sign-free.
+  the automorphism inverts the parameter of some root subgroup.
+* `TauCeti.SlStd.exists_graphAutomorphismPoints_rootSubgroupPointsOfPair_ne`: if moreover `-1 ≠ 1`
+  in the coefficient ring, that inversion genuinely moves a point, so the sign-free simple-root
+  equation really does fail on some root.
 * `TauCeti.SlStd.map_graphAutomorphismPoints_range_rootSubgroupPointsOfPair`: the graph
   automorphism nevertheless permutes the root subgroups themselves.
 * `TauCeti.SlStd.twistedFrobenius_rootSubgroupPointsOfPair`: the composite equation, the
@@ -132,10 +141,12 @@ theorem graphAutomorphismPoints_rootSubgroupPointsOfPair_of_even (hij : i ≠ j)
   rw [graphAutomorphismPoints_rootSubgroupPointsOfPair, heven.add_one.neg_one_pow, neg_one_mul,
     ofAdd_neg, ofAdd_toAdd]
 
-/-- **The signs cannot all be normalized to one.** As soon as the rank is at least two the root
-`ε_0 - ε_2` has even index sum, so the graph automorphism inverts its parameter. Together with
-`TauCeti.SlStd.odd_rootTarget_add_rootSource` this is the precise sense in which the sign-free
-equation on the simple root subgroups does not extend to every root. -/
+/-- **The graph automorphism inverts the parameter of some root subgroup.** As soon as the rank is
+at least two the root `ε_0 - ε_2` has even index sum, so the sign `(-1) ^ (i + j + 1)` there is
+`-1`. This is an equation, not an inequality: whether the two sides differ depends on the
+coefficient ring, and
+`TauCeti.SlStd.exists_graphAutomorphismPoints_rootSubgroupPointsOfPair_ne` supplies the separation
+under `(-1 : A) ≠ 1`. -/
 theorem exists_graphAutomorphismPoints_rootSubgroupPointsOfPair_eq_inv (hr : 2 ≤ r) :
     ∃ (i j : Fin (r + 1)) (hij : i ≠ j), ∀ u : Multiplicative A,
       graphAutomorphismPoints r A (rootSubgroupPointsOfPair r hij u) =
@@ -144,6 +155,29 @@ theorem exists_graphAutomorphismPoints_rootSubgroupPointsOfPair_eq_inv (hr : 2 �
   · simp [Fin.ext_iff]
   -- The two indices are the numerals `0` and `2`, whose sum is `1 + 1`.
   · exact graphAutomorphismPoints_rootSubgroupPointsOfPair_of_even r _ ⟨1, rfl⟩ u
+
+/-- **The sign-free simple-root equation does not extend to every root.** From rank two on, and
+whenever `-1` and `1` are distinct in the coefficient ring, there is a root subgroup and a point of
+it whose image under the graph automorphism is *not* the point with the same parameter in the
+reversed root subgroup. Together with `TauCeti.SlStd.odd_rootTarget_add_rootSource`, which puts
+every numbered simple root in the sign-free case, this is the precise sense in which the pinning
+determines the parameters only on the simple roots. The hypothesis on `A` is needed: over `ZMod 2`
+the sign `-1` equals `1` and the equation of
+`TauCeti.SlStd.graphAutomorphismPoints_rootSubgroupPointsOfPair` is sign-free on every root. -/
+theorem exists_graphAutomorphismPoints_rootSubgroupPointsOfPair_ne (hr : 2 ≤ r)
+    (hA : (-1 : A) ≠ 1) :
+    ∃ (i j : Fin (r + 1)) (hij : i ≠ j) (u : Multiplicative A),
+      graphAutomorphismPoints r A (rootSubgroupPointsOfPair r hij u) ≠
+        rootSubgroupPointsOfPair r (Fin.rev_injective.ne hij.symm) u := by
+  have hij : (⟨0, by omega⟩ : Fin (r + 1)) ≠ ⟨2, by omega⟩ :=
+    Fin.ne_of_val_ne (by omega : (0 : ℕ) ≠ 2)
+  refine ⟨_, _, hij, Multiplicative.ofAdd 1, ?_⟩
+  intro h
+  -- The two indices are the numerals `0` and `2`, whose sum is `1 + 1`.
+  rw [graphAutomorphismPoints_rootSubgroupPointsOfPair_of_even r hij ⟨1, rfl⟩] at h
+  have h' := rootSubgroupPointsOfPair_injective r _ h
+  rw [← ofAdd_neg] at h'
+  exact hA (Multiplicative.ofAdd.injective h')
 
 /-- **The graph automorphism permutes the root subgroups.** The sign it introduces rescales the
 parameter by a unit and so does not move the subgroup: the image of the root subgroup at
