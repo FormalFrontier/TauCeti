@@ -156,9 +156,10 @@ def simpleRootSubgroup (i : Fin d.1.rank) :
     Multiplicative d.1.Closure →* d.AmbientGroup :=
   SpStd.rootSubgroupPoints d.carrierRank (.inl (d.carrierNode i)) d.1.Closure
 
+-- The equation through which the upstream root-subgroup API reaches `simpleRootSubgroup`, whose
+-- definition itself stays sealed.
 /-- The simple-root subgroup is the carrier's numbered raising subgroup at the corresponding
-carrier node. This is the equation through which the upstream root-subgroup API reaches
-`simpleRootSubgroup`, whose definition itself stays sealed. -/
+carrier node. -/
 theorem simpleRootSubgroup_def (i : Fin d.1.rank) :
     d.simpleRootSubgroup i =
       SpStd.rootSubgroupPoints d.carrierRank (.inl (d.carrierNode i)) d.1.Closure :=
