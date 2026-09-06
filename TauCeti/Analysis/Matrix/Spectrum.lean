@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Analysis.Matrix.PosDef
-public import Mathlib.Analysis.Matrix.Spectrum
 
 /-!
 # Eigen-coordinates of a real symmetric matrix
