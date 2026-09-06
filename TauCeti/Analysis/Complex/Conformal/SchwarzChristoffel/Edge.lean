@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.Complex.HasPrimitives
 public import Mathlib.LinearAlgebra.AffineSpace.FiniteDimensional
 public import TauCeti.Analysis.Complex.Conformal.SchwarzChristoffel.Primitive
 
@@ -23,9 +22,10 @@ is discontinuous across the part of the real axis to the left of a prevertex.  I
 branch that is wrong: replacing the factor `(z - a i) ^ (e i)` by `(a i - z) ^ (e i)` for every
 prevertex lying to the right of a reference point `c` produces
 `schwarzChristoffelContinuedIntegrand`, which differs from the integrand on the upper half-plane
-by the unimodular constant `exp (i · schwarzChristoffelEdgeAngle a e c)` and is holomorphic on the
-whole vertical strip cut out by a prevertex-free interval.  On that interval it is real and
-positive, since every factor is a positive real raised to a real power.
+by the unimodular constant `exp (i · schwarzChristoffelEdgeAngle a e c)` and, when `c` is taken to
+be the left endpoint of a prevertex-free interval, is holomorphic on the whole vertical strip that
+interval cuts out.  On the interval itself it is real and positive, since every factor is then a
+positive real raised to a real power.
 
 Integrating the continued integrand over the disc whose diameter is the interval — a disc which
 lies in the strip, so Morera's theorem for a disc supplies a primitive there — gives a holomorphic
@@ -41,8 +41,8 @@ prevertex `a i` rotates the edge direction by `-π · e i`, which for the classi
 ## Main definitions
 
 * `TauCeti.schwarzChristoffelContinuedIntegrand` -- the Schwarz--Christoffel integrand with the
-  branch of every factor to the right of a reference point reflected, so that it continues
-  holomorphically across the real axis near that point.
+  branch of every factor to the right of a reference point reflected, so that, as long as no
+  prevertex equals that point, it continues holomorphically across the real axis near it.
 * `TauCeti.schwarzChristoffelEdgeAngle` -- the argument `π ∑_{a i > c} e i` of the resulting
   edge direction.
 
@@ -58,7 +58,7 @@ prevertex `a i` rotates the edge direction by `-π · e i`, which for the classi
   extends continuously to a prevertex-free real interval, and an increment of the extension is a
   real multiple of the edge direction.
 * `TauCeti.exists_tendsto_schwarzChristoffelPrimitive_injOn_collinear` -- consequently the
-  interval is carried injectively onto a collinear set: the edge is a straight segment.
+  interval is carried injectively onto a collinear set: the edge runs along a straight line.
 
 ## References
 
@@ -80,9 +80,10 @@ variable {ι : Type*} [Fintype ι]
 
 Each factor `(z - a i) ^ (e i)` of `schwarzChristoffelIntegrand` whose prevertex `a i` lies to the
 right of `c` is replaced by `(a i - z) ^ (e i)`, moving its branch cut from the real half-line to
-the left of `a i` to the one to the right.  All the cuts then avoid a neighbourhood of `c` in the
-real axis, so the product continues holomorphically across it, while on the upper half-plane it
-still agrees with the integrand up to the unimodular constant of
+the left of `a i` to the one to the right.  Provided no prevertex equals `c`, all the cuts then
+avoid a neighbourhood of `c` in the real axis, so the product continues holomorphically across it
+(`differentiableAt_schwarzChristoffelContinuedIntegrand`), while on the upper half-plane it still
+agrees with the integrand up to the unimodular constant of
 `schwarzChristoffelIntegrand_eq_exp_mul_continued`. -/
 def schwarzChristoffelContinuedIntegrand (a e : ι → ℝ) (c : ℝ) (z : ℂ) : ℂ :=
   ∏ i, (if a i ≤ c then z - (a i : ℂ) else (a i : ℂ) - z) ^ (e i : ℂ)
@@ -139,7 +140,7 @@ theorem schwarzChristoffelIntegrand_eq_exp_mul_continued (a e : ι → ℝ) (c :
     by_cases h : a i ≤ c
     · rw [ite_eq_right (not_lt.mpr h), ite_eq_left h, Complex.exp_zero, one_mul]
     · rw [ite_eq_left (lt_of_not_ge h), ite_eq_right h]
-      exact sub_cpow_eq_exp_mul_sub_cpow_of_im_pos hz' (a i) (e i)
+      exact sub_cpow_eq_exp_mul_sub_cpow_of_im_pos hz' (a i) (e i : ℂ)
   rw [schwarzChristoffelIntegrand_def, schwarzChristoffelContinuedIntegrand_def,
     Finset.prod_congr rfl fun i _ => hfac i, Finset.prod_mul_distrib, ← Complex.exp_sum]
   congr 2
@@ -194,12 +195,6 @@ theorem schwarzChristoffelContinuedIntegrand_ofReal (a e : ι → ℝ) {c x : �
   · have hx : 0 < a i - x := sub_pos.mpr (hhi i (lt_of_not_ge h))
     have hcast : (a i : ℂ) - (x : ℂ) = ((a i - x : ℝ) : ℂ) := by push_cast; ring
     rw [ite_eq_right h, hcast, ← Complex.ofReal_cpow hx.le, abs_sub_comm, abs_of_pos hx]
-
-/-- The product `∏ i, |x - a i| ^ e i` of real powers of the distances to the prevertices is
-positive away from them. -/
-theorem prod_abs_sub_rpow_pos (a e : ι → ℝ) {x : ℝ} (hx : ∀ i, x ≠ a i) :
-    0 < ∏ i, |x - a i| ^ e i :=
-  Finset.prod_pos fun i _ => Real.rpow_pos_of_pos (abs_pos.mpr (sub_ne_zero_of_ne (hx i))) _
 
 /-- The **boundary value of the Schwarz--Christoffel integrand** at a point of a prevertex-free
 real interval: approaching from the upper half-plane, the integrand tends to the positive real
@@ -309,12 +304,12 @@ theorem exists_tendsto_schwarzChristoffelPrimitive_sub_eq (a e : ι → ℝ) (z�
       _ = ((∫ t in y..x, ∏ i, |t - a i| ^ e i : ℝ) : ℂ) * C := by
           rw [intervalIntegral.integral_ofReal]
 
-/-- **The image of a prevertex-free boundary interval under the Schwarz--Christoffel map is a
-straight segment.**  The boundary values of the map along such an interval are collinear, and
-distinct points of the interval have distinct boundary values, so the interval is carried
-injectively onto a piece of a line — an edge of the image polygon. -/
+/-- **The Schwarz--Christoffel map carries a prevertex-free boundary interval injectively into a
+line.**  The boundary values of the map along such an interval are collinear, and distinct points
+of the interval have distinct boundary values, so the interval is carried injectively onto a subset
+of a line — an edge of the image polygon. -/
 theorem exists_tendsto_schwarzChristoffelPrimitive_injOn_collinear (a e : ι → ℝ)
-    (z₀ : UpperHalfPlane) {p q : ℝ} (hpq : p < q) (ha : ∀ i, a i ∉ Ioo p q) :
+    (z₀ : UpperHalfPlane) {p q : ℝ} (ha : ∀ i, a i ∉ Ioo p q) :
     ∃ L : ℝ → ℂ,
       (∀ x ∈ Ioo p q, Tendsto (schwarzChristoffelPrimitive a e z₀)
         (𝓝[upperHalfPlaneSet] (x : ℂ)) (𝓝 (L x))) ∧
@@ -325,13 +320,15 @@ theorem exists_tendsto_schwarzChristoffelPrimitive_injOn_collinear (a e : ι →
     continuousOn_finsetProd _ fun i _ t ht =>
       (((continuous_id.sub continuous_const).abs.continuousAt).rpow_const
         (Or.inl (abs_ne_zero.mpr (sub_ne_zero_of_ne (hne t ht i))))).continuousWithinAt
+  have hprodpos : ∀ t : ℝ, (∀ i, t ≠ a i) → 0 < ∏ i, |t - a i| ^ e i := fun t ht =>
+    Finset.prod_pos fun i _ => Real.rpow_pos_of_pos (abs_pos.mpr (sub_ne_zero_of_ne (ht i))) _
   have key : ∀ x ∈ Ioo p q, ∀ y ∈ Ioo p q, y < x → L x - L y ≠ 0 := by
     intro x hx y hy hyx
     rw [hdiff x hx y hy]
     have hsub' : uIcc y x ⊆ Ioo p q := Set.ordConnected_Ioo.uIcc_subset hy hx
     have hpos : 0 < ∫ t in y..x, ∏ i, |t - a i| ^ e i :=
       intervalIntegral.intervalIntegral_pos_of_pos_on (hfcont.mono hsub').intervalIntegrable
-        (fun t ht => prod_abs_sub_rpow_pos a e
+        (fun t ht => hprodpos t
           (hne t (hsub' (Set.Icc_subset_uIcc (Set.Ioo_subset_Icc_self ht))))) hyx
     exact mul_ne_zero (mod_cast hpos.ne') (Complex.exp_ne_zero _)
   have hinj : InjOn L (Ioo p q) := by
@@ -341,12 +338,14 @@ theorem exists_tendsto_schwarzChristoffelPrimitive_injOn_collinear (a e : ι →
     · exact h
     · exact absurd (by simp [hxy]) (key x hx y hy h)
   refine ⟨L, hL, hinj, ?_⟩
-  have hmid : (p + q) / 2 ∈ Ioo p q := ⟨by linarith, by linarith⟩
-  refine (collinear_iff_of_mem (Set.mem_image_of_mem L hmid)).mpr
+  rcases (Ioo p q).eq_empty_or_nonempty with hempty | ⟨m, hm⟩
+  · rw [hempty, Set.image_empty]
+    exact collinear_empty ℝ ℂ
+  refine (collinear_iff_of_mem (Set.mem_image_of_mem L hm)).mpr
     ⟨Complex.exp (schwarzChristoffelEdgeAngle a e p * Complex.I), ?_⟩
   rintro - ⟨x, hx, rfl⟩
-  refine ⟨∫ t in ((p + q) / 2)..x, ∏ i, |t - a i| ^ e i, ?_⟩
-  have := hdiff x hx _ hmid
+  refine ⟨∫ t in m..x, ∏ i, |t - a i| ^ e i, ?_⟩
+  have := hdiff x hx _ hm
   simp only [Complex.real_smul, vadd_eq_add]
   linear_combination this
 

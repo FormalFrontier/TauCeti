@@ -17,8 +17,8 @@ positive imaginary part, hence lies in `Complex.slitPlane`.  The principal power
 derivative is the simple fraction `r / (z - x)`.
 
 Reflecting the base across the real axis, replacing `z - x` by `x - z`, multiplies the power by
-the unimodular constant `exp (π r i)`, because the two bases lie on opposite sides of the real
-axis.
+the constant `exp (π r i)` -- unimodular when `r` is real -- because the two bases lie on opposite
+sides of the real axis.
 
 These are the basic branch facts for a factor of a product of principal powers with real base
 points, such as the Schwarz--Christoffel integrand.
@@ -62,12 +62,12 @@ lemma sub_cpow_ne_zero_of_im_pos {z : ℂ} (hz : 0 < z.im) (x r : ℝ) :
   simp only [sub_im, ofReal_im, sub_zero, zero_im] at this
   exact hz.ne' this
 
-/-- Reflecting the base of a principal power with real base point and real exponent multiplies
-it by the unimodular factor `exp (π r i)`.  At a point with positive imaginary part the two bases
-`z - x` and `x - z` lie on opposite sides of the real axis, so their arguments differ by `π` and
-neither meets the branch cut of the other. -/
-lemma sub_cpow_eq_exp_mul_sub_cpow_of_im_pos {z : ℂ} (hz : 0 < z.im) (x r : ℝ) :
-    (z - (x : ℂ)) ^ (r : ℂ) = Complex.exp ((Real.pi : ℂ) * r * I) * ((x : ℂ) - z) ^ (r : ℂ) := by
+/-- Reflecting the base of a principal power with real base point multiplies it by the factor
+`exp (π r i)`, unimodular for a real exponent `r`.  At a point with positive imaginary part the two
+bases `z - x` and `x - z` lie on opposite sides of the real axis, so their arguments differ by `π`
+and neither meets the branch cut of the other. -/
+lemma sub_cpow_eq_exp_mul_sub_cpow_of_im_pos {z : ℂ} (hz : 0 < z.im) (x : ℝ) (r : ℂ) :
+    (z - (x : ℂ)) ^ r = Complex.exp ((Real.pi : ℂ) * r * I) * ((x : ℂ) - z) ^ r := by
   have him : ((x : ℂ) - z).im < 0 := by simpa using hz
   have hne : (x : ℂ) - z ≠ 0 := fun h => by simp [h] at him
   have hlog : ∀ w : ℂ, w.im < 0 → Complex.log (-w) = Complex.log w + (Real.pi : ℂ) * I := by
