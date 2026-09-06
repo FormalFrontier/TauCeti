@@ -197,6 +197,7 @@ section Isometry
 variable {e : X ≃ᵐ Y}
 
 /-- A measurable isometric equivalence preserves Wasserstein distance. -/
+@[simp]
 theorem wassersteinEDist_map_eq
     (hdY : Measurable fun z : Y × Y ↦ edist z.1 z.2) (he : Isometry e)
     (μ ν : Measure X) :
@@ -226,6 +227,7 @@ theorem wassersteinEDist_map_eq
     _ ≤ wassersteinEDist p (μ.map e) (ν.map e) := hbackward
 
 /-- A measurable isometric equivalence preserves the finite-moment condition. -/
+@[simp]
 theorem hasFiniteMoment_map_iff
     (hdY : ∀ y : Y, Measurable fun z : Y ↦ edist y z) (he : Isometry e) :
     HasFiniteMoment p (μ.map e) ↔ HasFiniteMoment p μ := by
