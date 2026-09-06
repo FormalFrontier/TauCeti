@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Analysis.Semigroups.Similarity
 public import TauCeti.Analysis.Semigroups.Generator.Basic
+import TauCeti.Analysis.Semigroups.Generator.Uniqueness
 
 /-!
 # The generator of a similar semigroup
@@ -25,6 +26,9 @@ with `S`; this is how complex linearity of a semigroup is read off its generator
   transported generator domain iff `e⁻¹ y` is in the original one.
 * `TauCeti.Semigroups.StronglyContinuousSemigroup.similar_generator_apply`: the transported
   generator is `e ∘ A ∘ e⁻¹`.
+* `TauCeti.Semigroups.StronglyContinuousSemigroup.similar_eq_self_of_generator_comm` and
+  `apply_apply_eq_apply_apply_of_generator_comm`: the commutation criterion, `S.similar e = S`
+  when `e` commutes with the generator, so `S t` commutes with `e`.
 
 ## References
 
@@ -80,6 +84,40 @@ theorem similar_generator_apply (S : StronglyContinuousSemigroup X) (e : X ≃L[
     (S.generator_tendsto ⟨e.symm y, (S.mem_similar_domain_iff e y).mp hy⟩)).congr'
     (Eventually.of_forall fun t => ?_)
   simp only [Function.comp_apply, similar_genQuot_eq]
+
+/-- **Commutation criterion.** A C₀-semigroup whose generator commutes with an invertible
+operator `e` (in the sense that `e` maps the generator domain onto itself and intertwines the
+generator) is invariant under conjugation by `e`: `S.similar e = S`. -/
+theorem similar_eq_self_of_generator_comm [CompleteSpace X] (S : StronglyContinuousSemigroup X)
+    (e : X ≃L[ℝ] X) (hdom : ∀ x, e x ∈ S.domain ↔ x ∈ S.domain)
+    (hcomm : ∀ (x : X) (hx : x ∈ S.generator.domain),
+      S.generator ⟨e x, by rw [S.generator_domain, hdom, ← S.generator_domain]; exact hx⟩ =
+        e (S.generator ⟨x, hx⟩)) :
+    S.similar e = S := by
+  refine eq_of_generator_eq (LinearPMap.ext ?_ fun y hy hy' => ?_)
+  · ext y
+    rw [(S.similar e).generator_domain, S.generator_domain, S.mem_similar_domain_iff,
+      ← hdom (e.symm y), e.apply_symm_apply]
+  · have hy₂ : y ∈ (S.similar e).domain := by rwa [(S.similar e).generator_domain] at hy
+    have hy₃ : e.symm y ∈ S.generator.domain := by
+      rw [S.generator_domain]
+      exact (S.mem_similar_domain_iff e y).mp hy₂
+    rw [S.similar_generator_apply e hy₂, ← hcomm (e.symm y) hy₃]
+    congr 1
+    exact Subtype.ext (e.apply_symm_apply y)
+
+/-- The operators of a C₀-semigroup commute with an invertible operator that commutes with the
+generator. -/
+theorem apply_apply_eq_apply_apply_of_generator_comm [CompleteSpace X]
+    (S : StronglyContinuousSemigroup X) (e : X ≃L[ℝ] X) (hdom : ∀ x, e x ∈ S.domain ↔ x ∈ S.domain)
+    (hcomm : ∀ (x : X) (hx : x ∈ S.generator.domain),
+      S.generator ⟨e x, by rw [S.generator_domain, hdom, ← S.generator_domain]; exact hx⟩ =
+        e (S.generator ⟨x, hx⟩))
+    (t : ℝ≥0) (x : X) : S t (e x) = e (S t x) := by
+  have h := congrArg (fun T : StronglyContinuousSemigroup X => T t (e x))
+    (S.similar_eq_self_of_generator_comm e hdom hcomm)
+  rw [similar_apply_apply, e.symm_apply_apply] at h
+  exact h.symm
 
 end StronglyContinuousSemigroup
 

@@ -261,64 +261,38 @@ theorem mem_domain_iff_of_generator_eq_restrictScalars
     (hA : S.generator = A.restrictScalars ℝ) {y : X} : y ∈ S.domain ↔ y ∈ A.domain := by
   rw [← S.generator_domain, hA, LinearPMap.mem_restrictScalars_domain ℝ]
 
-omit [CompleteSpace X] in
-/-- Conjugating by `i` preserves the generator domain when the generator is complex linear. -/
-private theorem similar_smulI_generator_domain (S : StronglyContinuousSemigroup X)
-    {A : X →ₗ.[ℂ] X} (hA : S.generator = A.restrictScalars ℝ) :
-    (S.similar (Complex.smulIEquiv X)).generator.domain = S.generator.domain := by
-  ext y
-  rw [(S.similar (Complex.smulIEquiv X)).generator_domain, S.generator_domain,
-    S.mem_similar_domain_iff,
-    Complex.smulIEquiv_symm_apply, S.mem_domain_iff_of_generator_eq_restrictScalars hA,
-    S.mem_domain_iff_of_generator_eq_restrictScalars hA]
-  exact A.domain.smul_mem_iff (neg_ne_zero.mpr Complex.I_ne_zero)
-
-omit [CompleteSpace X] in
-/-- Conjugating by `i` preserves the generator action when the generator is complex linear. -/
-private theorem similar_smulI_generator_apply (S : StronglyContinuousSemigroup X)
-    {A : X →ₗ.[ℂ] X} (hA : S.generator = A.restrictScalars ℝ) {y : X}
-    (hy : y ∈ (S.similar (Complex.smulIEquiv X)).generator.domain) (hy' : y ∈ S.generator.domain) :
-    (S.similar (Complex.smulIEquiv X)).generator ⟨y, hy⟩ = S.generator ⟨y, hy'⟩ := by
-  have hy₂ : y ∈ (S.similar (Complex.smulIEquiv X)).domain := by
-    rwa [(S.similar (Complex.smulIEquiv X)).generator_domain] at hy
-  rw [S.similar_generator_apply (Complex.smulIEquiv X) hy₂, Complex.smulIEquiv_apply]
-  have hyA : y ∈ A.domain :=
-    (S.mem_domain_iff_of_generator_eq_restrictScalars hA).mp
-      (by rwa [S.generator_domain] at hy')
-  have hyA' : (Complex.smulIEquiv X).symm y ∈ A.domain := by
-    rw [Complex.smulIEquiv_symm_apply]
-    exact A.domain.smul_mem _ hyA
-  have hmk : (⟨(Complex.smulIEquiv X).symm y, hyA'⟩ : A.domain) =
-      (-Complex.I) • (⟨y, hyA⟩ : A.domain) :=
-    Subtype.ext (by rw [Submodule.coe_smul]; exact Complex.smulIEquiv_symm_apply y)
-  rw [LinearPMap.congr_fun_restrictScalars ℝ hA _ hyA',
-    LinearPMap.congr_fun_restrictScalars ℝ hA hy' hyA, hmk, A.map_smul, Complex.I_smul_neg_I_smul]
-
 /-- **Complex linearity is read off the generator.** A real C₀-semigroup on a complex Banach
 space whose generator is the real restriction of a complex-linear partial map is complex linear. -/
 theorem isComplexLinear_of_generator_eq_restrictScalars (S : StronglyContinuousSemigroup X)
     {A : X →ₗ.[ℂ] X} (hA : S.generator = A.restrictScalars ℝ) : S.IsComplexLinear := by
-  have hS : S.similar (Complex.smulIEquiv X) = S :=
-    eq_of_generator_eq (LinearPMap.ext (S.similar_smulI_generator_domain hA)
-      fun _ hy hy' => S.similar_smulI_generator_apply hA hy hy')
   refine S.isComplexLinear_of_I_smul fun t x => ?_
-  have h := congrArg (fun T : StronglyContinuousSemigroup X => T t (Complex.I • x)) hS
-  rw [similar_apply_apply, ← Complex.smulIEquiv_apply x, (Complex.smulIEquiv X).symm_apply_apply,
-    Complex.smulIEquiv_apply, Complex.smulIEquiv_apply] at h
-  exact h.symm
+  have hdom : ∀ x, Complex.smulIEquiv X x ∈ S.domain ↔ x ∈ S.domain := fun x => by
+    rw [Complex.smulIEquiv_apply, S.mem_domain_iff_of_generator_eq_restrictScalars hA,
+      S.mem_domain_iff_of_generator_eq_restrictScalars hA]
+    exact A.domain.smul_mem_iff Complex.I_ne_zero
+  have hcomm : ∀ (x : X) (hx : x ∈ S.generator.domain),
+      S.generator ⟨Complex.smulIEquiv X x, by
+        rw [S.generator_domain, hdom, ← S.generator_domain]; exact hx⟩ =
+        Complex.smulIEquiv X (S.generator ⟨x, hx⟩) := fun x hx => by
+    have hxA : x ∈ A.domain :=
+      (S.mem_domain_iff_of_generator_eq_restrictScalars hA).mp (by rwa [S.generator_domain] at hx)
+    have hIxA : Complex.smulIEquiv X x ∈ A.domain := by
+      rw [Complex.smulIEquiv_apply]
+      exact A.domain.smul_mem _ hxA
+    have hmk : (⟨Complex.smulIEquiv X x, hIxA⟩ : A.domain) = Complex.I • (⟨x, hxA⟩ : A.domain) :=
+      Subtype.ext (by rw [Submodule.coe_smul]; exact Complex.smulIEquiv_apply x)
+    rw [LinearPMap.congr_fun_restrictScalars ℝ hA _ hIxA,
+      LinearPMap.congr_fun_restrictScalars ℝ hA hx hxA, hmk, A.map_smul, Complex.smulIEquiv_apply]
+  have h := S.apply_apply_eq_apply_apply_of_generator_comm (Complex.smulIEquiv X) hdom hcomm t x
+  rwa [Complex.smulIEquiv_apply, Complex.smulIEquiv_apply] at h
 
 omit [CompleteSpace X] in
 /-- The complex generator of a complex-linear semigroup whose real generator is the real
 restriction of `A` is `A` itself. -/
 theorem complexGenerator_eq_of_generator_eq_restrictScalars (S : StronglyContinuousSemigroup X)
     (hS : S.IsComplexLinear) {A : X →ₗ.[ℂ] X} (hA : S.generator = A.restrictScalars ℝ) :
-    S.complexGenerator hS = A := by
-  refine LinearPMap.ext ?_ ?_
-  · ext x
-    rw [S.complexGenerator_domain hS, S.mem_complexDomain_iff hS,
-      S.mem_domain_iff_of_generator_eq_restrictScalars hA]
-  · intro x hx hxA
-    rw [S.complexGenerator_apply hS ⟨x, hx⟩, LinearPMap.congr_fun_restrictScalars ℝ hA _ hxA]
+    S.complexGenerator hS = A :=
+  LinearPMap.restrictScalars_injective ℝ (by rw [S.complexGenerator_restrictScalars hS, hA])
 
 end StronglyContinuousSemigroup
 

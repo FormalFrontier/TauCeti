@@ -27,7 +27,7 @@ variable {R S E F : Type*} [Ring R] [Ring S] {σ : R →+* S} [AddCommGroup E] [
 
 /-- Equal partial linear maps take equal values: the value-level part of `LinearPMap.ext_iff`,
 with the two domain memberships as explicit arguments. -/
-theorem congr_fun {f g : E →ₛₗ.[σ] F} (h : f = g) {x : E} (hf : x ∈ f.domain)
+protected theorem congr_fun {f g : E →ₛₗ.[σ] F} (h : f = g) {x : E} (hf : x ∈ f.domain)
     (hg : x ∈ g.domain) : f ⟨x, hf⟩ = g ⟨x, hg⟩ :=
   (LinearPMap.ext_iff.mp h).2 (x := x) (hf := hf) (hg := hg)
 
