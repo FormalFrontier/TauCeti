@@ -60,6 +60,10 @@ All the results are stated of `Module.End`, so they sit in the `End` namespace u
   `j`-th power.
 * `TauCeti.End.conj_trace_eq_trace_pow_sub_one`: over `ℂ`, the conjugate of the trace of an
   endomorphism of finite order `n` is the trace of its inverse `f ^ (n - 1)`.
+* `TauCeti.End.exists_eq_smul_of_norm_trace_eq_finrank`: over `ℂ`, an endomorphism of finite order
+  whose trace has absolute value the dimension **is a scalar**, the scalar being a root of unity.
+  The trace is the sum of `finrank ℂ V` many roots of unity, so that absolute value is the largest
+  it can take, and it is attained only when the eigenvalues all coincide.
 * `TauCeti.End.trace_eq_finrank_iff`: over `ℂ`, an endomorphism of finite order has trace equal to
   the dimension **exactly when it is the identity**. The trace is the sum of `finrank ℂ V` many
   roots of unity, each of real part at most `1`, so the value `finrank ℂ V` is attained only when
@@ -208,77 +212,131 @@ theorem conj_trace_eq_trace_pow_sub_one {f : End ℂ V} {n : ℕ} (hn : n ≠ 0)
     exact inv_eq_of_mul_eq_one_right
       (by rw [← pow_succ', Nat.sub_add_cancel (Nat.one_le_iff_ne_zero.2 hn), hμ])
 
-/-- A root of unity whose real part is `1` is `1`: it has norm `1`, so its real part already
-exhausts that norm and its imaginary part vanishes. -/
-private theorem eq_one_of_pow_eq_one_of_re_eq_one {μ : ℂ} {n : ℕ} (hn : n ≠ 0) (hμ : μ ^ n = 1)
-    (hre : μ.re = 1) : μ = 1 := by
-  have hnorm : ‖μ‖ = 1 := Complex.norm_eq_one_of_pow_eq_one hμ hn
+/-- A complex number of norm `1` whose real part is `1` is `1`: the real part already exhausts the
+norm, so the imaginary part vanishes. -/
+private theorem eq_one_of_norm_eq_one_of_re_eq_one {μ : ℂ} (hnorm : ‖μ‖ = 1) (hre : μ.re = 1) :
+    μ = 1 := by
   have him : μ.im = 0 := Complex.abs_re_eq_norm.mp (by rw [hre, hnorm, abs_one])
   exact Complex.ext (by simpa using hre) (by simpa using him)
 
-/-- **An endomorphism of finite order with trace the dimension is the identity.** The eigenvalues
-of `f` are `n`-th roots of unity, so each has real part at most `1`; the trace is the sum of the
-eigenvalues weighted by the dimensions of the eigenspaces, and those dimensions add up to
-`finrank ℂ V`. Comparing real parts, the value `finrank ℂ V` is attained only when every eigenvalue
-has real part `1`, hence is `1`, and `f` is diagonalizable, so it is the identity there.
+/-- **An endomorphism of finite order whose trace has the largest possible absolute value is a
+scalar.** The eigenvalues of `f` are `n`-th roots of unity and the trace is their sum, weighted by
+the dimensions of the eigenspaces, which add up to `finrank ℂ V`. A sum of `finrank ℂ V` many unit
+vectors of `ℂ` has absolute value `finrank ℂ V` only when they all point the same way, so every
+eigenvalue equals the common phase `μ`; `f` is diagonalizable, so it is `μ` times the identity.
 
-The restriction to `ℂ` is one of proof and of API, not of substance. The statement is true over any
-field of characteristic zero, the eigenvalues generating a cyclotomic subfield of the algebraic
-closure that embeds into `ℂ`; what the argument below uses is the comparison `Re μ ≤ ‖μ‖`, which
-such an embedding is exactly what it takes to have. That descent is not carried out here, and `ℂ`
-is where the consumers of this file work. -/
-theorem eq_one_of_trace_eq_finrank {f : End ℂ V} {n : ℕ} (hn : n ≠ 0) (hf : f ^ n = 1)
-    (h : LinearMap.trace ℂ V f = (finrank ℂ V : ℂ)) : f = 1 := by
+The bound itself, `‖tr f‖ ≤ finrank ℂ V`, is the triangle inequality;
+`TauCeti.End.eq_one_of_trace_eq_finrank` is the case `μ = 1`, where the trace attains the bound at
+the positive real value `finrank ℂ V`. -/
+theorem exists_eq_smul_of_norm_trace_eq_finrank {f : End ℂ V} {n : ℕ} (hn : n ≠ 0) (hf : f ^ n = 1)
+    (h : ‖LinearMap.trace ℂ V f‖ = (finrank ℂ V : ℝ)) : ∃ μ : ℂ, μ ^ n = 1 ∧ f = μ • 1 := by
   classical
   have hn' : (n : ℂ) ≠ 0 := Nat.cast_ne_zero.2 hn
-  set E := (End.finite_hasEigenvalue f).toFinset
-  -- the dimensions of the eigenspaces add up to the dimension: the case `m = 0` of the trace
-  -- formula, where `f ^ 0 = 1` has trace `finrank ℂ V`
+  rcases Nat.eq_zero_or_pos (finrank ℂ V) with hV | hV
+  · have : Subsingleton V := Module.finrank_zero_iff.1 hV
+    exact ⟨1, one_pow n, LinearMap.ext fun _ => Subsingleton.elim _ _⟩
+  set E := (End.finite_hasEigenvalue f).toFinset with hE
   have hdim : ∑ μ ∈ E, (finrank ℂ (f.eigenspace μ) : ℂ) = (finrank ℂ V : ℂ) := by
     simpa using (trace_pow_eq_sum_eigenvalue_pow hn' hf 0).symm
-  -- the trace is the weighted sum of the eigenvalues: the case `m = 1`
-  have htrace : ∑ μ ∈ E, (finrank ℂ (f.eigenspace μ) : ℂ) * μ = (finrank ℂ V : ℂ) := by
-    simpa using (trace_pow_eq_sum_eigenvalue_pow hn' hf 1).symm.trans h
-  -- so the eigenvalues, weighted by dimension, differ from `1` by nothing
-  have hcomplex : ∑ μ ∈ E, (finrank ℂ (f.eigenspace μ) : ℂ) * (1 - μ) = 0 := by
-    simp only [mul_sub, mul_one, Finset.sum_sub_distrib, hdim, htrace, sub_self]
-  have hreal : ∑ μ ∈ E, (finrank ℂ (f.eigenspace μ) : ℝ) * (1 - μ.re) = 0 := by
-    have := congrArg Complex.re hcomplex
+  have htrace : ∑ μ ∈ E, (finrank ℂ (f.eigenspace μ) : ℂ) * μ = LinearMap.trace ℂ V f := by
+    simpa using (trace_pow_eq_sum_eigenvalue_pow hn' hf 1).symm
+  have hNne : (finrank ℂ V : ℂ) ≠ 0 := Nat.cast_ne_zero.2 hV.ne'
+  -- the common phase of the eigenvalues
+  set μ₀ : ℂ := LinearMap.trace ℂ V f / (finrank ℂ V : ℂ) with hμ₀def
+  have htμ₀ : LinearMap.trace ℂ V f = μ₀ * (finrank ℂ V : ℂ) := by
+    rw [hμ₀def, div_mul_cancel₀ _ hNne]
+  have hnormμ₀ : ‖μ₀‖ = 1 := by
+    rw [hμ₀def, norm_div, h, Complex.norm_natCast]
+    exact div_self (Nat.cast_ne_zero.2 hV.ne')
+  have hμ₀ne : μ₀ ≠ 0 := by
+    intro h0
+    rw [h0, norm_zero] at hnormμ₀
+    exact zero_ne_one hnormμ₀
+  have hconj : (starRingEnd ℂ) μ₀ * μ₀ = 1 := by
+    rw [← Complex.inv_eq_conj hnormμ₀]
+    exact inv_mul_cancel₀ hμ₀ne
+  -- rotating the trace back by that phase recovers the dimension exactly
+  have hkey : ∑ μ ∈ E, (finrank ℂ (f.eigenspace μ) : ℂ) * ((starRingEnd ℂ) μ₀ * μ)
+      = (finrank ℂ V : ℂ) := by
+    calc ∑ μ ∈ E, (finrank ℂ (f.eigenspace μ) : ℂ) * ((starRingEnd ℂ) μ₀ * μ)
+        = (starRingEnd ℂ) μ₀ * ∑ μ ∈ E, (finrank ℂ (f.eigenspace μ) : ℂ) * μ := by
+          rw [Finset.mul_sum]
+          exact Finset.sum_congr rfl fun _ _ => by ring
+      _ = (starRingEnd ℂ) μ₀ * (μ₀ * (finrank ℂ V : ℂ)) := by rw [htrace, htμ₀]
+      _ = (finrank ℂ V : ℂ) := by rw [← mul_assoc, hconj, one_mul]
+  have hzero : ∑ μ ∈ E, (finrank ℂ (f.eigenspace μ) : ℂ) * (1 - (starRingEnd ℂ) μ₀ * μ) = 0 := by
+    simp only [mul_sub, mul_one, Finset.sum_sub_distrib, hdim, hkey, sub_self]
+  have hreal : ∑ μ ∈ E, (finrank ℂ (f.eigenspace μ) : ℝ) * (1 - ((starRingEnd ℂ) μ₀ * μ).re)
+      = 0 := by
+    have := congrArg Complex.re hzero
     simpa [Complex.re_sum, Complex.mul_re] using this
-  -- every summand is nonnegative, an eigenvalue having real part at most its norm, which is `1`
-  have hnonneg : ∀ μ ∈ E, 0 ≤ (finrank ℂ (f.eigenspace μ) : ℝ) * (1 - μ.re) := by
+  have hnormE : ∀ μ ∈ E, ‖(starRingEnd ℂ) μ₀ * μ‖ = 1 := by
     intro μ hμ
     have hpow : μ ^ n = 1 :=
       pow_eq_one_of_hasEigenvalue hf ((End.finite_hasEigenvalue f).mem_toFinset.1 hμ)
-    have : μ.re ≤ 1 := (Complex.re_le_norm μ).trans_eq (Complex.norm_eq_one_of_pow_eq_one hpow hn)
+    rw [norm_mul, Complex.norm_conj, hnormμ₀, Complex.norm_eq_one_of_pow_eq_one hpow hn, one_mul]
+  -- every summand is nonnegative, a rotated eigenvalue having real part at most its norm `1`
+  have hnonneg : ∀ μ ∈ E,
+      0 ≤ (finrank ℂ (f.eigenspace μ) : ℝ) * (1 - ((starRingEnd ℂ) μ₀ * μ).re) := by
+    intro μ hμ
+    have := (Complex.re_le_norm ((starRingEnd ℂ) μ₀ * μ)).trans_eq (hnormE μ hμ)
     exact mul_nonneg (Nat.cast_nonneg _) (by linarith)
-  -- hence each vanishes, and the dimension factor does not
-  have hone : ∀ μ ∈ E, μ = 1 := by
+  have hall : ∀ μ ∈ E, μ = μ₀ := by
     intro μ hμ
     have hev : f.HasEigenvalue μ := (End.finite_hasEigenvalue f).mem_toFinset.1 hμ
-    have hzero := (Finset.sum_eq_zero_iff_of_nonneg hnonneg).1 hreal μ hμ
+    have hz := (Finset.sum_eq_zero_iff_of_nonneg hnonneg).1 hreal μ hμ
     have hdpos : (finrank ℂ (f.eigenspace μ) : ℝ) ≠ 0 := by
       have : f.eigenspace μ ≠ ⊥ := hev
       simpa [Submodule.finrank_eq_zero] using this
-    refine eq_one_of_pow_eq_one_of_re_eq_one hn
-      (pow_eq_one_of_hasEigenvalue hf hev) ?_
-    have := mul_eq_zero.1 hzero
-    rcases this with h' | h'
-    · exact absurd h' hdpos
-    · linarith
-  -- `f - 1` is semisimple with every eigenvalue `0`, hence zero
-  have hss : (f - 1 : End ℂ V).IsSemisimple := by
-    simpa using (End.isSemisimple_sub_algebraMap_iff (μ := (1 : ℂ))).2
-      (isSemisimple_of_pow_eq_one hn' hf)
+    have hre : ((starRingEnd ℂ) μ₀ * μ).re = 1 := by
+      rcases mul_eq_zero.1 hz with h' | h'
+      · exact absurd h' hdpos
+      · linarith
+    have h1 : (starRingEnd ℂ) μ₀ * μ = 1 :=
+      eq_one_of_norm_eq_one_of_re_eq_one (hnormE μ hμ) hre
+    calc μ = ((starRingEnd ℂ) μ₀ * μ₀) * μ := by rw [hconj, one_mul]
+      _ = μ₀ * ((starRingEnd ℂ) μ₀ * μ) := by ring
+      _ = μ₀ := by rw [h1, mul_one]
+  have hEne : E.Nonempty := by
+    rcases Finset.eq_empty_or_nonempty E with hEmp | hne
+    · rw [hEmp, Finset.sum_empty] at hdim
+      exact absurd hdim.symm hNne
+    · exact hne
+  obtain ⟨ν, hν⟩ := hEne
+  have hμ₀E : μ₀ ∈ E := by rw [← hall ν hν]; exact hν
+  refine ⟨μ₀,
+    pow_eq_one_of_hasEigenvalue hf ((End.finite_hasEigenvalue f).mem_toFinset.1 hμ₀E), ?_⟩
+  -- `f - μ₀` is semisimple with every eigenvalue `0`, hence zero
+  have hss : (f - μ₀ • (1 : End ℂ V)).IsSemisimple := by
+    rw [← Algebra.algebraMap_eq_smul_one]
+    exact (End.isSemisimple_sub_algebraMap_iff (μ := μ₀)).2 (isSemisimple_of_pow_eq_one hn' hf)
   refine sub_eq_zero.1 (hss.eq_zero_iff_forall_eigenvalue.2 fun μ hμ => ?_)
   -- `End.hasEigenvalue_sub_iff` shifts the eigenvalues of `f - c • LinearMap.id` by `c`, so the
-  -- subtracted identity has to be written as that scalar action before it applies
-  have hid : (f - 1 : End ℂ V) = f - (1 : ℂ) • LinearMap.id := by
-    rw [one_smul, End.one_eq_id]
-  have hev : f.HasEigenvalue (μ + 1) := by
-    rw [hid, End.hasEigenvalue_sub_iff] at hμ
-    exact hμ
-  linear_combination hone (μ + 1) ((End.finite_hasEigenvalue f).mem_toFinset.2 hev)
+  -- subtracted scalar has to be written as that scalar action before it applies
+  have hid : (f - μ₀ • (1 : End ℂ V)) = f - μ₀ • LinearMap.id := by rw [End.one_eq_id]
+  rw [hid, End.hasEigenvalue_sub_iff] at hμ
+  have := hall (μ + μ₀) ((End.finite_hasEigenvalue f).mem_toFinset.2 hμ)
+  linear_combination this
+
+/-- **An endomorphism of finite order with trace the dimension is the identity.** The trace
+attains the largest absolute value it can, so `f` is a scalar
+(`TauCeti.End.exists_eq_smul_of_norm_trace_eq_finrank`), and the scalar is `1` because the trace of
+`μ • 1` is `μ` times the dimension.
+
+The restriction to `ℂ` is one of proof and of API, not of substance. The statement is true over any
+field of characteristic zero, the eigenvalues generating a cyclotomic subfield of the algebraic
+closure that embeds into `ℂ`; what the argument uses is the comparison `Re μ ≤ ‖μ‖`, which such an
+embedding is exactly what it takes to have. That descent is not carried out here, and `ℂ` is where
+the consumers of this file work. -/
+theorem eq_one_of_trace_eq_finrank {f : End ℂ V} {n : ℕ} (hn : n ≠ 0) (hf : f ^ n = 1)
+    (h : LinearMap.trace ℂ V f = (finrank ℂ V : ℂ)) : f = 1 := by
+  obtain ⟨μ, -, rfl⟩ :=
+    exists_eq_smul_of_norm_trace_eq_finrank hn hf (by rw [h, Complex.norm_natCast])
+  rcases Nat.eq_zero_or_pos (finrank ℂ V) with hV | hV
+  · have : Subsingleton V := Module.finrank_zero_iff.1 hV
+    exact LinearMap.ext fun _ => Subsingleton.elim _ _
+  · rw [map_smul, LinearMap.trace_one, smul_eq_mul] at h
+    rw [mul_right_cancel₀ (Nat.cast_ne_zero.2 hV.ne') (h.trans (one_mul _).symm), one_smul]
 
 /-- **An endomorphism of finite order has trace the dimension exactly when it is the identity.**
 The forward direction is `TauCeti.End.eq_one_of_trace_eq_finrank`; the converse is
