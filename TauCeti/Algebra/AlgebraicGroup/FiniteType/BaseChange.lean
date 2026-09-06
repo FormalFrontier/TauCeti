@@ -31,6 +31,9 @@ the original points evaluated on `K`-algebras.
 * `FiniteTypeCommHopfAlgCat.baseChangeFunctor`: functorial base change.
 * `FiniteTypeCommHopfAlgCat.baseChangeTensorProductIso`: the canonical comparison between the
   base change of a tensor product and the tensor product of the base changes.
+* `FiniteTypeCommHopfAlgCat.baseChangeMap_includeLeft_injective` and
+  `FiniteTypeCommHopfAlgCat.baseChangeMap_includeRight_injective`: the base-changed coordinate
+  inclusions into a product are injective.
 * `FiniteTypeCommHopfAlgCat.baseChangeIsoOfObjIso`: lift an isomorphism between specified
   underlying base-changed objects to the finite-type full subcategory.
 * `FiniteTypeCommHopfAlgCat.baseChangePointsMulEquiv`: the inherited point equivalence
@@ -195,6 +198,54 @@ theorem baseChangeMap_includeRight_comp_baseChangeTensorProductIso_hom
     TensorProduct.tmul_eq_smul_one_tmul s l
   rw [hsH, hsL]
   exact TensorProduct.smul_tmul s ((1 : K) ⊗ₜ[k] (1 : H)) ((1 : K) ⊗ₜ[k] l)
+
+/-- The base change of the left coordinate inclusion into a product is injective. -/
+theorem baseChangeMap_includeLeft_injective
+    (H L : FiniteTypeCommHopfAlgCat.{u, v} k) :
+    Function.Injective (toBialgHom (baseChangeMap (K := K) (includeLeft H L))) := by
+  let H' := baseChange (K := K) H
+  let L' := baseChange (K := K) L
+  let e := baseChangeTensorProductIso K H L
+  apply Function.Injective.of_comp (f := toBialgHom e.hom)
+  have hcomp := congrArg toBialgHom
+    (baseChangeMap_includeLeft_comp_baseChangeTensorProductIso_hom K H L)
+  rw [toBialgHom_comp] at hcomp
+  change (toBialgHom e.hom).comp (toBialgHom (baseChangeMap (K := K) (includeLeft H L))) =
+    Bialgebra.TensorProduct.includeLeft at hcomp
+  have hinclude : Function.Injective
+      (Bialgebra.TensorProduct.includeLeft (R := K) (H₁ := H') (H₂ := L')) := by
+    apply Function.LeftInverse.injective
+      (g := Bialgebra.TensorProduct.projectLeft (R := K) (H₁ := H') (H₂ := L'))
+    intro x
+    simp only [← BialgHom.comp_apply,
+      Bialgebra.TensorProduct.projectLeft_comp_includeLeft, BialgHom.id_apply]
+  intro x y hxy
+  apply hinclude
+  simpa only [Function.comp_apply, ← BialgHom.comp_apply, hcomp] using hxy
+
+/-- The base change of the right coordinate inclusion into a product is injective. -/
+theorem baseChangeMap_includeRight_injective
+    (H L : FiniteTypeCommHopfAlgCat.{u, v} k) :
+    Function.Injective (toBialgHom (baseChangeMap (K := K) (includeRight H L))) := by
+  let H' := baseChange (K := K) H
+  let L' := baseChange (K := K) L
+  let e := baseChangeTensorProductIso K H L
+  apply Function.Injective.of_comp (f := toBialgHom e.hom)
+  have hcomp := congrArg toBialgHom
+    (baseChangeMap_includeRight_comp_baseChangeTensorProductIso_hom K H L)
+  rw [toBialgHom_comp] at hcomp
+  change (toBialgHom e.hom).comp (toBialgHom (baseChangeMap (K := K) (includeRight H L))) =
+    Bialgebra.TensorProduct.includeRight at hcomp
+  have hinclude : Function.Injective
+      (Bialgebra.TensorProduct.includeRight (R := K) (H₁ := H') (H₂ := L')) := by
+    apply Function.LeftInverse.injective
+      (g := Bialgebra.TensorProduct.projectRight (R := K) (H₁ := H') (H₂ := L'))
+    intro x
+    simp only [← BialgHom.comp_apply,
+      Bialgebra.TensorProduct.projectRight_comp_includeRight, BialgHom.id_apply]
+  intro x y hxy
+  apply hinclude
+  simpa only [Function.comp_apply, ← BialgHom.comp_apply, hcomp] using hxy
 
 /-- Lift an isomorphism between specified underlying base-changed Hopf algebras to the
 finite-type full subcategory. The object equalities record the chosen presentations of the
