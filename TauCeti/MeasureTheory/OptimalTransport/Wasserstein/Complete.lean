@@ -16,31 +16,15 @@ exponent `1 ≤ p < ∞`, the `p`-Wasserstein distance is a complete pseudometri
 laws `P_p (X)` of `TauCeti.WassersteinSpace` and, more generally, on every anchored
 finite-distance component of `TauCeti.WassersteinComponent`.
 
-The construction behind both statements is carried out once, on measures, in
-`TauCeti.exists_isProbabilityMeasure_wassersteinEDist_le_tsum`: a sequence of laws whose
+The measure-level result `TauCeti.exists_isProbabilityMeasure_wassersteinEDist_le_tsum` says that a
+sequence of laws whose
 consecutive Wasserstein distances are bounded by a summable sequence has a limit law, together
 with the quantitative estimate that its distance to the `n`-th term is at most the `n`-th tail of
-those bounds.
-
-That construction is the classical argument on path space rather than an argument by tightness.
-Near-optimal couplings of the consecutive laws are glued into a *single* probability measure on
-`ℕ → X` by Layer 0's countable gluing `TauCeti.Measure.chainMeasure`, whose consecutive coordinate
-pairs are the prescribed couplings. The coordinate process then has summable jumps, so almost
-every path is Cauchy and — the ground space being complete — convergent; the limit is measurable
-as an almost everywhere limit of the measurable coordinate maps, and the joint law of the `n`-th
-coordinate with that limit is a coupling exhibiting the asserted bound.
-
-Two economies keep the argument short. Summability of the jumps is only needed in `L¹`, which the
-`L^p` bounds supply for free because the path law is a probability measure, so no `L^p`
-Minkowski inequality for a countable sum is required. And the displacement to the limit is
-compared with the displacements along the chain by Fatou's lemma for the `L^p` seminorm, in the
-`ℝ≥0∞`-valued form that `TauCeti.eLpNorm_rpow_eq_lintegral` makes available; a finite triangle
-inequality then bounds each of the latter.
-
-The exponent has to be finite in two places: the seminorm is a root of an integral, and the
-distances to the limit are recovered from a pointwise almost everywhere limit. Completeness of the
-finite-`W_∞` components is a separate statement, with its own proof by consecutive near-optimal
-couplings, and belongs with the rest of the `W_∞` endpoint.
+those bounds. It uses `TauCeti.Measure.chainMeasure` to realize consecutive couplings on one path
+space. The completeness theorems apply this result to anchored components; finite-moment laws are
+then handled by their isometric identification with a Dirac-anchored component. The finite-exponent
+hypothesis is essential to the `L^p` limit estimate, so no completeness result for `p = ∞` is stated
+here.
 
 ## Main statements
 
@@ -73,51 +57,15 @@ universe u
 
 variable {X : Type u} {p : ℝ≥0∞}
 
-/-- **Fatou's lemma for the `L^p` seminorm**, for `ℝ≥0∞`-valued functions and a finite nonzero
-exponent: an almost everywhere pointwise limit of functions of `L^p` seminorm at most `c` again has
-`L^p` seminorm at most `c`. Mathlib's `MeasureTheory.Lp.eLpNorm_le_of_ae_tendsto` is the same
-statement for functions valued in a seminormed group, which the extended-valued ground distance of
-a transport problem is not; the proof here is the same passage through
-`TauCeti.eLpNorm_rpow_eq_lintegral` and Fatou's lemma for the lower integral. -/
-private theorem eLpNorm_le_of_ae_tendsto {α : Type*} [MeasurableSpace α] {μ : Measure α}
-    (hp0 : p ≠ 0) (hp : p ≠ ∞) {f : ℕ → α → ℝ≥0∞} {g : α → ℝ≥0∞} {c : ℝ≥0∞}
-    (hf : ∀ n, AEMeasurable (f n) μ)
-    (hlim : ∀ᵐ x ∂μ, Tendsto (fun n ↦ f n x) atTop (𝓝 (g x)))
-    (hle : ∀ n, eLpNorm (f n) p μ ≤ c) :
-    eLpNorm g p μ ≤ c := by
-  have hr : 0 < p.toReal := ENNReal.toReal_pos hp0 hp
-  have key : eLpNorm g p μ ^ p.toReal ≤ c ^ p.toReal := by
-    rw [eLpNorm_rpow_eq_lintegral hp0 hp]
-    calc ∫⁻ x, g x ^ p.toReal ∂μ
-        = ∫⁻ x, atTop.liminf (fun n ↦ f n x ^ p.toReal) ∂μ := by
-          refine lintegral_congr_ae ?_
-          filter_upwards [hlim] with x hx
-          exact (Tendsto.liminf_eq
-            (((ENNReal.continuous_rpow_const (y := p.toReal)).tendsto (g x)).comp hx)).symm
-      _ ≤ atTop.liminf fun n ↦ ∫⁻ x, f n x ^ p.toReal ∂μ :=
-          lintegral_liminf_le' fun n ↦ (hf n).pow_const _
-      _ ≤ c ^ p.toReal := by
-          refine liminf_le_of_frequently_le' (.of_forall fun n ↦ ?_)
-          rw [← eLpNorm_rpow_eq_lintegral hp0 hp]
-          exact ENNReal.rpow_le_rpow (hle n) hr.le
-  exact (ENNReal.rpow_le_rpow_iff hr).1 key
-
 section Limit
 
 variable [MeasurableSpace X] [PseudoMetricSpace X] [BorelSpace X] [SecondCountableTopology X]
   [CompleteSpace X] [StandardBorelSpace X]
 
-/-- **A chain of laws with summable Wasserstein jumps converges.** If the `p`-Wasserstein distance
-of consecutive terms of a sequence `μ` of probability measures is bounded by a summable sequence
-`b`, then there is a probability measure `ν` with `W_p (μ n, ν)` at most the `n`-th tail
-`∑' k, b (n + k)`; in particular `W_p (μ n, ν)` tends to `0`.
-
-This is the analytic content of the completeness of the Wasserstein distance, stated on measures
-so that it serves both `TauCeti.WassersteinSpace` and every anchored component. The limit measure
-is the law of the almost sure limit of the coordinate process of the countable gluing of
-near-optimal couplings of the consecutive terms; the tail bound is what identifies that law as the
-Wasserstein limit. The hypothesis is a strict inequality because it is applied to a value of the
-infimum `TauCeti.wassersteinEDist`, which is what makes near-optimal couplings available. -/
+/-- **A chain of laws with summable Wasserstein jumps converges.** If consecutive terms of a
+sequence `μ` of probability measures have `p`-Wasserstein distance strictly below a summable
+sequence `b`, then some probability measure `ν` satisfies
+`W_p (μ n, ν) ≤ ∑' k, b (n + k)` for every `n`. -/
 theorem exists_isProbabilityMeasure_wassersteinEDist_le_tsum (hp : 1 ≤ p) (hp' : p ≠ ∞)
     {μ : ℕ → Measure X} [∀ n, IsProbabilityMeasure (μ n)] {b : ℕ → ℝ≥0∞}
     (hb : ∑' n, b n ≠ ∞) (hμ : ∀ n, wassersteinEDist p (μ n) (μ (n + 1)) < b n) :
@@ -208,7 +156,7 @@ theorem exists_isProbabilityMeasure_wassersteinEDist_le_tsum (hp : 1 ≤ p) (hp'
         rw [eLpNorm_map_measure hd.aestronglyMeasurable ((hev n).prodMk hZ).aemeasurable]
         rfl
     _ ≤ ∑' k, b (n + k) := by
-        refine eLpNorm_le_of_ae_tendsto hp0 hp'
+        refine eLpNorm_le_of_ae_tendsto_ennreal hp0 hp'
           (fun N ↦ (hd.comp ((hev n).prodMk (hev (n + N)))).aemeasurable) ?_
           fun N ↦ (hstep N).trans (ENNReal.sum_le_tsum _)
         filter_upwards [hZtendsto] with x hx
@@ -253,10 +201,8 @@ namespace WassersteinComponent
 
 variable {μ₀ : ProbabilityMeasure X}
 
-/-- **Every anchored finite-distance Wasserstein component over a Polish ground space is
-complete**, for a finite exponent `1 ≤ p < ∞`. A Cauchy sequence of laws in the component of `μ₀`
-has a limit law, and that limit is again at finite distance from `μ₀` because it is at finite
-distance from the first term of the sequence. -/
+/-- Every anchored finite-distance Wasserstein component over a Polish ground space is complete
+for a finite exponent `1 ≤ p < ∞`. -/
 theorem completeSpace (hp' : p ≠ ∞) : CompleteSpace (WassersteinComponent p μ₀) := by
   refine EMetric.complete_of_convergent_controlled_sequences (fun n ↦ 2⁻¹ ^ n)
     (fun n ↦ ENNReal.pow_pos (by simp) n) fun u hu ↦ ?_
@@ -288,36 +234,17 @@ end WassersteinComponent
 
 namespace WassersteinSpace
 
-/-- **The finite-moment Wasserstein space over a Polish ground space is complete**, for a finite
-exponent `1 ≤ p < ∞`. The limit law of a Cauchy sequence has a finite `p`-moment because it is at
-finite distance from the first term of the sequence, which has one. -/
+/-- The finite-moment Wasserstein space over a Polish ground space is complete for a finite
+exponent `1 ≤ p < ∞`. -/
 theorem completeSpace (hp' : p ≠ ∞) : CompleteSpace (WassersteinSpace p X) := by
-  refine EMetric.complete_of_convergent_controlled_sequences (fun n ↦ 2⁻¹ ^ n)
-    (fun n ↦ ENNReal.pow_pos (by simp) n) fun u hu ↦ ?_
-  have hjump : ∀ n, wassersteinEDist p ((u n : ProbabilityMeasure X) : Measure X)
-      ((u (n + 1) : ProbabilityMeasure X) : Measure X) < 2⁻¹ ^ n := fun n ↦ by
-    have := hu n n (n + 1) le_rfl (Nat.le_succ n)
-    rwa [edist_def] at this
-  obtain ⟨ν, hν, hνle⟩ :=
-    exists_isProbabilityMeasure_wassersteinEDist_le_geometric Fact.out hp' hjump
-  obtain ⟨x₀⟩ : Nonempty X :=
-    Measure.nonempty_of_neZero ((u 0 : ProbabilityMeasure X) : Measure X)
-  have hmoment : HasFiniteMoment p ν := by
-    refine (hasFiniteMoment_iff_wassersteinEDist_dirac_ne_top measurable_edist x₀ ν).2 ?_
-    have hdirac : wassersteinEDist p (Measure.dirac x₀)
-        ((u 0 : ProbabilityMeasure X) : Measure X) ≠ ∞ :=
-      (hasFiniteMoment_iff_wassersteinEDist_dirac_ne_top measurable_edist x₀ _).1
-        (hasFiniteMoment (u 0))
-    refine ne_top_of_le_ne_top
-      (ENNReal.add_ne_top.2 ⟨hdirac, ne_top_of_le_ne_top (by simp) (hνle 0)⟩)
-      (wassersteinEDist_triangle measurable_edist Fact.out _ _ _)
-  have hcoe : ((mk (⟨ν, hν⟩ : ProbabilityMeasure X) hmoment : WassersteinSpace p X) :
-      ProbabilityMeasure X) = ⟨ν, hν⟩ := coe_mk _ _
-  refine ⟨mk ⟨ν, hν⟩ hmoment, tendsto_iff_edist_tendsto_0.2 ?_⟩
-  refine tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds tendsto_geometric_mul_two
-    (fun _ ↦ zero_le) fun n ↦ ?_
-  rw [edist_def, hcoe]
-  exact hνle n
+  rcases isEmpty_or_nonempty (WassersteinSpace p X) with h | h
+  · infer_instance
+  · obtain ⟨μ⟩ := h
+    obtain ⟨x₀⟩ : Nonempty X :=
+      Measure.nonempty_of_neZero ((μ : ProbabilityMeasure X) : Measure X)
+    let _ : CompleteSpace (WassersteinComponent p (diracProba x₀)) :=
+      WassersteinComponent.completeSpace hp'
+    exact (isometryEquivComponent x₀).completeSpace
 
 /-- The finite-moment Wasserstein space over a Polish ground space is complete, read off the
 exponent facts. -/
