@@ -31,8 +31,9 @@ when `discr f` is a square in `F`. This is the **discriminant test** for contain
 alternating group.
 
 The characteristic hypothesis `ringChar F ≠ 2` is not decoration. In characteristic `2` one has
-`-1 = 1`, so the sign never moves `δ`, the discriminant of a separable monic polynomial is
-*always* a square, and the test decides nothing; this is recorded as
+`-1 = 1`, so the sign never moves `δ`; inseparable monic polynomials have zero discriminant.
+Thus the discriminant of every monic polynomial is *always* a square, and the test decides
+nothing; this is recorded as
 `Polynomial.Monic.isSquare_discr_of_char_two`.
 
 ## Main definitions
@@ -50,8 +51,8 @@ The characteristic hypothesis `ringChar F ≠ 2` is not decoration. In character
   `discrSqrt e` comes from `F`.
 * `Polynomial.Monic.isSquare_discr_iff_range_le_alternatingGroup`: **the discriminant test**,
   valid away from characteristic `2`.
-* `Polynomial.Monic.isSquare_discr_of_char_two`: in characteristic `2` the discriminant of a monic
-  separable polynomial is always a square, so the test is vacuous there.
+* `Polynomial.Monic.isSquare_discr_of_char_two`: in characteristic `2` the discriminant of every
+  monic polynomial is a square, so the test is vacuous there.
 
 ## References
 
@@ -148,32 +149,35 @@ theorem _root_.Polynomial.Monic.isSquare_discr_iff_range_le_alternatingGroup
     ⟨(Fintype.equivFinOfCardEq (card_rootSet_eq_natDegree hsep Fact.out)).symm⟩
   exact (hf.isSquare_discr_iff_mem_range hsep e).trans (hf.discrSqrt_mem_range_iff hsep hchar e)
 
-/-- In characteristic `2` the discriminant of a monic separable polynomial is always a square,
-whatever its Galois group: the sign of a permutation acts trivially because `-1 = 1`, so the
-product of the root differences is fixed by the whole Galois group and therefore lies in the base
-field.
+/-- In characteristic `2` the discriminant of every monic polynomial is a square. For a separable
+polynomial, the sign of a permutation acts trivially because `-1 = 1`, so the product of the root
+differences is fixed by the whole Galois group and therefore lies in the base field. For an
+inseparable polynomial, the discriminant is zero.
 
 This is why the discriminant test carries the hypothesis `ringChar F ≠ 2`. The invariant that
 replaces the discriminant in characteristic `2` is Berlekamp's. -/
-theorem _root_.Polynomial.Monic.isSquare_discr_of_char_two (hf : f.Monic) (hsep : f.Separable)
+theorem _root_.Polynomial.Monic.isSquare_discr_of_char_two (hf : f.Monic)
     (hchar : ringChar F = 2) : IsSquare f.discr := by
   classical
-  let E := f.SplittingField
-  let _ : IsGalois F E := IsGalois.of_separable_splitting_field hsep
-  let _ : Fact ((f.map (algebraMap F E)).Splits) := ⟨IsSplittingField.splits E f⟩
-  have hF : (2 : F) = 0 := by
-    exact_mod_cast (ringChar.spec F 2).mpr (by rw [hchar])
-  have h2 : (2 : E) = 0 := by rw [← map_ofNat (algebraMap F E) 2, hF, map_zero]
-  obtain ⟨e⟩ : Nonempty (Fin f.natDegree ≃ f.rootSet E) :=
-    ⟨(Fintype.equivFinOfCardEq (card_rootSet_eq_natDegree hsep Fact.out)).symm⟩
-  rw [hf.isSquare_discr_iff_mem_range hsep e, IsGalois.mem_range_algebraMap_iff_fixed]
-  intro ϕ
-  rw [AlgEquiv.map_discrSqrt]
-  rcases Int.units_eq_one_or (Equiv.Perm.sign (Gal.galActionHom f E (Gal.restrict f E ϕ)))
-    with h1 | h1 <;> rw [h1]
-  · rw [one_smul]
-  · simp only [Units.smul_def, Units.val_neg, Units.val_one, neg_smul, one_smul]
-    linear_combination -h2 * discrSqrt e
+  by_cases hsep : f.Separable
+  · let E := f.SplittingField
+    let _ : IsGalois F E := IsGalois.of_separable_splitting_field hsep
+    let _ : Fact ((f.map (algebraMap F E)).Splits) := ⟨IsSplittingField.splits E f⟩
+    have hF : (2 : F) = 0 := by
+      exact_mod_cast (ringChar.spec F 2).mpr (by rw [hchar])
+    have h2 : (2 : E) = 0 := by rw [← map_ofNat (algebraMap F E) 2, hF, map_zero]
+    obtain ⟨e⟩ : Nonempty (Fin f.natDegree ≃ f.rootSet E) :=
+      ⟨(Fintype.equivFinOfCardEq (card_rootSet_eq_natDegree hsep Fact.out)).symm⟩
+    rw [hf.isSquare_discr_iff_mem_range hsep e, IsGalois.mem_range_algebraMap_iff_fixed]
+    intro ϕ
+    rw [AlgEquiv.map_discrSqrt]
+    rcases Int.units_eq_one_or (Equiv.Perm.sign (Gal.galActionHom f E (Gal.restrict f E ϕ)))
+      with h1 | h1 <;> rw [h1]
+    · rw [one_smul]
+    · simp only [Units.smul_def, Units.val_neg, Units.val_one, neg_smul, one_smul]
+      linear_combination -h2 * discrSqrt e
+  · have hdiscr : f.discr = 0 := not_ne_iff.mp fun hne ↦ hsep (hf.discr_ne_zero_iff.mp hne)
+    simp [hdiscr]
 
 end Galois
 
