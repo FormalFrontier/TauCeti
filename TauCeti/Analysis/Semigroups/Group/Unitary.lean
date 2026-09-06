@@ -34,8 +34,8 @@ of the inner product gives the infinitesimal unitary identity
 
 The resolvent-range theorems for the forward and reversed contraction semigroups then identify
 the adjoint domain and upgrade this identity to `A† = -A`: the generator is skew-adjoint. This
-completes the generator direction of Stone's theorem. Constructing the converse unitary group
-from a self-adjoint operator is not claimed here.
+completes the generator direction of Stone's theorem; the converse construction is in
+`TauCeti.Analysis.Semigroups.Group.Stone.Unbounded`.
 
 ## Main declarations
 
@@ -48,8 +48,8 @@ from a self-adjoint operator is not claimed here.
   submodule.
 * `TauCeti.Semigroups.StronglyContinuousGroup.complexGenerator`: the generator as a complex
   `LinearPMap`.
-* `TauCeti.Semigroups.StronglyContinuousGroup.isUnitary_of_isComplexLinear_of_forall_norm_le_one`:
-  a contractive C₀-group with complex-linear operators is unitary.
+* `TauCeti.Semigroups.StronglyContinuousGroup.isUnitary_of_isComplexLinear_of_opNorm_le_one`:
+  a contractive C₀-group whose forward semigroup is complex linear is unitary.
 * `TauCeti.Semigroups.StronglyContinuousGroup.complexGenerator_restrictScalars`,
   `complexGenerator_eq_of_generator_eq_restrictScalars` and `eq_of_complexGenerator_eq`: the
   real generator is the real restriction of the complex one, which is therefore determined by
@@ -154,16 +154,26 @@ theorem isComplexLinear (hU : U.IsUnitary) : U.toSemigroup.IsComplexLinear :=
 
 end IsUnitary
 
-/-- A contractive C₀-group whose operators are complex linear is unitary. -/
-theorem isUnitary_of_isComplexLinear_of_forall_norm_le_one (U : StronglyContinuousGroup H)
-    (hlin : ∀ (t : ℝ) (z : ℂ) (x : H), U t (z • x) = z • U t x)
-    (h : ∀ t : ℝ, ‖U t‖ ≤ 1) : U.IsUnitary := by
+/-- A contractive C₀-group whose forward semigroup is complex linear is unitary: complex linearity
+at negative times follows from that at nonnegative times through the group law. -/
+theorem isUnitary_of_isComplexLinear_of_opNorm_le_one (U : StronglyContinuousGroup H)
+    (hlin : U.toSemigroup.IsComplexLinear) (h : ∀ t : ℝ, ‖U t‖ ≤ 1) : U.IsUnitary := by
+  have hsmul : ∀ (t : ℝ) (z : ℂ) (x : H), U t (z • x) = z • U t x := by
+    intro t z x
+    rcases le_or_gt 0 t with ht | ht
+    · rw [← U.toSemigroup_realOperator_of_nonneg ht]
+      exact hlin.realOperator_map_smul t z x
+    · have hs : 0 ≤ -t := neg_nonneg.mpr ht.le
+      calc U t (z • x) = U t (z • U (-t) (U t x)) := by rw [U.map_neg_apply_map_apply]
+        _ = U t (U (-t) (z • U t x)) := by
+          rw [← U.toSemigroup_realOperator_of_nonneg hs, hlin.realOperator_map_smul]
+        _ = z • U t x := U.map_apply_map_neg_apply t _
   refine IsUnitary.intro fun t x y => ?_
   let L : H →ₗᵢ[ℂ] H :=
     { toLinearMap :=
         { toFun := U t
           map_add' := (U t).map_add
-          map_smul' := hlin t }
+          map_smul' := hsmul t }
       norm_map' := U.norm_map_apply_eq_of_norm_le_one t (h t) (h (-t)) }
   exact L.inner_map_map x y
 
