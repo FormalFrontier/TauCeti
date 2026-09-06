@@ -77,6 +77,10 @@ available the bound below turns into the Dirichlet-density-zero statement.  The 
 `Chebotarev` as the consumer that needs these estimates when moving between a field and a fixed
 subfield.
 
+`TauCetiRoadmap/Chebotarev/README.md`, Layer **11.3(2)** is also a source for the statement proved
+here, not only its consumer: it gives the estimate, its rate `O(√x log x) = o(x)`, and the argument
+that `𝔑𝔭 = p ^ f ≤ x` with `f ≥ 2` forces `p ≤ √x`.
+
 ## References
 
 * J. Neukirch, *Algebraic Number Theory*, Chapter VII, §13.

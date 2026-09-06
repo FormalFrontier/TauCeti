@@ -75,6 +75,9 @@ weighted prime counts `primeTheta` and `primeCount` of 4.3. Layer 5 supplies the
 estimates for these counts, and consumes the prime base and exponent of a prime-power ideal to
 fibre those estimates over the primes.
 
+`TauCetiRoadmap/Chebotarev/README.md`, Layer **11.3(3)** is the source for the finite-set estimate:
+a finite set of primes contributes `O(log x)`, hence `o(x)`.
+
 ## References
 
 * G. Tenenbaum, *Introduction to Analytic and Probabilistic Number Theory*, Chapters I--II.

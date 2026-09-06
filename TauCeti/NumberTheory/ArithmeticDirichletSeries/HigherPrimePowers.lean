@@ -65,7 +65,8 @@ This is the prime and prime-power half of Layer **5.1** together with Layer **5.
 `O(√x log² x)` estimate under the standard logarithmic prime-power weight" and for the
 hypotheses needed by other arithmetic weights.  Layer 10.2 consumes it as the named estimate
 turning an asymptotic for `ψ` into one for `ϑ`; the roadmap's own accounting there requires only
-the `o(x)` corollary.
+the `o(x)` corollary.  The fibre bound added here serves the discard estimate of
+`TauCetiRoadmap/Chebotarev/README.md`, Layer **11.3(2)**.
 
 The ideal-counting half of Layer 5.1 is a separate estimate: it is analytic, resting on Mathlib's
 `NumberField.Ideal.tendsto_norm_le_div_atTop₀`, and is not needed here.

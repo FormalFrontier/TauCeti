@@ -68,6 +68,9 @@ package `PrimeBoundaryRemainder`, carrying the `LSeriesHasSum` and boundary-cont
 and the asymptotic `primePsi_asymptotic_of_boundary` it yields — waits on the Wiener–Ikehara
 theorem of Layer 9.
 
+The finite-set bound is stated in `TauCetiRoadmap/Chebotarev/README.md`, Layer **11.3(3)**, as
+`∑_{𝔭 ∈ T} ∑_{𝔑𝔭 ^ j ≤ x} log 𝔑𝔭 ≤ #T * log x`; that is `primePsi_le_ncard_mul_log` below.
+
 ## References
 
 * H. Davenport, *Multiplicative Number Theory*, Chapter 7.
