@@ -27,8 +27,10 @@ order, so `TauCeti.not_simple_indFDRep_of_prime_card_of_not_normal` applies with
 about the representation at all. The decomposition `sgn ⊕ standard` itself is not proved here.
 
 From the *normal* subgroup `A₃`, on the other hand, every **faithful** linear character induces
-irreducibly, producing the two-dimensional irreducible of `S₃`. Here the normal-subgroup Mackey
-criterion, read on a linear character by
+irreducibly, producing the two-dimensional irreducible of `S₃` -- two-dimensional because induction
+multiplies the dimension by the index of the subgroup
+(`TauCeti.finrank_indFDRep_ofLinearCharacter`), and `A₃` has index two. Here the normal-subgroup
+Mackey criterion, read on a linear character by
 `TauCeti.simple_indFDRep_ofLinearCharacter_iff_centralizer_le`, reduces the question to whether
 anything outside `A₃` centralizes `A₃`, and nothing does. A faithful linear character exists
 because `A₃` is cyclic of order three and the coefficient field has enough roots of unity for the
@@ -50,10 +52,8 @@ is what makes it a *worked* example rather than a further piece of theory.
   stabilizer of `S₃` is irreducible**, in particular not the roadmap's linear characters.
 * `TauCeti.simple_indFDRep_ofLinearCharacter_alternatingGroup_fin_three`: **a faithful linear
   character of `A₃` induces irreducibly to `S₃`**.
-* `TauCeti.finrank_indFDRep_ofLinearCharacter_alternatingGroup_fin_three`: what it induces to is
-  two-dimensional, so this is the two-dimensional irreducible of `S₃`.
 * `TauCeti.exists_monoidHom_alternatingGroup_fin_three_injective`: a faithful linear character of
-  `A₃` exists, so the previous two statements are not vacuous.
+  `A₃` exists, so the previous statement is not vacuous.
 
 ## References
 
@@ -97,15 +97,6 @@ theorem simple_indFDRep_ofLinearCharacter_alternatingGroup_fin_three
     Simple (indFDRep (FDRep.ofLinearCharacter (k := k) χ)) :=
   (simple_indFDRep_ofLinearCharacter_iff_centralizer_le hχ).mpr
     centralizer_alternatingGroup_fin_three_le
-
-omit [IsAlgClosed k] [CharZero k] in
-/-- **What a linear character of `A₃` induces to is two-dimensional**, `A₃` having index two in
-`S₃`. Together with `TauCeti.simple_indFDRep_ofLinearCharacter_alternatingGroup_fin_three` this is
-the roadmap's two-dimensional irreducible of `S₃`. -/
-theorem finrank_indFDRep_ofLinearCharacter_alternatingGroup_fin_three
-    (χ : alternatingGroup (Fin 3) →* kˣ) :
-    Module.finrank k (indFDRep (FDRep.ofLinearCharacter (k := k) χ)) = 2 := by
-  rw [finrank_indFDRep_ofLinearCharacter, alternatingGroup.index_eq_two]
 
 section Faithful
 

@@ -31,16 +31,16 @@ character wants, so `Ind` of a nontrivial `χ` is irreducible; and induction fro
 index two doubles the dimension, so what it produces is a **two-dimensional irreducible
 representation** of `Equiv.Perm α`.
 
-For `Nat.card α = 4` this is the roadmap's `A₄ ◁ S₄` example and it is not vacuous:
+For `Nat.card α = 4` this is the `A₄ ◁ S₄` case, and it is not vacuous:
 `TauCeti.exists_monoidHom_alternatingGroup_ne_one` produces a nontrivial linear character of `A₄`
 from the identification of its commutator subgroup with the Klein four subgroup. The last statement
 of the file assembles the three facts for that case: over an algebraically closed field of
 characteristic zero, `S₄` has a two-dimensional irreducible representation induced from `A₄`.
 
-What the example asks for beyond this is not proved here: that the nontrivial linear characters of
-`A₄` are *exactly* the pair `χ`, `χ⁻¹` -- which needs the order of the character group, not just
-the orbit -- and that the three-dimensional irreducible of `A₄` is `S₄`-fixed, with the Clifford
-correspondence run over each constituent.
+Two further facts about the pair `A₄ ◁ S₄` lie outside the scope of this file: that the nontrivial
+linear characters of `A₄` are *exactly* `χ` and `χ⁻¹`, which needs the order of the character group
+and not just the orbit; and that the three-dimensional irreducible of `A₄` is `S₄`-fixed, the case
+of the Clifford correspondence complementary to the one treated here.
 
 ## Main statements
 
@@ -54,9 +54,6 @@ correspondence run over each constituent.
   such a character exists, so `S₄` has a two-dimensional irreducible induced from `A₄`.
 
 ## References
-
-The inertia computation of the "Clifford on `A₄ ◁ S₄`" worked example of
-[the induction and restriction roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/InductionRestriction/README.md).
 
 * J.-P. Serre, *Linear Representations of Finite Groups*, Chapter 8.
 -/
@@ -117,7 +114,7 @@ theorem exists_simple_finrank_two_indFDRep_alternatingGroup (hα : Nat.card α =
   have hnt : Nontrivial α := by
     rw [← Finite.one_lt_card_iff_nontrivial, hα]
     norm_num
-  have _ : NeZero ((Monoid.exponent (alternatingGroup α) : ℕ) : k) :=
+  have _ : NeZero ((Monoid.exponent (Abelianization (alternatingGroup α)) : ℕ) : k) :=
     ⟨Nat.cast_ne_zero.mpr Monoid.exponent_ne_zero_of_finite⟩
   obtain ⟨χ, hχ⟩ := exists_monoidHom_alternatingGroup_ne_one (α := α) k hα
   exact ⟨χ, inertia_ofLinearCharacter_alternatingGroup hχ,

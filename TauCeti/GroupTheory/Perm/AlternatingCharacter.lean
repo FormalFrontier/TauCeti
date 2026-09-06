@@ -5,9 +5,11 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.GroupTheory.Abelianization.Finite
 public import Mathlib.GroupTheory.FiniteAbelian.Duality
 public import Mathlib.GroupTheory.GroupAction.ConjAct
 public import Mathlib.GroupTheory.SpecificGroups.Alternating.KleinFour
+public import TauCeti.GroupTheory.GroupAction.ConjAct
 
 /-!
 # An odd permutation inverts every linear character of the alternating group
@@ -57,9 +59,6 @@ trivial character.
 
 ## References
 
-The group theory behind the "Clifford on `A₄ ◁ S₄`" worked example of
-[the induction and restriction roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/InductionRestriction/README.md).
-
 * J.-P. Serre, *Linear Representations of Finite Groups*, Chapter 5.
 -/
 
@@ -74,13 +73,6 @@ variable {α : Type*} [DecidableEq α] [Fintype α]
 section Character
 
 variable {M : Type*} [CommGroup M] (χ : alternatingGroup α →* M)
-
-/-- Conjugation by an element of a normal subgroup does not move a homomorphism from that subgroup
-to a commutative group: it conjugates the value, which is the value. -/
-private theorem map_conjNormal_of_mem_subgroup {G : Type*} [Group G] {N : Subgroup G} [N.Normal]
-    (ψ : N →* M) (a x : N) : ψ (MulAut.conjNormal (a : G) x) = ψ x := by
-  rw [MulAut.conjNormal_val, MulAut.conj_apply, map_mul, map_mul, map_inv,
-    mul_comm (ψ a) (ψ x), mul_assoc, mul_inv_cancel, mul_one]
 
 /-- Two odd permutations differ by an even one. -/
 private theorem mul_inv_mem_alternatingGroup {g s : Perm α} (hg : g ∉ alternatingGroup α)
@@ -112,7 +104,7 @@ private theorem map_conjNormal_alternatingGroup_of_fixed {s : Perm α}
     (h : ∀ x : alternatingGroup α, χ (MulAut.conjNormal s x) = χ x) (g : Perm α)
     (x : alternatingGroup α) : χ (MulAut.conjNormal g x) = χ x := by
   by_cases hg : g ∈ alternatingGroup α
-  · exact map_conjNormal_of_mem_subgroup χ ⟨g, hg⟩ x
+  · exact map_conjNormal_val χ ⟨g, hg⟩ x
   · have hgs : g * s⁻¹ ∈ alternatingGroup α := mul_inv_mem_alternatingGroup hg hs
     have hfac : (MulAut.conjNormal g : MulAut (alternatingGroup α)) =
         MulAut.conjNormal ((⟨g * s⁻¹, hgs⟩ : alternatingGroup α) : Perm α) *
@@ -121,7 +113,7 @@ private theorem map_conjNormal_alternatingGroup_of_fixed {s : Perm α}
       congr 1
       simp
     rw [hfac]
-    exact (map_conjNormal_of_mem_subgroup χ ⟨g * s⁻¹, hgs⟩ _).trans (h x)
+    exact (map_conjNormal_val χ ⟨g * s⁻¹, hgs⟩ _).trans (h x)
 
 /-- **A linear character of the alternating group fixed by conjugation by an odd permutation is
 trivial.** Such a character is fixed by conjugation by every permutation, hence takes the same
@@ -160,7 +152,8 @@ theorem eq_one_of_map_conjNormal_eq_alternatingGroup {s : Perm α} (hs : s ∉ a
     exact Subgroup.mem_map.mpr ⟨⟨c, hc.mem_alternatingGroup⟩, hthree c hc _, rfl⟩
   ext x
   obtain ⟨y, hy, hxy⟩ := Subgroup.mem_map.mp (hle x.2)
-  rw [MonoidHom.one_apply, ← show y = x from Subtype.ext hxy]
+  have hyx : y = x := Subtype.ext hxy
+  rw [MonoidHom.one_apply, ← hyx]
   exact hy
 
 /-- **An odd permutation inverts every linear character of the alternating group.** The product of
@@ -179,10 +172,11 @@ theorem map_conjNormal_alternatingGroup_eq_inv {s : Perm α} (hs : s ∉ alterna
           (MulAut.conjNormal s y) =
         (χ.comp (MulAut.conjNormal s : MulAut (alternatingGroup α)).toMonoidHom * χ) y := by
     intro y
+    -- Conjugation by `s * s` lies inside the alternating group, so `χ` does not see it.
+    have hss : χ (MulAut.conjNormal (s * s) y) = χ y := map_conjNormal_val χ ⟨s * s, hsq⟩ y
     simp only [MonoidHom.mul_apply, MonoidHom.coe_comp, Function.comp_apply,
       MulEquiv.coe_toMonoidHom]
-    rw [hcomp y, show χ (MulAut.conjNormal (s * s) y) = χ y from
-      map_conjNormal_of_mem_subgroup χ ⟨s * s, hsq⟩ y, mul_comm]
+    rw [hcomp y, hss, mul_comm]
   have hone := eq_one_of_map_conjNormal_eq_alternatingGroup _ hs hfix
   have hx : (χ.comp (MulAut.conjNormal s : MulAut (alternatingGroup α)).toMonoidHom * χ) x = 1 := by
     rw [hone]
@@ -219,11 +213,6 @@ end Character
 
 section Existence
 
-/-- The canonical map to the abelianization is surjective. -/
-private theorem surjective_abelianization_of (G : Type*) [Group G] :
-    Function.Surjective (Abelianization.of : G →* Abelianization G) := fun y =>
-  QuotientGroup.induction_on y fun x => ⟨x, rfl⟩
-
 /-- **The abelianization of `A₄` is nontrivial**, witnessed by an even permutation outside the
 Klein four subgroup: that subgroup is the commutator subgroup of `A₄`, and it has order `4` inside
 a group of order `12`. -/
@@ -247,21 +236,17 @@ theorem exists_abelianization_of_ne_one_alternatingGroup (hα : Nat.card α = 4)
   exact hx
 
 variable (M : Type*) [CommMonoid M]
-  [HasEnoughRootsOfUnity M (Monoid.exponent (alternatingGroup α))]
+  [HasEnoughRootsOfUnity M (Monoid.exponent (Abelianization (alternatingGroup α)))]
 
 /-- **`A₄` has a nontrivial linear character** valued in any commutative monoid with enough roots
-of unity for the exponent of `A₄`; an algebraically closed field of characteristic zero supplies
-one. The character comes from the abelianization `A₄ / V₄`, which
+of unity for the exponent of the abelianization `A₄ / V₄` -- through which every such character
+factors, and for which an algebraically closed field of characteristic zero supplies the roots.
+The character comes from that abelianization, which
 `TauCeti.exists_abelianization_of_ne_one_alternatingGroup` shows is nontrivial, by the duality of
 finite abelian groups. -/
 theorem exists_monoidHom_alternatingGroup_ne_one (hα : Nat.card α = 4) :
     ∃ χ : alternatingGroup α →* Mˣ, χ ≠ 1 := by
   obtain ⟨x, hx⟩ := exists_abelianization_of_ne_one_alternatingGroup (α := α) hα
-  have _ : Finite (Abelianization (alternatingGroup α)) :=
-    Finite.of_surjective _ (surjective_abelianization_of (alternatingGroup α))
-  have _ : HasEnoughRootsOfUnity M (Monoid.exponent (Abelianization (alternatingGroup α))) :=
-    HasEnoughRootsOfUnity.of_dvd M
-      (MonoidHom.exponent_dvd (surjective_abelianization_of (alternatingGroup α)))
   obtain ⟨φ, hφ⟩ :=
     CommGroup.exists_apply_ne_one_of_hasEnoughRootsOfUnity (Abelianization (alternatingGroup α)) M
       hx
