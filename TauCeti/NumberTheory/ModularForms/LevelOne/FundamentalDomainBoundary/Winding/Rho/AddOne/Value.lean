@@ -342,18 +342,6 @@ private lemma norm_le_of_near_rho_add_one {δL δR : ℝ} (hH : Real.sqrt 3 / 2 
     exact norm_fdBoundary_sub_rho_add_one_arc_le H ⟨h1.le, by linarith [ht.2]⟩
       (by linarith) (by linarith [ht.2])
 
-/-- **The vertical excision half-width.** On the left leg the excision parameter `ε` is
-converted into a parameter half-width by dividing by the leg's length `H - √3/2`; the three
-facts the excision argument needs are that it is positive, at most `1`, and undoes the
-division. The companion on the arc is
-`fdBoundaryArcExcisionHalfWidth_pos_and_lt_one_and_two_mul_sin_eq`. -/
-private lemma verticalExcisionHalfWidth_pos_and_le_one_and_mul_eq (hε : 0 < ε)
-    (hεH : ε < H - Real.sqrt 3 / 2) :
-    0 < ε / (H - Real.sqrt 3 / 2) ∧ ε / (H - Real.sqrt 3 / 2) ≤ 1 ∧
-      ε / (H - Real.sqrt 3 / 2) * (H - Real.sqrt 3 / 2) = ε := by
-  have hHpos : (0 : ℝ) < H - Real.sqrt 3 / 2 := hε.trans hεH
-  exact ⟨div_pos hε hHpos, (div_le_one hHpos).2 hεH.le, div_mul_cancel₀ ε hHpos.ne'⟩
-
 /-- **The excision collapse at `ρ + 1`**: for small `ε`, the `ε`-excised index integrand
 of the boundary contour about `ρ + 1` is interval integrable, and its integral is
 exactly `-πi/3 - arcsin(ε/2)·i`. -/
@@ -371,7 +359,7 @@ private lemma truncated_integral_spec_rho_add_one (hH : Real.sqrt 3 / 2 < H) (h�
   obtain ⟨hδR_pos, hδR_lt, h2sin⟩ :=
     fdBoundaryArcExcisionHalfWidth_pos_and_lt_one_and_two_mul_sin_eq hε hε₃
   set δR := fdBoundaryArcExcisionHalfWidth ε with hδR_def
-  obtain ⟨hδL_pos, hδL_le, hlin⟩ := verticalExcisionHalfWidth_pos_and_le_one_and_mul_eq hε hεH
+  obtain ⟨hδL_pos, hδL_le, hlin⟩ := verticalExcisionHalfWidth_pos_and_le_one_and_mul_eq hε hεH.le
   set δL := ε / (H - Real.sqrt 3 / 2) with hδL_def
   obtain ⟨hi_left, hi_right, hval⟩ :=
     ftc_logDeriv_telescope_rho_add_one H hH hδL_pos hδL_le hδR_pos hδR_lt
