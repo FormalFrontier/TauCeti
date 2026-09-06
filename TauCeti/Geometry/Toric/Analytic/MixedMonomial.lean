@@ -5,9 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.Calculus.ContDiff.Operations
 public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
+public import TauCeti.Algebra.BigOperators.ZPow
+public import TauCeti.Analysis.Calculus.ContDiffZPow
 
 /-!
 # Mixed monomial maps between mixed charts
@@ -212,45 +213,6 @@ end MixedExponent
 
 /-! ### Composition of mixed monomial maps -/
 
-/-- A product of integral powers of one invertible complex number collapses to a single power. -/
-private theorem prod_zpow_eq_zpow_sum {ι : Type*} (s : Finset ι) {y : ℂ} (hy : y ≠ 0)
-    (e : ι → ℤ) : ∏ i ∈ s, y ^ e i = y ^ ∑ i ∈ s, e i := by
-  classical
-  induction s using Finset.cons_induction with
-  | empty => simp
-  | cons a s ha ih => rw [prod_cons, sum_cons, ih, zpow_add₀ hy]
-
-/-- The exponent bookkeeping of a composite monomial in invertible coordinates. -/
-private theorem prod_prod_zpow {m : ℕ} {y : Fin l → ℂ} (hy : ∀ b, y b ≠ 0)
-    (e : Fin m → Fin l → ℤ) (g : Fin m → ℤ) :
-    ∏ a, (∏ b, y b ^ e a b) ^ g a = ∏ b, y b ^ ∑ a, g a * e a b := by
-  calc ∏ a, (∏ b, y b ^ e a b) ^ g a = ∏ b, ∏ a, y b ^ (g a * e a b) := by
-        rw [Finset.prod_comm]
-        exact prod_congr rfl fun a _ ↦ by
-          rw [← Finset.prod_zpow]
-          exact prod_congr rfl fun b _ ↦ by rw [← zpow_mul, mul_comm]
-    _ = ∏ b, y b ^ ∑ a, g a * e a b :=
-        prod_congr rfl fun b _ ↦ prod_zpow_eq_zpow_sum _ (hy b) _
-
-/-- The exponent bookkeeping of a composite monomial in invertible coordinates raised to natural
-powers. -/
-private theorem prod_prod_zpow_pow {m : ℕ} {y : Fin l → ℂ} (hy : ∀ b, y b ≠ 0)
-    (e : Fin m → Fin l → ℤ) (g : Fin m → ℕ) :
-    ∏ a, (∏ b, y b ^ e a b) ^ g a = ∏ b, y b ^ ∑ a, (g a : ℤ) * e a b := by
-  rw [← prod_prod_zpow hy e fun a ↦ (g a : ℤ)]
-  exact prod_congr rfl fun a _ ↦ (zpow_natCast _ _).symm
-
-/-- The exponent bookkeeping of a composite monomial in the boundary coordinates. -/
-private theorem prod_prod_pow {m : ℕ} (x : Fin k → ℂ) (e : Fin m → Fin k → ℕ) (g : Fin m → ℕ) :
-    ∏ a, (∏ b, x b ^ e a b) ^ g a = ∏ b, x b ^ ∑ a, g a * e a b := by
-  calc ∏ a, (∏ b, x b ^ e a b) ^ g a = ∏ b, ∏ a, x b ^ (g a * e a b) := by
-        rw [Finset.prod_comm]
-        exact prod_congr rfl fun a _ ↦ by
-          rw [← Finset.prod_pow]
-          exact prod_congr rfl fun b _ ↦ by rw [← pow_mul, mul_comm]
-    _ = ∏ b, x b ^ ∑ a, g a * e a b :=
-        prod_congr rfl fun b _ ↦ prod_pow_eq_pow_sum _ _ _
-
 /-- The identity exponent data induces the identity map, at every ambient point. -/
 @[simp]
 theorem mixedMonomialMap_id : mixedMonomialMap (MixedExponent.id k l) = id := by
@@ -277,28 +239,22 @@ theorem mixedMonomialMap_comp (B : MixedExponent k' l' k'' l'') (A : MixedExpone
     mixedMonomialMap (B.comp A) z = mixedMonomialMap B (mixedMonomialMap A z) := by
   have hy : ∀ b, z.2 b ≠ 0 := hz
   refine Prod.ext (funext fun c ↦ ?_) (funext fun c ↦ ?_)
-  · have hbb := prod_prod_pow z.1 A.boundaryBoundary (B.boundaryBoundary c)
-    have hbt := prod_prod_zpow_pow hy A.boundaryTorus (B.boundaryBoundary c)
-    have htt := prod_prod_zpow hy A.torusTorus (B.boundaryTorus c)
+  · have hbb := prod_prod_pow univ univ z.1 A.boundaryBoundary (B.boundaryBoundary c)
+    have hbt := prod_prod_zpow_pow univ univ (fun b _ ↦ hy b) A.boundaryTorus
+      (B.boundaryBoundary c)
+    have htt := prod_prod_zpow univ univ (fun b _ ↦ hy b) A.torusTorus (B.boundaryTorus c)
     simp only [mixedMonomialMap_fst_apply, mixedMonomialMap_snd_apply, mul_pow,
       prod_mul_distrib, MixedExponent.comp_boundaryBoundary, MixedExponent.comp_boundaryTorus,
       Matrix.mul_apply, Matrix.add_apply, Matrix.map_apply]
     rw [hbb, hbt, htt, mul_assoc, ← prod_mul_distrib]
     exact congrArg _ (prod_congr rfl fun b _ ↦ zpow_add₀ (hy b) _ _)
-  · have htt := prod_prod_zpow hy A.torusTorus (B.torusTorus c)
+  · have htt := prod_prod_zpow univ univ (fun b _ ↦ hy b) A.torusTorus (B.torusTorus c)
     simp only [mixedMonomialMap_snd_apply, MixedExponent.comp_torusTorus, Matrix.mul_apply]
     rw [htt]
 
 /-! ### Holomorphy -/
 
 variable {n : WithTop ℕ∞}
-
-private theorem contDiffAt_zpow {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
-    {f : E → ℂ} {x : E} (hf : ContDiffAt ℂ n f x) (hx : f x ≠ 0) (m : ℤ) :
-    ContDiffAt ℂ n (fun z ↦ f z ^ m) x := by
-  obtain ⟨i, rfl | rfl⟩ := m.eq_nat_or_neg
-  · simpa [zpow_natCast] using hf.pow i
-  · simpa [zpow_neg, zpow_natCast, Pi.inv_def] using (hf.pow i).inv (pow_ne_zero _ hx)
 
 /-- A mixed monomial map is holomorphic at every point of the mixed-chart locus, to any order. -/
 theorem mixedMonomialMap_contDiffAt (A : MixedExponent k l k' l')
@@ -430,8 +386,7 @@ theorem ofTorusBlock_comp_ofTorusBlock (C C' : Matrix (Fin k) (Fin l) ℤ)
 theorem ofTorusBlock_comp_eq_id_of_mul_eq_one (C : Matrix (Fin k) (Fin l) ℤ)
     {D D' : Matrix (Fin l) (Fin l) ℤ} (h : D' * D = 1) :
     (ofTorusBlock (-(C * D')) D').comp (ofTorusBlock C D) = MixedExponent.id k l := by
-  rw [ofTorusBlock_comp_ofTorusBlock, h, Matrix.neg_mul, Matrix.mul_assoc, h, Matrix.mul_one,
-    add_neg_cancel, ofTorusBlock_zero_one]
+  simp [ofTorusBlock_comp_ofTorusBlock, Matrix.mul_assoc, h]
 
 end MixedExponent
 
@@ -444,9 +399,7 @@ noncomputable def basisChangeOpenPartialHomeomorph (C : Matrix (Fin k) (Fin l) �
   mixedMonomialOpenPartialHomeomorph (MixedExponent.ofTorusBlock C D)
     (MixedExponent.ofTorusBlock (-(C * D⁻¹)) D⁻¹)
     (MixedExponent.ofTorusBlock_comp_eq_id_of_mul_eq_one C (Matrix.nonsing_inv_mul D hD))
-    (by
-      rw [MixedExponent.ofTorusBlock_comp_ofTorusBlock, Matrix.mul_nonsing_inv D hD, neg_add_cancel,
-        MixedExponent.ofTorusBlock_zero_one])
+    (by simp [MixedExponent.ofTorusBlock_comp_ofTorusBlock, Matrix.mul_nonsing_inv D hD])
 
 section
 
