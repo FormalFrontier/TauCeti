@@ -148,11 +148,9 @@ lemma weightedOrderOfVanishingOnOrbit_eq_two_mul_div [SlashInvariantFormClass F 
 /-- **One `Γ`-orbit's share of the level-one weight.** The summand of the level-one weighted
 order at the `SL(2, ℤ)`-orbit of `p` — the number of cosets translating `p` into the `Γ`-orbit
 `o`, times the order there, scaled by the level-one elliptic order — is the general-level
-weighted order at `o`, and vanishes off the fibre. Orbit-stabiliser
-(`card_fiber_orbitOfCosetTranslate_mul_cardStabilizerOnOrbit_eq`) is what turns the count into
-the weight `2 / |Stab_Γ o|`; off the fibre the count is itself zero. -/
+weighted order at `o`, and vanishes off the fibre. -/
 private lemma card_fiber_smul_orderOfVanishingOnSubgroupOrbit_mul_ellipticOrder_inv_eq_indicator
-    [ModularFormClass F (Γ : Subgroup (GL (Fin 2) ℝ)) k] (f : F) (p : ℍ)
+    [SlashInvariantFormClass F (Γ : Subgroup (GL (Fin 2) ℝ)) k] (f : F) (p : ℍ)
     (o : orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ) :
     ((Nat.card {q : 𝒮ℒ ⧸ (Γ : Subgroup (GL (Fin 2) ℝ)).subgroupOf 𝒮ℒ //
           orbitOfCosetTranslate p q = o} • orderOfVanishingOnSubgroupOrbit f o : ℤ) : ℚ) *
@@ -231,11 +229,9 @@ lemma hasFiniteSupport_weightedOrderOfVanishingOnSubgroupOrbit [Γ.FiniteIndex]
   exact fun h0 ↦ ho (by rw [weightedOrderOfVanishingOnSubgroupOrbit_def, h0]; simp)
 
 /-- **The `Γ`-orbits carrying mass are covered by the fibres above the `SL(2, ℤ)`-orbits they
-lie in.** Restricting the unrestricted sum to that union changes nothing, which is what lets the
-sum be reindexed by `SL(2, ℤ)`-orbits. Those fibres are pairwise disjoint by
-`Set.pairwiseDisjoint_fiber`, so the reindexing is a partition. -/
+lie in**, so restricting the unrestricted sum to that union changes nothing. -/
 private lemma finsum_eq_finsum_mem_biUnion_preimage_slOrbitOfSubgroupOrbit
-    [ModularFormClass F (Γ : Subgroup (GL (Fin 2) ℝ)) k] (f : F) :
+    [SlashInvariantFormClass F (Γ : Subgroup (GL (Fin 2) ℝ)) k] (f : F) :
     (∑ᶠ o : orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ,
         weightedOrderOfVanishingOnSubgroupOrbit f o) =
       ∑ᶠ o ∈ ⋃ P ∈ slOrbitOfSubgroupOrbit (Γ := Γ) ''
