@@ -44,11 +44,14 @@ class group (`oneEquivClassGroup`).
   of an element congruent to one is prime to the modulus.
 * `TauCeti.GlobalNumberFields.idealClass_eq_one_iff`: an ideal has trivial ray class exactly when
   it is generated, as a fractional ideal, by an element of `Kˣ` congruent to one modulo `𝔪`.
-* `TauCeti.GlobalNumberFields.classMap_classMap` and
-  `TauCeti.GlobalNumberFields.classMap_idealClass`: the transition maps compose along a tower of
-  moduli, and carry the class of an integral ideal to the class of the same ideal.
+* `TauCeti.GlobalNumberFields.classMap_comp_classMap` and
+  `TauCeti.GlobalNumberFields.classMap_comp_idealClass`: the transition maps compose along a tower
+  of moduli, and carry the class of an integral ideal to the class of the same ideal.  Both are
+  equalities of homomorphisms, with the pointwise forms `classMap_classMap` and
+  `classMap_idealClass` derived from them.
 * `TauCeti.GlobalNumberFields.oneEquivClassGroup`: at the trivial modulus the ray class group is
-  the class group of `𝓞 K`.
+  the class group of `𝓞 K`, carrying a ray class to the class of the same fractional ideal
+  (`TauCeti.GlobalNumberFields.oneEquivClassGroup_rayClassMk`).
 
 ## References
 
@@ -61,6 +64,9 @@ public section
 open IsDedekindDomain IsDedekindDomain.HeightOneSpectrum NumberField
 open scoped nonZeroDivisors NumberField
 
+-- Provenance: the declaration names and signatures formalized here follow the interface file
+-- `GlobalNumberFields/Suggested.lean`, and its accompanying `README.md`, of the TauCetiRoadmap
+-- repository, which specify this API.
 namespace TauCeti.GlobalNumberFields
 
 variable {K : Type*} [Field K] [NumberField K]
@@ -129,10 +135,6 @@ noncomputable def idealClass (𝔪 : Modulus K) :
     integralIdealsPrimeTo 𝔪 →* RayClassGroup 𝔪 :=
   (rayClassMk 𝔪).comp (NumberFieldArithmetic.integralIdealsAwayHom 𝔪.support)
 
-@[simp] theorem idealClass_mul (𝔪 : Modulus K) (I J : integralIdealsPrimeTo 𝔪) :
-    idealClass 𝔪 (I * J) = idealClass 𝔪 I * idealClass 𝔪 J :=
-  map_mul _ _ _
-
 /-- **The intrinsic triviality criterion for a ray class.**  An integral ideal prime to `𝔪` has
 trivial ray class exactly when it is generated as a *fractional* ideal by an element of `Kˣ` that
 is congruent to one modulo `𝔪`; the congruence already carries both the finite conditions and the
@@ -166,20 +168,35 @@ noncomputable def classMap {𝔪 𝔫 : Modulus K} (h : 𝔪 ∣ 𝔫) :
     classMap h (rayClassMk 𝔫 I) =
       rayClassMk 𝔪 (NumberFieldArithmetic.idealsAwayInclusion (Modulus.support_mono h) I) := (rfl)
 
+/-- **The transition maps compose along a tower of moduli**, as an equality of homomorphisms. -/
+theorem classMap_comp_classMap {𝔪 𝔫 𝔭 : Modulus K} (h₁ : 𝔪 ∣ 𝔫) (h₂ : 𝔫 ∣ 𝔭) :
+    (classMap h₁).comp (classMap h₂) = classMap (Modulus.dvd_trans h₁ h₂) := by
+  refine MonoidHom.ext fun c ↦ ?_
+  obtain ⟨I, rfl⟩ := rayClassMk_surjective 𝔭 c
+  rw [MonoidHom.comp_apply, classMap_rayClassMk, classMap_rayClassMk, classMap_rayClassMk]
+  congr 1
+  exact Subtype.ext (Units.ext (by simp [NumberFieldArithmetic.coe_idealsAwayInclusion]))
+
 /-- The transition maps compose along a tower of moduli. -/
 theorem classMap_classMap {𝔪 𝔫 𝔭 : Modulus K} (h₁ : 𝔪 ∣ 𝔫) (h₂ : 𝔫 ∣ 𝔭) (c : RayClassGroup 𝔭) :
     classMap h₁ (classMap h₂ c) = classMap (Modulus.dvd_trans h₁ h₂) c := by
-  obtain ⟨I, rfl⟩ := rayClassMk_surjective 𝔭 c
-  rw [classMap_rayClassMk, classMap_rayClassMk, classMap_rayClassMk]
+  rw [← MonoidHom.comp_apply, classMap_comp_classMap]
+
+/-- **The ray class of an integral ideal is compatible with the transition maps**, as an equality
+of homomorphisms out of `integralIdealsPrimeTo 𝔫`. -/
+theorem classMap_comp_idealClass {𝔪 𝔫 : Modulus K} (h : 𝔪 ∣ 𝔫) :
+    (classMap h).comp (idealClass 𝔫) =
+      (idealClass 𝔪).comp (integralIdealsPrimeToInclusion h) := by
+  refine MonoidHom.ext fun I ↦ ?_
+  rw [MonoidHom.comp_apply, MonoidHom.comp_apply, idealClass, MonoidHom.comp_apply,
+    classMap_rayClassMk, idealClass, MonoidHom.comp_apply]
   congr 1
-  exact Subtype.ext (Units.ext (by simp [NumberFieldArithmetic.coe_idealsAwayInclusion]))
+  exact Subtype.ext (Units.ext (by simp [NumberFieldArithmetic.coe_integralIdealsAwayHom]))
 
 /-- **The ray class of an integral ideal is compatible with the transition maps.** -/
 @[simp] theorem classMap_idealClass {𝔪 𝔫 : Modulus K} (h : 𝔪 ∣ 𝔫) (I : integralIdealsPrimeTo 𝔫) :
     classMap h (idealClass 𝔫 I) = idealClass 𝔪 (integralIdealsPrimeToInclusion h I) := by
-  rw [idealClass, MonoidHom.comp_apply, classMap_rayClassMk, idealClass, MonoidHom.comp_apply]
-  congr 1
-  exact Subtype.ext (Units.ext (by simp [NumberFieldArithmetic.coe_integralIdealsAwayHom]))
+  rw [← MonoidHom.comp_apply, classMap_comp_idealClass, MonoidHom.comp_apply]
 
 /-! ### The trivial modulus -/
 
@@ -215,5 +232,18 @@ noncomputable def oneEquivClassGroup :
     RayClassGroup (Modulus.one K) ≃* ClassGroup (𝓞 K) :=
   (QuotientGroup.congr (ray (Modulus.one K)) (toPrincipalIdeal (𝓞 K) K).range
     idealsPrimeToOneEquiv map_ray_one).trans (ClassGroup.equiv (K := K)).symm
+
+/-- **The equivalence at the trivial modulus carries a ray class to the class of the same
+fractional ideal.** -/
+@[simp] theorem oneEquivClassGroup_rayClassMk (I : idealsPrimeTo (Modulus.one K)) :
+    oneEquivClassGroup (rayClassMk (Modulus.one K) I) =
+      ClassGroup.mk K (I : (FractionalIdeal (𝓞 K)⁰ K)ˣ) := by
+  have h : oneEquivClassGroup (rayClassMk (Modulus.one K) I) =
+      (ClassGroup.equiv (K := K)).symm (QuotientGroup.mk' (toPrincipalIdeal (𝓞 K) K).range
+        (I : (FractionalIdeal (𝓞 K)⁰ K)ˣ)) := (rfl)
+  rw [h, MulEquiv.symm_apply_eq, ClassGroup.equiv_mk]
+  simp only [QuotientGroup.mk'_apply, FractionalIdeal.canonicalEquiv_self,
+    RingEquiv.coe_mulEquiv_refl]
+  rfl
 
 end TauCeti.GlobalNumberFields

@@ -71,6 +71,9 @@ public section
 open IsDedekindDomain IsDedekindDomain.HeightOneSpectrum NumberField
 open scoped nonZeroDivisors NumberField
 
+-- Provenance: the declaration names and signatures formalized here follow the interface file
+-- `GlobalNumberFields/Suggested.lean`, and its accompanying `README.md`, of the TauCetiRoadmap
+-- repository, which specify this API.
 namespace TauCeti.GlobalNumberFields
 
 /-- A **modulus** of a number field `K`: a nonzero integral ideal of `𝓞 K` together with a finite
@@ -103,9 +106,6 @@ infinite part of `𝔪` is contained in that of `𝔫`, so that the congruence c
 `𝔫` are the stronger ones. -/
 instance : Dvd (Modulus K) :=
   ⟨fun 𝔪 𝔫 ↦ 𝔪.finitePart ∣ 𝔫.finitePart ∧ 𝔪.infinitePart ⊆ 𝔫.infinitePart⟩
-
-theorem dvd_iff {𝔪 𝔫 : Modulus K} :
-    𝔪 ∣ 𝔫 ↔ 𝔪.finitePart ∣ 𝔫.finitePart ∧ 𝔪.infinitePart ⊆ 𝔫.infinitePart := Iff.rfl
 
 @[refl]
 theorem dvd_refl (𝔪 : Modulus K) : 𝔪 ∣ 𝔪 := ⟨_root_.dvd_refl _, Finset.Subset.refl _⟩
