@@ -156,32 +156,27 @@ private lemma natDiagGL_mul_mapGL_eq_mapGL_mul_primeRep_none_of_entries (hp : 0 
   · linear_combination (-(p : ℚ) * ((γ 1 0 : ℤ) : ℚ)) * hσdetQ
   · linear_combination (-(p : ℚ) * ((γ 1 1 : ℤ) : ℚ)) * hσdetQ
 
-/-- The sheared left factor lies in `Γ₁(N)`. Its diagonal entries are congruent to `1` and
-its lower-left entry to `0` mod `N`, using `γ ∈ Γ₁(N)` and the congruence `m p ≡ 1 (mod N)`
-that `hmp` records. -/
-private lemma mem_Gamma1_of_coe_eq_shearedEntries {γ δ : SL(2, ℤ)} {a' : ℤ}
-    (hδmat : (δ : Matrix (Fin 2) (Fin 2) ℤ) =
-      !![γ 0 0 - γ 0 1 * (N : ℤ), γ 0 1 * σ 0 0 - a' * σ 0 1;
-        (p : ℤ) * (γ 1 0 - γ 1 1 * (N : ℤ)), (p : ℤ) * γ 1 1 * σ 0 0 - γ 1 0 * σ 0 1])
-    (ha : ((γ 0 0 : ℤ) : ZMod N) = 1) (hd : ((γ 1 1 : ℤ) : ZMod N) = 1)
+/-- The sheared left factor lies in `Γ₁(N)`. Only its bottom row is needed: `mem_Gamma1_iff`
+reduces membership to `Γ₀(N)` plus the lower-right congruence, so the lower-left entry being
+`0` and the lower-right `1` mod `N` suffice — the upper-left congruence is forced by the
+determinant. -/
+private lemma mem_Gamma1_of_lowerRow_eq {γ δ : SL(2, ℤ)}
+    (h10 : (δ 1 0 : ℤ) = (p : ℤ) * (γ 1 0 - γ 1 1 * (N : ℤ)))
+    (h11 : (δ 1 1 : ℤ) = (p : ℤ) * γ 1 1 * σ 0 0 - γ 1 0 * σ 0 1)
+    (hd : ((γ 1 1 : ℤ) : ZMod N) = 1)
     (hc : ((γ 1 0 : ℤ) : ZMod N) = 0) (hmp : ((σ 0 0 * (p : ℤ) : ℤ) : ZMod N) = 1) :
     δ ∈ Gamma1 N := by
-  refine (Gamma1_mem N δ).mpr ⟨?_, ?_, ?_⟩
-  · have h : ((γ 0 0 - γ 0 1 * (N : ℤ) : ℤ) : ZMod N) = 1 := by
-      push_cast
-      rw [ha, ZMod.natCast_self]
-      ring
-    simpa [hδmat] using h
-  · have h : (((p : ℤ) * γ 1 1 * σ 0 0 - γ 1 0 * σ 0 1 : ℤ) : ZMod N) = 1 := by
-      push_cast at hmp ⊢
-      rw [hc]
-      linear_combination (((γ 1 1 : ℤ) : ZMod N)) * hmp + hd
-    simpa [hδmat] using h
+  refine mem_Gamma1_iff.mpr ⟨Gamma0_mem.mpr ?_, ?_⟩
   · have h : (((p : ℤ) * (γ 1 0 - γ 1 1 * (N : ℤ)) : ℤ) : ZMod N) = 0 := by
       push_cast
       rw [hc, ZMod.natCast_self]
       ring
-    simpa [hδmat] using h
+    simpa [h10] using h
+  · have h : (((p : ℤ) * γ 1 1 * σ 0 0 - γ 1 0 * σ 0 1 : ℤ) : ZMod N) = 1 := by
+      push_cast at hmp ⊢
+      rw [hc]
+      linear_combination (((γ 1 1 : ℤ) : ZMod N)) * hmp + hd
+    simpa [h11] using h
 
 /-- **The forward factorisation through the twisted coset.** For `γ = !![a, b; c, d] ∈ Γ₁(N)`
 with `p ∣ a`, the product `diag(1, p) · γ` lies in the right coset `Γ₁(N) · σ · diag(p, 1)`:
@@ -195,7 +190,7 @@ lemma exists_mem_Gamma1_natDiagGL_mul_primeRep_none_of_dvd (hp : 0 < p)
     (hσ11 : σ 1 1 = (p : ℤ)) {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma1 N) (hpa : (p : ℤ) ∣ γ 0 0) :
     ∃ δ : SL(2, ℤ), δ ∈ Gamma1 N ∧
       natDiagGL 2 ![1, p] * mapGL ℚ γ = mapGL ℚ δ * primeRep σ p none := by
-  obtain ⟨ha, hd, hc⟩ := (Gamma1_mem N γ).mp hγ
+  obtain ⟨-, hd, hc⟩ := (Gamma1_mem N γ).mp hγ
   obtain ⟨a', ha'⟩ := hpa
   have hσdet : σ 0 0 * (p : ℤ) - σ 0 1 * (N : ℤ) = 1 :=
     mul_sub_mul_eq_one_of_lowerRow hσ10 hσ11
@@ -216,13 +211,13 @@ lemma exists_mem_Gamma1_natDiagGL_mul_primeRep_none_of_dvd (hp : 0 < p)
   have hmp : ((σ 0 0 * (p : ℤ) : ℤ) : ZMod N) = 1 := by
     have hσΓ0 : σ ∈ Gamma0 N := Gamma0_mem.mpr (by rw [hσ10]; simp)
     simpa [hσ11] using intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0 hσΓ0
-  refine ⟨δ, mem_Gamma1_of_coe_eq_shearedEntries hδmat ha hd hc hmp, ?_⟩
-  · have e00 : (δ 0 0 : ℤ) = γ 0 0 - γ 0 1 * (N : ℤ) := by rw [hδmat]; simp
-    have e01 : (δ 0 1 : ℤ) = γ 0 1 * σ 0 0 - a' * σ 0 1 := by rw [hδmat]; simp
-    have e10 : (δ 1 0 : ℤ) = (p : ℤ) * (γ 1 0 - γ 1 1 * (N : ℤ)) := by rw [hδmat]; simp
-    have e11 : (δ 1 1 : ℤ) = (p : ℤ) * γ 1 1 * σ 0 0 - γ 1 0 * σ 0 1 := by rw [hδmat]; simp
-    exact natDiagGL_mul_mapGL_eq_mapGL_mul_primeRep_none_of_entries hp hσ10 hσ11 ha'
-      e00 e01 e10 e11
+  have e00 : (δ 0 0 : ℤ) = γ 0 0 - γ 0 1 * (N : ℤ) := by rw [hδmat]; simp
+  have e01 : (δ 0 1 : ℤ) = γ 0 1 * σ 0 0 - a' * σ 0 1 := by rw [hδmat]; simp
+  have e10 : (δ 1 0 : ℤ) = (p : ℤ) * (γ 1 0 - γ 1 1 * (N : ℤ)) := by rw [hδmat]; simp
+  have e11 : (δ 1 1 : ℤ) = (p : ℤ) * γ 1 1 * σ 0 0 - γ 1 0 * σ 0 1 := by rw [hδmat]; simp
+  exact ⟨δ, mem_Gamma1_of_lowerRow_eq e10 e11 hd hc hmp,
+    natDiagGL_mul_mapGL_eq_mapGL_mul_primeRep_none_of_entries hp hσ10 hσ11 ha'
+      e00 e01 e10 e11⟩
 
 /-- **The witness for the reverse inclusion.** The matrix `!![m p, n; N, 1]` lies in `Γ₁(N)` —
 its determinant is the Bézout relation and `m p ≡ 1 (mod N)` — and moving it across
