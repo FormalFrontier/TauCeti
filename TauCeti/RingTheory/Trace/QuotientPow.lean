@@ -43,6 +43,15 @@ characteristic of `κ` does not divide `e` (see
 * `Ideal.span_singleton_sup_pow_succ`: in a Dedekind domain, an element of `P ^ n` outside
   `P ^ (n + 1)` generates `P ^ n` modulo `P ^ (n + 1)`.
 * `Algebra.trace_quotient_pow`: the trace formula `Tr_{B ⧸ P ^ n} = n · Tr_{B ⧸ P}`.
+
+## References
+
+Mathlib already proves the ideal equality `Ideal.span_singleton_sup_pow_succ` below, as the
+`suffices` step inside the proof of `Ideal.exists_mul_add_mem_pow_succ` in
+`Mathlib.RingTheory.Ideal.Norm.AbsNorm`, on the way to the element-wise form of that statement;
+Mathlib credits it to [J. Neukirch, *Algebraic Number Theory*][Neukirch1992], Proposition 6.1.
+The theorem below states that step on its own, with the proof adapted from Mathlib's, because it
+is the ideal-level form — not the element-wise one — that the filtration argument here needs.
 -/
 
 public section
@@ -54,7 +63,12 @@ namespace Ideal
 variable {B : Type*} [CommRing B] [IsDedekindDomain B] (P : Ideal B) [P.IsPrime]
 
 /-- In a Dedekind domain, an element of `P ^ n` that is not in `P ^ (n + 1)` generates `P ^ n`
-modulo `P ^ (n + 1)`. -/
+modulo `P ^ (n + 1)`.
+
+This equality is extracted from the proof of Mathlib's `Ideal.exists_mul_add_mem_pow_succ`
+(`Mathlib.RingTheory.Ideal.Norm.AbsNorm`), where it appears as an internal `suffices` step, and
+the proof below is adapted from that one; Mathlib credits it to
+[J. Neukirch, *Algebraic Number Theory*][Neukirch1992], Proposition 6.1. -/
 theorem span_singleton_sup_pow_succ (hP : P ≠ ⊥) {n : ℕ} {a : B} (ha : a ∈ P ^ n)
     (ha' : a ∉ P ^ (n + 1)) : Ideal.span {a} ⊔ P ^ (n + 1) = P ^ n := by
   refine Ideal.eq_prime_pow_of_succ_lt_of_le hP (lt_of_le_of_ne le_sup_right fun h ↦ ha' ?_)
