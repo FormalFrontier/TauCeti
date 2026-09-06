@@ -330,9 +330,9 @@ the two mixed-chart domains. -/
 @[simp]
 theorem mixedChartProdHomeomorph_mem_prod {k₁ l₁ k₂ l₂ : ℕ}
     (z : (Fin (k₁ + k₂) → ℂ) × (Fin (l₁ + l₂) → ℂ)) :
-    mixedChartProdHomeomorph z ∈ mixedChartDomain k₁ l₁ ×ˢ mixedChartDomain k₂ l₂ ↔
+    (∀ j : Fin l₁, z.2 (Fin.castAdd l₂ j) ≠ 0) ∧
+      (∀ j : Fin l₂, z.2 (Fin.natAdd l₁ j) ≠ 0) ↔
       z ∈ mixedChartDomain (k₁ + k₂) (l₁ + l₂) := by
-  simp only [Set.mem_prod, mem_mixedChartDomain, mixedChartProdHomeomorph_apply]
   constructor
   · rintro ⟨h₁, h₂⟩ j
     exact Fin.addCases h₁ h₂ j
