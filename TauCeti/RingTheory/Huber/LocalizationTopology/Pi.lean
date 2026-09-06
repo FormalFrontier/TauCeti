@@ -16,9 +16,12 @@ structure map out of `A` apiece. This file bundles them into one ring homomorphi
 `T` is needed for either, so none is imposed: what is defined here is the product map for an
 arbitrary finite `T`.
 
-The family `(R(T/t))_{t ∈ T}` is a cover of `Spa(A,A⁺)` — a *standard rational cover* — precisely
-when `T` generates the unit ideal, by
-`TauCeti.ValuationSpectrum.spa_eq_biUnion_rationalSubset_of_span_eq_top`. Under that hypothesis
+The family `(R(T/t))_{t ∈ T}` is a cover of `Spa(A,A⁺)` — a *standard rational cover* — **when**
+`T` generates the unit ideal, by
+`TauCeti.ValuationSpectrum.spa_eq_biUnion_rationalSubset_of_span_eq_top`, which needs nothing of
+`A`. The converse holds as well, but only once every maximal ideal of `A` is open
+(`TauCeti.ValuationSpectrum.span_eq_top_iff_spa_eq_biUnion_rationalSubset`, Corollary 7.53), and
+that hypothesis is not carried here. Under the spanning hypothesis
 this map is the comparison whose faithful flatness and injectivity Wedhorn's Corollary 8.32
 asserts. Neither the hypothesis nor those conclusions appear below; this is the map they are
 about.
@@ -55,7 +58,7 @@ variable {A : Type*} [CommRing A] [TopologicalSpace A] [IsTopologicalRing A]
   (hden : ∀ t : T, HasDenominatorPower P T (t : A) (S t))
 
 /-- **The structure map into a family of rational localisations**: the tuple of the structure maps
-`A → A⟨T/t⟩`, one for each numerator `t ∈ T`. The family is a standard rational cover exactly when
+`A → A⟨T/t⟩`, one for each numerator `t ∈ T`. The family is a standard rational cover when
 `Ideal.span (T : Set A) = ⊤`, which nothing here requires. -/
 noncomputable def rationalLocalizationPiHom :
     letI : ∀ t : T, UniformSpace (S t) := fun t ↦ locUniformSpace P T (t : A) (S t) (hden t)
