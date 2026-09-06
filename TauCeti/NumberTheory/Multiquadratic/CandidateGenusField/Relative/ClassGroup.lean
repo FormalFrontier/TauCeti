@@ -21,7 +21,7 @@ relative Galois group `Gal(K_gen/K)` has the same order as the maximal elementar
 `Cl⁺(K) / Cl⁺(K)²` of the narrow class group, and, for imaginary `K`, as `Cl(K) / Cl(K)²`: all equal
 `2 ^ (t - 1)`, where `t` is the number of rational primes ramifying in `K`.
 
-This is the numerical content of the genus-theoretic summit isomorphisms
+This is the numerical content of the expected genus-field isomorphisms
 `Gal(K_gen/K) ≅ Cl⁺(K) / Cl⁺(K)²` and, for imaginary `K`, `Gal(K_gen/K) ≅ Cl(K) / Cl(K)²` — the two
 sides have equal cardinality — established **without class field theory**, by combining the
 field-theoretic relative degree `[K_gen : K] = 2 ^ (t - 1)`
@@ -53,8 +53,8 @@ variable {d : ℤ}
 /-- **The relative candidate-genus-field Galois group and `Cl(K)/Cl(K)²` have equal order.** For an
 imaginary quadratic field `K = ℚ(√d)` (`d < 0` squarefree), `|Gal(K_gen/K)|` equals `|Cl(K)/Cl(K)²|`
 — both are `2 ^ (t - 1)`, where `t` is the number of rational primes ramifying in `K`. This is the
-cardinality shadow of the summit isomorphism `Gal(K_gen/K) ≅ Cl(K)/Cl(K)²`, established without
-class field theory. -/
+cardinality shadow of the expected genus-field isomorphism `Gal(K_gen/K) ≅ Cl(K)/Cl(K)²`,
+established without class field theory. -/
 theorem card_aut_candidateGenusField_over_base_eq_card_elementaryTwoQuotient
     (hd : Squarefree d) (hneg : d < 0) :
     Nat.card (candidateGenusField hd ≃ₐ[candidateGenusFieldBase hd] candidateGenusField hd) =
@@ -76,15 +76,17 @@ theorem card_aut_candidateGenusField_over_base_eq_card_elementaryTwoQuotient
       (adjoin_candidateGenusFieldBaseGen_eq_top hd) hd]
 
 /-- **The relative candidate-genus-field Galois group and `Cl⁺(K)/Cl⁺(K)²` have equal order.** For a
-quadratic field `K = ℚ(√d)` of either signature (`d` squarefree and not a rational square, with
-`1 < |d|`), `|Gal(K_gen/K)|` equals `|Cl⁺(K)/Cl⁺(K)²|` — both are `2 ^ (t - 1)`, where `t` is the
-number of rational primes ramifying in `K`. This is the cardinality shadow of the summit isomorphism
+quadratic field `K = ℚ(√d)` of either signature (`d` squarefree with `1 < |d|`), `|Gal(K_gen/K)|`
+equals `|Cl⁺(K)/Cl⁺(K)²|` — both are `2 ^ (t - 1)`, where `t` is the number of rational primes
+ramifying in `K`. This is the cardinality shadow of the expected genus-field isomorphism
 `Gal(K_gen/K) ≅ Cl⁺(K)/Cl⁺(K)²`, established without class field theory. -/
 theorem card_aut_candidateGenusField_over_base_eq_card_narrowElementaryTwoQuotient
-    (hd : Squarefree d) (hnsq : ¬ IsSquare ((d : ℤ) : ℚ)) (hd1 : 1 < d.natAbs) :
+    (hd : Squarefree d) (hd1 : 1 < d.natAbs) :
     Nat.card (candidateGenusField hd ≃ₐ[candidateGenusFieldBase hd] candidateGenusField hd) =
       Nat.card
         (NumberField.NarrowClassGroup.ElementaryTwoQuotient (candidateGenusFieldBase hd)) := by
+  have hnsq : ¬ IsSquare ((d : ℤ) : ℚ) :=
+    not_isSquare_intCast_of_squarefree_of_ne_one hd (by rintro rfl; norm_num at hd1)
   have : NumberField (candidateGenusFieldBase hd) :=
     NumberField.of_intermediateField (candidateGenusFieldBase hd)
   rw [card_aut_candidateGenusField_over_base hd hnsq,
