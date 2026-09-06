@@ -87,7 +87,11 @@ private theorem exists_smul_mem_traceDual_of_mem_traceDual {x : L}
         congr 1
         simp only [Algebra.smul_def, j]
         ring
-      _ = f i := rfl
+      _ = ((Algebra.traceForm K L) (algebraMap R K b • x)) (algebraMap S L i) := by
+        rw [Algebra.traceForm_apply]
+      _ = f i := by
+        simp only [f, LinearMap.comp_apply, LinearMap.restrictScalars_apply,
+          Algebra.linearMap_apply]
   have hN : N = ⊤ := by
     apply top_unique
     rw [← hs]
@@ -187,10 +191,19 @@ theorem extendedHom_dual_one_eq_dual_one
     _ = (↑(FractionalIdeal.dual Rₘ K (1 : FractionalIdeal Sₘ⁰ L)) : Submodule Sₘ L) :=
       (FractionalIdeal.coe_dual_one Rₘ K L Sₘ).symm
 
+omit [IsTorsionFree R S] [IsTorsionFree Rₘ Sₘ] in
 include K L in
 /-- The different ideal commutes with localization. -/
 theorem map_differentIdeal_eq_differentIdeal :
+    let _ : IsTorsionFree R L := .trans_faithfulSMul R K L
+    let _ : IsTorsionFree Rₘ L := .trans_faithfulSMul Rₘ K L
+    let _ : IsTorsionFree R S := IsIntegralClosure.isTorsionFree R L
+    let _ : IsTorsionFree Rₘ Sₘ := IsIntegralClosure.isTorsionFree Rₘ L
     (differentIdeal R S).map (algebraMap S Sₘ) = differentIdeal Rₘ Sₘ := by
+  have : IsTorsionFree R L := .trans_faithfulSMul R K L
+  have : IsTorsionFree Rₘ L := .trans_faithfulSMul Rₘ K L
+  have : IsTorsionFree R S := IsIntegralClosure.isTorsionFree R L
+  have : IsTorsionFree Rₘ Sₘ := IsIntegralClosure.isTorsionFree Rₘ L
   have hMS : Algebra.algebraMapSubmonoid S M ≤ S⁰ :=
     map_le_nonZeroDivisors_of_injective (algebraMap R S)
       (FaithfulSMul.algebraMap_injective R S) hM
