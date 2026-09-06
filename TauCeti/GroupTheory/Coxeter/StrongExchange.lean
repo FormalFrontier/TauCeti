@@ -205,11 +205,11 @@ private theorem isLiftable_reflectionSwap : M.IsLiftable (reflectionSwap cs) := 
   intro i i'
   have hm : (cs.simple i * cs.simple i') ^ M i i' = 1 := cs.simple_mul_simple_pow i i'
   have hprod : ((CoxeterSystem.alternatingWord i i' (2 * M i i')).map
-      (reflectionSwap cs)).prod = (reflectionSwap cs i * reflectionSwap cs i') ^ M i i' :=
-    TauCeti.prod_map_alternatingWord_two_mul _ i i' _
+      (reflectionSwap cs)).prod = (reflectionSwap cs i * reflectionSwap cs i') ^ M i i' := by
+    simp [TauCeti.prod_map_alternatingWord]
   have hword : π (CoxeterSystem.alternatingWord i i' (2 * M i i')) = 1 := by
-    rw [CoxeterSystem.wordProd,
-      TauCeti.prod_map_alternatingWord_two_mul cs.simple i i' (M i i'), hm]
+    rw [CoxeterSystem.wordProd]
+    simp [TauCeti.prod_map_alternatingWord, hm]
   have hseq : ris (CoxeterSystem.alternatingWord i i' (2 * M i i'))
       = (lis (CoxeterSystem.alternatingWord i' i (2 * M i i'))).reverse := by
     rw [← cs.rightInvSeq_reverse, TauCeti.reverse_alternatingWord_two_mul]

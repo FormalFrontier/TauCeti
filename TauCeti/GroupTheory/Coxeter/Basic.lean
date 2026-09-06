@@ -21,7 +21,7 @@ trivial group.
   family `f`. This is the shape in which a braid relation is checked against a family that is not
   yet known to satisfy it, so it cannot be routed through
   `CoxeterSystem.prod_alternatingWord_eq_mul_pow`, which evaluates only the simple reflections
-  themselves. The evaluations at lengths `2`, `3` and `2 * m` are special cases.
+  themselves. The evaluations at lengths `2` and `3` are special cases.
 * `TauCeti.reverse_alternatingWord_two_mul`: reversing an alternating word of even length swaps its
   two letters.
 * `TauCeti.subsingleton_of_isEmpty_index`: a Coxeter system of rank zero has a trivial group.
@@ -81,12 +81,6 @@ private theorem alternatingWord_two_mul_succ' (i i' : B) (m : ℕ) :
   have h : 2 * (m + 1) = 2 * m + 1 + 1 := by ring
   rw [h, CoxeterSystem.alternatingWord_succ, CoxeterSystem.alternatingWord_succ]
   simp
-
-/-- An alternating word of length `2 * m`, evaluated through any family `f`, is the `m`-th power of
-`f i * f i'`. -/
-theorem prod_map_alternatingWord_two_mul (f : B → N) (i i' : B) (m : ℕ) :
-    ((CoxeterSystem.alternatingWord i i' (2 * m)).map f).prod = (f i * f i') ^ m := by
-  simp [prod_map_alternatingWord]
 
 /-- Reversing an alternating word of even length swaps its two letters. -/
 theorem reverse_alternatingWord_two_mul (i i' : B) (m : ℕ) :
