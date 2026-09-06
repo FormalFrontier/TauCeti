@@ -412,6 +412,18 @@ private lemma coprime_coupling_mem_H (a b : Fin n → ℕ)
     exact diagSandwich_scaling n b hb F G E i j
   exact mem_SLnZ_of_coprime_scaling n C (∏ i, a i) (∏ i, b i) hcop h_det h_scale_a h_scale_b
 
+/-- **The `δa`-conjugate of the first-component quotient is a `δb`-sandwich of `κ`.** This is
+the equation defining `κ` with `p₂ * δa` cancelled on the left and `q₁ * δb` on the right; it
+is a rearrangement in the group and assumes nothing about integrality. -/
+private lemma conj_quotient_eq_sandwich {δa δb p₁ p₂ q₁ q₂ κ : GL (Fin n) ℚ}
+    (hκ_eq : p₂ * δa * (q₂ * δb) * κ = p₁ * δa * (q₁ * δb)) :
+    δa⁻¹ * p₂⁻¹ * p₁ * δa = q₂ * δb * κ * δb⁻¹ * q₁⁻¹ := by
+  apply mul_left_cancel (a := p₂ * δa)
+  apply mul_right_cancel (b := q₁ * δb)
+  simp only [mul_assoc, mul_inv_cancel_left, inv_mul_cancel_left, inv_mul_cancel, mul_one]
+  simp only [mul_assoc] at hκ_eq
+  exact hκ_eq.symm
+
 /-- The conjugated quotient of two first-component representatives is integral: the key
 step of the multiplicity bound, coupling the two coset decompositions through `κ`. -/
 private lemma out_conj_diagA_mem_H (a b : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i)
@@ -424,12 +436,7 @@ private lemma out_conj_diagA_mem_H (a b : Fin n → ℕ) (ha_pos : ∀ i, 0 < a 
     (hσ' : mapGL ℚ σ' = h₁a⁻¹ * (p₂⁻¹ * p₁) * h₁a)
     (hκ_eq : p₂ * δa * (q₂ * δb) * κ = p₁ * δa * (q₁ * δb)) :
     δa⁻¹ * p₂⁻¹ * p₁ * δa ∈ SLnZ n := by
-  have h_beta_eq : δa⁻¹ * p₂⁻¹ * p₁ * δa = q₂ * δb * κ * δb⁻¹ * q₁⁻¹ := by
-    apply mul_left_cancel (a := p₂ * δa)
-    apply mul_right_cancel (b := q₁ * δb)
-    simp only [mul_assoc, mul_inv_cancel_left, inv_mul_cancel_left, inv_mul_cancel, mul_one]
-    simp only [mul_assoc] at hκ_eq
-    exact hκ_eq.symm
+  have h_beta_eq := conj_quotient_eq_sandwich n hκ_eq
   have h_lhs_eq : δa⁻¹ * p₂⁻¹ * p₁ * δa =
       h₂a⁻¹ * ((natDiagGL n a)⁻¹ * mapGL ℚ σ' * natDiagGL n a) * h₂a := by
     rw [hσ']
