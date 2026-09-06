@@ -136,52 +136,21 @@ section InternalHom
 variable {W₁ : Type u} {W₂ : Type v} [AddCommGroup W₁] [Module ℂ W₁]
   [AddCommGroup W₂] [Module ℂ W₂]
 
-/-- Conjugation on a space of complex-linear maps, sending `f` to the map
-`x ↦ ω₂ (f (ω₁ x))`.
-
-Conjugating both the input and output makes the resulting map complex-linear in `x`; as a
-function of `f`, this operation is conjugate-linear. -/
-private def internalHomMap (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂) :
-    (W₁ →ₗ[ℂ] W₂) →ₛₗ[starRingEnd ℂ] (W₁ →ₗ[ℂ] W₂) where
-  toFun f :=
-    { toFun := fun x ↦ ω₂.toEquiv (f (ω₁.toEquiv x))
-      map_add' := fun x y ↦ by simp
-      map_smul' := fun c x ↦ by
-        rw [ω₁.toEquiv.map_smulₛₗ, map_smul, ω₂.toEquiv.map_smulₛₗ]
-        simp }
-  map_add' := fun f g ↦ by
-    ext x
-    simp
-  map_smul' := fun c f ↦ by
-    ext x
-    exact ω₂.toEquiv.map_smulₛₗ c (f (ω₁.toEquiv x))
-
-/-- Conjugating a complex-linear map twice returns the original map. -/
-private theorem internalHomMap_involutive (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂) :
-    Function.Involutive (internalHomMap ω₁ ω₂) := by
-  intro f
-  ext x
-  simp [internalHomMap]
-
 /-- The conjugation on the internal hom of two complex vector spaces with conjugation. It sends
 `f : W₁ →ₗ[ℂ] W₂` to `x ↦ ω₂ (f (ω₁ x))`. -/
 def internalHom (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂) :
     Conjugation (W₁ →ₗ[ℂ] W₂) where
-  toEquiv :=
-    { toFun := internalHomMap ω₁ ω₂
-      invFun := internalHomMap ω₁ ω₂
-      left_inv := internalHomMap_involutive ω₁ ω₂
-      right_inv := internalHomMap_involutive ω₁ ω₂
-      map_add' := (internalHomMap ω₁ ω₂).map_add
-      map_smul' := (internalHomMap ω₁ ω₂).map_smulₛₗ }
-  involutive := internalHomMap_involutive ω₁ ω₂
+  toEquiv := ω₁.toEquiv.arrowCongr ω₂.toEquiv
+  involutive := fun f ↦ by
+    ext x
+    simp [ω₁.toEquiv_symm]
 
 /-- Conjugation on an internal hom conjugates the input and output. -/
 @[simp]
 theorem internalHom_toEquiv_apply_apply (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂)
     (f : W₁ →ₗ[ℂ] W₂) (x : W₁) :
     (ω₁.internalHom ω₂).toEquiv f x = ω₂.toEquiv (f (ω₁.toEquiv x)) :=
-  (rfl)
+  by simp [internalHom, ω₁.toEquiv_symm]
 
 end InternalHom
 
