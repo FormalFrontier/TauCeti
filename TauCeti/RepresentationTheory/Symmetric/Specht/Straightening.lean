@@ -94,6 +94,9 @@ standard (`TauCeti.StandardYoungTableau.exists_toTableau_eq_iff`).
 
 * [G. D. James, *The Representation Theory of the Symmetric Groups*][james1978], Sections 7 and 8.
 * [B. E. Sagan, *The Symmetric Group*][sagan2001], Sections 2.5 and 2.6.
+* [Schur--Weyl roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SchurWeyl/README.md),
+  Layer 5, "The standard basis", which names the straightening algorithm as a target in its own
+  right.
 -/
 
 public section

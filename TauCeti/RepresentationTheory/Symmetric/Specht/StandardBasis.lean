@@ -67,6 +67,8 @@ definition, so the standard ones already do.
 
 * [G. D. James, *The Representation Theory of the Symmetric Groups*][james1978], Sections 7 and 8.
 * [B. E. Sagan, *The Symmetric Group*][sagan2001], Sections 2.5 and 2.6.
+* [Schur--Weyl roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SchurWeyl/README.md),
+  Layer 5, "The standard basis", whose basis and dimension of the Specht module this proves.
 -/
 
 public section
