@@ -59,8 +59,9 @@ def herbrandQuotient (M : Rep R G) : ℚ :=
   Nat.card (tateCohomology M 0) / Nat.card (tateCohomology M (-1))
 
 /-- The Herbrand quotient is the ratio of the orders of degree zero and degree `-1` Tate
-cohomology. -/
-@[simp]
+cohomology. This unfolding equation is deliberately not `@[simp]`: the terminating evaluations
+below keep `herbrandQuotient` as their left-hand side, and unfolding it first would make each of
+them non-simp-normal. -/
 theorem herbrandQuotient_def (M : Rep R G) :
     herbrandQuotient M =
       Nat.card (tateCohomology M 0) / Nat.card (tateCohomology M (-1)) := by
@@ -71,7 +72,7 @@ theorem herbrandQuotient_def (M : Rep R G) :
 theorem herbrandQuotient_eq_zero_iff {M : Rep R G} :
     herbrandQuotient M = 0 ↔
       Infinite (tateCohomology M 0) ∨ Infinite (tateCohomology M (-1)) := by
-  simp [Nat.card_eq_zero]
+  simp [herbrandQuotient_def, Nat.card_eq_zero]
 
 /-- The Herbrand quotient of a finite representation of a finite cyclic group is one. -/
 @[simp]
