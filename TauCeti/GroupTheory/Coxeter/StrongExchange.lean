@@ -461,10 +461,9 @@ theorem exists_isReduced_sublist (ω : List B) :
   induction n with
   | zero =>
     intro ω hω
-    -- A word of length zero is empty, hence reduced.
-    exact ⟨ω, List.Sublist.refl ω, show ℓ (π ω) = ω.length from by
-      have := cs.length_wordProd_le ω
-      omega, rfl⟩
+    -- A word of length zero is empty, and the empty word is reduced.
+    obtain rfl : ω = [] := List.length_eq_zero_iff.mp (Nat.le_zero.mp hω)
+    exact ⟨[], List.Sublist.refl [], by simp [CoxeterSystem.IsReduced], rfl⟩
   | succ n ih =>
     intro ω hω
     by_cases hred : cs.IsReduced ω
