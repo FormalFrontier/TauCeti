@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Lie.Symplectic.StandardCarrier.FieldPoints
 public import TauCeti.Algebra.Lie.Symplectic.StandardCarrier.Frobenius
 public import TauCeti.FieldTheory.Finite.SepClosedSubfield
 
