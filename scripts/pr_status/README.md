@@ -163,10 +163,11 @@ gh api --paginate "/repos/TauCetiProject/TauCeti/issues/N/timeline?per_page=100"
 ```
 
 Read those as **observed label intervals**, not exact conflict durations: the
-boundaries are quantised by the fifteen-minute poll and by GitHub's scheduling, a
-conflict that arises and clears between two runs is never seen at all, and a PR
-closed while labelled has no closing event. The actor distinguishes the bot's own
-transitions from a human's.
+boundaries are quantised by when a sweep last read a definite answer -- by the
+push and cron triggers, by GitHub's scheduling of them, and by when GitHub's lazy
+mergeability computation stops saying UNKNOWN -- a conflict that arises and clears
+between two runs is never seen at all, and a PR closed while labelled has no
+closing event. The actor distinguishes the bot's own transitions from a human's.
 
 Two ordering decisions carry the weight:
 
