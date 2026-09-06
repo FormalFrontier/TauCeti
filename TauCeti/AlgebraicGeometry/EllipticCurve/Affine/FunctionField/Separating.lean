@@ -16,18 +16,15 @@ subfield `F(genericX E)`. The Weierstrass relation is a monic quadratic equation
 over this subfield, and its derivative at `genericY E` is the nonzero value of `W_Y` at the
 generic point.
 
+Together with `transcendental_genericX`, this separability exhibits `genericX E` as a separating
+element of `F(E)` over `F`, which is what proves the Kähler differentials of `F(E)` to have basis
+`dx`, and hence basis the invariant differential.
+
 ## Main results
 
 * `WeierstrassCurve.Affine.evalEval_polynomialY_genericX_genericY_ne_zero`: `W_Y` is nonzero at
   the generic point of an elliptic curve.
 * `WeierstrassCurve.Affine.isSeparable_adjoin_genericX`: `F(E)` is separable over `F(genericX E)`.
-
-## Roadmap
-
-`TauCetiRoadmap/EllipticCurves/README.md`, Layer 1, milestone **The invariant differential**.
-Separability over `F(genericX E)`, together with `transcendental_genericX`, supplies the
-separating element used to prove that the Kähler differentials have basis `dx`, and hence basis
-the invariant differential.
 
 ## Provenance
 
