@@ -74,8 +74,8 @@ namespace QuadraticMap.Nondegenerate
 variable {R M M' P : Type*} [CommRing R] [AddCommGroup M] [Module R M]
   [AddCommGroup M'] [Module R M'] [AddCommGroup P] [Module R P]
 
-/-- Nondegeneracy passes to an orthogonal product when `2` is invertible: by `radical_prod` the
-radical of the product is the product of the radicals. -/
+/-- The orthogonal product of two nondegenerate quadratic maps is nondegenerate, when `2` is
+invertible in the coefficient ring. -/
 theorem prod [Invertible (2 : R)] {Q : QuadraticMap R M P} {Q' : QuadraticMap R M' P}
     (hQ : Q.Nondegenerate) (hQ' : Q'.Nondegenerate) : (Q.prod Q').Nondegenerate := by
   rw [QuadraticMap.nondegenerate_iff_radical_eq_bot, QuadraticMap.radical_prod,

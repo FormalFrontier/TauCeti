@@ -59,14 +59,17 @@ open QuadraticMap QuadraticForm
 
 namespace TauCeti
 
-universe u v
+universe u v w
 
 variable {K : Type u} [Field K]
 
 /-! ### Diagonal presentations -/
 
-/-- A diagonal presentation of a regular quadratic form: a rank `n` together with a tuple of
-units, read as the diagonal form `⟨w 0, …, w (n - 1)⟩`. -/
+/-- A diagonal presentation: a rank `n` together with a tuple of units, read as the diagonal
+form `⟨w 0, …, w (n - 1)⟩`. The presented form is regular under this file's standing hypothesis
+that `2` is invertible in `K` (`TauCeti.nondegenerate_presentedForm`); the definition itself asks
+only for a field, and in characteristic two the polar form of a weighted sum of squares vanishes,
+so the presented form need not be nondegenerate. -/
 abbrev RegularFormPresentation (K : Type u) [Field K] : Type u := Σ n : ℕ, Fin n → Kˣ
 
 /-- The form presented by `(n, w)`, namely the weighted sum of squares with weights `w`. -/
@@ -74,6 +77,7 @@ def presentedForm (p : RegularFormPresentation K) : QuadraticForm K (Fin p.1 →
   weightedSumSquares K fun i => ((p.2 i : K))
 
 /-- The presented form evaluates as the weighted sum of the squares of the coordinates. -/
+@[simp]
 theorem presentedForm_apply (p : RegularFormPresentation K) (x : Fin p.1 → K) :
     presentedForm p x = ∑ i, (p.2 i : K) * (x i * x i) := by
   simp [presentedForm, weightedSumSquares_apply]
@@ -113,7 +117,10 @@ instance regularFormSetoid (K : Type u) [Field K] : Setoid (RegularFormPresentat
 theorem regularFormSetoid_iff {p q : RegularFormPresentation K} :
     p ≈ q ↔ (presentedForm p).Equivalent (presentedForm q) := Iff.rfl
 
-/-- Isometry classes of regular finite-dimensional quadratic forms, presented diagonally. -/
+/-- Isometry classes of diagonal presentations. When `2` is invertible in `K` every presented
+form is regular and every regular form on a finite-dimensional space is presented, so this is
+exactly the set of isometry classes of regular finite-dimensional quadratic forms; over a field
+of characteristic two it is only the quotient of the diagonal presentations by isometry. -/
 abbrev RegularFormClass (K : Type u) [Field K] : Type u := Quotient (regularFormSetoid K)
 
 /-- Two presentations have the same class exactly when they present isometric forms. -/
@@ -172,7 +179,7 @@ def presentedFormAppendIsometryEquiv (p q : RegularFormPresentation K) :
 
 /-- The form presented by a concatenation is isometric to the orthogonal sum of the two
 presented forms. -/
-theorem presentedForm_append_equivalent (p q : RegularFormPresentation K) :
+theorem equivalent_presentedForm_append_prod (p q : RegularFormPresentation K) :
     (presentedForm (RegularFormPresentation.append p q)).Equivalent
       ((presentedForm p).prod (presentedForm q)) :=
   ⟨presentedFormAppendIsometryEquiv p q⟩
@@ -183,8 +190,8 @@ theorem presentedForm_append_congr {p p' q q' : RegularFormPresentation K}
     (hq : (presentedForm q).Equivalent (presentedForm q')) :
     (presentedForm (RegularFormPresentation.append p q)).Equivalent
       (presentedForm (RegularFormPresentation.append p' q')) :=
-  (presentedForm_append_equivalent p q).trans
-    ((hp.prod hq).trans (presentedForm_append_equivalent p' q').symm)
+  (equivalent_presentedForm_append_prod p q).trans
+    ((hp.prod hq).trans (equivalent_presentedForm_append_prod p' q').symm)
 
 /-- Concatenation of presentations is commutative up to isometry. -/
 theorem presentedForm_append_comm (p q : RegularFormPresentation K) :
@@ -193,8 +200,8 @@ theorem presentedForm_append_comm (p q : RegularFormPresentation K) :
   have h : ((presentedForm p).prod (presentedForm q)).Equivalent
       ((presentedForm q).prod (presentedForm p)) :=
     ⟨QuadraticMap.IsometryEquiv.prodComm _ _⟩
-  exact ((presentedForm_append_equivalent p q).trans h).trans
-    (presentedForm_append_equivalent q p).symm
+  exact ((equivalent_presentedForm_append_prod p q).trans h).trans
+    (equivalent_presentedForm_append_prod q p).symm
 
 /-- The associator of an orthogonal product of quadratic forms. Mathlib supplies the two
 commutativity isometries of `QuadraticMap.prod` but not this one. -/
@@ -214,15 +221,15 @@ theorem presentedForm_append_assoc (p q r : RegularFormPresentation K) :
   have h₁ : ((presentedForm (RegularFormPresentation.append p q)).prod
       (presentedForm r)).Equivalent
       (((presentedForm p).prod (presentedForm q)).prod (presentedForm r)) :=
-    (presentedForm_append_equivalent p q).prod (QuadraticMap.Equivalent.refl _)
+    (equivalent_presentedForm_append_prod p q).prod (QuadraticMap.Equivalent.refl _)
   have h₂ : (((presentedForm p).prod (presentedForm q)).prod (presentedForm r)).Equivalent
       ((presentedForm p).prod ((presentedForm q).prod (presentedForm r))) :=
     ⟨prodAssocIsometryEquiv _ _ _⟩
   have h₃ : ((presentedForm p).prod ((presentedForm q).prod (presentedForm r))).Equivalent
       ((presentedForm p).prod (presentedForm (RegularFormPresentation.append q r))) :=
-    (QuadraticMap.Equivalent.refl _).prod (presentedForm_append_equivalent q r).symm
-  exact ((((presentedForm_append_equivalent _ r).trans h₁).trans h₂).trans h₃).trans
-    (presentedForm_append_equivalent p (RegularFormPresentation.append q r)).symm
+    (QuadraticMap.Equivalent.refl _).prod (equivalent_presentedForm_append_prod q r).symm
+  exact ((((equivalent_presentedForm_append_prod _ r).trans h₁).trans h₂).trans h₃).trans
+    (equivalent_presentedForm_append_prod p (RegularFormPresentation.append q r)).symm
 
 /-- The empty presentation presents the zero form on the zero space. -/
 private theorem presentedForm_nil (w : Fin 0 → Kˣ) :
@@ -245,7 +252,7 @@ theorem presentedForm_nil_append (w : Fin 0 → Kˣ) (q : RegularFormPresentatio
       (presentedForm q)).Equivalent (presentedForm q) := by
     rw [presentedForm_nil w]
     exact ⟨zeroProdIsometryEquiv (presentedForm q)⟩
-  exact (presentedForm_append_equivalent ⟨0, w⟩ q).trans h
+  exact (equivalent_presentedForm_append_prod ⟨0, w⟩ q).trans h
 
 /-- Orthogonal sum of isometry classes. -/
 instance : Add (RegularFormClass K) :=
@@ -299,8 +306,8 @@ theorem RegularFormClass.rank_zero : RegularFormClass.rank (0 : RegularFormClass
 
 /-! ### The class of a regular form -/
 
-variable [Invertible (2 : K)] {V W : Type v} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
-  [AddCommGroup W] [Module K W] [FiniteDimensional K W]
+variable [Invertible (2 : K)] {V : Type v} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
+  {W : Type w} [AddCommGroup W] [Module K W] [FiniteDimensional K W]
 
 /-- Every regular form on a finite-dimensional space has a diagonal presentation. -/
 theorem exists_presentedForm_equivalent (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) :
@@ -323,6 +330,7 @@ theorem formClass_mk (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
     (((exists_presentedForm_equivalent Q hQ).choose_spec).symm.trans hp)
 
 /-- Two regular forms are isometric exactly when their classes agree. -/
+@[simp]
 theorem formClass_eq_iff (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) (R : QuadraticForm K W)
     (hR : R.Nondegenerate) : formClass Q hQ = formClass R hR ↔ Q.Equivalent R := by
   obtain ⟨p, hp⟩ := exists_presentedForm_equivalent Q hQ
@@ -353,6 +361,6 @@ theorem formClass_prod (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) (R : Quadr
   obtain ⟨p, hp⟩ := exists_presentedForm_equivalent Q hQ
   obtain ⟨q, hq⟩ := exists_presentedForm_equivalent R hR
   rw [formClass_mk Q hQ p hp, formClass_mk R hR q hq, RegularFormClass.mk_add_mk,
-    formClass_mk _ _ _ ((hp.prod hq).trans (presentedForm_append_equivalent p q).symm)]
+    formClass_mk _ _ _ ((hp.prod hq).trans (equivalent_presentedForm_append_prod p q).symm)]
 
 end TauCeti
