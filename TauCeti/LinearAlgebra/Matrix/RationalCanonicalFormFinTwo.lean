@@ -74,6 +74,10 @@ determinant is `d`, so it is the normal form that the classification of `2 × 2`
 on. -/
 def companionFinTwo : Matrix (Fin 2) (Fin 2) R := !![0, -d; 1, t]
 
+/-- The companion matrix, spelled out. The body of `TauCeti.companionFinTwo` is not exposed, so
+this is what lets a downstream file read off an entry of it. -/
+theorem companionFinTwo_def : companionFinTwo t d = !![0, -d; 1, t] := (rfl)
+
 @[simp]
 theorem det_companionFinTwo : (companionFinTwo t d).det = d := by
   simp [companionFinTwo, Matrix.det_fin_two_of]

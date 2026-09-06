@@ -15,6 +15,9 @@ public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
 public import Mathlib.LinearAlgebra.Matrix.Trace
 -- `ConjClasses` occurs in the statements below.
 public import Mathlib.Algebra.Group.Conj
+-- Non-public: `Matrix.GeneralLinearGroup.center_eq_range_scalar` turns a scalar element of `GL₂`
+-- into the scalar matrix of a unit, in a proof only.
+import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Basic
 -- Non-public: `Nat.card_units`, `Nat.card_sum` and `Nat.card_prod` are used only in the final
 -- count.
 import Mathlib.Algebra.GroupWithZero.Units.Fintype
@@ -37,6 +40,11 @@ classes are indexed by the units `a`, giving `q - 1` of them; the non-scalar cla
 the pairs `(trace, det)` with the determinant a unit and the trace unconstrained, giving `q (q - 1)`
 of them. Altogether `q² - 1`, which is the number of irreducible complex representations of
 `GL₂(𝔽_q)`.
+
+The representative chosen here is uniform but anonymous. Over a finite field with a supplied
+degree-`2` extension it can be replaced by the four *named* normal forms — a scalar, a diagonal
+matrix with distinct entries, a Jordan block, and an element of the non-split torus — in
+`TauCeti/LinearAlgebra/Matrix/GeneralLinearGroup/NormalForm.lean`.
 
 Being scalar is spelled `M ∈ Set.range (Matrix.scalar (Fin 2))`, as in
 `TauCeti.LinearAlgebra.Matrix.Commute`, whose commutant computation is the companion result,
@@ -232,15 +240,11 @@ theorem bijective_mk_conjRepGLFinTwo :
   · intro C
     obtain ⟨g, rfl⟩ := ConjClasses.exists_rep C
     by_cases hg : (g : Matrix (Fin 2) (Fin 2) F) ∈ Set.range (Matrix.scalar (Fin 2))
-    · obtain ⟨a, ha⟩ := hg
-      have ha0 : a ≠ 0 := by
-        rintro rfl
-        have h1 : (g : Matrix (Fin 2) (Fin 2) F) *
-            ((g⁻¹ : GL (Fin 2) F) : Matrix (Fin 2) (Fin 2) F) = 1 := by
-          rw [← Units.val_mul, mul_inv_cancel, Units.val_one]
-        rw [← ha, map_zero, zero_mul] at h1
-        exact zero_ne_one h1
-      exact ⟨Sum.inl (Units.mk0 a ha0), congrArg ConjClasses.mk (Units.ext ha)⟩
+    · obtain ⟨a, ha⟩ : ∃ a : Fˣ, Matrix.GeneralLinearGroup.scalar (Fin 2) a = g := by
+        refine MonoidHom.mem_range.1 ?_
+        rw [← Matrix.GeneralLinearGroup.center_eq_range_scalar]
+        exact Matrix.GeneralLinearGroup.mem_center_iff_val_mem_range_scalar.2 hg
+      exact ⟨Sum.inl a, congrArg ConjClasses.mk ha⟩
     · exact ⟨Sum.inr ((g : Matrix (Fin 2) (Fin 2) F).trace, Matrix.GeneralLinearGroup.det g),
         ConjClasses.mk_eq_mk_iff_isConj.2 (isConj_companionGL hg).symm⟩
 

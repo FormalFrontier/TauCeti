@@ -64,8 +64,10 @@ The counting results all assume `F` finite, where the torus language is uncondit
 
 Both computations are stated for a normal form — a diagonal matrix, and an element of the non-split
 torus in the basis `TauCeti.nonSplitTorusBasis` — rather than for an arbitrary regular semisimple
-element. Every regular semisimple element of `GL₂(𝔽_q)` is conjugate to one of the two, but that
-classification, and the transport of a centralizer along a conjugation, are not proved here.
+element. Every regular semisimple element of `GL₂(𝔽_q)` is conjugate to one of the two; that
+classification is `TauCeti.exists_isConj_normalForm` of
+`TauCeti/LinearAlgebra/Matrix/GeneralLinearGroup/NormalForm.lean`, and the transport of a
+centralizer along a conjugation is not proved here.
 
 The third regular family is also here. A **non-semisimple** element is a Jordan block
 `TauCeti.jordanGL a b = !![a, b; 0, a]` with `b ≠ 0`; it is again regular
