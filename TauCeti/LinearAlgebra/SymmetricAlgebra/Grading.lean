@@ -12,19 +12,14 @@ public import TauCeti.LinearAlgebra.SymmetricAlgebra.Homogeneous
 /-!
 # The grading of a symmetric algebra
 
-Let `M` be a free module over a commutative ring. The powers of the image of `M` in its symmetric
-algebra are not merely a spanning family: they form an internal direct sum. Thus every element of
-the symmetric algebra has a unique finite decomposition into homogeneous terms.
+Let `M` be a free module over a commutative semiring. The powers of the image of `M` in its
+symmetric algebra are not merely a spanning family: they form an internal direct sum. Thus every
+element of the symmetric algebra has a unique finite decomposition into homogeneous terms.
 
 The proof transports the standard total-degree decomposition of a multivariate polynomial ring
 across the algebra equivalence associated to a basis of `M`. Besides the intrinsic result for a
 free module, the comparison with multivariate homogeneous polynomials is exposed for a specified
 basis.
-
-The comparison and the resulting independence hold over a commutative semiring. Passing from
-independence to an internal direct sum uses
-`DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top`, which Mathlib documents as false
-over a general semiring, so the internality results assume a commutative ring.
 
 ## Main results
 
@@ -44,11 +39,7 @@ open Module
 
 universe u v w
 
-variable (R : Type u) (M : Type v)
-
-section CommSemiring
-
-variable [CommSemiring R] [AddCommMonoid M] [Module R M]
+variable (R : Type u) (M : Type v) [CommSemiring R] [AddCommMonoid M] [Module R M]
 
 /-- The algebra equivalence induced by a basis preserves homogeneous degree. -/
 @[simp]
@@ -70,7 +61,9 @@ theorem map_homogeneousSubmodule_equivMvPolynomial {ι : Type w} (b : Basis ι R
 induced by a basis.
 
 This is not a `simp` lemma: `MvPolynomial.mem_homogeneousSubmodule` already rewrites the
-left-hand side to `MvPolynomial.IsHomogeneous`, so the orientation below is not simp-normal. -/
+left-hand side to `MvPolynomial.IsHomogeneous`, so the orientation below is not simp-normal. The
+simp-normal form of the characterisation is
+`SymmetricAlgebra.isHomogeneous_equivMvPolynomial_iff`. -/
 theorem _root_.SymmetricAlgebra.equivMvPolynomial_mem_homogeneousSubmodule_iff {ι : Type w}
     (b : Basis ι R M) (n : ℕ) (p : SymmetricAlgebra R M) :
     SymmetricAlgebra.equivMvPolynomial b p ∈ MvPolynomial.homogeneousSubmodule ι R n ↔
@@ -79,45 +72,65 @@ theorem _root_.SymmetricAlgebra.equivMvPolynomial_mem_homogeneousSubmodule_iff {
     Submodule.mem_map_equiv (e := (SymmetricAlgebra.equivMvPolynomial b).toLinearEquiv)]
   simp
 
-/-- A basis makes the homogeneous pieces of its symmetric algebra independent. -/
-theorem iSupIndep_homogeneousSubmodule_of_basis {ι : Type w} (b : Basis ι R M) :
-    iSupIndep (homogeneousSubmodule R M) := by
-  rw [← iSupIndep_map_orderIso_iff
-    (Submodule.orderIsoMapComap (SymmetricAlgebra.equivMvPolynomial b).toLinearEquiv)]
-  simpa only [Function.comp_def, Submodule.orderIsoMapComap_apply,
-    map_homogeneousSubmodule_equivMvPolynomial R M b] using
-    (MvPolynomial.decomposition :
-      DirectSum.Decomposition
-        (MvPolynomial.homogeneousSubmodule ι R)).isInternal.submodule_iSupIndep
-
-/-- The homogeneous pieces of the symmetric algebra of a free module are independent. -/
-theorem iSupIndep_homogeneousSubmodule [Module.Free R M] :
-    iSupIndep (homogeneousSubmodule R M) := by
-  let ⟨⟨ι, b⟩⟩ := Module.Free.exists_basis (R := R) (M := M)
-  exact iSupIndep_homogeneousSubmodule_of_basis R M b
-
-end CommSemiring
-
-section CommRing
-
-/- Independence plus spanning only gives an internal direct sum over a ring: see the note on
-`DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top`. -/
-variable [CommRing R] [AddCommGroup M] [Module R M]
+/-- An element of a symmetric algebra is homogeneous of degree `n` exactly when its image under
+the polynomial equivalence induced by a basis is. -/
+@[simp]
+theorem _root_.SymmetricAlgebra.isHomogeneous_equivMvPolynomial_iff {ι : Type w}
+    (b : Basis ι R M) (n : ℕ) (p : SymmetricAlgebra R M) :
+    (SymmetricAlgebra.equivMvPolynomial b p).IsHomogeneous n ↔ p ∈ homogeneousSubmodule R M n :=
+  (MvPolynomial.mem_homogeneousSubmodule _ _).symm.trans
+    (SymmetricAlgebra.equivMvPolynomial_mem_homogeneousSubmodule_iff R M b n p)
 
 /-- A basis makes the homogeneous pieces an internal direct sum decomposition of its symmetric
 algebra. -/
 theorem isInternal_homogeneousSubmodule_of_basis {ι : Type w} (b : Basis ι R M) :
-    DirectSum.IsInternal (homogeneousSubmodule R M) :=
-  DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top
-    (iSupIndep_homogeneousSubmodule_of_basis R M b)
-    (iSup_homogeneousSubmodule_eq_top R M)
+    DirectSum.IsInternal (homogeneousSubmodule R M) := by
+  have hmap : ∀ n : ℕ, (homogeneousSubmodule R M n).map
+      ((SymmetricAlgebra.equivMvPolynomial b).toLinearEquiv :
+        SymmetricAlgebra R M →ₗ[R] MvPolynomial ι R) =
+      MvPolynomial.homogeneousSubmodule ι R n := fun n ↦ by
+    rw [AlgEquiv.toLinearEquiv_toLinearMap]
+    exact map_homogeneousSubmodule_equivMvPolynomial R M b n
+  -- The basis equivalence restricts to an equivalence of each degree-`n` piece.
+  let φ (n : ℕ) : homogeneousSubmodule R M n ≃ₗ[R] MvPolynomial.homogeneousSubmodule ι R n :=
+    ((SymmetricAlgebra.equivMvPolynomial b).toLinearEquiv.submoduleMap _).trans
+      (LinearEquiv.ofEq _ _ (hmap n))
+  have hφ : ∀ (n : ℕ) (x : homogeneousSubmodule R M n),
+      (φ n x : MvPolynomial ι R) = SymmetricAlgebra.equivMvPolynomial b x := fun _ _ ↦ rfl
+  -- Hence recomposition on the symmetric algebra is conjugate to recomposition on polynomials.
+  have hsq : ⇑(SymmetricAlgebra.equivMvPolynomial b) ∘
+        ⇑(DirectSum.coeAddMonoidHom (homogeneousSubmodule R M)) =
+      ⇑(DirectSum.coeAddMonoidHom (MvPolynomial.homogeneousSubmodule ι R)) ∘
+        ⇑(DirectSum.lmap fun n ↦ (φ n).toLinearMap) := by
+    refine funext fun x ↦ ?_
+    induction x using DirectSum.induction_on with
+    | zero => simp
+    | of n y => simpa using (hφ n y).symm
+    | add y z hy hz => simpa using congrArg₂ (· + ·) hy hz
+  have hlmap : Function.Bijective (DirectSum.lmap fun n ↦ (φ n).toLinearMap) :=
+    ⟨(DirectSum.lmap_injective _).2 fun n ↦ (φ n).injective,
+      (DirectSum.lmap_surjective _).2 fun n ↦ (φ n).surjective⟩
+  refine ((SymmetricAlgebra.equivMvPolynomial b).bijective.of_comp_iff' _).mp ?_
+  rw [hsq]
+  exact ((MvPolynomial.decomposition :
+    DirectSum.Decomposition (MvPolynomial.homogeneousSubmodule ι R)).isInternal).comp hlmap
 
 /-- The homogeneous pieces form an internal direct sum decomposition of the symmetric algebra of
 a free module. -/
 theorem isInternal_homogeneousSubmodule [Module.Free R M] :
-    DirectSum.IsInternal (homogeneousSubmodule R M) :=
-  DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top
-    (iSupIndep_homogeneousSubmodule R M) (iSup_homogeneousSubmodule_eq_top R M)
+    DirectSum.IsInternal (homogeneousSubmodule R M) := by
+  let ⟨⟨ι, b⟩⟩ := Module.Free.exists_basis (R := R) (M := M)
+  exact isInternal_homogeneousSubmodule_of_basis R M b
+
+/-- A basis makes the homogeneous pieces of its symmetric algebra independent. -/
+theorem iSupIndep_homogeneousSubmodule_of_basis {ι : Type w} (b : Basis ι R M) :
+    iSupIndep (homogeneousSubmodule R M) :=
+  (isInternal_homogeneousSubmodule_of_basis R M b).submodule_iSupIndep
+
+/-- The homogeneous pieces of the symmetric algebra of a free module are independent. -/
+theorem iSupIndep_homogeneousSubmodule [Module.Free R M] :
+    iSupIndep (homogeneousSubmodule R M) :=
+  (isInternal_homogeneousSubmodule R M).submodule_iSupIndep
 
 /-- The canonical decomposition of the symmetric algebra of a free module into its homogeneous
 pieces. -/
@@ -125,7 +138,5 @@ pieces. -/
 noncomputable def homogeneousDecomposition [Module.Free R M] :
     DirectSum.Decomposition (homogeneousSubmodule R M) :=
   (isInternal_homogeneousSubmodule R M).chooseDecomposition
-
-end CommRing
 
 end TauCeti.SymmetricAlgebra
