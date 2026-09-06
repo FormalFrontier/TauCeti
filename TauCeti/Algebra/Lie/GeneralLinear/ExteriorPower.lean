@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Algebra.Lie.ExteriorPower
 public import TauCeti.Algebra.Lie.GeneralLinear.HighestWeight
-public import TauCeti.LinearAlgebra.End.List
 public import Mathlib.Algebra.Lie.Semisimple.Defs
 import Mathlib.Algebra.Lie.Matrix
 import Mathlib.LinearAlgebra.ExteriorPower.Basis
@@ -289,7 +288,8 @@ private noncomputable def firstBasisEmbedding (d : ℕ) (h : d ≤ Fintype.card 
   (Fin.castLEOrderEmb h).trans (Fintype.orderIsoFinOfCardEq ι rfl).toOrderEmbedding
 
 private theorem firstBasisEmbedding_apply (d : ℕ) (h : d ≤ Fintype.card ι) (l : Fin d) :
-    firstBasisEmbedding d h l = Fintype.orderIsoFinOfCardEq ι rfl (Fin.castLE h l) := rfl
+    firstBasisEmbedding d h l = Fintype.orderIsoFinOfCardEq ι rfl (Fin.castLE h l) := by
+  simp [firstBasisEmbedding]
 
 private noncomputable def basisPath (d : ℕ) (h : d ≤ Fintype.card ι)
     (s : Set.powersetCard ι d) (k : ℕ) (l : Fin d) : ι :=
@@ -579,26 +579,16 @@ private theorem diagonalFactor_apply (d : ℕ)
       if (i ∈ s.1) = (i ∈ t.1) then
         ιMulti_family K d (Pi.basisFun K ι) t else 0 := by
   classical
-  rw [diagonalFactor]
   have haction := lie_single_self_basisWedge (K := K) t.1 t.2 i
   rw [basisWedge_eq_ιMulti_family t.1 (Set.powersetCard.card_eq t)] at haction
+  rw [diagonalFactor]
   by_cases his : i ∈ s.1
-  · by_cases hit : i ∈ t.1
-    · simp only [his, hit, ite_true, eq_self]
-      rw [← gl_lie_def, haction]
-      simp only [hit, ite_true, one_smul]
-    · simp only [his, hit, ite_true, true_ne_false]
-      rw [← gl_lie_def, haction]
-      simp only [hit, ite_false, zero_smul]
-  · by_cases hit : i ∈ t.1
-    · simp only [his, hit, ite_false, false_ne_true]
-      rw [LinearMap.sub_apply]
-      rw [← gl_lie_def, haction]
-      simp only [hit, ite_true, Module.End.one_apply, one_smul, sub_self]
-    · simp only [his, hit, ite_false, eq_self]
-      rw [LinearMap.sub_apply]
-      rw [← gl_lie_def, haction]
-      simp only [hit, ite_false, Module.End.one_apply, zero_smul, sub_zero, ite_true]
+  · simp only [his, ite_true]
+    rw [← gl_lie_def, haction]
+    by_cases hit : i ∈ t.1 <;> simp [hit]
+  · simp only [his, ite_false]
+    rw [LinearMap.sub_apply, ← gl_lie_def, haction]
+    by_cases hit : i ∈ t.1 <;> simp [hit]
 
 private noncomputable def diagonalProjector (d : ℕ)
     (s : Set.powersetCard ι d) : Module.End K (⋀[K]^d (ι → K)) :=
@@ -616,12 +606,14 @@ private theorem diagonalProjector_apply (d : ℕ)
         (u.map fun i ↦ if (i ∈ s.1) = (i ∈ t.1) then (1 : K) else 0).prod •
           ιMulti_family K d (Pi.basisFun K ι) t := by
     intro u
-    apply TauCeti.Module.End.list_prod_apply_eq_smul (R := K)
-    intro i _
-    rw [diagonalFactor_apply]
-    by_cases h : (i ∈ s.1) = (i ∈ t.1)
-    · simp only [h, ite_true, one_smul]
-    · simp only [h, ite_false, zero_smul]
+    induction u with
+    | nil => simp
+    | cons i u ih =>
+      simp only [List.map_cons, List.prod_cons, Module.End.mul_apply]
+      rw [ih, map_smul, diagonalFactor_apply]
+      by_cases h : (i ∈ s.1) = (i ∈ t.1)
+      · simp [h]
+      · simp [h]
   rw [diagonalProjector]
   rw [hprod]
   rw [Finset.prod_map_toList, Finset.prod_boole]

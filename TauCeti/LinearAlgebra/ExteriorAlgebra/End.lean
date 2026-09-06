@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.LinearAlgebra.ExteriorAlgebra.Contraction
-public import TauCeti.LinearAlgebra.End.List
 
 /-!
 # Exterior creation and contraction generate all endomorphisms
@@ -45,8 +44,8 @@ private noncomputable def vacancyProjection {n : ℕ} (b : Module.Basis (Fin n) 
 
 private noncomputable def basisProjection {n : ℕ} (b : Module.Basis (Fin n) K W)
     (s : Finset (Fin n)) : Module.End K (ExteriorAlgebra K W) :=
-  ((List.ofFn fun i : Fin n ↦ i).map
-    (fun i ↦ if i ∈ s then occupationProjection b i else vacancyProjection b i)).prod
+  List.prod ((List.ofFn fun i : Fin n ↦ i).map fun i ↦
+    if i ∈ s then occupationProjection b i else vacancyProjection b i)
 
 private noncomputable def actionRange {n : ℕ} (b : Module.Basis (Fin n) K W) :
     Subalgebra K (Module.End K (ExteriorAlgebra K W)) :=
@@ -105,20 +104,37 @@ private theorem listProd_basisFactor_apply {n : ℕ}
         (b.ExteriorAlgebra t) =
       (List.prod (l.map (fun i ↦ (if (i ∈ s ↔ i ∈ t) then 1 else 0 : K))) •
         b.ExteriorAlgebra t) := by
-  apply TauCeti.Module.End.list_prod_apply_eq_smul (R := K)
-  intro i hi
-  simpa using (basisFactor_apply b s t i)
+  induction l with
+  | nil => simp
+  | cons i l ih =>
+      rw [List.map_cons, List.prod_cons, Module.End.mul_apply, ih, map_smul,
+        basisFactor_apply]
+      simp
 
 private theorem basisProjection_basis {n : ℕ}
     (b : Module.Basis (Fin n) K W) (s t : Finset (Fin n)) :
     basisProjection b s (b.ExteriorAlgebra t) =
       if s = t then b.ExteriorAlgebra t else 0 := by
-  rw [basisProjection]
-  rw [listProd_basisFactor_apply]
-  rw [List.map_ofFn, Fin.prod_ofFn]
-  simp only [Function.comp_apply]
-  rw [Fintype.prod_boole]
-  simp [Finset.ext_iff]
+  rw [basisProjection, listProd_basisFactor_apply]
+  by_cases hst : s = t
+  · subst t
+    simp only [iff_self, ite_true]
+    have hall : (List.ofFn fun i : Fin n ↦ i).map (fun _ ↦ (1 : K)) =
+        List.replicate n 1 := by
+      apply List.eq_replicate_iff.mpr
+      simp
+    rw [hall, List.prod_replicate, one_pow, one_smul]
+  · have hdiff : ∃ i : Fin n, ¬ (i ∈ s ↔ i ∈ t) := by
+      contrapose! hst
+      exact Finset.ext hst
+    obtain ⟨i, hi⟩ := hdiff
+    have hzero : (0 : K) ∈
+        (List.ofFn fun i : Fin n ↦ i).map
+          (fun i ↦ (if (i ∈ s ↔ i ∈ t) then 1 else 0 : K)) := by
+      apply List.mem_map.mpr
+      exact ⟨i, List.mem_ofFn.mpr ⟨i, rfl⟩, by simp [hi]⟩
+    rw [ite_eq_right hst]
+    rw [List.prod_eq_zero hzero, zero_smul]
 
 private noncomputable def create {n : ℕ} (b : Module.Basis (Fin n) K W)
     (s : Finset (Fin n)) : Module.End K (ExteriorAlgebra K W) :=

@@ -105,7 +105,7 @@ done here.
 
 namespace TauCeti
 
-open Matrix _root_.Module
+open Matrix Module
 
 attribute [local instance 100] LieRing.ofAssociativeRing
 
