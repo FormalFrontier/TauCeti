@@ -82,7 +82,9 @@ The two counting statements are the group-theoretic half of a fibre count: for a
 quotient `#G / (#C * orderOf σ)` counts something, and it does so only because the division is
 exact — `#C` is the index of the centralizer of `σ`, and `orderOf σ` divides that centralizer's
 order, so their product divides `#G`. Dividing then leaves the centralizer's order over
-`orderOf σ`.
+`orderOf σ`. Their names, arguments and conclusions are pinned by
+`TauCetiRoadmap/Chebotarev/Suggested.lean` lines 377-382, which state
+`card_carrier_mul_orderOf_dvd` in this form for that fibre count.
 -/
 
 public section
