@@ -7,6 +7,8 @@ module
 
 public import TauCeti.FieldTheory.FunctionField.Place.Extension.Splitting
 public import TauCeti.FieldTheory.FunctionField.Place.Extension.Tower
+public import TauCeti.FieldTheory.Galois.FixedField
+public import TauCeti.FieldTheory.IntermediateField.ScalarTower
 
 /-!
 # The decomposition group and the decomposition field of a place
@@ -36,7 +38,8 @@ proved here.
 ## Main definitions
 
 * `TauCeti.Place.decompositionField`: the subfield of `F'` fixed by the decomposition group of a
-  place, an `IntermediateField F F'`.
+  place, an `IntermediateField F F'`, with `TauCeti.Place.mem_decompositionField_iff` for its
+  membership.
 
 ## Main results
 
@@ -44,7 +47,7 @@ proved here.
   `e(P ∣ P ∩ F) · f(P ∣ P ∩ F)`, and `TauCeti.Place.finrank_decompositionField` restates this as
   the degree of `F'` over the decomposition field.
 * `TauCeti.Place.eq_of_restrict_decompositionField_eq` and
-  `TauCeti.Place.setOfPred_restrict_decompositionField_eq_singleton`: **a place is the only
+  `TauCeti.Place.setOf_restrict_decompositionField_eq_eq_singleton`: **a place is the only
   place of `F'` above its restriction to its decomposition field**.
 * `TauCeti.Place.ramificationIdx_restrict_decompositionField` and
   `TauCeti.Place.relativeDegree_restrict_decompositionField`: below the decomposition field the
@@ -66,14 +69,6 @@ proved here.
 public section
 
 namespace TauCeti
-
-/-- Mathlib's `IntermediateField.isScalarTower_mid` supplies `IsScalarTower K S L` for an
-intermediate field `S` of `L / K`; a place of `F' / k` restricted to an intermediate field of
-`F' / F` needs the same statement over the constant field `k` sitting below `F`. -/
-instance instIsScalarTowerIntermediateField {k F F' : Type*} [Field k] [Field F] [Field F']
-    [Algebra k F] [Algebra k F'] [Algebra F F'] [IsScalarTower k F F']
-    (E : IntermediateField F F') : IsScalarTower k E F' :=
-  IsScalarTower.of_algebraMap_eq fun _ ↦ rfl
 
 namespace Place
 
@@ -108,6 +103,23 @@ theorem card_decompositionSubgroup (P : Place k F') :
 def decompositionField (P : Place k F') : IntermediateField F F' :=
   IntermediateField.fixedField (P.integers.decompositionSubgroup F)
 
+omit [Algebra k F] [IsScalarTower k F F'] [Algebra.IsIntegral F F'] [FiniteDimensional F F']
+  [IsGalois F F'] in
+/-- The decomposition field of `P` is by definition the fixed field of the decomposition group
+of `P`. -/
+theorem decompositionField_def (P : Place k F') :
+    decompositionField F P = IntermediateField.fixedField (P.integers.decompositionSubgroup F) :=
+  (rfl)
+
+omit [Algebra k F] [IsScalarTower k F F'] [Algebra.IsIntegral F F'] [FiniteDimensional F F']
+  [IsGalois F F'] in
+/-- An element of `F'` lies in the decomposition field of `P` exactly when the decomposition
+group of `P` fixes it. -/
+@[simp]
+theorem mem_decompositionField_iff (P : Place k F') (x : F') :
+    x ∈ decompositionField F P ↔ ∀ σ ∈ P.integers.decompositionSubgroup F, σ x = x :=
+  IntermediateField.mem_fixedField_iff _ x
+
 omit [Algebra.IsIntegral F F'] [FiniteDimensional F F'] [IsGalois F F'] in
 /-- **The two actions on places agree**: restricting the scalars of an automorphism of `F'` over
 an intermediate field `E` down to `F` does not change the place it produces. -/
@@ -131,13 +143,12 @@ theorem eq_of_restrict_decompositionField_eq {P Q : Place k F'}
     (h : restrict k (decompositionField F P) Q = restrict k (decompositionField F P) P) :
     Q = P := by
   obtain ⟨τ, hτ⟩ := exists_smul_eq_of_restrict_eq (F := (decompositionField F P : Type v')) h
-  refine MulAction.injective (τ.restrictScalars F) ?_
-  change τ.restrictScalars F • Q = τ.restrictScalars F • P
-  rw [restrictScalars_smul F _ τ Q, hτ, restrictScalars_smul_eq_self F P τ]
+  rw [← smul_left_cancel_iff (τ.restrictScalars F), restrictScalars_smul F _ τ Q, hτ,
+    restrictScalars_smul_eq_self F P τ]
 
 omit [Algebra.IsIntegral F F'] in
 /-- The fibre of a place over its restriction to its decomposition field is a single point. -/
-theorem setOfPred_restrict_decompositionField_eq_singleton (P : Place k F') :
+theorem setOf_restrict_decompositionField_eq_eq_singleton (P : Place k F') :
     {Q : Place k F' | restrict k (decompositionField F P) Q =
       restrict k (decompositionField F P) P} = {P} :=
   Set.eq_singleton_iff_unique_mem.mpr ⟨rfl, fun _ h ↦ eq_of_restrict_decompositionField_eq F h⟩
@@ -158,7 +169,7 @@ theorem ramificationIdx_mul_relativeDegree_decompositionField (P : Place k F') :
       ramificationIdx F P * relativeDegree k F P := by
   have h := ncard_mul_ramificationIdx_mul_relativeDegree_eq_finrank
     (F := (decompositionField F P : Type v')) P
-  rw [setOfPred_restrict_decompositionField_eq_singleton, Set.ncard_singleton, one_mul,
+  rw [setOf_restrict_decompositionField_eq_eq_singleton, Set.ncard_singleton, one_mul,
     finrank_decompositionField] at h
   exact h
 
@@ -190,19 +201,25 @@ private theorem eq_one_of_restrict_decompositionField (P : Place k F') :
   exact ⟨Nat.dvd_one.mp ⟨_, hone.symm⟩,
     Nat.dvd_one.mp ⟨_, by rw [mul_comm]; exact hone.symm⟩⟩
 
-/-- **A place is unramified over its decomposition field** (Stichtenoth, Theorem 3.8.2). -/
+/-- **The restriction of a place to its decomposition field is unramified over `F`**
+(Stichtenoth, Theorem 3.8.2): no ramification of `P` over `F` happens below the decomposition
+field. -/
+@[simp]
 theorem ramificationIdx_restrict_decompositionField (P : Place k F') :
     ramificationIdx F (restrict k (decompositionField F P) P) = 1 :=
   (eq_one_of_restrict_decompositionField F P).1
 
 /-- **The residue extension below the decomposition field is trivial** (Stichtenoth,
-Theorem 3.8.2). -/
+Theorem 3.8.2): the restriction of `P` to its decomposition field has relative degree `1`
+over `F`. -/
+@[simp]
 theorem relativeDegree_restrict_decompositionField (P : Place k F') :
     relativeDegree k F (restrict k (decompositionField F P) P) = 1 :=
   (eq_one_of_restrict_decompositionField F P).2
 
 /-- **The ramification index is unchanged over the decomposition field** (Stichtenoth,
 Theorem 3.8.2). -/
+@[simp]
 theorem ramificationIdx_decompositionField (P : Place k F') :
     ramificationIdx (decompositionField F P) P = ramificationIdx F P := by
   rw [ramificationIdx_restrict_mul (k₁ := k) (F₀ := F)
@@ -211,6 +228,7 @@ theorem ramificationIdx_decompositionField (P : Place k F') :
 
 /-- **The relative degree is unchanged over the decomposition field** (Stichtenoth,
 Theorem 3.8.2). -/
+@[simp]
 theorem relativeDegree_decompositionField (P : Place k F') :
     relativeDegree k (decompositionField F P) P = relativeDegree k F P := by
   have hf : relativeDegree k F P = relativeDegree k (decompositionField F P) P *
@@ -229,30 +247,16 @@ theorem decompositionSubgroup_integers_smul (σ : F' ≃ₐ[F] F') (P : Place k 
     MulAction.stabilizer_smul_eq_stabilizer_map_conj]
 
 omit [Algebra.IsIntegral F F'] [FiniteDimensional F F'] [IsGalois F F'] in
-private theorem fixedField_map_conj (H : Subgroup (F' ≃ₐ[F] F')) (σ : F' ≃ₐ[F] F') :
-    IntermediateField.fixedField (H.map (MulAut.conj σ).toMonoidHom) =
-      (IntermediateField.fixedField H).map σ.toAlgHom := by
-  ext x
-  simp only [IntermediateField.mem_fixedField_iff, IntermediateField.mem_map]
-  constructor
-  · intro h
-    refine ⟨σ.symm x, fun g hg ↦ ?_, by simp⟩
-    have hx := h (MulAut.conj σ g) (Subgroup.mem_map_of_mem _ hg)
-    exact σ.injective (by simpa using hx)
-  · rintro ⟨y, hy, rfl⟩ g ⟨h, hh, rfl⟩
-    simpa using congrArg σ (hy h hh)
-
-omit [Algebra.IsIntegral F F'] [FiniteDimensional F F'] [IsGalois F F'] in
 /-- **The decomposition field of a conjugate place is the image of the decomposition field**
 (Stichtenoth, Theorem 3.8.2). -/
 theorem decompositionField_smul (σ : F' ≃ₐ[F] F') (P : Place k F') :
     decompositionField F (σ • P) = (decompositionField F P).map σ.toAlgHom := by
-  rw [decompositionField, decompositionSubgroup_integers_smul, fixedField_map_conj,
-    decompositionField]
+  rw [decompositionField, decompositionSubgroup_integers_smul,
+    IntermediateField.fixedField_map_conj, decompositionField]
 
 /-- **The degree of the decomposition field over `F`** (Stichtenoth, Theorem 3.8.2): it is the
 number of places of `F' / k` lying over the place below `P`. -/
-theorem finrank_decompositionField_eq_ncard_setOfPred_restrict_eq (P : Place k F') :
+theorem finrank_decompositionField_eq_ncard_setOf_restrict_eq (P : Place k F') :
     Module.finrank F (decompositionField F P) =
       {Q : Place k F' | Q.restrict k F = P.restrict k F}.ncard := by
   have htower := Module.finrank_mul_finrank F (decompositionField F P : Type v') F'

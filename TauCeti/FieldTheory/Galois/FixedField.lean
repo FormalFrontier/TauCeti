@@ -10,10 +10,13 @@ public import Mathlib.FieldTheory.Galois.Basic
 /-!
 # Fixed fields and fixing subgroups
 
-Two complements to Mathlib's Galois correspondence.
+Three complements to Mathlib's Galois correspondence.
 
 For a finite Galois extension `M / K`, a subgroup `H ≤ Gal(M/K)` and an intermediate field `E`,
 the fixed field of `H` and `E` generate `M` exactly when `H` meets the fixers of `E` trivially.
+
+The correspondence is equivariant for conjugation: the fixed field of a conjugate subgroup is the
+image of the fixed field under the conjugating automorphism.
 
 The correspondence between subgroups and their fixed fields also holds with no hypothesis on
 `M / K` at all, provided the subgroup is finite: Artin's theorem makes `M` finite Galois over the
@@ -24,6 +27,7 @@ out; the fixing subgroup of a subfield of finite degree is finite for the same r
 ## Main results
 
 * `Subgroup.fixedField_sup_eq_top_iff`
+* `IntermediateField.fixedField_map_conj`
 * `IntermediateField.fixingSubgroup_fixedField_of_finite`
 * `IntermediateField.finite_of_finiteDimensional_fixedField`
 * `IntermediateField.card_fixingSubgroup_le`
@@ -100,5 +104,19 @@ theorem card_fixingSubgroup_le (E : IntermediateField K M) [FiniteDimensional E 
     Nat.card (fixingSubgroup E) ≤ Module.finrank E M := by
   rw [Nat.card_congr (fixingSubgroupEquiv E).toEquiv, Nat.card_eq_fintype_card]
   exact AlgEquiv.card_le
+
+/-- **The Galois correspondence is conjugation-equivariant.** The fixed field of the conjugate
+subgroup `σ H σ⁻¹` is the image under `σ` of the fixed field of `H`. -/
+theorem fixedField_map_conj (H : Subgroup (M ≃ₐ[K] M)) (σ : M ≃ₐ[K] M) :
+    fixedField (H.map (MulAut.conj σ).toMonoidHom) = (fixedField H).map σ.toAlgHom := by
+  ext x
+  simp only [mem_fixedField_iff, mem_map]
+  constructor
+  · intro h
+    refine ⟨σ.symm x, fun g hg ↦ ?_, by simp⟩
+    have hx := h (MulAut.conj σ g) (Subgroup.mem_map_of_mem _ hg)
+    exact σ.injective (by simpa using hx)
+  · rintro ⟨y, hy, rfl⟩ g ⟨h, hh, rfl⟩
+    simpa using congrArg σ (hy h hh)
 
 end IntermediateField
