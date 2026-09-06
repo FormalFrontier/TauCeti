@@ -76,7 +76,10 @@ estimates for these counts, and consumes the prime base and exponent of a prime-
 fibre those estimates over the primes.
 
 `TauCetiRoadmap/Chebotarev/README.md`, Layer **11.3(3)** is the source for the finite-set estimate:
-a finite set of primes contributes `O(log x)`, hence `o(x)`.
+a finite set of primes contributes `O(log x)`, hence `o(x)`.  The fibre bound
+`card_mul_log_absNorm_le_of_pow_le_of_base_eq` lives here rather than with either consumer: it holds
+for every exponent `k ≥ 1`, and both the higher-power estimate of 11.3(2) and the finite-set
+estimate of 11.3(3) rest on it.
 
 ## References
 
@@ -562,6 +565,42 @@ theorem log_absNorm_asIdeal_pos (v : HeightOneSpectrum (𝓞 K)) :
 theorem log_absNorm_asIdeal_nonneg (v : HeightOneSpectrum (𝓞 K)) :
     0 ≤ Real.log (Ideal.absNorm v.asIdeal : ℝ) :=
   (log_absNorm_asIdeal_pos v).le
+
+/-- **A fixed prime base contributes at most `log x`.** For a finset `F` of prime powers all of
+base `v` and of absolute norm at most `x`, the total weight `#F · log N(v)` is at most `log x`:
+distinct members of `F` have distinct exponents, and every exponent is at most
+`log x / log N(v)`.
+
+This is the counting core shared by the two weighted estimates over a prime fibre, which differ
+only in which prime powers they collect: `TauCeti.higherPrimePowerTheta_le_card_primesLE_mul_log`
+takes the exponents `k ≥ 2`, `TauCeti.primePsi_le_ncard_mul_log` all `k ≥ 1`. Only `1 ≤ x` and a
+common base are needed. -/
+theorem card_mul_log_absNorm_le_of_pow_le_of_base_eq (hx : 1 ≤ x) {v : HeightOneSpectrum (𝓞 K)}
+    {F : Finset (IdealPrimePower K)}
+    (hF : ∀ A ∈ F, ((Ideal.absNorm v.asIdeal : ℝ)) ^ primePowerExponent A ≤ x)
+    (hbase : ∀ A ∈ F, primePowerBase A = v) :
+    (F.card : ℝ) * Real.log (Ideal.absNorm v.asIdeal) ≤ Real.log x := by
+  classical
+  have hLpos : 0 < Real.log (Ideal.absNorm v.asIdeal) := log_absNorm_asIdeal_pos v
+  have hexpbound : ∀ A ∈ F,
+      primePowerExponent A ∈ Finset.Icc 1 ⌊Real.log x / Real.log (Ideal.absNorm v.asIdeal)⌋₊ := by
+    intro A hA
+    have hlog : (primePowerExponent A : ℝ) * Real.log (Ideal.absNorm v.asIdeal) ≤ Real.log x :=
+      Real.le_log_of_pow_le (by linarith [two_le_absNorm_asIdeal_real v]) (hF A hA)
+    exact Finset.mem_Icc.mpr
+      ⟨primePowerExponent_pos A, Nat.le_floor ((le_div_iff₀ hLpos).mpr hlog)⟩
+  have hcard : F.card ≤ ⌊Real.log x / Real.log (Ideal.absNorm v.asIdeal)⌋₊ := by
+    refine le_trans (Finset.card_le_card_of_injOn primePowerExponent hexpbound ?_) ?_
+    · exact fun A hA B hB h ↦
+        idealPrimePower_eq_of_base_eq_of_exponent_eq ((hbase A hA).trans (hbase B hB).symm) h
+    · rw [Nat.card_Icc]; omega
+  calc (F.card : ℝ) * Real.log (Ideal.absNorm v.asIdeal)
+      ≤ (⌊Real.log x / Real.log (Ideal.absNorm v.asIdeal)⌋₊ : ℝ)
+        * Real.log (Ideal.absNorm v.asIdeal) :=
+        mul_le_mul_of_nonneg_right (by exact_mod_cast hcard) hLpos.le
+    _ ≤ Real.log x := by
+        rw [← le_div_iff₀ hLpos]
+        exact Nat.floor_le (div_nonneg (Real.log_nonneg hx) hLpos.le)
 
 /-- The logarithmically weighted prime count is nonnegative. -/
 theorem primeTheta_nonneg (S : Set (HeightOneSpectrum (𝓞 K))) (x : ℝ) : 0 ≤ primeTheta K S x :=
