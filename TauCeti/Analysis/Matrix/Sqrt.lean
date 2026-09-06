@@ -45,8 +45,8 @@ variable {𝕜 : Type*} [RCLike 𝕜] {ι : Type*} [Fintype ι]
 
 /-- Pulling the quadratic form of `B` back along the linear map of `A` gives the quadratic form
 of the sandwich `Aᴴ * B * A`. -/
-theorem inner_toEuclideanLin_toEuclideanLin [DecidableEq ι] (A B : Matrix ι ι 𝕜)
-    (x : EuclideanSpace 𝕜 ι) :
+theorem inner_toEuclideanLin_toEuclideanLin [DecidableEq ι] {κ : Type*} [Fintype κ]
+    [DecidableEq κ] (A : Matrix κ ι 𝕜) (B : Matrix κ κ 𝕜) (x : EuclideanSpace 𝕜 ι) :
     ⟪A.toEuclideanLin x, B.toEuclideanLin (A.toEuclideanLin x)⟫_𝕜 =
       ⟪x, (Aᴴ * B * A).toEuclideanLin x⟫_𝕜 := by
   rw [← LinearMap.adjoint_inner_right, ← toEuclideanLin_conjTranspose_eq_adjoint]
