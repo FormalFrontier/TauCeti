@@ -659,13 +659,30 @@ theorem eventually_primeCount_eq_card (hS : S.Finite) :
   simp
 
 open Asymptotics Filter in
+/-- **Primes counted below the prime-ideal-theorem order carry negligible weight.** Chebyshev's
+comparison spends one factor of `log x` per counted prime, so a count of `o(x / log x)` gives a
+weighted sum of `o(x)`.
+
+Stated for an arbitrary prime set, since the argument uses nothing about which primes are counted;
+`TauCeti.primeTheta_higherDegreePrimes_isLittleO` is the residue-degree instance. -/
+theorem primeTheta_isLittleO_of_primeCount_isLittleO
+    (h : primeCount K S =o[atTop] fun x : ℝ ↦ x / Real.log x) :
+    primeTheta K S =o[atTop] fun x : ℝ ↦ x := by
+  have hlog : ∀ᶠ x : ℝ in atTop, Real.log x ≠ 0 :=
+    (eventually_gt_atTop (1 : ℝ)).mono fun _ hx ↦ (Real.log_pos hx).ne'
+  have hmul : (fun x : ℝ ↦ primeCount K S x * Real.log x) =o[atTop] fun x : ℝ ↦ x := by
+    simpa [mul_comm] using (isLittleO_mul_iff_isLittleO_div hlog).2 h
+  refine IsBigO.trans_isLittleO (IsBigO.of_bound 1 (.of_forall fun x ↦ ?_)) hmul
+  rw [one_mul, Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (primeTheta_nonneg _ _)]
+  exact (primeTheta_le_primeCount_mul_log _ x).trans (le_abs_self _)
+
+open Asymptotics Filter in
 /-- **A finite set of primes carries a negligible weight**, because its contribution to `ϑ_K` is
 eventually *constant*: past the largest norm in the set every member is already counted, so the
 sum stops growing. A constant is `o(x)`.
 
 This is what lets a counting argument discard an exceptional set outright — the ramified primes of
-an extension, say — rather than only from a density. It is the discard
-`TauCetiRoadmap/Chebotarev/README.md`, Layer 11.3(3), asks for. -/
+an extension, say — rather than only from a density. -/
 theorem primeTheta_isLittleO_of_finite (hS : S.Finite) :
     primeTheta K S =o[atTop] fun x : ℝ ↦ x := by
   refine (isLittleO_const_id_atTop

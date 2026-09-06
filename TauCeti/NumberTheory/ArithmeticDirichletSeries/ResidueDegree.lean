@@ -166,16 +166,6 @@ theorem primeCount_higherDegreePrimes_isLittleO :
     primeCount K (higherDegreePrimes K) =o[atTop] fun x ↦ x / Real.log x :=
   primeCount_higherDegreePrimes_isBigO.trans_isLittleO sqrt_isLittleO_div_log
 
-private theorem count_mul_log_isLittleO :
-    (fun x : ℝ ↦ primeCount K (higherDegreePrimes K) x * Real.log x) =o[atTop] fun x : ℝ ↦ x := by
-  refine (primeCount_higherDegreePrimes_isLittleO.mul_isBigO
-    (isBigO_refl (fun x : ℝ ↦ Real.log x) atTop)).trans_isBigO (IsBigO.of_bound 1 ?_)
-  filter_upwards [eventually_gt_atTop (1 : ℝ)] with x hx
-  have hlog : 0 < Real.log x := Real.log_pos hx
-  rw [one_mul, Real.norm_eq_abs, Real.norm_eq_abs, abs_of_pos (by positivity),
-    div_mul_cancel₀ _ hlog.ne']
-  exact le_abs_self x
-
 /-- **The primes of residue degree above one carry a negligible weight.** Their contribution to
 `ϑ_K` is `o(x)`.
 
@@ -183,14 +173,10 @@ This is the count `o(x / log x)` above, weighted by Chebyshev's `log x` per prim
 estimate a contraction between two number fields discards: the norms satisfy
 `𝔑_{E/ℚ}𝔓 = (𝔑_{K/ℚ}𝔭)^{f(𝔓/𝔭)}`, so a term of `ϑ` moves to a different value of `n` unless the
 relative residue degree is one, and `f(𝔓/𝔭) ≥ 2` forces `f(𝔓/p) ≥ 2`, which is what this absolute
-statement covers. This is the residue-degree discard
-`TauCetiRoadmap/Chebotarev/README.md`, Layer 11.3(2), asks for. -/
+statement covers. -/
 theorem primeTheta_higherDegreePrimes_isLittleO (K : Type*) [Field K] [NumberField K] :
-    primeTheta K (higherDegreePrimes K) =o[atTop] fun x : ℝ ↦ x := by
-  refine IsBigO.trans_isLittleO (IsBigO.of_bound 1 (.of_forall fun x ↦ ?_))
-    (count_mul_log_isLittleO (K := K))
-  rw [one_mul, Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (primeTheta_nonneg _ _)]
-  exact (primeTheta_le_primeCount_mul_log _ x).trans (le_abs_self _)
+    primeTheta K (higherDegreePrimes K) =o[atTop] fun x : ℝ ↦ x :=
+  primeTheta_isLittleO_of_primeCount_isLittleO primeCount_higherDegreePrimes_isLittleO
 
 /-! ### Convergence of the prime Dirichlet series over the degree-above-one primes -/
 

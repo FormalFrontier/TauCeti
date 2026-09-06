@@ -256,11 +256,9 @@ distinct members of `F` have distinct exponents, and every exponent is at most
 `log x / log N(v)`.
 
 This is the counting core shared by the two weighted estimates over a prime fibre, which differ
-only in which prime powers they collect. It was factored out of
-`TauCeti.higherPrimePowerTheta_le_card_primesLE_mul_log` below, whose proof first made the
-argument for exponents `k ≥ 2`; `TauCeti.primePsi_le_ncard_mul_log` needs the same count with
-`k ≥ 1`, and both now go through here. Both consumers are estimates
-`TauCetiRoadmap/Chebotarev/README.md`, Layer 11.3, asks for. -/
+only in which prime powers they collect: `TauCeti.higherPrimePowerTheta_le_card_primesLE_mul_log`
+takes the exponents `k ≥ 2`, `TauCeti.primePsi_le_ncard_mul_log` all `k ≥ 1`. Only `1 ≤ x` and a
+common base are needed. -/
 theorem card_fiber_mul_log_absNorm_le (hx : 1 ≤ x) {v : HeightOneSpectrum (𝓞 K)}
     {F : Finset (IdealPrimePower K)}
     (hF : ∀ A ∈ F, ((Ideal.absNorm v.asIdeal : ℝ)) ^ primePowerExponent A ≤ x)
