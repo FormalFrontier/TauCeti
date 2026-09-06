@@ -71,13 +71,41 @@ variable {n : ℕ} (b : Module.Basis (Fin n) ℤ M)
 variable (wt : Fin n → κ → ℤ)
 
 omit [Module ℚ V] in
-private theorem basisMatrix_eq_of_val_apply_eq {A : Type v} [CommRing A]
+private theorem basisMatrix_eq_of_val_eq {A : Type v} [CommRing A]
     {x y : LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M)}
-    (hxy : ∀ z, x.val z = y.val z) :
+    (hxy : x.val = y.val) :
     Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom x =
       Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom y :=
   congrArg (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom)
-    (Units.ext (LinearMap.ext hxy))
+    (Units.ext hxy)
+
+omit [Fintype κ] in
+private theorem coe_kostantRootSubgroupParam {A : Type v} [CommRing A] (i : I)
+    (t : Multiplicative A) :
+    (kostantRootSubgroupParam e h ρ M hM i (hnil i) (CommAlgCat.of ℤ A) t :
+        Module.End A (A ⊗[ℤ] M)) =
+      baseChangeExp (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M
+        (fun n _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i n hv)
+        (Multiplicative.toAdd t) :=
+  LinearMap.ext fun z =>
+    kostantRootSubgroupParam_val_apply e h ρ M hM i (hnil i) (CommAlgCat.of ℤ A) t z
+
+omit [Fintype κ] in
+private theorem basisMatrix_kostantWeylProduct (i j : I) (A : Type v) [CommRing A] :
+    Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom
+        (kostantRootSubgroupParam e h ρ M hM i (hnil i) (CommAlgCat.of ℤ A)
+            (Multiplicative.ofAdd 1) *
+          kostantRootSubgroupParam e h ρ M hM j (hnil j) (CommAlgCat.of ℤ A)
+            (Multiplicative.ofAdd (-1)) *
+          kostantRootSubgroupParam e h ρ M hM i (hnil i) (CommAlgCat.of ℤ A)
+            (Multiplicative.ofAdd 1)) =
+      Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom
+        (kostantWeylGL e h ρ M hM (hnil i) (hnil j) A) := by
+  apply basisMatrix_eq_of_val_eq (A := A) M b
+  rw [Units.val_mul, Units.val_mul, coe_kostantRootSubgroupParam (i := i),
+    coe_kostantRootSubgroupParam (i := j), toAdd_ofAdd, kostantWeylGL_val]
+  exact (kostantWeylPoints_toLinearMap_eq
+    e h ρ M hM (hnil i) (hnil j) (A := A)).symm
 
 /-! ## The Weyl representative in the carrier -/
 
@@ -102,19 +130,12 @@ theorem coe_kostantToralWeylPoint (i j : I) (A : Type v) [CommRing A] :
         Matrix.GeneralLinearGroup (Fin n) A) =
       Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMulEquiv
         (kostantWeylGL e h ρ M hM (hnil i) (hnil j) A) := by
-  rw [kostantToralWeylPoint]
-  simp only [Subgroup.coe_mul, coe_kostantToralRootSubgroupPoints]
-  rw [← basisMatrix_kostantRootSubgroupParam e h ρ M hM hnil b A i
-      (Multiplicative.ofAdd 1),
-    ← basisMatrix_kostantRootSubgroupParam e h ρ M hM hnil b A j
-      (Multiplicative.ofAdd (-1)),
-    ← map_mul, ← map_mul]
-  exact basisMatrix_eq_of_val_apply_eq (A := A) M b fun z => by
-    rw [Units.val_mul, Units.val_mul, Module.End.mul_apply, Module.End.mul_apply,
-      kostantRootSubgroupParam_val_apply, kostantRootSubgroupParam_val_apply,
-      kostantRootSubgroupParam_val_apply, toAdd_ofAdd, toAdd_ofAdd, kostantWeylGL_val]
-    exact LinearMap.congr_fun
-      (kostantWeylPoints_toLinearMap_eq e h ρ M hM (hnil i) (hnil j) (A := A)).symm z
+  simpa only [kostantToralWeylPoint, Subgroup.coe_mul,
+    coe_kostantToralRootSubgroupPoints, map_mul,
+    basisMatrix_kostantRootSubgroupParam e h ρ M hM hnil b A i (Multiplicative.ofAdd 1),
+    basisMatrix_kostantRootSubgroupParam e h ρ M hM hnil b A j (Multiplicative.ofAdd (-1)),
+    MulEquiv.toMonoidHom_eq_coe] using
+    basisMatrix_kostantWeylProduct e h ρ M hM hnil b i j A
 
 /-! ## Normalization of the represented torus -/
 
@@ -124,6 +145,24 @@ variable (hT : IsSl2Triple (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (h c)))
   (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e j))))
 variable (hα : ∀ q, ⁅h q, e i⁆ = (α q : ℚ) • e i)
 variable (hαneg : ∀ q, ⁅h q, e j⁆ = -((α q : ℚ) • e j))
+
+omit [Fintype κ] in
+include hT in
+private theorem basisMatrix_kostantWeylConjRoot (A : Type v) [CommRing A] (u : A) :
+    Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom
+        (kostantWeylGL e h ρ M hM (hnil i) (hnil j) A *
+          kostantRootSubgroupParam e h ρ M hM i (hnil i) (CommAlgCat.of ℤ A)
+            (Multiplicative.ofAdd u) *
+          (kostantWeylGL e h ρ M hM (hnil i) (hnil j) A)⁻¹) =
+      Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom
+        (kostantRootSubgroupParam e h ρ M hM j (hnil j) (CommAlgCat.of ℤ A)
+          (Multiplicative.ofAdd (-u))) := by
+  apply basisMatrix_eq_of_val_eq (A := A) M b
+  rw [Units.val_mul, Units.val_mul, kostantWeylGL_val, kostantWeylGL_inv_val,
+    coe_kostantRootSubgroupParam (i := i), coe_kostantRootSubgroupParam (i := j),
+    toAdd_ofAdd]
+  exact kostantWeylPoints_conj_baseChangeExp
+    e h ρ M hM (hnil i) (hnil j) hT u
 
 include hT in
 /-- Conjugation by the carrier's Weyl representative exchanges the two root subgroups of the
@@ -136,27 +175,12 @@ theorem kostantToralWeylPoint_conj_rootSubgroupPoints (A : Type v) [CommRing A] 
       kostantToralRootSubgroupPoints e h ρ M hM hnil b wt j A
         (Multiplicative.ofAdd (-u)) := by
   apply Subtype.ext
-  rw [Subgroup.coe_mul, Subgroup.coe_mul, Subgroup.coe_inv,
-    coe_kostantToralWeylPoint, coe_kostantToralRootSubgroupPoints,
-    coe_kostantToralRootSubgroupPoints,
-    ← basisMatrix_kostantRootSubgroupParam e h ρ M hM hnil b A i
-      (Multiplicative.ofAdd u),
-    ← basisMatrix_kostantRootSubgroupParam e h ρ M hM hnil b A j
-      (Multiplicative.ofAdd (-u))]
-  simpa only [map_mul, map_inv, MulEquiv.toMonoidHom_eq_coe] using
-    basisMatrix_eq_of_val_apply_eq (A := A) M b
-      (x := kostantWeylGL e h ρ M hM (hnil i) (hnil j) A *
-        kostantRootSubgroupParam e h ρ M hM i (hnil i) (CommAlgCat.of ℤ A)
-          (Multiplicative.ofAdd u) *
-        (kostantWeylGL e h ρ M hM (hnil i) (hnil j) A)⁻¹)
-      (y := kostantRootSubgroupParam e h ρ M hM j (hnil j) (CommAlgCat.of ℤ A)
-        (Multiplicative.ofAdd (-u))) fun z => by
-      rw [Units.val_mul, Units.val_mul, Module.End.mul_apply, Module.End.mul_apply,
-        kostantWeylGL_val, kostantWeylGL_inv_val,
-        kostantRootSubgroupParam_val_apply, kostantRootSubgroupParam_val_apply,
-        toAdd_ofAdd, toAdd_ofAdd]
-      exact LinearMap.congr_fun
-        (kostantWeylPoints_conj_baseChangeExp e h ρ M hM (hnil i) (hnil j) hT u) z
+  simpa only [Subgroup.coe_mul, Subgroup.coe_inv, coe_kostantToralWeylPoint,
+    coe_kostantToralRootSubgroupPoints, map_mul, map_inv,
+    basisMatrix_kostantRootSubgroupParam e h ρ M hM hnil b A i (Multiplicative.ofAdd u),
+    basisMatrix_kostantRootSubgroupParam e h ρ M hM hnil b A j (Multiplicative.ofAdd (-u)),
+    MulEquiv.toMonoidHom_eq_coe] using
+    basisMatrix_kostantWeylConjRoot e h ρ M hM hnil b hT A u
 
 include hT hα hαneg in
 /-- Conjugating a represented weight-torus point by the carrier's Weyl representative reflects
@@ -210,8 +234,7 @@ theorem kostantToralWeylPoint_mem_normalizer_weightTorusPoints
       refine ⟨s, Subtype.ext ?_⟩
       exact (coe_kostantToralWeightTorusPoints e h ρ M hM hnil b wt A s).trans hs
   rw [hcarrier, ← Subgroup.subgroupOf_normalizer_eq hTK]
-  change (kostantToralWeylPoint e h ρ M hM hnil b wt i j A :
-    Matrix.GeneralLinearGroup (Fin n) A) ∈ Subgroup.normalizer T
+  rw [Subgroup.mem_subgroupOf]
   rw [coe_kostantToralWeylPoint]
   let f := Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom
   let T' := (kostantTorusPoints M b wt A).range
