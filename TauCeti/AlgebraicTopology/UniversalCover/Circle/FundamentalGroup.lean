@@ -13,6 +13,7 @@ public import Mathlib.AlgebraicTopology.FundamentalGroupoid.SimplyConnected
 public import TauCeti.AlgebraicTopology.FundamentalGroup.Homeomorph
 public import TauCeti.AlgebraicTopology.UniversalCover.AddCircle
 public import TauCeti.AlgebraicTopology.UniversalCover.Deck.FundamentalGroup.Basic
+public import TauCeti.Topology.Circle.AddCircle
 
 /-!
 # Fundamental groups of additive and complex circles
@@ -51,8 +52,6 @@ transformation, so `Deck ((↑) : 𝕜 → AddCircle p)` acts transitively on ev
 * `AddCircle.fundamentalGroupMulEquivZero`: the basepoint-`0` specialisation, using the lift
   `0 : ℝ`.
 * `UnitAddCircle.fundamentalGroupMulEquiv`: `π₁(S¹) ≅ ℤ` for the unit circle.
-* `AddCircle.homeomorphCircle_symm_one`: the inverse circle homeomorphism sends `1` to `0` for
-  every nonzero real period.
 * `Circle.fundamentalGroupMulEquiv`: `π₁(Circle, x) ≃* Multiplicative ℤ`.
 
 ## References
@@ -279,16 +278,6 @@ lemma fundamentalGroupMulEquiv_eq_one_iff (γ : FundamentalGroup UnitAddCircle 0
 end UnitAddCircle
 
 noncomputable section
-
-namespace AddCircle
-
-/-- The inverse homeomorphism `AddCircle.homeomorphCircle.symm` carries `1 : Circle` to `0`. -/
-@[simp]
-theorem homeomorphCircle_symm_one {T : ℝ} (hT : T ≠ 0) :
-    (AddCircle.homeomorphCircle hT).symm 1 = 0 := by
-  rw [Homeomorph.symm_apply_eq, AddCircle.homeomorphCircle_apply, AddCircle.toCircle_zero]
-
-end AddCircle
 
 namespace Circle
 
