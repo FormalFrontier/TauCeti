@@ -29,6 +29,7 @@ namespace TauCeti.Matrix.SpecialLinearGroup
 universe u
 
 /-- The scalar extension of `ModularGroup.S` to a commutative ring has its standard matrix. -/
+@[simp]
 theorem coe_modularGroup_S {R : Type u} [CommRing R] :
     (((ModularGroup.S : SL(2, ℤ)) : SL(2, R)) : Matrix (Fin 2) (Fin 2) R) =
       !![0, -1; 1, 0] := by
