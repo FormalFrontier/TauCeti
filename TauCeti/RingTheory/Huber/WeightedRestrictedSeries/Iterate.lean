@@ -10,8 +10,6 @@ public import TauCeti.RingTheory.Huber.WeightedEval.Completion
 public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Completion
 public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.PowerBounded
 
-import TauCeti.RingTheory.Huber.Completion
-
 import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.PairOfDefinition
 
 /-!
@@ -27,17 +25,10 @@ A⟨X₁,…,X_{k+m}⟩ ⟶ A⟨X₁,…,Xₖ⟩⟨Y₁,…,Y_m⟩    and    A�
 
 and proves them mutually inverse, so that `A⟨X⟩⟨Y⟩ ≅ A⟨X,Y⟩`.
 
-Each is Wedhorn's Proposition 5.50 for the completed algebra — `weightedEvalHomCompletion` —
-applied to a tuple of generators. The first carries `Xᵢ` to the `i`-th variable of the inner
-algebra read as a constant series of the outer one when `i < k`, and to the corresponding variable
-of the outer algebra when `i ≥ k`. The second is built in two steps: the first block of variables
-gives `A⟨X₁,…,Xₖ⟩ → A⟨X₁,…,X_{k+m}⟩`, and over that map the outer variables `Y_j` go to `X_{k+j}`.
-
-Two hypotheses make the applications legitimate and neither is automatic. The target must be a
-*complete Hausdorff nonarchimedean* ring, which for an iterated algebra rests on the completion of
-a nonarchimedean group being nonarchimedean; and each tuple must be power-bounded, which
-`isPowerBounded_completion_coe_iff` reduces to power-boundedness in the uncompleted ring, where
-`isPowerBounded_weightedX_one_weight` and `isPowerBounded_weightedC` settle it.
+The first carries `Xᵢ` to the `i`-th variable of the inner algebra read as a constant series of
+the outer one when `i < k`, and to the corresponding variable of the outer algebra when `i ≥ k`.
+The second carries the `j`-th variable of the outer algebra to `X_{k+j}`, and is a map over
+`A⟨X₁,…,Xₖ⟩` through the inclusion of the first block of variables.
 
 ## Main definitions
 
@@ -64,10 +55,9 @@ a nonarchimedean group being nonarchimedean; and each tuple must be power-bounde
   generators. The bodies of the definitions are not exported, so these are how a consumer computes
   with the maps.
 * `TauCeti.Huber.iterateJoinHom_comp_iterateSplitHom` and
-  `TauCeti.Huber.iterateSplitHom_comp_iterateJoinHom`: the two maps are mutually inverse. Each is
-  the uniqueness half of Proposition 5.50 — two continuous homomorphisms out of the completion
-  agreeing on the constants and the variables are equal — applied to the composite and the
-  identity.
+  `TauCeti.Huber.iterateSplitHom_comp_iterateJoinHom`: the two maps are mutually inverse, with
+  `TauCeti.Huber.iterateSplitHom_comp_iterateFirstBlockHom` identifying the composite of the
+  splitting with the inclusion of the first block as the structure map of the iterate.
 * `TauCeti.Huber.continuous_iterateRingEquiv` and its `symm`, with the `_coe` and `_apply` `@[simp]`
   lemmas: the isomorphism is one of *topological* rings, and it is `iterateSplitHom` with inverse
   `iterateJoinHom`.
@@ -279,6 +269,7 @@ theorem iterateStructureHom_eq (a : A) :
     algebraMap_completion_weightedRestrictedSubring_apply _ _ isWeightFamily_one_weight]
 
 /-- **Joining after splitting is the identity on `A⟨X₁,…,X_{k+m}⟩`.** -/
+@[simp]
 theorem iterateJoinHom_comp_iterateSplitHom :
     (iterateJoinHom k m A).comp (iterateSplitHom k m A)
       = RingHom.id (restrictedMvPowerSeriesCompletion (k + m) A) := by
@@ -297,6 +288,7 @@ theorem iterateJoinHom_comp_iterateSplitHom :
 
 /-- Splitting after including the first block is the structure map of the iterated algebra over
 `A⟨X₁,…,Xₖ⟩`: the two agree on the constants and on the variables of `A⟨X₁,…,Xₖ⟩`. -/
+@[simp]
 theorem iterateSplitHom_comp_iterateFirstBlockHom :
     (iterateSplitHom k m A).comp (iterateFirstBlockHom k m A)
       = algebraMap (restrictedMvPowerSeriesCompletion k A)
@@ -313,6 +305,7 @@ theorem iterateSplitHom_comp_iterateFirstBlockHom :
       algebraMap_completion_weightedRestrictedSubring_apply _ _ isWeightFamily_one_weight]
 
 /-- **Splitting after joining is the identity on `A⟨X₁,…,Xₖ⟩⟨Y₁,…,Y_m⟩`.** -/
+@[simp]
 theorem iterateSplitHom_comp_iterateJoinHom :
     (iterateSplitHom k m A).comp (iterateJoinHom k m A)
       = RingHom.id
