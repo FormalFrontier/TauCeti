@@ -163,15 +163,15 @@ section Completion
 
 variable [IsHuberRing A]
 
+-- At a general weight family, or for a constant, there is nothing to name: write the composition,
+-- `isPowerBounded_completion_coe_of_isPowerBounded (isPowerBounded_weightedX hT hi)` or
+-- `… (isPowerBounded_weightedC hT ha)`.
 /-- **The variable `Xᵢ` is power-bounded in `A⟨X₁,…,Xₖ⟩`**, the trivial-weight case, which is the
 one the universal property of the completed algebra is applied at.
 
 `@[simp]` because it is unconditional, matching
 `TauCeti.Huber.isPowerBounded_weightedX_one_weight` on the uncompleted ring: `simp` closes such a
-goal outright rather than rewriting it, which the composition it abbreviates cannot do. At a
-general weight family, or for a constant, write that composition —
-`isPowerBounded_completion_coe_of_isPowerBounded (isPowerBounded_weightedX hT hi)` and
-`… (isPowerBounded_weightedC hT ha)` — rather than naming it. -/
+goal outright rather than rewriting it. -/
 @[simp]
 theorem isPowerBounded_coe_weightedX_one_weight (i : Fin k) :
     IsPowerBounded ((weightedX (fun _ : Fin k ↦ ({1} : Set A)) isWeightFamily_one_weight i :
