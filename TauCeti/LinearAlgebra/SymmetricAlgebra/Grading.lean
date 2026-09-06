@@ -69,8 +69,8 @@ theorem map_homogeneousSubmodule_equivMvPolynomial {ι : Type w} (b : Basis ι R
 
 /-- Membership in a homogeneous piece can be tested after applying the polynomial equivalence
 induced by a basis. -/
-theorem equivMvPolynomial_mem_homogeneousSubmodule_iff {ι : Type w} (b : Basis ι R M)
-    (n : ℕ) (p : SymmetricAlgebra R M) :
+theorem _root_.SymmetricAlgebra.equivMvPolynomial_mem_homogeneousSubmodule_iff {ι : Type w}
+    (b : Basis ι R M) (n : ℕ) (p : SymmetricAlgebra R M) :
     SymmetricAlgebra.equivMvPolynomial b p ∈ MvPolynomial.homogeneousSubmodule ι R n ↔
       p ∈ homogeneousSubmodule R M n := by
   rw [← map_homogeneousSubmodule_equivMvPolynomial R M b n]
