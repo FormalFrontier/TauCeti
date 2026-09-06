@@ -14,6 +14,9 @@ public import Mathlib.RingTheory.Norm.Defs
 import TauCeti.LinearAlgebra.Matrix.RationalCanonicalFormFinTwo
 -- Non-public: `basisOfLinearIndependentOfCardEqFinrank` builds that basis, inside a proof only.
 import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
+-- Non-public: `linearIndependent_one_of_notMem_range_algebraMap` is the independence of `1` and
+-- `x` that basis rests on; used in a proof only.
+import TauCeti.LinearAlgebra.Dimension.IsQuadraticExtension
 -- Non-public: the extension theory of finite fields supplies the root of an irreducible quadratic,
 -- inside a proof only.
 import Mathlib.FieldTheory.Finite.Extension
@@ -68,29 +71,13 @@ section Basis
 
 variable {E : Type*} [Field E] [Algebra F E]
 
-/-- An element of `E` outside `F` is linearly independent from `1` over `F`. -/
-private theorem linearIndependent_one_root {x : E} (hx : x ∉ Set.range (algebraMap F E)) :
-    LinearIndependent F ![(1 : E), x] := by
-  rw [LinearIndependent.pair_iff]
-  intro s t hst
-  have hst' : algebraMap F E s + algebraMap F E t * x = 0 := by
-    simpa [Algebra.smul_def] using hst
-  rcases eq_or_ne t 0 with rfl | ht
-  · exact ⟨(algebraMap F E).injective (by simpa using hst'), rfl⟩
-  · have ht' : algebraMap F E t ≠ 0 := fun h =>
-      ht ((algebraMap F E).injective (by simpa using h))
-    refine absurd ⟨-(s / t), ?_⟩ hx
-    rw [map_neg, map_div₀]
-    field_simp
-    linear_combination -hst'
-
 /-- The `F`-basis `(1, x)` of a degree-`2` extension `E/F` attached to an element `x` outside `F`.
 It is used only to compute the trace and the norm of `x`, both of which are basis independent. -/
 private noncomputable def oneRootBasis (hE : Module.finrank F E = 2) {x : E}
     (hx : x ∉ Set.range (algebraMap F E)) : Module.Basis (Fin 2) F E :=
   have : FiniteDimensional F E := Module.finite_of_finrank_eq_succ (n := 1) hE
-  basisOfLinearIndependentOfCardEqFinrank (b := ![1, x]) (linearIndependent_one_root hx)
-    (by simp [hE])
+  basisOfLinearIndependentOfCardEqFinrank (b := ![1, x])
+    (linearIndependent_one_of_notMem_range_algebraMap F E hx) (by simp [hE])
 
 private theorem coe_oneRootBasis (hE : Module.finrank F E = 2) {x : E}
     (hx : x ∉ Set.range (algebraMap F E)) : ⇑(oneRootBasis hE hx) = ![1, x] := by
