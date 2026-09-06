@@ -40,6 +40,12 @@ Galois group of its fixed points, and that fixed-point subfield is the one under
 * `Subgroup.zpowers_toAlgAutMulEquiv_eq_top`
 * `AlgEquiv.isCyclic_fixedField_zpowers`
 * `AlgEquiv.zpowers_toAlgAutMulEquiv_self_eq_top`
+
+## References
+
+* `TauCetiRoadmap/Chebotarev/README.md`, Layer 8.2 — asks for `M` cyclic over the field fixed
+  by `⟨σ⟩`, with generator the restriction of `σ`.
+* `TauCetiRoadmap/Chebotarev/Suggested.lean`, lines 283-291 — names that fixed field.
 -/
 
 public section
