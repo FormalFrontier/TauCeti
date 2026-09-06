@@ -28,9 +28,15 @@ The proof skeleton is adapted from `cyclic_subgroup_meets_G_times_one_trivially`
 Birkbeck--Brasca) at commit `8575c9df1ae0a61120ab5c964c7911414254bec7`. That version assumes
 `Nat.card G ∣ orderOf τ` with both groups finite; the hypothesis here is weaker.
 
+It also records that `g`, viewed inside the subgroup it generates, generates that subgroup: the
+canonical generator of `zpowers g` is `⟨g, mem_zpowers g⟩`. Mathlib knows `zpowers g` is cyclic
+but does not name a generator, which is what a transport along an isomorphism out of `zpowers g`
+needs.
+
 ## Main results
 
 * `Subgroup.zpowers_inf_top_prod_bot_eq_bot_of_orderOf_dvd`
+* `Subgroup.zpowers_mk_self_eq_top`
 -/
 
 public section
@@ -53,5 +59,17 @@ theorem zpowers_inf_top_prod_bot_eq_bot_of_orderOf_dvd {G H : Type*} [Group G] [
     orderOf_dvd_iff_zpow_eq_one.mp (hστ.natCast.trans (orderOf_dvd_iff_zpow_eq_one.mpr hτ))
   rw [mem_bot, Prod.mk_eq_one]
   exact ⟨by simpa [hσ] using (congrArg Prod.fst hk).symm, hh⟩
+
+/-- **An element generates the subgroup it generates.** Inside `zpowers g`, the canonical element
+`⟨g, mem_zpowers g⟩` has all of `zpowers g` for its own `zpowers`.
+
+Mathlib supplies `IsCyclic ↥(zpowers g)` as an instance but names no generator, so this is what a
+transport along an isomorphism out of `zpowers g` consumes. -/
+theorem zpowers_mk_self_eq_top {G : Type*} [Group G] (g : G) :
+    zpowers (⟨g, mem_zpowers g⟩ : ↥(zpowers g)) = ⊤ := by
+  ext ⟨x, hx⟩
+  simp only [Subgroup.mem_top, iff_true]
+  obtain ⟨n, rfl⟩ := hx
+  exact ⟨n, by ext; simp⟩
 
 end Subgroup
