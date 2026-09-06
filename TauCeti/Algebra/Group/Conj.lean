@@ -41,9 +41,9 @@ conjugation action.
   `Nat.card` form.
 * `TauCeti.ConjClasses.ncard_carrier_mk_of_mem_center`: the class of a central element is a single
   point.
-* `TauCeti.ConjClasses.card_carrier_mul_orderOf_dvd`: the class size times the order of a member
+* `ConjClasses.card_carrier_mul_orderOf_dvd`: the class size times the order of a member
   divides the order of the group, so the fibre quotient below is an exact division.
-* `TauCeti.ConjClasses.card_div_mul_card_carrier_orderOf_eq_card_centralizer_div_orderOf`: that
+* `ConjClasses.card_div_mul_card_carrier_orderOf_eq_card_centralizer_div_orderOf`: that
   quotient equals the order of the centralizer divided by the order of the member.
 * `TauCeti.ConjClasses.card_carrier_dvd_card`: the size of a conjugacy class divides the order of
   the group, with `TauCeti.ConjClasses.card_carrier_cast_ne_zero` the consequence that the size of
@@ -191,36 +191,6 @@ theorem card_carrier_dvd_card (C : ConjClasses G) : Nat.card C.carrier ∣ Nat.c
       = (Subgroup.centralizer {x}).index := card_carrier_mk x
     _ ∣ Nat.card G := Subgroup.index_dvd_card _
 
-/-- **The size of a conjugacy class times the order of a member divides the order of the group.**
-
-The class size is the index of the centralizer of `σ` (`card_carrier_mk`), and `orderOf σ` divides
-the order of that centralizer because `σ` lies in it; index times order is the group order.
-
-For a *finite* group this is what makes `Nat.card G / (Nat.card C.carrier * orderOf σ)` an exact
-division rather than a truncated one, which is why Chebotarev's fibre count needs it separately;
-`card_div_mul_card_carrier_orderOf_eq_card_centralizer_div_orderOf` evaluates that quotient. No
-finiteness is assumed here: for an infinite group both sides degenerate to `0`, and the statement
-stays true. -/
-theorem card_carrier_mul_orderOf_dvd (C : _root_.ConjClasses G) (σ : G) (hσ : σ ∈ C.carrier) :
-    Nat.card C.carrier * orderOf σ ∣ Nat.card G := by
-  rw [_root_.ConjClasses.mem_carrier_iff_mk_eq] at hσ
-  subst hσ
-  obtain ⟨k, hk⟩ := (Subgroup.centralizer {σ}).orderOf_dvd_natCard
-    (Subgroup.mem_centralizer_singleton_iff.mpr rfl)
-  exact ⟨k, by rw [card_carrier_mk, mul_assoc, ← hk, Subgroup.index_mul_card]⟩
-
-/-- **That quotient in closed form.** For a finite group, dividing the order of the group by the
-class size times the order of a member leaves the order of the centralizer divided by that same
-order; the common factor is the centralizer's index, which the class size equals. -/
-theorem card_div_mul_card_carrier_orderOf_eq_card_centralizer_div_orderOf [Finite G]
-    (C : _root_.ConjClasses G) (σ : G) (hσ : σ ∈ C.carrier) :
-    Nat.card G / (Nat.card C.carrier * orderOf σ)
-      = Nat.card (Subgroup.centralizer {σ}) / orderOf σ := by
-  rw [_root_.ConjClasses.mem_carrier_iff_mk_eq] at hσ
-  subst hσ
-  rw [card_carrier_mk, ← Subgroup.index_mul_card (Subgroup.centralizer {σ}),
-    Nat.mul_div_mul_left _ _ (Nat.pos_of_ne_zero Subgroup.index_ne_zero_of_finite)]
-
 /-- The size of a conjugacy class is nonzero in any semiring in which the order of the group is
 nonzero: it divides that order. -/
 theorem card_carrier_cast_ne_zero {R : Type*} [Semiring R] (C : ConjClasses G)
@@ -337,6 +307,38 @@ theorem map_pow {N : Type*} [Monoid N] (f : M →* N) (C : ConjClasses M) (j : �
   -- the map on representatives, after which `mk_pow` handles both powers and `map_pow` finishes
   -- in `N`.
   rw [mk_pow, map_mk, map_mk, mk_pow, _root_.map_pow]
+
+/-- **The size of a conjugacy class times the order of a member divides the order of the group.**
+
+The class size is the index of the centralizer of `σ`
+(`TauCeti.ConjClasses.card_carrier_mk`), and `orderOf σ` divides
+the order of that centralizer because `σ` lies in it; index times order is the group order.
+
+For a *finite* group this is what makes `Nat.card G / (Nat.card C.carrier * orderOf σ)` an exact
+division rather than a truncated one, which is why Chebotarev's fibre count needs it separately;
+`card_div_mul_card_carrier_orderOf_eq_card_centralizer_div_orderOf` evaluates that quotient. No
+finiteness is assumed here: for an infinite group both sides degenerate to `0`, and the statement
+stays true. -/
+theorem card_carrier_mul_orderOf_dvd {G : Type*} [Group G] (C : ConjClasses G) (σ : G)
+    (hσ : σ ∈ C.carrier) :
+    Nat.card C.carrier * orderOf σ ∣ Nat.card G := by
+  rw [mem_carrier_iff_mk_eq] at hσ
+  subst hσ
+  obtain ⟨k, hk⟩ := (Subgroup.centralizer {σ}).orderOf_dvd_natCard
+    (Subgroup.mem_centralizer_singleton_iff.mpr rfl)
+  exact ⟨k, by rw [TauCeti.ConjClasses.card_carrier_mk, mul_assoc, ← hk, Subgroup.index_mul_card]⟩
+
+/-- **That quotient in closed form.** For a finite group, dividing the order of the group by the
+class size times the order of a member leaves the order of the centralizer divided by that same
+order; the common factor is the centralizer's index, which the class size equals. -/
+theorem card_div_mul_card_carrier_orderOf_eq_card_centralizer_div_orderOf {G : Type*} [Group G]
+    [Finite G] (C : ConjClasses G) (σ : G) (hσ : σ ∈ C.carrier) :
+    Nat.card G / (Nat.card C.carrier * orderOf σ)
+      = Nat.card (Subgroup.centralizer {σ}) / orderOf σ := by
+  rw [mem_carrier_iff_mk_eq] at hσ
+  subst hσ
+  rw [TauCeti.ConjClasses.card_carrier_mk, ← Subgroup.index_mul_card (Subgroup.centralizer {σ}),
+    Nat.mul_div_mul_left _ _ (Nat.pos_of_ne_zero Subgroup.index_ne_zero_of_finite)]
 
 /-- **Elements of different orders are not conjugate.** Conjugation is an automorphism, so it
 preserves the order of an element; hence two elements whose orders differ have distinct conjugacy
