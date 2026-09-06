@@ -316,8 +316,14 @@ private theorem exists_compareFormsSq_eq_sign_smul {ε : ℝ} (hε : ε * ε = 1
   have hconj : (starRingEnd ℂ) c
       = ((ε * ((H (compareForms B H hdef x) (compareForms B H hdef x)).re / (H x x).re) : ℝ)
           : ℂ) := by
-    rw [Complex.ofReal_mul, Complex.ofReal_div, ← mul_div_assoc, eq_div_iff hrne, ← hrC, ← hsC,
-      hkey, ← mul_assoc, hεC, one_mul]
+    -- Recast `hkey` once against the two real parts; from here on nothing about the forms is
+    -- used, only the scalar identity `s = ε * (conj c * r)` together with `ε * ε = 1` and `r ≠ 0`.
+    have hkeyC : ((H (compareForms B H hdef x) (compareForms B H hdef x)).re : ℂ)
+        = (ε : ℂ) * ((starRingEnd ℂ) c * ((H x x).re : ℂ)) := by
+      rw [← hsC, ← hrC]; exact hkey
+    push_cast
+    field_simp
+    linear_combination (-(ε : ℂ)) * hkeyC - ((starRingEnd ℂ) c * ((H x x).re : ℂ)) * hεC
   refine ⟨_, div_pos hspos hrpos, fun y => ?_⟩
   rw [hc y, ← Complex.conj_conj c, hconj, Complex.conj_ofReal]
 
@@ -348,9 +354,10 @@ private theorem exists_conjLinear_sq_eq_sign_smul {B : BilinForm ℂ V} {H : V �
   -- `ℝ`-to-`ℂ` coercion, so the map equality below stays a plain scalar computation.
   have hsq : (((Real.sqrt t)⁻¹ : ℝ) : ℂ) * (((Real.sqrt t)⁻¹ : ℝ) : ℂ) * ((ε * t : ℝ) : ℂ)
       = (ε : ℂ) := by
+    -- Over `ℝ` the scaling factor is `t⁻¹ * (ε * t)`, which is `ε` because `t` is positive.
     have hreal : (Real.sqrt t)⁻¹ * (Real.sqrt t)⁻¹ * (ε * t) = ε := by
-      rw [← mul_inv, Real.mul_self_sqrt htpos.le, mul_comm ε t, ← mul_assoc,
-        inv_mul_cancel₀ htpos.ne', one_mul]
+      rw [← mul_inv, Real.mul_self_sqrt htpos.le]
+      field_simp
     exact_mod_cast hreal
   refine ⟨(((Real.sqrt t)⁻¹ : ℝ) : ℂ) • compareForms B H hdef, fun x => ?_, fun g v => ?_⟩
   · simp only [LinearMap.smul_apply, map_smulₛₗ, Complex.conj_ofReal, smul_smul,
