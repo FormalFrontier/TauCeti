@@ -29,8 +29,8 @@ a Huber ring satisfies it, by `TauCeti.Huber.IsHuberRing.isCountablyGenerated_nh
 ## Main results
 
 * `TauCeti.Huber.weightedMap_one_weight_surjective`, with
-  `TauCeti.Huber.weightedMap_one_weight_surjective_of_isOpenQuotientMap` the form taking the
-  bundled `IsOpenQuotientMap`.
+  `IsOpenQuotientMap.weightedMap_one_weight_surjective` the form taking the bundled structure —
+  in that namespace so `hq.weightedMap_one_weight_surjective` works.
 
 ## References
 
@@ -59,8 +59,8 @@ surjective on restricted series**, provided `𝓝 (0 : A)` is countably generate
 `B⟨X₁,…,Xₖ⟩` is then the image of one of `A⟨X₁,…,Xₖ⟩`.
 
 The hypothesis is the filter inequality the proof consumes rather than `IsOpenMap φ`, which is
-strictly stronger; `TauCeti.Huber.weightedMap_one_weight_surjective_of_isOpenQuotientMap` is the
-form for a caller holding the bundled open-quotient structure.
+strictly stronger; `IsOpenQuotientMap.weightedMap_one_weight_surjective` is the form for a caller
+holding the bundled open-quotient structure.
 
 This is the step Wedhorn's Proposition & Definition 6.36(ii) needs: a ring *strictly*
 topologically of finite type over `A` is an open quotient of some `A⟨X₁,…,Xₖ⟩`
@@ -97,11 +97,11 @@ holding the bundled `IsOpenQuotientMap φ`.
 That is the interface finite-type presentations come in — `TauCeti.Huber`
 `.IsStrictlyTopologicallyFiniteType` produces one — so it is the form a consumer actually has,
 and it bundles exactly the continuity, surjectivity and openness the filter-level theorem needs. -/
-theorem weightedMap_one_weight_surjective_of_isOpenQuotientMap
+theorem _root_.IsOpenQuotientMap.weightedMap_one_weight_surjective
     [(𝓝 (0 : A)).IsCountablyGenerated] {φ : A →+* B} (hq : IsOpenQuotientMap φ) :
     Function.Surjective (weightedMap (k := k) hq.continuous isWeightFamily_one_weight
       isWeightFamily_one_weight fun _ ↦ by simp) :=
-  weightedMap_one_weight_surjective hq.continuous hq.surjective
+  TauCeti.Huber.weightedMap_one_weight_surjective hq.continuous hq.surjective
     (map_zero φ ▸ hq.isOpenMap.nhds_le 0)
 
 end TauCeti.Huber
