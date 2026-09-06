@@ -90,7 +90,7 @@ theorem map_div_prod_gammaMeasure {a b r : ℝ} (ha : 0 < a) (hb : 0 < b) (hr : 
       = ((gammaMeasure a r).prod (gammaMeasure b r)).map
         (fun z ↦ fisherSnedecorMap (2 * a) (2 * b) (z.1 / (z.1 + z.2))) := by
         refine (Measure.map_congr ?_).symm
-        filter_upwards [ae_mem_prod_Ioi_gammaMeasure ha hb hr] with z hz
+        filter_upwards [ae_mem_prod_Ioi_gammaMeasure ha hb hr hr] with z hz
         exact fisherSnedecorMap_div_add ha2 hb2 hz.1 hz.2
     _ = (((gammaMeasure a r).prod (gammaMeasure b r)).map (fun z ↦ z.1 / (z.1 + z.2))).map
           (fisherSnedecorMap (2 * a) (2 * b)) := by

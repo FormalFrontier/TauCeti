@@ -269,7 +269,7 @@ private theorem map_betaGammaMap_prod_beta_gamma {a b r : ℝ} (ha : 0 < a) (hb 
   let _ := isProbabilityMeasure_gammaMeasure ha hr
   let _ := isProbabilityMeasure_gammaMeasure hb hr
   rw [← Measure.restrict_eq_self_of_ae_mem (ae_mem_gammaBetaTarget ha hb hr),
-    ← Measure.restrict_eq_self_of_ae_mem (ae_mem_prod_Ioi_gammaMeasure ha hb hr),
+    ← Measure.restrict_eq_self_of_ae_mem (ae_mem_prod_Ioi_gammaMeasure ha hb hr hr),
     prod_beta_gammaMeasure_eq_withDensity, prod_gammaMeasure_eq_withDensity]
   unfold gammaBetaTarget
   rw [restrict_withDensity (measurableSet_Ioo.prod measurableSet_Ioi),
