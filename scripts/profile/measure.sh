@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs INSIDE the landrun sandbox (offline, no token, writes confined to the
+# Runs INSIDE the bwrap sandbox (offline, no token, writes confined to the
 # exact candidate tree's .lake directory). For every prepared Lean source under <prep>/src,
 # with Mathlib's countHeartbeats linter and write the linter's output next to
 # it as <name>.hb. The library has already been built by the caller, so a

@@ -48,6 +48,7 @@ pseudometrics and is measurable in both directions.
 * `TauCeti.WassersteinComponent p μ₀` — the finite-distance component of an anchor law;
 * `TauCeti.WassersteinSpace p X` — probability laws with finite `p`-moment;
 * `TauCeti.WassersteinSpace.equivComponent` — identification with a Dirac-anchored component.
+* `TauCeti.WassersteinSpace.isometryEquivComponent` — the isometric form of that identification.
 
 ## References
 
@@ -414,6 +415,12 @@ theorem edist_equivComponent (x₀ : X) (μ ν : WassersteinSpace p X) :
 component anchored at the Dirac law of that basepoint. -/
 theorem isometry_equivComponent (x₀ : X) : Isometry (equivComponent (p := p) x₀) :=
   edist_equivComponent x₀
+
+/-- Choosing a basepoint gives an isometric equivalence from `WassersteinSpace p X` to the
+finite-distance component anchored at the Dirac law of that basepoint. -/
+def isometryEquivComponent (x₀ : X) :
+    WassersteinSpace p X ≃ᵢ WassersteinComponent p (diracProba x₀) :=
+  ⟨equivComponent x₀, isometry_equivComponent x₀⟩
 
 /-- The identification with a Dirac-anchored component preserves the real-valued Wasserstein
 distance. -/

@@ -8,6 +8,7 @@ module
 public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
 import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.Derivative
 import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.XYIdealMaximal
+import TauCeti.RingTheory.FractionalIdeal.Divisibility
 import Mathlib.LinearAlgebra.DirectSum.Finite
 import Mathlib.LinearAlgebra.FreeModule.Norm
 import Mathlib.RingTheory.Artinian.Module
@@ -268,6 +269,156 @@ private theorem finrank_quotient_mul {I J : Ideal W.CoordinateRing}
   omega
 
 omit [DecidableEq F] in
+/-- **A point derivation descends to the coordinate ring.** An `F`-linear `d` on `F[X][Y]`
+killing `W.polynomial`, and obeying the Leibniz rule at `(x, y)` so that it kills the whole
+ideal `⟨W.polynomial⟩`, factors through the quotient defining `W.CoordinateRing`. -/
+private noncomputable def coordinateRingDerivation {x y : F}
+    (heval : W.polynomial.evalEval x y = 0) (d : F[X][Y] →ₗ[F] F)
+    (hmul : ∀ p q : F[X][Y], d (p * q) = p.evalEval x y * d q + q.evalEval x y * d p)
+    (hd : d W.polynomial = 0) :
+    W.CoordinateRing →ₗ[F] F :=
+  (Submodule.liftQ ((Ideal.span {W.polynomial} : Ideal F[X][Y]).restrictScalars F) d
+    (by
+      intro z hz
+      obtain ⟨p, rfl⟩ := Ideal.mem_span_singleton'.mp hz
+      rw [LinearMap.mem_ker, hmul, hd, heval, mul_zero, zero_mul, add_zero])).comp
+    (Submodule.Quotient.restrictScalarsEquiv F
+      (Ideal.span {W.polynomial} : Ideal F[X][Y])).symm.toLinearMap
+
+omit [DecidableEq F] in
+/-- The descended map is computed by `d` on any polynomial representative. -/
+@[simp] private theorem coordinateRingDerivation_mk {x y : F}
+    (heval : W.polynomial.evalEval x y = 0) (d : F[X][Y] →ₗ[F] F)
+    (hmul : ∀ p q : F[X][Y], d (p * q) = p.evalEval x y * d q + q.evalEval x y * d p)
+    (hd : d W.polynomial = 0) (p : F[X][Y]) :
+    coordinateRingDerivation heval d hmul hd (CoordinateRing.mk W p) = d p :=
+  -- `CoordinateRing.mk` *is* the quotient projection and `restrictScalarsEquiv` is the identity
+  -- on representatives, so both layers of the descent compute on `p` by `Submodule.liftQ_apply`.
+  (rfl)
+
+omit [DecidableEq F] in
+/-- **A point derivation kills products drawn from the point ideal**, because evaluation at
+`(x, y)` kills the point ideal itself. -/
+private theorem coordinateRingDerivation_mul_mem_eq_zero {x y : F}
+    (heval : W.polynomial.evalEval x y = 0) (d : F[X][Y] →ₗ[F] F)
+    (hmul : ∀ p q : F[X][Y], d (p * q) = p.evalEval x y * d q + q.evalEval x y * d p)
+    (hd : d W.polynomial = 0) (a b : CoordinateRing.XYIdeal W x (C y)) :
+    coordinateRingDerivation heval d hmul hd (a * b : W.CoordinateRing) = 0 := by
+  have hIker : CoordinateRing.XYIdeal W x (C y) ≤ RingHom.ker (AdjoinRoot.evalEval heval) := by
+    rw [CoordinateRing.XYIdeal, Ideal.span_le, Set.pair_subset_iff]
+    refine ⟨?_, ?_⟩
+    · simp only [SetLike.mem_coe, RingHom.mem_ker]
+      rw [CoordinateRing.XClass, AdjoinRoot.evalEval_mk]
+      simp [evalEval_C]
+    · simp only [SetLike.mem_coe, RingHom.mem_ker]
+      rw [CoordinateRing.YClass, AdjoinRoot.evalEval_mk]
+      simp
+  obtain ⟨p, hp⟩ := AdjoinRoot.mk_surjective (a : W.CoordinateRing)
+  obtain ⟨q, hq⟩ := AdjoinRoot.mk_surjective (b : W.CoordinateRing)
+  have hpa : p.evalEval x y = 0 := by
+    rw [← AdjoinRoot.evalEval_mk heval p, hp]
+    exact RingHom.mem_ker.mp (hIker a.2)
+  have hqb : q.evalEval x y = 0 := by
+    rw [← AdjoinRoot.evalEval_mk heval q, hq]
+    exact RingHom.mem_ker.mp (hIker b.2)
+  rw [← hp, ← hq, ← map_mul, coordinateRingDerivation_mk, hmul, hpa, hqb,
+    zero_mul, zero_mul, add_zero]
+
+omit [DecidableEq F] in
+/-- **A point derivation induces a functional on the cotangent space of the point ideal.** -/
+private noncomputable def cotangentFunctional {x y : F}
+    (heval : W.polynomial.evalEval x y = 0) (d : F[X][Y] →ₗ[F] F)
+    (hmul : ∀ p q : F[X][Y], d (p * q) = p.evalEval x y * d q + q.evalEval x y * d p)
+    (hd : d W.polynomial = 0) :
+    (CoordinateRing.XYIdeal W x (C y)).Cotangent →ₗ[F] F :=
+  Ideal.Cotangent.lift
+    ((coordinateRingDerivation heval d hmul hd).comp
+      ((CoordinateRing.XYIdeal W x (C y)).subtype.restrictScalars F))
+    (coordinateRingDerivation_mul_mem_eq_zero heval d hmul hd)
+
+omit [DecidableEq F] in
+/-- The induced functional is computed by `d` on any polynomial representative. -/
+private theorem cotangentFunctional_toCotangent {x y : F}
+    (heval : W.polynomial.evalEval x y = 0) (d : F[X][Y] →ₗ[F] F)
+    (hmul : ∀ p q : F[X][Y], d (p * q) = p.evalEval x y * d q + q.evalEval x y * d p)
+    (hd : d W.polynomial = 0) (p : F[X][Y])
+    (hp : CoordinateRing.mk W p ∈ CoordinateRing.XYIdeal W x (C y)) :
+    cotangentFunctional heval d hmul hd
+      ((CoordinateRing.XYIdeal W x (C y)).toCotangent ⟨CoordinateRing.mk W p, hp⟩) = d p :=
+  (Ideal.Cotangent.lift_toCotangent _ _ _).trans
+    (coordinateRingDerivation_mk heval d hmul hd p)
+
+omit [DecidableEq F] in
+/-- **The cotangent space of an invertible point ideal is a line.** Base changing the invertible
+ideal `I` to the residue field `R / I ≃ F` makes `I / I²` free of rank one. -/
+private noncomputable def cotangentXYIdealEquiv {x y : F} (heq : W.Equation x y)
+    (hunit : IsUnit (CoordinateRing.XYIdeal W x (C y) :
+      FractionalIdeal W.CoordinateRing⁰ W.FunctionField)) :
+    (CoordinateRing.XYIdeal W x (C y)).Cotangent ≃ₗ[F] F := by
+  have hfd : FiniteDimensional F (W.CoordinateRing ⧸ CoordinateRing.XYIdeal W x (C y)) :=
+    (CoordinateRing.quotientXYIdealEquiv heq).toLinearEquiv.symm.finiteDimensional
+  exact (((Submodule.quotEquivOfEq _ _ (smul_top_eq_comap_mul
+      (CoordinateRing.XYIdeal W x (C y)) (CoordinateRing.XYIdeal W x (C y)))).trans
+      (quotIdealMulEquiv (F := F) hunit)).restrictScalars F).trans
+    (CoordinateRing.quotientXYIdealEquiv heq).toLinearEquiv
+
+omit [DecidableEq F] in
+/-- **At a singular solution the cotangent space of the point ideal is at least a plane.** The two
+coordinate derivations at `(x, y)` descend to it, and are dual to its two generators `X - x` and
+`Y - y`, so together they map it onto `F × F`. -/
+private theorem exists_surjective_cotangentProd_of_singular {x y : F}
+    (heval : W.polynomial.evalEval x y = 0)
+    (hsX : W.polynomialX.evalEval x y = 0) (hsY : W.polynomialY.evalEval x y = 0) :
+    ∃ δ : (CoordinateRing.XYIdeal W x (C y)).Cotangent →ₗ[F] F × F, Function.Surjective δ := by
+  -- Substitute `y` then differentiate in `X`, or differentiate in `Y` then substitute.
+  let evalY : F[X][Y] →ₗ[F] F[X] := (Polynomial.leval (C y)).restrictScalars F
+  let evalX : F[X] →ₗ[F] F := Polynomial.leval x
+  let dX : F[X][Y] →ₗ[F] F := evalX.comp (Polynomial.derivative.comp evalY)
+  let dY : F[X][Y] →ₗ[F] F :=
+    evalX.comp (evalY.comp (Polynomial.derivative.restrictScalars F))
+  have hdX_apply (p : F[X][Y]) : dX p = (p.eval (C y)).derivative.eval x := rfl
+  have hdY_apply (p : F[X][Y]) : dY p = (p.derivative.eval (C y)).eval x := rfl
+  have hWX : dX W.polynomial = 0 := by
+    rw [hdX_apply, W.derivative_eval_polynomial]
+    simpa using hsX
+  have hWY : dY W.polynomial = 0 := by
+    rw [hdY_apply, W.derivative_polynomial]
+    simpa only [evalEval] using hsY
+  have hdX_mul (p q : F[X][Y]) :
+      dX (p * q) = p.evalEval x y * dX q + q.evalEval x y * dX p := by
+    simp only [hdX_apply, evalEval, Polynomial.eval_mul, Polynomial.derivative_mul,
+      Polynomial.eval_add]
+    ring
+  have hdY_mul (p q : F[X][Y]) :
+      dY (p * q) = p.evalEval x y * dY q + q.evalEval x y * dY p := by
+    simp only [hdY_apply, evalEval, Polynomial.derivative_mul, Polynomial.eval_add,
+      Polynomial.eval_mul]
+    ring
+  have hdX_X : dX (C (X - C x)) = 1 := by rw [hdX_apply]; simp
+  have hdX_Y : dX (Y - C (C y)) = 0 := by rw [hdX_apply]; simp
+  have hdY_X : dY (C (X - C x)) = 0 := by rw [hdY_apply]; simp
+  have hdY_Y : dY (Y - C (C y)) = 1 := by rw [hdY_apply]; simp
+  -- Fold the representatives back into the canonical generators before citing `subset_span`,
+  -- rather than leaning on `XClass`/`YClass` unfolding to them.
+  have hXmem : CoordinateRing.mk W (C (X - C x)) ∈ CoordinateRing.XYIdeal W x (C y) := by
+    rw [← CoordinateRing.XClass]
+    exact Ideal.subset_span (Set.mem_insert _ _)
+  have hYmem : CoordinateRing.mk W (Y - C (C y)) ∈ CoordinateRing.XYIdeal W x (C y) := by
+    rw [← CoordinateRing.YClass]
+    exact Ideal.subset_span (Set.mem_insert_of_mem _ rfl)
+  refine ⟨(cotangentFunctional heval dX hdX_mul hWX).prod
+    (cotangentFunctional heval dY hdY_mul hWY), ?_⟩
+  have hXX := (cotangentFunctional_toCotangent heval dX hdX_mul hWX _ hXmem).trans hdX_X
+  have hXY := (cotangentFunctional_toCotangent heval dY hdY_mul hWY _ hXmem).trans hdY_X
+  have hYX := (cotangentFunctional_toCotangent heval dX hdX_mul hWX _ hYmem).trans hdX_Y
+  have hYY := (cotangentFunctional_toCotangent heval dY hdY_mul hWY _ hYmem).trans hdY_Y
+  rintro ⟨a, b⟩
+  refine ⟨a • (CoordinateRing.XYIdeal W x (C y)).toCotangent ⟨_, hXmem⟩ +
+    b • (CoordinateRing.XYIdeal W x (C y)).toCotangent ⟨_, hYmem⟩, ?_⟩
+  simp only [LinearMap.prod_apply, Function.prod_apply, map_add, map_smul, hXX, hXY, hYX, hYY]
+  simp
+
+omit [DecidableEq F] in
 /-- An equation solution whose point ideal is invertible is nonsingular. At a singular solution,
 the two coordinate derivations make the cotangent space at least two-dimensional, whereas an
 invertible point ideal has one-dimensional cotangent space. -/
@@ -276,136 +427,16 @@ private theorem nonsingular_of_isUnit_XYIdeal {x y : F} (heq : W.Equation x y)
       FractionalIdeal W.CoordinateRing⁰ W.FunctionField)) :
     W.Nonsingular x y := by
   rw [Nonsingular, and_iff_right heq]
-  -- `W.Equation x y` *is* this evaluation identity, so unfold it once here and use `heval`
-  -- everywhere below instead of re-unfolding `Equation` at each use.
+  -- `W.Equation x y` *is* this evaluation identity; both helpers take it in that form.
   have heval : W.polynomial.evalEval x y = 0 := by simpa only [Equation] using heq
   by_contra hs
   push Not at hs
-  let P := F[X][Y]
-  let H : Ideal P := Ideal.span {W.polynomial}
-  let evalY : P →ₗ[F] F[X] := (Polynomial.leval (C y)).restrictScalars F
-  let evalX : F[X] →ₗ[F] F := Polynomial.leval x
-  let dX : P →ₗ[F] F := evalX.comp (Polynomial.derivative.comp evalY)
-  let dY : P →ₗ[F] F := evalX.comp
-    (evalY.comp (Polynomial.derivative.restrictScalars F))
-  have hdX_apply (p : P) : dX p = (p.eval (C y)).derivative.eval x := rfl
-  have hdY_apply (p : P) : dY p = (p.derivative.eval (C y)).eval x := rfl
-  have hWX : dX W.polynomial = 0 := by
-    rw [hdX_apply, W.derivative_eval_polynomial]
-    simpa using hs.1
-  have hWY : dY W.polynomial = 0 := by
-    rw [hdY_apply, W.derivative_polynomial]
-    simpa only [evalEval] using hs.2
-  have hdX_mul (p q : P) : dX (p * q) =
-      p.evalEval x y * dX q + q.evalEval x y * dX p := by
-    rw [hdX_apply, hdX_apply, hdX_apply]
-    simp only [evalEval]
-    rw [Polynomial.eval_mul, Polynomial.derivative_mul, Polynomial.eval_add,
-      Polynomial.eval_mul, Polynomial.eval_mul]
-    ring
-  have hdY_mul (p q : P) : dY (p * q) =
-      p.evalEval x y * dY q + q.evalEval x y * dY p := by
-    rw [hdY_apply, hdY_apply, hdY_apply]
-    simp only [evalEval]
-    rw [Polynomial.derivative_mul, Polynomial.eval_add, Polynomial.eval_mul,
-      Polynomial.eval_mul, Polynomial.eval_add, Polynomial.eval_mul, Polynomial.eval_mul]
-    ring
-  have hHX : H.restrictScalars F ≤ LinearMap.ker dX := by
-    intro z hz
-    obtain ⟨p, rfl⟩ := Ideal.mem_span_singleton'.mp hz
-    rw [LinearMap.mem_ker, hdX_mul, hWX, heval, mul_zero, zero_mul, add_zero]
-  have hHY : H.restrictScalars F ≤ LinearMap.ker dY := by
-    intro z hz
-    obtain ⟨p, rfl⟩ := Ideal.mem_span_singleton'.mp hz
-    rw [LinearMap.mem_ker, hdY_mul, hWY, heval, mul_zero, zero_mul, add_zero]
-  let qX : (P ⧸ H.restrictScalars F) →ₗ[F] F :=
-    Submodule.liftQ (H.restrictScalars F) dX hHX
-  let qY : (P ⧸ H.restrictScalars F) →ₗ[F] F :=
-    Submodule.liftQ (H.restrictScalars F) dY hHY
-  let eQ : (P ⧸ H.restrictScalars F) ≃ₗ[F] W.CoordinateRing :=
-    Submodule.Quotient.restrictScalarsEquiv F H
-  let DX : W.CoordinateRing →ₗ[F] F := qX.comp eQ.symm.toLinearMap
-  let DY : W.CoordinateRing →ₗ[F] F := qY.comp eQ.symm.toLinearMap
-  have DX_mk (p : P) : DX (CoordinateRing.mk W p) = dX p := by rfl
-  have DY_mk (p : P) : DY (CoordinateRing.mk W p) = dY p := by rfl
-  let I := CoordinateRing.XYIdeal W x (C y)
-  -- The defining equation of the local abbreviation `I`; every step below rewrites with `hI`
-  -- rather than relying on the `let` unfolding silently.
-  have hI : I = CoordinateRing.XYIdeal W x (C y) := rfl
-  let ρ : W.CoordinateRing →+* F := AdjoinRoot.evalEval heval
-  have hρ_mk (p : P) : ρ (CoordinateRing.mk W p) = p.evalEval x y :=
-    AdjoinRoot.evalEval_mk _ p
-  have hIker : I ≤ RingHom.ker ρ := by
-    rw [hI, CoordinateRing.XYIdeal, Ideal.span_le, Set.pair_subset_iff]
-    refine ⟨?_, ?_⟩
-    · simp only [SetLike.mem_coe, RingHom.mem_ker]
-      rw [CoordinateRing.XClass, hρ_mk]
-      simp [evalEval_C]
-    · simp only [SetLike.mem_coe, RingHom.mem_ker]
-      rw [CoordinateRing.YClass, hρ_mk]
-      simp
-  have hρmem {a : W.CoordinateRing} (ha : a ∈ I) : ρ a = 0 :=
-    RingHom.mem_ker.mp (hIker ha)
-  have hDX_mul (a b : W.CoordinateRing) :
-      DX (a * b) = ρ a * DX b + ρ b * DX a := by
-    obtain ⟨p, rfl⟩ := AdjoinRoot.mk_surjective a
-    obtain ⟨q, rfl⟩ := AdjoinRoot.mk_surjective b
-    rw [← map_mul]
-    simp only [DX_mk, hρ_mk, hdX_mul]
-  have hDY_mul (a b : W.CoordinateRing) :
-      DY (a * b) = ρ a * DY b + ρ b * DY a := by
-    obtain ⟨p, rfl⟩ := AdjoinRoot.mk_surjective a
-    obtain ⟨q, rfl⟩ := AdjoinRoot.mk_surjective b
-    rw [← map_mul]
-    simp only [DY_mk, hρ_mk, hdY_mul]
-  let fX : I →ₗ[F] F := DX.comp (I.subtype.restrictScalars F)
-  let fY : I →ₗ[F] F := DY.comp (I.subtype.restrictScalars F)
-  -- Application lemmas for the two restrictions, in the style of `hdX_apply` above, so that the
-  -- products below are rewritten rather than unfolded.
-  have hfX_apply (a : I) : fX a = DX a := rfl
-  have hfY_apply (a : I) : fY a = DY a := rfl
-  have hfX (a b : I) : fX (a * b) = 0 := by
-    rw [hfX_apply, MulMemClass.coe_mul, hDX_mul, hρmem a.2, hρmem b.2, zero_mul, zero_mul,
-      zero_add]
-  have hfY (a b : I) : fY (a * b) = 0 := by
-    rw [hfY_apply, MulMemClass.coe_mul, hDY_mul, hρmem a.2, hρmem b.2, zero_mul, zero_mul,
-      zero_add]
-  let δX : I.Cotangent →ₗ[F] F := Ideal.Cotangent.lift fX hfX
-  let δY : I.Cotangent →ₗ[F] F := Ideal.Cotangent.lift fY hfY
-  let δ : I.Cotangent →ₗ[F] F × F := δX.prod δY
-  have hXmem : CoordinateRing.XClass W x ∈ I :=
-    Ideal.subset_span (Set.mem_insert _ _)
-  have hYmem : CoordinateRing.YClass W (C y) ∈ I :=
-    Ideal.subset_span (Set.mem_insert_of_mem _ rfl)
-  have hDX_X : DX (CoordinateRing.XClass W x) = 1 := by
-    rw [CoordinateRing.XClass, DX_mk, hdX_apply]
-    simp
-  have hDX_Y : DX (CoordinateRing.YClass W (C y)) = 0 := by
-    rw [CoordinateRing.YClass, DX_mk, hdX_apply]
-    simp
-  have hDY_X : DY (CoordinateRing.XClass W x) = 0 := by
-    rw [CoordinateRing.XClass, DY_mk, hdY_apply]
-    simp
-  have hDY_Y : DY (CoordinateRing.YClass W (C y)) = 1 := by
-    rw [CoordinateRing.YClass, DY_mk, hdY_apply]
-    simp
-  have hδsurj : Function.Surjective δ := by
-    rintro ⟨a, b⟩
-    refine ⟨a • I.toCotangent ⟨CoordinateRing.XClass W x, hXmem⟩ +
-      b • I.toCotangent ⟨CoordinateRing.YClass W (C y), hYmem⟩, ?_⟩
-    ext <;> simp [δ, δX, δY, fX, fY, hDX_X, hDX_Y, hDY_X, hDY_Y]
-  let hquot : Module.Finite F (W.CoordinateRing ⧸ I) := by
-    rw [hI]
-    exact (CoordinateRing.quotientXYIdealEquiv heq).toLinearEquiv.symm.finiteDimensional
-  let eI := quotIdealMulEquiv (F := F) (I := I) (J := I) hunit
-  have hsquare := smul_top_eq_comap_mul I I
-  let eCot : I.Cotangent ≃ₗ[F] (W.CoordinateRing ⧸ I) :=
-    ((Submodule.quotEquivOfEq _ _ hsquare).trans eI).restrictScalars F
-  let hcot : Module.Finite F I.Cotangent := eCot.symm.finiteDimensional
-  have hfin : Module.finrank F I.Cotangent = 1 := by
-    rw [eCot.finrank_eq, hI]
-    exact (CoordinateRing.quotientXYIdealEquiv heq).toLinearEquiv.finrank_eq.trans
-      (Module.finrank_self F)
+  obtain ⟨δ, hδsurj⟩ := exists_surjective_cotangentProd_of_singular heval hs.1 hs.2
+  -- `δ` maps the cotangent space onto `F × F`, but an invertible point ideal makes it a line.
+  have hcot : Module.Finite F (CoordinateRing.XYIdeal W x (C y)).Cotangent :=
+    (cotangentXYIdealEquiv heq hunit).symm.finiteDimensional
+  have hfin : Module.finrank F (CoordinateRing.XYIdeal W x (C y)).Cotangent = 1 :=
+    (cotangentXYIdealEquiv heq hunit).finrank_eq.trans (Module.finrank_self F)
   have hprod : Module.finrank F (F × F) = 2 := by
     rw [Module.finrank_prod, Module.finrank_self]
   have hle := LinearMap.finrank_le_finrank_of_surjective hδsurj
@@ -535,53 +566,19 @@ private theorem exists_codimLEOne_inv_integral
       Module.finrank F (W.CoordinateRing ⧸ J) ≤ 1 ∧
         ClassGroup.mk W.FunctionField hJunit.unit =
           (ClassGroup.mk W.FunctionField hIunit.unit)⁻¹ := by
-  let R := W.CoordinateRing
-  let K := W.FunctionField
   have hIne : I ≠ ⊥ := by
     intro h
     apply hIunit.ne_zero
     simp [h]
-  obtain ⟨a, ha_mem, ha, hbound⟩ :=
-    exists_mem_norm_natDegree_le (F := F) I hIne
-  have hle : Ideal.span {a} ≤ I := by
-    rw [Ideal.span_le, Set.singleton_subset_iff]
-    exact ha_mem
-  let Q : FractionalIdeal R⁰ K :=
-    (Ideal.span ({a} : Set R) : FractionalIdeal R⁰ K) * ↑hIunit.unit⁻¹
-  have hQ_le : Q ≤ 1 := by
-    dsimp [Q]
-    calc
-      (Ideal.span ({a} : Set R) : FractionalIdeal R⁰ K) * ↑hIunit.unit⁻¹ ≤
-          (I : FractionalIdeal R⁰ K) * ↑hIunit.unit⁻¹ := by
-            gcongr
-      _ = 1 := hIunit.mul_val_inv
-  obtain ⟨J, hJQ⟩ := FractionalIdeal.le_one_iff_exists_coeIdeal.mp hQ_le
-  have hJ : Ideal.span {a} = I * J := by
-    apply FractionalIdeal.coeIdeal_injective (R := R) (K := K)
-    simp only [FractionalIdeal.coeIdeal_mul, hJQ]
-    dsimp [Q]
-    rw [mul_left_comm, hIunit.mul_val_inv, mul_one]
-  have hspan_ne : Ideal.span ({a} : Set W.CoordinateRing) ≠ ⊥ := by
-    rwa [Ne, Ideal.span_singleton_eq_bot]
-  have hJne : J ≠ ⊥ := by
-    intro h
-    rw [h, Ideal.mul_bot] at hJ
-    exact hspan_ne hJ
-  have haK : algebraMap R K a ≠ 0 := by
-    simpa using (FaithfulSMul.algebraMap_injective R K).ne ha
-  let au : Kˣ := Units.mk0 (algebraMap R K a) haK
-  have hspanUnit : IsUnit (Ideal.span ({a} : Set R) : FractionalIdeal R⁰ K) := by
-    refine ⟨toPrincipalIdeal R K au, ?_⟩
-    rw [coe_toPrincipalIdeal, FractionalIdeal.coeIdeal_span_singleton]
-    rfl
-  have hJunit : IsUnit (J : FractionalIdeal R⁰ K) := by
-    have hIJunit : IsUnit
-        ((I : FractionalIdeal R⁰ K) * (J : FractionalIdeal R⁰ K)) := by
-      rw [← FractionalIdeal.coeIdeal_mul, ← hJ]
-      exact hspanUnit
-    exact (IsUnit.mul_iff.mp hIJunit).2
+  obtain ⟨a, ha_mem, ha, hbound⟩ := exists_mem_norm_natDegree_le (F := F) I hIne
+  obtain ⟨J, hJunit, hJne, hJ⟩ :=
+    Ideal.exists_isUnit_span_singleton_eq_mul I hIunit ha ha_mem
+  have haK : algebraMap W.CoordinateRing W.FunctionField a ≠ 0 := by
+    simpa using (FaithfulSMul.algebraMap_injective W.CoordinateRing W.FunctionField).ne ha
   refine ⟨J, hJunit, ?_, ?_⟩
-  · have hdim : Module.finrank F (W.CoordinateRing ⧸ Ideal.span {a}) =
+  · -- Codimension is additive on the factorisation `⟨a⟩ = I * J`, and `⟨a⟩` has codimension
+    -- the degree of the norm of `a`, which was chosen at most one more than that of `I`.
+    have hdim : Module.finrank F (W.CoordinateRing ⧸ Ideal.span {a}) =
         Module.finrank F (W.CoordinateRing ⧸ I) +
           Module.finrank F (W.CoordinateRing ⧸ J) := by
       rw [hJ]
@@ -591,11 +588,11 @@ private theorem exists_codimLEOne_inv_integral
       finrank_quotient_span_eq_natDegree_norm (CoordinateRing.basis W) ha
     omega
   · rw [eq_inv_iff_mul_eq_one, ← map_mul, ClassGroup.mk_eq_one_iff]
-    refine ⟨au, ?_⟩
+    refine ⟨Units.mk0 _ haK, ?_⟩
     rw [Units.val_mul, hJunit.unit_spec, hIunit.unit_spec,
       ← FractionalIdeal.coeIdeal_mul, mul_comm J I, ← hJ,
       FractionalIdeal.coeIdeal_span_singleton, FractionalIdeal.coe_spanSingleton]
-    simp [au]
+    simp
 
 omit [DecidableEq F] in
 /-- Every fractional ideal class has an inverse-class integral representative of codimension at

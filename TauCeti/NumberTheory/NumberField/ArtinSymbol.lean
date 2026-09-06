@@ -10,6 +10,8 @@ public import Mathlib.RingTheory.Frobenius
 public import TauCeti.NumberTheory.NumberField.Frobenius.Restriction
 public import TauCeti.NumberTheory.NumberField.UnramifiedTower
 import TauCeti.Algebra.Group.Conj
+import TauCeti.NumberTheory.NumberField.Frobenius.DecompositionGroup
+import TauCeti.NumberTheory.NumberField.SplitsCompletely
 
 /-!
 # The Artin symbol of an unramified prime
@@ -25,6 +27,9 @@ Exercise 2.
 The same reference gives functoriality in a normal tower: restriction maps the Artin symbol of
 `L/K` to the Artin symbol of `M/K`. Unramifiedness in the intermediate extension is derived from
 unramifiedness in the top extension, rather than assumed separately.
+
+Finally, the symbol detects complete splitting: it is the identity class exactly when the
+residue degree is one, equivalently when `𝓞 L` has `[L : K]` primes above `𝔭`.
 -/
 
 public section
@@ -172,5 +177,50 @@ theorem artinSymbol_eq_map_autCongr (𝔭 : Ideal (𝓞 K)) [𝔭.IsMaximal] (e 
   rfl
 
 end IsoOfExtensions
+
+section SplitsCompletely
+
+/-!
+### The trivial Artin symbol
+
+Two equivalent readings of the identity Artin class at an unramified prime: residue degree one,
+and complete splitting.
+-/
+
+variable {L : Type*} [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+
+/-- **The Artin symbol is trivial exactly at residue degree one.** For a prime `Q` of `𝓞 L` above
+an unramified `𝔭`, the Artin symbol of `𝔭` is the identity class if and only if `f(Q/𝔭) = 1`.
+
+The residue degree is common to all primes above `𝔭`, so the choice of `Q` is immaterial. -/
+theorem artinSymbol_eq_one_iff_inertiaDeg_eq_one (𝔭 : Ideal (𝓞 K)) [𝔭.IsMaximal]
+    (hur : ∀ (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver 𝔭], Algebra.IsUnramifiedAt (𝓞 K) Q)
+    (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver 𝔭] :
+    artinSymbol 𝔭 hur = 1 ↔ Q.inertiaDeg (𝓞 K) = 1 := by
+  have hQ : Q ≠ ⊥ := Ideal.ne_bot_of_liesOver_of_ne_bot (NeZero.ne 𝔭) Q
+  have : Algebra.IsUnramifiedAt (𝓞 K) Q := hur Q
+  obtain ⟨σ, hσ⟩ := exists_isArithFrobAt K Q hQ
+  rw [artinSymbol_eq_mk_of_isArithFrobAt 𝔭 hur Q σ hσ, ConjClasses.one_eq_mk_one,
+    ConjClasses.mk_eq_mk_iff_isConj, isConj_one_left, ← orderOf_eq_one_iff,
+    orderOf_eq_inertiaDeg_of_isArithFrobAt Q hQ hσ]
+
+/-- **The Artin symbol is trivial exactly at the completely split primes.** For `𝔭` unramified in
+`L`, the Artin symbol of `𝔭` is the identity class if and only if `𝔭` splits completely, that is,
+`𝓞 L` has `[L : K]` primes above `𝔭`.
+
+A caller who knows the prime count therefore knows the symbol, and conversely. -/
+theorem artinSymbol_eq_one_iff_ncard_primesOver_eq_finrank (𝔭 : Ideal (𝓞 K)) [𝔭.IsMaximal]
+    (hur : ∀ (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver 𝔭], Algebra.IsUnramifiedAt (𝓞 K) Q) :
+    artinSymbol 𝔭 hur = 1 ↔ (𝔭.primesOver (𝓞 L)).ncard = Module.finrank K L := by
+  obtain ⟨Q, _, _⟩ := (inferInstance : Nonempty (𝔭.primesOver (𝓞 L)))
+  have : Algebra.IsUnramifiedAt (𝓞 K) Q := hur Q
+  rw [artinSymbol_eq_one_iff_inertiaDeg_eq_one 𝔭 hur Q,
+    ncard_primesOver_eq_finrank_iff_of_isGalois K L 𝔭,
+    Ideal.ramificationIdxIn_eq_ramificationIdx 𝔭 Q (L ≃ₐ[K] L),
+    Ideal.inertiaDegIn_eq_inertiaDeg 𝔭 Q (L ≃ₐ[K] L),
+    Ideal.ramificationIdx_eq_one_of_isUnramifiedAt]
+  exact (and_iff_right rfl).symm
+
+end SplitsCompletely
 
 end NumberField

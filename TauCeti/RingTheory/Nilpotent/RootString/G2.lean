@@ -228,18 +228,11 @@ private theorem sum_smul_mul_sum_smul_of_chainG2Order {R : Type*} [CommRing R]
     congr 1
     simp only [mul_pow, pow_add, pow_mul]
     ring
-  -- Step 4: the terms of the hypercube outside that part vanish.
-  have hsub : ∑ w ∈ range N ×ˢ range N ×ˢ range N ×ˢ range N ×ˢ range N ×ˢ range N with
-        w.1 + w.2.1 + w.2.2.1 + w.2.2.2.1 + 2 * w.2.2.2.2.1 < N ∧
-          w.2.2.2.2.2 + w.2.1 + 2 * w.2.2.1 + 3 * w.2.2.2.1 + 3 * w.2.2.2.2.1 < N, G w =
-      ∑ w ∈ range N ×ˢ range N ×ˢ range N ×ˢ range N ×ˢ range N ×ˢ range N, G w := by
-    refine Finset.sum_subset (Finset.filter_subset _ _) ?_
-    rintro ⟨a, b, c, d, e, q⟩ hmem hnot
-    simp only [Finset.mem_product, Finset.mem_range] at hmem
-    simp only [Finset.mem_filter, Finset.mem_product, Finset.mem_range] at hnot
-    have hor : N ≤ a + b + c + d + 2 * e ∨ N ≤ q + b + 2 * c + 3 * d + 3 * e := by omega
-    simp [hG, hzero a b c d e q hor]
-  rw [← hsrc, hbij, hsub, hbox]
+  -- Step 4: off that part the summand vanishes, so the slice already carries the whole sum.
+  rw [← hsrc, hbij, ← hbox]
+  exact Finset.sum_filter_of_ne fun w _ hne => by
+    by_contra h
+    exact hne (by simp [hG, hzero w.1 w.2.1 w.2.2.1 w.2.2.2.1 w.2.2.2.2.1 w.2.2.2.2.2 (by omega)])
 
 /-! ## The Chevalley commutator relation -/
 

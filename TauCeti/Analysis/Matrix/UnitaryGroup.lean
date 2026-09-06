@@ -19,7 +19,7 @@ unitary group. Rescaling by a scalar of modulus one keeps a matrix unitary, so n
 
 ## Main results
 
-* `TauCeti.Matrix.exists_circle_smul_mem_specialUnitaryGroup`: every complex unitary matrix becomes
+* `Matrix.exists_circle_smul_mem_specialUnitaryGroup`: every complex unitary matrix becomes
   special unitary after multiplication by a suitable scalar of modulus one.
 -/
 
@@ -27,14 +27,12 @@ public section
 
 namespace TauCeti
 
-namespace Matrix
-
 variable {n : Type*} [Fintype n] [DecidableEq n]
 
 /-- `U(n) = Circle · SU(n)`: every complex unitary matrix becomes special unitary after
 multiplication by a suitable scalar of modulus one. The scalar is a `card n`-th root of the inverse
 of the determinant, which has modulus one; the root is taken through `Circle.exp`. -/
-theorem exists_circle_smul_mem_specialUnitaryGroup (U : Matrix.unitaryGroup n ℂ) :
+theorem _root_.Matrix.exists_circle_smul_mem_specialUnitaryGroup (U : Matrix.unitaryGroup n ℂ) :
     ∃ c : Circle, ((c : ℂ) • (U : Matrix n n ℂ)) ∈ Matrix.specialUnitaryGroup n ℂ := by
   have hcc : ∀ z : Circle, (z : ℂ) ∈ unitary ℂ := fun z =>
     Unitary.mem_iff_star_mul_self.mpr <| by
@@ -63,7 +61,5 @@ theorem exists_circle_smul_mem_specialUnitaryGroup (U : Matrix.unitaryGroup n �
     push_cast
     field_simp
     ring
-
-end Matrix
 
 end TauCeti

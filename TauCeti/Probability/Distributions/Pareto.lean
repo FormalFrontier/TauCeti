@@ -55,20 +55,20 @@ namespace ProbabilityTheory
 
 variable {t r q : ℝ}
 
-private theorem paretoPDF_toReal (ht : 0 < t) (hr : 0 < r) (x : ℝ) :
+private theorem paretoPDF_toReal (ht : 0 ≤ t) (hr : 0 ≤ r) (x : ℝ) :
     (paretoPDF t r x).toReal =
       if t ≤ x then r * t ^ r * x ^ (-(r + 1)) else 0 := by
   rw [paretoPDF_eq, ENNReal.toReal_ofReal]
   split_ifs with hx
-  · simpa [paretoPDFReal, hx] using paretoPDFReal_nonneg ht.le hr.le x
+  · simpa [paretoPDFReal, hx] using paretoPDFReal_nonneg ht hr x
   · exact le_rfl
 
 /-- The Pareto density times `x ^ q` is, on the support, the constant `r * t ^ r` times the
 single real power `x ^ (q - r - 1)`, and vanishes off the support. -/
-private theorem paretoPDF_toReal_mul_rpow (ht : 0 < t) (hr : 0 < r) (q x : ℝ) :
+private theorem paretoPDF_toReal_mul_rpow (ht : 0 < t) (hr : 0 ≤ r) (q x : ℝ) :
     (paretoPDF t r x).toReal * x ^ q =
       Set.indicator (Set.Ici t) (fun y => r * t ^ r * y ^ (q - r - 1)) x := by
-  rw [paretoPDF_toReal ht hr]
+  rw [paretoPDF_toReal ht.le hr]
   by_cases hx : t ≤ x
   · have hx0 : 0 < x := ht.trans_le hx
     have hexponent : -(r + 1) + q = q - r - 1 := by ring
@@ -102,7 +102,7 @@ theorem integrable_rpow_paretoMeasure_iff (ht : 0 < t) (hr : 0 < r) (q : ℝ) :
       Set.indicator (Set.Ici t) (fun y => r * t ^ r * y ^ (q - r - 1)) := by
     funext x
     rw [mul_comm]
-    exact paretoPDF_toReal_mul_rpow ht hr q x
+    exact paretoPDF_toReal_mul_rpow ht hr.le q x
   rw [hfun, integrable_indicator_iff measurableSet_Ici]
   rw [integrableOn_congr_set_ae Ioi_ae_eq_Ici.symm]
   have hc : IsUnit (r * t ^ r) := isUnit_iff_ne_zero.mpr <|
@@ -125,7 +125,7 @@ theorem integral_rpow_paretoMeasure (ht : 0 < t) (hr : 0 < r) (hq : q < r) :
   simp only [smul_eq_mul]
   have hfun : (fun x : ℝ => (paretoPDF t r x).toReal * x ^ q) =
       Set.indicator (Set.Ici t) (fun y => r * t ^ r * y ^ (q - r - 1)) :=
-    funext fun x => paretoPDF_toReal_mul_rpow ht hr q x
+    funext fun x => paretoPDF_toReal_mul_rpow ht hr.le q x
   rw [hfun, integral_indicator measurableSet_Ici, integral_Ici_eq_integral_Ioi,
     integral_const_mul, integral_Ioi_rpow_of_lt (by linarith) ht]
   have hexponent : q - r - 1 + 1 = q - r := by ring

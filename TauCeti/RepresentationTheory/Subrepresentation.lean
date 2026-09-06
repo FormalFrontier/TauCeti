@@ -235,14 +235,14 @@ noncomputable def asModuleEquivAsSubmodule (σ : Subrepresentation ρ) :
 @[simp]
 theorem coe_asModuleEquivAsSubmodule_apply (σ : Subrepresentation ρ)
     (x : σ.toRepresentation.asModule) :
-    _root_.Representation.asModuleEquiv ρ (σ.asModuleEquivAsSubmodule x).1 =
+    (σ.asModuleEquivAsSubmodule x).1 =
       (σ.toRepresentation.asModuleEquiv x).1 :=
   (rfl)
 
 @[simp]
 theorem coe_asModuleEquivAsSubmodule_symm_apply (σ : Subrepresentation ρ)
     (x : σ.asSubmodule) :
-    (σ.toRepresentation.asModuleEquiv (σ.asModuleEquivAsSubmodule.symm x)).1 =
+    (σ.asModuleEquivAsSubmodule.symm x).1 =
       _root_.Representation.asModuleEquiv ρ x.1 :=
   (rfl)
 

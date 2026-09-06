@@ -25,8 +25,8 @@ at its two nodes.
 
 ## Main definitions
 
-* `TauCeti.ContCohomology.explicitInfl1` and `TauCeti.ContCohomology.explicitInfl2`: inflation on
-  the explicit model in degrees `1` and `2`.
+* `TauCeti.ContCohomology.explicitInfl0`, `explicitInfl1`, and `explicitInfl2`: inflation on the
+  explicit model in degrees `0`, `1`, and `2`.
 
 ## Main statements
 
@@ -111,6 +111,28 @@ theorem subtype_quotientMk_smul (g : G) (m : FixedPoints.addSubgroup N M) :
     coe_quotient_smul_fixedPoints_addSubgroup, coe_smul_fixedPoints_addSubgroup]
 
 end CompatiblePair
+
+section DegreeZero
+
+variable (G : Type u) [Group G]
+  (M : Type v) [AddCommGroup M] [DistribMulAction G M]
+  (N : Subgroup G) [N.Normal]
+
+/-- **Inflation in degree zero**: inclusion of the `G ⧸ N`-invariants of `M ^ N` into the
+`G`-invariants of `M`. -/
+def explicitInfl0 : H0 (G ⧸ N) (FixedPoints.addSubgroup N M) →+ H0 G M :=
+  explicitMap0 (G ⧸ N) (FixedPoints.addSubgroup N M) (QuotientGroup.mk' N)
+    (FixedPoints.addSubgroup N M).subtype fun g m => by
+      simp only [QuotientGroup.mk'_apply, AddSubgroup.coe_subtype,
+        coe_quotient_smul_fixedPoints_addSubgroup, coe_smul_fixedPoints_addSubgroup]
+
+/-- Degree-zero inflation does not change the underlying coefficient. -/
+@[simp]
+theorem coe_explicitInfl0 (m : H0 (G ⧸ N) (FixedPoints.addSubgroup N M)) :
+    (explicitInfl0 G M N m : M) = (m : M) :=
+  coe_explicitMap0 _ _ _ _ _ m
+
+end DegreeZero
 
 section DegreeOne
 

@@ -7,6 +7,7 @@ recurrence visibility. Pure logic only -- GitHub and Zulip are faked, so no netw
 or `gh` is needed. Run: python3 scripts/pr_status/test_stuck_alerts.py
 """
 
+import datetime
 import os
 import unittest
 
@@ -456,6 +457,74 @@ class DivergedHeadTest(unittest.TestCase):
         # A deleted head repo/branch is a different problem; do not cry wolf on an API miss.
         _install(self, self._routes(""))
         self.assertEqual(sa.detect_diverged_head(), [])
+
+class FailingSchedulerTest(unittest.TestCase):
+    """A cron that fires punctually and fails punctually must not read as healthy.
+
+    dead-scheduler reads only a run's created_at, so it cannot distinguish a working job from a
+    broken one. pages.yml failed every scheduled run for a day while that detector stayed quiet
+    and the site served stale content; these tests pin the gap shut.
+    """
+
+    @staticmethod
+    def sched_run(conclusion, status="completed", hours=1):
+        when = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=hours)
+        return {"status": status, "conclusion": conclusion,
+                "created_at": when.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "url": "https://github.com/x/y/actions/runs/1"}
+
+    def check(self, runs):
+        self.addCleanup(setattr, sa, "gh_stream", sa.gh_stream)
+        sa.gh_stream = lambda *a, **k: runs
+        return sa._check_scheduler_health("pages.yml", "pages / doc-gen publish")
+
+    def test_a_streak_of_failures_alerts(self):
+        alerts = self.check([self.sched_run("failure", hours=1), self.sched_run("failure", hours=4)])
+        self.assertEqual(len(alerts), 1)
+        self.assertEqual(alerts[0]["key"], "failing-scheduler/pages.yml")
+        self.assertIn("pages.yml", alerts[0]["body"])
+
+    def test_one_failure_is_not_an_emergency(self):
+        # These jobs are long and touch the network; a lone red run is noise, and this topic
+        # stops being read the moment it carries noise.
+        self.assertEqual(
+            self.check([self.sched_run("failure", hours=1), self.sched_run("success", hours=4)]), [])
+
+    def test_a_recent_success_clears_the_streak(self):
+        self.assertEqual(
+            self.check([self.sched_run("success", hours=1), self.sched_run("failure", hours=4),
+                        self.sched_run("failure", hours=7)]), [])
+
+    def test_in_progress_and_cancelled_runs_do_not_hide_a_streak(self):
+        # A queued run at the head, and a cancelled one between two failures, are evidence of
+        # nothing. Treating either as a break would let a concurrency policy mask real breakage.
+        alerts = self.check([
+            self.sched_run(None, status="in_progress", hours=0),
+            self.sched_run("failure", hours=1),
+            self.sched_run("cancelled", hours=4),
+            self.sched_run("failure", hours=7),
+        ])
+        self.assertEqual(len(alerts), 1)
+
+    def test_an_entirely_red_window_says_it_is_a_lower_bound(self):
+        alerts = self.check([self.sched_run("failure", hours=h) for h in (1, 4, 7)])
+        self.assertIn("at least", alerts[0]["body"])
+
+    def test_timed_out_counts_as_failure(self):
+        alerts = self.check([self.sched_run("timed_out", hours=1), self.sched_run("failure", hours=4)])
+        self.assertEqual(len(alerts), 1)
+
+    def test_no_runs_at_all_is_dead_schedulers_business(self):
+        # An absent cron is a different alert with a different fix; do not double-report it.
+        self.assertEqual(self.check([]), [])
+
+    def test_the_detector_is_registered_under_its_own_prefix(self):
+        # The prefix is what "fail closed" keys off: a detector raising must mark only its own
+        # alerts unknown, so its keys and its registered prefix have to agree.
+        prefixes = dict(sa.DETECTORS)
+        self.assertIn("failing-scheduler", prefixes)
+        self.assertEqual(sa.key_prefix("failing-scheduler/pages.yml"), "failing-scheduler")
+
 
 if __name__ == "__main__":
     unittest.main()

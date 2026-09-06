@@ -292,6 +292,22 @@ private lemma multiplicity_mul_multiplicity_eq_sum_indicator [IsHeckeTriple Δ H
   · exact (Finset.sum_eq_zero fun p _ ↦ ite_eq_right fun hh ↦ hcond hh.1).symm
 
 open Classical in
+/-- **Only the double coset of the product contributes.** If `E` is not the `H₁`-`H₃` double
+coset of `w`, then no left-coset representative of `E` is congruent to `w` modulo `H₃`. An
+indicator sum over those representatives therefore vanishes whatever else `P` asks of them. -/
+private lemma sum_ite_eq_zero_of_ne_mk (w : Δ) (E : HeckeCoset Δ H₁ H₃)
+    [Fintype (DecompQuotient H₁ H₃ (E.rep : G))]
+    (P : DecompQuotient H₁ H₃ (E.rep : G) → Prop) (hne : E ≠ HeckeCoset.mk H₁ H₃ w) :
+    ∑ l : DecompQuotient H₁ H₃ (E.rep : G),
+        (if P l ∧ ((w : G) : G ⧸ H₃) = (((l.out : G) * E.rep : G) : G ⧸ H₃) then 1 else 0)
+      = 0 := by
+  refine Finset.sum_eq_zero fun l _ ↦ ite_eq_right ?_
+  rintro ⟨-, hmatch⟩
+  have hwE : (w : G) ∈ doubleCoset ((E.rep : Δ) : G) H₁ H₃ :=
+    mem_doubleCoset_of_quotient_eq l.out.2 hmatch
+  exact hne ((HeckeCoset.mk_rep E).symm.trans (HeckeCoset.mk_eq_mk_of_mem hwE).symm)
+
+open Classical in
 /-- The left-handed Fubini step: the left association also counts pairs of representatives
 whose product moves `d` into `H₃g₃H₄`, using the invariance of the multiplicity across the
 left cosets of a double coset. -/
@@ -325,15 +341,7 @@ private lemma sum_image_mulMap_multiplicity_left [IsHeckeTriple Δ H₁ H₂]
   have hmk : ((wG : G) : G ⧸ H₃) = (((l₀.out : G) * (E₀.rep : G) : G) : G ⧸ H₃) :=
     (QuotientGroup.eq.mpr hl₀).symm
   rw [Finset.sum_eq_single_of_mem E₀ hE₀mem ?hEne]
-  case hEne =>
-    intro E hE hne
-    refine Finset.sum_eq_zero fun l _ ↦ ite_eq_right ?_
-    rintro ⟨-, hmatch⟩
-    have hwE : wG ∈ doubleCoset ((E.rep : Δ) : G) H₁ H₃ :=
-      mem_doubleCoset_of_quotient_eq l.out.2 hmatch
-    refine hne (HeckeCoset.toSet_injective ?_)
-    rw [HeckeCoset.toSet_eq_doubleCoset_rep, hE₀def, HeckeCoset.toSet_mk]
-    exact (doubleCoset_eq_of_mem hwE).symm
+  case hEne => exact fun E _ hne ↦ sum_ite_eq_zero_of_ne_mk ⟨wG, hwΔ⟩ E _ hne
   rw [Finset.sum_eq_single_of_mem l₀ (Finset.mem_univ _) ?hlne]
   case hlne =>
     intro l _ hlne
