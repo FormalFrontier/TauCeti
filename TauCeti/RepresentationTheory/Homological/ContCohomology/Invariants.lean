@@ -48,6 +48,8 @@ unbundled classes freely.
   `H` of a group with a topology acting continuously on a discrete module, the quotient `G ⧸ H`
   acts continuously on `M ^ H`; no compatibility of the topology of `G` with its group structure
   is used.
+* `TauCeti.continuous_fixedPointsPairing`: a jointly continuous equivariant pairing remains
+  jointly continuous after restriction to invariant coefficients.
 
 ## Roadmap
 
@@ -71,6 +73,32 @@ public section
 open MulAction
 
 namespace TauCeti
+
+section Pairing
+
+variable {G : Type*} [Group G]
+  {M : Type*} [AddCommGroup M] [TopologicalSpace M] [DistribMulAction G M]
+  {N : Type*} [AddCommGroup N] [TopologicalSpace N] [DistribMulAction G N]
+  {P : Type*} [AddCommGroup P] [TopologicalSpace P] [DistribMulAction G P]
+
+/-- Restricting a jointly continuous pairing to invariant coefficients remains jointly
+continuous. -/
+theorem continuous_fixedPointsPairing (H : Subgroup G) (μ : M →+ N →+ P)
+    (hequiv : ∀ (g : G) (m : M) (n : N), μ (g • m) (g • n) = g • μ m n)
+    (hμ : Continuous fun p : M × N => μ p.1 p.2) :
+    Continuous fun p : FixedPoints.addSubgroup H M × FixedPoints.addSubgroup H N =>
+      fixedPointsPairing H μ hequiv p.1 p.2 := by
+  rw [continuous_induced_rng]
+  have hfun :
+      (Subtype.val ∘ fun p : FixedPoints.addSubgroup H M × FixedPoints.addSubgroup H N =>
+        fixedPointsPairing H μ hequiv p.1 p.2) =
+        fun p => μ (p.1 : M) (p.2 : N) := by
+    funext p
+    exact coe_fixedPointsPairing H μ hequiv p.1 p.2
+  rw [hfun]
+  exact hμ.comp (continuous_subtype_val.prodMap continuous_subtype_val)
+
+end Pairing
 
 section FiniteLevel
 
