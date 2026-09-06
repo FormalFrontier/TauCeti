@@ -26,13 +26,14 @@ result (`Martingale/AntitoneLimit.lean`) all feed into `tendsto_ae_condExp_iInf`
 ## Main results
 
 - `tendsto_ae_condExp_iInf`: Lévy's downward theorem — for antitone `𝔽`, the sequence
-  `μ[f | 𝔽 n]` converges a.e. to `μ[f | ⨅ n, 𝔽 n]` (the reverse-martingale limit). This is
-  the roadmap Layer-4 target, spelled in the Mathlib convergence-API grammar (conclusion-first)
-  required by the naming convention.
+  `μ[f | 𝔽 n]` converges a.e. to `μ[f | ⨅ n, 𝔽 n]` (the reverse-martingale limit), spelled in
+  the Mathlib convergence-API grammar (conclusion-first).
 - `tendsto_eLpNorm_condExp_iInf`: the L¹ form of the same theorem — the convergence also holds in
-  `L¹`, i.e. `eLpNorm (μ[f | 𝔽 n] - μ[f | ⨅ n, 𝔽 n]) 1 μ → 0`. This is the follow-up Layer-4
-  target and the form most downstream analytic uses want; it mirrors Mathlib's upward
-  `MeasureTheory.tendsto_eLpNorm_condExp`.
+  `L¹`, i.e. `eLpNorm (μ[f | 𝔽 n] - μ[f | ⨅ n, 𝔽 n]) 1 μ → 0`, the form most downstream
+  analytic uses want; it mirrors Mathlib's upward `MeasureTheory.tendsto_eLpNorm_condExp`.
+- `measure_inter_eq_mul_of_forall_zero_or_one_iInf`: factorization along a decreasing filtration
+  with `μ`-trivial intersection — if `B' n` is `𝔽 n`-measurable with `μ (B' n)` and `μ (A ∩ B' n)`
+  independent of `n`, then `μ (A ∩ B) = μ A * μ B`, by Lévy's downward theorem applied to `1_A`.
 
 ## References
 
@@ -40,8 +41,11 @@ result (`Martingale/AntitoneLimit.lean`) all feed into `tendsto_ae_condExp_iInf`
 * Durrett, *Probability: Theory and Examples* (2019), Section 5.5
 * Williams, *Probability with Martingales* (1991), Theorem 12.12
 
-Adapted from `cameronfreer/exchangeability` (`Probability/Martingale/Convergence.lean`, pin
-`e0532e59ceff23edab44dda9ab0655debbc9cc22`). Written Mathlib-shaped for eventual upstreaming.
+The downward theorems are adapted from `cameronfreer/exchangeability`
+(`Probability/Martingale/Convergence.lean`, pin `e0532e59ceff23edab44dda9ab0655debbc9cc22`). The
+filtration factorization adapts the private Lévy-downward factorization step of
+`Graphon/RelRestrictionIndependence.lean` in `cameronfreer/graphon` (Apache 2.0) at commit
+`175911f9d2e053f2a33d966658dfce0e4ae2811d`.
 -/
 
 public section
@@ -174,5 +178,65 @@ theorem tendsto_eLpNorm_condExp_iInf [IsFiniteMeasure μ] {𝔽 : ℕ → Measur
     (h_filtration : Antitone 𝔽) (h_le0 : 𝔽 0 ≤ (inferInstance : MeasurableSpace Ω)) (f : Ω → ℝ) :
     Tendsto (fun n => eLpNorm (μ[f | 𝔽 n] - μ[f | ⨅ n, 𝔽 n]) 1 μ) atTop (𝓝 0) :=
   (tendsto_ae_and_eLpNorm_condExp_iInf h_filtration h_le0 f).2
+
+/-- **Factorization along a decreasing filtration with trivial tail.** If `B' n` is `𝔽 n`-measurable
+along an antitone sequence of sub-σ-algebras whose intersection is `μ`-trivial, and neither
+`μ (B' n)` nor `μ (A ∩ B' n)` depends on `n`, then the joint mass factorizes: Lévy's downward
+theorem drives `μ[1_A | 𝔽 n]` to the tail conditional expectation, which triviality makes the
+constant `μ A`. -/
+theorem measure_inter_eq_mul_of_forall_zero_or_one_iInf [IsZeroOrProbabilityMeasure μ]
+    {𝔽 : ℕ → MeasurableSpace Ω} (hanti : Antitone 𝔽) (h𝔽 : ∀ n, 𝔽 n ≤ ‹MeasurableSpace Ω›)
+    (htriv : ∀ s, MeasurableSet[⨅ n, 𝔽 n] s → μ s = 0 ∨ μ s = 1)
+    {A B : Set Ω} (hA : MeasurableSet A) {B' : ℕ → Set Ω}
+    (hB' : ∀ n, MeasurableSet[𝔽 n] (B' n)) (hBmass : ∀ n, μ (B' n) = μ B)
+    (hjoint : ∀ n, μ (A ∩ B' n) = μ (A ∩ B)) :
+    μ (A ∩ B) = μ A * μ B := by
+  rcases eq_zero_or_isProbabilityMeasure μ with rfl | _
+  · simp
+  have hinf : (⨅ n, 𝔽 n) ≤ ‹MeasurableSpace Ω› := (iInf_le 𝔽 0).trans (h𝔽 0)
+  set f₀ : Ω → ℝ := A.indicator fun _ => 1 with hf₀def
+  have hf₀ : Integrable f₀ μ := (integrable_const 1).indicator hA
+  have hconst : μ[f₀|⨅ n, 𝔽 n] =ᵐ[μ] fun _ => ∫ x, f₀ x ∂μ :=
+    condExp_ae_eq_integral_of_forall_zero_or_one hinf htriv hf₀
+  have hc : ∫ x, f₀ x ∂μ = (μ A).toReal := by
+    rw [hf₀def, integral_indicator_const (1 : ℝ) hA, smul_eq_mul, mul_one, measureReal_def]
+  have hbound : ∀ n, |(μ (A ∩ B)).toReal - (μ A).toReal * (μ B).toReal| ≤
+      (eLpNorm (μ[f₀|𝔽 n] - μ[f₀|⨅ m, 𝔽 m]) 1 μ).toReal := by
+    intro n
+    have hBn : MeasurableSet (B' n) := h𝔽 n _ (hB' n)
+    have hg : Integrable (μ[f₀|𝔽 n] - μ[f₀|⨅ m, 𝔽 m]) μ :=
+      integrable_condExp.sub integrable_condExp
+    have h1 : ∫ x in B' n, (μ[f₀|𝔽 n]) x ∂μ = (μ (A ∩ B)).toReal := by
+      rw [setIntegral_condExp (h𝔽 n) hf₀ (hB' n), hf₀def, setIntegral_indicator hA,
+        setIntegral_const, smul_eq_mul, mul_one, Set.inter_comm (B' n) A, measureReal_def,
+        hjoint n]
+    have h2 : ∫ x in B' n, (μ[f₀|⨅ m, 𝔽 m]) x ∂μ = (μ A).toReal * (μ B).toReal := by
+      rw [setIntegral_congr_ae hBn (hconst.mono fun x hx _ => hx), setIntegral_const,
+        smul_eq_mul, hc, measureReal_def, hBmass n, mul_comm]
+    have hsplit : ∫ x in B' n, (μ[f₀|𝔽 n] - μ[f₀|⨅ m, 𝔽 m]) x ∂μ =
+        (μ (A ∩ B)).toReal - (μ A).toReal * (μ B).toReal := by
+      simp only [Pi.sub_apply]
+      rw [integral_sub integrable_condExp.integrableOn integrable_condExp.integrableOn, h1, h2]
+    calc |(μ (A ∩ B)).toReal - (μ A).toReal * (μ B).toReal|
+        = ‖∫ x in B' n, (μ[f₀|𝔽 n] - μ[f₀|⨅ m, 𝔽 m]) x ∂μ‖ := by
+          rw [hsplit, Real.norm_eq_abs]
+      _ ≤ ∫ x in B' n, ‖(μ[f₀|𝔽 n] - μ[f₀|⨅ m, 𝔽 m]) x‖ ∂μ :=
+          norm_integral_le_integral_norm _
+      _ ≤ ∫ x, ‖(μ[f₀|𝔽 n] - μ[f₀|⨅ m, 𝔽 m]) x‖ ∂μ :=
+          setIntegral_le_integral hg.norm (Eventually.of_forall fun x => norm_nonneg _)
+      _ = (eLpNorm (μ[f₀|𝔽 n] - μ[f₀|⨅ m, 𝔽 m]) 1 μ).toReal := by
+          rw [integral_norm_eq_lintegral_enorm hg.aestronglyMeasurable,
+            eLpNorm_one_eq_lintegral_enorm]
+  have hLevyReal : Tendsto
+      (fun n => (eLpNorm (μ[f₀|𝔽 n] - μ[f₀|⨅ m, 𝔽 m]) 1 μ).toReal) atTop (𝓝 0) := by
+    simpa [Function.comp_def] using (ENNReal.tendsto_toReal ENNReal.zero_ne_top).comp
+      (tendsto_eLpNorm_condExp_iInf hanti (h𝔽 0) f₀)
+  have habs0 : |(μ (A ∩ B)).toReal - (μ A).toReal * (μ B).toReal| = 0 :=
+    le_antisymm (ge_of_tendsto' hLevyReal hbound) (abs_nonneg _)
+  refine (ENNReal.toReal_eq_toReal_iff' (measure_ne_top μ _)
+    (ENNReal.mul_ne_top (measure_ne_top μ _) (measure_ne_top μ _))).mp ?_
+  rw [ENNReal.toReal_mul]
+  have := abs_eq_zero.mp habs0
+  linarith
 
 end MeasureTheory

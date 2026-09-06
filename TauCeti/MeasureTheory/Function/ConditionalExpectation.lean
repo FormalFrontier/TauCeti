@@ -19,12 +19,17 @@ import Mathlib.MeasureTheory.Function.ConditionalExpectation.Real
 - `condExp_ae_eq_of_forall_condExp_ae_eq_of_tendsto_eLpNorm`: L¹-continuity of conditional
   expectation — if `Xn → Xlim` in L¹ (in `eLpNorm`) and each `μ[Xn n | F]` agrees a.e. with a fixed
   `Y`, then `μ[Xlim | F]` agrees a.e. with `Y`.
+- `condExp_ae_eq_integral_of_forall_zero_or_one`: conditioning on a `μ`-trivial σ-algebra — one
+  all of whose sets have measure `0` or `1` — is integrating: `μ[f | m']` is a.e. the constant
+  `∫ f ∂μ`.
 
-Both are generic conditional-expectation facts (no exchangeability/tail/directing-measure
+All are generic conditional-expectation facts (no exchangeability/tail/directing-measure
 hypotheses), each the bridge for a downstream construction.
 
-Adapted from `cameronfreer/exchangeability` (`Probability/CondExp.lean` and
-`Probability/Martingale/Convergence.lean`, pin `e0532e59ceff23edab44dda9ab0655debbc9cc22`).
+The first two are adapted from `cameronfreer/exchangeability` (`Probability/CondExp.lean` and
+`Probability/Martingale/Convergence.lean`, pin `e0532e59ceff23edab44dda9ab0655debbc9cc22`); the
+third from `Graphon/LevyDownward.lean` in `cameronfreer/graphon` (Apache 2.0) at commit
+`175911f9d2e053f2a33d966658dfce0e4ae2811d`.
 -/
 
 public section
@@ -137,6 +142,32 @@ lemma condExp_ae_eq_of_forall_condExp_ae_eq_of_tendsto_eLpNorm
   filter_upwards [h_norm_zero] with ω hω
   simp only [Pi.zero_apply] at hω
   exact sub_eq_zero.mp hω
+
+/-- Conditioning on a `μ`-trivial σ-algebra is integrating: if every `m'`-measurable set has
+measure `0` or `1`, then `μ[f | m']` is a.e. the constant `∫ f ∂μ`. -/
+theorem condExp_ae_eq_integral_of_forall_zero_or_one {Ω : Type*} {m0 : MeasurableSpace Ω}
+    {μ : Measure Ω} [IsZeroOrProbabilityMeasure μ] {m' : MeasurableSpace Ω} (hm' : m' ≤ m0)
+    (htriv : ∀ s, MeasurableSet[m'] s → μ s = 0 ∨ μ s = 1) {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] [CompleteSpace E] {f : Ω → E} (hf : Integrable f μ) :
+    μ[f | m'] =ᵐ[μ] fun _ => ∫ x, f x ∂μ := by
+  rcases eq_zero_or_isProbabilityMeasure μ with rfl | _
+  · simp [Filter.EventuallyEq, ae_zero]
+  refine (ae_eq_condExp_of_forall_setIntegral_eq hm' hf
+    (fun s _ _ => integrableOn_const) ?_
+    stronglyMeasurable_const.aestronglyMeasurable).symm
+  intro s hs _
+  rcases htriv s hs with h0 | h1
+  · rw [setIntegral_measure_zero _ h0, setIntegral_measure_zero _ h0]
+  · have hcompl : μ sᶜ = 0 := by
+      have := measure_compl (hm' s hs) (measure_ne_top μ s)
+      rw [h1] at this
+      simpa using this
+    have hs_int : ∫ x in s, f x ∂μ = ∫ x, f x ∂μ := by
+      rw [← integral_add_compl (hm' s hs) hf, setIntegral_measure_zero _ hcompl, add_zero]
+    rw [hs_int, setIntegral_const]
+    have hsr : μ.real s = 1 := by
+      rw [Measure.real, h1, ENNReal.toReal_one]
+    rw [hsr, one_smul]
 
 end MeasureTheory
 

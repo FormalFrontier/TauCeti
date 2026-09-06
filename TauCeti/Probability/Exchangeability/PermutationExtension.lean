@@ -18,6 +18,8 @@ exchangeability API:
 * strictly increasing finite subsequences extend to strictly increasing self-maps of `ℕ`.
 * finite selections inside a larger finite prefix, or in `ℕ`, extend to permutations by Mathlib's
   `Equiv.Perm.exists_extending_pair`, which this module publicly re-exports.
+* two disjoint finite index sets admit a permutation fixing the first pointwise and carrying the
+  second past any cutoff (`exists_perm_fixOn_le_apply`).
 
 The strict-monotone `ℕ` extension helper is adapted from the `cameronfreer/exchangeability`
 Layer 0 sources pinned at `e0532e59ceff23edab44dda9ab0655debbc9cc22`, with Tau Ceti API names
@@ -82,6 +84,35 @@ theorem exists_strictMono_nat_extending_fin {m : ℕ} {k : Fin m → ℕ} (hk : 
     ∃ φ : ℕ → ℕ, StrictMono φ ∧ ∀ i : Fin m, φ i.val = k i :=
   let ⟨φ, _, hφ, hφ_eq, _⟩ := exists_strictMono_nat_extending_fin_eventually_add hk
   ⟨φ, hφ, hφ_eq⟩
+
+/-- A permutation of `ℕ` that fixes a finite set `I` pointwise and carries a finite set `J`,
+disjoint from `I`, past `n`. -/
+theorem _root_.Finset.exists_perm_fixOn_le_apply (I J : Finset ℕ) (hIJ : Disjoint I J) (n : ℕ) :
+    ∃ ρ : Equiv.Perm ℕ, (∀ i ∈ I, ρ i = i) ∧ ∀ j ∈ J, n ≤ ρ j := by
+  classical
+  -- shift `J` by `N`, large enough to clear both `n` and everything in `I`
+  set N : ℕ := n + (I ∪ J).sup id + 1 with hN
+  let g : ↥(I ∪ J) → ℕ := fun x => if (x : ℕ) ∈ I then x else x + N
+  -- every element of `J` is sent past `N`, hence past everything in `I ∪ J`
+  have hbig : ∀ x : ↥(I ∪ J), (x : ℕ) < N := fun x => by
+    have := Finset.le_sup (f := id) x.property
+    simp only [id] at this; omega
+  have hg : Function.Injective g := by
+    intro x y hxy
+    simp only [g] at hxy
+    apply Subtype.ext
+    have hx := hbig x
+    have hy := hbig y
+    split_ifs at hxy <;> omega
+  obtain ⟨ρ, hρ⟩ := Equiv.Perm.exists_extending_pair (fun x : ↥(I ∪ J) => (x : ℕ)) g
+    Subtype.val_injective hg
+  refine ⟨ρ, fun i hi => ?_, fun j hj => ?_⟩
+  · have := hρ ⟨i, Finset.mem_union_left _ hi⟩
+    simpa [g, hi] using this
+  · have hjI : j ∉ I := Finset.disjoint_right.mp hIJ hj
+    have := hρ ⟨j, Finset.mem_union_right _ hj⟩
+    simp only [g, hjI, ite_false] at this
+    rw [this]; omega
 
 end Probability
 
