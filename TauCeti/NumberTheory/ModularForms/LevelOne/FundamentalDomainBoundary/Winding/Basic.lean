@@ -224,25 +224,6 @@ lemma fdBoundaryArcExcisionHalfWidth_mul_pi_div_twelve (ε : ℝ) :
   rw [fdBoundaryArcExcisionHalfWidth_def]
   field_simp
 
-/-- **The vertical excision half-width.** On a vertical leg of length `H - √3/2` the excision
-parameter `ε` becomes a parameter half-width by dividing by that length. The three facts the
-excision argument needs are that it is positive, at most `1`, and undoes the division; only
-`ε ≤ H - √3/2` is required, the leg's positivity following from that together with `0 < ε`.
-The companion on the arc is
-`fdBoundaryArcExcisionHalfWidth_pos_and_lt_one_and_two_mul_sin_eq`. -/
-lemma verticalExcisionHalfWidth_pos_and_le_one_and_mul_eq {ε : ℝ} (hε : 0 < ε)
-    (hεH : ε ≤ H - Real.sqrt 3 / 2) :
-    0 < ε / (H - Real.sqrt 3 / 2) ∧ ε / (H - Real.sqrt 3 / 2) ≤ 1 ∧
-      ε / (H - Real.sqrt 3 / 2) * (H - Real.sqrt 3 / 2) = ε := by
-  have hHpos : (0 : ℝ) < H - Real.sqrt 3 / 2 := hε.trans_le hεH
-  exact ⟨div_pos hε hHpos, (div_le_one hHpos).2 hεH, div_mul_cancel₀ ε hHpos.ne'⟩
-
-/-- **The chord-matched excision half-width does what it is for.** For an excision radius `ε`
-below the corner chord `2·sin(π/12)`, the half-width lies strictly between `0` and `1` and
-reproduces `ε` as its own chord: `2·sin(δ·π/12) = ε`.
-
-This is the trigonometric content shared by the excision constructions at `i`, at `ρ` and at
-`ρ + 1`; it needs no upper bound on `ε` beyond the chord bound. -/
 lemma fdBoundaryArcExcisionHalfWidth_pos_and_lt_one_and_two_mul_sin_eq {ε : ℝ} (hε : 0 < ε)
     (hε₃ : ε < 2 * Real.sin (Real.pi / 12)) :
     0 < fdBoundaryArcExcisionHalfWidth ε ∧ fdBoundaryArcExcisionHalfWidth ε < 1 ∧

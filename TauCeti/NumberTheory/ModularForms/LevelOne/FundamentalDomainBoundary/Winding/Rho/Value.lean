@@ -340,9 +340,10 @@ private lemma truncated_integral_spec_rho (hH : Real.sqrt 3 / 2 < H) (hε : 0 < 
   obtain ⟨hδL_pos, hδL_lt, h2sin⟩ :=
     fdBoundaryArcExcisionHalfWidth_pos_and_lt_one_and_two_mul_sin_eq hε hε₃
   set δL := fdBoundaryArcExcisionHalfWidth ε with hδL_def
-  obtain ⟨hδR_pos, hδR_le, hlin⟩ :=
-    verticalExcisionHalfWidth_pos_and_le_one_and_mul_eq hε hεH.le
   set δR := ε / (H - Real.sqrt 3 / 2) with hδR_def
+  have hδR_pos : 0 < δR := div_pos hε (hε.trans hεH)
+  have hδR_le : δR ≤ 1 := (div_le_one (hε.trans hεH)).2 hεH.le
+  have hlin : δR * (H - Real.sqrt 3 / 2) = ε := div_mul_cancel₀ ε (hε.trans hεH).ne'
   obtain ⟨hi_left, hi_right, hval⟩ :=
     ftc_logDeriv_telescope_rho H hH hδL_pos hδL_lt hδR_pos hδR_le
   have hae_left := Contour.ae_logDeriv_sub_eq_truncated (γ := fdBoundary H)
