@@ -85,7 +85,7 @@ picks the lexicographic order, supplied as a local instance.
 
 namespace TauCeti
 
-open Matrix Module exteriorPower
+open Matrix _root_.Module exteriorPower
 
 attribute [local instance 100] LieRing.ofAssociativeRing
 
