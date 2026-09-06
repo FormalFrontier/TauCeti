@@ -78,13 +78,11 @@ rather than reusable conjugacy-class API. This operation is *not* adapted from t
 Birkbeck–Brasca `chebotarev-density` development, which works with `ConjClasses.mk` and
 `Subgroup.zpowers` directly and never forms `C ^ j`.
 
-The two counting statements come from the same roadmap: `Chebotarev/README.md` Layer 8.2, the
-fixed-field fibre count, asks for `#C * f ∣ #G` "as a separate statement, so the quotient is exact
-rather than a truncated natural-number division", and its `Suggested.lean` pins the signature as
-`card_carrier_mul_orderOf_dvd (C) (σ) (hσ : σ ∈ C.carrier)`, which is the shape used here. The
-divisibility is stated without the roadmap's `[Finite G]`, which the proof does not need. Neither
-statement is adapted from `chebotarev-density`: that development proves the fibre count inline in
-`CebotarevDensity/FixedFieldDensity.lean` and never isolates the group-theoretic core.
+The two counting statements are the group-theoretic half of a fibre count: for a finite group the
+quotient `#G / (#C * orderOf σ)` counts something, and it does so only because the division is
+exact — `#C` is the index of the centralizer of `σ`, and `orderOf σ` divides that centralizer's
+order, so their product divides `#G`. Dividing then leaves the centralizer's order over
+`orderOf σ`. They are wanted by the Chebotarev roadmap's Layer 8.2.
 -/
 
 public section
@@ -313,8 +311,8 @@ theorem map_pow {N : Type*} [Monoid N] (f : M →* N) (C : ConjClasses M) (j : �
 For a *finite* group this is what makes `Nat.card G / (Nat.card C.carrier * orderOf σ)` an exact
 division rather than a truncated one, which is why Chebotarev's fibre count needs it separately;
 `card_div_mul_card_carrier_orderOf_eq_card_centralizer_div_orderOf` evaluates that quotient. No
-finiteness is assumed here: for an infinite group both sides degenerate to `0`, and the statement
-stays true. -/
+finiteness is assumed here: for an infinite group `Nat.card G` is `0`, and every natural number
+divides `0`. -/
 theorem card_carrier_mul_orderOf_dvd {G : Type*} [Group G] (C : ConjClasses G) (σ : G)
     (hσ : σ ∈ C.carrier) :
     Nat.card C.carrier * orderOf σ ∣ Nat.card G := by
