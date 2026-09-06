@@ -16,6 +16,10 @@ positive imaginary part, hence lies in `Complex.slitPlane`.  The principal power
 `(z - x) ^ (r : ℂ)` is therefore holomorphic and nonvanishing there, and its logarithmic
 derivative is the simple fraction `r / (z - x)`.
 
+Reflecting the base across the real axis, replacing `z - x` by `x - z`, multiplies the power by
+the unimodular constant `exp (π r i)`, because the two bases lie on opposite sides of the real
+axis.
+
 These are the basic branch facts for a factor of a product of principal powers with real base
 points, such as the Schwarz--Christoffel integrand.
 
@@ -24,6 +28,7 @@ points, such as the Schwarz--Christoffel integrand.
 * `TauCeti.sub_ofReal_mem_slitPlane_of_im_pos`
 * `TauCeti.differentiableAt_sub_cpow_of_im_pos`
 * `TauCeti.sub_cpow_ne_zero_of_im_pos`
+* `TauCeti.sub_cpow_eq_exp_mul_sub_cpow_of_im_pos`
 * `TauCeti.logDeriv_sub_cpow_of_im_pos`
 -/
 
@@ -56,6 +61,25 @@ lemma sub_cpow_ne_zero_of_im_pos {z : ℂ} (hz : 0 < z.im) (x r : ℝ) :
   have := congr_arg Complex.im h
   simp only [sub_im, ofReal_im, sub_zero, zero_im] at this
   exact hz.ne' this
+
+/-- Reflecting the base of a principal power with real base point and real exponent multiplies
+it by the unimodular factor `exp (π r i)`.  At a point with positive imaginary part the two bases
+`z - x` and `x - z` lie on opposite sides of the real axis, so their arguments differ by `π` and
+neither meets the branch cut of the other. -/
+lemma sub_cpow_eq_exp_mul_sub_cpow_of_im_pos {z : ℂ} (hz : 0 < z.im) (x r : ℝ) :
+    (z - (x : ℂ)) ^ (r : ℂ) = Complex.exp ((Real.pi : ℂ) * r * I) * ((x : ℂ) - z) ^ (r : ℂ) := by
+  have him : ((x : ℂ) - z).im < 0 := by simpa using hz
+  have hne : (x : ℂ) - z ≠ 0 := fun h => by simp [h] at him
+  have hlog : ∀ w : ℂ, w.im < 0 → Complex.log (-w) = Complex.log w + (Real.pi : ℂ) * I := by
+    intro w hw
+    apply Complex.ext
+    · simp [Complex.log_re]
+    · simp [Complex.log_im, Complex.arg_neg_eq_arg_add_pi_of_im_neg hw]
+  have hneg : z - (x : ℂ) = -((x : ℂ) - z) := by ring
+  rw [hneg, Complex.cpow_def_of_ne_zero (neg_ne_zero.mpr hne),
+    Complex.cpow_def_of_ne_zero hne, hlog _ him, ← Complex.exp_add]
+  congr 1
+  ring
 
 /-- The logarithmic derivative of `w ↦ (w - x) ^ (r : ℂ)` at a point with positive imaginary
 part is the simple fraction `r / (z - x)`. -/
