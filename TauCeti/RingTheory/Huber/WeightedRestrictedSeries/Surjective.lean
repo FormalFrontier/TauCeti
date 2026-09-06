@@ -10,8 +10,8 @@ public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Basic
 /-!
 # `A⟨X₁,…,Xₖ⟩ → B⟨X₁,…,Xₖ⟩` is surjective along an open surjection
 
-A continuous **open** surjection `φ : A → B` of nonarchimedean rings induces a surjection
-`A⟨X₁,…,Xₖ⟩ → B⟨X₁,…,Xₖ⟩` of restricted power-series rings.
+A continuous **open** surjection `φ : A → B` of nonarchimedean rings whose source has countably
+generated `𝓝 0` induces a surjection `A⟨X₁,…,Xₖ⟩ → B⟨X₁,…,Xₖ⟩` of restricted power-series rings.
 
 Openness is the hypothesis that matters. Surjectivity of `φ` alone lifts each coefficient of a
 restricted series separately, but the preimages so chosen need not tend to zero, and then the lift
