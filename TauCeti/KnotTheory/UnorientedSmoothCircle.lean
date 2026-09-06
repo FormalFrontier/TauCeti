@@ -106,8 +106,12 @@ def forgetOrientation (f : SmoothCircleEmbedding I M) :
 
 /-- Two oriented presentations have the same unoriented class exactly when they agree up to
 orientation reversal. -/
+@[simp]
 theorem forgetOrientation_eq_iff :
     forgetOrientation f = forgetOrientation g ↔ UnorientedRel f g := by
+  change Quotient.mk (unorientedSetoid (I := I) (M := M)) f =
+      Quotient.mk (unorientedSetoid (I := I) (M := M)) g ↔
+    (unorientedSetoid (I := I) (M := M)).r f g
   exact Quotient.eq
 
 /-- Reversing the orientation does not change the unoriented presentation. -/
@@ -126,6 +130,8 @@ def range (u : UnorientedSmoothCircleEmbedding I M) : Set M :=
   Quotient.lift (fun f : SmoothCircleEmbedding I M => Set.range f)
     (by
       intro f g h
+      -- `Quotient.lift` supplies the setoid relation via `≈`; its `r` field is definitionally
+      -- `UnorientedRel`, so this controlled reduction exposes the relation's two cases.
       change SmoothCircleEmbedding.UnorientedRel f g at h
       rcases h with rfl | h
       · rfl
@@ -136,11 +142,6 @@ def range (u : UnorientedSmoothCircleEmbedding I M) : Set M :=
 theorem range_forgetOrientation (f : SmoothCircleEmbedding I M) :
     range (SmoothCircleEmbedding.forgetOrientation f) = Set.range f :=
   by simp [range, SmoothCircleEmbedding.forgetOrientation]
-
-/-- Reversing a representative does not change the underlying unoriented embedded circle. -/
-theorem range_forgetOrientation_reverse (f : SmoothCircleEmbedding I M) :
-    range (SmoothCircleEmbedding.forgetOrientation f.reverse) = Set.range f := by
-  rw [range_forgetOrientation, SmoothCircleEmbedding.range_reverse]
 
 /-- To prove a property of an unoriented presentation, it suffices to prove it for every oriented
 representative. -/
