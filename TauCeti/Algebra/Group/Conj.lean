@@ -310,10 +310,6 @@ theorem map_pow {N : Type*} [Monoid N] (f : M →* N) (C : ConjClasses M) (j : �
 
 /-- **The size of a conjugacy class times the order of a member divides the order of the group.**
 
-The class size is the index of the centralizer of `σ`
-(`TauCeti.ConjClasses.card_carrier_mk`), and `orderOf σ` divides
-the order of that centralizer because `σ` lies in it; index times order is the group order.
-
 For a *finite* group this is what makes `Nat.card G / (Nat.card C.carrier * orderOf σ)` an exact
 division rather than a truncated one, which is why Chebotarev's fibre count needs it separately;
 `card_div_mul_card_carrier_orderOf_eq_card_centralizer_div_orderOf` evaluates that quotient. No
@@ -330,7 +326,9 @@ theorem card_carrier_mul_orderOf_dvd {G : Type*} [Group G] (C : ConjClasses G) (
 
 /-- **That quotient in closed form.** For a finite group, dividing the order of the group by the
 class size times the order of a member leaves the order of the centralizer divided by that same
-order; the common factor is the centralizer's index, which the class size equals. -/
+order.
+
+Both divisions are exact, so a caller may read either side as a count. -/
 theorem card_div_mul_card_carrier_orderOf_eq_card_centralizer_div_orderOf {G : Type*} [Group G]
     [Finite G] (C : ConjClasses G) (σ : G) (hσ : σ ∈ C.carrier) :
     Nat.card G / (Nat.card C.carrier * orderOf σ)
