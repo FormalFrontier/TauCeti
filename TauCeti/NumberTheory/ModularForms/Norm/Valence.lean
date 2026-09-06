@@ -228,23 +228,6 @@ lemma hasFiniteSupport_weightedOrderOfVanishingOnSubgroupOrbit [Γ.FiniteIndex]
   simp only [Function.mem_support, ne_eq] at ho ⊢
   exact fun h0 ↦ ho (by rw [weightedOrderOfVanishingOnSubgroupOrbit_def, h0]; simp)
 
-/-- **The `Γ`-orbits carrying mass are covered by the fibres above the `SL(2, ℤ)`-orbits they
-lie in**, so restricting the unrestricted sum to that union changes nothing. -/
-private lemma finsum_eq_finsum_mem_biUnion_preimage_slOrbitOfSubgroupOrbit
-    [SlashInvariantFormClass F (Γ : Subgroup (GL (Fin 2) ℝ)) k] (f : F) :
-    (∑ᶠ o : orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ,
-        weightedOrderOfVanishingOnSubgroupOrbit f o) =
-      ∑ᶠ o ∈ ⋃ P ∈ slOrbitOfSubgroupOrbit (Γ := Γ) ''
-          Function.support (weightedOrderOfVanishingOnSubgroupOrbit (Γ := Γ) (k := k) f),
-        slOrbitOfSubgroupOrbit (Γ := Γ) ⁻¹' {P},
-        weightedOrderOfVanishingOnSubgroupOrbit f o := by
-  have hsub : Function.support (weightedOrderOfVanishingOnSubgroupOrbit (Γ := Γ) (k := k) f) ⊆
-      ⋃ P ∈ slOrbitOfSubgroupOrbit (Γ := Γ) ''
-          Function.support (weightedOrderOfVanishingOnSubgroupOrbit (Γ := Γ) (k := k) f),
-        slOrbitOfSubgroupOrbit (Γ := Γ) ⁻¹' {P} :=
-    fun o ho ↦ Set.mem_biUnion ⟨o, ho, rfl⟩ rfl
-  rw [finsum_mem_def, Set.indicator_eq_self.mpr hsub]
-
 /-- **The interior mass of the norm, redistributed over the `Γ`-orbits.** The level-one weighted
 divisor sum of `ModularForm.norm 𝒮ℒ f` is the general-level weighted divisor sum of `f`.
 
@@ -262,7 +245,14 @@ theorem finsum_weightedOrderOfVanishingOnSubgroupOrbit_eq_finsum_norm [Γ.Finite
     hasFiniteSupport_weightedOrderOfVanishingOnSubgroupOrbit f
   set I := slOrbitOfSubgroupOrbit (Γ := Γ) ''
     Function.support (weightedOrderOfVanishingOnSubgroupOrbit (Γ := Γ) (k := k) f) with hIdef
-  rw [finsum_eq_finsum_mem_biUnion_preimage_slOrbitOfSubgroupOrbit f,
+  -- the orbits carrying mass are covered by the fibres above their own image
+  have hrestrict : (∑ᶠ o : orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ,
+        weightedOrderOfVanishingOnSubgroupOrbit f o) =
+      ∑ᶠ o ∈ ⋃ P ∈ I, slOrbitOfSubgroupOrbit (Γ := Γ) ⁻¹' {P},
+        weightedOrderOfVanishingOnSubgroupOrbit f o := by
+    rw [finsum_mem_def, hIdef, Set.biUnion_preimage_singleton,
+      Set.indicator_eq_self.mpr (Set.subset_preimage_image _ _)]
+  rw [hrestrict,
     finsum_mem_biUnion (Set.pairwiseDisjoint_fiber (slOrbitOfSubgroupOrbit (Γ := Γ)) I)
       (hsupp.image _)
       fun P _ ↦ finite_preimage_slOrbitOfSubgroupOrbit P,
