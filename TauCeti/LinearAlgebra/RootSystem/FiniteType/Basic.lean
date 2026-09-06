@@ -39,7 +39,7 @@ denominators. The symmetrization itself is not redone here: Mathlib packages it 
 * `TauCeti.isFiniteType_of_conjTranspose_mul_self_of_det_ne_zero`: the constructor used for a
   matrix presented by its entries. Positive definiteness of the symmetrization is certified by an
   explicit Gram model `Cᴴ * C` together with nonsingularity, both of which are finite
-  computations. `TauCeti.Matrix.det_mul_intCast` is the determinant of the symmetrization that
+  computations. `Matrix.det_mul_intCast` is the determinant of the symmetrization that
   such a computation meets.
 * `TauCeti.IsFiniteType.submatrix`: principal submatrices of a finite-type matrix are of finite
   type. This is what lets a forbidden subdiagram rule out a diagram containing it.
@@ -106,14 +106,12 @@ open scoped Matrix
 
 namespace TauCeti
 
-namespace Matrix
-
 /-- **The determinant of a symmetrization.** Scaling the rows of an integer matrix `M` by a
 rational vector `d` multiplies the determinant by `∏ i, d i`. This is `Matrix.det_mul_column`, which
 does the row scaling, composed with `Int.cast_det`, which turns the determinant of the cast matrix
 into the cast of the integral determinant; the composite is the shape in which the symmetrization
 of `TauCeti.IsFiniteType` is met. -/
-theorem det_mul_intCast {n : Type*} [Fintype n] [DecidableEq n]
+theorem _root_.Matrix.det_mul_intCast {n : Type*} [Fintype n] [DecidableEq n]
     (d : n → ℚ) (M : _root_.Matrix n n ℤ) :
     (_root_.Matrix.of fun i j ↦ d i * (M i j : ℚ)).det = (∏ i, d i) * (M.det : ℚ) := by
   have hmap : (_root_.Matrix.of fun i j ↦ d i * (M i j : ℚ))
@@ -121,8 +119,6 @@ theorem det_mul_intCast {n : Type*} [Fintype n] [DecidableEq n]
     ext i j
     simp
   rw [hmap, _root_.Matrix.det_mul_column, ← Int.cast_det]
-
-end Matrix
 
 variable {B : Type*} {A : Matrix B B ℤ}
 
