@@ -311,7 +311,7 @@ private lemma atkinLehnerAutomorphism_toMonoidHom_apply (x : GL (Fin 2) ℚ) :
   (rfl)
 
 /-- The ambient Atkin–Lehner automorphism is involutive. -/
-@[simp] lemma atkinLehnerAutomorphism_involutive (x : GL (Fin 2) ℚ) :
+lemma atkinLehnerAutomorphism_involutive (x : GL (Fin 2) ℚ) :
     atkinLehnerAutomorphism N (atkinLehnerAutomorphism N x) = x := by
   rw [atkinLehnerAutomorphism_apply, ← atkinLehnerHom_unop,
     atkinLehnerAutomorphism_apply, ← atkinLehnerHom_unop]
