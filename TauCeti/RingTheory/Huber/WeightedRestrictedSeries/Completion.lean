@@ -113,8 +113,9 @@ theorem continuous_algebraMap_completion_weightedRestrictedSubring {T : Fin k �
     (UniformSpace.Completion.algebraMap_def _ _ a).symm
 
 /-- **The structure map into the completion is the constant series**, read in the completion.
-The `Algebra` instance is the completion of `weightedRestrictedSubring.instAlgebra`, so this is
-the composite of that instance's structure map with the coercion. -/
+
+This is what lets a statement about the generators — phrased with `weightedC` — meet one about the
+`A`-algebra structure, phrased with `algebraMap`. -/
 theorem algebraMap_completion_weightedRestrictedSubring {T : Fin k → Set A}
     (hT : IsWeightFamily T) (a : A) :
     algebraMap A (UniformSpace.Completion (weightedRestrictedSubring T hT)) a

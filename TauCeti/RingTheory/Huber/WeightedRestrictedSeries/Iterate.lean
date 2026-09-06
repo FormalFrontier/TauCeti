@@ -8,7 +8,6 @@ module
 public import TauCeti.RingTheory.Huber.WeightedEval.Completion
 public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.PowerBounded
 
-import TauCeti.RingTheory.Huber.Completion
 import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.PairOfDefinition
 
 /-!
@@ -45,7 +44,8 @@ a nonarchimedean group being nonarchimedean; and each tuple must be power-bounde
 * `TauCeti.Huber.iterateFirstBlockHom`: the inclusion `A⟨X₁,…,Xₖ⟩ → A⟨X₁,…,X_{k+m}⟩` of the first
   block, which the map below is taken over.
 * `TauCeti.Huber.iterateJoinHom`: the comparison map that joins them.
-* `TauCeti.Huber.iterateRingEquiv`: the isomorphism the two assemble into.
+* `TauCeti.Huber.iterateRingEquiv`: the isomorphism the two assemble into, with
+  `TauCeti.Huber.iterateAlgEquiv` its `A`-algebra form.
 
 ## Main results
 
@@ -64,6 +64,11 @@ a nonarchimedean group being nonarchimedean; and each tuple must be power-bounde
 * `TauCeti.Huber.continuous_iterateRingEquiv` and its `symm`, with the `_coe` and `_apply` `@[simp]`
   lemmas: the isomorphism is one of *topological* rings, and it is `iterateSplitHom` with inverse
   `iterateJoinHom`.
+
+* `TauCeti.Huber.iterateSplitHom_comp_algebraMap`: the comparison carries the structure map of
+  `A⟨X₁,…,X_{k+m}⟩` to that of the iterate, which is what makes it a map of `A`-algebras. The
+  iterate carries no `Algebra A` instance — `Algebra` does not compose transitively — so
+  `iterateAlgEquiv` supplies the one its structure map induces.
 
 ## The shape of the argument
 
@@ -347,6 +352,42 @@ theorem continuous_iterateRingEquiv : Continuous (iterateRingEquiv k m A) :=
 /-- Its inverse is continuous too. -/
 theorem continuous_iterateRingEquiv_symm : Continuous (iterateRingEquiv k m A).symm :=
   (continuous_iterateJoinHom k m A).congr fun x ↦ (iterateRingEquiv_symm_apply k m A x).symm
+
+/-! ### As a map of `A`-algebras -/
+
+/-- **The comparison map carries the structure map of `A⟨X₁,…,X_{k+m}⟩` to the structure map of
+the iterated algebra**, so it is a map of `A`-algebras. -/
+@[simp]
+theorem iterateSplitHom_comp_algebraMap :
+    (iterateSplitHom k m A).comp (algebraMap A (restrictedMvPowerSeriesCompletion (k + m) A))
+      = iterateStructureHom k m A := by
+  ext a
+  rw [RingHom.comp_apply,
+    algebraMap_completion_weightedRestrictedSubring _ _ isWeightFamily_one_weight,
+    iterateSplitHom_coe_weightedC]
+
+/-- **The iteration isomorphism as an equivalence of `A`-algebras.**
+
+The algebra structure on the iterate is the one its structure map induces: `Algebra` does not
+compose transitively, so `A⟨X₁,…,Xₖ⟩⟨Y₁,…,Y_m⟩` carries no `Algebra A` instance of its own and the
+statement supplies it.
+
+`@[expose]` so that `iterateAlgEquiv_apply` can identify it with the ring equivalence downstream. -/
+@[expose] noncomputable def iterateAlgEquiv :
+    letI := (iterateStructureHom k m A).toAlgebra
+    restrictedMvPowerSeriesCompletion (k + m) A ≃ₐ[A]
+      restrictedMvPowerSeriesCompletion m (restrictedMvPowerSeriesCompletion k A) :=
+  letI := (iterateStructureHom k m A).toAlgebra
+  AlgEquiv.ofRingEquiv (f := iterateRingEquiv k m A) fun a ↦ by
+    rw [RingHom.algebraMap_toAlgebra, iterateRingEquiv_apply, ← RingHom.comp_apply,
+      iterateSplitHom_comp_algebraMap]
+
+/-- The algebra equivalence is the ring equivalence. -/
+@[simp]
+theorem iterateAlgEquiv_apply (x : restrictedMvPowerSeriesCompletion (k + m) A) :
+    letI := (iterateStructureHom k m A).toAlgebra
+    iterateAlgEquiv k m A x = iterateRingEquiv k m A x :=
+  rfl
 
 end TauCeti.Huber
 
