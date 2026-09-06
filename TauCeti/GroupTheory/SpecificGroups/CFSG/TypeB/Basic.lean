@@ -8,6 +8,7 @@ module
 public import TauCeti.Algebra.Lie.Orthogonal.TypeB.SpinCarrier.Frobenius
 public import TauCeti.GroupTheory.FixedPointCandidate
 public import TauCeti.GroupTheory.SpecificGroups.CFSG.Frobenius
+public import TauCeti.GroupTheory.SpecificGroups.CFSG.TypeB.Index
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Assembly
 
 /-!
@@ -49,6 +50,11 @@ present family are also collected there, by `TauCeti.TypeB2LieIndex`: that subty
 untwisted family out of the pair sharing the `B₂` diagram, where this one cuts the untwisted family
 out of the whole list, at every rank the family has.
 
+The subtype everything here is stated on, `TauCeti.TypeBLieIndex`, together with its selector
+`TauCeti.LieTypeIndex.IsTypeB`, its introduction form and the diagram facts that hold of every one
+of its indices, is indexing data and carries no carrier; it is in
+`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeB/Index.lean`, which this file imports.
+
 Nothing here asserts that the carrier is reductive, that its weight torus is maximal, that it is
 the spin group scheme, or that it is the pinned simply connected Chevalley--Demazure group scheme
 of type `Bₙ`: no identification of the spin carrier with that pinned group is proved here or in the
@@ -68,8 +74,6 @@ The counterpart constructions on the other families are in
 
 ## Main declarations
 
-* `TauCeti.LieTypeIndex.IsTypeB` and `TauCeti.TypeBLieIndex`: the constructor selector of the
-  family and the subtype of validated indices it cuts out, on which everything below is stated.
 * `TauCeti.TypeBLieIndex.AmbientGroup`: the algebraic-closure-valued points of the full-weight
   type-`B` spin carrier at the rank the index names.
 * `TauCeti.TypeBLieIndex.simpleRootSubgroup`: its positive simple-root subgroup at a
@@ -104,67 +108,7 @@ public section
 
 namespace TauCeti
 
-/-! ## The validated indices of the family -/
-
-namespace LieTypeIndex
-
-/-- Whether a Lie-type index belongs to the untwisted family `B_r(q)`.
-
-This is a constructor selector, not a mathematical property of a group. It is false on the Suzuki
-family `²B₂(2^(2m+1))`, which shares the `B₂` diagram but takes an odd power of a half-Frobenius
-for its Steinberg map. The rank, field, and preferred-representative restrictions come from the
-enclosing `TauCeti.ValidLieTypeIndex`. -/
-abbrev IsTypeB : LieTypeIndex → Prop
-  | .B _ _ => True
-  | _ => False
-
-instance : DecidablePred IsTypeB := fun d => by
-  cases d <;> infer_instance
-
-end LieTypeIndex
-
-/-- A validated index in the untwisted type-`B` family `B_r(q)`.
-
-In particular, its rank is at least two, and neither `B₂(2)`, whose recipe does not produce a
-simple group, nor `B₂(3)`, which the list carries as `²A₃(2)`, is an index of this subtype. The
-Suzuki family `²B₂(2^(2m+1))`, which shares the `B₂` diagram, is not of this subtype either. -/
-abbrev TypeBLieIndex : Type _ := {d : ValidLieTypeIndex // d.1.IsTypeB}
-
 namespace TypeBLieIndex
-
-open LieTypeIndex (inStandardRange_iff valid_iff)
-
-/-- Introduce a valid type-`B` index. -/
-abbrev ofB (rank : ℕ) (q : PrimePower) (hvalid : (LieTypeIndex.B rank q).Valid) :
-    TypeBLieIndex :=
-  ⟨⟨.B rank q, hvalid⟩, trivial⟩
-
-/-- Every type-B index is an introduction form `ofB rank q hvalid`. -/
-theorem exists_eq_ofB (d : TypeBLieIndex) :
-    ∃ (rank : ℕ) (q : PrimePower) (hvalid : (LieTypeIndex.B rank q).Valid),
-      d = ofB rank q hvalid := by
-  obtain ⟨⟨d, hvalid⟩, hB⟩ := d
-  revert hvalid hB
-  cases d
-  case B rank q => exact fun hvalid _ => ⟨rank, q, hvalid, rfl⟩
-  all_goals exact fun _ hB => False.elim hB
-
-/-- **The Cartan matrix of the diagram a validated type-`B` index names**, entry by entry: it is
-the type-`B` Cartan matrix at the index's rank. This is the projection of the introduction form
-`TauCeti.TypeBLieIndex.ofB` through `TauCeti.DynkinType.cartanMatrix_B`, stated on entries rather
-than on matrices because the rank occurs in the index types of the two nodes. -/
-theorem dynkinType_cartanMatrix_apply (d : TypeBLieIndex) (i j : Fin d.1.rank) :
-    d.1.dynkinType.cartanMatrix i j = CartanMatrix.B d.1.rank i j := by
-  obtain ⟨rank, q, hvalid, rfl⟩ := d.exists_eq_ofB
-  exact congrFun₂ (DynkinType.cartanMatrix_B rank) i j
-
-/-- The rank of a validated type-`B` index is at least two: the `B₁` diagram is `A₁`, and the
-double edge that names the family appears from rank two on. -/
-theorem two_le_rank (d : TypeBLieIndex) : 2 ≤ d.1.rank := by
-  obtain ⟨rank, q, hvalid, rfl⟩ := d.exists_eq_ofB
-  simpa only [ValidLieTypeIndex.rank, ValidLieTypeIndex.dynkinType,
-    LieTypeIndex.dynkinType_B, DynkinType.rank_B] using
-      ((inStandardRange_iff _).mp ((valid_iff _).mp hvalid).1).1
 
 variable (d : TypeBLieIndex)
 
@@ -242,11 +186,10 @@ def simpleRootSubgroup (i : Fin d.1.rank) : Multiplicative d.1.Closure →* d.Am
 
 /-- The simple-root subgroup is the carrier's numbered raising subgroup at the corresponding
 carrier node. This is the equation through which the upstream root-subgroup API reaches
-`simpleRootSubgroup`, whose definition itself stays sealed.
-
-It is deliberately not a `simp` lemma: `steinberg_simpleRootSubgroup` is the normal form the pinned
-equations of this file are stated against, and unfolding to
-`TauCeti.TypeBSpinCarrier.rootSubgroupPoints` would keep it from firing. -/
+`simpleRootSubgroup`, whose definition itself stays sealed. -/
+-- Deliberately not a `simp` lemma: `steinberg_simpleRootSubgroup` is the normal form the pinned
+-- equations of this file are stated against, and unfolding to
+-- `TauCeti.TypeBSpinCarrier.rootSubgroupPoints` would keep it from firing.
 theorem simpleRootSubgroup_def (i : Fin d.1.rank) :
     d.simpleRootSubgroup i =
       TypeBSpinCarrier.rootSubgroupPoints d.carrierRank (.inl (d.carrierNode i)) d.1.Closure :=
@@ -288,11 +231,10 @@ def steinberg : d.AmbientGroup →* d.AmbientGroup :=
   TypeBSpinCarrier.frobenius d.carrierRank d.1.characteristic d.1.fieldExponent d.1.Closure
 
 /-- The Steinberg map of a type-`B` index is the carrier's Frobenius at the exponent the index
-records. This is its unfolding lemma; the definition itself stays sealed.
-
-It is deliberately not a `simp` lemma: `steinberg_simpleRootSubgroup` and `coe_steinberg_apply` are
-the normal forms the pinned equations of this file are stated against, and unfolding to
-`TauCeti.TypeBSpinCarrier.frobenius` would keep them from firing. -/
+records. This is its unfolding lemma; the definition itself stays sealed. -/
+-- Deliberately not a `simp` lemma: `steinberg_simpleRootSubgroup` and `coe_steinberg_apply` are
+-- the normal forms the pinned equations of this file are stated against, and unfolding to
+-- `TauCeti.TypeBSpinCarrier.frobenius` would keep them from firing.
 theorem steinberg_def :
     d.steinberg =
       TypeBSpinCarrier.frobenius d.carrierRank d.1.characteristic d.1.fieldExponent d.1.Closure :=
@@ -329,12 +271,11 @@ theorem steinberg_simpleRootSubgroup (i : Fin d.1.rank) (u : Multiplicative d.1.
 entries lie in the field of definition.** Writing `𝔽_q` for `TauCeti.ValidLieTypeIndex.fixedField`,
 the copy of the field of `q` elements inside the algebraic closure, the group whose derived
 subgroup the recipe below takes is therefore the group of points of the spin carrier whose entries
-lie in `𝔽_q`.
-
-As for `TauCeti.ValidLieTypeIndex.mem_fixedSubgroup_geckFrobenius_iff`, this is not a `simp` lemma:
-`TauCeti.fixedSubgroup` is `MonoidHom.eqLocus` against the identity, so `simp` rewrites its
-left-hand side to `d.steinberg g = g` through `MonoidHom.mem_eqLocus`, and the `simpNF` linter
-rejects the annotation. -/
+lie in `𝔽_q`. -/
+-- As for `TauCeti.ValidLieTypeIndex.mem_fixedSubgroup_geckFrobenius_iff`, this is not a `simp`
+-- lemma: `TauCeti.fixedSubgroup` is `MonoidHom.eqLocus` against the identity, so `simp` rewrites
+-- its left-hand side to `d.steinberg g = g` through `MonoidHom.mem_eqLocus`, and the `simpNF`
+-- linter rejects the annotation.
 theorem mem_fixedSubgroup_steinberg_iff (g : d.AmbientGroup) :
     g ∈ fixedSubgroup d.steinberg ↔
       ∀ r c, ((g : Matrix.GeneralLinearGroup
