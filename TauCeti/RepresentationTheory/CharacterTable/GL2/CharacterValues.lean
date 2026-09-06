@@ -37,8 +37,10 @@ That these four values determine the Steinberg character outright is a statement
 conjugacy classes, not about the representation: every element of `GL₂(𝔽_q)` is conjugate to one of
 the four representatives (`TauCeti/LinearAlgebra/Matrix/GeneralLinearGroup/ConjugacyClasses.lean`
 classifies the classes by trace and determinant, and the elliptic normal form is the one that needs
-the quadratic extension), and a character is a class function. That reduction is not carried out
-here; the values below are stated at the normal forms themselves.
+the quadratic extension), and a character is a class function. That exhaustion is
+`TauCeti.exists_isConj_normalForm` of
+`TauCeti/LinearAlgebra/Matrix/GeneralLinearGroup/NormalForm.lean`; it is not invoked here, the
+values below being stated at the normal forms themselves.
 
 ## Main results
 

@@ -38,6 +38,11 @@ the pairs `(trace, det)` with the determinant a unit and the trace unconstrained
 of them. Altogether `q² - 1`, which is the number of irreducible complex representations of
 `GL₂(𝔽_q)`.
 
+The representative chosen here is uniform but anonymous. Over a finite field with a supplied
+degree-`2` extension it can be replaced by the four *named* normal forms — a scalar, a diagonal
+matrix with distinct entries, a Jordan block, and an element of the non-split torus — in
+`TauCeti/LinearAlgebra/Matrix/GeneralLinearGroup/NormalForm.lean`.
+
 Being scalar is spelled `M ∈ Set.range (Matrix.scalar (Fin 2))`, as in
 `TauCeti.LinearAlgebra.Matrix.Commute`, whose commutant computation is the companion result,
 describing the centralizer of a non-scalar matrix rather than its conjugacy class.
@@ -57,6 +62,8 @@ describing the centralizer of a non-scalar matrix rather than its conjugacy clas
 * `TauCeti.eq_of_mem_range_scalar_of_isConj`: a scalar element of `GL n R` is alone in its class.
 * `TauCeti.isConj_iff_of_notMem_range_scalar`: **the classification**, two non-scalar elements of
   `GL₂(F)` are conjugate exactly when they have the same trace and the same determinant.
+* `TauCeti.exists_scalar_eq_of_mem_range_scalar`: a scalar element of `GL n F` over a field is the
+  scalar matrix of a unit.
 * `TauCeti.card_conjClasses_GL2`: `GL₂(𝔽_q)` has `q² - 1` conjugacy classes.
 
 ## References
@@ -101,6 +108,21 @@ theorem eq_of_mem_range_scalar_of_isConj {g h : GL n R}
   rw [← hc, hcomm, mul_assoc, mul_inv_cancel, mul_one]
 
 end Invariants
+
+/-- **A scalar element of `GL n F` over a field is a scalar matrix of a unit.** The scalar is
+nonzero because the matrix is invertible. -/
+theorem exists_scalar_eq_of_mem_range_scalar {n : Type*} [Fintype n] [DecidableEq n] [Nonempty n]
+    {F : Type*} [Field F] {g : GL n F}
+    (hg : (g : Matrix n n F) ∈ Set.range (Matrix.scalar n)) :
+    ∃ a : Fˣ, Matrix.GeneralLinearGroup.scalar n a = g := by
+  obtain ⟨a, ha⟩ := hg
+  have ha0 : a ≠ 0 := by
+    rintro rfl
+    have h1 : (g : Matrix n n F) * ((g⁻¹ : GL n F) : Matrix n n F) = 1 := by
+      rw [← Units.val_mul, mul_inv_cancel, Units.val_one]
+    rw [← ha, map_zero, zero_mul] at h1
+    exact zero_ne_one h1
+  exact ⟨Units.mk0 a ha0, Units.ext ha⟩
 
 /-! ### The classification in `GL₂` -/
 
@@ -232,15 +254,8 @@ theorem bijective_mk_conjRepGLFinTwo :
   · intro C
     obtain ⟨g, rfl⟩ := ConjClasses.exists_rep C
     by_cases hg : (g : Matrix (Fin 2) (Fin 2) F) ∈ Set.range (Matrix.scalar (Fin 2))
-    · obtain ⟨a, ha⟩ := hg
-      have ha0 : a ≠ 0 := by
-        rintro rfl
-        have h1 : (g : Matrix (Fin 2) (Fin 2) F) *
-            ((g⁻¹ : GL (Fin 2) F) : Matrix (Fin 2) (Fin 2) F) = 1 := by
-          rw [← Units.val_mul, mul_inv_cancel, Units.val_one]
-        rw [← ha, map_zero, zero_mul] at h1
-        exact zero_ne_one h1
-      exact ⟨Sum.inl (Units.mk0 a ha0), congrArg ConjClasses.mk (Units.ext ha)⟩
+    · obtain ⟨a, ha⟩ := exists_scalar_eq_of_mem_range_scalar hg
+      exact ⟨Sum.inl a, congrArg ConjClasses.mk ha⟩
     · exact ⟨Sum.inr ((g : Matrix (Fin 2) (Fin 2) F).trace, Matrix.GeneralLinearGroup.det g),
         ConjClasses.mk_eq_mk_iff_isConj.2 (isConj_companionGL hg).symm⟩
 
