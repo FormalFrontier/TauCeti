@@ -9,10 +9,8 @@ public import Mathlib.FieldTheory.KummerPolynomial
 public import Mathlib.NumberTheory.LegendreSymbol.Basic
 public import Mathlib.NumberTheory.NumberField.Ideal.KummerDedekind
 public import Mathlib.RingTheory.Discriminant
-public import Mathlib.RingTheory.Ideal.Int
 public import TauCeti.NumberTheory.NumberField.Quadratic.Basic
-public import TauCeti.NumberTheory.NumberField.Quadratic.TotalRamification
-public import TauCeti.NumberTheory.RamificationInertia.Splitting
+public import TauCeti.NumberTheory.NumberField.SplitsCompletely
 
 /-!
 # The prime-splitting law for a quadratic field
@@ -31,19 +29,16 @@ power-basis discriminant `4d`, which is coprime to the odd prime `p ∤ d`.
 This is the base case (`n = 1`) of the multiquadratic prime-splitting law (Layer 1 of the
 multiquadratic roadmap).
 
-The splitting law is then read off at the level of ideals. Two primes above `p` is the largest
-number the fundamental identity `∑ e(𝔭) f(𝔭) = [K : ℚ] = 2` allows, so a split prime forces
-`e(𝔭 ∣ p) = f(𝔭 ∣ p) = 1` for each of them, hence `N(𝔭) = p`. In particular a split prime is
-the absolute norm of an ideal of `𝓞 K` — the shape in which the splitting law enters genus
-theory, where an ideal of norm `p` is what carries the prescribed values of the genus characters.
-This complements `TauCeti.NumberTheory.NumberField.Quadratic.TotalRamification`, which runs the
-same fundamental identity in the opposite extreme case `e = 2`.
+The splitting law is then read off at the level of ideals: a completely split rational prime is
+the absolute norm of a prime of `𝓞 K`
+(`NumberField.absNorm_eq_of_ncard_primesOver_eq_finrank`). That is the shape in which the
+splitting law enters genus theory, where an ideal of norm `p` is what carries the prescribed
+values of the genus characters.
 
 ## Main results
 
 * `NumberField.ncard_primesOver_quadratic_iff`: the quadratic splitting law.
-* `NumberField.absNorm_eq_of_ncard_primesOver_eq_two`: its absolute norm is that rational prime.
-* `NumberField.exists_isPrime_absNorm_eq_of_legendreSym_eq_one`: an odd prime `p ∤ d` with
+* `NumberField.exists_isPrime_and_absNorm_eq_of_legendreSym_eq_one`: an odd prime `p` with
   `legendreSym p d = 1` is the absolute norm of a prime ideal of `𝓞 K`.
 
 ## Provenance
@@ -55,7 +50,6 @@ prepared for the multiquadratic roadmap of the Tau Ceti library.
 public section
 
 open Polynomial NumberField Ideal Module RingOfIntegers UniqueFactorizationMonoid
-open TauCeti.RamificationInertia
 
 namespace NumberField
 
@@ -184,45 +178,26 @@ theorem ncard_primesOver_quadratic_iff {θ : 𝓞 K} {d : ℤ}
   rw [hcard, hfr]
   exact card_monicFactorsMod_quadratic_iff hmin hodd hcop
 
-section Split
-
-variable {p : ℕ}
-
-variable (hK : finrank ℚ K = 2) (hp : p.Prime)
-  (hsplit : ((span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K)).ncard = 2)
-  (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] [𝔭.LiesOver (span {(p : ℤ)})]
-
-include hK hp hsplit
-
-/-- **The absolute norm of a split prime of a quadratic field is the rational prime below it.**
-Since the residue degree is `1`, the residue field of `𝔭` is `ℤ/p`, so `N(𝔭) = p`. -/
-theorem absNorm_eq_of_ncard_primesOver_eq_two : Ideal.absNorm 𝔭 = p := by
-  have := Fact.mk hp
-  rw [← hK, ← NumberField.RingOfIntegers.rank K] at hsplit
-  have hinertia : 𝔭.inertiaDeg ℤ = 1 :=
-    (ramificationIdx_eq_one_and_inertiaDeg_eq_one_of_ncard_primesOver_eq_finrank
-      (span {(p : ℤ)}) 𝔭 hsplit).2
-  rw [← Ideal.pow_inertiaDeg p 𝔭, hinertia, pow_one]
-
-end Split
-
-/-- **A split prime is an ideal norm.** For `K = ℚ(√d)` and an odd prime `p ∤ d` that is a
-quadratic residue mod `p` — that is, one which splits in `K` by `ncard_primesOver_quadratic_iff` —
-there is a prime ideal of `𝓞 K` of absolute norm `p`. This is the form in which the splitting law
-feeds genus theory: the genus characters are computed on ideals through their absolute norms. -/
-theorem exists_isPrime_absNorm_eq_of_legendreSym_eq_one {θ : 𝓞 K} {d : ℤ}
+/-- **A split prime is an ideal norm.** For `K = ℚ(√d)` and an odd prime `p` which is a quadratic
+residue mod `p` — that is, one which splits in `K` by `ncard_primesOver_quadratic_iff` — there is a
+prime ideal of `𝓞 K` of absolute norm `p`. This is the form in which the splitting law feeds genus
+theory: the genus characters are computed on ideals through their absolute norms. -/
+theorem exists_isPrime_and_absNorm_eq_of_legendreSym_eq_one {θ : 𝓞 K} {d : ℤ}
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
-    {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2) (hcop : ¬ (p : ℤ) ∣ d)
-    (hleg : legendreSym p d = 1) :
+    {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2) (hleg : legendreSym p d = 1) :
     ∃ 𝔭 : Ideal (𝓞 K), 𝔭.IsPrime ∧ Ideal.absNorm 𝔭 = p := by
-  have hK : finrank ℚ K = 2 := finrank_rat_eq_two hmin hgen
-  have hsplit : ((span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K)).ncard = 2 := by
-    rw [← hK]
-    exact (ncard_primesOver_quadratic_iff hmin hgen hodd hcop).mpr hleg
+  -- A nonzero value of the Legendre symbol already records that `p ∤ d`.
+  have hcop : ¬ (p : ℤ) ∣ d := by
+    intro hdvd
+    rw [(legendreSym.eq_zero_iff p d).mpr ((ZMod.intCast_zmod_eq_zero_iff_dvd d p).mpr hdvd)]
+      at hleg
+    exact zero_ne_one hleg
+  have hsplit : ((span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K)).ncard = finrank ℚ K :=
+    (ncard_primesOver_quadratic_iff hmin hgen hodd hcop).mpr hleg
   obtain ⟨⟨𝔮, h𝔮, hlo⟩⟩ :=
     (inferInstance : Nonempty ((span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K)))
-  have := h𝔮
-  have := hlo
-  exact ⟨𝔮, h𝔮, absNorm_eq_of_ncard_primesOver_eq_two hK Fact.out hsplit 𝔮⟩
+  -- `h𝔮` and `hlo` are the prime and lies-over hypotheses of the norm computation; pass them
+  -- explicitly rather than installing them as anonymous local instances.
+  exact ⟨𝔮, h𝔮, @absNorm_eq_of_ncard_primesOver_eq_finrank K _ _ p _ 𝔮 h𝔮 hlo hsplit⟩
 
 end NumberField
