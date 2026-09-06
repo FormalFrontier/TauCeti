@@ -24,7 +24,7 @@ itself, rather than with any of its users.
 
 ## Main results
 
-* `TauCeti.ContinuousLinearMap.separatingLeft_toBilinForm_iff_injective`: the bilinear form of a
+* `ContinuousLinearMap.separatingLeft_toBilinForm_iff_injective`: the bilinear form of a
   continuous linear map into the dual is left-separating if and only if the map is injective.
 * `TauCeti.ContinuousLinearMap.isInvertible_of_injective`: in finite dimensions an injective map
   into the dual is already invertible, the dual having the same dimension as the space.
@@ -40,7 +40,8 @@ variable {𝕜 E : Type*} [NormedField 𝕜] [AddCommGroup E] [Module 𝕜 E] [T
 
 /-- The bilinear form of a continuous linear map into the dual space is left-separating exactly
 when the map is injective. -/
-theorem separatingLeft_toBilinForm_iff_injective (L : E →L[𝕜] E →L[𝕜] 𝕜) :
+theorem _root_.ContinuousLinearMap.separatingLeft_toBilinForm_iff_injective
+    (L : E →L[𝕜] E →L[𝕜] 𝕜) :
     L.toBilinForm.SeparatingLeft ↔ Function.Injective L := by
   rw [LinearMap.separatingLeft_iff_ker_eq_bot, LinearMap.ker_eq_bot]
   exact ⟨fun h v w hvw ↦ h (LinearMap.ext fun u ↦ by simp [hvw]),
