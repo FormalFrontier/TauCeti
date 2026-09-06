@@ -54,7 +54,7 @@ finite acyclic quiver is basic (`TauCeti.PathAlgebra.isBasic`).
 ## Main results
 
 * `TauCeti.isBasic_def`: unfolding lemma for `TauCeti.IsBasic`.
-* `TauCeti.RingEquiv.isBasic_iff`: basicness is invariant under a ring equivalence.
+* `RingEquiv.isBasic_iff`: basicness is invariant under a ring equivalence.
 * `TauCeti.Matrix.isReduced_iff_subsingleton`: a matrix ring over a nonzero reduced semiring is
   reduced exactly when it has at most one index.
 * `TauCeti.isReduced_iff_pi_divisionRing`: a semisimple ring is reduced if and only if it is a
@@ -191,7 +191,7 @@ theorem isBasic_def (A : Type v) [Ring A] :
 /-- **Basicness is invariant under ring equivalence.**  A ring equivalence carries the Jacobson
 radical onto the Jacobson radical, hence descends to an equivalence of the quotients, along which
 both semisimplicity and reducedness transport. -/
-theorem RingEquiv.isBasic_iff {A : Type v} {B : Type w} [Ring A] [Ring B] (e : A ≃+* B) :
+theorem _root_.RingEquiv.isBasic_iff {A : Type v} {B : Type w} [Ring A] [Ring B] (e : A ≃+* B) :
     IsBasic A ↔ IsBasic B := by
   have hmap : Ring.jacobson B = (Ring.jacobson A).map (e : A →+* B) :=
     le_antisymm (by rw [Ideal.map_comap_of_equiv]; exact Ring.le_comap_jacobson (e.symm : B →+* A))
