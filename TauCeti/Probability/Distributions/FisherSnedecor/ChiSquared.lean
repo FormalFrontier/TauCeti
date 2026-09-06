@@ -21,19 +21,17 @@ classical ratio it is named for: for independent chi-squared variables `U` and `
 
 The identification is stated in two parametrizations.  A chi-squared law with `k` degrees of
 freedom is the gamma law of shape `k / 2` and rate `1 / 2`, and a ratio is unchanged by a common
-scaling of its two arguments, so the gamma form `map_div_prod_gammaMeasure` covers all gamma
+scaling of its two arguments, so the gamma form `map_scaled_div_gammaMeasure` covers all gamma
 variables with a common rate, at the price of writing the degrees of freedom as `2 * a` and
-`2 * b`.  The chi-squared form `map_div_prod_chiSquaredMeasure` is its specialisation to the
+`2 * b`.  The chi-squared form `map_scaled_div_chiSquaredMeasure` is its specialisation to the
 classical parameters, and is the statement to use for a variance ratio.
 
 ## Main results
 
-* `TauCeti.Probability.fisherSnedecorMap_div_add` — the pointwise identity between the beta-to-F
-  transformation of a ratio-to-sum and the scaled quotient;
-* `TauCeti.Probability.map_div_prod_gammaMeasure` — the pushforward of a product of gamma laws
+* `TauCeti.Probability.map_scaled_div_gammaMeasure` — the pushforward of a product of gamma laws
   with a common rate along the scaled quotient is Fisher's F law;
-* `TauCeti.Probability.map_div_prod_chiSquaredMeasure` — the same statement for chi-squared laws,
-  in the classical degrees-of-freedom parametrization;
+* `TauCeti.Probability.map_scaled_div_chiSquaredMeasure` — the same statement for chi-squared
+  laws, in the classical degrees-of-freedom parametrization;
 * `TauCeti.Probability.hasLaw_fisherSnedecor_of_gammaMeasure` and
   `TauCeti.Probability.hasLaw_fisherSnedecor_of_chiSquared` — the random-variable forms.
 
@@ -55,29 +53,12 @@ namespace Probability
 
 variable {m n : ℝ}
 
-/-! ### The pointwise identity -/
-
-/-- On the positive quadrant, the beta-to-F transformation with `m` and `n` degrees of freedom
-sends the ratio-to-sum `u / (u + v)` to the variance ratio `(u / m) / (v / n)`; equivalently, it
-inverts the passage from a variance ratio to the fraction of the total that its numerator
-carries. -/
-theorem fisherSnedecorMap_div_add (hm : 0 < m) (hn : 0 < n) {u v : ℝ} (hu : 0 < u) (hv : 0 < v) :
-    fisherSnedecorMap m n (u / (u + v)) = u / m / (v / n) := by
-  have hm' : m ≠ 0 := hm.ne'
-  have hn' : n ≠ 0 := hn.ne'
-  have huv : (0 : ℝ) < u + v := by linarith
-  have hsub : 1 - u / (u + v) = v / (u + v) := by
-    field_simp
-    ring
-  rw [fisherSnedecorMap_def, hsub]
-  field_simp
-
 /-! ### The pushforward of a product of gamma laws -/
 
 /-- The variance ratio of two independent gamma variables with a common positive rate has Fisher's
 F law with twice their shape parameters as degrees of freedom.  The common rate cancels, so it
 does not appear in the conclusion. -/
-theorem map_div_prod_gammaMeasure {a b r : ℝ} (ha : 0 < a) (hb : 0 < b) (hr : 0 < r) :
+theorem map_scaled_div_gammaMeasure {a b r : ℝ} (ha : 0 < a) (hb : 0 < b) (hr : 0 < r) :
     ((gammaMeasure a r).prod (gammaMeasure b r)).map
         (fun z ↦ z.1 / (2 * a) / (z.2 / (2 * b))) =
       fisherSnedecorMeasure (2 * a) (2 * b) := by
@@ -106,12 +87,12 @@ theorem map_div_prod_gammaMeasure {a b r : ℝ} (ha : 0 < a) (hb : 0 < b) (hr : 
 
 This is the classical description of Fisher's F law, and the reason for the name of
 `TauCeti.Probability.fisherSnedecorMeasure`. -/
-theorem map_div_prod_chiSquaredMeasure (hm : 0 < m) (hn : 0 < n) :
+theorem map_scaled_div_chiSquaredMeasure (hm : 0 < m) (hn : 0 < n) :
     ((chiSquaredMeasure m).prod (chiSquaredMeasure n)).map (fun z ↦ z.1 / m / (z.2 / n)) =
       fisherSnedecorMeasure m n := by
   have hm2 : 2 * (m / 2) = m := by ring
   have hn2 : 2 * (n / 2) = n := by ring
-  have h := map_div_prod_gammaMeasure (a := m / 2) (b := n / 2) (r := 1 / 2)
+  have h := map_scaled_div_gammaMeasure (a := m / 2) (b := n / 2) (r := 1 / 2)
     (by linarith) (by linarith) (by norm_num)
   rw [hm2, hn2] at h
   rw [chiSquaredMeasure_eq_gammaMeasure hm, chiSquaredMeasure_eq_gammaMeasure hn]
@@ -136,7 +117,7 @@ theorem hasLaw_fisherSnedecor_of_gammaMeasure {a b r : ℝ} (ha : 0 < a) (hb : 0
   have hratio : HasLaw (fun z : ℝ × ℝ ↦ z.1 / (2 * a) / (z.2 / (2 * b)))
       (fisherSnedecorMeasure (2 * a) (2 * b))
       ((gammaMeasure a r).prod (gammaMeasure b r)) :=
-    ⟨by fun_prop, map_div_prod_gammaMeasure ha hb hr⟩
+    ⟨by fun_prop, map_scaled_div_gammaMeasure ha hb hr⟩
   exact hratio.fun_comp hpair
 
 /-- If `X` and `Y` are independent chi-squared variables with positive degrees of freedom `m` and
@@ -144,15 +125,13 @@ theorem hasLaw_fisherSnedecor_of_gammaMeasure {a b r : ℝ} (ha : 0 < a) (hb : 0
 theorem hasLaw_fisherSnedecor_of_chiSquared (hm : 0 < m) (hn : 0 < n) (hXY : IndepFun X Y P)
     (hX : HasLaw X (chiSquaredMeasure m) P) (hY : HasLaw Y (chiSquaredMeasure n) P) :
     HasLaw (fun ω ↦ X ω / m / (Y ω / n)) (fisherSnedecorMeasure m n) P := by
-  let _ := isProbabilityMeasure_chiSquaredMeasure hm.le
-  let _ := isProbabilityMeasure_chiSquaredMeasure hn.le
-  let _ : IsProbabilityMeasure P := hX.isProbabilityMeasure
-  have hpair : HasLaw (fun ω ↦ (X ω, Y ω))
-      ((chiSquaredMeasure m).prod (chiSquaredMeasure n)) P := hXY.hasLaw_prod hX hY
-  have hratio : HasLaw (fun z : ℝ × ℝ ↦ z.1 / m / (z.2 / n)) (fisherSnedecorMeasure m n)
-      ((chiSquaredMeasure m).prod (chiSquaredMeasure n)) :=
-    ⟨by fun_prop, map_div_prod_chiSquaredMeasure hm hn⟩
-  exact hratio.fun_comp hpair
+  rw [chiSquaredMeasure_eq_gammaMeasure hm] at hX
+  rw [chiSquaredMeasure_eq_gammaMeasure hn] at hY
+  have hm2 : 2 * (m / 2) = m := by ring
+  have hn2 : 2 * (n / 2) = n := by ring
+  have h := hasLaw_fisherSnedecor_of_gammaMeasure (a := m / 2) (b := n / 2) (r := 1 / 2)
+    (by linarith) (by linarith) (by norm_num) hXY hX hY
+  rwa [hm2, hn2] at h
 
 end Probability
 

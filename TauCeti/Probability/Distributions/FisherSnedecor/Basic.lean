@@ -28,6 +28,7 @@ import TauCeti.Analysis.Calculus.RealCharts
 * `fisherSnedecorMap_image_Ioo` — the image of the open unit interval.
 * `fisherSnedecorMap_strictMonoOn` — strict monotonicity below one.
 * `fisherSnedecorMapInv_map` and `fisherSnedecorMap_mapInv` — the inverse identities.
+* `fisherSnedecorMap_div_add` — the beta-to-F image of a ratio-to-sum is the scaled quotient.
 * `ae_mem_Ioi_fisherSnedecorMeasure` — positivity almost surely.
 * `fisherSnedecorMeasure_eq_withDensity` — the density representation with respect to Lebesgue
   measure.
@@ -191,6 +192,21 @@ theorem fisherSnedecorMap_mapInv (hm : m ≠ 0) (hn : n ≠ 0) {x : ℝ}
   rw [fisherSnedecorMap_def, fisherSnedecorMapInv_def]
   field_simp [hm, hn, hden]
   ring
+
+/-- On the positive quadrant, the beta-to-F transformation with `m` and `n` degrees of freedom
+sends the ratio-to-sum `u / (u + v)` to the variance ratio `(u / m) / (v / n)`; equivalently, it
+inverts the passage from a variance ratio to the fraction of the total that its numerator
+carries. -/
+theorem fisherSnedecorMap_div_add (hm : 0 < m) (hn : 0 < n) {u v : ℝ} (hu : 0 < u) (hv : 0 < v) :
+    fisherSnedecorMap m n (u / (u + v)) = u / m / (v / n) := by
+  have hm' : m ≠ 0 := hm.ne'
+  have hn' : n ≠ 0 := hn.ne'
+  have huv : (0 : ℝ) < u + v := by linarith
+  have hsub : 1 - u / (u + v) = v / (u + v) := by
+    field_simp
+    ring
+  rw [fisherSnedecorMap_def, hsub]
+  field_simp
 
 /-- For positive degrees of freedom, the inverse transformation maps `Ioi 0` into `Ioo 0 1`. -/
 theorem fisherSnedecorMapInv_mem_Ioo (hm : 0 < m) (hn : 0 < n) {x : ℝ} (hx : 0 < x) :
