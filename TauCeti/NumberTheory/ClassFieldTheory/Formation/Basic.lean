@@ -21,9 +21,9 @@ topological formulation: a `Formation` is a smooth discrete topological represen
 
 A **finite normal layer** is a pair of open subgroups `V ≤ U` with `V` normal in `U`. In field
 notation it is the layer `K/F` with `U = G_F` and `V = G_K`. Its Galois group `Γ = U ⧸ V` is
-finite as soon as `G` is compact, its coefficient module is the level `A^V`, and its ground level
-is `A^U`. The three constructions below are what the cohomology of the layer is taken of and
-compared with:
+finite because `V` is open in the compact group `U`, its coefficient module is the level `A^V`,
+and its ground level is `A^U`. The three constructions below are what the cohomology of the layer
+is taken of and compared with:
 
 * `rep`, the coefficient module `A^V` carrying the action of `Γ`. The `U`-action on `A^V` is well
   defined because `V` is normal in `U`, and `V` acts on `A^V` trivially, so the action descends to
@@ -67,9 +67,11 @@ The coefficient module is built as `Representation.ofQuotient` of a
 restriction of `A` along `V ∩ U → U → G`, which is the same submodule of the ambient module but
 not the same term as `A^V`, and every later comparison would have to transport along that equality.
 
-Compactness of `G` is not a field of `Formation`: it is assumed exactly where the finiteness of a
-layer's Galois group is used, so that the constructions above are available for an arbitrary
-topological group.
+The group `G` is profinite — a compact, totally disconnected topological group — and both
+`Formation` and `NormalLayer` carry those hypotheses. They are what makes the family of open
+subgroups the distinguished family of the Artin–Tate definition, with the open subgroups a
+neighbourhood basis of `1`, and what makes the Galois group of every layer finite, so that the
+`degree` of a layer is its genuine index and not the junk value `0` of an infinite quotient.
 
 Both the group and the coefficient module live in `Type`. Mathlib's `tateCohomology` asks for the
 finite group and the coefficient ring `ℤ` in one universe and for the coefficient module in that
@@ -99,12 +101,13 @@ attribute [local instance] TopRep.distribMulAction TopRep.smulCommClass
 
 /-! ### Formations and their levels -/
 
-/-- A **formation**: a smooth discrete continuous integral representation of a topological group.
+/-- A **formation**: a smooth discrete continuous integral representation of a profinite group.
 In the arithmetic applications `G` is the Galois group of a Galois extension and the module is the
 multiplicative group of the top field, read additively. The distinguished family of subgroups of
 the Artin–Tate definition is the family of open subgroups of `G`, which is why the levels below
 are indexed by `OpenSubgroup G`. -/
-structure Formation (G : Type) [Group G] [TopologicalSpace G] where
+structure Formation (G : Type) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+    [CompactSpace G] [TotallyDisconnectedSpace G] where
   /-- the coefficient module of the formation, a topological representation of `G` over `ℤ` -/
   module : TopRep.{0} ℤ G
   /-- the coefficient module is discrete with open point stabilizers, so that every element is
@@ -113,7 +116,8 @@ structure Formation (G : Type) [Group G] [TopologicalSpace G] where
 
 namespace Formation
 
-variable {G : Type} [Group G] [TopologicalSpace G] (F : Formation G)
+variable {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGroup G] [CompactSpace G]
+  [TotallyDisconnectedSpace G] (F : Formation G)
 
 /-- The coefficient module of a formation as a plain integral representation of `G`, forgetting
 its topology. The levels, the layer representations and all of their cohomology are taken of this
@@ -155,7 +159,8 @@ end Formation
 /-- A **finite normal layer** `V ◁ U` of open subgroups of `G`. In field notation this is the
 finite Galois layer `K/F` inside the extension `G` cuts out, with `U = G_F` the ground subgroup and
 `V = G_K` the top subgroup. -/
-structure NormalLayer (G : Type) [Group G] [TopologicalSpace G] where
+structure NormalLayer (G : Type) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+    [CompactSpace G] [TotallyDisconnectedSpace G] where
   /-- the ground subgroup `U`, cutting out the base field of the layer -/
   ground : OpenSubgroup G
   /-- the top subgroup `V`, cutting out the top field of the layer -/
@@ -167,7 +172,8 @@ structure NormalLayer (G : Type) [Group G] [TopologicalSpace G] where
 
 namespace NormalLayer
 
-variable {G : Type} [Group G] [TopologicalSpace G] (L : NormalLayer G)
+variable {G : Type} [Group G] [TopologicalSpace G] [IsTopologicalGroup G] [CompactSpace G]
+  [TotallyDisconnectedSpace G] (L : NormalLayer G)
 
 /-- The top subgroup `V` of a layer, viewed as a subgroup of the ground subgroup `U`. -/
 abbrev relativeTop : Subgroup L.ground := L.top.toSubgroup.subgroupOf L.ground.toSubgroup
@@ -217,8 +223,6 @@ def galOfOpenNormalEquiv (V : OpenSubgroup G) [V.toSubgroup.Normal] :
     exact ⟨fun ⟨_, ha, h⟩ ↦ h ▸ ha, fun hx ↦ ⟨⟨x, trivial⟩, hx, rfl⟩⟩
 
 section Finite
-
-variable [IsTopologicalGroup G] [CompactSpace G]
 
 /-- The top subgroup is open in the compact ground subgroup, so the Galois group is finite. -/
 instance instFiniteGal : Finite L.Gal :=
@@ -313,7 +317,7 @@ end Coefficients
 
 section Norm
 
-variable [IsTopologicalGroup G] [CompactSpace G] (F : Formation G)
+variable (F : Formation G)
 
 /-- The **norm** `N_{U/V} : A^V → A^U` of a finite normal layer: the sum of the Galois conjugates,
 landing in the ground level through `groundLevelEquiv`. -/
