@@ -28,7 +28,8 @@ public section
 namespace TauCeti
 
 /-- The sign group `Additive ℤˣ` is one-dimensional over `ZMod 2`. -/
-theorem finrank_zmod_two_additive_intUnits : Module.finrank (ZMod 2) (Additive ℤˣ) = 1 := by
+@[simp] theorem finrank_zmod_two_additive_intUnits :
+    Module.finrank (ZMod 2) (Additive ℤˣ) = 1 := by
   refine (finrank_eq_one_iff_of_nonzero' (K := ZMod 2) (Additive.ofMul (-1 : ℤˣ))
     (by rw [Ne, ofMul_eq_zero]; decide)).mpr fun w => ?_
   rcases Int.units_eq_one_or (Additive.toMul w) with h | h
