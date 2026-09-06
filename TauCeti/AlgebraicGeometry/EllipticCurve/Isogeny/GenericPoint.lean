@@ -19,7 +19,7 @@ point is nothing but the generic point of `W₂` transported along `φ^*` by Mat
 
 The transport is an `AddMonoidHom` and is functorial, so the tautological point of a composite
 `ψ ∘ φ` is the tautological point of `ψ` transported along `φ^*`. This expresses a composite of
-pullbacks as a statement in the group `W₂⁄F(W₁)`, which is how `[m] ∘ [n] = [m n]` is proved in
+pullbacks as a statement in the group `W₃⁄F(W₁)`, which is how `[m] ∘ [n] = [m n]` is proved in
 `MulByInt/Comp.lean`.
 
 ## Main results
@@ -72,6 +72,9 @@ omit [W₂.IsElliptic] in
 /-- **The tautological point of a composite**: transporting the tautological point of `ψ` along
 `φ^*` gives the tautological point of `ψ ∘ φ`. This is functoriality of `Point.map` read through
 the previous identification. -/
+-- Not `@[simp]`: `Isogeny.comp_pullback` is itself `@[simp]`, so it rewrites this left-hand side
+-- to `(φ.fieldPullback.comp ψ.pullback).tautologicalPoint` before this rule could fire, and
+-- `simpNF` rejects the pair.
 theorem tautologicalPoint_comp (ψ : Isogeny W₂ W₃) (φ : Isogeny W₁ W₂) :
     (ψ.comp φ).pullback.tautologicalPoint =
       Point.map φ.fieldPullback ψ.pullback.tautologicalPoint := by
