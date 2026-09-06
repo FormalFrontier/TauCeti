@@ -389,11 +389,12 @@ elementary transvection `x_{ij}(c)` to `x_{rev j, rev i}(ε c)` with the sign
 The reversal of the two indices is the reversal of the Bourbaki numbering, and the sign is the one
 produced by the signed conjugator `TauCeti.typeAGraphConjugator` of this construction: it is what
 the alternating diagonal signs of `Q` contribute once the reversal has moved the transvection. The
-sign is not always `1`: the sum `i + j` is odd on a simple root, where
-`TauCeti.typeAGraphAutomorphism_transvectionUnit` records the sign-free equation, but even on some
-other roots, for instance on `ε_0 - ε_2` once the rank is at least two. Whether some other
-parametrization of the root subgroups makes every sign trivial at once is not addressed here; for
-that question see R. W. Carter, *Simple Groups of Lie Type*, §12.2. -/
+sign is `1` whenever the sum `i + j` is odd, which it is on every simple root, where
+`TauCeti.typeAGraphAutomorphism_transvectionUnit` records the sign-free equation; it is `-1` on the
+roots with even index sum, for instance on `ε_0 - ε_2` once the rank is at least two, and that value
+differs from `1` exactly when `(-1 : A) ≠ 1`. Whether some other parametrization of the root
+subgroups makes every sign trivial at once is not addressed here; for that question see
+R. W. Carter, *Simple Groups of Lie Type*, §12.2. -/
 @[simp]
 theorem typeAGraphAutomorphism_transvectionUnit_of_ne (r : ℕ) {i j : Fin (r + 1)}
     (hij : i ≠ j) (c : A) :

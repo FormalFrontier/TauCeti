@@ -25,7 +25,8 @@ Frob_q (x_{ij}(c))     = x_{ij}(c ^ q),
 
 The Frobenius keeps each root subgroup and raises the parameter, exactly as on a simple root. The
 graph automorphism reverses the two matrix indices, which is the reversal of the Bourbaki
-numbering, and rescales the parameter by a sign, which is `1` exactly when `i + j` is odd.
+numbering, and rescales the parameter by a sign: that sign is `1` whenever `i + j` is odd, and `-1`
+whenever `i + j` is even, and the even case differs from the odd one only when `(-1 : A) ≠ 1`.
 
 That sign comes from the signed conjugator that defines this `γ`. The sum `i + j` is odd on every
 numbered simple root, by `TauCeti.SlStd.odd_rootTarget_add_rootSource`, which is why the pinned
