@@ -249,18 +249,6 @@ private theorem prod_beta_gammaMeasure_eq_withDensity (a b r : ℝ) :
       (Probability.measurable_gammaPDF (a + b) r), ← Measure.volume_eq_prod]
   rfl
 
-/-- Almost every point of a product of two Gamma laws with a common positive rate lies in the
-open positive quadrant. -/
-theorem ae_mem_prod_Ioi_gammaMeasure {a b r : ℝ} (ha : 0 < a) (hb : 0 < b)
-    (hr : 0 < r) :
-    ∀ᵐ z ∂(gammaMeasure a r).prod (gammaMeasure b r), z ∈ Ioi (0 : ℝ) ×ˢ Ioi (0 : ℝ) := by
-  let _ := isProbabilityMeasure_gammaMeasure ha hr
-  let _ := isProbabilityMeasure_gammaMeasure hb hr
-  rw [Measure.ae_prod_mem_iff_ae_ae_mem (measurableSet_Ioi.prod measurableSet_Ioi)]
-  filter_upwards [ae_pos_gammaMeasure a r] with x hx
-  filter_upwards [ae_pos_gammaMeasure b r] with y hy
-  exact ⟨hx, hy⟩
-
 private theorem ae_mem_gammaBetaTarget {a b r : ℝ} (ha : 0 < a) (hb : 0 < b)
     (hr : 0 < r) :
     ∀ᵐ z ∂(betaMeasure a b).prod (gammaMeasure (a + b) r), z ∈ gammaBetaTarget := by
