@@ -687,9 +687,7 @@ theorem atkinLehnerAntiInvolution_bar_mem_doubleCoset_of_primitive [NeZero N]
   -- unit conditions carried by membership are conditions on `A` itself
   obtain ⟨A₀, hA₀, hxdet, hAN, hAunit⟩ := (mem_Delta0_iff N).mp hx
   obtain rfl : A = A₀ := Matrix.map_injective Int.cast_injective (hA.symm.trans hA₀)
-  have hAco : Int.gcd (A 0 0) N = 1 :=
-    Int.isCoprime_iff_gcd_eq_one.mp
-      (isCoprime_comm.mp ((ZMod.coe_int_isUnit_iff_isCoprime _ _).mp hAunit))
+  have hAco : Int.gcd (A 0 0) N = 1 := int_gcd_natCast_eq_one_of_isUnit N hAunit
   have hA_det_pos : 0 < A.det := by rw [← Int.cast_pos (R := ℚ), Int.cast_det, ← hA]; exact hxdet
   obtain ⟨m, hm⟩ : ∃ m : ℕ, A.det = (m : ℤ) :=
     ⟨A.det.natAbs, (Int.natAbs_of_nonneg hA_det_pos.le).symm⟩
@@ -731,9 +729,7 @@ theorem atkinLehnerAntiInvolution_bar_mem_doubleCoset [NeZero N] (x : GL (Fin 2)
     (hx : x ∈ Delta0 N) : (atkinLehnerAntiInvolution N).bar x hx ∈
       DoubleCoset.doubleCoset x ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)) := by
   obtain ⟨A, hA, hxdet, hAN, hAunit⟩ := (mem_Delta0_iff N).mp hx
-  have hAco : Int.gcd (A 0 0) N = 1 :=
-    Int.isCoprime_iff_gcd_eq_one.mp
-      (isCoprime_comm.mp ((ZMod.coe_int_isUnit_iff_isCoprime _ _).mp hAunit))
+  have hAco : Int.gcd (A 0 0) N = 1 := int_gcd_natCast_eq_one_of_isUnit N hAunit
   have hA_det_pos : 0 < A.det := by
     rw [← Int.cast_pos (R := ℚ), Int.cast_det, ← hA]
     exact hxdet
