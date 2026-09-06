@@ -28,10 +28,9 @@ element of `F(E)` over `F`, which is what proves the Kähler differentials of `F
 
 ## Provenance
 
-The separating-element argument reorganises the span-of-`dx` proof from the AINTLIB `HasseWeil`
+The separating-element argument is adapted from `kaehler_rank_one` in the AINTLIB `HasseWeil`
 project (Chris Birkbeck), Apache-2.0, `HasseWeil/FormalGroupCorrespondence.lean` at commit
-`513e83879e2f`. The Weierstrass relation itself is the existing
-`equation_genericX_genericY`.
+`513e83879e2f`.
 -/
 
 public section

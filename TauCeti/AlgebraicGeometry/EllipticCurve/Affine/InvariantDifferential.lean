@@ -57,23 +57,6 @@ Ported from the AINTLIB `HasseWeil` project (Chris Birkbeck), Apache-2.0, at com
 `invariantDifferential` and `invariantDifferential_ne_zero`) and
 `HasseWeil/FormalGroupCorrespondence.lean` (`kaehler_rank_one`, the one-dimensionality, proved
 there by the same span-of-`dx` argument).
-
-The proofs are reorganised here, and the reorganisation is what removes the source's two
-overrides: `D_x_ne_zero` carried a `maxHeartbeats` override and `kaehler_rank_one` carried a
-larger one, while no declaration here needs any. The source's `[DecidableEq F]` hypothesis is
-also dropped. Its direct span-of-`dx` proof is replaced by the general separating-element API in
-`TauCeti.FieldTheory.FunctionField.Differential.Kaehler`; the curve-specific separability input is
-provided by `Affine.FunctionField.Separating`. The Weierstrass relation itself,
-which the source re-derives inside `AdjoinRoot`, is the existing `equation_genericX_genericY`.
-The chain rule, the basis and the uniqueness statement are stated here and are not in the
-source, which proves only `Module.finrank = 1`.
-
-Sources swept for the same material and not carrying it:
-`github.com/MichaelStollBayreuth/EllipticCurves` @ `449c7b936813` and
-`github.com/ImperialCollegeLondon/FLT`, whose only mentions of `KaehlerDifferential` are in
-Henselian-local-ring files; and pinned Mathlib, which computes `Module.rank Ω[S⁄R]` only for
-standard smooth presentations (`RingTheory/Smooth/StandardSmoothCotangent.lean`), a hypothesis
-not available here.
 -/
 
 public section
