@@ -7,7 +7,6 @@ module
 
 public import Mathlib.LinearAlgebra.Basis.Basic
 public import Mathlib.LinearAlgebra.Dimension.StrongRankCondition
-public import TauCeti.Combinatorics.Young.StandardTableau.Order
 public import TauCeti.RepresentationTheory.Symmetric.Specht.Straightening
 
 /-!
