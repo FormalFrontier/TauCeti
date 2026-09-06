@@ -14,7 +14,8 @@ public import Mathlib.AlgebraicGeometry.EllipticCurve.Weierstrass
 Facts about the invariants of an elliptic curve, complementing
 `Mathlib/AlgebraicGeometry/EllipticCurve/Weierstrass.lean`:
 
-* `WeierstrassCurve.a₁_ne_zero_or_a₃_ne_zero_of_two_eq_zero`: where `2 = 0`, an elliptic curve
+* `WeierstrassCurve.a₁_ne_zero_or_a₃_ne_zero_of_Δ_ne_zero_of_two_eq_zero`: where `2 = 0`, a curve
+  with `Δ ≠ 0`
   has `a₁ ≠ 0` or `a₃ ≠ 0`;
 * `WeierstrassCurve.j_eq_1728_iff`: `j = 1728 ↔ c₆ = 0`, the analogue for `j = 1728` of Mathlib's
   `WeierstrassCurve.j_eq_zero_iff` (`j = 0 ↔ c₄ = 0`), together with its unreduced companion
@@ -52,12 +53,14 @@ namespace WeierstrassCurve
 
 variable {R : Type*} [CommRing R] (E : WeierstrassCurve R) [E.IsElliptic]
 
-/-- Where `2 = 0`, an elliptic curve has `a₁ ≠ 0` or `a₃ ≠ 0`: otherwise `a₁ = a₃ = 0` makes the
-partial derivative `∂/∂y = 2y + a₁x + a₃` vanish identically, so `Δ = 0`. -/
-lemma a₁_ne_zero_or_a₃_ne_zero_of_two_eq_zero [Nontrivial R] (h2 : (2 : R) = 0) :
+omit [E.IsElliptic] in
+/-- Where `2 = 0`, a curve with nonzero discriminant has `a₁ ≠ 0` or `a₃ ≠ 0`: otherwise
+`a₁ = a₃ = 0` makes the partial derivative `∂/∂y = 2y + a₁x + a₃` vanish identically, so
+`Δ = 0`. -/
+lemma a₁_ne_zero_or_a₃_ne_zero_of_Δ_ne_zero_of_two_eq_zero (hΔ : E.Δ ≠ 0) (h2 : (2 : R) = 0) :
     E.a₁ ≠ 0 ∨ E.a₃ ≠ 0 := by
   by_contra! h
-  exact E.isUnit_Δ.ne_zero (by rw [Δ, b₈, b₆, b₄, b₂, h.1, h.2]; grobner)
+  exact hΔ (by rw [Δ, b₈, b₆, b₄, b₂, h.1, h.2]; grobner)
 
 /-- `j(E) = 1728` if and only if `c₆(E)² = 0`, by the relation `1728·Δ = c₄³ - c₆²`. This is the
 analogue for `j = 1728` of `WeierstrassCurve.j_eq_zero_iff'` (`j = 0 ↔ c₄³ = 0`). -/
