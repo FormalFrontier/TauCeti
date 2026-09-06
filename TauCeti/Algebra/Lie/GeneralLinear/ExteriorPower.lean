@@ -624,20 +624,9 @@ private theorem diagonalProjector_apply (d : ℕ)
     · simp only [h, ite_false, zero_smul]
   rw [diagonalProjector]
   rw [hprod]
-  by_cases hst : s = t
-  · subst t
-    simp
-  · obtain ⟨i, his, hit⟩ :=
-      (Set.powersetCard.exists_mem_notMem_iff_ne s t).mp hst
-    have hi : (i ∈ s.1) ≠ (i ∈ t.1) := fun h ↦ hit (h.mp his)
-    have hzero : ((Finset.univ.toList).map fun j : ι ↦
-        if (j ∈ s.1) = (j ∈ t.1) then (1 : K) else 0).prod = 0 := by
-      apply List.prod_eq_zero
-      rw [List.mem_map]
-      refine ⟨i, ?_, by simp [hi]⟩
-      simp
-    simp only [hst, ite_false]
-    rw [hzero, zero_smul]
+  rw [TauCeti.Module.End.listProd_indicator_eq_if_eq (l := Finset.univ.toList)
+    (fun i ↦ by simp) s.1 t.1]
+  simp
 
 private theorem diagonalProjector_mem (d : ℕ)
     (N : LieSubmodule K (Matrix ι ι K) (⋀[K]^d (ι → K)))

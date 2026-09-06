@@ -42,6 +42,34 @@ theorem listProd_apply_eq_smul (f : I → Module.End R M) (c : I → R) (x : M) 
 
 end
 
+section
+
+variable {R : Type u} {I : Type v}
+variable [CommRing R] [DecidableEq I]
+
+/-- A list containing every element of the index type has indicator product one exactly when two
+finite labels agree, and zero otherwise. -/
+theorem listProd_indicator_eq_if_eq (l : List I) (hl : ∀ i, i ∈ l) (s t : Finset I) :
+    (l.map fun i ↦ if (i ∈ s ↔ i ∈ t) then (1 : R) else 0).prod = if s = t then 1 else 0 := by
+  classical
+  by_cases hst : s = t
+  · subst t
+    simp only [iff_self, ite_true]
+    have hall : l.map (fun _ ↦ (1 : R)) = List.replicate l.length 1 := by
+      apply List.eq_replicate_iff.mpr
+      simp
+    rw [hall, List.prod_replicate, one_pow]
+  · obtain ⟨i, hi⟩ : ∃ i, ¬ (i ∈ s ↔ i ∈ t) := by
+      contrapose! hst
+      exact Finset.ext hst
+    have hzero : (0 : R) ∈ l.map (fun i ↦ if (i ∈ s ↔ i ∈ t) then 1 else 0) := by
+      apply List.mem_map.mpr
+      exact ⟨i, hl i, by simp [hi]⟩
+    simp only [hst, ite_false]
+    exact List.prod_eq_zero hzero
+
+end
+
 end Module.End
 
 end TauCeti
