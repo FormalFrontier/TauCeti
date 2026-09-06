@@ -214,17 +214,20 @@ theorem flat_restrictionRingHomOfSubset (ht : t ∈ T') (hsplit : ∀ u ∈ T', 
       = restrictionRingHomOfSubset P T s S hden T' S' hden' hTT' a := fun a ↦ by
     rw [laurentQuotientRingEquiv_apply, laurentQuotientRestrictionRingHom_quotientMk_weightedC]
   set e := laurentQuotientRingEquiv P T s t S hden T' S' hden' hTT' ht hsplit hcl
-  have _ := flat_quotient_laurentRelationIdeal P T s t S hden hTate hnoeth
-  let _ := (restrictionRingHomOfSubset P T s S hden T' S' hden' hTT').toAlgebra
-  -- the Laurent quotient is flat over `A⟨T/s⟩` and Remark 7.55 identifies it with `A⟨T'/s⟩`;
-  -- the inverse identification is a map of `A⟨T/s⟩`-algebras, so the flatness crosses it
-  have hsymm : ∀ r, e.symm (algebraMap (UniformSpace.Completion S) _ r)
-      = algebraMap (UniformSpace.Completion S) _ r := by
-    intro r
-    rw [RingHom.algebraMap_toAlgebra, ← hecomm, RingEquiv.symm_apply_apply,
-      ← Ideal.Quotient.mk_algebraMap,
-      RingHom.algebraMap_toAlgebra (weightedC _ isWeightFamily_one_weight)]
-  exact Module.Flat.of_linearEquiv (AlgEquiv.ofRingEquiv (f := e.symm) hsymm).toLinearEquiv
+  -- the restriction map is the structure map of the Laurent quotient followed by the
+  -- identification, so it is a composite of two flat maps
+  have hcomp : (e : _ →+* UniformSpace.Completion S').comp
+      (algebraMap (UniformSpace.Completion S)
+        (weightedRestrictedSubring (fun _ : Fin 1 ↦ ({1} : Set (UniformSpace.Completion S)))
+          isWeightFamily_one_weight ⧸ laurentRelationIdeal P T s t S hden))
+      = restrictionRingHomOfSubset P T s S hden T' S' hden' hTT' := by
+    ext a
+    rw [RingHom.comp_apply, RingEquiv.coe_toRingHom, ← Ideal.Quotient.mk_algebraMap,
+      RingHom.algebraMap_toAlgebra (weightedC _ isWeightFamily_one_weight), hecomm]
+  rw [← hcomp]
+  exact (RingHom.flat_algebraMap_iff.mpr
+    (flat_quotient_laurentRelationIdeal P T s t S hden hTate hnoeth)).comp
+      (RingHom.Flat.of_bijective e.bijective)
 
 /-- **Proposition 8.30, the elementary case**, for a topologically nilpotent denominator over a
 strongly noetherian base: the hypotheses of
