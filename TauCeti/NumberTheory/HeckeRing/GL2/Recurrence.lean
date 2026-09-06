@@ -95,6 +95,16 @@ private lemma heckeT_prime_pow_one : heckeT ⟨p ^ 1, pow_pos hp.pos 1⟩ = heck
   exact Subtype.ext (pow_one p)
 
 include hp in
+/-- `T(p)` commutes with the scalar operator `T(p,p)`, by `mul_comm_of_antiInvolution`:
+transposition is an anti-involution fixing every Hecke coset, which makes the ring
+commutative on the pair. -/
+private lemma commute_heckeT_prime_heckeTScalar :
+    Commute (heckeT ⟨p, hp.pos⟩) (heckeTScalar p) := by
+  rw [heckeT_prime p hp]
+  exact HeckeCosetModule.mul_comm_of_antiInvolution ℤ (transposeAntiInvolution 2)
+    (transposeAntiInvolution_onHeckeCoset_eq_self 2) (heckeTDiag 1 p) (heckeTScalar p)
+
+include hp in
 /-- The inductive step of the recurrence for exponents `≥ 3`: substitute the recurrence at
 `k` into the key product identity, then rearrange. -/
 private lemma heckeT_prime_pow_recurrence_step (k : ℕ) (hk_pos : 0 < k)
@@ -121,11 +131,7 @@ private lemma heckeT_prime_pow_recurrence_step (k : ℕ) (hk_pos : 0 < k)
   -- and `T(p,p)` over the difference on the right
   conv at h5 => rhs; rw [mul_sub]
   -- the scalar operator is central, and the induction hypothesis rewrites `T(p) · T(pᵏ)`
-  have hcomm : heckeT ⟨p, hp.pos⟩ * heckeTScalar p =
-      heckeTScalar p * heckeT ⟨p, hp.pos⟩ := by
-    rw [heckeT_prime p hp]
-    exact HeckeCosetModule.mul_comm_of_antiInvolution ℤ (transposeAntiInvolution 2)
-      (transposeAntiInvolution_onHeckeCoset_eq_self 2) (heckeTDiag 1 p) (heckeTScalar p)
+  have hcomm := (commute_heckeT_prime_heckeTScalar p hp).eq
   have hih : heckeT ⟨p, hp.pos⟩ * heckeT ⟨p ^ k, pow_pos hp.pos k⟩ =
       heckeT ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ +
         (p : ℤ) • (heckeTScalar p * heckeT ⟨p ^ (k - 1), pow_pos hp.pos (k - 1)⟩) := by
@@ -221,16 +227,11 @@ sequence over any ring in which `D` and `S` commute — and here they do, the sc
 being central. -/
 
 include hp in
-/-- `T(p)` commutes with the scalar operator `p • T(p,p)`.
-
-The scalar operator is central by `mul_comm_of_antiInvolution`, and an integer multiple of a
+/-- `T(p)` commutes with the scalar operator `p • T(p,p)`: an integer multiple of a
 commuting element still commutes. -/
 private lemma commute_heckeT_prime_smul_heckeTScalar :
-    Commute (heckeT ⟨p, hp.pos⟩) ((p : ℤ) • heckeTScalar p) := by
-  refine Commute.smul_right ?_ _
-  rw [heckeT_prime p hp]
-  exact HeckeCosetModule.mul_comm_of_antiInvolution ℤ (transposeAntiInvolution 2)
-    (transposeAntiInvolution_onHeckeCoset_eq_self 2) (heckeTDiag 1 p) (heckeTScalar p)
+    Commute (heckeT ⟨p, hp.pos⟩) ((p : ℤ) • heckeTScalar p) :=
+  (commute_heckeT_prime_heckeTScalar p hp).smul_right _
 
 include hp in
 /-- **Shimura, Theorem 3.24(4)** — the prime-power product formula:
