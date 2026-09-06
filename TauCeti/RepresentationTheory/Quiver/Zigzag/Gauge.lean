@@ -44,8 +44,6 @@ below.
   backtrack along an edge.
 * `TauCeti.SkewZigzagParameter.gauge`: the gauge transform of a skew-zigzag parameter.
 * `TauCeti.SkewZigzagParameter.IsGaugeEquivalent`: the gauge equivalence relation on parameters.
-* the `One` instance on `TauCeti.SkewZigzagParameter`: the constant parameter, whose relation
-  quotient is the ordinary zigzag one.
 
 ## Main results
 
@@ -82,7 +80,7 @@ variable {V : Type u} (G : SimpleGraph V)
 
 section Scale
 
-variable {M : Type*} [CommMonoid M]
+variable {M : Type*} [Monoid M]
 
 /-- The **backtrack scale** of a labelling `u` of the arrows of a doubled quiver along an edge: the
 product of the labels of the two orientations of that edge. Rescaling by `u` multiplies the
@@ -90,20 +88,26 @@ backtrack along the edge by this factor. -/
 def backtrackScale (u : ∀ ⦃x y : DoubledQuiver G⦄, (x ⟶ y) → M) {i j : V} (h : G.Adj i j) : M :=
   u (arrow G h) * u (arrow G h.symm)
 
+/-- The backtrack scale of a unit-valued labelling is the backtrack scale of its underlying scalar
+labelling. -/
+theorem val_backtrackScale {k : Type w} [Monoid k]
+    (u : ∀ ⦃x y : DoubledQuiver G⦄, (x ⟶ y) → kˣ) {i j : V} (h : G.Adj i j) :
+    ((backtrackScale G u h : kˣ) : k) = backtrackScale G (fun _ _ e => ((u e : kˣ) : k)) h :=
+  Units.val_mul _ _
+
+end Scale
+
+section ScaleComm
+
+variable {M : Type*} [CommMonoid M]
+
 /-- **The backtrack scale is a function of the unoriented edge**: it is unchanged by reversing the
 adjacency indexing it. -/
 theorem backtrackScale_symm (u : ∀ ⦃x y : DoubledQuiver G⦄, (x ⟶ y) → M) {i j : V}
     (h : G.Adj i j) : backtrackScale G u h.symm = backtrackScale G u h :=
   mul_comm _ _
 
-/-- The backtrack scale of a unit-valued labelling is the backtrack scale of its underlying scalar
-labelling. -/
-theorem val_backtrackScale {k : Type w} [CommMonoid k]
-    (u : ∀ ⦃x y : DoubledQuiver G⦄, (x ⟶ y) → kˣ) {i j : V} (h : G.Adj i j) :
-    ((backtrackScale G u h : kˣ) : k) = backtrackScale G (fun _ _ e => ((u e : kˣ) : k)) h :=
-  Units.val_mul _ _
-
-end Scale
+end ScaleComm
 
 /-! ### Rescaling a backtrack element -/
 
@@ -230,21 +234,6 @@ theorem isGaugeEquivalent_equivalence :
     Equivalence (IsGaugeEquivalent (k := k) (G := G)) :=
   ⟨IsGaugeEquivalent.refl, IsGaugeEquivalent.symm, IsGaugeEquivalent.trans⟩
 
-/-! ### The constant parameter -/
-
-/-- The constant skew-zigzag parameter, all of whose ratios are one: it imposes that all backtracks
-at a vertex are equal, which is the ordinary zigzag relation. -/
-instance : One (SkewZigzagParameter k G) where
-  one :=
-    { ratio _ _ _ _ _ := 1
-      ratio_self := by intro i j h; rfl
-      ratio_inv := by intro i j j' h h'; exact one_mul 1
-      ratio_cocycle := by intro i j j' j'' h h' h''; rw [one_mul, one_mul] }
-
-@[simp]
-theorem one_ratio {i j j' : V} (h : G.Adj i j) (h' : G.Adj i j') :
-    (1 : SkewZigzagParameter k G).ratio h h' = 1 := (rfl)
-
 end SkewZigzagParameter
 
 /-! ### Gauge independence of the presented algebra -/
@@ -254,19 +243,6 @@ section Independence
 open SkewZigzagParameter
 
 variable (k : Type w) [CommRing k] {V : Type u} (G : SimpleGraph V) [Finite V]
-
-/-- Rescaling the arrows by two unit labellings whose product is one undoes itself. -/
-theorem rescale_val_rescale_val (u u' : ∀ ⦃x y : DoubledQuiver G⦄, (x ⟶ y) → kˣ)
-    (h : ∀ ⦃x y : DoubledQuiver G⦄ (e : x ⟶ y), u e * u' e = 1)
-    (z : pathAlgebra k (DoubledQuiver G)) :
-    rescale (fun _ _ e => ((u e : kˣ) : k)) (rescale (fun _ _ e => ((u' e : kˣ) : k)) z) = z := by
-  have hcomp : (rescale (fun _ _ e => ((u e : kˣ) : k))).comp
-      (rescale fun _ _ e => ((u' e : kˣ) : k)) = AlgHom.id k (pathAlgebra k (DoubledQuiver G)) := by
-    rw [rescale_comp_rescale, ← rescale_one]
-    apply rescale_congr
-    intro _ _ e
-    rw [← Units.val_mul, h e, Units.val_one]
-  rw [← AlgHom.comp_apply, hcomp, AlgHom.id_apply]
 
 /-- **Rescaling by a unit labelling carries the skew relators of a parameter into the relation ideal
 of its gauge transform**: a path relator is multiplied by its path weight, and the backtrack
@@ -320,13 +296,27 @@ noncomputable def skewZigzagQuotientGaugeEquiv (c c' : SkewZigzagParameter k G)
   AlgEquiv.ofAlgHom (skewZigzagQuotientRescaleHom k G c c' u hc)
     (skewZigzagQuotientRescaleHom k G c' c (fun _ _ e => (u e)⁻¹) (by rw [hc, gauge_gauge_inv]))
     (Ideal.Quotient.algHom_ext k (AlgHom.ext fun x => by
+      have hid : rescale (fun _ _ e => ((u e : kˣ) : k) * (((u e)⁻¹ : kˣ) : k))
+          = AlgHom.id k (pathAlgebra k (DoubledQuiver G)) := by
+        rw [← rescale_one]
+        exact rescale_congr _ _ fun _ _ e => by
+          rw [← Units.val_mul, mul_inv_cancel, Units.val_one]
+      have hux : rescale (fun _ _ e => ((u e : kˣ) : k))
+          (rescale (fun _ _ e => (((u e)⁻¹ : kˣ) : k)) x) = x := by
+        rw [← AlgHom.comp_apply, rescale_comp_rescale, hid, AlgHom.id_apply]
       simp only [AlgHom.comp_apply, Ideal.Quotient.mkₐ_eq_mk, ← skewZigzagMk_apply,
-        skewZigzagQuotientRescaleHom_skewZigzagMk, AlgHom.id_apply,
-        rescale_val_rescale_val k G _ _ fun _ _ e => mul_inv_cancel (u e)]))
+        skewZigzagQuotientRescaleHom_skewZigzagMk, AlgHom.id_apply, hux]))
     (Ideal.Quotient.algHom_ext k (AlgHom.ext fun x => by
+      have hid : rescale (fun _ _ e => (((u e)⁻¹ : kˣ) : k) * ((u e : kˣ) : k))
+          = AlgHom.id k (pathAlgebra k (DoubledQuiver G)) := by
+        rw [← rescale_one]
+        exact rescale_congr _ _ fun _ _ e => by
+          rw [← Units.val_mul, inv_mul_cancel, Units.val_one]
+      have hux : rescale (fun _ _ e => (((u e)⁻¹ : kˣ) : k))
+          (rescale (fun _ _ e => ((u e : kˣ) : k)) x) = x := by
+        rw [← AlgHom.comp_apply, rescale_comp_rescale, hid, AlgHom.id_apply]
       simp only [AlgHom.comp_apply, Ideal.Quotient.mkₐ_eq_mk, ← skewZigzagMk_apply,
-        skewZigzagQuotientRescaleHom_skewZigzagMk, AlgHom.id_apply,
-        rescale_val_rescale_val k G _ _ fun _ _ e => inv_mul_cancel (u e)]))
+        skewZigzagQuotientRescaleHom_skewZigzagMk, AlgHom.id_apply, hux]))
 
 /-- **The gauge isomorphism is the arrow rescaling**: on an arbitrary quotient representative it
 rescales and then takes the class in the gauged quotient. -/

@@ -30,6 +30,8 @@ comparisons of parameters, including normalization on trees, belong to later wor
 ## Main definitions
 
 * `TauCeti.SkewZigzagParameter`: a unit-valued backtrack-ratio labelling.
+* the `One` instance on `TauCeti.SkewZigzagParameter`: the constant parameter, all of whose ratios
+  are one.
 * `TauCeti.IsSkewZigzagRelator` and `TauCeti.skewZigzagIdeal`: the uniform skew relation family
   and the two-sided ideal it generates.
 * `TauCeti.skewZigzagQuotient` and `TauCeti.skewZigzagMk`: the relation quotient and quotient map.
@@ -75,6 +77,25 @@ structure SkewZigzagParameter (k : Type w) [Monoid k] {V : Type u} (G : SimpleGr
 attribute [simp] SkewZigzagParameter.ratio_self
 
 namespace SkewZigzagParameter
+
+section One
+
+variable {k : Type w} [Monoid k] {V : Type u} {G : SimpleGraph V}
+
+/-- The constant skew-zigzag parameter, all of whose ratios are one: it imposes that all backtracks
+at a vertex are equal, which is the ordinary zigzag relation. -/
+instance : One (SkewZigzagParameter k G) where
+  one :=
+    { ratio _ _ _ _ _ := 1
+      ratio_self := by intro i j h; rfl
+      ratio_inv := by intro i j j' h h'; exact one_mul 1
+      ratio_cocycle := by intro i j j' j'' h h' h''; rw [one_mul, one_mul] }
+
+@[simp]
+theorem one_ratio {i j j' : V} (h : G.Adj i j) (h' : G.Adj i j') :
+    (1 : SkewZigzagParameter k G).ratio h h' = 1 := (rfl)
+
+end One
 
 variable {k : Type w} [MonoidWithZero k] [Nontrivial k] {V : Type u} {G : SimpleGraph V}
 
