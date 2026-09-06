@@ -58,7 +58,11 @@ namespace CoordinatePullback
 infinity exactly when the generic `x`-coordinate of the source is integral over the target
 coordinate ring acting through it. One direction is a special case; for the other, the
 `y`-coordinate follows from the Weierstrass equation and the two coordinates generate the
-coordinate ring. -/
+coordinate ring.
+
+Deliberately not `@[simp]`: `CoordinatePullback.mapsInfinity_iff` already carries that attribute
+and rewrites `MapsInfinity` to its quantified form, so this left-hand side is not in simp-normal
+form and the `simpNF` linter rejects the pair. -/
 theorem mapsInfinity_iff_isIntegralElem_genericX (p : CoordinatePullback W₁ W₂) :
     p.MapsInfinity ↔ RingHom.IsIntegralElem p.toRingHom W₁.genericX := by
   refine ⟨fun h => ?_, fun hx => ?_⟩
