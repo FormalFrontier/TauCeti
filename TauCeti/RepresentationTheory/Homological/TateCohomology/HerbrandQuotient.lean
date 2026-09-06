@@ -6,7 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.RepresentationTheory.Homological.TateCohomology.LowDegree
-public import Mathlib.RepresentationTheory.Homological.FiniteCyclic
+import Mathlib.RepresentationTheory.Homological.FiniteCyclic
 
 /-!
 # Herbrand quotients of finite cyclic group representations
