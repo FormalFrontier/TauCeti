@@ -193,15 +193,13 @@ theorem fisherSnedecorMap_mapInv (hm : m ≠ 0) (hn : n ≠ 0) {x : ℝ}
   field_simp [hm, hn, hden]
   ring
 
-/-- On the positive quadrant, the beta-to-F transformation with `m` and `n` degrees of freedom
-sends the ratio-to-sum `u / (u + v)` to the variance ratio `(u / m) / (v / n)`; equivalently, it
-inverts the passage from a variance ratio to the fraction of the total that its numerator
-carries. -/
-theorem fisherSnedecorMap_div_add (hm : 0 < m) (hn : 0 < n) {u v : ℝ} (hu : 0 < u) (hv : 0 < v) :
+/-- Away from the zeros of the denominators involved, the beta-to-F transformation with `m` and
+`n` degrees of freedom sends the ratio-to-sum `u / (u + v)` to the variance ratio
+`(u / m) / (v / n)`; equivalently, it inverts the passage from a variance ratio to the fraction of
+the total that its numerator carries. -/
+theorem fisherSnedecorMap_div_add (hm : m ≠ 0) (hn : n ≠ 0) {u v : ℝ} (hv : v ≠ 0)
+    (huv : u + v ≠ 0) :
     fisherSnedecorMap m n (u / (u + v)) = u / m / (v / n) := by
-  have hm' : m ≠ 0 := hm.ne'
-  have hn' : n ≠ 0 := hn.ne'
-  have huv : (0 : ℝ) < u + v := by linarith
   have hsub : 1 - u / (u + v) = v / (u + v) := by
     field_simp
     ring
