@@ -66,7 +66,10 @@ What this file supplies is the branch's explicit carrier, its numbered root char
 type-`Bₙ` root datum, the equation `Frob_q (x_i(u)) = x_i(u ^ q)` that milestone L1 asks of an
 ordinary Frobenius factor, and the milestone L3 recipe run on that Frobenius, each in the shape
 those milestones state it; they transfer to the L0 carrier along that Layer 9 identification, and
-not before. The counterparts on the branches already assembled are
+not before. Accordingly the fixed-point quotient formed below is named
+`TauCeti.TypeBLieIndex.SpinCarrierGroup` after the carrier it is formed on, and the canonical
+`TauCeti.TypeBLieIndex.Group` of the branch is left undefined until that identification is
+available to define it by. The counterparts on the branches already assembled are
 `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeA.lean`,
 `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeD.lean`,
 `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeE6.lean` and
@@ -86,7 +89,9 @@ not before. The counterparts on the branches already assembled are
   `TauCeti.TypeBLieIndex.mem_fixedSubgroup_steinberg_iff`: the Steinberg endomorphism of the
   family, its equation `Frob_q (x_i(u)) = x_i(u ^ q)` on the numbered simple-root subgroups, and
   the description of its fixed points as the carrier points with entries in `𝔽_q`.
-* `TauCeti.TypeBLieIndex.Group`: the derived subgroup of those fixed points, modulo its centre.
+* `TauCeti.TypeBLieIndex.SpinCarrierGroup`: the derived subgroup of those fixed points, modulo its
+  centre. The name records the carrier it is formed on; the canonical `Group` of the branch is not
+  defined here, for the reason given below.
 
 ## References
 
@@ -356,14 +361,15 @@ points of the Steinberg map above, modulo the centre of that derived subgroup.
 
 This is the shape milestone L3 asks of the untwisted family `Bₙ(q)`, formed on the spin carrier
 rather than on the pinned simply connected Chevalley--Demazure group scheme that milestone L0 asks
-for. It becomes the candidate simple group of that family along the Layer 9 identification of the
-two carriers described in the module docstring, and not before; it is not offered as that candidate
-here. Nothing below asserts that it is finite, perfect, or simple. -/
-abbrev Group : Type := FixedPointCandidate d.steinberg
+for. The name says which carrier it is formed on, and the branch's canonical `Group` is deliberately
+not defined here: this quotient becomes the candidate simple group of the family only along the
+Layer 9 identification of the two carriers described in the module docstring, so the canonical name
+is left for whatever definition that identification licenses. Nothing below asserts that this
+quotient is finite, perfect, or simple. -/
+abbrev SpinCarrierGroup : Type := FixedPointCandidate d.steinberg
 
-/-- The classification list asks every branch to carry a group instance; the quotient construction
-supplies it. -/
-example : _root_.Group d.Group := inferInstance
+/-- The classification recipe produces a group; the quotient construction supplies the instance. -/
+example : Group d.SpinCarrierGroup := inferInstance
 
 end
 
