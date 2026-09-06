@@ -507,16 +507,8 @@ theorem graphAutomorphism_hom_comp_self :
 
 /-- The inverse leg of the doubled type-`E₆` graph automorphism is its forward leg. -/
 @[simp]
-theorem graphAutomorphism_inv : graphAutomorphism.inv = graphAutomorphism.hom := by
-  calc
-    graphAutomorphism.inv = 𝟙 groupScheme ≫ graphAutomorphism.inv :=
-      (Category.id_comp _).symm
-    _ = (graphAutomorphism.hom ≫ graphAutomorphism.hom) ≫
-        graphAutomorphism.inv := by rw [graphAutomorphism_hom_comp_self]
-    _ = graphAutomorphism.hom ≫
-        (graphAutomorphism.hom ≫ graphAutomorphism.inv) := Category.assoc _ _ _
-    _ = graphAutomorphism.hom := by
-      rw [graphAutomorphism.hom_inv_id, Category.comp_id]
+theorem graphAutomorphism_inv : graphAutomorphism.inv = graphAutomorphism.hom :=
+  ((Iso.hom_comp_eq_id graphAutomorphism).mp graphAutomorphism_hom_comp_self).symm
 
 /-! ## The graph automorphism on matrix-valued points -/
 
