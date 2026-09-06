@@ -210,8 +210,13 @@ theorem baseChangeMap_includeLeft_injective
   have hcomp := congrArg toBialgHom
     (baseChangeMap_includeLeft_comp_baseChangeTensorProductIso_hom K H L)
   rw [toBialgHom_comp] at hcomp
+  -- `includeLeft` is a finite-type categorical abbreviation for this bialgebra map. There is
+  -- deliberately no duplicate categorical `toBialgHom` lemma, so expose that abbreviation here.
   change (toBialgHom e.hom).comp (toBialgHom (baseChangeMap (K := K) (includeLeft H L))) =
     Bialgebra.TensorProduct.includeLeft at hcomp
+  -- Mathlib's algebra-level inclusion theorem requires `Module.Flat K H'`, which is not
+  -- available for an arbitrary Hopf algebra. The counit projection gives a retraction without
+  -- adding that unnecessary hypothesis.
   have hinclude : Function.Injective
       (Bialgebra.TensorProduct.includeLeft (R := K) (H₁ := H') (H₂ := L')) := by
     apply Function.LeftInverse.injective
@@ -234,8 +239,12 @@ theorem baseChangeMap_includeRight_injective
   have hcomp := congrArg toBialgHom
     (baseChangeMap_includeRight_comp_baseChangeTensorProductIso_hom K H L)
   rw [toBialgHom_comp] at hcomp
+  -- `includeRight` is likewise only a finite-type wrapper around the concrete bialgebra map;
+  -- expose the abbreviation rather than adding a second public statement of that identity.
   change (toBialgHom e.hom).comp (toBialgHom (baseChangeMap (K := K) (includeRight H L))) =
     Bialgebra.TensorProduct.includeRight at hcomp
+  -- As on the left, the bialgebra projection proves injectivity without the flatness
+  -- hypothesis required by Mathlib's algebra-level tensor-product inclusion theorem.
   have hinclude : Function.Injective
       (Bialgebra.TensorProduct.includeRight (R := K) (H₁ := H') (H₂ := L')) := by
     apply Function.LeftInverse.injective

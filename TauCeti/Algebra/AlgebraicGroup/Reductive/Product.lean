@@ -124,8 +124,12 @@ private theorem restriction_eq_counit
   intro x
   have h := congrArg (fun φ : H ⟶ M ↦ FiniteTypeCommHopfAlgCat.toBialgHom φ x) hcomp
   rw [FiniteTypeCommHopfAlgCat.toBialgHom_comp, BialgHom.comp_apply] at h
-  exact h.trans (HopfIdeal.apply_eq_counit_of_ker_eq_augmentation
-    (FiniteTypeCommHopfAlgCat.toBialgHom f) hf x)
+  exact h.trans (TauCeti.BialgHom.apply_eq_counit_of_ker_eq_augmentation
+    (FiniteTypeCommHopfAlgCat.toBialgHom f)
+      (by
+        ext y
+        rw [RingHom.mem_ker, HopfIdeal.mem_toIdeal, ← hf, HopfIdeal.mem_ker])
+      x)
 
 /-- **A direct product of reductive finite-type affine groups is reductive.** -/
 theorem tensorProduct (H K : FiniteTypeCommHopfAlgCat.{u, u} k)
@@ -191,23 +195,33 @@ theorem tensorProduct (H K : FiniteTypeCommHopfAlgCat.{u, u} k)
         (Bialgebra.counitAlgHom (AlgebraicClosure k) Hbar) := by
     have h := restriction_eq_counit (FiniteTypeCommHopfAlgCat.includeLeft Hbar Kbar)
       (e.inv ≫ q) (fH ≫ q) hleftComp hleft
-    rw [show (FiniteTypeCommHopfAlgCat.toBialgHom
-      (FiniteTypeCommHopfAlgCat.includeLeft Hbar Kbar)).toAlgHom =
-        (Bialgebra.TensorProduct.includeLeft (R := AlgebraicClosure k)
-          (H₁ := Hbar) (H₂ := Kbar)).toAlgHom from rfl,
-      Bialgebra.TensorProduct.includeLeft_toAlgHom] at h
-    simpa only [g] using h
+    have hi : (FiniteTypeCommHopfAlgCat.toBialgHom
+        (FiniteTypeCommHopfAlgCat.includeLeft Hbar Kbar)).toAlgHom =
+        Algebra.TensorProduct.includeLeft := by
+      apply AlgHom.ext
+      intro x
+      exact (FiniteTypeCommHopfAlgCat.includeLeft_apply Hbar Kbar x).trans
+        (Algebra.TensorProduct.includeLeft_apply x).symm
+    rw [hi] at h
+    apply AlgHom.ext
+    intro x
+    simpa only [g] using DFunLike.congr_fun h x
   have hrightMap : g.comp Algebra.TensorProduct.includeRight =
       (Algebra.ofId (AlgebraicClosure k) (FiniteTypeCommHopfAlgCat.quotient P₀ I)).comp
         (Bialgebra.counitAlgHom (AlgebraicClosure k) Kbar) := by
     have h := restriction_eq_counit (FiniteTypeCommHopfAlgCat.includeRight Hbar Kbar)
       (e.inv ≫ q) (fK ≫ q) hrightComp hright
-    rw [show (FiniteTypeCommHopfAlgCat.toBialgHom
-      (FiniteTypeCommHopfAlgCat.includeRight Hbar Kbar)).toAlgHom =
-        (Bialgebra.TensorProduct.includeRight (R := AlgebraicClosure k)
-          (H₁ := Hbar) (H₂ := Kbar)).toAlgHom from rfl,
-      Bialgebra.TensorProduct.includeRight_toAlgHom] at h
-    simpa only [g] using h
+    have hi : (FiniteTypeCommHopfAlgCat.toBialgHom
+        (FiniteTypeCommHopfAlgCat.includeRight Hbar Kbar)).toAlgHom =
+        Algebra.TensorProduct.includeRight := by
+      apply AlgHom.ext
+      intro x
+      exact (FiniteTypeCommHopfAlgCat.includeRight_apply Hbar Kbar x).trans
+        (Algebra.TensorProduct.includeRight_apply x).symm
+    rw [hi] at h
+    apply AlgHom.ext
+    intro x
+    simpa only [g] using DFunLike.congr_fun h x
   have hg : g = ε := by
     rw [← AffineGroup.Product.productMap_restrict g, hleftMap, hrightMap]
     apply Algebra.TensorProduct.ext'
