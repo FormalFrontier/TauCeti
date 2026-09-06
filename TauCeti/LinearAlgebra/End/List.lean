@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Module.LinearMap.End
+public import Mathlib.Data.Finset.Basic
 
 /-!
 # List products of diagonal endomorphisms
