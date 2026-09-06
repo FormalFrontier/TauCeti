@@ -299,7 +299,7 @@ noncomputable def atkinLehnerAutomorphism : GL (Fin 2) ℚ ≃* GL (Fin 2) ℚ :
   (MulEquiv.inv' (GL (Fin 2) ℚ)).trans (atkinLehnerEquiv N).symm
 
 /-- The ambient automorphism is the Atkin–Lehner bar applied after inversion. -/
-lemma atkinLehnerAutomorphism_apply (x : GL (Fin 2) ℚ) :
+@[simp] lemma atkinLehnerAutomorphism_apply (x : GL (Fin 2) ℚ) :
     atkinLehnerAutomorphism N x = natDiagGL 2 ![1, N] *
       (transposeGLEquiv 2 x⁻¹).unop * (natDiagGL 2 ![1, N])⁻¹ :=
   (rfl)
@@ -311,20 +311,11 @@ private lemma atkinLehnerAutomorphism_toMonoidHom_apply (x : GL (Fin 2) ℚ) :
   (rfl)
 
 /-- The ambient Atkin–Lehner automorphism is involutive. -/
-@[simp] lemma atkinLehnerAutomorphism_involutive (x : GL (Fin 2) ℚ) :
+lemma atkinLehnerAutomorphism_involutive (x : GL (Fin 2) ℚ) :
     atkinLehnerAutomorphism N (atkinLehnerAutomorphism N x) = x := by
   rw [atkinLehnerAutomorphism_apply, ← atkinLehnerHom_unop,
     atkinLehnerAutomorphism_apply, ← atkinLehnerHom_unop]
   rw [map_inv, MulOpposite.unop_inv, atkinLehnerHom_involutive, inv_inv]
-
-/-- The ambient Atkin–Lehner automorphism is its own inverse. -/
-@[simp] theorem atkinLehnerAutomorphism_symm :
-    (atkinLehnerAutomorphism N).symm = atkinLehnerAutomorphism N := by
-  apply MulEquiv.ext
-  intro x
-  apply (atkinLehnerAutomorphism N).injective
-  rw [(atkinLehnerAutomorphism N).apply_symm_apply,
-    atkinLehnerAutomorphism_involutive]
 
 /-- The ambient Atkin–Lehner automorphism preserves the image of `Γ₀(N)`. -/
 @[simp] theorem atkinLehnerAutomorphism_map_Gamma0 [NeZero N] :
