@@ -252,8 +252,8 @@ theorem iterateStructureHom_eq (a : A) :
           weightedRestrictedSubring _ _) :
         restrictedMvPowerSeriesCompletion m (restrictedMvPowerSeriesCompletion k A)) := by
   rw [iterateStructureHom, RingHom.comp_apply,
-    algebraMap_completion_weightedRestrictedSubring _ _ isWeightFamily_one_weight,
-    algebraMap_completion_weightedRestrictedSubring _ _ isWeightFamily_one_weight]
+    algebraMap_completion_weightedRestrictedSubring_apply _ _ isWeightFamily_one_weight,
+    algebraMap_completion_weightedRestrictedSubring_apply _ _ isWeightFamily_one_weight]
 
 /-- **Joining after splitting is the identity on `A⟨X₁,…,X_{k+m}⟩`.** -/
 theorem iterateJoinHom_comp_iterateSplitHom :
@@ -265,7 +265,7 @@ theorem iterateJoinHom_comp_iterateSplitHom :
   · simp only [RingHom.coe_comp, Function.comp_apply, RingHom.id_apply,
       iterateSplitHom_coe_weightedC, iterateStructureHom_eq, iterateJoinHom_coe_weightedC,
       iterateFirstBlockHom_coe_weightedC,
-      algebraMap_completion_weightedRestrictedSubring _ _ isWeightFamily_one_weight]
+      algebraMap_completion_weightedRestrictedSubring_apply _ _ isWeightFamily_one_weight]
   · simp only [RingHom.coe_comp, Function.comp_apply, RingHom.id_apply,
       iterateSplitHom_coe_weightedX, iterateVar]
     refine Fin.addCases (fun i ↦ ?_) (fun j ↦ ?_) i
@@ -283,11 +283,11 @@ theorem iterateSplitHom_comp_iterateFirstBlockHom :
     (continuous_algebraMap_restrictedMvPowerSeriesCompletion m
       (restrictedMvPowerSeriesCompletion k A)) (fun a ↦ ?_) fun i ↦ ?_
   · simp only [RingHom.coe_comp, Function.comp_apply, iterateFirstBlockHom_coe_weightedC,
-      algebraMap_completion_weightedRestrictedSubring _ _ isWeightFamily_one_weight,
+      algebraMap_completion_weightedRestrictedSubring_apply _ _ isWeightFamily_one_weight,
       iterateSplitHom_coe_weightedC, iterateStructureHom_eq]
   · simp only [RingHom.coe_comp, Function.comp_apply, iterateFirstBlockHom_coe_weightedX,
       iterateSplitHom_coe_weightedX, iterateVar, Fin.addCases_left,
-      algebraMap_completion_weightedRestrictedSubring _ _ isWeightFamily_one_weight]
+      algebraMap_completion_weightedRestrictedSubring_apply _ _ isWeightFamily_one_weight]
 
 /-- **Splitting after joining is the identity on `A⟨X₁,…,Xₖ⟩⟨Y₁,…,Y_m⟩`.** -/
 theorem iterateSplitHom_comp_iterateJoinHom :
@@ -300,7 +300,7 @@ theorem iterateSplitHom_comp_iterateJoinHom :
   · simp only [RingHom.coe_comp, Function.comp_apply, RingHom.id_apply,
       iterateJoinHom_coe_weightedC]
     rw [← RingHom.comp_apply, iterateSplitHom_comp_iterateFirstBlockHom,
-      algebraMap_completion_weightedRestrictedSubring _ _ isWeightFamily_one_weight]
+      algebraMap_completion_weightedRestrictedSubring_apply _ _ isWeightFamily_one_weight]
   · simp only [RingHom.coe_comp, Function.comp_apply, RingHom.id_apply,
       iterateJoinHom_coe_weightedX, iterateSplitHom_coe_weightedX, iterateVar, Fin.addCases_right]
 
@@ -363,7 +363,7 @@ theorem iterateSplitHom_comp_algebraMap :
       = iterateStructureHom k m A := by
   ext a
   rw [RingHom.comp_apply,
-    algebraMap_completion_weightedRestrictedSubring _ _ isWeightFamily_one_weight,
+    algebraMap_completion_weightedRestrictedSubring_apply _ _ isWeightFamily_one_weight,
     iterateSplitHom_coe_weightedC]
 
 /-- **The iteration isomorphism as an equivalence of `A`-algebras.**
