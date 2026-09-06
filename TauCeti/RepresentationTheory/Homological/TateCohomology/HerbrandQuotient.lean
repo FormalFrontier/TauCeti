@@ -73,6 +73,7 @@ theorem herbrandQuotient_ne_zero_iff {M : Rep R G} :
   simp [herbrandQuotient, Nat.card_eq_zero]
 
 /-- The Herbrand quotient of a finite representation of a finite cyclic group is one. -/
+@[simp]
 theorem herbrandQuotient_eq_one_of_finite [IsCyclic G] (M : Rep R G) [Finite M] :
     herbrandQuotient M = 1 := by
   let hgen := isCyclic_iff_exists_zpowers_eq_top.mp (inferInstance : IsCyclic G)
