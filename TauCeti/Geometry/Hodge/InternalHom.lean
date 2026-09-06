@@ -33,6 +33,9 @@ has the intrinsic conjugation on linear maps.
   the degree-`p` component into the degree-`p+r` component.
 * `TauCeti.Hodge.HodgeStructureOn.map_mem_F_of_mem_internalHom_F`: a map in filtration degree
   at least `r` sends `F^p V` into `F^{p+r} W`.
+* `TauCeti.Hodge.HodgeStructureOn.mem_internalHom_piece_iff` and
+  `TauCeti.Hodge.HodgeStructureOn.mem_internalHom_F_iff`: these degree-shifting properties
+  characterize the internal-hom components and filtration steps.
 
 This is the internal-hom companion to duals and tensor products for pure Hodge structures;
 the convention follows Peters--Steenbrink, *Mixed Hodge Structures*, §2.1.
@@ -49,6 +52,14 @@ universe u v
 variable {W₁ : Type u} {W₂ : Type v}
 variable [AddCommGroup W₁] [Module ℂ W₁]
 variable [AddCommGroup W₂] [Module ℂ W₂]
+
+/-- Mathlib records `dualTensorHomEquivOfBasis_apply` for the basis-dependent contraction
+equivalence, but states no `apply` lemma for `dualTensorHomEquiv`; its forward map is the
+contraction `dualTensorHom` itself. -/
+private theorem dualTensorHomEquiv_apply [FiniteDimensional ℂ W₁]
+    (z : Module.Dual ℂ W₁ ⊗[ℂ] W₂) :
+    dualTensorHomEquiv ℂ W₁ W₂ z = dualTensorHom ℂ W₁ W₂ z :=
+  (rfl)
 
 namespace Conjugation
 
@@ -74,8 +85,9 @@ theorem dualTensorHomEquiv_symm_map_internalHom_conj [FiniteDimensional ℂ W₁
     (dualTensorHomEquiv ℂ W₁ W₂).symm ((ω₁.internalHom ω₂).toEquiv f) =
       (ω₁.dual.tensorProduct ω₂).toEquiv ((dualTensorHomEquiv ℂ W₁ W₂).symm f) := by
   apply (dualTensorHomEquiv ℂ W₁ W₂).injective
-  simpa using (ω₁.dualTensorHom_map_tensorProduct_conj ω₂
-    ((dualTensorHomEquiv ℂ W₁ W₂).symm f)).symm
+  rw [LinearEquiv.apply_symm_apply, dualTensorHomEquiv_apply,
+    ω₁.dualTensorHom_map_tensorProduct_conj ω₂, ← dualTensorHomEquiv_apply,
+    LinearEquiv.apply_symm_apply]
 
 end Conjugation
 
@@ -104,6 +116,7 @@ noncomputable def internalHom (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
 
 /-- The internal-hom filtration is the pullback of the tensor-product filtration on
 `V^* ⊗ W`. -/
+@[simp]
 theorem internalHom_F (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
     (hs₂ : HodgeStructureOn W₂ ω₂ n₂) (p : ℤ) :
     (hs₁.internalHom hs₂).F p =
@@ -113,6 +126,7 @@ theorem internalHom_F (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
 
 /-- The conjugate internal-hom filtration is the pullback of the conjugate tensor-product
 filtration. -/
+@[simp]
 theorem internalHom_conjF (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
     (hs₂ : HodgeStructureOn W₂ ω₂ n₂) (p : ℤ) :
     (hs₁.internalHom hs₂).conjF p =
@@ -130,8 +144,8 @@ theorem internalHom_piece (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
     (hs₁.internalHom hs₂).piece p =
       ((hs₁.dual.tensorProduct hs₂).piece p).comap
         (dualTensorHomEquiv ℂ W₁ W₂).symm.toLinearMap := by
-  rw [piece_def, internalHom_F, internalHom_conjF, piece_def, Submodule.comap_inf]
-  rw [show n₂ - n₁ - p = -n₁ + n₂ - p by ring]
+  have hindex : n₂ - n₁ - p = -n₁ + n₂ - p := by ring
+  rw [piece_def, internalHom_F, internalHom_conjF, piece_def, Submodule.comap_inf, hindex]
 
 /-- The degree-`p` internal-hom component, presented as the pullback of the sum of
 `(V^*)^r ⊗ W^{p-r}`. -/
@@ -149,9 +163,9 @@ theorem dualTensorHom_mem_internalHom_piece (hs₁ : HodgeStructureOn W₁ ω₁
     (hs₂ : HodgeStructureOn W₂ ω₂ n₂) {p q : ℤ} {φ : Module.Dual ℂ W₁} {y : W₂}
     (hφ : φ ∈ (hs₁.dual).piece p) (hy : y ∈ hs₂.piece q) :
     dualTensorHom ℂ W₁ W₂ (φ ⊗ₜ[ℂ] y) ∈ (hs₁.internalHom hs₂).piece (p + q) := by
-  rw [internalHom_piece, Submodule.mem_comap]
-  have ht := hs₁.dual.tmul_mem_tensorProduct hs₂ hφ hy
-  simpa using ht
+  rw [internalHom_piece, Submodule.mem_comap, LinearEquiv.coe_coe, ← dualTensorHomEquiv_apply,
+    LinearEquiv.symm_apply_apply]
+  exact hs₁.dual.tmul_mem_tensorProduct hs₂ hφ hy
 
 /-- A map of internal-hom Hodge degree `p` carries the source component of degree `a` into the
 target component of degree `a + p`. -/
@@ -181,6 +195,41 @@ theorem map_mem_piece_of_mem_internalHom_piece (hs₁ : HodgeStructureOn W₁ ω
   rw [← he]
   exact hle hz
 
+/-- The degree-`r` internal-hom component of a map, evaluated at a vector of Hodge degree `a`,
+is the degree-`a + r` component of the value. -/
+theorem internalHom_proj_apply_apply (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
+    (hs₂ : HodgeStructureOn W₂ ω₂ n₂) {r a : ℤ} (f : W₁ →ₗ[ℂ] W₂) {x : W₁}
+    (hx : x ∈ hs₁.piece a) :
+    (hs₁.internalHom hs₂).proj r f x = hs₂.proj (a + r) (f x) := by
+  have hext : LinearMap.applyₗ (R := ℂ) x ∘ₗ (hs₁.internalHom hs₂).proj r =
+      hs₂.proj (a + r) ∘ₗ LinearMap.applyₗ (R := ℂ) x := by
+    refine (hs₁.internalHom hs₂).linearMap_ext_of_piece fun s g hg ↦ ?_
+    have hgx : g x ∈ hs₂.piece (a + s) := hs₁.map_mem_piece_of_mem_internalHom_piece hs₂ hg hx
+    rcases eq_or_ne s r with rfl | hsr
+    · simp only [LinearMap.comp_apply, LinearMap.applyₗ_apply_apply,
+        (hs₁.internalHom hs₂).proj_apply_of_mem hg, hs₂.proj_apply_of_mem hgx]
+    · simp only [LinearMap.comp_apply, LinearMap.applyₗ_apply_apply,
+        (hs₁.internalHom hs₂).proj_apply_eq_zero_of_mem_of_ne hg hsr, LinearMap.zero_apply,
+        hs₂.proj_apply_eq_zero_of_mem_of_ne hgx (by omega : a + s ≠ a + r)]
+  exact congrArg (fun L ↦ L f) hext
+
+/-- A map lies in the degree-`p` internal-hom component exactly when it carries every source
+component of degree `a` into the target component of degree `a + p`. -/
+theorem mem_internalHom_piece_iff (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
+    (hs₂ : HodgeStructureOn W₂ ω₂ n₂) {p : ℤ} (f : W₁ →ₗ[ℂ] W₂) :
+    f ∈ (hs₁.internalHom hs₂).piece p ↔ ∀ a, ∀ x ∈ hs₁.piece a, f x ∈ hs₂.piece (a + p) := by
+  refine ⟨fun hf a x hx ↦ hs₁.map_mem_piece_of_mem_internalHom_piece hs₂ hf hx, fun hf ↦ ?_⟩
+  refine (hs₁.internalHom hs₂).mem_of_proj_mem fun r ↦ ?_
+  rcases eq_or_ne r p with rfl | hrp
+  · exact (hs₁.internalHom hs₂).proj_mem r f
+  · have hzero : (hs₁.internalHom hs₂).proj r f = 0 :=
+      hs₁.linearMap_ext_of_piece fun a x hx ↦ by
+        rw [hs₁.internalHom_proj_apply_apply hs₂ f hx,
+          hs₂.proj_apply_eq_zero_of_mem_of_ne (hf a x hx) (by omega : a + p ≠ a + r),
+          LinearMap.zero_apply]
+    rw [hzero]
+    exact Submodule.zero_mem _
+
 /-- A map in the `p`-th step of the internal-hom filtration sends the `q`-th step of the source
 filtration into the `(p+q)`-th step of the target filtration. -/
 theorem map_mem_F_of_mem_internalHom_F (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
@@ -199,6 +248,24 @@ theorem map_mem_F_of_mem_internalHom_F (hs₁ : HodgeStructureOn W₁ ω₁ n₁
     (fun ha y hy ↦ ?_) (by simp) (fun y z hy hz ↦ by simpa using Submodule.add_mem _ hy hz)
   exact ((hs₂.piece_le_F (a + r)).trans (hs₂.F_antitone (by omega)))
     (hs₁.map_mem_piece_of_mem_internalHom_piece hs₂ hg hy)
+
+/-- A map lies in the `p`-th step of the internal-hom filtration exactly when it sends every
+step `F^q` of the source filtration into the step `F^{p+q}` of the target filtration. -/
+theorem mem_internalHom_F_iff (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
+    (hs₂ : HodgeStructureOn W₂ ω₂ n₂) {p : ℤ} (f : W₁ →ₗ[ℂ] W₂) :
+    f ∈ (hs₁.internalHom hs₂).F p ↔ ∀ q, ∀ x ∈ hs₁.F q, f x ∈ hs₂.F (p + q) := by
+  refine ⟨fun hf q x hx ↦ hs₁.map_mem_F_of_mem_internalHom_F hs₂ hf hx, fun hf ↦ ?_⟩
+  refine (hs₁.internalHom hs₂).mem_of_proj_mem fun r ↦ ?_
+  rcases lt_or_ge r p with hrp | hpr
+  · have hzero : (hs₁.internalHom hs₂).proj r f = 0 :=
+      hs₁.linearMap_ext_of_piece fun a x hx ↦ by
+        rw [hs₁.internalHom_proj_apply_apply hs₂ f hx,
+          hs₂.proj_eq_zero_of_mem_F_of_lt (hf a x (hs₁.piece_le_F a hx)) (by omega),
+          LinearMap.zero_apply]
+    rw [hzero]
+    exact Submodule.zero_mem _
+  · exact ((hs₁.internalHom hs₂).piece_le_F r).trans ((hs₁.internalHom hs₂).F_antitone hpr)
+      ((hs₁.internalHom hs₂).proj_mem r f)
 
 end HodgeStructureOn
 
