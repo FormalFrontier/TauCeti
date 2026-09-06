@@ -6,6 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Analysis.Complex.Basic
+public import Mathlib.Analysis.Calculus.Deriv.ZPow
+public import Mathlib.Data.Matrix.Block
 public import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
 public import TauCeti.Algebra.BigOperators.ZPow
 public import TauCeti.Analysis.Calculus.ContDiffZPow
@@ -45,6 +47,14 @@ monomial maps really is a different function off that locus.
   mixed-chart locus. `TauCeti.Toric.MixedExponent.id_comp`,
   `TauCeti.Toric.MixedExponent.comp_id` and `TauCeti.Toric.MixedExponent.comp_assoc` are the
   associated category laws.
+* `TauCeti.Toric.MixedExponent.prod`, `TauCeti.Toric.mixedChartProdEquiv`, and
+  `TauCeti.Toric.mixedMonomialMap_prod`: products of exponent data act componentwise on products
+  of mixed charts.
+* `TauCeti.Toric.hasDerivAt_mixedMonomialMap_fst_boundary`,
+  `TauCeti.Toric.hasDerivAt_mixedMonomialMap_fst_torus`,
+  `TauCeti.Toric.hasDerivAt_mixedMonomialMap_snd_boundary`, and
+  `TauCeti.Toric.hasDerivAt_mixedMonomialMap_snd_torus`: the four blocks of the Jacobian in mixed
+  coordinates.
 * `TauCeti.Toric.mixedMonomialOpenPartialHomeomorph`: a two-sided inverse pair of exponent data
   gives a biholomorphism between the two mixed-chart loci, holomorphic in both directions by
   `TauCeti.Toric.mixedMonomialOpenPartialHomeomorph_contDiffOn` and
@@ -213,6 +223,41 @@ theorem comp_assoc {k''' l''' : ℕ} (C : MixedExponent k'' l'' k''' l''')
       simp [Matrix.add_mul, Matrix.mul_add, Matrix.mul_assoc, add_assoc])
     (Matrix.mul_assoc _ _ _)
 
+/-- The product of mixed exponent data is the block diagonal exponent data. -/
+def prod {k₁ l₁ k₁' l₁' k₂ l₂ k₂' l₂' : ℕ}
+    (A : MixedExponent k₁ l₁ k₁' l₁') (B : MixedExponent k₂ l₂ k₂' l₂') :
+    MixedExponent (k₁ + k₂) (l₁ + l₂) (k₁' + k₂') (l₁' + l₂') where
+  boundaryBoundary :=
+    (Matrix.fromBlocks A.boundaryBoundary 0 0 B.boundaryBoundary).submatrix
+      finSumFinEquiv.symm finSumFinEquiv.symm
+  boundaryTorus :=
+    (Matrix.fromBlocks A.boundaryTorus 0 0 B.boundaryTorus).submatrix
+      finSumFinEquiv.symm finSumFinEquiv.symm
+  torusTorus :=
+    (Matrix.fromBlocks A.torusTorus 0 0 B.torusTorus).submatrix
+      finSumFinEquiv.symm finSumFinEquiv.symm
+
+@[simp]
+theorem prod_boundaryBoundary {k₁ l₁ k₁' l₁' k₂ l₂ k₂' l₂' : ℕ}
+    (A : MixedExponent k₁ l₁ k₁' l₁') (B : MixedExponent k₂ l₂ k₂' l₂') :
+    (A.prod B).boundaryBoundary =
+      (Matrix.fromBlocks A.boundaryBoundary 0 0 B.boundaryBoundary).submatrix
+        finSumFinEquiv.symm finSumFinEquiv.symm := (rfl)
+
+@[simp]
+theorem prod_boundaryTorus {k₁ l₁ k₁' l₁' k₂ l₂ k₂' l₂' : ℕ}
+    (A : MixedExponent k₁ l₁ k₁' l₁') (B : MixedExponent k₂ l₂ k₂' l₂') :
+    (A.prod B).boundaryTorus =
+      (Matrix.fromBlocks A.boundaryTorus 0 0 B.boundaryTorus).submatrix
+        finSumFinEquiv.symm finSumFinEquiv.symm := (rfl)
+
+@[simp]
+theorem prod_torusTorus {k₁ l₁ k₁' l₁' k₂ l₂ k₂' l₂' : ℕ}
+    (A : MixedExponent k₁ l₁ k₁' l₁') (B : MixedExponent k₂ l₂ k₂' l₂') :
+    (A.prod B).torusTorus =
+      (Matrix.fromBlocks A.torusTorus 0 0 B.torusTorus).submatrix
+        finSumFinEquiv.symm finSumFinEquiv.symm := (rfl)
+
 end MixedExponent
 
 /-! ### Composition of mixed monomial maps -/
@@ -256,6 +301,48 @@ theorem mixedMonomialMap_comp (B : MixedExponent k' l' k'' l'') (A : MixedExpone
     simp only [mixedMonomialMap_snd_apply, MixedExponent.comp_torusTorus, Matrix.mul_apply]
     rw [htt]
 
+/-! ### Products -/
+
+/-- Splitting the boundary and torus coordinates identifies the mixed chart of the sum of two
+dimensions with the product of the two mixed charts. -/
+def mixedChartProdEquiv {k₁ l₁ k₂ l₂ : ℕ} :
+    ((Fin (k₁ + k₂) → ℂ) × (Fin (l₁ + l₂) → ℂ)) ≃
+      (((Fin k₁ → ℂ) × (Fin l₁ → ℂ)) × ((Fin k₂ → ℂ) × (Fin l₂ → ℂ))) where
+  toFun := fun z ↦
+    (((fun i ↦ z.1 (Fin.castAdd k₂ i)), fun i ↦ z.2 (Fin.castAdd l₂ i)),
+      ((fun i ↦ z.1 (Fin.natAdd k₁ i)), fun i ↦ z.2 (Fin.natAdd l₁ i)))
+  invFun := fun z ↦ (Fin.addCases z.1.1 z.2.1, Fin.addCases z.1.2 z.2.2)
+  left_inv z := by
+    apply Prod.ext <;> funext i
+    · refine Fin.addCases ?_ ?_ i <;> simp
+    · refine Fin.addCases ?_ ?_ i <;> simp
+  right_inv z := by
+    ext i <;> simp
+
+@[simp]
+theorem mixedChartProdEquiv_apply {k₁ l₁ k₂ l₂ : ℕ}
+    (z : (Fin (k₁ + k₂) → ℂ) × (Fin (l₁ + l₂) → ℂ)) :
+    mixedChartProdEquiv z =
+      (((fun i ↦ z.1 (Fin.castAdd k₂ i)), fun i ↦ z.2 (Fin.castAdd l₂ i)),
+        ((fun i ↦ z.1 (Fin.natAdd k₁ i)), fun i ↦ z.2 (Fin.natAdd l₁ i))) := (rfl)
+
+@[simp]
+theorem mixedChartProdEquiv_symm_apply {k₁ l₁ k₂ l₂ : ℕ}
+    (z : ((Fin k₁ → ℂ) × (Fin l₁ → ℂ)) × ((Fin k₂ → ℂ) × (Fin l₂ → ℂ))) :
+    mixedChartProdEquiv.symm z = (Fin.addCases z.1.1 z.2.1, Fin.addCases z.1.2 z.2.2) := (rfl)
+
+/-- The mixed monomial map of block diagonal product exponent data is the product of the two
+mixed monomial maps, under the canonical splitting of mixed-chart coordinates. -/
+theorem mixedMonomialMap_prod {k₁ l₁ k₁' l₁' k₂ l₂ k₂' l₂' : ℕ}
+    (A : MixedExponent k₁ l₁ k₁' l₁') (B : MixedExponent k₂ l₂ k₂' l₂')
+    (z : (Fin (k₁ + k₂) → ℂ) × (Fin (l₁ + l₂) → ℂ)) :
+    mixedChartProdEquiv (mixedMonomialMap (A.prod B) z) =
+      (mixedMonomialMap A (mixedChartProdEquiv z).1,
+        mixedMonomialMap B (mixedChartProdEquiv z).2) := by
+  ext i <;>
+    simp [mixedChartProdEquiv, mixedMonomialMap, MixedExponent.prod, Fin.prod_univ_add,
+      Matrix.fromBlocks]
+
 /-! ### Holomorphy -/
 
 variable {n : WithTop ℕ∞}
@@ -283,6 +370,77 @@ theorem mixedMonomialMap_differentiableOn (A : MixedExponent k l k' l') :
     DifferentiableOn ℂ (mixedMonomialMap A) (mixedChartDomain k l) :=
   fun _ hz ↦ ((mixedMonomialMap_contDiffAt (n := 1) A hz).differentiableAt
     one_ne_zero).differentiableWithinAt
+
+/-! ### Jacobian entries -/
+
+/-- The boundary-to-boundary block of the Jacobian of a mixed monomial map. The formula remains
+valid when the boundary coordinate vanishes. -/
+theorem hasDerivAt_mixedMonomialMap_fst_boundary (A : MixedExponent k l k' l')
+    (z : (Fin k → ℂ) × (Fin l → ℂ)) (a : Fin k') (b : Fin k) :
+    HasDerivAt
+      (fun t ↦ (mixedMonomialMap A (Function.update z.1 b t, z.2)).1 a)
+      ((A.boundaryBoundary a b : ℂ) * z.1 b ^ (A.boundaryBoundary a b - 1) *
+        ((∏ c ∈ univ \ {b}, z.1 c ^ A.boundaryBoundary a c) *
+          ∏ c, z.2 c ^ A.boundaryTorus a c)) (z.1 b) := by
+  rw [show (fun t ↦ (mixedMonomialMap A (Function.update z.1 b t, z.2)).1 a) =
+      fun t ↦ t ^ A.boundaryBoundary a b *
+        ((∏ c ∈ univ \ {b}, z.1 c ^ A.boundaryBoundary a c) *
+          ∏ c, z.2 c ^ A.boundaryTorus a c) by
+    funext t
+    simp only [mixedMonomialMap_fst_apply]
+    rw [show (∏ c, Function.update z.1 b t c ^ A.boundaryBoundary a c) = _ from by
+      simpa using prod_update_pow univ z.1 (A.boundaryBoundary a) (mem_univ b) t]
+    simp only [mul_assoc]]
+  exact (hasDerivAt_pow (A.boundaryBoundary a b) (z.1 b)).mul_const
+    ((∏ c ∈ univ \ {b}, z.1 c ^ A.boundaryBoundary a c) *
+      ∏ c, z.2 c ^ A.boundaryTorus a c)
+
+/-- The torus-to-boundary block of the Jacobian of a mixed monomial map, on the mixed-chart
+domain. -/
+theorem hasDerivAt_mixedMonomialMap_fst_torus (A : MixedExponent k l k' l')
+    {z : (Fin k → ℂ) × (Fin l → ℂ)} (hz : z ∈ mixedChartDomain k l)
+    (a : Fin k') (b : Fin l) :
+    HasDerivAt
+      (fun t ↦ (mixedMonomialMap A (z.1, Function.update z.2 b t)).1 a)
+      ((A.boundaryTorus a b : ℂ) * z.2 b ^ (A.boundaryTorus a b - 1) *
+        ((∏ c, z.1 c ^ A.boundaryBoundary a c) *
+          ∏ c ∈ univ \ {b}, z.2 c ^ A.boundaryTorus a c)) (z.2 b) := by
+  rw [show (fun t ↦ (mixedMonomialMap A (z.1, Function.update z.2 b t)).1 a) =
+      fun t ↦ (∏ c, z.1 c ^ A.boundaryBoundary a c) *
+        (t ^ A.boundaryTorus a b *
+          ∏ c ∈ univ \ {b}, z.2 c ^ A.boundaryTorus a c) by
+    funext t
+    simp only [mixedMonomialMap_fst_apply]
+    rw [show (∏ c, Function.update z.2 b t c ^ A.boundaryTorus a c) = _ from by
+      simpa using prod_update_zpow univ z.2 (A.boundaryTorus a) (mem_univ b) t]]
+  simpa only [mul_assoc, mul_left_comm, mul_comm] using
+    ((hasDerivAt_zpow (A.boundaryTorus a b) (z.2 b) (Or.inl (hz b))).mul_const
+      (∏ c ∈ univ \ {b}, z.2 c ^ A.boundaryTorus a c)).const_mul
+        (∏ c, z.1 c ^ A.boundaryBoundary a c)
+
+/-- The boundary-to-torus block of the Jacobian of a mixed monomial map is zero. -/
+theorem hasDerivAt_mixedMonomialMap_snd_boundary (A : MixedExponent k l k' l')
+    (z : (Fin k → ℂ) × (Fin l → ℂ)) (a : Fin l') (b : Fin k) :
+    HasDerivAt (fun t ↦ (mixedMonomialMap A (Function.update z.1 b t, z.2)).2 a) 0
+      (z.1 b) := by
+  simpa only [mixedMonomialMap_snd_apply] using
+    (hasDerivAt_const (x := z.1 b) (c := ∏ c, z.2 c ^ A.torusTorus a c))
+
+/-- The torus-to-torus block of the Jacobian of a mixed monomial map, on the mixed-chart domain. -/
+theorem hasDerivAt_mixedMonomialMap_snd_torus (A : MixedExponent k l k' l')
+    {z : (Fin k → ℂ) × (Fin l → ℂ)} (hz : z ∈ mixedChartDomain k l)
+    (a : Fin l') (b : Fin l) :
+    HasDerivAt
+      (fun t ↦ (mixedMonomialMap A (z.1, Function.update z.2 b t)).2 a)
+      ((A.torusTorus a b : ℂ) * z.2 b ^ (A.torusTorus a b - 1) *
+        ∏ c ∈ univ \ {b}, z.2 c ^ A.torusTorus a c) (z.2 b) := by
+  rw [show (fun t ↦ (mixedMonomialMap A (z.1, Function.update z.2 b t)).2 a) =
+      fun t ↦ t ^ A.torusTorus a b * ∏ c ∈ univ \ {b}, z.2 c ^ A.torusTorus a c by
+    funext t
+    simp only [mixedMonomialMap_snd_apply]
+    simpa using prod_update_zpow univ z.2 (A.torusTorus a) (mem_univ b) t]
+  exact (hasDerivAt_zpow (A.torusTorus a b) (z.2 b) (Or.inl (hz b))).mul_const
+    (∏ c ∈ univ \ {b}, z.2 c ^ A.torusTorus a c)
 
 /-! ### Biholomorphisms between mixed charts -/
 
