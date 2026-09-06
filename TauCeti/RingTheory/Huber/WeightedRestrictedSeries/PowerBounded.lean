@@ -5,12 +5,8 @@ Authors: Chris Birkbeck
 -/
 module
 
-public import TauCeti.RingTheory.Huber.Basic
 public import TauCeti.RingTheory.Huber.PowerBounded
 public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Basic
-public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Completion
-
-import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.PairOfDefinition
 
 /-!
 # Power-bounded elements of `A⟨X₁, …, Xₖ⟩_T`
@@ -23,11 +19,6 @@ exhibit elements of that plus ring rather than determining it.
 Neither result needs the trivial weight family. The constant result holds for every weight family;
 the variable result needs only `1 ∈ T i`, which the trivial family satisfies.
 
-Both carry over to the separated completion, where the generators of `A⟨X₁,…,Xₖ⟩` are what
-Wedhorn's Proposition 5.50 asks to be power-bounded when the completed algebra is the target of a
-continuous ring homomorphism. That step needs `A` to be Huber, which the uncompleted statements do
-not.
-
 ## Main results
 
 * `TauCeti.Huber.isPowerBounded_weightedX`: the variable `Xᵢ` is power-bounded whenever `1 ∈ T i`,
@@ -37,15 +28,11 @@ not.
   `A⟨X⟩_T`, for every weight family.
 * `TauCeti.Huber.closure_weightedC_weightedX_le_powerBoundedSubring`: the inclusion itself, as a
   containment of subrings.
-* `TauCeti.Huber.isPowerBounded_coe_weightedX_one_weight`: the variable `Xᵢ` is power-bounded in
-  the completion `A⟨X₁,…,Xₖ⟩`, over a Huber base. This is the form Proposition 5.50 asks for when
-  the completed algebra is the target, and it is unconditional, so it is `@[simp]`.
 
 ## References
 
 * [T. Wedhorn, *Adic Spaces*][wedhorn_adic] (arXiv:1910.05934v1), Definition 7.56 and
-  Example 7.57, and Proposition 5.50 for the universal property whose hypothesis on the tuple the
-  completed statement discharges.
+  Example 7.57.
 
 AINTLIB (`github.com/CBirkbeck/AINTLIB`, Apache-2.0) at commit
 `2baa76f742bdb4fb8ee323fabba41203bd390e08`, `projects/AdicSpaces/Adic spaces/Wedhorn828.lean`,
@@ -156,30 +143,6 @@ theorem closure_weightedC_weightedX_le_powerBoundedSubring {T : Fin k → Set A}
   · exact mem_powerBoundedSubring.mpr
       (isPowerBounded_weightedC hT (mem_powerBoundedSubring.mp ha))
   · exact mem_powerBoundedSubring.mpr (isPowerBounded_weightedX hT (hi i))
-
-/-! ### In the completion -/
-
-section Completion
-
-variable [IsHuberRing A]
-
--- At a general weight family, or for a constant, there is nothing to name: write the composition,
--- `isPowerBounded_completion_coe_of_isPowerBounded (isPowerBounded_weightedX hT hi)` or
--- `… (isPowerBounded_weightedC hT ha)`.
-/-- **The variable `Xᵢ` is power-bounded in `A⟨X₁,…,Xₖ⟩`**, the trivial-weight case, which is the
-one the universal property of the completed algebra is applied at.
-
-`@[simp]` because it is unconditional, matching
-`TauCeti.Huber.isPowerBounded_weightedX_one_weight` on the uncompleted ring: `simp` closes such a
-goal outright rather than rewriting it. -/
-@[simp]
-theorem isPowerBounded_coe_weightedX_one_weight (i : Fin k) :
-    IsPowerBounded ((weightedX (fun _ : Fin k ↦ ({1} : Set A)) isWeightFamily_one_weight i :
-        weightedRestrictedSubring (fun _ : Fin k ↦ ({1} : Set A)) isWeightFamily_one_weight) :
-      restrictedMvPowerSeriesCompletion k A) :=
-  isPowerBounded_completion_coe_of_isPowerBounded (isPowerBounded_weightedX_one_weight i)
-
-end Completion
 
 end TauCeti.Huber
 
