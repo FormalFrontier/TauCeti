@@ -15,9 +15,10 @@ public import TauCeti.Topology.Algebra.Ring.Subring
 /-!
 # Completions of nonarchimedean groups and rings
 
-Three facts about the Hausdorff completion that need only the additive, resp. ring, structure:
-the closure of the image of an open additive subgroup is open, the kernel of the completion map
-is the closure of the zero ideal, and integral closedness of an open subring survives completion.
+Facts about the Hausdorff completion that need only the additive, resp. ring, structure: the
+closure of the image of an open additive subgroup is open and these closures inherit a
+neighbourhood basis at zero, the kernel of the completion map is the closure of the zero ideal,
+and integral closedness of an open subring survives completion.
 
 They are stated here rather than alongside the Huber-ring theory that uses them, since none
 mentions a pair of definition or an adic topology, and they live in the `UniformSpace.Completion`
@@ -40,6 +41,8 @@ of `G`.
   additive subgroup of `A` is open, and
   `UniformSpace.Completion.isOpen_topologicalClosure_map_coeRingHom` says the same of an open
   subring.
+* `UniformSpace.Completion.hasBasis_nhds_zero_closure_image`: those closures inherit a
+  neighbourhood basis at zero from one of open subgroups of `A`.
 * `UniformSpace.Completion.preimage_closure_image_coe`: for an *open* subgroup `G`, the preimage
   under `A → Â` of the closure of the image of `G` is `G` itself. With the openness result above
   this is the bijection of Wedhorn's Example 5.33 between the open subgroups of `A` and of `Â`.
@@ -59,11 +62,13 @@ of `G`.
   `UniformSpace.Completion.isIntegrallyClosedIn_topologicalClosure_map_coeRingHom` follows.
 * Mathlib's `Mathlib/Topology/Algebra/Nonarchimedean/Completion.lean`, whose openness proof runs
   the same `closure_image_mem_nhds`-then-`isOpen_of_mem_nhds` argument these proofs follow.
+* `TauCeti.Huber.PairOfDefinition.hasBasis_nhds_zero_completion`, the same statement for the ring
+  of definition of a Huber pair, which `hasBasis_nhds_zero_closure_image` generalizes.
 -/
 
 public section
 
-open UniformSpace
+open Filter Topology UniformSpace
 
 namespace UniformSpace.Completion
 
@@ -78,6 +83,27 @@ theorem isOpen_closure_image_coe {G : AddSubgroup A} (hG : IsOpen (G : Set A)) :
   have hmem := Completion.isDenseInducing_coe.closure_image_mem_nhds (hG.mem_nhds G.zero_mem)
   rw [Completion.coe_zero] at hmem
   exact AddSubgroup.isOpen_of_mem_nhds ((G.map Completion.toCompl).topologicalClosure) hmem
+
+/-- **The closures of the images of a neighbourhood basis of open subgroups are a neighbourhood
+basis of zero in the completion.** -/
+theorem hasBasis_nhds_zero_closure_image {ι : Sort*} {p : ι → Prop} {V : ι → OpenAddSubgroup A}
+    (hV : (𝓝 (0 : A)).HasBasis p fun i ↦ (V i : Set A)) :
+    (𝓝 (0 : Completion A)).HasBasis p
+      fun i ↦ closure (((↑) : A → Completion A) '' (V i : Set A)) := by
+  refine Filter.hasBasis_iff.mpr fun U ↦ ⟨fun hU ↦ ?_, ?_⟩
+  · -- a closed neighbourhood inside `U` pulls back to one containing some `V i`, and taking
+    -- closures of images stays inside it
+    obtain ⟨C, ⟨hC, hCclosed⟩, hCU⟩ := (closed_nhds_basis (0 : Completion A)).mem_iff.mp hU
+    have hpre : ((↑) : A → Completion A) ⁻¹' C ∈ 𝓝 (0 : A) :=
+      (continuous_coe A).continuousAt.preimage_mem_nhds (by rwa [coe_zero])
+    obtain ⟨i, hi, hn⟩ := hV.mem_iff.mp hpre
+    refine ⟨i, hi, fun x hx ↦ hCU ?_⟩
+    have hx' : x ∈ closure C := closure_mono (Set.image_subset_iff.mpr hn) hx
+    rwa [hCclosed.closure_eq] at hx'
+  · rintro ⟨i, hi, hn⟩
+    exact Filter.mem_of_superset
+      ((isOpen_closure_image_coe (V i).isOpen).mem_nhds
+        (subset_closure ⟨0, (V i).zero_mem, coe_zero⟩)) hn
 
 /-- **An open additive subgroup is recovered from the closure of its image.** For `G` open, the
 preimage under `A → Â` of the closure of the image of `G` is `G` itself.

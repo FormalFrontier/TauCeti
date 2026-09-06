@@ -19,7 +19,7 @@ contains a box that constrains only finitely many coordinates, so shrinking thos
 factors to open subgroups and leaving the rest unconstrained produces an open subgroup inside it.
 
 These live in the `Pi` namespace of the construction they describe rather than in a `TauCeti`
-one, following `TauCeti/Topology/Algebra/Nonarchimedean/Completion.lean`.
+one, following `TauCeti/Topology/Algebra/Nonarchimedean/Completion/Basic.lean`.
 
 ## Main results
 
