@@ -19,8 +19,6 @@ argument for the conductor theorem consumes, and it is stated for characters val
 
 ## Main results
 
-* `DirichletCharacter.not_factorsThrough_of_not_forall`: a character non-trivial somewhere on
-  the kernel of the reduction does not factor through it.
 * `DirichletCharacter.exists_alt_unit_in_coset_with_char_separation`: character separation within
   a fibre of the reduction map.
 
@@ -38,18 +36,6 @@ consequence of the other, so only this form is ported and the extraction is done
 public section
 
 namespace DirichletCharacter
-
-/-- **A character nontrivial on the kernel does not factor.** A unit homomorphism `χ` that is
-not identically `1` on the kernel of `ZMod.unitsMap : (ZMod N)ˣ →* (ZMod d)ˣ` gives a Dirichlet
-character that does not factor through `d`. This is the hypothesis of
-`exists_alt_unit_in_coset_with_char_separation` in the form callers usually hold it. -/
-theorem not_factorsThrough_of_not_forall {R : Type*} [CommMonoidWithZero R] {N : ℕ} [NeZero N]
-    {d : ℕ} (hd : d ∣ N) {χ : (ZMod N)ˣ →* Rˣ}
-    (hχ : ¬ ∀ u : (ZMod N)ˣ, ZMod.unitsMap hd u = 1 → χ u = 1) :
-    ¬ DirichletCharacter.FactorsThrough (MulChar.ofUnitHom χ) d := by
-  refine fun hfac ↦ hχ fun v hv ↦ ?_
-  simpa using MonoidHom.mem_ker.mp
-    ((factorsThrough_iff_ker_unitsMap hd).mp hfac (MonoidHom.mem_ker.mpr hv))
 
 /-- **Character separation within a coset.** If `χ` does not factor through `d ∣ N`, then every
 unit `u` has a partner `u'` with the same reduction modulo `d` but a different character value —
