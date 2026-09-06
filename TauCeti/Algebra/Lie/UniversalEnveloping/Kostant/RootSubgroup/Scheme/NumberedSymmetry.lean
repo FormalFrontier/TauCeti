@@ -50,6 +50,9 @@ weights are the weights of an admissible lattice: all of that is supplied by the
   base-changed lattice symmetry in the chosen basis.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantNumberedSymmetryCoordinateIso`: the resulting
   automorphism of the coordinate Hopf algebra of `GLₙ`.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantNumberedSymmetryPoints`: conjugation by that matrix,
+  as an automorphism of any subgroup of `GLₙ` it normalizes, together with its coordinate
+  formula, its naturality in the value ring, and its order relation.
 
 ## Main results
 
@@ -141,6 +144,94 @@ theorem map_kostantNumberedSymmetryMatrix {A : Type v} {B : Type v'} [CommRing A
     (LinearMap.toMatrixAlgEquiv (b.baseChange B))
       (AddEquiv.baseChangeInvariantRestrictUnit (R := B) θ.toAddEquiv M hθM).val i j
   exact congrFun (congrFun hmatrix i) j
+
+/-- The matrix of a numbered symmetry satisfies every order relation satisfied by the underlying
+rational linear equivalence. -/
+theorem kostantNumberedSymmetryMatrix_pow_eq_one (A : Type v) [CommRing A] {m : ℕ}
+    (hm : ∀ x, (θ ^ m) x = x) :
+    kostantNumberedSymmetryMatrix M b θ hθM A ^ m = 1 := by
+  have hm' : ∀ x, (θ.toAddEquiv.toIntLinearEquiv ^ m) x = x := fun x =>
+    (LinearEquiv.pow_apply θ.toAddEquiv.toIntLinearEquiv m x).trans
+      ((LinearEquiv.pow_apply θ m x).symm.trans (hm x))
+  have hunit := AddEquiv.baseChangeInvariantRestrictUnit_pow_eq_one
+    (R := A) θ.toAddEquiv M hθM hm'
+  have hmatrix := congrArg
+    (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom) hunit
+  rw [map_pow, map_one] at hmatrix
+  rw [kostantNumberedSymmetryMatrix]
+  exact hmatrix
+
+/-! ## The symmetry on a normalized group of matrix-valued points -/
+
+/-- **The automorphism of a group of matrix-valued points induced by a numbered symmetry**, given
+by conjugation by the symmetry's matrix on any subgroup `P` of `GLₙ` that matrix normalizes. A
+carrier cut out inside `GLₙ` supplies `P` and the normalization hypothesis; everything the
+conjugation satisfies is then read off the matrix. -/
+noncomputable def kostantNumberedSymmetryPoints (A : Type v) [CommRing A]
+    (P : Subgroup (Matrix.GeneralLinearGroup (Fin n) A))
+    (hP : P.map (MulAut.conj (kostantNumberedSymmetryMatrix M b θ hθM A)).toMonoidHom = P) :
+    MulAut P :=
+  P.normalizerMonoidHom ⟨kostantNumberedSymmetryMatrix M b θ hθM A,
+    Subgroup.mem_normalizer_iff_map_conj_eq.mpr hP⟩
+
+/-- On matrices, the numbered symmetry acts on points by conjugation by its matrix. -/
+@[simp]
+theorem coe_kostantNumberedSymmetryPoints (A : Type v) [CommRing A]
+    (P : Subgroup (Matrix.GeneralLinearGroup (Fin n) A))
+    (hP : P.map (MulAut.conj (kostantNumberedSymmetryMatrix M b θ hθM A)).toMonoidHom = P)
+    (g : P) :
+    (kostantNumberedSymmetryPoints M b θ hθM A P hP g :
+        Matrix.GeneralLinearGroup (Fin n) A) =
+      kostantNumberedSymmetryMatrix M b θ hθM A * g *
+        (kostantNumberedSymmetryMatrix M b θ hθM A)⁻¹ :=
+  (rfl)
+
+/-- On matrices, the inverse of the numbered symmetry on points is conjugation by the inverse of
+its matrix. -/
+@[simp]
+theorem coe_kostantNumberedSymmetryPoints_symm (A : Type v) [CommRing A]
+    (P : Subgroup (Matrix.GeneralLinearGroup (Fin n) A))
+    (hP : P.map (MulAut.conj (kostantNumberedSymmetryMatrix M b θ hθM A)).toMonoidHom = P)
+    (g : P) :
+    ((kostantNumberedSymmetryPoints M b θ hθM A P hP).symm g :
+        Matrix.GeneralLinearGroup (Fin n) A) =
+      (kostantNumberedSymmetryMatrix M b θ hθM A)⁻¹ * g *
+        kostantNumberedSymmetryMatrix M b θ hθM A :=
+  (rfl)
+
+/-- **The numbered symmetry on points is natural in the value ring.** The naturality is stated
+against any homomorphism `F` of point groups which is the entrywise map on matrices, which is what
+a carrier's own base-change map on points is; in particular the symmetry commutes with every
+Frobenius map. -/
+theorem comp_kostantNumberedSymmetryPoints {A : Type v} {B : Type v'} [CommRing A] [CommRing B]
+    (P : Subgroup (Matrix.GeneralLinearGroup (Fin n) A))
+    (hP : P.map (MulAut.conj (kostantNumberedSymmetryMatrix M b θ hθM A)).toMonoidHom = P)
+    (Q : Subgroup (Matrix.GeneralLinearGroup (Fin n) B))
+    (hQ : Q.map (MulAut.conj (kostantNumberedSymmetryMatrix M b θ hθM B)).toMonoidHom = Q)
+    (φ : A →+* B) (F : P →* Q)
+    (hF : ∀ g : P, (F g : Matrix.GeneralLinearGroup (Fin n) B) =
+      Matrix.GeneralLinearGroup.map φ g) :
+    F.comp (kostantNumberedSymmetryPoints M b θ hθM A P hP).toMonoidHom =
+      (kostantNumberedSymmetryPoints M b θ hθM B Q hQ).toMonoidHom.comp F := by
+  refine MonoidHom.ext fun g => Subtype.ext ?_
+  rw [MonoidHom.comp_apply, MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom,
+    MulEquiv.coe_toMonoidHom, hF, coe_kostantNumberedSymmetryPoints,
+    coe_kostantNumberedSymmetryPoints, hF, map_mul, map_mul, map_inv,
+    map_kostantNumberedSymmetryMatrix]
+
+/-- **The numbered symmetry on points inherits every order relation its matrix satisfies.** -/
+theorem kostantNumberedSymmetryPoints_pow_eq_one (A : Type v) [CommRing A]
+    (P : Subgroup (Matrix.GeneralLinearGroup (Fin n) A))
+    (hP : P.map (MulAut.conj (kostantNumberedSymmetryMatrix M b θ hθM A)).toMonoidHom = P)
+    {m : ℕ} (hm : kostantNumberedSymmetryMatrix M b θ hθM A ^ m = 1) :
+    kostantNumberedSymmetryPoints M b θ hθM A P hP ^ m = 1 := by
+  have hX : (⟨kostantNumberedSymmetryMatrix M b θ hθM A,
+      Subgroup.mem_normalizer_iff_map_conj_eq.mpr hP⟩ :
+        Subgroup.normalizer (P : Set (Matrix.GeneralLinearGroup (Fin n) A))) ^ m = 1 :=
+    Subtype.ext (by
+      rw [Subgroup.coe_pow]
+      exact hm)
+  rw [kostantNumberedSymmetryPoints, ← map_pow, hX, map_one]
 
 /-- Conjugation by the numbered symmetry on the points of the general-linear coordinate
 Hopf algebra. -/
