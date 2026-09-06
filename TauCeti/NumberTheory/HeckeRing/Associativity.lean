@@ -305,9 +305,7 @@ private lemma sum_ite_eq_zero_of_ne_mk (w : Δ) (E : HeckeCoset Δ H₁ H₃)
   rintro ⟨-, hmatch⟩
   have hwE : (w : G) ∈ doubleCoset ((E.rep : Δ) : G) H₁ H₃ :=
     mem_doubleCoset_of_quotient_eq l.out.2 hmatch
-  refine hne (HeckeCoset.toSet_injective ?_)
-  rw [HeckeCoset.toSet_eq_doubleCoset_rep, HeckeCoset.toSet_mk]
-  exact (doubleCoset_eq_of_mem hwE).symm
+  exact hne ((HeckeCoset.mk_rep E).symm.trans (HeckeCoset.mk_eq_mk_of_mem hwE).symm)
 
 open Classical in
 /-- The left-handed Fubini step: the left association also counts pairs of representatives
