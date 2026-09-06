@@ -387,12 +387,14 @@ elementary transvection `x_{ij}(c)` to `x_{rev j, rev i}(ε c)` with the sign
 ```
 
 The reversal of the two indices is the reversal of the Bourbaki numbering, and the sign is the one
-forced by the Chevalley structure constants once the pinning has normalized the parameters on the
-simple root subgroups. In this pinning the sign is not always `1`: the sum `i + j` is odd on a
-simple root, where `TauCeti.typeAGraphAutomorphism_transvectionUnit` records the sign-free equation,
-but even on some other roots, for instance on `ε_0 - ε_2` once the rank is at least two. Whether
-some other parametrization of the root subgroups makes every sign trivial at once is a question
-about the Chevalley commutator constants, and is not addressed here. -/
+produced by the signed conjugator `TauCeti.typeAGraphConjugator` of this construction: it is what
+the alternating diagonal signs of `Q` contribute once the reversal has moved the transvection. The
+sign is not always `1`: the sum `i + j` is odd on a simple root, where
+`TauCeti.typeAGraphAutomorphism_transvectionUnit` records the sign-free equation, but even on some
+other roots, for instance on `ε_0 - ε_2` once the rank is at least two. Whether some other
+parametrization of the root subgroups makes every sign trivial at once is not addressed here; for
+that question see R. W. Carter, *Simple Groups of Lie Type*, §12.2. -/
+@[simp]
 theorem typeAGraphAutomorphism_transvectionUnit_of_ne (r : ℕ) {i j : Fin (r + 1)}
     (hij : i ≠ j) (c : A) :
     typeAGraphAutomorphism r A (transvectionUnit hij c) =
@@ -418,8 +420,8 @@ theorem typeAGraphAutomorphism_transvectionUnit_of_ne (r : ℕ) {i j : Fin (r + 
 /-- **The pinned graph automorphism reverses the positive simple-root subgroups without changing
 their parameters.** In Bourbaki numbering, the node `i` is carried to `i.rev`. The sign that
 `TauCeti.typeAGraphAutomorphism_transvectionUnit_of_ne` attaches to a general root is trivial here,
-the two matrix indices `i` and `i + 1` of a simple root having odd sum. -/
-@[simp]
+the two matrix indices `i` and `i + 1` of a simple root having odd sum. That general equation is
+the `@[simp]` form, and `simp` reaches this one through it, so this lemma is not itself `simp`. -/
 theorem typeAGraphAutomorphism_transvectionUnit (r : ℕ) (i : Fin r) (c : A) :
     typeAGraphAutomorphism r A
         (transvectionUnit (Fin.castSucc_lt_succ (i := i)).ne c) =
@@ -430,8 +432,9 @@ theorem typeAGraphAutomorphism_transvectionUnit (r : ℕ) (i : Fin r) (c : A) :
     typeAGraphAutomorphism_transvectionUnit_of_ne r (Fin.castSucc_lt_succ (i := i)).ne c
 
 /-- The pinned graph automorphism reverses the negative simple-root subgroups without changing
-their parameters. -/
-@[simp]
+their parameters. As for the positive simple roots,
+`TauCeti.typeAGraphAutomorphism_transvectionUnit_of_ne` is the `@[simp]` form that `simp` uses to
+reach this one. -/
 theorem typeAGraphAutomorphism_transvectionUnit_lower (r : ℕ) (i : Fin r) (c : A) :
     typeAGraphAutomorphism r A
         (transvectionUnit (Fin.castSucc_lt_succ (i := i)).ne' c) =

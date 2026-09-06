@@ -11,11 +11,10 @@ public import TauCeti.Algebra.Lie.SpecialLinear.StandardCarrier.TwistedFrobenius
 /-!
 # The type-A Steinberg maps on every root subgroup
 
-The Frobenius, the pinned graph automorphism, and their composite are already pinned against the
-`2 * r` numbered simple root subgroups of the full-weight type-`A_r` carrier. A pinning normalizes
-the root-subgroup parameters on the simple roots only, and that restriction is not a weakening: it
-is what makes the graph automorphism the unique automorphism with the stated action. This file
-records what the three maps then do on the remaining root subgroups, the pair-indexed family
+The Frobenius, the pinned graph automorphism, and their composite are explicitly constructed maps of
+the full-weight type-`A_r` carrier, already pinned against its `2 * r` numbered simple root
+subgroups: on those the equations recorded so far carry the parameter across unchanged. This file
+records what the three maps do on the remaining root subgroups, the pair-indexed family
 `TauCeti.SlStd.rootSubgroupPointsOfPair` covering all `r * (r + 1)` roots `ε_i - ε_j`:
 
 ```text
@@ -28,9 +27,9 @@ The Frobenius keeps each root subgroup and raises the parameter, exactly as on a
 graph automorphism reverses the two matrix indices, which is the reversal of the Bourbaki
 numbering, and rescales the parameter by a sign, which is `1` exactly when `i + j` is odd.
 
-That sign is a consequence of the construction rather than a defect of the pinning. The sum `i + j`
-is odd on every numbered simple root, by `TauCeti.SlStd.odd_rootTarget_add_rootSource`, which is why
-the pinned equation `TauCeti.SlStd.graphAutomorphismPoints_rootSubgroupPoints` carries no sign; but
+That sign comes from the signed conjugator that defines this `γ`. The sum `i + j` is odd on every
+numbered simple root, by `TauCeti.SlStd.odd_rootTarget_add_rootSource`, which is why the pinned
+equation `TauCeti.SlStd.graphAutomorphismPoints_rootSubgroupPoints` carries no sign; but
 as soon as the rank is at least two the root `ε_0 - ε_2` has even index sum, and the automorphism
 inverts its parameter there. That inversion is a genuine departure from the sign-free equation
 whenever `-1 ≠ 1` in the coefficient ring, which is
@@ -110,7 +109,7 @@ variable {A : Type} [CommRing A] {i j : Fin (r + 1)}
 at `ε_i - ε_j` to the one at `ε_{rev j} - ε_{rev i}` and rescales the parameter by the sign
 `(-1) ^ (i + j + 1)`. The reversal of the indices is the reversal of the Bourbaki numbering that
 `TauCeti.SlStd.graphAutomorphismPoints_rootSubgroupPoints` records on the simple roots; the sign is
-what the pinning leaves undetermined outside them. -/
+`1` on those roots and can be `-1` on the others. -/
 @[simp]
 theorem graphAutomorphismPoints_rootSubgroupPointsOfPair (hij : i ≠ j) (u : Multiplicative A) :
     graphAutomorphismPoints r A (rootSubgroupPointsOfPair r hij u) =
@@ -160,9 +159,9 @@ theorem exists_graphAutomorphismPoints_rootSubgroupPointsOfPair_eq_inv (hr : 2 �
 whenever `-1` and `1` are distinct in the coefficient ring, there is a root subgroup and a point of
 it whose image under the graph automorphism is *not* the point with the same parameter in the
 reversed root subgroup. Together with `TauCeti.SlStd.odd_rootTarget_add_rootSource`, which puts
-every numbered simple root in the sign-free case, this is the precise sense in which the pinning
-determines the parameters only on the simple roots. The hypothesis on `A` is needed: over `ZMod 2`
-the sign `-1` equals `1` and the equation of
+every numbered simple root in the sign-free case, this says that the sign-free equation holding on
+the numbered simple roots does not hold on every root. The hypothesis on `A` is needed: over
+`ZMod 2` the sign `-1` equals `1` and the equation of
 `TauCeti.SlStd.graphAutomorphismPoints_rootSubgroupPointsOfPair` is sign-free on every root. -/
 theorem exists_graphAutomorphismPoints_rootSubgroupPointsOfPair_ne (hr : 2 ≤ r)
     (hA : (-1 : A) ≠ 1) :
@@ -186,19 +185,26 @@ theorem map_graphAutomorphismPoints_range_rootSubgroupPointsOfPair (hij : i ≠ 
     Subgroup.map (graphAutomorphismPoints r A).toMonoidHom
         (rootSubgroupPointsOfPair r hij).range =
       (rootSubgroupPointsOfPair r (Fin.rev_injective.ne hij.symm)).range := by
-  ext g
-  simp only [Subgroup.mem_map, MonoidHom.mem_range, MulEquiv.coe_toMonoidHom]
-  constructor
-  · rintro ⟨_, ⟨u, rfl⟩, rfl⟩
-    exact ⟨_, (graphAutomorphismPoints_rootSubgroupPointsOfPair r hij u).symm⟩
-  · rintro ⟨u, rfl⟩
-    refine ⟨rootSubgroupPointsOfPair r hij (Multiplicative.ofAdd
-      ((-1 : A) ^ ((i : ℕ) + (j : ℕ) + 1) * Multiplicative.toAdd u)), ⟨_, rfl⟩, ?_⟩
-    rw [graphAutomorphismPoints_rootSubgroupPointsOfPair]
-    congr 1
-    -- The sign is its own inverse, so applying it twice restores the parameter.
-    rw [toAdd_ofAdd, ← mul_assoc, ← pow_add, ← two_mul, pow_mul, neg_one_sq, one_pow, one_mul,
-      ofAdd_toAdd]
+  set ε : A := (-1 : A) ^ ((i : ℕ) + (j : ℕ) + 1) with hε
+  -- The sign is its own inverse, so rescaling the parameter by it is a surjective endomorphism of
+  -- `Multiplicative A`.
+  have hεε (a : A) : ε * (ε * a) = a := by
+    rw [hε, ← mul_assoc, ← pow_add, ← two_mul, pow_mul, neg_one_sq, one_pow, one_mul]
+  set σ : Multiplicative A →* Multiplicative A :=
+    AddMonoidHom.toMultiplicative (AddMonoidHom.mulLeft ε) with hσ
+  have hσrange : σ.range = ⊤ :=
+    MonoidHom.range_eq_top_of_surjective _ fun u =>
+      ⟨Multiplicative.ofAdd (ε * Multiplicative.toAdd u), by
+        rw [hσ]; exact congrArg Multiplicative.ofAdd (hεε _)⟩
+  -- On the root subgroup at `ε_i - ε_j` the graph automorphism is that rescaling followed by the
+  -- parametrization of the reversed root subgroup.
+  have hcomp : (graphAutomorphismPoints r A).toMonoidHom.comp (rootSubgroupPointsOfPair r hij) =
+      (rootSubgroupPointsOfPair r (Fin.rev_injective.ne hij.symm)).comp σ :=
+    MonoidHom.ext fun u => by
+      rw [MonoidHom.comp_apply, MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom,
+        graphAutomorphismPoints_rootSubgroupPointsOfPair, hσ]
+      rfl
+  rw [MonoidHom.map_range, hcomp, MonoidHom.range_comp, hσrange, ← MonoidHom.range_eq_map]
 
 end GraphAutomorphism
 
