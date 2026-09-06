@@ -32,7 +32,8 @@ needed — only that `⟨σ⟩` be finite.
 * `IntermediateField.fixingSubgroup_fixedField_of_finite`
 * `IntermediateField.finite_of_finiteDimensional_fixedField`
 * `IntermediateField.card_fixingSubgroup_le`
-* `Subgroup.equivAlgEquivFixedField`
+* `Subgroup.equivAlgEquivFixedField`, with `Subgroup.equivAlgEquivFixedField_apply`
+  showing it changes only the base field.
 * `AlgEquiv.isCyclic_fixedField_zpowers`
 * `AlgEquiv.zpowers_equivAlgEquivFixedField_self_eq_top`
 
@@ -130,6 +131,15 @@ noncomputable def equivAlgEquivFixedField (H : Subgroup (M ≃ₐ[K] M)) [Finite
     H ≃* (M ≃ₐ[IntermediateField.fixedField H] M) :=
   (MulEquiv.subgroupCongr (IntermediateField.fixingSubgroup_fixedField_of_finite H).symm).trans
     (IntermediateField.fixingSubgroupEquiv _)
+
+/-- **The isomorphism changes only the base field.** An element of `H` and its image act on `M` by
+the same map, so a generator of `H` is exhibited as an automorphism of `M` over the fixed field
+rather than merely corresponding to one. -/
+@[simp]
+theorem equivAlgEquivFixedField_apply (H : Subgroup (M ≃ₐ[K] M)) [Finite H] (σ : H) (x : M) :
+    (equivAlgEquivFixedField H σ) x = (σ : M ≃ₐ[K] M) x := by
+  obtain ⟨σ, hσ⟩ := σ
+  rfl
 
 end Subgroup
 
