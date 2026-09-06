@@ -82,8 +82,6 @@ subfield.
 * J. Neukirch, *Algebraic Number Theory*, Chapter VII, §13.
 * J.-P. Serre, *A Course in Arithmetic*, Chapter VI, and J. Milne, *Algebraic Number Theory*,
   Chapter VIII, for the same estimate in the Dirichlet-density setting.
-* `TauCetiRoadmap/Chebotarev/README.md`, Layer 11.3(2), for the negligible weight of the primes
-  of residue degree above one.
 -/
 
 public section
@@ -185,7 +183,8 @@ This is the count `o(x / log x)` above, weighted by Chebyshev's `log x` per prim
 estimate a contraction between two number fields discards: the norms satisfy
 `𝔑_{E/ℚ}𝔓 = (𝔑_{K/ℚ}𝔭)^{f(𝔓/𝔭)}`, so a term of `ϑ` moves to a different value of `n` unless the
 relative residue degree is one, and `f(𝔓/𝔭) ≥ 2` forces `f(𝔓/p) ≥ 2`, which is what this absolute
-statement covers. -/
+statement covers. This is the residue-degree discard
+`TauCetiRoadmap/Chebotarev/README.md`, Layer 11.3(2), asks for. -/
 theorem primeTheta_higherDegreePrimes_isLittleO (K : Type*) [Field K] [NumberField K] :
     primeTheta K (higherDegreePrimes K) =o[atTop] fun x : ℝ ↦ x := by
   refine IsBigO.trans_isLittleO (IsBigO.of_bound 1 (.of_forall fun x ↦ ?_))

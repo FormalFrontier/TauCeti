@@ -75,8 +75,6 @@ The ideal-counting half of Layer 5.1 is a separate estimate: it is analytic, res
 * H. Davenport, *Multiplicative Number Theory*, Chapter 7.
 * G. Tenenbaum, *Introduction to Analytic and Probabilistic Number Theory*, Chapter I.2.
 * J. Neukirch, *Algebraic Number Theory*, Chapter VII.
-* `TauCetiRoadmap/Chebotarev/README.md`, Layer 11.3, whose two estimates share the
-  fibre-and-count step `TauCeti.card_fiber_mul_log_absNorm_le` proved below.
 -/
 
 public section
@@ -261,7 +259,8 @@ This is the counting core shared by the two weighted estimates over a prime fibr
 only in which prime powers they collect. It was factored out of
 `TauCeti.higherPrimePowerTheta_le_card_primesLE_mul_log` below, whose proof first made the
 argument for exponents `k ≥ 2`; `TauCeti.primePsi_le_ncard_mul_log` needs the same count with
-`k ≥ 1`, and both now go through here. -/
+`k ≥ 1`, and both now go through here. Both consumers are estimates
+`TauCetiRoadmap/Chebotarev/README.md`, Layer 11.3, asks for. -/
 theorem card_fiber_mul_log_absNorm_le (hx : 1 ≤ x) {v : HeightOneSpectrum (𝓞 K)}
     {F : Finset (IdealPrimePower K)}
     (hF : ∀ A ∈ F, ((Ideal.absNorm v.asIdeal : ℝ)) ^ primePowerExponent A ≤ x)

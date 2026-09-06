@@ -80,8 +80,6 @@ fibre those estimates over the primes.
 * G. Tenenbaum, *Introduction to Analytic and Probabilistic Number Theory*, Chapters I--II.
 * H. Davenport, *Multiplicative Number Theory*, Chapters 1 and 7.
 * J. Neukirch, *Algebraic Number Theory*, Chapter VII.
-* `TauCetiRoadmap/Chebotarev/README.md`, Layer 11.3(2), for the negligible weight of a finite
-  set of primes in `ϑ`, supplied here by `TauCeti.primeTheta_isLittleO_of_finite`.
 -/
 
 public section
@@ -666,7 +664,8 @@ eventually *constant*: past the largest norm in the set every member is already 
 sum stops growing. A constant is `o(x)`.
 
 This is what lets a counting argument discard an exceptional set outright — the ramified primes of
-an extension, say — rather than only from a density. -/
+an extension, say — rather than only from a density. It is the discard
+`TauCetiRoadmap/Chebotarev/README.md`, Layer 11.3(2), asks for. -/
 theorem primeTheta_isLittleO_of_finite (hS : S.Finite) :
     primeTheta K S =o[atTop] fun x : ℝ ↦ x := by
   refine (isLittleO_const_id_atTop

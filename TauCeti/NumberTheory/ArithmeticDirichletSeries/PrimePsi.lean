@@ -73,8 +73,6 @@ theorem of Layer 9.
 * H. Davenport, *Multiplicative Number Theory*, Chapter 7.
 * G. Tenenbaum, *Introduction to Analytic and Probabilistic Number Theory*, Chapter I.2.
 * J. Neukirch, *Algebraic Number Theory*, Chapter VII.
-* `TauCetiRoadmap/Chebotarev/README.md`, Layer 11.3(3), for the `O(log x)` cost of discarding
-  a finite set of primes from `ψ`, which the estimates below supply.
 
 The rational-prime case of `ψ`, `ϑ` and their difference is Mathlib's
 `Mathlib/NumberTheory/Chebyshev.lean`, whose `Chebyshev.theta_le_psi` and
@@ -243,7 +241,10 @@ an extension, say, or lying above such — at a cost of `O(log x)`.
 
 The fibre step is `TauCeti.card_fiber_mul_log_absNorm_le`, which was factored out of
 `TauCeti.higherPrimePowerTheta_le_card_primesLE_mul_log`: that theorem first made this
-exponent-counting argument, for exponents `k ≥ 2`, and both estimates now share it. -/
+exponent-counting argument, for exponents `k ≥ 2`, and both estimates now share it.
+
+The `O(log x)` rate is what `TauCetiRoadmap/Chebotarev/README.md`, Layer 11.3(3), asks of this
+estimate. -/
 theorem primePsi_le_ncard_mul_log (hS : S.Finite) (hx : 1 ≤ x) :
     primePsi K S x ≤ S.ncard * Real.log x := by
   classical
