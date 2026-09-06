@@ -13,7 +13,7 @@ public import TauCeti.RepresentationTheory.Quiver.Representation.FiniteDimension
 public import TauCeti.RepresentationTheory.Quiver.Representation.Indecomposable
 
 /-!
-# The pencil of lines over the generalized Kronecker quiver
+# The line representations of the generalized Kronecker quiver
 
 Put the base field at both vertices of the generalized Kronecker quiver, let one distinguished
 arrow act by multiplication by a scalar `c` and every other arrow by the identity. This file
@@ -25,18 +25,20 @@ made of pairwise non-isomorphic indecomposables:
 Every member of the family has dimension vector `(1, 1)`. So on a quiver with at least two arrows
 the dimension vector of a finite-dimensional indecomposable **does not determine it**, and its
 Tits value is `2 - #arrows`, not `1`. Both facts are sharpness statements: the Gabriel injection
-`TauCeti.nonempty_iso_of_dimVector_eq_of_indecomposable_of_isAcyclic` and the root property
+`TauCeti.nonempty_iso_of_dimVector_eq_of_indecomposable_of_isAcyclic` and the real-root property
 `TauCeti.titsForm_dimVector_eq_one_of_indecomposable_of_isAcyclic` are proved for an acyclic
 quiver whose Tits form is *positive definite*, and the Kronecker quiver -- acyclic, with the
 positive semidefinite Tits form `(a - b) ^ 2` of `TauCeti.Quiver.Kronecker.titsForm_apply` --
 shows that neither survives the weakening of that hypothesis to acyclicity alone.
 
-The family is the affine chart of the `ℙ¹`-family the Kronecker quiver is known for: letting the
-two arrows of `• ⇉ •` act by a pair of scalars `(c₀, c₁)`, rescaling that pair by a unit produces
-an isomorphic representation, so the classes are the points `[c₀ : c₁]` of the projective line.
-Normalizing the non-distinguished arrows to the identity picks the chart `c₁ ≠ 0` and
-parametrizes it by `c = c₀ / c₁`; the single class it omits is the point at infinity, where the
-distinguished arrow acts by the identity and every other arrow by zero.
+The family is the affine chart of the `ℙ¹`-family the Kronecker quiver is known for, and only that
+chart: letting the two arrows of `• ⇉ •` act by a pair of scalars `(c₀, c₁)`, rescaling that pair
+by a unit produces an isomorphic representation, so the classes are the points `[c₀ : c₁]` of the
+projective line. Normalizing the non-distinguished arrows to the identity picks the chart
+`c₁ ≠ 0` and parametrizes it by `c = c₀ / c₁`. Neither the one class this omits -- the point at
+infinity, where the distinguished arrow acts by the identity and every other arrow by zero -- nor
+the exhaustiveness of the resulting list, is built here; a projective-line-indexed family and its
+classification are left to a later file.
 
 The member at `c = 0` is the smallest Jordan block `TauCeti.kroneckerJordanRep k a₁ 0` of
 `TauCeti.RepresentationTheory.Quiver.Kronecker.FiniteRepType`, up to the identification of
@@ -88,11 +90,12 @@ mixed shape.
 
 ## References
 
-This supplies the `ℙ¹`-family of indecomposables of dimension vector `(1, 1)` asked for by the
-"Kronecker quiver" worked example of
-`TauCetiRoadmap/RepresentationTheory/QuiverRepresentations/README.md`. See Derksen--Weyman, *An
-Introduction to Quiver Representations*, and Assem--Simson--Skowroński, *Elements of the
-Representation Theory of Associative Algebras I*, Ch. VIII.
+This builds the affine chart of the `ℙ¹`-family of indecomposables of dimension vector `(1, 1)`
+named by the "Kronecker quiver" worked example of
+`TauCetiRoadmap/RepresentationTheory/QuiverRepresentations/README.md`; the projective family
+itself is not supplied here. See Derksen--Weyman, *An Introduction to Quiver Representations*, and
+Assem--Simson--Skowroński, *Elements of the Representation Theory of Associative Algebras I*,
+Ch. VIII.
 -/
 
 public section
@@ -333,7 +336,10 @@ theorem exists_indecomposable_dimVector_eq_not_nonempty_iso (k : Type u) [Field 
 
 This is the sharpness of `TauCeti.titsForm_dimVector_eq_one_of_indecomposable_of_isAcyclic`: over
 an acyclic quiver whose Tits form is only positive semidefinite, the dimension vector of an
-indecomposable need not be a root. -/
+indecomposable need not have Tits value `1`, that is, need not be a *real* root. It remains a root
+of the Kronecker quiver, an imaginary one: for two arrows `(1, 1)` is the isotropic null root of
+`Ã₁` recorded by `TauCeti.Quiver.Kronecker.titsForm_eq_zero_iff_exists_smul`, and for more arrows
+its Tits value `2 - #arrows` is negative. -/
 theorem titsForm_dimVector_kroneckerLineRep [Fintype A] :
     titsForm (Quiver.Kronecker A)
         (fun j : Quiver.Kronecker A ↦ (dimVector (kroneckerLineRep k a₁ c) j : ℤ)) =
