@@ -44,11 +44,12 @@ numbered-symmetry construction of a Kostant toral closure descends the operator 
 on every Bourbaki-numbered raising and lowering root subgroup, `σ` the fork exchange, and with
 `γ ^ 2 = 1`.
 
-The graph operator itself squares to `-1` rather than to `1`, so the signed permutation matrix
-`TauCeti.TypeDSpinCarrier.graphAutMatrix` squares to `-1` and not to `1`: the two signs at a
+The graph operator itself squares to `-1`, so the signed permutation matrix
+`TauCeti.TypeDSpinCarrier.graphAutMatrix` squares to the scalar `-1`: the two signs at a
 graph-exchanged pair of coordinates multiply to `-1`, which is
 `TauCeti.TypeDSpinCarrier.graphBasisScale_graphBasisPerm_mul`. The automorphism of the carrier is
-conjugation by that matrix, and `-1` is central, so it is an involution regardless.
+conjugation by that matrix, and `-1` is central, so conjugating twice is the identity whatever the
+value ring.
 
 Nothing here asserts that the carrier is reductive, that its weight torus is maximal, that it is
 the spin group scheme or the pinned simply connected Chevalley--Demazure group scheme of type
@@ -76,8 +77,11 @@ the spin group scheme or the pinned simply connected Chevalley--Demazure group s
 * `TauCeti.TypeDSpinCarrier.weightTorus_comp_graphAut_hom` and
   `TauCeti.TypeDSpinCarrier.graphAutPoints_weightTorusPoints`: the graph automorphism relabels the
   coordinates of the represented spin weight torus by the fork exchange.
+* `TauCeti.TypeDSpinCarrier.schemePointsMulEquiv_graphAut_comp_carrierι`: on every algebra-valued
+  point of the carrier, the automorphism of the carrier is the conjugation that the automorphism on
+  points performs, so the two are the same action.
 * `TauCeti.TypeDSpinCarrier.graphAut_sq` and
-  `TauCeti.TypeDSpinCarrier.graphAutPoints_graphAutPoints`: the order relation `γ ^ 2 = 1`, on the
+  `TauCeti.TypeDSpinCarrier.graphAutPoints_apply_apply`: the order relation `γ ^ 2 = 1`, on the
   carrier and on points.
 * `TauCeti.TypeDSpinCarrier.graphAutMatrix_mul_self`: the matrix implementing it squares to `-1`.
 * `TauCeti.TypeDSpinCarrier.pointsMap_comp_graphAutPoints`: the automorphism on points is natural
@@ -189,7 +193,7 @@ theorem graphOperator_latticeBasis (i : Fin (dimension n)) :
 /-- **The final-sign toggle is an involution of the coordinate basis**, matching the involutivity
 of the fork exchange on the diagram. -/
 @[simp]
-theorem graphBasisPerm_graphBasisPerm (i : Fin (dimension n)) :
+theorem graphBasisPerm_apply_apply (i : Fin (dimension n)) :
     graphBasisPerm n hn (graphBasisPerm n hn i) = i := by
   apply (Fintype.equivFin (Finset (Fin n))).symm.injective
   rw [← signSet, ← signSet, signSet_graphBasisPerm, signSet_graphBasisPerm,
@@ -355,8 +359,9 @@ theorem coe_graphAutMatrix_apply (A : Type v) [CommRing A] (i j : Fin (dimension
     (latticeBasis n) (graphOperator n hn) (graphOperator_mem_lattice_iff n hn)
     (graphBasisPerm n hn) (graphBasisScale n hn) (graphOperator_latticeBasis n hn) A i j
 
-/-- **The graph matrix squares to `-1`.** Its two signs at a graph-exchanged pair of coordinates
-multiply to `-1`, so conjugation by it is nonetheless an involution. -/
+/-- **The graph matrix squares to the scalar `-1`.** Its two signs at a graph-exchanged pair of
+coordinates multiply to `-1`, and `-1` is central, so conjugation by it is nonetheless an
+involution. -/
 theorem graphAutMatrix_mul_self (A : Type v) [CommRing A] :
     graphAutMatrix n hn A * graphAutMatrix n hn A = -1 := by
   refine Units.ext ?_
@@ -364,7 +369,7 @@ theorem graphAutMatrix_mul_self (A : Type v) [CommRing A] :
   ext i j
   rw [Matrix.mul_apply, Matrix.neg_apply, Matrix.one_apply,
     Finset.sum_eq_single (graphBasisPerm n hn j)]
-  · rw [coe_graphAutMatrix_apply, coe_graphAutMatrix_apply, graphBasisPerm_graphBasisPerm]
+  · rw [coe_graphAutMatrix_apply, coe_graphAutMatrix_apply, graphBasisPerm_apply_apply]
     rcases eq_or_ne i j with rfl | hij
     · rw [ite_eq_left (rfl : graphBasisPerm n hn i = graphBasisPerm n hn i),
         ite_eq_left (rfl : i = i), ← map_mul, graphBasisScale_graphBasisPerm_mul,
@@ -440,6 +445,44 @@ theorem coe_graphAutPoints_symm (A : Type v) [CommRing A] (g : points n hn A) :
       (graphAutMatrix n hn A)⁻¹ * g * graphAutMatrix n hn A :=
   (rfl)
 
+/-- **The graph automorphism on points is the map the graph automorphism of the carrier induces.**
+On every algebra-valued point of the carrier, composing with
+`TauCeti.TypeDSpinCarrier.graphAut` and including into `GL_(2^n)` conjugates the point's matrix by
+`TauCeti.TypeDSpinCarrier.graphAutMatrix`, which is what `TauCeti.TypeDSpinCarrier.graphAutPoints`
+does by `TauCeti.TypeDSpinCarrier.coe_graphAutPoints`. So the automorphism of the carrier and the
+one on its matrix-valued points are the same action. -/
+theorem schemePointsMulEquiv_graphAut_comp_carrierι (A : Type) [CommRing A]
+    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶ (groupScheme n hn).X) :
+    GeneralLinear.schemePointsMulEquiv (dimension n) A
+        (p ≫ ((graphAut n hn).hom ≫ carrierι n hn).hom.hom) =
+      graphAutMatrix n hn A *
+          GeneralLinear.schemePointsMulEquiv (dimension n) A (p ≫ (carrierι n hn).hom.hom) *
+        (graphAutMatrix n hn A)⁻¹ := by
+  have hcomp : (graphAut n hn).hom ≫ carrierι n hn =
+      eqToHom (groupScheme_eq_kostantToralGroupScheme n hn) ≫ (toralGraphAut n hn).hom ≫
+        kostantToralGroupSchemeι
+          (TauCeti.serreRootGenerator (CartanMatrix.D n))
+          (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+          (rep_kostantForm_mem_lattice n hn)
+          (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) := by
+    rw [graphAut_hom, carrierι_def]
+    simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
+  rw [hcomp, carrierι_def, graphAutMatrix]
+  simpa only [toralGraphAut, Grp.comp_hom_hom, Category.assoc] using
+    schemePointsMulEquiv_kostantToralNumberedSymmetryIso
+      (TauCeti.serreRootGenerator (CartanMatrix.D n))
+      (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+      (rep_kostantForm_mem_lattice n hn)
+      (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n)
+      ⇑(graphRootPerm n hn) (graphOperator n hn)
+      (graphOperator_mem_lattice_iff n hn)
+      (graphOperator_rep_rootGenerator n hn)
+      (graphRootPerm n hn).surjective
+      (graphBasisPerm n hn) (graphBasisScale n hn)
+      (graphOperator_latticeBasis n hn)
+      (graphPermD n (by omega)) (basisWeight_graphBasisPerm n hn) A
+      (p ≫ (eqToHom (groupScheme_eq_kostantToralGroupScheme n hn)).hom.hom)
+
 /-- **The graph automorphism renumbers the pinned root subgroups on matrix-valued points**,
 without changing their additive parameter. This is the equation `γ (x_α(t)) = x_{γ α}(t)` that
 pins a graph automorphism, read on the points of the carrier. -/
@@ -469,7 +512,7 @@ theorem graphAutPoints_weightTorusPoints (A : Type v) [CommRing A] (s : Fin n �
         torusCharacter (fun k => s (graphPermD n (by omega) k)) (basisWeight n i) := by
     intro i
     have hperm : (graphBasisPerm n hn)⁻¹ i = graphBasisPerm n hn i := by
-      rw [Equiv.Perm.inv_def, Equiv.symm_apply_eq, graphBasisPerm_graphBasisPerm]
+      rw [Equiv.Perm.inv_def, Equiv.symm_apply_eq, graphBasisPerm_apply_apply]
     have hwt : basisWeight n (graphBasisPerm n hn i) =
         basisWeight n i ∘ graphPermD n (by omega) := by
       funext k
@@ -488,9 +531,9 @@ theorem graphAutPoints_weightTorusPoints (A : Type v) [CommRing A] (s : Fin n �
   exact congrArg diagGL (funext hchar)
 
 /-- **The graph automorphism on points is an involution.** The graph matrix squares to the central
-element `-1`, so conjugating twice is the identity even though the matrix itself has order four. -/
+scalar `-1`, so conjugating twice is the identity even where that scalar is not `1`. -/
 @[simp]
-theorem graphAutPoints_graphAutPoints (A : Type v) [CommRing A] (g : points n hn A) :
+theorem graphAutPoints_apply_apply (A : Type v) [CommRing A] (g : points n hn A) :
     graphAutPoints n hn A (graphAutPoints n hn A g) = g := by
   refine Subtype.ext ?_
   rw [coe_graphAutPoints, coe_graphAutPoints]

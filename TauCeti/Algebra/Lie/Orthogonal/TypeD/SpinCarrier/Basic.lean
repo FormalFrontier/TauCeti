@@ -256,6 +256,18 @@ noncomputable def carrierι (hn : 4 ≤ n) :
       (rep_kostantForm_mem_lattice n hn)
       (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n)
 
+/-- The canonical inclusion is the generic Kostant toral-closure inclusion, read across the
+carrier's presentation as that closure. -/
+theorem carrierι_def :
+    carrierι n hn =
+      eqToHom (groupScheme_eq_kostantToralGroupScheme n hn) ≫
+        kostantToralGroupSchemeι
+          (TauCeti.serreRootGenerator (CartanMatrix.D n))
+          (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+          (rep_kostantForm_mem_lattice n hn)
+          (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) := by
+  rw [carrierι]
+
 /-- The type-`Dₙ` spin carrier is a closed subgroup scheme of its ambient general linear group. -/
 instance isClosedImmersion_carrierι : IsClosedImmersion (carrierι n hn).hom.hom.left := by
   rw [carrierι]
