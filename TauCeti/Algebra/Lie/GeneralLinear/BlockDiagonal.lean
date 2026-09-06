@@ -27,7 +27,7 @@ this map gives a `gl ι` action on every exterior power of `ι × κ → R`.
 
 namespace TauCeti
 
-open Matrix Module exteriorPower
+open Matrix _root_.Module exteriorPower
 
 open scoped Kronecker
 
