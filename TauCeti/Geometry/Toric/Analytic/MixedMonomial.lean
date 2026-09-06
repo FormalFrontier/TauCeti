@@ -266,8 +266,8 @@ theorem mixedMonomialMap_contDiffAt (A : MixedExponent k l k' l')
     fun b ↦ contDiffAt_pi.mp contDiffAt_snd b
   refine ContDiffAt.prodMk (contDiffAt_pi.mpr fun a ↦ ?_) (contDiffAt_pi.mpr fun a ↦ ?_)
   · exact (contDiffAt_prod fun b _ ↦ (hx b).pow _).mul
-      (contDiffAt_prod fun b _ ↦ contDiffAt_zpow (hy b) (hz b) _)
-  · exact contDiffAt_prod fun b _ ↦ contDiffAt_zpow (hy b) (hz b) _
+      (contDiffAt_prod fun b _ ↦ (hy b).zpow (hz b) _)
+  · exact contDiffAt_prod fun b _ ↦ (hy b).zpow (hz b) _
 
 /-- A mixed monomial map is holomorphic on the mixed-chart locus, to any order. -/
 theorem mixedMonomialMap_contDiffOn (A : MixedExponent k l k' l') :
@@ -333,15 +333,17 @@ theorem mixedMonomialOpenPartialHomeomorph_target :
 holomorphic, to any order. -/
 theorem mixedMonomialOpenPartialHomeomorph_contDiffOn :
     ContDiffOn ℂ n (mixedMonomialOpenPartialHomeomorph A B hBA hAB)
-      (mixedMonomialOpenPartialHomeomorph A B hBA hAB).source :=
-  mixedMonomialMap_contDiffOn A
+      (mixedMonomialOpenPartialHomeomorph A B hBA hAB).source := by
+  simpa only [mixedMonomialOpenPartialHomeomorph_coe, mixedMonomialOpenPartialHomeomorph_source]
+    using mixedMonomialMap_contDiffOn A
 
 /-- An inverse pair of exponent data induces a biholomorphism: the inverse of the induced
 homeomorphism is holomorphic, to any order. -/
 theorem mixedMonomialOpenPartialHomeomorph_symm_contDiffOn :
     ContDiffOn ℂ n (mixedMonomialOpenPartialHomeomorph A B hBA hAB).symm
-      (mixedMonomialOpenPartialHomeomorph A B hBA hAB).target :=
-  mixedMonomialMap_contDiffOn B
+      (mixedMonomialOpenPartialHomeomorph A B hBA hAB).target := by
+  simpa only [mixedMonomialOpenPartialHomeomorph_symm_coe,
+    mixedMonomialOpenPartialHomeomorph_target] using mixedMonomialMap_contDiffOn B
 
 end
 
@@ -428,15 +430,17 @@ theorem basisChangeOpenPartialHomeomorph_target :
 is holomorphic, to any order. -/
 theorem basisChangeOpenPartialHomeomorph_contDiffOn :
     ContDiffOn ℂ n (basisChangeOpenPartialHomeomorph C D hD)
-      (basisChangeOpenPartialHomeomorph C D hD).source :=
-  mixedMonomialOpenPartialHomeomorph_contDiffOn _ _ _ _
+      (basisChangeOpenPartialHomeomorph C D hD).source := by
+  simpa only [basisChangeOpenPartialHomeomorph_coe, basisChangeOpenPartialHomeomorph_source]
+    using mixedMonomialMap_contDiffOn (MixedExponent.ofTorusBlock C D)
 
 /-- A unimodular change of the extending basis induces a biholomorphism: the inverse of the induced
 homeomorphism is holomorphic, to any order. -/
 theorem basisChangeOpenPartialHomeomorph_symm_contDiffOn :
     ContDiffOn ℂ n (basisChangeOpenPartialHomeomorph C D hD).symm
-      (basisChangeOpenPartialHomeomorph C D hD).target :=
-  mixedMonomialOpenPartialHomeomorph_symm_contDiffOn _ _ _ _
+      (basisChangeOpenPartialHomeomorph C D hD).target := by
+  simpa only [basisChangeOpenPartialHomeomorph_symm_coe, basisChangeOpenPartialHomeomorph_target]
+    using mixedMonomialMap_contDiffOn (MixedExponent.ofTorusBlock (-(C * D⁻¹)) D⁻¹)
 
 end
 

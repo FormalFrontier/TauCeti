@@ -22,17 +22,15 @@ allowed to vanish.
 
 ## Main results
 
-* `TauCeti.prod_zpow_eq_zpow_sum`: `∏ i ∈ s, y ^ e i = y ^ ∑ i ∈ s, e i` for `y ≠ 0`.
-* `TauCeti.prod_prod_pow`, `TauCeti.prod_prod_zpow` and `TauCeti.prod_prod_zpow_pow`: substituting
+* `Finset.prod_zpow_eq_zpow_sum`: `∏ i ∈ s, y ^ e i = y ^ ∑ i ∈ s, e i` for `y ≠ 0`.
+* `Finset.prod_prod_pow`, `Finset.prod_prod_zpow` and `Finset.prod_prod_zpow_pow`: substituting
   monomials into a monomial multiplies the exponent matrices, for the three combinations of
   natural and integral exponents that make sense.
 -/
 
 public section
 
-namespace TauCeti
-
-open Finset
+namespace Finset
 
 variable {ι κ M G₀ : Type*}
 
@@ -72,7 +70,7 @@ theorem prod_prod_zpow [CommGroupWithZero G₀] (s : Finset ι) (t : Finset κ) 
     _ = ∏ b ∈ t, y b ^ ∑ a ∈ s, g a * e a b :=
         prod_congr rfl fun b hb ↦ prod_zpow_eq_zpow_sum _ (hy b hb) _
 
-/-- The mixed case of `TauCeti.prod_prod_zpow`: monomials with integral exponents in invertible
+/-- The mixed case of `Finset.prod_prod_zpow`: monomials with integral exponents in invertible
 coordinates, substituted into a monomial with natural exponents `g`. -/
 theorem prod_prod_zpow_pow [CommGroupWithZero G₀] (s : Finset ι) (t : Finset κ) {y : κ → G₀}
     (hy : ∀ b ∈ t, y b ≠ 0) (e : ι → κ → ℤ) (g : ι → ℕ) :
@@ -80,4 +78,4 @@ theorem prod_prod_zpow_pow [CommGroupWithZero G₀] (s : Finset ι) (t : Finset 
   rw [← prod_prod_zpow s t hy e fun a ↦ (g a : ℤ)]
   exact prod_congr rfl fun a _ ↦ (zpow_natCast _ _).symm
 
-end TauCeti
+end Finset
