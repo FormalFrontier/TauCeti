@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.Lie.E7.Minuscule.RootDatum
 public import TauCeti.GroupTheory.SpecificGroups.CFSG.Closure
+public import TauCeti.GroupTheory.SpecificGroups.CFSG.GraphTwisted
 
 /-!
 # The exceptional family `E₇(q)` on the minuscule carrier
@@ -22,7 +23,9 @@ This file selects the family with `TauCeti.LieTypeIndex.IsTypeE7` and the subtyp
 algebraic closure of the index's prime field, the simple root subgroups numbered by the Bourbaki
 nodes of the `E₇` diagram, the explicit unipotent matrix each of them is, and the pinning equation
 that reads their characters as the simple roots of `TauCeti.DynkinType.simplyConnectedRootDatum`
-at `E₇`.
+at `E₇`. Since the diagram has no symmetry, the family takes an ordinary Steinberg map, and
+`TauCeti.TypeE7LieIndex.diagramPerm_toGraphTwistedIndex` is the check that the permutation its
+index carries is trivial.
 
 The minuscule representation rather than the adjoint one is what makes the carrier's character
 lattice the full weight lattice of the `E₇` root datum, which contains the root lattice with index
@@ -32,7 +35,9 @@ where the two lattices coincide.
 No Steinberg endomorphism is formed here, and no group of fixed points: the `q`-power Frobenius of
 this carrier is separate work. Nothing below asserts that the carrier is reductive, that its weight
 torus is maximal, that it is the pinned simply connected Chevalley--Demazure group scheme of type
-`E₇`, or that any group named is finite, perfect or simple. What is proved of the carrier against
+`E₇`, or that any group named is finite, perfect or simple; none of those is proved of
+`TauCeti.E7Minuscule.groupScheme` here or in the files this one imports, and the carrier is not
+offered as a substitute for the pinned group of the diagram. What is proved of the carrier against
 the `E₇` diagram is the pinning equation
 `TauCeti.TypeE7LieIndex.weightTorusPoints_conj_simpleRootSubgroup`.
 
@@ -49,6 +54,8 @@ the `E₇` diagram is the pinning equation
 
 * `TauCeti.LieTypeIndex.valid_E7`: every `E₇` parameter is a preferred classification
   representative.
+* `TauCeti.TypeE7LieIndex.diagramPerm_toGraphTwistedIndex`: the diagram permutation the family
+  carries is the identity.
 * `TauCeti.TypeE7LieIndex.coe_simpleRootSubgroup`: a simple-root point is the explicit unipotent
   matrix `1 + u Eᵢ` in the minuscule basis.
 * `TauCeti.TypeE7LieIndex.weightTorusPoints_conj_simpleRootSubgroup`: the weight torus rescales
@@ -64,29 +71,9 @@ the `E₇` diagram is the pinning equation
   `E₇` diagram that the root subgroups below are indexed by.
 
 The interface follows the parallel type-`E₆` file
-`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeE6.lean`.
-
-## Roadmap
-
-Milestone L0 of `TauCetiRoadmap/CFSGStatement/README.md` asks for the points of the *pinned* simply
-connected Chevalley--Demazure group scheme of `TauCeti.DynkinType.simplyConnectedRootDatum` at the
-diagram the index names, with its root subgroups. **This file does not close L0 on the `E₇` branch,
-and the minuscule carrier is not offered as a substitute for that pinned group.** The pinned group
-scheme, its pinning, and any identification of a carrier with it are Layer 9 targets of
-`TauCetiRoadmap/ReductiveGroups/README.md` that the CFSG roadmap consumes rather than builds; none
-of them is proved of `TauCeti.E7Minuscule.groupScheme` here or in the files this one imports. The
-names `TauCeti.ValidLieTypeIndex.AmbientGroup` and `TauCeti.ValidLieTypeIndex.simpleRootSubgroup`
-that L0 asks for are accordingly left free, as
-`TauCeti/GroupTheory/SpecificGroups/CFSG/GeckCarrier.lean` records; everything below is named inside
-the family's own subtype `TauCeti.TypeE7LieIndex`. What this file supplies is the `E₇` branch's
-explicit carrier, its numbered simple root subgroups as explicit unipotent matrices, and the pinning
-equation reading their characters in the `E₇` root datum, each in the shape that milestone states
-it; they transfer to the L0 carrier along that Layer 9 identification, and not before. The
-counterparts on the branches already assembled are
-`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeA.lean`,
-`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeD.lean`,
-`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeE6.lean` and
-`TauCeti/GroupTheory/SpecificGroups/CFSG/Unimodular.lean`.
+`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeE6.lean`, whose index API lives in
+`TauCeti/GroupTheory/SpecificGroups/CFSG/Index.lean`; the `E₇` index API is here instead only
+because that file is at the line limit its style linter enforces.
 -/
 
 public section
@@ -166,6 +153,20 @@ theorem exists_eq_of (d : TypeE7LieIndex) : ∃ q : PrimePower, d = of q := by
 @[simp] theorem rank_eq_seven (d : TypeE7LieIndex) : d.1.rank = 7 :=
   congrArg DynkinType.rank d.dynkinType_eq
 
+/-- The family `E₇(q)`, regarded as an ordinary-or-graph-twisted index. It uses no half-Frobenius,
+so it carries a diagram permutation, namely the identity. -/
+abbrev toGraphTwistedIndex (d : TypeE7LieIndex) : GraphTwistedIndex :=
+  ⟨d.1, LieTypeIndex.not_usesHalfFrobenius_of_isTypeE7 d.2⟩
+
+/-- **The diagram permutation of the family `E₇(q)` is the identity**, so the Steinberg map of the
+family is the field Frobenius outright. The `E₇` diagram is a tree with no nontrivial symmetry, so
+no second family shares it to be told apart from. -/
+@[simp]
+theorem diagramPerm_toGraphTwistedIndex (d : TypeE7LieIndex) :
+    d.toGraphTwistedIndex.diagramPerm = 1 := by
+  obtain ⟨q, rfl⟩ := d.exists_eq_of
+  exact GraphTwistedIndex.diagramPerm_E7 (LieTypeIndex.valid_E7 q)
+
 noncomputable section
 
 variable (d : TypeE7LieIndex)
@@ -175,8 +176,7 @@ variable (d : TypeE7LieIndex)
 /-- **The ambient group this file attaches to a validated `E₇` index**: the points of the explicit
 full-weight type-`E₇` minuscule Chevalley carrier over the algebraic closure of its prime field.
 No finiteness, reductivity, pinning or maximality statement is attached to it, and it is not
-claimed to be the points of the pinned simply connected `E₇` group scheme that milestone L0 asks
-for, that identification being the Layer 9 target described in the module docstring. -/
+claimed to be the points of the pinned simply connected `E₇` group scheme. -/
 abbrev AmbientGroup : Type := E7Minuscule.points d.1.Closure
 
 /-- The positive simple-root subgroup at the Bourbaki-numbered node `i` of the `E₇` diagram. It is
@@ -206,8 +206,9 @@ theorem coe_simpleRootSubgroup (i : Fin d.1.rank) (u : Multiplicative d.1.Closur
         Matrix (Fin 56) (Fin 56) d.1.Closure) =
       1 + Multiplicative.toAdd u •
         (E7Minuscule.raisingMatrix (finCongr d.rank_eq_seven i)).map
-          (Int.cast : ℤ → d.1.Closure) :=
-  E7Minuscule.coe_rootSubgroupPoints_inl _ _ _
+          (Int.cast : ℤ → d.1.Closure) := by
+  rw [simpleRootSubgroup_def]
+  exact E7Minuscule.coe_rootSubgroupPoints_inl _ _ _
 
 /-- **The simple-root subgroups sit at the simple roots of the `E₇` root datum.** A point `s` of
 the carrier's rank-seven split weight torus conjugates the subgroup at node `i` to itself,
@@ -228,8 +229,9 @@ theorem weightTorusPoints_conj_simpleRootSubgroup (i : Fin d.1.rank)
               ((E7.simplyConnectedRootDatum DynkinType.valid_E7).root
                 (E7.simpleIndex DynkinType.valid_E7 (finCongr d.rank_eq_seven i))) :
                   d.1.Closure) *
-            Multiplicative.toAdd u)) :=
-  E7Minuscule.weightTorusPoints_conj_rootSubgroupPoints_root_simpleIndex
+            Multiplicative.toAdd u)) := by
+  rw [simpleRootSubgroup_def]
+  exact E7Minuscule.weightTorusPoints_conj_rootSubgroupPoints_root_simpleIndex
     DynkinType.valid_E7 _ _ s u
 
 end
