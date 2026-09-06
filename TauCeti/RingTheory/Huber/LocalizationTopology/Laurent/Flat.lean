@@ -22,8 +22,7 @@ statements, in increasing generality:
   complete noetherian Tate ring;
 * **Wedhorn's Proposition 8.30, elementary case**: the restriction map `A⟨T/s⟩ → A⟨T'/s⟩` is flat
   when `T'` is `T` with one numerator `t` adjoined. It asks the hypotheses above of `A⟨T/s⟩`,
-  together with closedness of the Laurent relation ideal, **only when `t ∉ T`**; for `t ∈ T` the
-  two numerator sets coincide and the map is an identity enlargement, which needs nothing;
+  together with closedness of the Laurent relation ideal, **only when `t ∉ T`**;
 * the restriction map of an arbitrary enlargement `T ⊆ T'` is flat, assuming `s` topologically
   nilpotent and `A⟨U/s⟩` strongly noetherian for every `U` with `T ⊆ U ⊂ T'`. This is **not**
   Wedhorn's Proposition 8.30, which assumes strong noetherianity of `A` alone; see
@@ -170,13 +169,13 @@ theorem flat_quotient_laurentRelationIdeal_of_isStronglyNoetherian
     (isNoetherianRing_of_isStronglyNoetherian
       (by rw [IsUniformAddGroup.rightUniformSpace_eq]; infer_instance))
 
-/-- **Changing the localisation that carries a presentation is flat.** Two presentations with the
-same numerator set are compared by restriction maps that are mutually inverse, so each is bijective.
+/-- **Changing the localisation that carries a presentation is flat.** For two presentations with
+the same numerator set, carried by different localisations of `A` at `s`, the restriction map
+between them is flat.
 
 This is the identity enlargement, and it assumes nothing: no nilpotence, no noetherianity. It is
-the `T = T'` case of the chain below, what lets that chain end at an arbitrary localisation of
-`T'` rather than the one its induction runs on, and what the elementary case falls back on when
-its new numerator is already present. -/
+what lets the chain below end at an arbitrary localisation of `T'` rather than the one its
+induction runs on. -/
 theorem flat_restrictionRingHomOfSubset_self (P : PairOfDefinition A) (T : Finset A)
     (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
     (hden : HasDenominatorPower P T s S)
@@ -211,9 +210,8 @@ one-numerator enlargement is flat.
 
 `hsplit` says that `T'` is the numerators of `T` together with the single `t`; `hTate` and
 `hnoeth` are Lemma 8.31's hypotheses on the base `A⟨T/s⟩`, and `hcl` asks the Laurent relation
-ideal to be closed. All three are asked only for `t ∉ T`: when `t` is already a numerator the two
-sets coincide and `flat_restrictionRingHomOfSubset_self` settles the map. The
-`..._of_isStronglyNoetherian` variant below takes them in the form they are met in. -/
+ideal to be closed. All three are asked only for `t ∉ T`. The `..._of_isStronglyNoetherian`
+variant below takes them in the form they are met in. -/
 theorem flat_restrictionRingHomOfSubset (ht : t ∈ T') (hsplit : ∀ u ∈ T', u ∈ T ∨ u = t)
     (hTate : t ∉ T → letI := locUniformSpace P T s S hden
       letI := isUniformAddGroup_locUniformSpace P T s S hden
