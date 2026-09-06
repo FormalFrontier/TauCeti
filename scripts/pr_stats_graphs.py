@@ -100,10 +100,38 @@ def atomic_write(path: Path, content: str) -> None:
         raise
 
 
+# A depleted budget is not a transient failure: retrying in one, two and four seconds cannot
+# refill it, so the original three quick attempts turned an hour-long wait into an immediate
+# error. The budget refills on a fixed schedule, so the only useful response is to wait for it.
+RATE_LIMITED = re.compile(r"rate limit|secondary rate|was submitted too quickly", re.I)
+# One GraphQL window is an hour, plus a margin for clock skew between here and GitHub. Capped so
+# that a misread reset time, or a limit that is not actually going to refill, fails the job
+# instead of holding a runner indefinitely.
+MAX_RATE_LIMIT_WAIT = 75 * 60
+
+
+def rate_limit_reset_wait() -> float | None:
+    """Seconds until the GraphQL budget refills, or None if that cannot be established."""
+    probe = subprocess.run(
+        ["gh", "api", "rate_limit", "--jq", ".resources.graphql.reset"],
+        text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    )
+    if probe.returncode != 0:
+        return None
+    try:
+        reset = datetime.fromtimestamp(int(probe.stdout.strip()), tz=timezone.utc)
+    except ValueError:
+        return None
+    # A small margin past the reset, so a request does not land on the boundary and fail again.
+    return max(0.0, (reset - datetime.now(timezone.utc)).total_seconds()) + 5
+
+
 def run_gh(arguments: list[str], attempts: int = 3) -> str:
-    """Run gh with short retries for transient GitHub/API failures."""
+    """Run gh, with short retries for transient failures and a long one for a depleted budget."""
     last_error = None
-    for attempt in range(attempts):
+    waited = 0.0
+    attempt = 0
+    while attempt < attempts:
         result = subprocess.run(
             ["gh", *arguments], text=True, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -111,7 +139,22 @@ def run_gh(arguments: list[str], attempts: int = 3) -> str:
         if result.returncode == 0:
             return result.stdout
         last_error = result.stderr.strip() or f"gh exited {result.returncode}"
-        if attempt + 1 < attempts:
+        if RATE_LIMITED.search(last_error):
+            wait = rate_limit_reset_wait()
+            if wait is None or waited + wait > MAX_RATE_LIMIT_WAIT:
+                raise RuntimeError(
+                    f"GitHub rate limit exhausted and not waitable: {last_error}. "
+                    f"Already waited {waited / 60:.0f} min of a {MAX_RATE_LIMIT_WAIT / 60:.0f} "
+                    "min budget. Pass a recent snapshot with --since-data so that unchanged "
+                    "pull requests do not have to be walked again.")
+            print(f"rate limit reached; waiting {wait / 60:.1f} min for the budget to refill",
+                  file=sys.stderr)
+            time.sleep(wait)
+            waited += wait
+            # Waiting is not one of the three attempts: the request never really ran.
+            continue
+        attempt += 1
+        if attempt < attempts:
             time.sleep(2 ** attempt)
     raise RuntimeError(f"GitHub query failed after {attempts} attempts: {last_error}")
 
@@ -130,7 +173,7 @@ query($owner:String!, $name:String!, $cursor:String) {
                  orderBy:{field:CREATED_AT, direction:ASC}) {
       pageInfo { hasNextPage endCursor }
       nodes {
-        number createdAt mergedAt closedAt state isDraft
+        number createdAt updatedAt mergedAt closedAt state isDraft
         author { login }
         labels(first:30) { nodes { name } }
       }
@@ -200,18 +243,76 @@ def fetch_timeline(owner: str, name: str, number: int) -> dict:
         cursor = timeline["pageInfo"]["endCursor"]
 
 
-def fetch_timelines(owner: str, name: str, numbers: list[int]) -> dict[int, dict]:
-    """Fetch current state and timelines independently; batching loses events."""
+def fetch_timelines(
+    owner: str, name: str, numbers: list[int], reusable: dict[int, dict] | None = None,
+) -> tuple[dict[int, dict], int]:
+    """Fetch current state and timelines independently; batching loses events.
+
+    One GraphQL request per pull request, which is the dominant cost of this script and the
+    reason it needs `reusable`: a repository with more open-plus-recently-closed pull requests
+    than the hourly GraphQL budget cannot be walked from scratch at all. `reusable` maps a
+    number to a timeline recorded when the pull request last had a given `updatedAt`; the caller
+    only puts an entry there when that `updatedAt` still holds, so a hit is exact rather than a
+    heuristic. Returns the timelines and how many had to be fetched.
+    """
+    reusable = reusable or {}
     result = {}
+    fetched = 0
     for index, number in enumerate(numbers, start=1):
+        cached = reusable.get(number)
+        if cached is not None:
+            result[number] = cached
+            continue
         result[number] = fetch_timeline(owner, name, number)
-        if index % 100 == 0 or index == len(numbers):
-            print(f"fetched {index:,}/{len(numbers):,} PR timelines", file=sys.stderr)
-    return result
+        fetched += 1
+        if fetched % 100 == 0 or index == len(numbers):
+            print(f"fetched {fetched:,} PR timelines "
+                  f"({len(numbers) - fetched:,} reused of {len(numbers):,})", file=sys.stderr)
+    return result, fetched
 
 
-def fetch_prs(repo: str) -> list[dict]:
-    """Fetch every PR and its authoritative, directly queried label timeline."""
+def reusable_timelines(previous: dict | None, prs: list[dict]) -> dict[int, dict]:
+    """Timelines from an earlier snapshot that the current `updatedAt` proves are still current.
+
+    A pull request's `updatedAt` moves when it is labelled, so an unchanged one is a sound
+    certificate that its label timeline is unchanged too. Anything the previous snapshot does
+    not carry a matching `updated_at` and a recorded timeline for is simply refetched, so a
+    snapshot written before this field existed, a truncated one, or none at all all degrade to
+    the original full walk rather than to wrong data.
+    """
+    if not previous:
+        return {}
+    recorded = {}
+    for entry in previous.get("prs") or []:
+        if entry.get("updated_at") and "labeled_events" in entry:
+            recorded[entry.get("number")] = entry
+    reusable = {}
+    for pr in prs:
+        entry = recorded.get(pr["number"])
+        if entry is None or entry["updated_at"] != pr["updated_at"]:
+            continue
+        # Shaped like a fetch_timeline result, because that is what the caller substitutes it
+        # for. Only the event list comes from the previous snapshot: the state fields are taken
+        # from this run's page query, which was read later than the cached copy and so is the
+        # fresher of the two. They must agree anyway -- an unchanged `updatedAt` says so -- but
+        # preferring the newer read keeps a reused pull request no staler than a fetched one.
+        reusable[pr["number"]] = {
+            "merged_at": pr["merged_at"],
+            "closed_at": pr["closed_at"],
+            "state": pr["state"],
+            "is_draft": pr["is_draft"],
+            "labels": pr["labels"],
+            "labeled_events": entry.get("labeled_events") or [],
+        }
+    return reusable
+
+
+def fetch_prs(repo: str, previous: dict | None = None) -> list[dict]:
+    """Fetch every PR and its authoritative, directly queried label timeline.
+
+    `previous` is an earlier snapshot from this same repository, used only to skip refetching
+    the timeline of a pull request that has not been touched since. See `reusable_timelines`.
+    """
     owner, name = split_repo(repo)
     cursor = None
     prs = []
@@ -223,6 +324,7 @@ def fetch_prs(repo: str) -> list[dict]:
             prs.append({
                 "number": raw["number"],
                 "created_at": raw["createdAt"],
+                "updated_at": raw["updatedAt"],
                 "merged_at": raw["mergedAt"],
                 "closed_at": raw["closedAt"],
                 "state": raw["state"],
@@ -238,7 +340,8 @@ def fetch_prs(repo: str) -> list[dict]:
         pr["number"] for pr in prs
         if pr["closed_at"] is None or parse_dt(pr["closed_at"]) >= LIFECYCLE_EPOCH
     ]
-    timelines = fetch_timelines(owner, name, timeline_numbers)
+    timelines, _ = fetch_timelines(
+        owner, name, timeline_numbers, reusable_timelines(previous, prs))
     for pr in prs:
         if pr["number"] not in timelines:
             continue
@@ -338,8 +441,37 @@ def fetch_scoreboards(
     return scoreboards, rejected
 
 
-def fetch_snapshot(repo: str) -> dict:
-    prs = fetch_prs(repo)
+def load_previous(path: Path | None, repo: str) -> dict | None:
+    """An earlier snapshot to reuse timelines from, or None if there is nothing usable.
+
+    Every failure here is non-fatal and reported, because this file is only ever an
+    optimisation: no snapshot, an unreadable one, or one from another repository all mean the
+    same thing -- walk everything, as before. Silence would be the wrong choice in the other
+    direction though. A cache that has quietly stopped being restored looks exactly like a
+    healthy run until the budget runs out, which is the failure this whole path exists to
+    prevent, so a miss says so on stderr.
+    """
+    if path is None:
+        return None
+    try:
+        previous = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        print(f"no previous snapshot at {path}; walking every timeline", file=sys.stderr)
+        return None
+    except (OSError, ValueError) as error:
+        print(f"ignoring unreadable snapshot {path}: {error}", file=sys.stderr)
+        return None
+    if previous.get("repo") != repo:
+        print(f"ignoring snapshot for {previous.get('repo')!r}, expected {repo!r}",
+              file=sys.stderr)
+        return None
+    print(f"reusing timelines from the snapshot taken at {previous.get('fetched_at')}",
+          file=sys.stderr)
+    return previous
+
+
+def fetch_snapshot(repo: str, previous: dict | None = None) -> dict:
+    prs = fetch_prs(repo, previous)
     trusted_logins = {
         pr["author"] for pr in prs
         if pr.get("merged_at") and pr.get("author") != "unknown"
@@ -889,6 +1021,11 @@ def main() -> int:
     parser.add_argument("--out-dir", required=True, type=Path)
     parser.add_argument("--data", type=Path, help="normalized offline snapshot")
     parser.add_argument("--dump-data", type=Path, help="write fetched normalized snapshot")
+    parser.add_argument("--since-data", type=Path,
+                        help="an earlier snapshot; pull requests untouched since it was written "
+                             "keep their recorded timeline instead of being walked again. "
+                             "A missing or unreadable file is ignored, so a cold start still "
+                             "works -- it is a cost optimisation, never a source of truth.")
     parser.add_argument("--as-of", help="override snapshot time (ISO 8601)")
     parser.add_argument("--contributor-limit", type=int, default=24)
     parser.add_argument("--history-days", type=int, default=90)
@@ -900,7 +1037,7 @@ def main() -> int:
     if args.data:
         data = json.loads(args.data.read_text(encoding="utf-8"))
     else:
-        data = fetch_snapshot(args.repo)
+        data = fetch_snapshot(args.repo, load_previous(args.since_data, args.repo))
         if args.dump_data:
             atomic_write(args.dump_data, json.dumps(data, indent=2) + "\n")
     as_of = parse_dt(args.as_of) if args.as_of else None
