@@ -66,11 +66,6 @@ down the Bruhat order.
 
 ## References
 
-This is the "Bruhat order's basic well-definedness" item under "Consequences" in Layer 3 of
-`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`, the root-system-free Coxeter
-combinatorics that layer collects; the strong exchange condition it consumes is the first item of
-the same layer.
-
 * A. Björner and F. Brenti, *Combinatorics of Coxeter Groups*, Springer GTM 231 (2005),
   Sections 2.1 and 2.2.
 * N. Bourbaki, *Groupes et algèbres de Lie*, Chapitres IV-VI, Ch. IV, §1, Exercise 3.
@@ -208,10 +203,8 @@ theorem BruhatLE.antisymm (h₁ : cs.BruhatLE u w) (h₂ : cs.BruhatLE w u) : u 
   exact absurd ((h₁.length_lt_of_ne hne).trans (h₂.length_lt_of_ne (Ne.symm hne))) (lt_irrefl _)
 
 /-- The Bruhat order is invariant under inversion. -/
-theorem BruhatLE.inv (h : cs.BruhatLE u w) : cs.BruhatLE u⁻¹ w⁻¹ := by
-  induction h with
-  | refl => exact Relation.ReflTransGen.refl
-  | tail _ hs ih => exact ih.tail hs.inv
+theorem BruhatLE.inv (h : cs.BruhatLE u w) : cs.BruhatLE u⁻¹ w⁻¹ :=
+  Relation.ReflTransGen.lift (fun x : W => x⁻¹) (fun _ _ hs => BruhatStep.inv hs) u w h
 
 end
 
@@ -262,6 +255,12 @@ def bruhatPartialOrder : PartialOrder W where
 /-- The `≤` of `CoxeterSystem.bruhatPartialOrder` is `CoxeterSystem.BruhatLE`. -/
 @[simp]
 theorem bruhatPartialOrder_le : cs.bruhatPartialOrder.le = cs.BruhatLE := (rfl)
+
+/-- The `<` of `CoxeterSystem.bruhatPartialOrder` is `CoxeterSystem.BruhatLE` away from the
+diagonal. -/
+@[simp]
+theorem bruhatPartialOrder_lt : cs.bruhatPartialOrder.lt u w ↔ cs.BruhatLE u w ∧ u ≠ w :=
+  @lt_iff_le_and_ne W cs.bruhatPartialOrder u w
 
 /-! ### The subword description -/
 
