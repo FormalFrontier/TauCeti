@@ -67,13 +67,7 @@ theorem algebraMap_mem_adjoin_genericY (w : W'.CoordinateRing) :
       IntermediateField.adjoin L {W'.genericY} := fun r ↦ by
     rw [IsScalarTower.algebraMap_apply F[X] L W'.FunctionField]
     exact IntermediateField.algebraMap_mem _ _
-  have hsmul : ∀ (r : F[X]) (v : W'.CoordinateRing),
-      algebraMap W'.CoordinateRing W'.FunctionField (r • v) =
-        algebraMap F[X] W'.FunctionField r *
-          algebraMap W'.CoordinateRing W'.FunctionField v := fun r v ↦ by
-    simpa [Algebra.smul_def] using
-      map_smul (IsScalarTower.toAlgHom F[X] W'.CoordinateRing W'.FunctionField) r v
-  rw [map_add, hsmul, hsmul, map_one, mul_one]
+  rw [map_add, algebraMap_smul_eq_mul, algebraMap_smul_eq_mul, map_one, mul_one]
   exact add_mem (hbase p)
     (mul_mem (hbase q) (IntermediateField.subset_adjoin _ _ (genericY_def W').symm))
 
