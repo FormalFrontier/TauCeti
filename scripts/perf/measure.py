@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Measure changed Lean modules with host perf around an offline landrun."""
+"""Measure changed Lean modules with host perf around an offline bwrap sandbox."""
 
 from __future__ import annotations
 
@@ -18,6 +18,14 @@ OUTER_TIMEOUT = 370
 
 
 def terminate_group(process: subprocess.Popen[bytes]) -> None:
+    """Kill a timed-out measurement.
+
+    Under landrun the sandboxed processes shared this process group, so the group signal
+    reached them directly. bwrap's `--new-session` puts them in their own, and the group
+    signal now reaches bwrap alone -- which is enough: `--unshare-all` gives the sandbox its
+    own PID namespace whose init is bwrap's child, so killing bwrap tears the whole tree
+    down. `--die-with-parent` covers the case where this process dies first.
+    """
     try:
         os.killpg(process.pid, signal.SIGTERM)
         process.wait(timeout=10)
@@ -38,22 +46,47 @@ def run(command: list[str], *, cwd: Path, timeout: int | None = None) -> int:
 
 
 def sandbox_command(
-    root: Path, landrun: str, watchdog_toolchain: Path, modules: list[str]
+    root: Path, bwrap: str, watchdog_toolchain: Path, modules: list[str]
 ) -> list[str]:
+    """Build the offline bwrap policy the measured Lean build runs under.
+
+    `--tmpfs /` rather than a read-only bind of the host root: landrun's rules only ever
+    granted, so the policy this replaces already denied everything it did not name, and
+    binding `/` back in would quietly widen it. Only the same paths are bound over that
+    empty root, and only `.lake` is writable.
+    """
+    elan = Path.home() / ".elan"
     command = [
-        landrun,
-        "--rox", "/usr", "--rox", "/etc",
-        "--rw", "/dev/null", "--rox", "/dev/zero", "--rox", "/dev/urandom", "--rox", "/dev/random",
-        "--rox", str(Path.home() / ".elan"), "--rox", str(watchdog_toolchain),
-        "--rox", str(root), "--rw", str(root / ".lake"),
+        bwrap,
+        "--tmpfs", "/",
+        "--ro-bind", "/usr", "/usr",
+        "--ro-bind", "/etc", "/etc",
+        # Ubuntu is merged-usr; the compatibility symlinks have to be recreated by hand
+        # because nothing of the real root survives `--tmpfs /`.
+        "--symlink", "usr/bin", "/bin",
+        "--symlink", "usr/sbin", "/sbin",
+        "--symlink", "usr/lib", "/lib",
+        "--symlink", "usr/lib64", "/lib64",
+        "--dev", "/dev", "--proc", "/proc", "--tmpfs", "/tmp",
+        "--ro-bind", str(elan), str(elan),
+        "--ro-bind", str(watchdog_toolchain), str(watchdog_toolchain),
+        "--ro-bind", str(root), str(root),
+        "--bind", str(root / ".lake"), str(root / ".lake"),
+        "--clearenv",
     ]
+    # landrun's `--env NAME` looked the value up in the parent environment; bwrap needs it
+    # spelled out, and `--clearenv` means a name we do not pass simply is not there.
     for name in (
         "PATH", "HOME", "CI", "LAKE_NO_CACHE", "LAKE_ARTIFACT_CACHE",
         "LAKE_RESTORE_ARTIFACTS", "LAKE_CACHE_DIR", "WATCHDOG_TOOLCHAIN",
     ):
-        command.extend(("--env", name))
+        value = os.environ.get(name)
+        if value is not None:
+            command.extend(("--setenv", name, value))
     command.extend(
         (
+            "--chdir", str(root),
+            "--unshare-all", "--die-with-parent", "--new-session",
             "--", "bash", "-euo", "pipefail", "-c",
             'export LAKE_OVERRIDE_LEAN=true; export LEAN="$WATCHDOG_TOOLCHAIN/bin/lean"; exec lake build "$@"',
             "_", *modules,
@@ -131,7 +164,7 @@ def main() -> int:
     parser.add_argument("--side", choices=("base", "head"), required=True)
     parser.add_argument("--raw-dir", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--landrun", default="landrun")
+    parser.add_argument("--bwrap", default="bwrap")
     parser.add_argument("--watchdog-toolchain", type=Path, required=True)
     parser.add_argument("--perf", default="perf")
     parser.add_argument("--metric", choices=("instructions", "cpu"), required=True)
@@ -162,7 +195,7 @@ def main() -> int:
                 raise SystemExit(f"unsafe or missing source: {source}")
             source.touch()
         prebuild = run(
-            sandbox_command(root, args.landrun, watchdog_toolchain, modules), cwd=root
+            sandbox_command(root, args.bwrap, watchdog_toolchain, modules), cwd=root
         )
         if prebuild != 0:
             print(f"{args.side} prebuild failed with exit code {prebuild}", file=sys.stderr)
@@ -192,7 +225,7 @@ def main() -> int:
         module = entry[f"{args.side}_module"]
         invalidate_module(root, entry[f"{args.side}_path"])
         raw = args.raw_dir / f"{entry['slug']}.json"
-        measured = sandbox_command(root, args.landrun, watchdog_toolchain, [module])
+        measured = sandbox_command(root, args.bwrap, watchdog_toolchain, [module])
         if args.metric == "instructions":
             command = [
                 args.perf, "stat", "-j", "-e", "instructions:u", "-o", str(raw), "--",

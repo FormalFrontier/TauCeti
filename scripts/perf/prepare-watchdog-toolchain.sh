@@ -33,6 +33,6 @@ done
 ln -s "$real_lean" "$destination/bin/lean-real"
 install -m 0755 "$(dirname "$0")/lean-watchdog.sh" "$destination/bin/lean"
 
-# Prove both sides of Lake's contract before this directory enters landrun.
+# Prove both sides of Lake's contract before this directory enters the sandbox.
 test "$("$destination/bin/lean" --print-prefix)" = "$destination"
 test "$("$destination/bin/lean" --githash)" = "$("$real_lean" --githash)"

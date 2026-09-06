@@ -6,8 +6,8 @@ name: pr-performance
 # status posting, and report rendering run as trusted host steps. Both comparison trees are
 # exact immutable commits: merge base versus PR head, or queue base versus combined merge-group
 # head. A workflow-pinned harness attests Lake config before every command that can elaborate
-# candidate sources runs offline under landrun. Host perf wraps the landrun process;
-# its raw counter files live in RUNNER_TEMP, which is not mounted in landrun, so
+# candidate sources runs offline under bwrap. Host perf wraps the bwrap process;
+# its raw counter files live in RUNNER_TEMP, which is not mounted in the bwrap sandbox, so
 # PR code cannot forge or erase its measurements. No token enters the sandbox.
 #
 # The required `perf` commit status is separate from the advisory heartbeat
@@ -69,13 +69,14 @@ jobs:
        (github.event.comment.user.login == github.event.issue.user.login ||
         contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)))
     env:
-      LANDRUN_SHA256: 645178e3239cd33760560834e50efea0864183a2a8a82faf199760dffee6dd71
-      LANDRUN_VER: v0.1.14
+      BWRAP_VER: 0.9.0-1ubuntu0.1
+      BWRAP_DEB_SHA256: 1b506492bd9c7fd0cdb4f02ac822f1d3e336b0aead5113c1239baf8db5db562a
+      BWRAP_SHA256: 52231e1caf55bcbc667b269f49c63599a6f7db4767ae6a039580d0ff853db712
       LAKE_ARTIFACT_CACHE: ""
       LAKE_RESTORE_ARTIFACTS: ""
       LAKE_CACHE_DIR: ""
     steps:
-      # --- Trusted setup. No PR code runs before the landrun measurement steps. ---
+      # --- Trusted setup. No PR code runs before the sandboxed measurement steps. ---
       - name: Resolve immutable base and head commits
         id: pr
         env:
@@ -264,7 +265,7 @@ jobs:
           printf '[]\n' > "$RUNNER_TEMP/base-results.json"
           printf '[]\n' > "$RUNNER_TEMP/head-results.json"
 
-      # Pinned leanprover/elan release, verified by SHA-256. Like landrun below it is installed
+      # Pinned leanprover/elan release, verified by SHA-256. Like bwrap below it is installed
       # in the trusted phase, before anything confines the PR's code, and it chooses the `lake`
       # that later runs inside that confinement. scripts/test_elan_pin.py keeps the copies honest.
       - name: Install elan (trusted, pinned + checksum)
@@ -281,26 +282,68 @@ jobs:
           rm -f elan.tar.gz elan-init
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
-      - name: Install landrun and prove confinement (trusted, fail closed)
+      - name: Install bubblewrap (pinned + checksum) and self-test (fail closed)
         if: ${{ steps.manifest.outputs.count != '0' }}
         run: |
           set -euo pipefail
-          curl -sSL -H 'Accept: application/octet-stream' \
-            "https://github.com/Zouuup/landrun/releases/download/${LANDRUN_VER}/landrun-linux-amd64" -o landrun
-          echo "${LANDRUN_SHA256}  landrun" | sha256sum -c -
-          mkdir -p "$HOME/.local/bin"
-          install -m 0755 landrun "$HOME/.local/bin/landrun"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          export PATH="$HOME/.local/bin:$PATH"
+          # Pinned Ubuntu package, verified twice: the .deb that was fetched, and the binary it
+          # installed. A bare `apt-get install bubblewrap` would take whatever the archive holds on
+          # the day, which is not a pin.
+          deb="bubblewrap_${BWRAP_VER}_amd64.deb"
+          curl -sSL --fail "http://archive.ubuntu.com/ubuntu/pool/main/b/bubblewrap/${deb}" -o bwrap.deb \
+            || curl -sSL --fail "http://security.ubuntu.com/ubuntu/pool/main/b/bubblewrap/${deb}" -o bwrap.deb
+          echo "${BWRAP_DEB_SHA256}  bwrap.deb" | sha256sum -c -
+          sudo dpkg -i bwrap.deb >/dev/null
+          echo "${BWRAP_SHA256}  /usr/bin/bwrap" | sha256sum -c -
+          rm -f bwrap.deb
+          bwrap --version
+
+          # Ubuntu 24.04 denies unprivileged user namespaces through AppArmor, so bwrap cannot build
+          # its sandbox as shipped. Grant the capability to this one binary rather than clearing
+          # kernel.apparmor_restrict_unprivileged_userns, which would lift it for everything on the
+          # runner. Measured on ubuntu-24.04: without this, bwrap fails with
+          # "loopback: Failed RTM_NEWADDR: Operation not permitted".
+          printf '%s\n' \
+            'abi <abi/4.0>,' \
+            'include <tunables/global>' \
+            'profile bwrap /usr/bin/bwrap flags=(unconfined) {' \
+            '  userns,' \
+            '  include if exists <local/bwrap>' \
+            '}' | sudo tee /etc/apparmor.d/bwrap >/dev/null
+          sudo apparmor_parser -r /etc/apparmor.d/bwrap
+
+          # Prove the sandbox enforces before trusting it with candidate code. bwrap fails closed
+          # where landrun's --best-effort could degrade to no sandbox at all, but `--unshare-all`
+          # expands to `--unshare-user-try`, which SKIPS the user namespace rather than failing when
+          # it cannot be created -- so a run can still start with far less isolation than was asked
+          # for. The userns comparison below is what catches that; the rest mirror the checks the
+          # landrun self-test made, plus one landrun could not make at all: a network namespace does
+          # not bound AF_UNIX, so confirm no host daemon socket is reachable either.
+          probe() {
+            bwrap --tmpfs / --ro-bind /usr /usr --ro-bind /etc /etc \
+              --symlink usr/bin /bin --symlink usr/sbin /sbin \
+              --symlink usr/lib /lib --symlink usr/lib64 /lib64 \
+              --dev /dev --proc /proc --tmpfs /tmp \
+              --clearenv --setenv PATH /usr/bin \
+              --unshare-all --die-with-parent --new-session -- /usr/bin/bash -c "$1"
+          }
           set +e
-          landrun --rox /usr --rox /etc --rw /dev/null -- bash -c 'echo ok' >/dev/null 2>&1; ok=$?
-          landrun --rox /usr --rox /etc --rw /dev/null -- bash -c 'echo x > /etc/landrun-probe' >/dev/null 2>&1; wr=$?
-          landrun --rox /usr --rox /etc --rw /dev/null -- bash -c 'echo x > /dev/shm/landrun-probe' >/dev/null 2>&1; shm=$?
-          landrun --rox /usr --rox /etc --rw /dev/null -- bash -c 'curl -sS --max-time 8 https://example.com >/dev/null' >/dev/null 2>&1; net=$?
+          probe 'echo ok' >/dev/null 2>&1; ok=$?
+          probe 'echo x > /etc/bwrap-probe' >/dev/null 2>&1; wr=$?
+          probe 'echo x > /dev/shm/bwrap-probe && cat /dev/shm/bwrap-probe' >/dev/null 2>&1; shm=$?
+          probe 'curl -sS --max-time 8 https://example.com >/dev/null' >/dev/null 2>&1; net=$?
+          probe 'test -e /run/docker.sock' >/dev/null 2>&1; sock=$?
+          host_ns=$(readlink /proc/self/ns/user)
+          sb_ns=$(probe 'readlink /proc/self/ns/user' 2>/dev/null)
           set -e
-          echo "self-test: run=$ok write=$wr shm=$shm net=$net"
-          if [ "$ok" -ne 0 ] || [ "$wr" -eq 0 ] || [ "$shm" -eq 0 ] || [ "$net" -eq 0 ]; then
-            echo '::error::landrun did not enforce; refusing to run candidate code'
+          echo "self-test: run=$ok write=$wr shm=$shm net=$net docker-sock=$sock userns=$host_ns->$sb_ns"
+          # /dev/shm is a private tmpfs here rather than the host's, so a write to it
+          # succeeds and is simply invisible outside; what must hold is that the host's
+          # own sockets are not there.
+          if [ "$ok" -ne 0 ] || [ "$wr" -eq 0 ] || [ "$net" -eq 0 ] || [ "$sock" -eq 0 ] \
+             || [ -z "$sb_ns" ] || [ "$sb_ns" = "$host_ns" ]; then
+            echo "::error::bwrap not enforcing (run=$ok write=$wr net=$net" \
+              "docker-sock=$sock userns=$host_ns->$sb_ns); refusing to run candidate code"
             exit 1
           fi
 
@@ -375,9 +418,9 @@ jobs:
           bash gate/scripts/perf/prepare-watchdog-toolchain.sh "$watchdog" "$real_lean"
           echo "path=$watchdog" >> "$GITHUB_OUTPUT"
 
-      # Host perf owns RUNNER_TEMP and wraps landrun. The raw files are not in
-      # any landrun mount, while all Lean/Lake execution is inside landrun.
-      - name: Measure base modules (host metric around offline landrun)
+      # Host perf owns RUNNER_TEMP and wraps bwrap. The raw files are not bound
+      # into the sandbox, while all Lean/Lake execution is inside it.
+      - name: Measure base modules (host metric around offline bwrap sandbox)
         id: base_perf
         if: ${{ steps.manifest.outputs.count != '0' }}
         continue-on-error: true
@@ -429,7 +472,7 @@ jobs:
             --output "$RUNNER_TEMP/perf-manifest.json" \
             --heartbeat-dir head/.lake/tmp/profile
 
-      - name: Measure head modules (host metric around offline landrun)
+      - name: Measure head modules (host metric around offline bwrap sandbox)
         id: head_perf
         if: ${{ steps.manifest.outputs.count != '0' }}
         continue-on-error: true
@@ -458,8 +501,8 @@ jobs:
             --run-url '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
 
       # Advisory heartbeat profile remains available, but it has no bearing on
-      # the required perf status. It executes under the same landrun + watchdog.
-      - name: Measure advisory heartbeats (landrun, offline)
+      # the required perf status. It executes under the same bwrap + watchdog.
+      - name: Measure advisory heartbeats (bwrap, offline)
         id: heartbeats
         if: ${{ steps.manifest.outputs.count != '0' && steps.head_perf.outcome == 'success' }}
         continue-on-error: true
@@ -468,12 +511,22 @@ jobs:
           WATCHDOG_TOOLCHAIN: ${{ steps.head_watchdog.outputs.path }}
         run: |
           export PATH="$HOME/.local/bin:$HOME/.elan/bin:$PATH"
-          landrun --rox /usr --rox /etc \
-            --rw /dev/null --rox /dev/zero --rox /dev/urandom --rox /dev/random \
-            --rox "$HOME/.elan" --rox "$WATCHDOG_TOOLCHAIN" \
-            --rox "$PWD/head" --rw "$PWD/head/.lake" --rox "$PWD/gate" \
-            --env PATH --env HOME --env CI --env LAKE_NO_CACHE --env WATCHDOG_TOOLCHAIN \
-            -- bash -euo pipefail -c 'cd head && exec bash ../gate/scripts/profile/measure.sh .lake/tmp/profile'
+          bwrap --tmpfs / \
+            --ro-bind /usr /usr --ro-bind /etc /etc \
+            --symlink usr/bin /bin --symlink usr/sbin /sbin \
+            --symlink usr/lib /lib --symlink usr/lib64 /lib64 \
+            --dev /dev --proc /proc --tmpfs /tmp \
+            --ro-bind "$HOME/.elan" "$HOME/.elan" \
+            --ro-bind "$WATCHDOG_TOOLCHAIN" "$WATCHDOG_TOOLCHAIN" \
+            --ro-bind "$PWD/head" "$PWD/head" --bind "$PWD/head/.lake" "$PWD/head/.lake" \
+            --ro-bind "$PWD/gate" "$PWD/gate" \
+            --clearenv \
+            --setenv PATH "$PATH" --setenv HOME "$HOME" --setenv CI "${CI:-}" \
+            --setenv LAKE_NO_CACHE "${LAKE_NO_CACHE:-}" \
+            --setenv WATCHDOG_TOOLCHAIN "${WATCHDOG_TOOLCHAIN:-}" \
+            --chdir "$PWD/head" \
+            --unshare-all --die-with-parent --new-session \
+            -- bash -euo pipefail -c 'exec bash ../gate/scripts/profile/measure.sh .lake/tmp/profile'
 
       - name: Safely collect heartbeat logs from the untrusted writable tree
         id: collect_heartbeats
