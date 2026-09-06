@@ -178,10 +178,11 @@ theorem ncard_primesOver_quadratic_iff {θ : 𝓞 K} {d : ℤ}
   rw [hcard, hfr]
   exact card_monicFactorsMod_quadratic_iff hmin hodd hcop
 
-/-- **A split prime is an ideal norm.** For `K = ℚ(√d)` and an odd prime `p` which is a quadratic
-residue mod `p` — that is, one which splits in `K` by `ncard_primesOver_quadratic_iff` — there is a
-prime ideal of `𝓞 K` of absolute norm `p`. This is the form in which the splitting law feeds genus
-theory: the genus characters are computed on ideals through their absolute norms. -/
+/-- **A split prime is an ideal norm.** For `K = ℚ(√d)` and an odd prime `p` for which `d` is a
+quadratic residue mod `p` — that is, one which splits in `K` by
+`ncard_primesOver_quadratic_iff` — there is a prime ideal of `𝓞 K` of absolute norm `p`. This is the
+form in which the splitting law feeds genus theory: the genus characters are computed on ideals
+through their absolute norms. -/
 theorem exists_isPrime_and_absNorm_eq_of_legendreSym_eq_one {θ : 𝓞 K} {d : ℤ}
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
     {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2) (hleg : legendreSym p d = 1) :

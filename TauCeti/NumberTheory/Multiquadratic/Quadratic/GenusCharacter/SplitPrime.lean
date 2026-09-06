@@ -32,7 +32,7 @@ class.
 
 The classical account is in D. A. Cox, *Primes of the Form `x² + ny²`*, §3.B, and F. Lemmermeyer,
 *Reciprocity Laws*, §2.2. The splitting law itself, the genus characters, and their descent to the
-narrow class group are the preceding Tau Ceti modules; nothing is vendored here.
+narrow class group are the preceding Tau Ceti modules.
 
 ## Main results
 
