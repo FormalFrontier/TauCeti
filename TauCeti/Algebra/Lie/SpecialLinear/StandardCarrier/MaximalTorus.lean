@@ -35,18 +35,6 @@ noncomputable section
 
 variable (r : ℕ)
 
-private theorem prod_ite_eq_of_eq {M : Type*} [CommMonoid M] (f : Fin r → M)
-    (e : Fin r → Fin (r + 1)) (he : Function.Injective e) (k : Fin (r + 1)) (c : Fin r)
-    (hkc : k = e c) :
-    (∏ i, if k = e i then f i else 1) = f c := by
-  rw [Finset.prod_eq_single c]
-  · simp only [hkc, ↓reduceIte]
-  · intro j _ hj
-    split_ifs with h
-    · exact (hj (he (hkc.symm.trans h)).symm).elim
-    · rfl
-  · exact fun h ↦ absurd (Finset.mem_univ c) h
-
 /-- The standard weight at coordinate `k` evaluates as the quotient of two adjacent partial
 products. Missing factors at the two ends are interpreted as one. -/
 private theorem torusCharacter_weight (K : Type u) [CommRing K]
@@ -67,8 +55,13 @@ private theorem torusCharacter_weight (K : Type u) [CommRing K]
     split_ifs with hk
     · let c : Fin r := ⟨k, hk⟩
       have hkc : k = c.castSucc := Fin.ext (by simp [c])
-      rw [prod_ite_eq_of_eq r s Fin.castSucc
-        (fun _ _ h ↦ Fin.castSucc_inj.mp h) k c hkc]
+      rw [Fintype.prod_eq_single c]
+      · simp only [hkc, ↓reduceIte]
+        exact congrArg s (Fin.ext rfl)
+      · intro j hj
+        split_ifs with h
+        · exact (hj (Fin.castSucc_inj.mp (hkc.symm.trans h)).symm).elim
+        · rfl
     · have : ∀ i : Fin r, k ≠ i.castSucc := by
         intro i hi
         apply hk
@@ -87,8 +80,13 @@ private theorem torusCharacter_weight (K : Type u) [CommRing K]
     · have hi : (k - 1 : ℕ) < r := by omega
       let c : Fin r := ⟨k - 1, hi⟩
       have hkc : k = c.succ := Fin.ext (by simp [c]; omega)
-      rw [prod_ite_eq_of_eq r (fun i ↦ (s i)⁻¹) Fin.succ
-        (fun _ _ h ↦ Fin.succ_inj.mp h) k c hkc]
+      rw [Fintype.prod_eq_single c]
+      · simp only [hkc, ↓reduceIte]
+        exact congrArg (fun j ↦ (s j)⁻¹) (Fin.ext (by simp))
+      · intro j hj
+        split_ifs with h
+        · exact (hj (Fin.succ_inj.mp (hkc.symm.trans h)).symm).elim
+        · rfl
     · have : ∀ i : Fin r, k ≠ i.succ := by
         intro i hi
         apply hk
@@ -113,8 +111,7 @@ private theorem torusCharacter_partialProd {K : Type u} [CommRing K]
     subst k
     have hi : (⟨(0 : Fin (r + 1)), hkr⟩ : Fin r).succ.castSucc =
         (0 : Fin (r + 1)).succ := Fin.ext rfl
-    rw [mul_one, hi, Fin.partialProd_succ,
-      show (0 : Fin (r + 1)).castSucc = (0 : Fin (r + 2)) by rfl,
+    rw [mul_one, hi, Fin.partialProd_succ, Fin.castSucc_zero,
       Fin.partialProd_zero, one_mul]
   · have hkmax : (k : ℕ) = r := by omega
     have hrpos : 0 < r := by omega
@@ -252,7 +249,7 @@ theorem range_weightTorusPoints_eq_diagonalPoints (K : Type u) [CommRing K] :
 
 /-- If its weight characters are distinct over a ring without zero divisors, the standard weight
 torus is maximal among commutative subgroups of the type `A_r` carrier. -/
-theorem eq_range_weightTorusPoints_of_le_of_isMulCommutative_of_weightChar_injective
+theorem eq_range_weightTorusPoints_of_weightChar_injective_of_le_of_isMulCommutative
     (K : Type u) [CommRing K] [IsCancelMulZero K]
     (hchar : Function.Injective (weightChar K (κ := Fin r)))
     (H : Subgroup (points r K)) [IsMulCommutative H]
@@ -273,7 +270,7 @@ theorem eq_range_weightTorusPoints_of_le_of_isMulCommutative
     (H : Subgroup (points r K)) [IsMulCommutative H]
     (hle : (weightTorusPoints r K).range ≤ H) :
     H = (weightTorusPoints r K).range :=
-  eq_range_weightTorusPoints_of_le_of_isMulCommutative_of_weightChar_injective r K
+  eq_range_weightTorusPoints_of_weightChar_injective_of_le_of_isMulCommutative r K
     weightChar_injective H hle
 
 end
