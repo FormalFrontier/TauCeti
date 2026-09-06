@@ -33,7 +33,7 @@ Under those identifications:
 The list `n ↦ fourierRep T n` is moreover complete among the one-dimensional representations: a
 continuous representation of the circle group on `ℂ` acts by the scalar `π x 1`, which is a
 continuous additive character of `AddCircle T` and therefore a Fourier monomial by
-`TauCeti.exists_fourierAddChar_eq`.
+`AddChar.exists_fourierAddChar_eq`.
 
 The last two are recorded as anonymous `example`s: they are consistency checks on the general
 theory's normalization, not new API, and naming them would duplicate
@@ -56,9 +56,9 @@ theory's normalization, not new API, and naming them would duplicate
 * `TauCeti.contIntertwiningMap_fourierRep_eq_zero_of_ne`: for `m ≠ n` there is no nonzero
   continuous intertwiner `fourierRep T n → fourierRep T m`, so the Fourier representations are
   pairwise inequivalent.
-* `TauCeti.exists_fourierChar_eq`, `TauCeti.exists_fourierRep_eq`: every continuous linear
-  character, and every one-dimensional continuous representation, of the circle group is a Fourier
-  one.
+* `MonoidHom.exists_fourierChar_eq`, `ContRepresentation.exists_fourierRep_eq`: every continuous
+  linear character, and every one-dimensional continuous representation, of the circle group is a
+  Fourier one.
 * `TauCeti.orthonormal_characterLp_fourierRep`: **the character-orthonormality half of the
   acceptance criterion.** The characters of the `fourierRep T n` are an orthonormal family in `L²`
   of the circle group for normalized Haar measure; this is `AddCircle.orthonormal_fourier` read
@@ -80,16 +80,13 @@ multiplicative side. Because `Multiplicative (AddCircle T)` and `AddCircle T` ar
 with the same topology and σ-algebra, an integral over one is literally an integral over the other,
 which is what lets `inner_characterLp_fourierRep` end in Mathlib's orthonormality statement.
 
-What is *not* done here is the full Peter-Weyl half of the roadmap's circle acceptance criterion —
-identifying `peterWeylBasis` with `AddCircle.fourierBasis` under the indexing equivalence
-`Σ π, Fin 1 × Fin 1 ≃ ℤ`. Exhaustion is available in dimension one
-(`TauCeti.exists_fourierRep_eq`), but the step from there to *every* finite-dimensional
-irreducible — that an irreducible representation of an abelian group over an algebraically closed
-field is one-dimensional — is not proved here.
+What is *not* done here is the full Peter-Weyl identification of `peterWeylBasis` with
+`AddCircle.fourierBasis` under the indexing equivalence `Σ π, Fin 1 × Fin 1 ≃ ℤ`. Exhaustion is
+available in dimension one (`ContRepresentation.exists_fourierRep_eq`), but the step from there to
+*every* finite-dimensional irreducible — that an irreducible representation of an abelian group
+over an algebraically closed field is one-dimensional — is not proved here.
 
-This is the circle bullet of the `## Worked examples (acceptance criteria)` section of the
-[compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md),
-whose Layer 6 character theory is in
+The general compact-group character theory that is specialized here is in
 `TauCeti/RepresentationTheory/Compact/Character/Basic.lean`. The mathematical development follows
 Daniel Bump, *Lie Groups*, second edition, Chapter 2.
 
@@ -116,6 +113,13 @@ noncomputable def fourierChar (n : ℤ) : Multiplicative (AddCircle T) →* ℂ�
 @[simp]
 theorem coe_fourierChar (n : ℤ) (x : Multiplicative (AddCircle T)) :
     (fourierChar T n x : ℂ) = fourier n (Multiplicative.toAdd x) := (rfl)
+
+/-- The Fourier character is continuous as a `ℂ`-valued function: that is the continuity of
+`fourier n`. This is the hypothesis of `MonoidHom.exists_fourierChar_eq`. -/
+theorem continuous_coe_fourierChar (n : ℤ) :
+    Continuous fun x : Multiplicative (AddCircle T) => (fourierChar T n x : ℂ) := by
+  simp only [coe_fourierChar]
+  exact (fourier n).continuous.comp continuous_id
 
 /-- **The `n`-th Fourier character of the circle group**, as a one-dimensional continuous
 representation on `ℂ`: the group element `x` acts by multiplication by `fourier n x`. -/
@@ -259,26 +263,36 @@ example {m n : ℤ} (h : m ≠ n) :
   ContRepresentation.character_orthonormal_distinct _ _ _ _ (isUnitary_fourierRep T m)
     (contIntertwiningMap_fourierRep_eq_zero_of_ne T hT.out.ne' h)
 
+end TauCeti
+
+open TauCeti
+
+variable {T : ℝ} [hT : Fact (0 < T)]
+
+namespace MonoidHom
+
 include hT in
 /-- **Every continuous linear character of the circle group is a Fourier character.** This is
-`TauCeti.exists_fourierAddChar_eq`, the classification of the continuous additive characters of
+`AddChar.exists_fourierAddChar_eq`, the classification of the continuous additive characters of
 `AddCircle T`, read for the `ℂˣ`-valued multiplicative characters that
 `Representation.ofLinearCharacter` consumes. -/
 theorem exists_fourierChar_eq (χ : Multiplicative (AddCircle T) →* ℂˣ)
     (hχ : Continuous fun x : Multiplicative (AddCircle T) => (χ x : ℂ)) :
     ∃ n : ℤ, fourierChar T n = χ := by
-  obtain ⟨n, hn⟩ := exists_fourierAddChar_eq (T := T)
-    { toFun := fun x : AddCircle T => (χ (Multiplicative.ofAdd x) : ℂ)
-      map_zero_eq_one' := by simp
-      map_add_eq_mul' := fun x y => by simp [← Units.val_mul] } hχ
+  obtain ⟨n, hn⟩ :=
+    AddChar.exists_fourierAddChar_eq (AddChar.toMonoidHomEquiv.symm ((Units.coeHom ℂ).comp χ)) hχ
   exact ⟨n, MonoidHom.ext fun x =>
     Units.ext (by simpa using DFunLike.congr_fun hn (Multiplicative.toAdd x))⟩
+
+end MonoidHom
+
+namespace ContRepresentation
 
 include hT in
 /-- **Every one-dimensional continuous representation of the circle group is a Fourier
 representation.** A representation on `ℂ` is multiplication by the scalar `π x 1`, and that scalar
 is a continuous additive character of `AddCircle T`, hence a Fourier monomial by
-`TauCeti.exists_fourierAddChar_eq`.
+`AddChar.exists_fourierAddChar_eq`.
 
 With `TauCeti.contIntertwiningMap_fourierRep_eq_zero_of_ne` this says that `n ↦ fourierRep T n`
 lists the one-dimensional continuous representations of the circle group exactly once. Passing from
@@ -289,16 +303,15 @@ theorem exists_fourierRep_eq (π : ContRepresentation ℂ (Multiplicative (AddCi
     (hπ : Continuous π) : ∃ n : ℤ, fourierRep T n = π := by
   have hsmul (x : Multiplicative (AddCircle T)) (z : ℂ) : π x z = z * π x 1 := by
     simpa using (π x).map_smul z (1 : ℂ)
-  obtain ⟨n, hn⟩ := exists_fourierAddChar_eq (T := T)
+  obtain ⟨n, hn⟩ := AddChar.exists_fourierAddChar_eq (T := T)
     { toFun := fun x : AddCircle T => π (Multiplicative.ofAdd x) 1
       map_zero_eq_one' := by simp
       map_add_eq_mul' := fun x y => by
-        rw [show Multiplicative.ofAdd (x + y)
-            = Multiplicative.ofAdd x * Multiplicative.ofAdd y from rfl, map_mul]
+        rw [ofAdd_add, map_mul]
         simpa [mul_comm] using hsmul (Multiplicative.ofAdd x) (π (Multiplicative.ofAdd y) 1) }
     ((ContinuousLinearMap.apply ℂ ℂ (1 : ℂ)).continuous.comp hπ)
   refine ⟨n, DFunLike.ext _ _ fun x => ContinuousLinearMap.ext fun z => ?_⟩
   rw [fourierRep_apply, hsmul x z, mul_comm]
   exact congrArg (z * ·) (by simpa using DFunLike.congr_fun hn (Multiplicative.toAdd x))
 
-end TauCeti
+end ContRepresentation
