@@ -44,30 +44,4 @@ end
 
 end Module.End
 
-namespace Module.End
-
-section
-
-variable {R : Type u} {M : Type v} {I : Type w} {S : Type*}
-variable [CommSemiring R] [AddCommMonoid M] [Module R M]
-
-/-- The product of a family of endomorphisms over a coordinate list.
-
-The selected parameter is explicit so this combinator can represent both occupation/vacancy and
-other diagonal factor families. -/
-noncomputable def basisDiagonalProjector (coords : List I)
-    (factor : S → I → Module.End R M) (s : S) : Module.End R M :=
-  (coords.map (factor s)).prod
-
-/-- The defining equation for `basisDiagonalProjector`, exposed for clients in module-style files
-where the definition itself is opaque. -/
-theorem basisDiagonalProjector_eq_listProd (coords : List I)
-    (factor : S → I → Module.End R M) (s : S) :
-    basisDiagonalProjector coords factor s = (coords.map (factor s)).prod := by
-  rfl
-
-end
-
-end Module.End
-
 end TauCeti

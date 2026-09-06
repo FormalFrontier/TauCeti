@@ -45,9 +45,8 @@ private noncomputable def vacancyProjection {n : ℕ} (b : Module.Basis (Fin n) 
 
 private noncomputable def basisProjection {n : ℕ} (b : Module.Basis (Fin n) K W)
     (s : Finset (Fin n)) : Module.End K (ExteriorAlgebra K W) :=
-  Module.End.basisDiagonalProjector
-    (List.ofFn fun i : Fin n ↦ i)
-    (fun s i ↦ if i ∈ s then occupationProjection b i else vacancyProjection b i) s
+  ((List.ofFn fun i : Fin n ↦ i).map
+    (fun i ↦ if i ∈ s then occupationProjection b i else vacancyProjection b i)).prod
 
 private noncomputable def actionRange {n : ℕ} (b : Module.Basis (Fin n) K W) :
     Subalgebra K (Module.End K (ExteriorAlgebra K W)) :=
@@ -75,7 +74,6 @@ private theorem vacancyProjection_mem_actionRange {n : ℕ} (b : Module.Basis (F
 private theorem basisProjection_mem_actionRange {n : ℕ} (b : Module.Basis (Fin n) K W)
     (s : Finset (Fin n)) : basisProjection b s ∈ actionRange b := by
   rw [basisProjection]
-  rw [TauCeti.Module.End.basisDiagonalProjector_eq_listProd]
   apply Submonoid.list_prod_mem
   intro f hf
   obtain ⟨i, hi, rfl⟩ := List.mem_map.mp hf
@@ -116,7 +114,6 @@ private theorem basisProjection_basis {n : ℕ}
     basisProjection b s (b.ExteriorAlgebra t) =
       if s = t then b.ExteriorAlgebra t else 0 := by
   rw [basisProjection]
-  rw [TauCeti.Module.End.basisDiagonalProjector_eq_listProd]
   rw [listProd_basisFactor_apply]
   by_cases hst : s = t
   · subst t

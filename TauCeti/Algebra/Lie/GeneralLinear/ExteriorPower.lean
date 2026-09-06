@@ -446,19 +446,6 @@ private theorem lie_basisPath_step (d k : ℕ) (h : d ≤ Fintype.card ι) (hk :
       (basisPath_strictMono d h s k).injective a
       (firstBasisEmbedding d h a) hreverse_update
 
-private theorem lie_basisPath_succ (d k : ℕ) (h : d ≤ Fintype.card ι) (hk : k < d)
-    (s : Set.powersetCard ι d) :
-    letI : LieRingModule (Matrix ι ι K) (⋀[K]^d (ι → K)) :=
-      glLieRingModule (K := K) (n := ι) d
-    ⁅Matrix.single
-        (Set.powersetCard.ofFinEmbEquiv.symm s ⟨k, hk⟩)
-        (firstBasisEmbedding d h ⟨k, hk⟩) (1 : K),
-      ιMulti K d (fun l ↦
-        (Pi.single (basisPath d h s (k + 1) l) (1 : K) : ι → K))⁆ =
-      ιMulti K d (fun l ↦
-        (Pi.single (basisPath d h s k l) (1 : K) : ι → K)) := by
-  exact (lie_basisPath_step (K := K) d k h hk s).1
-
 private theorem mem_of_lie_succ_path (d : ℕ)
     (N : LieSubmodule K (Matrix ι ι K) (⋀[K]^d (ι → K)))
     (x : ℕ → (⋀[K]^d (ι → K)))
@@ -509,23 +496,10 @@ private theorem basisWedge_mem_of_first_mem (d : ℕ) (h : d ≤ Fintype.card ι
         refine ⟨Matrix.single
           (Set.powersetCard.ofFinEmbEquiv.symm s ⟨k, hk⟩)
           (firstBasisEmbedding d h ⟨k, hk⟩) (1 : K), ?_⟩
-        rw [← lie_basisPath_succ (K := K) d k h hk s]) hd
+        rw [← (lie_basisPath_step (K := K) d k h hk s).1]) hd
   rw [basisPath_zero] at hzero
   rw [basisWedge_eq_ιMulti]
   simpa only [Set.powersetCard.ofFinEmbEquiv_symm_apply] using hzero
-
-private theorem lie_basisPath_reverse (d k : ℕ) (h : d ≤ Fintype.card ι) (hk : k < d)
-    (s : Set.powersetCard ι d) :
-    letI : LieRingModule (Matrix ι ι K) (⋀[K]^d (ι → K)) :=
-      glLieRingModule (K := K) (n := ι) d
-    ⁅Matrix.single
-        (firstBasisEmbedding d h ⟨k, hk⟩)
-        (Set.powersetCard.ofFinEmbEquiv.symm s ⟨k, hk⟩) (1 : K),
-      ιMulti K d (fun l ↦
-        (Pi.single (basisPath d h s k l) (1 : K) : ι → K))⁆ =
-      ιMulti K d (fun l ↦
-        (Pi.single (basisPath d h s (k + 1) l) (1 : K) : ι → K)) := by
-  exact (lie_basisPath_step (K := K) d k h hk s).2
 
 private theorem first_mem_of_basisWedge_mem (d : ℕ) (h : d ≤ Fintype.card ι)
     (N : LieSubmodule K (Matrix ι ι K) (⋀[K]^d (ι → K)))
@@ -548,7 +522,7 @@ private theorem first_mem_of_basisWedge_mem (d : ℕ) (h : d ≤ Fintype.card ι
       refine ⟨Matrix.single
         (firstBasisEmbedding d h ⟨k, hk⟩)
         (Set.powersetCard.ofFinEmbEquiv.symm s ⟨k, hk⟩) (1 : K), ?_⟩
-      rw [← lie_basisPath_reverse (K := K) d k h hk s]) hzero
+      rw [← (lie_basisPath_step (K := K) d k h hk s).2]) hzero
   rw [basisPath_top] at htop
   exact htop
 
@@ -628,15 +602,7 @@ private theorem diagonalFactor_apply (d : ℕ)
 
 private noncomputable def diagonalProjector (d : ℕ)
     (s : Set.powersetCard ι d) : Module.End K (⋀[K]^d (ι → K)) :=
-  TauCeti.Module.End.basisDiagonalProjector
-    (Finset.univ.toList)
-    (fun s i ↦ diagonalFactor (K := K) d s i) s
-
-private theorem diagonalProjector_coeff_eq_one (d : ℕ)
-    (s : Set.powersetCard ι d) :
-    ((Finset.univ.toList).map fun j : ι ↦
-      if (j ∈ s.1) = (j ∈ s.1) then (1 : K) else 0).prod = 1 := by
-  simp
+  ((Finset.univ.toList).map (fun i ↦ diagonalFactor (K := K) d s i)).prod
 
 private theorem diagonalProjector_apply (d : ℕ)
     (s t : Set.powersetCard ι d) :
@@ -657,11 +623,9 @@ private theorem diagonalProjector_apply (d : ℕ)
     · simp only [h, ite_true, one_smul]
     · simp only [h, ite_false, zero_smul]
   rw [diagonalProjector]
-  rw [TauCeti.Module.End.basisDiagonalProjector_eq_listProd]
   rw [hprod]
   by_cases hst : s = t
   · subst t
-    rw [diagonalProjector_coeff_eq_one]
     simp
   · obtain ⟨i, his, hit⟩ :=
       (Set.powersetCard.exists_mem_notMem_iff_ne s t).mp hst
@@ -698,7 +662,7 @@ private theorem diagonalProjector_mem (d : ℕ)
     induction u with
     | nil => simpa using hx
     | cons i u ih => simpa [Module.End.mul_apply] using hfactor i ih
-  rw [diagonalProjector, TauCeti.Module.End.basisDiagonalProjector_eq_listProd]
+  rw [diagonalProjector]
   exact hmem Finset.univ.toList
 
 private theorem exists_basisWedge_mem_of_nonzero_mem (d : ℕ)
