@@ -145,6 +145,40 @@ lemma weightedOrderOfVanishingOnOrbit_eq_two_mul_div [SlashInvariantFormClass F 
   push_cast
   field_simp
 
+/-- **One `Γ`-orbit's share of the level-one weight.** The summand of the level-one weighted
+order at the `SL(2, ℤ)`-orbit of `p` — the number of cosets translating `p` into the `Γ`-orbit
+`o`, times the order there, scaled by the level-one elliptic order — is the general-level
+weighted order at `o`, and vanishes off the fibre. -/
+private lemma card_fiber_smul_orderOfVanishingOnSubgroupOrbit_mul_ellipticOrder_inv_eq_indicator
+    [SlashInvariantFormClass F (Γ : Subgroup (GL (Fin 2) ℝ)) k] (f : F) (p : ℍ)
+    (o : orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ) :
+    ((Nat.card {q : 𝒮ℒ ⧸ (Γ : Subgroup (GL (Fin 2) ℝ)).subgroupOf 𝒮ℒ //
+          orbitOfCosetTranslate p q = o} • orderOfVanishingOnSubgroupOrbit f o : ℤ) : ℚ) *
+        (ModularGroup.ellipticOrder (Quotient.mk'' p : orbitRel.Quotient SL(2, ℤ) ℍ) : ℚ)⁻¹ =
+      Set.indicator (slOrbitOfSubgroupOrbit (Γ := Γ) ⁻¹'
+          {(Quotient.mk'' p : orbitRel.Quotient SL(2, ℤ) ℍ)})
+        (weightedOrderOfVanishingOnSubgroupOrbit f) o := by
+  have he : (ModularGroup.ellipticOrder
+      (Quotient.mk'' p : orbitRel.Quotient SL(2, ℤ) ℍ) : ℚ) ≠ 0 := by
+    exact_mod_cast (ModularGroup.ellipticOrder_pos _).ne'
+  by_cases ho : slOrbitOfSubgroupOrbit o = (Quotient.mk'' p : orbitRel.Quotient SL(2, ℤ) ℍ)
+  · rw [Set.indicator_of_mem (by simpa using ho), weightedOrderOfVanishingOnSubgroupOrbit_def]
+    have hprod := card_fiber_orbitOfCosetTranslate_mul_cardStabilizerOnOrbit_eq p ho
+    have hc : (cardStabilizerOnOrbit o : ℚ) ≠ 0 := by
+      exact_mod_cast cardStabilizerOnOrbit_ne_zero o
+    have hprod' : (Nat.card {q : 𝒮ℒ ⧸ (Γ : Subgroup (GL (Fin 2) ℝ)).subgroupOf 𝒮ℒ //
+        orbitOfCosetTranslate p q = o} : ℚ) * (cardStabilizerOnOrbit o : ℚ) =
+        2 * (ModularGroup.ellipticOrder
+          (Quotient.mk'' p : orbitRel.Quotient SL(2, ℤ) ℍ) : ℚ) := by
+      exact_mod_cast congrArg (fun n : ℕ ↦ (n : ℚ)) hprod
+    rw [nsmul_eq_mul]
+    push_cast
+    field_simp
+    linear_combination (orderOfVanishingOnSubgroupOrbit f o : ℚ) * hprod'
+  · rw [Set.indicator_of_notMem (by simpa using ho),
+      card_fiber_orbitOfCosetTranslate_eq_zero p ho]
+    simp
+
 /-- **The level-one weight at a point redistributes over the `Γ`-orbits above it.** The weighted
 vanishing order of the norm at the `SL(2, ℤ)`-orbit of `p` is the sum of the general-level
 weighted orders of `f` over the `Γ`-orbits inside that orbit.
@@ -162,35 +196,6 @@ lemma weightedOrderOfVanishingOnOrbit_norm_eq_finsum_mem
         weightedOrderOfVanishingOnSubgroupOrbit f o := by
   induction P using Quotient.inductionOn' with
   | h p =>
-    have he : (ModularGroup.ellipticOrder
-        (Quotient.mk'' p : orbitRel.Quotient SL(2, ℤ) ℍ) : ℚ) ≠ 0 := by
-      exact_mod_cast (ModularGroup.ellipticOrder_pos _).ne'
-    -- the multiplicity of a `Γ`-orbit, divided by the level-one weight, is the general-level weight
-    have key : ∀ o : orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ,
-        ((Nat.card {q : 𝒮ℒ ⧸ (Γ : Subgroup (GL (Fin 2) ℝ)).subgroupOf 𝒮ℒ //
-              orbitOfCosetTranslate p q = o} • orderOfVanishingOnSubgroupOrbit f o : ℤ) : ℚ) *
-            (ModularGroup.ellipticOrder (Quotient.mk'' p : orbitRel.Quotient SL(2, ℤ) ℍ) : ℚ)⁻¹ =
-          Set.indicator (slOrbitOfSubgroupOrbit (Γ := Γ) ⁻¹'
-              {(Quotient.mk'' p : orbitRel.Quotient SL(2, ℤ) ℍ)})
-            (weightedOrderOfVanishingOnSubgroupOrbit f) o := by
-      intro o
-      by_cases ho : slOrbitOfSubgroupOrbit o = (Quotient.mk'' p : orbitRel.Quotient SL(2, ℤ) ℍ)
-      · rw [Set.indicator_of_mem (by simpa using ho), weightedOrderOfVanishingOnSubgroupOrbit_def]
-        have hprod := card_fiber_orbitOfCosetTranslate_mul_cardStabilizerOnOrbit_eq p ho
-        have hc : (cardStabilizerOnOrbit o : ℚ) ≠ 0 := by
-          exact_mod_cast cardStabilizerOnOrbit_ne_zero o
-        have hprod' : (Nat.card {q : 𝒮ℒ ⧸ (Γ : Subgroup (GL (Fin 2) ℝ)).subgroupOf 𝒮ℒ //
-            orbitOfCosetTranslate p q = o} : ℚ) * (cardStabilizerOnOrbit o : ℚ) =
-            2 * (ModularGroup.ellipticOrder
-              (Quotient.mk'' p : orbitRel.Quotient SL(2, ℤ) ℍ) : ℚ) := by
-          exact_mod_cast congrArg (fun n : ℕ ↦ (n : ℚ)) hprod
-        rw [nsmul_eq_mul]
-        push_cast
-        field_simp
-        linear_combination (orderOfVanishingOnSubgroupOrbit f o : ℚ) * hprod'
-      · rw [Set.indicator_of_notMem (by simpa using ho),
-          card_fiber_orbitOfCosetTranslate_eq_zero p ho]
-        simp
     have hcast : ((∑ᶠ o : orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ,
           Nat.card {q : 𝒮ℒ ⧸ (Γ : Subgroup (GL (Fin 2) ℝ)).subgroupOf 𝒮ℒ //
             orbitOfCosetTranslate p q = o} • orderOfVanishingOnSubgroupOrbit f o : ℤ) : ℚ) =
@@ -200,7 +205,8 @@ lemma weightedOrderOfVanishingOnOrbit_norm_eq_finsum_mem
       AddMonoidHom.map_finsum_of_injective (Int.castAddHom ℚ) Int.cast_injective _
     rw [weightedOrderOfVanishingOnOrbit_mk, orderOfVanishingAt_norm_eq_finsum_orbit f hf p,
       finsum_mem_def, div_eq_mul_inv, hcast, finsum_mul]
-    exact finsum_congr key
+    exact finsum_congr
+      (card_fiber_smul_orderOfVanishingOnSubgroupOrbit_mul_ellipticOrder_inv_eq_indicator f p)
 
 /-- The general-level weighted order is nonnegative: a modular form is holomorphic and the
 weight is positive. -/
@@ -239,27 +245,16 @@ theorem finsum_weightedOrderOfVanishingOnSubgroupOrbit_eq_finsum_norm [Γ.Finite
     hasFiniteSupport_weightedOrderOfVanishingOnSubgroupOrbit f
   set I := slOrbitOfSubgroupOrbit (Γ := Γ) ''
     Function.support (weightedOrderOfVanishingOnSubgroupOrbit (Γ := Γ) (k := k) f) with hIdef
-  have hmem_I {o : orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ}
-      (ho : o ∈ Function.support
-        (weightedOrderOfVanishingOnSubgroupOrbit (Γ := Γ) (k := k) f)) :
-      slOrbitOfSubgroupOrbit (Γ := Γ) o ∈ I :=
-    ⟨o, ho, rfl⟩
-  have hdisj : I.PairwiseDisjoint (fun P ↦ slOrbitOfSubgroupOrbit (Γ := Γ) ⁻¹' {P}) := by
-    intro a _ b _ hab
-    simp only [Function.onFun, Set.disjoint_left, Set.mem_preimage, Set.mem_singleton_iff]
-    exact fun o h1 h2 ↦ hab (h1 ▸ h2)
-  -- the `Γ`-orbits carrying mass are covered by the fibres above the finitely many
-  -- `SL(2, ℤ)`-orbits they lie in
-  have hsub : Function.support (weightedOrderOfVanishingOnSubgroupOrbit (Γ := Γ) (k := k) f) ⊆
-      ⋃ P ∈ I, slOrbitOfSubgroupOrbit (Γ := Γ) ⁻¹' {P} := fun o ho ↦
-    Set.mem_biUnion (hmem_I ho) rfl
+  -- the orbits carrying mass are covered by the fibres above their own image
   have hrestrict : (∑ᶠ o : orbitRel.Quotient (Γ : Subgroup (GL (Fin 2) ℝ)) ℍ,
         weightedOrderOfVanishingOnSubgroupOrbit f o) =
       ∑ᶠ o ∈ ⋃ P ∈ I, slOrbitOfSubgroupOrbit (Γ := Γ) ⁻¹' {P},
         weightedOrderOfVanishingOnSubgroupOrbit f o := by
-    rw [finsum_mem_def, Set.indicator_eq_self.mpr hsub]
+    rw [finsum_mem_def, hIdef, Set.biUnion_preimage_singleton,
+      Set.indicator_eq_self.mpr (Set.subset_preimage_image _ _)]
   rw [hrestrict,
-    finsum_mem_biUnion hdisj (hsupp.image _)
+    finsum_mem_biUnion (Set.pairwiseDisjoint_fiber (slOrbitOfSubgroupOrbit (Γ := Γ)) I)
+      (hsupp.image _)
       fun P _ ↦ finite_preimage_slOrbitOfSubgroupOrbit P,
     finsum_mem_congr rfl fun P _ ↦
       (weightedOrderOfVanishingOnOrbit_norm_eq_finsum_mem f hf P).symm, finsum_mem_def]
