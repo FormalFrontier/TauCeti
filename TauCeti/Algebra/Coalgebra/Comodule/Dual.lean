@@ -124,11 +124,14 @@ private theorem dualTensorHom_assoc_dualCoact_rTensor (x : Module.Dual R M ⊗[R
           dualTensorHom R M (H ⊗[R] H)
               (TensorProduct.assoc R (Module.Dual R M) H H (y ⊗ₜ[R] h)) m =
             dualTensorHom R M H y m ⊗ₜ[R] h := by
-        induction y using TensorProduct.induction_on with
-        | zero => simp
-        | add y z hy hz =>
-            simp only [TensorProduct.add_tmul, map_add, LinearMap.add_apply, hy, hz]
-        | tmul ψ a => simp [TensorProduct.smul_tmul']
+        calc
+          _ = (rTensorHomEquivHomRTensor R M H H
+              (dualTensorHom R M H y ⊗ₜ[R] h)) m := by
+            simp [rTensorHomEquivHomRTensor, dualTensorHomEquiv]
+          _ = _ := by
+            rw [rTensorHomEquivHomRTensor_apply]
+            exact TensorProduct.rTensorHomToHomRTensor_apply
+              (dualTensorHom R M H y) h m
       rw [LinearMap.rTensor_tmul, hleft, dualTensorHom_dualCoact_apply]
       rw [matrixCoefficient_def]
       generalize coact (R := R) (C := H) (M := M) m = z
