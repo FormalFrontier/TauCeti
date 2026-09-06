@@ -217,15 +217,14 @@ theorem kostantToralWeylPoint_mem_normalizer_weightTorusPoints
   have hcarrier :
       (kostantToralWeightTorusPoints e h ρ M hM hnil b wt A).range =
         T.subgroupOf K := by
-    ext x
-    simp only [MonoidHom.mem_range, Subgroup.mem_subgroupOf]
-    constructor
-    · rintro ⟨s, rfl⟩
-      refine ⟨s, ?_⟩
-      exact (coe_kostantToralWeightTorusPoints e h ρ M hM hnil b wt A s).symm
-    · rintro ⟨s, hs⟩
-      refine ⟨s, Subtype.ext ?_⟩
-      exact (coe_kostantToralWeightTorusPoints e h ρ M hM hnil b wt A s).trans hs
+    let fK := (kostantTorusMatrix M b wt).codRestrict K fun x ↦ hTK ⟨x, rfl⟩
+    have hf : kostantToralWeightTorusPoints e h ρ M hM hnil b wt A = fK := by
+      apply MonoidHom.ext
+      intro s
+      apply Subtype.ext
+      exact coe_kostantToralWeightTorusPoints e h ρ M hM hnil b wt A s
+    rw [hf]
+    exact (MonoidHom.subgroupOf_range_eq_of_le (kostantTorusMatrix M b wt) hTK).symm
   rw [hcarrier, ← Subgroup.subgroupOf_normalizer_eq hTK]
   rw [Subgroup.mem_subgroupOf]
   rw [coe_kostantToralWeylPoint]
