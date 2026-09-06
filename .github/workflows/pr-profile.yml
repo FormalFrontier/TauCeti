@@ -69,9 +69,9 @@ jobs:
        (github.event.comment.user.login == github.event.issue.user.login ||
         contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)))
     env:
-      BWRAP_VER: 0.12.0-1
-      BWRAP_DEB_SHA256: db4d572a7927bfd34cc9b8e24b56983efa8e0483d03da6c810f6caae081dcc36
-      BWRAP_SHA256: 5d1f77a455d3a5cc1a45bdbf2e23b89cbd7b33e640dd9ae3b5ce2573d133889e
+      BWRAP_VER: 0.9.0-1ubuntu0.1
+      BWRAP_DEB_SHA256: 1b506492bd9c7fd0cdb4f02ac822f1d3e336b0aead5113c1239baf8db5db562a
+      BWRAP_SHA256: 52231e1caf55bcbc667b269f49c63599a6f7db4767ae6a039580d0ff853db712
       LAKE_ARTIFACT_CACHE: ""
       LAKE_RESTORE_ARTIFACTS: ""
       LAKE_CACHE_DIR: ""
@@ -206,6 +206,29 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
+      # `.lake` is the sandbox's only writable mount point and the destination for the trusted
+      # cache restore, and it sits inside a checkout whose contents the candidate controls. A
+      # committed symlink there is followed by `mkdir -p`, by the cache restore, and by bwrap
+      # while it builds the sandbox, each of which would then write outside the checkout as the
+      # runner user. Replace it with a real, empty directory before anything reads or writes it.
+      #
+      # `rm -rf` unlinks a symlink rather than following it, so the hostile case is handled; the
+      # absent trailing slash is what keeps that true. This is also what makes the pinned
+      # bubblewrap version below safe, so the two have to move together.
+      - name: Normalise both trees' .lake before anything touches them
+        run: |
+          set -euo pipefail
+          rm -rf base/.lake
+          mkdir -p base/.lake
+          if [ -L base/.lake ] || [ ! -d base/.lake ]; then
+            echo "::error::base/.lake is not a real directory after normalisation"; exit 1
+          fi
+          rm -rf head/.lake
+          mkdir -p head/.lake
+          if [ -L head/.lake ] || [ ! -d head/.lake ]; then
+            echo "::error::head/.lake is not a real directory after normalisation"; exit 1
+          fi
+
       - name: Classify Lake configuration changes from trusted metadata
         id: config
         run: |
@@ -290,23 +313,33 @@ jobs:
           # installed. A bare `apt-get install bubblewrap` would take whatever the archive holds on
           # the day, which is not a pin.
           #
-          # 0.12.0 rather than the 0.9.0 noble ships: every earlier version lets a symlink in
-          # attacker-controlled content redirect the files bwrap creates while setting the sandbox
-          # up, before anything runs inside it (GHSA-pxhw-h44j-8pfx, announced 2026-08-27, no CVE
-          # assigned yet). This policy binds a candidate checkout and creates mount points beneath
-          # it, which is exactly that pattern. noble-security still has only 0.9.0-1ubuntu0.1, so
-          # the fixed package is taken from the archive pool; it needs libc6 >= 2.38 and noble has
-          # 2.39.
+          # Noble's own bubblewrap, so the pin holds for the life of 24.04. Pinning a package
+          # from a suite the runner does not track expires instead on Ubuntu's schedule: pool
+          # entries in a development suite are deleted as soon as a newer upload lands, which
+          # would take every required build down with it.
+          #
+          # 0.9.0 predates the fix for GHSA-pxhw-h44j-8pfx (2026-08-27, no CVE assigned yet),
+          # where a symlink in attacker-controlled content redirects the files bwrap creates
+          # while setting the sandbox up. That reaches these policies through exactly one path:
+          # `.lake`, the only place they create a mount point inside a candidate checkout. The
+          # "Normalise ... .lake" step above replaces it with a real directory before anything
+          # reads or writes it, which removes the precondition rather than patching the symptom,
+          # and closes the same hole for `mkdir -p` and the cache restore, neither of which the
+          # upstream fix would have covered.
+          #
+          # This is our own reasoning, not upstream's fix. If that normalisation step is ever
+          # dropped or moved after the cache restore, this pin has to go to >= 0.12.0.
+          # scripts/test_bwrap_pin.py checks the step is still there and still comes first.
           deb="bubblewrap_${BWRAP_VER}_amd64.deb"
           if ! curl -sSL --fail "https://archive.ubuntu.com/ubuntu/pool/main/b/bubblewrap/${deb}" -o bwrap.deb \
              && ! curl -sSL --fail "https://security.ubuntu.com/ubuntu/pool/main/b/bubblewrap/${deb}" -o bwrap.deb; then
             echo "::error::bubblewrap ${BWRAP_VER} is gone from the Ubuntu pool. The sandbox cannot be installed, so no PR can build until the pin is moved."
             printf '%s\n' \
               '' \
-              "WHAT HAPPENED: BWRAP_VER is pinned to ${BWRAP_VER}, which Ubuntu published in its" \
-              "development suite. Those pool entries are deleted once a newer bubblewrap is" \
-              "uploaded, so this pin expires on Ubuntu's schedule, not ours. Expect months," \
-              "not years." \
+              "WHAT HAPPENED: BWRAP_VER is pinned to ${BWRAP_VER} from noble, whose pool entries" \
+              'last as long as 24.04 is supported. Reaching this is unexpected: either the' \
+              'archive is having an outage, or the runner image has moved off 24.04, or the' \
+              'release has gone end of life.' \
               '' \
               'HOW TO FIX IT. Find the current version in any suite whose bubblewrap is 0.12.0' \
               'or newer:' \
@@ -326,13 +359,10 @@ jobs:
               '.github/workflows/{pr-build,pr-profile,nightly-verify}.yml. They must agree;' \
               'scripts/test_bwrap_pin.py fails if they do not.' \
               '' \
-              'DO NOT PIN BELOW 0.12.0. Earlier versions let a symlink in a candidate checkout' \
-              'redirect the files bwrap creates while setting the sandbox up' \
-              '(GHSA-pxhw-h44j-8pfx), which is exactly what these policies do.' \
-              '' \
-              'BETTER FIX: host a copy of the vetted .deb somewhere we control, or build' \
-              'bubblewrap from a pinned source tag, so the sandbox stops depending on how long' \
-              "Ubuntu keeps a development suite's pool entries." \
+              'IF YOU PIN BELOW 0.12.0, the "Normalise ... .lake" step is what keeps that safe:' \
+              'earlier bubblewrap lets a symlink in a candidate checkout redirect the files it' \
+              'creates while setting the sandbox up (GHSA-pxhw-h44j-8pfx). Check that step still' \
+              'runs before the cache restore, or move the pin to 0.12.0 or newer.' \
               '' >&2
             exit 1
           fi

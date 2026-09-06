@@ -12,6 +12,12 @@ sits on the merge queue's critical path and runs from the base definition under
 pull_request_target, so a shared action could not be exercised by the PR that introduced it.
 This test is what stops the copies drifting.
 
+The `.lake` normalisation is checked here too, because the pinned version depends on it:
+noble ships bubblewrap 0.9.0, which predates the fix for GHSA-pxhw-h44j-8pfx, and what keeps
+that safe is that no candidate-controlled symlink survives to be followed. Pinning noble's own
+package is what stops this pin expiring; a package from a suite the runner does not track is
+deleted from the pool as soon as Ubuntu uploads a newer one.
+
 The AppArmor profile is checked here too. Ubuntu 24.04 denies unprivileged user namespaces, so
 without the profile bwrap cannot build its sandbox at all — and a workflow that installed bwrap
 but not the profile would fail rather than silently run unconfined, which is the right way
@@ -138,6 +144,39 @@ class BwrapPin(unittest.TestCase):
                 for s in sandboxed:
                     self.assertTrue(any(i < s for i in install),
                                     f"{workflow.name}: sandboxed step {names[s]!r} precedes the self-test")
+
+    def test_lake_is_normalised_before_anything_touches_it(self):
+        """The step that makes the pinned bubblewrap version safe.
+
+        `.lake` is the only path where these policies create a mount point inside a checkout
+        the candidate controls, so a symlink committed there is the one way the pinned 0.9.0's
+        unfixed symlink handling (GHSA-pxhw-h44j-8pfx) could be reached. The same symlink would
+        also be followed by `mkdir -p` and by the trusted Mathlib cache restore, neither of
+        which the upstream fix covers. Replacing it with a real directory first is what closes
+        all three, so it has to exist and has to come before every other step that names it.
+        """
+        import yaml
+        for workflow in WORKFLOWS:
+            with self.subTest(workflow=workflow.name):
+                doc = yaml.safe_load(workflow.read_text())
+                steps = [s for job in doc["jobs"].values() for s in job.get("steps", [])]
+                names = [str(s.get("name", "")) for s in steps]
+                norm = [i for i, n in enumerate(names) if n.startswith("Normalise")]
+                self.assertTrue(norm, f"{workflow.name}: no .lake normalisation step")
+                first_norm = min(norm)
+                # It must unlink rather than follow, and must verify what it left behind.
+                body = str(steps[first_norm].get("run", ""))
+                self.assertIn("rm -rf", body)
+                self.assertNotIn("/.lake/", body.replace("mkdir -p", ""))  # no trailing slash
+                self.assertIn("-L", body)  # asserts the result is not a symlink
+                # Nothing earlier may name a candidate .lake.
+                for i, step in enumerate(steps[:first_norm]):
+                    blob = yaml.safe_dump(step)
+                    for tree in ("pr/.lake", "head/.lake", "base/.lake", "reference/.lake"):
+                        self.assertNotIn(
+                            tree, blob,
+                            f"{workflow.name}: step {names[i]!r} touches {tree} "
+                            f"before it is normalised")
 
     def test_no_workflow_still_invokes_landrun(self):
         # Comments may still name landrun to explain what changed and why; what must be gone
