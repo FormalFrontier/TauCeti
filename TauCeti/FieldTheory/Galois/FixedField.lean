@@ -134,8 +134,11 @@ noncomputable def equivAlgEquivFixedField (H : Subgroup (M ≃ₐ[K] M)) [Finite
 
 /-- **The isomorphism changes only the base field.** An element of `H` and its image act on `M` by
 the same map, so a generator of `H` is exhibited as an automorphism of `M` over the fixed field
-rather than merely corresponding to one. -/
-@[simp]
+rather than merely corresponding to one.
+
+Not marked `@[simp]`: the statement is `rfl`, so a consumer already has it definitionally, and a
+`simp` lemma matching under the `MulEquiv` coercion is work the normal-form linter has to redo for
+every declaration in the environment. -/
 theorem equivAlgEquivFixedField_apply (H : Subgroup (M ≃ₐ[K] M)) [Finite H] (σ : H) (x : M) :
     (equivAlgEquivFixedField H σ) x = (σ : M ≃ₐ[K] M) x := by
   obtain ⟨σ, hσ⟩ := σ
