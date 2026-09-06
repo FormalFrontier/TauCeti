@@ -734,9 +734,8 @@ theorem ReducedTensorWords.map_koszulTwist_comp_self (G : InternalGrading R M) (
     ReducedTensorWords.map_id]
 
 /-- The square of a graded coderivation anticommuting with the letterwise Koszul twist is an
-ordinary coderivation.  The anticommutation relation expresses oddness when `q` is odd and cancels
-the two mixed terms after applying the graded co-Leibniz rule twice.  For even `q`, the twist is the
-identity and the hypothesis instead reduces to `b + b = 0`. -/
+ordinary coderivation.  The anticommutation relation expresses oddness when `q` is odd.  For even
+`q`, the twist is the identity and the hypothesis instead reduces to `b + b = 0`. -/
 theorem ReducedTensorWords.IsGradedCoderivation.isCoderivation_comp_self
     {G : InternalGrading R M} {q : ℤ}
     {b : ReducedTensorWords R M →ₗ[R] ReducedTensorWords R M}
