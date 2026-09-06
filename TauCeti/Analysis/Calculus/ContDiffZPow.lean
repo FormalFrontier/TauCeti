@@ -20,7 +20,8 @@ for a nonnegative exponent. The hypothesis is the one carried by Mathlib's
 
 * `ContDiffWithinAt.zpow`: `fun z ↦ f z ^ (m : ℤ)` is `C^n` within a set at a point where
   `f` is `C^n` and either `f` does not vanish or `m` is nonnegative.
-* `ContDiffAt.zpow`: the corresponding pointwise statement.
+* `ContDiffAt.zpow`, `ContDiffOn.zpow` and `ContDiff.zpow`: the remaining members of the family,
+  with the hypotheses of `DifferentiableOn.zpow` and `Differentiable.zpow`.
 -/
 
 public section
@@ -45,3 +46,15 @@ and also, whatever the value there, for a nonnegative exponent. -/
 theorem ContDiffAt.zpow (hf : ContDiffAt 𝕜 n f x) (h : f x ≠ 0 ∨ 0 ≤ m) :
     ContDiffAt 𝕜 n (fun z ↦ f z ^ m) x :=
   hf.contDiffWithinAt.zpow h
+
+/-- An integral power of a `C^n` function is `C^n` on a set where the function does not vanish,
+and also, whatever its values there, for a nonnegative exponent. -/
+theorem ContDiffOn.zpow (hf : ContDiffOn 𝕜 n f s) (h : (∀ z ∈ s, f z ≠ 0) ∨ 0 ≤ m) :
+    ContDiffOn 𝕜 n (fun z ↦ f z ^ m) s :=
+  fun z hz ↦ (hf z hz).zpow (h.imp_left fun h ↦ h z hz)
+
+/-- An integral power of a `C^n` function is `C^n` if the function does not vanish, and also,
+whatever its values, for a nonnegative exponent. -/
+theorem ContDiff.zpow (hf : ContDiff 𝕜 n f) (h : (∀ z, f z ≠ 0) ∨ 0 ≤ m) :
+    ContDiff 𝕜 n (fun z ↦ f z ^ m) :=
+  contDiff_iff_contDiffAt.2 fun z ↦ hf.contDiffAt.zpow (h.imp_left fun h ↦ h z)
