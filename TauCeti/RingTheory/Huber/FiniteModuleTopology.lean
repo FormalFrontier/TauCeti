@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.RingTheory.Huber.ClosedSubmodule
+public import TauCeti.Topology.Algebra.Module.Finite
 
 /-!
 # The canonical topology on a finite module over a Tate ring
@@ -23,7 +24,8 @@ ring. The other three — first countability, nonarchimedeanness, and completene
 right uniformity — need nothing of `A` beyond those same properties, and are proved in that
 generality in `TauCeti.Topology.Algebra.Module.Finite`; a Huber ring supplies the hypotheses they
 do need through `TauCeti.Huber.IsHuberRing.isCountablyGenerated_nhds_zero` and
-`TauCeti.Huber.IsHuberRing.toNonarchimedeanRing`.
+`TauCeti.Huber.IsHuberRing.toNonarchimedeanRing`. That file is re-exported here, so that this
+module is the single entry point for the whole existence half of Proposition 6.18(1).
 
 Together with `TauCeti.Huber.IsTateRing.isModuleTopology`, these results give the existence and
 uniqueness asserted by Proposition 6.18(1), among the complete Hausdorff first-countable
@@ -35,6 +37,10 @@ topology on `M` from typeclass search.
 ## Main results
 
 * `TauCeti.Huber.IsTateRing.t2Space_moduleTopology`: the canonical topology is Hausdorff.
+
+The remaining three clauses are re-exported from `TauCeti.Topology.Algebra.Module.Finite`:
+`TauCeti.firstCountableTopology_moduleTopology`, `TauCeti.nonarchimedeanAddGroup_moduleTopology`
+and `TauCeti.completeSpace_moduleTopology`.
 
 ## References
 
@@ -54,7 +60,7 @@ variable {A : Type*} [CommRing A]
 /-- **The module topology on a finite module over a complete noetherian Tate ring is
 Hausdorff.** This supplies the separatedness clause of Wedhorn Proposition 6.18(1). -/
 theorem IsTateRing.t2Space_moduleTopology [UniformSpace A] [IsTopologicalRing A]
-    [IsUniformAddGroup A] [CompleteSpace A] [T2Space A] [IsTateRing A] [IsNoetherianRing A] :
+    [IsUniformAddGroup A] [CompleteSpace A] [T0Space A] [IsTateRing A] [IsNoetherianRing A] :
     @T2Space M (moduleTopology A M) := by
   let _ : TopologicalSpace M := moduleTopology A M
   have _ : IsModuleTopology A M := inferInstance

@@ -90,13 +90,12 @@ theorem completeSpace_moduleTopology [UniformSpace A] [IsTopologicalRing A]
   let _ : UniformSpace M := IsTopologicalAddGroup.rightUniformSpace M
   have _ : IsUniformAddGroup M := isUniformAddGroup_of_addCommGroup
   have _ : (𝓤 A).IsCountablyGenerated := IsUniformAddGroup.uniformity_countably_generated
-  obtain ⟨n, f, hf⟩ := Module.Finite.exists_fin' A M
-  let Q := (Fin n → A) ⧸ LinearMap.ker f
+  obtain ⟨n, S, ⟨e₀⟩⟩ := Module.Finite.exists_fin_quot_equiv A M
+  let Q := (Fin n → A) ⧸ S
   let _ : UniformSpace Q := IsTopologicalAddGroup.rightUniformSpace Q
   have _ : IsUniformAddGroup Q := isUniformAddGroup_of_addCommGroup
-  have _ : CompleteSpace Q :=
-    QuotientAddGroup.completeSpace_right (Fin n → A) (LinearMap.ker f).toAddSubgroup
-  let eLinear : Q ≃ₗ[A] M := f.quotKerEquivOfSurjective hf
+  have _ : CompleteSpace Q := QuotientAddGroup.completeSpace_right (Fin n → A) S.toAddSubgroup
+  let eLinear : Q ≃ₗ[A] M := e₀
   let e : Q ≃L[A] M :=
     { eLinear with
       continuous_toFun := IsModuleTopology.continuous_of_linearMap eLinear.toLinearMap
