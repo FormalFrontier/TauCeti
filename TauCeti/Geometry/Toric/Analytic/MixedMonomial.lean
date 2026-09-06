@@ -325,14 +325,15 @@ theorem mixedChartProdHomeomorph_symm_apply {k₁ l₁ k₂ l₂ : ℕ}
     mixedChartProdHomeomorph.symm z =
       (Fin.addCases z.1.1 z.2.1, Fin.addCases z.1.2 z.2.2) := (rfl)
 
-/-- The canonical coordinate splitting identifies a summed mixed-chart domain with the product of
-the two mixed-chart domains. -/
+/-- The canonical coordinate splitting identifies the mixed-chart domain of the summed dimensions
+with the product of the two mixed-chart domains. -/
 @[simp]
-theorem mixedChartProdHomeomorph_mem_prod {k₁ l₁ k₂ l₂ : ℕ}
-    (z : (Fin (k₁ + k₂) → ℂ) × (Fin (l₁ + l₂) → ℂ)) :
-    (∀ j : Fin l₁, z.2 (Fin.castAdd l₂ j) ≠ 0) ∧
-      (∀ j : Fin l₂, z.2 (Fin.natAdd l₁ j) ≠ 0) ↔
-      z ∈ mixedChartDomain (k₁ + k₂) (l₁ + l₂) := by
+theorem mixedChartProdHomeomorph_preimage_prod {k₁ l₁ k₂ l₂ : ℕ} :
+    mixedChartProdHomeomorph ⁻¹' (mixedChartDomain k₁ l₁ ×ˢ mixedChartDomain k₂ l₂) =
+      mixedChartDomain (k₁ + k₂) (l₁ + l₂) := by
+  ext z
+  simp only [Set.mem_preimage, Set.mem_prod, mem_mixedChartDomain,
+    mixedChartProdHomeomorph_apply]
   constructor
   · rintro ⟨h₁, h₂⟩ j
     exact Fin.addCases h₁ h₂ j
