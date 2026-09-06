@@ -39,6 +39,7 @@ ramification in the genus field, and `e(𝔭 ∣ p) = 2` is what makes the genus
 All of the following assume `Module.finrank ℚ K = 2`. They live in the namespace `NumberField`,
 except for the two `TauCeti.NumberField` results whose names are written out in full:
 
+* `sum_ramificationIdx_mul_inertiaDeg_eq_two`: the fundamental identity `∑ e(𝔭) f(𝔭) = 2`.
 * `primesOver_eq_singleton_of_mem_ramifiedPrimes` and
   `ncard_primesOver_eq_one_of_mem_ramifiedPrimes`: a ramified prime has a unique prime above it.
 * `ramificationIdx_eq_two_of_mem_ramifiedPrimes` and `inertiaDeg_eq_one_of_mem_ramifiedPrimes`:
@@ -66,7 +67,7 @@ variable {K : Type*} [Field K] [NumberField K] {p : ℕ}
 
 /-- **The fundamental identity for a quadratic field.** Over a rational prime `p`, the ramification
 indices and inertia degrees of the primes of `𝓞 K` satisfy `∑ e(𝔭) f(𝔭) = 2`. -/
-private theorem sum_ramificationIdx_mul_inertiaDeg_eq_two (hK : finrank ℚ K = 2)
+theorem sum_ramificationIdx_mul_inertiaDeg_eq_two (hK : finrank ℚ K = 2)
     [(span {(p : ℤ)} : Ideal ℤ).IsMaximal] :
     ∑ q : (span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K),
       q.1.ramificationIdx ℤ * q.1.inertiaDeg ℤ = 2 := by

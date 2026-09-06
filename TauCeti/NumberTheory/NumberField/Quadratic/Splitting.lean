@@ -9,7 +9,9 @@ public import Mathlib.FieldTheory.KummerPolynomial
 public import Mathlib.NumberTheory.LegendreSymbol.Basic
 public import Mathlib.NumberTheory.NumberField.Ideal.KummerDedekind
 public import Mathlib.RingTheory.Discriminant
+public import Mathlib.RingTheory.Ideal.Int
 public import TauCeti.NumberTheory.NumberField.Quadratic.Basic
+public import TauCeti.NumberTheory.NumberField.Quadratic.TotalRamification
 
 /-!
 # The prime-splitting law for a quadratic field
@@ -28,9 +30,23 @@ power-basis discriminant `4d`, which is coprime to the odd prime `p ∤ d`.
 This is the base case (`n = 1`) of the multiquadratic prime-splitting law (Layer 1 of the
 multiquadratic roadmap).
 
+The splitting law is then read off at the level of ideals. Two primes above `p` is the largest
+number the fundamental identity `∑ e(𝔭) f(𝔭) = [K : ℚ] = 2` allows, so a split prime forces
+`e(𝔭 ∣ p) = f(𝔭 ∣ p) = 1` for each of them, hence `N(𝔭) = p`. In particular a split prime is
+the absolute norm of an ideal of `𝓞 K` — the shape in which the splitting law enters genus
+theory, where an ideal of norm `p` is what carries the prescribed values of the genus characters.
+This complements `TauCeti.NumberTheory.NumberField.Quadratic.TotalRamification`, which runs the
+same fundamental identity in the opposite extreme case `e = 2`.
+
 ## Main results
 
 * `NumberField.ncard_primesOver_quadratic_iff`: the quadratic splitting law.
+* `NumberField.ramificationIdx_eq_one_of_ncard_primesOver_eq_two` and
+  `NumberField.inertiaDeg_eq_one_of_ncard_primesOver_eq_two`: a prime above a split rational
+  prime has `e = f = 1`.
+* `NumberField.absNorm_eq_of_ncard_primesOver_eq_two`: its absolute norm is that rational prime.
+* `NumberField.exists_isPrime_absNorm_eq_of_legendreSym_eq_one`: an odd prime `p ∤ d` with
+  `legendreSym p d = 1` is the absolute norm of a prime ideal of `𝓞 K`.
 
 ## Provenance
 
@@ -168,5 +184,86 @@ theorem ncard_primesOver_quadratic_iff {θ : 𝓞 K} {d : ℤ}
     exact Nat.card_eq_finsetCard _
   rw [hcard, hfr]
   exact card_monicFactorsMod_quadratic_iff hmin hodd hcop
+
+section Split
+
+variable {p : ℕ}
+
+/-- **A prime above a split rational prime of a quadratic field is unramified with trivial
+residue extension.** Two primes above `p` is the largest number the fundamental identity
+`∑ e(𝔭) f(𝔭) = 2` allows in a field of degree `2`, so both summands equal `1`: every prime `𝔭`
+above `p` has `e(𝔭 ∣ p) = f(𝔭 ∣ p) = 1`. -/
+private theorem ramificationIdx_and_inertiaDeg_eq_one_of_ncard_primesOver_eq_two
+    (hK : finrank ℚ K = 2) (hp : p.Prime)
+    (hsplit : ((span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K)).ncard = 2)
+    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] [𝔭.LiesOver (span {(p : ℤ)})] :
+    𝔭.ramificationIdx ℤ = 1 ∧ 𝔭.inertiaDeg ℤ = 1 := by
+  classical
+  have := Fact.mk hp
+  set x : (span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K) := ⟨𝔭, ‹_›, ‹_›⟩ with hx
+  have hx1 : (x : Ideal (𝓞 K)) = 𝔭 := by rw [hx]
+  -- Exactly one prime above `p` other than `𝔭`.
+  have hcard : (Finset.univ.erase x).card = 1 := by
+    rw [Finset.card_erase_of_mem (Finset.mem_univ x), Finset.card_univ,
+      ← Nat.card_eq_fintype_card, Nat.card_coe_set_eq, hsplit]
+  -- Its summand in the fundamental identity is at least `1`.
+  have hrest : 1 ≤ ∑ q ∈ Finset.univ.erase x, q.1.ramificationIdx ℤ * q.1.inertiaDeg ℤ := by
+    have hle := Finset.card_nsmul_le_sum (Finset.univ.erase x)
+      (fun q : (span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K) =>
+        q.1.ramificationIdx ℤ * q.1.inertiaDeg ℤ) 1
+      (fun q _ => Nat.one_le_iff_ne_zero.mpr
+        (Nat.mul_ne_zero (Ideal.ramificationIdx_pos q.1 ℤ).ne' (Ideal.inertiaDeg_pos q.1 ℤ).ne'))
+    simpa [hcard] using hle
+  have hsum := sum_ramificationIdx_mul_inertiaDeg_eq_two (K := K) (p := p) hK
+  rw [← Finset.add_sum_erase _ _ (Finset.mem_univ x), hx1] at hsum
+  have hpos : 1 ≤ 𝔭.ramificationIdx ℤ * 𝔭.inertiaDeg ℤ :=
+    Nat.one_le_iff_ne_zero.mpr
+      (Nat.mul_ne_zero (Ideal.ramificationIdx_pos 𝔭 ℤ).ne' (Ideal.inertiaDeg_pos 𝔭 ℤ).ne')
+  have hone : 𝔭.ramificationIdx ℤ * 𝔭.inertiaDeg ℤ = 1 := by omega
+  exact ⟨Nat.dvd_one.mp ⟨_, hone.symm⟩, Nat.dvd_one.mp ⟨_, by rw [← hone]; ring⟩⟩
+
+variable (hK : finrank ℚ K = 2) (hp : p.Prime)
+  (hsplit : ((span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K)).ncard = 2)
+  (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] [𝔭.LiesOver (span {(p : ℤ)})]
+
+include hK hp hsplit
+
+/-- **A split rational prime of a quadratic field is unramified.** The prime `𝔭` above a rational
+prime `p` with two primes above it has ramification index `e(𝔭 ∣ p) = 1`. -/
+theorem ramificationIdx_eq_one_of_ncard_primesOver_eq_two : 𝔭.ramificationIdx ℤ = 1 :=
+  (ramificationIdx_and_inertiaDeg_eq_one_of_ncard_primesOver_eq_two hK hp hsplit 𝔭).1
+
+/-- **The residue field does not grow at a split prime of a quadratic field.** The prime `𝔭` above
+a rational prime `p` with two primes above it has inertia degree `f(𝔭 ∣ p) = 1`. -/
+theorem inertiaDeg_eq_one_of_ncard_primesOver_eq_two : 𝔭.inertiaDeg ℤ = 1 :=
+  (ramificationIdx_and_inertiaDeg_eq_one_of_ncard_primesOver_eq_two hK hp hsplit 𝔭).2
+
+/-- **The absolute norm of a split prime of a quadratic field is the rational prime below it.**
+Since the residue degree is `1` (`inertiaDeg_eq_one_of_ncard_primesOver_eq_two`), the residue
+field of `𝔭` is `ℤ/p`, so `N(𝔭) = p`. -/
+theorem absNorm_eq_of_ncard_primesOver_eq_two : Ideal.absNorm 𝔭 = p := by
+  rw [← Ideal.pow_inertiaDeg p 𝔭,
+    inertiaDeg_eq_one_of_ncard_primesOver_eq_two hK hp hsplit 𝔭, pow_one]
+
+end Split
+
+/-- **A split prime is an ideal norm.** For `K = ℚ(√d)` and an odd prime `p ∤ d` that is a
+quadratic residue mod `p` — that is, one which splits in `K` by `ncard_primesOver_quadratic_iff` —
+there is a prime ideal of `𝓞 K` of absolute norm `p`. This is the form in which the splitting law
+feeds genus theory: the genus characters are computed on ideals through their absolute norms. -/
+theorem exists_isPrime_absNorm_eq_of_legendreSym_eq_one {θ : 𝓞 K} {d : ℤ}
+    (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
+    {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2) (hcop : ¬ (p : ℤ) ∣ d)
+    (hleg : legendreSym p d = 1) :
+    ∃ 𝔭 : Ideal (𝓞 K), 𝔭.IsPrime ∧ Ideal.absNorm 𝔭 = p := by
+  have hK : finrank ℚ K = 2 := finrank_rat_eq_two hmin hgen
+  have hsplit : ((span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K)).ncard = 2 := by
+    rw [← hK]
+    exact (ncard_primesOver_quadratic_iff hmin hgen hodd hcop).mpr hleg
+  obtain ⟨⟨𝔮, h𝔮, hlo⟩⟩ :=
+    (inferInstance : Nonempty ((span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K)))
+  have := h𝔮
+  have := hlo
+  exact ⟨𝔮, h𝔮, absNorm_eq_of_ncard_primesOver_eq_two hK Fact.out hsplit 𝔮⟩
 
 end NumberField
