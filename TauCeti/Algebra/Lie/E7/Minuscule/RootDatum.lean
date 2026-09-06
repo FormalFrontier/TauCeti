@@ -42,6 +42,10 @@ packages only the named simple-root pinning equations already justified by the c
   uniform simply connected `E₇` datum.
 * `TauCeti.E7Minuscule.weightTorus_conj_rootSubgroup_neg_root_simpleIndex`: the analogous
   equation for a negative simple root.
+* `TauCeti.E7Minuscule.weightTorusPoints_conj_rootSubgroupPoints_root_simpleIndex` and
+  `TauCeti.E7Minuscule.weightTorusPoints_conj_rootSubgroupPoints_neg_root_simpleIndex`: the same
+  two equations on matrix-valued points, which is the form a consumer working with a group of
+  points rather than with scheme morphisms uses.
 
 ## References
 
@@ -62,6 +66,8 @@ subgroups governed by characters of that datum.
 -/
 
 public section
+
+universe v
 
 open AlgebraicGeometry CategoryTheory
 open scoped CategoryTheory.MonObj
@@ -126,5 +132,44 @@ theorem weightTorus_conj_rootSubgroup_neg_root_simpleIndex (ht : E7.Valid) (i : 
       E7.rootGeneratorWeight_inr_eq_neg_root_simpleIndex ht i
   rw [← hroot]
   exact weightTorus_conj_rootSubgroup (.inr i) A s u
+
+/-! ## Torus conjugation equations on matrix-valued points -/
+
+/-- **The pinning equation at a named positive simple root, on matrix-valued points.** A point `s`
+of the split weight torus conjugates the raising-subgroup element of parameter `u` at node `i` to
+the same subgroup with parameter `αᵢ(s)u`, where `αᵢ` is the corresponding root of the uniform
+simply connected type-`E₇` datum. -/
+theorem weightTorusPoints_conj_rootSubgroupPoints_root_simpleIndex (ht : E7.Valid) (i : Fin 7)
+    (A : Type v) [CommRing A] (s : Fin 7 → Aˣ) (u : Multiplicative A) :
+    weightTorusPoints A s * rootSubgroupPoints (.inl i) A u * (weightTorusPoints A s)⁻¹ =
+      rootSubgroupPoints (.inl i) A
+        (Multiplicative.ofAdd
+          ((TauCeti.torusCharacter s
+              ((E7.simplyConnectedRootDatum ht).root (E7.simpleIndex ht i)) : A) *
+            Multiplicative.toAdd u)) := by
+  have hroot : E7.rootGeneratorWeight valid_E7 (.inl i) =
+      (E7.simplyConnectedRootDatum ht).root (E7.simpleIndex ht i) := by
+    simpa only [rank_E7] using
+      E7.rootGeneratorWeight_inl_eq_root_simpleIndex ht i
+  rw [← hroot]
+  exact weightTorusPoints_conj_rootSubgroupPoints (.inl i) A s u
+
+/-- **The pinning equation at a named negative simple root, on matrix-valued points.** A point `s`
+of the split weight torus conjugates the lowering-subgroup element of parameter `u` at node `i` to
+the same subgroup with parameter `(-αᵢ)(s)u`. -/
+theorem weightTorusPoints_conj_rootSubgroupPoints_neg_root_simpleIndex (ht : E7.Valid) (i : Fin 7)
+    (A : Type v) [CommRing A] (s : Fin 7 → Aˣ) (u : Multiplicative A) :
+    weightTorusPoints A s * rootSubgroupPoints (.inr i) A u * (weightTorusPoints A s)⁻¹ =
+      rootSubgroupPoints (.inr i) A
+        (Multiplicative.ofAdd
+          ((TauCeti.torusCharacter s
+              (-(E7.simplyConnectedRootDatum ht).root (E7.simpleIndex ht i)) : A) *
+            Multiplicative.toAdd u)) := by
+  have hroot : E7.rootGeneratorWeight valid_E7 (.inr i) =
+      -(E7.simplyConnectedRootDatum ht).root (E7.simpleIndex ht i) := by
+    simpa only [rank_E7] using
+      E7.rootGeneratorWeight_inr_eq_neg_root_simpleIndex ht i
+  rw [← hroot]
+  exact weightTorusPoints_conj_rootSubgroupPoints (.inr i) A s u
 
 end TauCeti.E7Minuscule
