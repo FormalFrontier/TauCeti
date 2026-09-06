@@ -82,7 +82,10 @@ The two counting statements are the group-theoretic half of a fibre count: for a
 quotient `#G / (#C * orderOf σ)` counts something, and it does so only because the division is
 exact — `#C` is the index of the centralizer of `σ`, and `orderOf σ` divides that centralizer's
 order, so their product divides `#G`. Dividing then leaves the centralizer's order over
-`orderOf σ`.
+`orderOf σ`. They are developed for the same roadmap (`Chebotarev/README.md` Layer 8.2, the
+fixed-field fibre count), whose `Suggested.lean` pins `card_carrier_mul_orderOf_dvd` with this
+signature and consumes it in `fixedField_frobenius_fiber_card`, the exact cardinality of the
+residue-degree-one relative fibre.
 -/
 
 public section
