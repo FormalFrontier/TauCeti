@@ -116,8 +116,8 @@ theorem exists_toTableau_eq_iff (t : YoungTableau μ) :
       fun _ _ hrow hcol => T.lt_of_colIndex_lt hrow hcol⟩
   · rintro ⟨hcol, hrow⟩
     refine ⟨⟨t, fun {i j₁ j₂} h hcell => ?_, fun {i₁ i₂ j} h hcell => ?_⟩, rfl⟩
-    · exact hrow _ _ (by simp) (by simpa using h)
-    · exact hcol _ _ (by simp) (by simpa using h)
+    · exact hrow _ _ (by simp only [rowIndex_apply]) (by simp only [colIndex_apply]; exact h)
+    · exact hcol _ _ (by simp only [colIndex_apply]) (by simp only [rowIndex_apply]; exact h)
 
 end StandardYoungTableau
 
