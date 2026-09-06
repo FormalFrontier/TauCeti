@@ -7,9 +7,6 @@ module
 
 public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Basic
 
-import Mathlib.Data.Finsupp.Encodable
-import TauCeti.RingTheory.Huber.Restricted.PowerSeries
-
 /-!
 # `A⟨X₁,…,Xₖ⟩ → B⟨X₁,…,Xₖ⟩` is surjective along an open surjection
 
