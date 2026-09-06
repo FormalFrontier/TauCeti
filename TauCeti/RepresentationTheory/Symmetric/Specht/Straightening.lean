@@ -7,6 +7,8 @@ module
 
 public import TauCeti.Combinatorics.Young.StandardTableau.Order
 public import TauCeti.RepresentationTheory.Symmetric.Specht.Garnir
+import TauCeti.Algebra.BigOperators.Finset.Swap
+import TauCeti.Algebra.Order.BigOperators.SumLtSum
 
 /-!
 # The Garnir element and the straightening algorithm
@@ -267,25 +269,6 @@ private theorem straightWeight_lt_of_colMoment_lt {t t' : YoungTableau μ}
 
 /-! ## Exchanging two labels of one column -/
 
-private theorem sum_mul_swap (f : Fin μ.card → ℕ) {x y : Fin μ.card} (hne : x ≠ y) :
-    (∑ k : Fin μ.card, f k * ((Equiv.swap x y k : Fin μ.card) : ℕ)) +
-        (f x * (x : ℕ) + f y * (y : ℕ)) =
-      (∑ k : Fin μ.card, f k * (k : ℕ)) + (f x * (y : ℕ) + f y * (x : ℕ)) := by
-  classical
-  have hsplit : ∀ g : Fin μ.card → ℕ,
-      ∑ k : Fin μ.card, g k = g x + (g y + ∑ k ∈ (Finset.univ.erase x).erase y, g k) := by
-    intro g
-    rw [← Finset.add_sum_erase _ g (Finset.mem_univ x),
-      ← Finset.add_sum_erase _ g (Finset.mem_erase.mpr ⟨hne.symm, Finset.mem_univ y⟩)]
-  have htail : ∀ k ∈ (Finset.univ.erase x).erase y,
-      f k * ((Equiv.swap x y k : Fin μ.card) : ℕ) = f k * (k : ℕ) := by
-    intro k hk
-    obtain ⟨hky, hk'⟩ := Finset.mem_erase.mp hk
-    rw [Equiv.swap_apply_of_ne_of_ne (Finset.mem_erase.mp hk').1 hky]
-  rw [hsplit fun k => f k * ((Equiv.swap x y k : Fin μ.card) : ℕ), hsplit fun k => f k * (k : ℕ),
-    Finset.sum_congr rfl htail, Equiv.swap_apply_left, Equiv.swap_apply_right]
-  ring
-
 /-- **Exchanging two labels of one column that are out of order increases the straightening
 measure.**  The exchange leaves every label in its own column, so the column moment is unchanged,
 while the smaller of the two labels moves to the earlier row and the row moment grows. -/
@@ -293,8 +276,8 @@ private theorem straightWeight_lt_of_swap {t : YoungTableau μ} {x y : Fin μ.ca
     (hcol : colIndex t x = colIndex t y) (hrow : rowIndex t x < rowIndex t y) (hyx : y < x) :
     straightWeight t < straightWeight (relabel (Equiv.swap x y) t) := by
   have hne : x ≠ y := fun h => absurd (congrArg (rowIndex t) h) hrow.ne
-  have hc := sum_mul_swap (colIndex t) hne
-  have hr := sum_mul_swap (rowIndex t) hne
+  have hc := sum_mul_swap (colIndex t) Fin.val (Finset.mem_univ x) (Finset.mem_univ y) hne
+  have hr := sum_mul_swap (rowIndex t) Fin.val (Finset.mem_univ x) (Finset.mem_univ y) hne
   rw [hcol] at hc
   have hcol' : colMoment (relabel (Equiv.swap x y) t) = colMoment t := by
     rw [colMoment_relabel, colMoment]
@@ -344,29 +327,6 @@ private theorem lt_of_mem_garnirSet {t : YoungTableau μ} {i j : ℕ} {x y : Fin
     · exact le_of_lt (hinc b y (by rw [hbc, hyc]) (by omega))
   exact lt_of_le_of_lt hby (lt_of_lt_of_le hyx hxa)
 
-/-- A set of labels every one of which is smaller than every label of a second set of the same
-size has the smaller sum. -/
-private theorem sum_lt_sum_of_forall_lt {U V : Finset (Fin μ.card)} (hcard : V.card = U.card)
-    (hU : U.Nonempty) (hlt : ∀ u ∈ U, ∀ v ∈ V, (v : ℕ) < (u : ℕ)) :
-    ∑ v ∈ V, (v : ℕ) < ∑ u ∈ U, (u : ℕ) := by
-  classical
-  have hV : V.Nonempty := Finset.card_pos.mp (by rw [hcard]; exact Finset.card_pos.mpr hU)
-  obtain ⟨w, hwV, hwm⟩ :=
-    Finset.mem_image.mp ((V.image fun v : Fin μ.card => (v : ℕ)).max'_mem (hV.image _))
-  have hVle : ∀ v ∈ V, (v : ℕ) ≤ (V.image fun v : Fin μ.card => (v : ℕ)).max' (hV.image _) :=
-    fun v hv => Finset.le_max' _ _ (Finset.mem_image_of_mem _ hv)
-  have hUge : ∀ u ∈ U,
-      (V.image fun v : Fin μ.card => (v : ℕ)).max' (hV.image _) + 1 ≤ (u : ℕ) :=
-    fun u hu => hwm ▸ hlt u hu w hwV
-  calc ∑ v ∈ V, (v : ℕ)
-      ≤ V.card * (V.image fun v : Fin μ.card => (v : ℕ)).max' (hV.image _) := by
-        simpa [smul_eq_mul] using Finset.sum_le_card_nsmul V _ _ hVle
-    _ < U.card * ((V.image fun v : Fin μ.card => (v : ℕ)).max' (hV.image _) + 1) := by
-        rw [hcard]
-        exact mul_lt_mul_of_pos_left (Nat.lt_succ_self _) (Finset.card_pos.mpr hU)
-    _ ≤ ∑ u ∈ U, (u : ℕ) := by
-        simpa [smul_eq_mul] using Finset.card_nsmul_le_sum U _ _ hUge
-
 /-- Summing over a Garnir set against the column index only sees which of its two halves a label
 lies in: the left half contributes the weight `j` and the right half the weight `j + 1`. -/
 private theorem sum_colIndex_garnirSet (t : YoungTableau μ) (i j : ℕ) (g : Fin μ.card → ℕ) :
@@ -384,73 +344,6 @@ private theorem sum_colIndex_garnirSet (t : YoungTableau μ) (i j : ℕ) (g : Fi
   rw [← Finset.sum_sdiff hAX, ← Finset.sum_sdiff (f := g) hAX, Finset.sum_congr rfl hBc,
     Finset.sum_congr rfl hAc, ← Finset.mul_sum, ← Finset.mul_sum]
   ring
-
-/-- **A permutation of a set that does not preserve a prescribed part increases the sum of the
-other part.**  If every label of `A` exceeds every label of `X \ A`, and `σ` permutes `X` without
-mapping `A` to itself, then `σ` moves some label of `A` into the image of `X \ A`, exchanging it
-for a strictly smaller one, so that image has the larger sum. -/
-private theorem sum_lt_sum_image_sdiff {X A : Finset (Fin μ.card)}
-    {σ : Equiv.Perm (Fin μ.card)} (hAX : A ⊆ X) (hXimg : X.image σ = X)
-    (himg : A.image σ ≠ A)
-    (hlt : ∀ a ∈ A, ∀ b ∈ X \ A, (b : ℕ) < (a : ℕ)) :
-    ∑ z ∈ X \ A, (z : ℕ) < ∑ z ∈ (X \ A).image σ, (z : ℕ) := by
-  classical
-  have hmemX : ∀ k ∈ X, σ k ∈ X := fun k hk => hXimg ▸ Finset.mem_image_of_mem σ hk
-  have hXA : X \ (X \ A) = A := Finset.sdiff_sdiff_eq_self hAX
-  have hcard : ((X \ A).image σ).card = (X \ A).card :=
-    Finset.card_image_of_injective _ σ.injective
-  have hBsub : (X \ A).image σ ⊆ X := by
-    intro z hz
-    obtain ⟨k, hk, rfl⟩ := Finset.mem_image.mp hz
-    exact hmemX k (Finset.sdiff_subset hk)
-  -- the image of the second part is not the second part again, since `A` is not preserved
-  have hne : (X \ A).image σ ≠ X \ A := by
-    intro heq
-    refine himg (Finset.eq_of_subset_of_card_le (fun z hz => ?_)
-      (le_of_eq (Finset.card_image_of_injective _ σ.injective).symm))
-    obtain ⟨k, hk, rfl⟩ := Finset.mem_image.mp hz
-    have hnot : σ k ∉ X \ A := by
-      intro hcontra
-      have himg' : σ k ∈ (X \ A).image σ := heq.symm ▸ hcontra
-      obtain ⟨k', hk', hk'eq⟩ := Finset.mem_image.mp himg'
-      exact (Finset.mem_sdiff.mp hk').2 (σ.injective hk'eq ▸ hk)
-    have hmem := Finset.mem_sdiff.mpr ⟨hmemX k (hAX hk), hnot⟩
-    rwa [hXA] at hmem
-  -- so the two differ, and what the image gains lies in `A`, above everything it loses
-  have hUV : (((X \ A).image σ) \ (X \ A)).card = ((X \ A) \ ((X \ A).image σ)).card := by
-    have h1 := Finset.card_sdiff_add_card_inter ((X \ A).image σ) (X \ A)
-    have h2 := Finset.card_sdiff_add_card_inter (X \ A) ((X \ A).image σ)
-    rw [Finset.inter_comm] at h2
-    omega
-  have hUne : (((X \ A).image σ) \ (X \ A)).Nonempty := by
-    rw [Finset.sdiff_nonempty]
-    exact fun hsub => hne (Finset.eq_of_subset_of_card_le hsub (le_of_eq hcard.symm))
-  have hUlt : ∀ u ∈ ((X \ A).image σ) \ (X \ A), ∀ v ∈ (X \ A) \ ((X \ A).image σ),
-      (v : ℕ) < (u : ℕ) := by
-    intro u hu v hv
-    obtain ⟨huX, huB⟩ := Finset.mem_sdiff.mp hu
-    refine hlt u ?_ v (Finset.mem_sdiff.mp hv).1
-    have hmem := Finset.mem_sdiff.mpr ⟨hBsub huX, huB⟩
-    rwa [hXA] at hmem
-  have hlt' := sum_lt_sum_of_forall_lt hUV.symm hUne hUlt
-  have hsd1 : (X \ A) \ ((X \ A) ∩ ((X \ A).image σ)) = (X \ A) \ ((X \ A).image σ) := by
-    ext z
-    simp only [Finset.mem_sdiff, Finset.mem_inter]
-    tauto
-  have hsd2 : ((X \ A).image σ) \ ((X \ A) ∩ ((X \ A).image σ)) =
-      ((X \ A).image σ) \ (X \ A) := by
-    ext z
-    simp only [Finset.mem_sdiff, Finset.mem_inter]
-    tauto
-  have h1 : (∑ z ∈ (X \ A) \ ((X \ A).image σ), (z : ℕ)) +
-      ∑ z ∈ (X \ A) ∩ ((X \ A).image σ), (z : ℕ) = ∑ z ∈ X \ A, (z : ℕ) := by
-    rw [← hsd1]
-    exact Finset.sum_sdiff Finset.inter_subset_left
-  have h2 : (∑ z ∈ ((X \ A).image σ) \ (X \ A), (z : ℕ)) +
-      ∑ z ∈ (X \ A) ∩ ((X \ A).image σ), (z : ℕ) = ∑ z ∈ (X \ A).image σ, (z : ℕ) := by
-    rw [← hsd2]
-    exact Finset.sum_sdiff Finset.inter_subset_right
-  omega
 
 /-- **A Garnir permutation that does not preserve the columns increases the column moment.**  It
 exchanges labels of the left half of the Garnir set for labels of the right half; the latter are
@@ -494,7 +387,7 @@ private theorem colMoment_lt_of_garnir {t : YoungTableau μ} {i j : ℕ}
     rw [hXimg] at h
     exact h.symm
   -- so the two moments differ only in the sum over the right half of the Garnir set
-  have hkey := sum_lt_sum_image_sdiff hAX hXimg himg hlt
+  have hkey := sum_lt_sum_image_sdiff Fin.val hAX hXimg himg hlt
   rw [colMoment_relabel, colMoment, hsum fun k => ((σ k : Fin μ.card) : ℕ),
     hsum fun k => (k : ℕ), Finset.sum_congr rfl hout,
     sum_colIndex_garnirSet t i j fun k => ((σ k : Fin μ.card) : ℕ),
