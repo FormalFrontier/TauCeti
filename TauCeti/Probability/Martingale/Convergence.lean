@@ -26,13 +26,11 @@ result (`Martingale/AntitoneLimit.lean`) all feed into `tendsto_ae_condExp_iInf`
 ## Main results
 
 - `tendsto_ae_condExp_iInf`: Lévy's downward theorem — for antitone `𝔽`, the sequence
-  `μ[f | 𝔽 n]` converges a.e. to `μ[f | ⨅ n, 𝔽 n]` (the reverse-martingale limit). This is
-  the roadmap Layer-4 target, spelled in the Mathlib convergence-API grammar (conclusion-first)
-  required by the naming convention.
+  `μ[f | 𝔽 n]` converges a.e. to `μ[f | ⨅ n, 𝔽 n]` (the reverse-martingale limit), spelled in
+  the Mathlib convergence-API grammar (conclusion-first).
 - `tendsto_eLpNorm_condExp_iInf`: the L¹ form of the same theorem — the convergence also holds in
-  `L¹`, i.e. `eLpNorm (μ[f | 𝔽 n] - μ[f | ⨅ n, 𝔽 n]) 1 μ → 0`. This is the follow-up Layer-4
-  target and the form most downstream analytic uses want; it mirrors Mathlib's upward
-  `MeasureTheory.tendsto_eLpNorm_condExp`.
+  `L¹`, i.e. `eLpNorm (μ[f | 𝔽 n] - μ[f | ⨅ n, 𝔽 n]) 1 μ → 0`, the form most downstream
+  analytic uses want; it mirrors Mathlib's upward `MeasureTheory.tendsto_eLpNorm_condExp`.
 - `measure_inter_eq_mul_of_forall_zero_or_one_iInf`: factorization along a decreasing filtration
   with `μ`-trivial intersection — if `B' n` is `𝔽 n`-measurable with `μ (B' n)` and `μ (A ∩ B' n)`
   independent of `n`, then `μ (A ∩ B) = μ A * μ B`, by Lévy's downward theorem applied to `1_A`.
@@ -43,8 +41,11 @@ result (`Martingale/AntitoneLimit.lean`) all feed into `tendsto_ae_condExp_iInf`
 * Durrett, *Probability: Theory and Examples* (2019), Section 5.5
 * Williams, *Probability with Martingales* (1991), Theorem 12.12
 
-Adapted from `cameronfreer/exchangeability` (`Probability/Martingale/Convergence.lean`, pin
-`e0532e59ceff23edab44dda9ab0655debbc9cc22`). Written Mathlib-shaped for eventual upstreaming.
+The downward theorems are adapted from `cameronfreer/exchangeability`
+(`Probability/Martingale/Convergence.lean`, pin `e0532e59ceff23edab44dda9ab0655debbc9cc22`). The
+filtration factorization adapts the private Lévy-downward factorization step of
+`Graphon/RelRestrictionIndependence.lean` in `cameronfreer/graphon` (Apache 2.0) at commit
+`175911f9d2e053f2a33d966658dfce0e4ae2811d`.
 -/
 
 public section
@@ -183,13 +184,15 @@ along an antitone sequence of sub-σ-algebras whose intersection is `μ`-trivial
 `μ (B' n)` nor `μ (A ∩ B' n)` depends on `n`, then the joint mass factorizes: Lévy's downward
 theorem drives `μ[1_A | 𝔽 n]` to the tail conditional expectation, which triviality makes the
 constant `μ A`. -/
-theorem measure_inter_eq_mul_of_forall_zero_or_one_iInf [IsProbabilityMeasure μ]
+theorem measure_inter_eq_mul_of_forall_zero_or_one_iInf [IsZeroOrProbabilityMeasure μ]
     {𝔽 : ℕ → MeasurableSpace Ω} (hanti : Antitone 𝔽) (h𝔽 : ∀ n, 𝔽 n ≤ ‹MeasurableSpace Ω›)
     (htriv : ∀ s, MeasurableSet[⨅ n, 𝔽 n] s → μ s = 0 ∨ μ s = 1)
     {A B : Set Ω} (hA : MeasurableSet A) {B' : ℕ → Set Ω}
     (hB' : ∀ n, MeasurableSet[𝔽 n] (B' n)) (hBmass : ∀ n, μ (B' n) = μ B)
     (hjoint : ∀ n, μ (A ∩ B' n) = μ (A ∩ B)) :
     μ (A ∩ B) = μ A * μ B := by
+  rcases eq_zero_or_isProbabilityMeasure μ with rfl | _
+  · simp
   have hinf : (⨅ n, 𝔽 n) ≤ ‹MeasurableSpace Ω› := (iInf_le 𝔽 0).trans (h𝔽 0)
   set f₀ : Ω → ℝ := A.indicator fun _ => 1 with hf₀def
   have hf₀ : Integrable f₀ μ := (integrable_const 1).indicator hA
