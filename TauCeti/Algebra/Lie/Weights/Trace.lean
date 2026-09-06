@@ -8,8 +8,6 @@ module
 public import TauCeti.Algebra.Lie.Submodule.Finrank
 public import TauCeti.Algebra.Lie.Weights.String
 
-public section
-
 /-!
 # The trace of a pair of opposite root vectors on a weight space
 
@@ -75,6 +73,8 @@ recursion, by the normalization `⟨λ, α^∨⟩⟨α, α⟩ = 2⟨λ, α⟩` o
   `sl₂`-string action of each `⟨eₐ, hₐ, fₐ⟩` on the weight spaces".  The string action is what is
   computed here.
 -/
+
+public section
 
 namespace TauCeti
 

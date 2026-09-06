@@ -16,7 +16,7 @@ public import TauCeti.Algebra.CentralSimple.Subfield
 -- subalgebra of maximal dimension and the fact that it is its own centralizer come from the
 -- subalgebra file, the dimension of the centralizer of a subfield from the centralizer file, and
 -- the real quaternions and their centrality appear only in the worked examples.
-import Mathlib.Data.Real.Basic
+import Mathlib.Basic.Real.Basic
 import TauCeti.Algebra.Algebra.Subalgebra.MaximalCommutative
 import TauCeti.Algebra.Central.Quaternion
 import TauCeti.Algebra.CentralSimple.Centralizer

@@ -493,7 +493,7 @@ private lemma per_weight_injective_zero
     (p : MvPolynomial (Fin 2) ℂ)
     (hp : MvPolynomial.IsWeightedHomogeneous (![4, 6] : Fin 2 → ℕ) p 0)
     (heval : (evalE₄E₆ p) (0 : ℤ) = 0) : p = 0 := by
-  have hpc : p = MvPolynomial.monomial (0 : Fin 2 →₀ ℕ) (MvPolynomial.coeff 0 p) :=
+  have hpc : p = MvPolynomial.monomial (0 : Fin 2 →₀ ℕ) (p.coeff 0) :=
     hp.eq_monomial_of_unique_weight (d₀ := 0) (fun d hd ↦ by
       rw [weight_eq_4a_6b] at hd
       ext i
@@ -544,7 +544,7 @@ private lemma discriminantPoly_piece_eq_monomial_sub
 
 private lemma support_degreeSum_lt_of_sub_discriminantPoly_piece (p : MvPolynomial (Fin 2) ℂ)
     {d : Fin 2 →₀ ℕ} (hd_mem : d ∈ p.support) (hd_ge : 3 ≤ d 0) :
-    ∑ d' ∈ (p - MvPolynomial.C (MvPolynomial.coeff d p) * ((1728 : ℂ) • discriminantPoly *
+    ∑ d' ∈ (p - MvPolynomial.C (p.coeff d) * ((1728 : ℂ) • discriminantPoly *
           (MvPolynomial.X (0 : Fin 2) ^ (d 0 - 3) *
             MvPolynomial.X (1 : Fin 2) ^ d 1))).support, d' 0 <
       ∑ d' ∈ p.support, d' 0 := by
@@ -574,7 +574,7 @@ private lemma weightedHomogeneous_poly_Delta_decomp_step {n : ℕ}
   have hwd : d 0 * 4 + d 1 * 6 = n := by
     have := (weight_eq_4a_6b d).symm.trans <| hp <| MvPolynomial.mem_support_iff.mp hd_mem
     lia
-  set c := MvPolynomial.coeff d p
+  set c := p.coeff d
   set δ_piece := MvPolynomial.C c * ((1728 : ℂ) • discriminantPoly *
     (MvPolynomial.X (0 : Fin 2) ^ (d 0 - 3) * MvPolynomial.X (1 : Fin 2) ^ d 1))
   set q₁ := MvPolynomial.C (c * 1728) *
@@ -614,7 +614,7 @@ private lemma reduced_isWeightedHomogeneous_eq_monomial {n : ℕ}
     (r : MvPolynomial (Fin 2) ℂ)
     (hr : MvPolynomial.IsWeightedHomogeneous (![4, 6] : Fin 2 → ℕ) r n)
     (hr_red : ∀ d ∈ r.support, d 0 < 3) {d₀ : Fin 2 →₀ ℕ} (hd₀ : d₀ ∈ r.support) :
-    r = MvPolynomial.monomial d₀ (MvPolynomial.coeff d₀ r) := by
+    r = MvPolynomial.monomial d₀ (r.coeff d₀) := by
   ext d
   rw [MvPolynomial.coeff_monomial]
   by_cases hd : d = d₀
@@ -658,7 +658,7 @@ private lemma reduced_part_eq_zero {n : ℕ} (hn12 : 12 ≤ n)
   · rwa [MvPolynomial.support_eq_empty] at hr_empty
   obtain ⟨d₀, hd₀⟩ := Finset.nonempty_of_ne_empty hr_empty
   have hr_mono := reduced_isWeightedHomogeneous_eq_monomial r hr hr_red hd₀
-  set c := MvPolynomial.coeff d₀ r
+  set c := r.coeff d₀
   suffices hc : c = 0 by rw [hr_mono, hc, MvPolynomial.monomial_zero]
   have hd₀_weight : 4 * d₀ 0 + 6 * d₀ 1 = n := by
     have := (weight_eq_4a_6b d₀).symm.trans (hr (MvPolynomial.mem_support_iff.mp hd₀))

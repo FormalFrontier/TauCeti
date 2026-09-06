@@ -21,8 +21,10 @@ computes that the compositum has degree four over it.
 The product root squares to `-21`, so its simple extension is the copy of `ℚ(√-21)`
 inside the candidate genus field. The relative-degree calculation then specializes
 `TauCeti.Multiquadratic.finrank_top_over_intermediateField_of_finrank_eq_two`.
-This supplies the field-degree part of the roadmap's `ℚ(√-21)` acceptance example;
-identifying the ambient compositum as the maximal unramified abelian extension is later work.
+This supplies the field-degree part of the roadmap's `ℚ(√-21)` acceptance example.
+Maximality is available in general for the canonical `candidateGenusField hd` through
+`isGenusField_candidateGenusField`; identifying the ambient compositum presented here with that
+canonical field is still later work.
 
 The prime-discriminant description follows D. A. Cox, *Primes of the Form x² + ny²*,
 and F. Lemmermeyer's *Reciprocity Laws*.

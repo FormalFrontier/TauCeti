@@ -76,7 +76,7 @@ theorem ExchangeableLaw.measurePreserving_permReindex {ρ : Measure (ℕ → α)
 theorem measurable_pi_uncurry_prod {T β ι : Type*} [MeasurableSpace T] [MeasurableSpace β]
     {f : T → β → α} (hf : Measurable (Function.uncurry f)) :
     Measurable fun p : T × (ι → β) => fun i => f p.1 (p.2 i) :=
-  measurable_pi_lambda _ fun i =>
+  Measurable.of_eval fun i =>
     hf.comp (measurable_fst.prodMk ((measurable_pi_apply i).comp measurable_snd))
 
 /-- **An i.i.d. product law is exchangeable.** Reindexing a constant product law by a

@@ -9,7 +9,6 @@ public import TauCeti.NumberTheory.HeckeRing.GLn.DiagonalCosets
 
 import Mathlib.LinearAlgebra.Matrix.Integer
 import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.CongruenceSplit
-import TauCeti.NumberTheory.HeckeRing.Multiplicity.Support
 
 /-!
 # Coprime multiplication in the `GL_n` Hecke ring
@@ -426,11 +425,8 @@ private lemma out_conj_diagA_mem_H (a b : Fin n → ℕ) (ha_pos : ∀ i, 0 < a 
     (hκ_eq : p₂ * δa * (q₂ * δb) * κ = p₁ * δa * (q₁ * δb)) :
     δa⁻¹ * p₂⁻¹ * p₁ * δa ∈ SLnZ n := by
   have h_beta_eq : δa⁻¹ * p₂⁻¹ * p₁ * δa = q₂ * δb * κ * δb⁻¹ * q₁⁻¹ := by
-    apply mul_left_cancel (a := p₂ * δa)
-    apply mul_right_cancel (b := q₁ * δb)
-    simp only [mul_assoc, mul_inv_cancel_left, inv_mul_cancel_left, inv_mul_cancel, mul_one]
-    simp only [mul_assoc] at hκ_eq
-    exact hκ_eq.symm
+    refine mul_left_cancel (a := p₂ * δa) (mul_right_cancel (b := q₁ * δb) ?_)
+    simpa [mul_assoc] using hκ_eq.symm
   have h_lhs_eq : δa⁻¹ * p₂⁻¹ * p₁ * δa =
       h₂a⁻¹ * ((natDiagGL n a)⁻¹ * mapGL ℚ σ' * natDiagGL n a) * h₂a := by
     rw [hσ']
@@ -454,8 +450,7 @@ private lemma out_conj_diagA_mem_H (a b : Fin n → ℕ) (ha_pos : ∀ i, 0 < a 
       mapGL ℚ FF * natDiagGL n b * mapGL ℚ G_pre *
         (natDiagGL n b)⁻¹ * mapGL ℚ EE := by
     rw [h_lhs_eq, h_rhs_eq] at h_beta_eq
-    apply mul_left_cancel (a := h₂a⁻¹)
-    apply mul_right_cancel (b := h₂a)
+    refine mul_left_cancel (a := h₂a⁻¹) (mul_right_cancel (b := h₂a) ?_)
     rw [hFF, hEE]
     simp only [mul_assoc, inv_mul_cancel, mul_one, inv_mul_cancel_left]
     simp only [mul_assoc] at h_beta_eq

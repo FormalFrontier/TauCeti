@@ -9,8 +9,6 @@ public import TauCeti.Algebra.Lie.GeneralLinear.ExteriorPower
 
 import Mathlib.LinearAlgebra.Matrix.Kronecker
 
-public section
-
 /-!
 # Block-diagonal actions of general linear Lie algebras
 
@@ -24,6 +22,8 @@ this map gives a `gl ι` action on every exterior power of `ι × κ → R`.
 * `TauCeti.glBlockDiagonalLieRingModule` and `TauCeti.glBlockDiagonalLieModule`: the induced
   action on exterior powers of the standard module.
 -/
+
+public section
 
 namespace TauCeti
 

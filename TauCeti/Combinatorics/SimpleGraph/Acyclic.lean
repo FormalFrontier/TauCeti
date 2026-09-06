@@ -7,8 +7,6 @@ module
 
 public import Mathlib.Combinatorics.SimpleGraph.Acyclic
 
-public section
-
 /-!
 # Paths in acyclic simple graphs
 
@@ -23,6 +21,8 @@ This file records reusable consequences of acyclicity for paths in simple graphs
 * `SimpleGraph.IsAcyclic.not_adj_of_adj_start_of_adj_end`: when both lie off the path, such a
   neighbour of the start and a neighbour of the end are not adjacent.
 -/
+
+public section
 
 namespace TauCeti
 

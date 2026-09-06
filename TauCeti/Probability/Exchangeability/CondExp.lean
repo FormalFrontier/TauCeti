@@ -101,7 +101,7 @@ private theorem map_block_future_eq_pathLaw_map {μ : Measure Ω} [IsFiniteMeasu
       congr 1
       omega
   rw [← hcomp, ← AEMeasurable.map_map_of_aemeasurable hsplit.aemeasurable
-    (aemeasurable_pi_lambda _ fun i => hX_ae (φ i)), hreindex]
+    (AEMeasurable.of_eval fun i => hX_ae (φ i)), hreindex]
 
 /-- **Future-conditioned selection invariance for finite blocks.** Two strictly monotone selections
 of the same length, both lying below a cutoff `c`, have the same conditional law given the future
@@ -121,9 +121,9 @@ theorem Contractable.condExp_block_comp_future_ae_eq {μ : Measure Ω} [IsFinite
   rw [tailFamily_eq_comap_shift X c]
   exact TauCeti.MeasureTheory.condExp_comp_ae_eq_of_pair_law_eq
     (fun ω i => X (k i) ω) (fun ω i => X (l i) ω) (fun ω n => X (c + n) ω)
-    (measurable_pi_lambda _ fun i => hX_meas (k i))
-    (measurable_pi_lambda _ fun i => hX_meas (l i))
-    (measurable_pi_lambda _ fun n => hX_meas (c + n)) hpair hf
+    (Measurable.of_eval fun i => hX_meas (k i))
+    (Measurable.of_eval fun i => hX_meas (l i))
+    (Measurable.of_eval fun n => hX_meas (c + n)) hpair hf
 
 /-- **Tail-conditioned selection invariance for finite blocks.** For a contractable process, any
 two *strictly monotone* selections of the same length have the same conditional law given the

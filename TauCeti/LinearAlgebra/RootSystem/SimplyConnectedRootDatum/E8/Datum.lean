@@ -9,8 +9,6 @@ public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8.Lattice
 import TauCeti.LinearAlgebra.Matrix.Gram
 
-public section
-
 /-!
 # The simply connected root datum of type `E₈`
 
@@ -68,6 +66,8 @@ The coordinates and the node numbering follow Bourbaki, *Lie Groups and Lie Alge
 `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`. Its assembly follows
 `TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E6.Basic`.
 -/
+
+public section
 
 namespace TauCeti
 

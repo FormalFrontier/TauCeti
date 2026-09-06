@@ -8,8 +8,6 @@ module
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.C.Model
 
-public section
-
 /-!
 # The simply connected root datum of type `Cₙ`
 
@@ -73,6 +71,8 @@ The coordinates and the node numbering follow Bourbaki, *Lie Groups and Lie Alge
 12.1. This is the `Cₙ` branch of the target "a named datum per valid type" in Layer 6 of
 `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`.
 -/
+
+public section
 
 namespace TauCeti
 

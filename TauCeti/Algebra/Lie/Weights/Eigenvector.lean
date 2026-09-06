@@ -7,8 +7,6 @@ module
 
 public import Mathlib.Algebra.Lie.Weights.Killing
 
-public section
-
 /-!
 # Simultaneous eigenvectors of a subalgebra
 
@@ -42,6 +40,8 @@ This is elementary weight-space infrastructure for the highest weight modules of
 `TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`: the weight shift is what makes
 a lowered highest weight vector an eigenvector again.
 -/
+
+public section
 
 namespace TauCeti
 

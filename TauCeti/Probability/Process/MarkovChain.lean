@@ -238,7 +238,7 @@ theorem markovChainLaw_map_eval_succ [IsProbabilityMeasure ν] (n : ℕ) :
     (markovChainLaw ν κ).map (fun x => x (n + 1))
       = κ ∘ₘ ((markovChainLaw ν κ).map fun x => x n) := by
   rw [← Measure.snd_compProd, ← markovChainLaw_map_pair_succ, Measure.snd_map_prodMk₀]
-  exact (measurable_pi_apply n).aemeasurable
+  exacts [(measurable_pi_apply n).aemeasurable, (measurable_pi_apply (n + 1)).aemeasurable]
 
 /-- **The finite path masses of the chain.** On a state space with measurable singletons the mass a
 homogeneous Markov chain gives to a finite path is the initial weight of its first state times the

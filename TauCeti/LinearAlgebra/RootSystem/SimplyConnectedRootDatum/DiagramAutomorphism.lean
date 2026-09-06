@@ -165,8 +165,8 @@ of the Cartan matrix. -/
 It is this inverse, and not the coweight map itself, which carries a coroot to the coroot of the
 permuted index. -/
 @[simp] theorem rationalDiagramAut_coweightEquiv_symm (hσ : σ ∈ t.diagramSymmetry) :
-    (RootPairing.Equiv.coweightEquiv (t.rationalRootSystem ht) (t.rationalRootSystem ht)
-        (rationalDiagramAut ht hσ)).symm = LinearEquiv.funCongrLeft ℚ ℚ σ.symm := by
+    (RootPairing.Equiv.coweightEquiv (rationalDiagramAut ht hσ)).symm =
+      LinearEquiv.funCongrLeft ℚ ℚ σ.symm := by
   apply LinearEquiv.toLinearMap_injective
   apply (t.rationalBase ht).toCoweightBasis.ext
   intro i
@@ -196,8 +196,7 @@ weight map, so it permutes the simple coroots by `σ⁻¹`. -/
   apply LinearMap.ext
   intro x
   rw [← RootPairing.Equiv.coweightEquiv_apply]
-  apply (RootPairing.Equiv.coweightEquiv (t.rationalRootSystem ht)
-    (t.rationalRootSystem ht) (rationalDiagramAut ht hσ)).symm.injective
+  apply (RootPairing.Equiv.coweightEquiv (rationalDiagramAut ht hσ)).symm.injective
   rw [LinearEquiv.symm_apply_apply, rationalDiagramAut_coweightEquiv_symm]
   ext j
   simp
@@ -207,13 +206,13 @@ the Cartan matrix. -/
 @[simp] theorem coroot_diagramRootPerm (hσ : σ ∈ t.diagramSymmetry) (k : Fin t.numRoots) :
     (t.simplyConnectedRootDatum ht).coroot (diagramRootPerm ht hσ k) =
       fun j => (t.simplyConnectedRootDatum ht).coroot k (σ.symm j) := by
-  have h1 : (RootPairing.Equiv.coweightEquiv (t.rationalRootSystem ht) (t.rationalRootSystem ht)
-      (rationalDiagramAut ht hσ)) ((t.rationalRootSystem ht).coroot (diagramRootPerm ht hσ k)) =
+  have h1 : (RootPairing.Equiv.coweightEquiv (rationalDiagramAut ht hσ))
+      ((t.rationalRootSystem ht).coroot (diagramRootPerm ht hσ k)) =
       (t.rationalRootSystem ht).coroot k := by
     rw [RootPairing.Equiv.coweightEquiv_apply, RootPairing.Hom.coroot_coweightMap_apply,
       diagramRootPerm, Equiv.symm_apply_apply]
-  have h2 := congrArg (RootPairing.Equiv.coweightEquiv (t.rationalRootSystem ht)
-    (t.rationalRootSystem ht) (rationalDiagramAut ht hσ)).symm h1
+  have h2 := congrArg
+    (RootPairing.Equiv.coweightEquiv (rationalDiagramAut ht hσ)).symm h1
   rw [LinearEquiv.symm_apply_apply] at h2
   have h3 := DFunLike.congr_fun (rationalDiagramAut_coweightEquiv_symm ht hσ)
     ((t.rationalRootSystem ht).coroot k)

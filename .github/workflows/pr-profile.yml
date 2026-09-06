@@ -6,8 +6,8 @@ name: pr-performance
 # status posting, and report rendering run as trusted host steps. Both comparison trees are
 # exact immutable commits: merge base versus PR head, or queue base versus combined merge-group
 # head. A workflow-pinned harness attests Lake config before every command that can elaborate
-# candidate sources runs offline under landrun. Host perf wraps the landrun process;
-# its raw counter files live in RUNNER_TEMP, which is not mounted in landrun, so
+# candidate sources runs offline under bwrap. Host perf wraps the bwrap process;
+# its raw counter files live in RUNNER_TEMP, which is not mounted in the bwrap sandbox, so
 # PR code cannot forge or erase its measurements. No token enters the sandbox.
 #
 # The required `perf` commit status is separate from the advisory heartbeat
@@ -45,6 +45,14 @@ concurrency:
     }}
   cancel-in-progress: true
 
+env:
+  # Temporary escape hatch for `lake exe cache get`, kept only for an easy rollback
+  # during the transition to the cache tool's new default read endpoint. Set the
+  # variable to `1` to send cache reads back to the legacy storage endpoint. Clear it to
+  # return reads to the default endpoint on the next run: the cache tool treats unset,
+  # empty, `0`, and `false` alike as off.
+  MATHLIB_CACHE_DEBUG_USE_LEGACY: ${{ vars.MATHLIB_CACHE_DEBUG_USE_LEGACY }}
+
 jobs:
   # Deliberately not named `perf`: the authoritative required context is the
   # commit status posted at the end, not this workflow's automatic check-run.
@@ -61,13 +69,14 @@ jobs:
        (github.event.comment.user.login == github.event.issue.user.login ||
         contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)))
     env:
-      LANDRUN_SHA256: 645178e3239cd33760560834e50efea0864183a2a8a82faf199760dffee6dd71
-      LANDRUN_VER: v0.1.14
+      BWRAP_VER: 0.9.0-1build1
+      BWRAP_DEB_SHA256: dde30d1f24da50446d647ed504ec8dc5a714f171974d054c70a589b48ba38b48
+      BWRAP_SHA256: 3e33f8255e1411ada346db27028c25ef5ba4fa3327754a2321ea4c8732a3bc10
       LAKE_ARTIFACT_CACHE: ""
       LAKE_RESTORE_ARTIFACTS: ""
       LAKE_CACHE_DIR: ""
     steps:
-      # --- Trusted setup. No PR code runs before the landrun measurement steps. ---
+      # --- Trusted setup. No PR code runs before the sandboxed measurement steps. ---
       - name: Resolve immutable base and head commits
         id: pr
         env:
@@ -197,6 +206,37 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
+      # `.lake` sits inside a checkout whose contents the candidate controls, and a symlink
+      # committed there gets followed by everything that later writes to that path, each of
+      # which then writes outside the checkout as the runner user. Replacing it with a real,
+      # empty directory first stops that. `rm -rf` unlinks a symlink rather than following it,
+      # which is what makes this work; the absent trailing slash is what keeps it true.
+      #
+      # There are two reasons this step exists, and they expire differently.
+      #
+      # The first is the pinned bubblewrap. Noble ships 0.9.0, which follows such a symlink
+      # while creating the sandbox's mount point (GHSA-pxhw-h44j-8pfx). Upstream fixed that in
+      # 0.12.0, so THIS REASON GOES AWAY once noble carries 0.12.0 or newer and the pin below
+      # moves to it.
+      #
+      # The second does not. `mkdir -p <tree>/.lake/tmp` and the Mathlib cache restore both run
+      # in the trusted phase, before any sandbox exists, and both follow the symlink themselves.
+      # No bubblewrap version fixes that, because bubblewrap is not involved. So this step stays
+      # after the pin moves, unless those two callers are made symlink-safe at the same time.
+      - name: Normalise both trees' .lake before anything touches them
+        run: |
+          set -euo pipefail
+          rm -rf base/.lake
+          mkdir -p base/.lake
+          if [ -L base/.lake ] || [ ! -d base/.lake ]; then
+            echo "::error::base/.lake is not a real directory after normalisation"; exit 1
+          fi
+          rm -rf head/.lake
+          mkdir -p head/.lake
+          if [ -L head/.lake ] || [ ! -d head/.lake ]; then
+            echo "::error::head/.lake is not a real directory after normalisation"; exit 1
+          fi
+
       - name: Classify Lake configuration changes from trusted metadata
         id: config
         run: |
@@ -256,7 +296,7 @@ jobs:
           printf '[]\n' > "$RUNNER_TEMP/base-results.json"
           printf '[]\n' > "$RUNNER_TEMP/head-results.json"
 
-      # Pinned leanprover/elan release, verified by SHA-256. Like landrun below it is installed
+      # Pinned leanprover/elan release, verified by SHA-256. Like bwrap below it is installed
       # in the trusted phase, before anything confines the PR's code, and it chooses the `lake`
       # that later runs inside that confinement. scripts/test_elan_pin.py keeps the copies honest.
       - name: Install elan (trusted, pinned + checksum)
@@ -273,26 +313,149 @@ jobs:
           rm -f elan.tar.gz elan-init
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
-      - name: Install landrun and prove confinement (trusted, fail closed)
+      - name: Install bubblewrap (pinned + checksum) and self-test (fail closed)
         if: ${{ steps.manifest.outputs.count != '0' }}
         run: |
           set -euo pipefail
-          curl -sSL -H 'Accept: application/octet-stream' \
-            "https://github.com/Zouuup/landrun/releases/download/${LANDRUN_VER}/landrun-linux-amd64" -o landrun
-          echo "${LANDRUN_SHA256}  landrun" | sha256sum -c -
-          mkdir -p "$HOME/.local/bin"
-          install -m 0755 landrun "$HOME/.local/bin/landrun"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          export PATH="$HOME/.local/bin:$PATH"
+          # Pinned Ubuntu package, verified twice: the .deb that was fetched, and the binary it
+          # installed. A bare `apt-get install bubblewrap` would take whatever the archive holds on
+          # the day, which is not a pin.
+          #
+          # Noble's RELEASE pocket, which is the part of the archive Ubuntu never rewrites: a
+          # version published there stays published for the life of the release. The pocket
+          # matters more than the suite. `0.9.0-1ubuntu0.1` in noble-security looks like the
+          # better package, but security and updates entries are superseded and then deleted
+          # when the next one lands, so pinning that would expire the first time Ubuntu ships a
+          # bubblewrap fix. A development suite is worse again, deleted on the next upload.
+          #
+          # What we give up is the noble-security revision, whose only change is a backport
+          # Flatpak needed for CVE-2024-42472. That is an enabling change for Flatpak rather
+          # than a bubblewrap vulnerability fix, and nothing here uses Flatpak.
+          #
+          # 0.9.0 predates the fix for GHSA-pxhw-h44j-8pfx (2026-08-27, no CVE assigned yet),
+          # where a symlink in attacker-controlled content redirects the files bwrap creates
+          # while setting the sandbox up. That reaches these policies through exactly one path:
+          # `.lake`, the only place they create a mount point inside a candidate checkout. The
+          # "Normalise ... .lake" step above replaces it with a real directory before anything
+          # reads or writes it, which removes the precondition rather than patching the symptom,
+          # and closes the same hole for `mkdir -p` and the cache restore, neither of which the
+          # upstream fix would have covered.
+          #
+          # So this pin is safe because of that step, not because 0.9.0 is fixed. Moving to
+          # 0.12.0 when noble carries it would make the sandbox safe on its own and retire that
+          # half of the step's job; the trusted-phase half stays either way. Until then the step
+          # is load-bearing, and scripts/test_bwrap_pin.py checks it is still present and still
+          # runs before anything that touches a candidate `.lake`.
+          deb="bubblewrap_${BWRAP_VER}_amd64.deb"
+          if ! curl -sSL --fail "https://archive.ubuntu.com/ubuntu/pool/main/b/bubblewrap/${deb}" -o bwrap.deb \
+             && ! curl -sSL --fail "https://security.ubuntu.com/ubuntu/pool/main/b/bubblewrap/${deb}" -o bwrap.deb; then
+            echo "::error::bubblewrap ${BWRAP_VER} is gone from the Ubuntu pool. The sandbox cannot be installed, so no PR can build until the pin is moved."
+            printf '%s\n' \
+              '' \
+              "WHAT HAPPENED: BWRAP_VER is pinned to ${BWRAP_VER} from noble's release pocket," \
+              'which Ubuntu does not rewrite for the life of the release. Reaching this is' \
+              'unexpected: an archive outage, a runner image no longer on 24.04, or 24.04 gone' \
+              'end of life.' \
+              '' \
+              'HOW TO FIX IT. Take the version from a RELEASE pocket, never from -updates,' \
+              '-security or a development suite: those are superseded and deleted, so a pin' \
+              'to one expires and brings every required build down with it.' \
+              '' \
+              '  suite=noble        # or the release pocket of whatever image CI runs on' \
+              '  curl -s "https://archive.ubuntu.com/ubuntu/dists/$suite/main/binary-amd64/Packages.gz" \' \
+              "    | gunzip | awk '/^Package: bubblewrap\$/{f=1} f&&/^Version:/{print \$2; exit}'" \
+              '' \
+              'Download it and take both hashes:' \
+              '' \
+              '  curl -sSLO "https://archive.ubuntu.com/ubuntu/pool/main/b/bubblewrap/bubblewrap_${ver}_amd64.deb"' \
+              '  sha256sum "bubblewrap_${ver}_amd64.deb"   # BWRAP_DEB_SHA256' \
+              '  sudo dpkg -i "bubblewrap_${ver}_amd64.deb"' \
+              '  sha256sum /usr/bin/bwrap                  # BWRAP_SHA256' \
+              '' \
+              'Set BWRAP_VER, BWRAP_DEB_SHA256 and BWRAP_SHA256 in all three of' \
+              '.github/workflows/{pr-build,pr-profile,nightly-verify}.yml. They must agree;' \
+              'scripts/test_bwrap_pin.py fails if they do not.' \
+              '' \
+              'ON VERSIONS: 0.12.0 or newer is safe on its own. Below that, the' \
+              '"Normalise ... .lake" step is what keeps it safe, because earlier bubblewrap' \
+              'follows a symlink in a candidate checkout while creating the sandbox mount point' \
+              '(GHSA-pxhw-h44j-8pfx). If you pin below 0.12.0, check that step still runs before' \
+              'anything else touches .lake. Keep the step either way: the trusted-phase callers' \
+              'follow the symlink themselves and no bubblewrap version fixes that.' \
+              '' >&2
+            exit 1
+          fi
+          if ! echo "${BWRAP_DEB_SHA256}  bwrap.deb" | sha256sum -c -; then
+            echo "::error::bubblewrap ${BWRAP_VER} downloaded but does not match BWRAP_DEB_SHA256. Ubuntu does not rewrite published packages, so either the pin is wrong or the download was tampered with. Re-derive the hashes rather than relaxing this check."
+            exit 1
+          fi
+          sudo dpkg -i bwrap.deb >/dev/null
+          if ! echo "${BWRAP_SHA256}  /usr/bin/bwrap" | sha256sum -c -; then
+            echo "::error::the installed /usr/bin/bwrap does not match BWRAP_SHA256, so the binary that would run is not the one that was vetted. Re-derive it with: sudo dpkg -i ${deb} && sha256sum /usr/bin/bwrap"
+            exit 1
+          fi
+          rm -f bwrap.deb
+          /usr/bin/bwrap --version
+
+          # Ubuntu 24.04 denies unprivileged user namespaces through AppArmor, so bwrap cannot build
+          # its sandbox as shipped. Grant the capability to this one binary rather than clearing
+          # kernel.apparmor_restrict_unprivileged_userns, which would lift it for everything on the
+          # runner. Measured on ubuntu-24.04: without this, bwrap fails with
+          # "loopback: Failed RTM_NEWADDR: Operation not permitted".
+          printf '%s\n' \
+            'abi <abi/4.0>,' \
+            'include <tunables/global>' \
+            'profile bwrap /usr/bin/bwrap flags=(unconfined) {' \
+            '  userns,' \
+            '  include if exists <local/bwrap>' \
+            '}' | sudo tee /etc/apparmor.d/bwrap >/dev/null
+          sudo apparmor_parser -r /etc/apparmor.d/bwrap
+
+          # Prove the sandbox enforces before trusting it with candidate code. bwrap fails closed
+          # where landrun's --best-effort could degrade to no sandbox at all, but `--unshare-all`
+          # expands to `--unshare-user-try`, which SKIPS the user namespace rather than failing
+          # when it cannot be created, so the policies name `--unshare-user` explicitly and this
+          # compares the resulting namespace against the host's.
+          #
+          # `env -i`: `--clearenv` clears the CHILD's environment, but bwrap keeps its own and is
+          # PID 1 of the sandbox's PID namespace, so without this the launcher's environment stays
+          # readable at /proc/1/environ from inside (containers/bubblewrap#725).
+          probe() {
+            env -i /usr/bin/bwrap --tmpfs / --ro-bind /usr /usr --ro-bind /etc /etc \
+              --symlink usr/bin /bin --symlink usr/sbin /sbin \
+              --symlink usr/lib /lib --symlink usr/lib64 /lib64 \
+              --dev /dev --proc /proc --tmpfs /tmp --remount-ro / \
+              --setenv PATH /usr/bin \
+              --unshare-user --unshare-ipc --unshare-pid --unshare-net --unshare-uts \
+              --unshare-cgroup --disable-userns --die-with-parent --new-session \
+              -- /usr/bin/bash -c "$1"
+          }
+          # Canaries, so each check can fail for the right reason. Testing that a host path is
+          # merely absent proves nothing if it never existed; these are known to exist outside.
+          canary=$(mktemp -d); echo secret > "$canary/file"
+          echo secret > /dev/shm/bwrap-host-canary-$$
           set +e
-          landrun --rox /usr --rox /etc --rw /dev/null -- bash -c 'echo ok' >/dev/null 2>&1; ok=$?
-          landrun --rox /usr --rox /etc --rw /dev/null -- bash -c 'echo x > /etc/landrun-probe' >/dev/null 2>&1; wr=$?
-          landrun --rox /usr --rox /etc --rw /dev/null -- bash -c 'echo x > /dev/shm/landrun-probe' >/dev/null 2>&1; shm=$?
-          landrun --rox /usr --rox /etc --rw /dev/null -- bash -c 'curl -sS --max-time 8 https://example.com >/dev/null' >/dev/null 2>&1; net=$?
+          probe 'echo ok' >/dev/null 2>&1; ok=$?
+          probe 'echo x > /etc/bwrap-probe' >/dev/null 2>&1; wr=$?
+          probe 'mkdir /bwrap-probe-dir' >/dev/null 2>&1; rootw=$?
+          probe "cat $canary/file" >/dev/null 2>&1; hostro=$?
+          probe "cat /dev/shm/bwrap-host-canary-$$" >/dev/null 2>&1; shm=$?
+          probe 'curl -sS --max-time 8 https://example.com >/dev/null' >/dev/null 2>&1; net=$?
+          probe 'unshare --user --map-root-user true' >/dev/null 2>&1; nest=$?
+          host_ns=$(readlink /proc/self/ns/user)
+          sb_ns=$(probe 'readlink /proc/self/ns/user' 2>/dev/null)
+          sb_env=$(probe 'tr "\0" "\n" < /proc/1/environ | grep -c .' 2>/dev/null)
           set -e
-          echo "self-test: run=$ok write=$wr shm=$shm net=$net"
-          if [ "$ok" -ne 0 ] || [ "$wr" -eq 0 ] || [ "$shm" -eq 0 ] || [ "$net" -eq 0 ]; then
-            echo '::error::landrun did not enforce; refusing to run candidate code'
+          rm -rf "$canary" /dev/shm/bwrap-host-canary-$$
+          echo "self-test: run=$ok etc-write=$wr root-write=$rootw host-read=$hostro shm=$shm" \
+            "net=$net nested-userns=$nest pid1-env=$sb_env userns=$host_ns->$sb_ns"
+          # Every one of these but `ok` must FAIL inside the sandbox.
+          if [ "$ok" -ne 0 ] || [ "$wr" -eq 0 ] || [ "$rootw" -eq 0 ] || [ "$hostro" -eq 0 ] \
+             || [ "$shm" -eq 0 ] || [ "$net" -eq 0 ] || [ "$nest" -eq 0 ] \
+             || [ "$sb_env" != "0" ] || [ -z "$sb_ns" ] || [ "$sb_ns" = "$host_ns" ]; then
+            echo "::error::bwrap not enforcing (run=$ok etc-write=$wr root-write=$rootw" \
+              "host-read=$hostro shm=$shm net=$net nested-userns=$nest pid1-env=$sb_env" \
+              "userns=$host_ns->$sb_ns); refusing to run candidate code"
             exit 1
           fi
 
@@ -330,7 +493,9 @@ jobs:
         env:
           PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
           PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
-          LAKE_CACHE_MAX_REVS: "0"
+          # The same limit as pr-build, for the same shared script. This step reads the
+          # comparison base, which main publishes, so the search stops at the first lookup.
+          LAKE_CACHE_MAX_REVS: "100"
         run: |
           set -euo pipefail
           if [ -z "$PUBLIC_ARTIFACT_ENDPOINT" ] || [ -z "$PUBLIC_REVISION_ENDPOINT" ]; then
@@ -365,16 +530,16 @@ jobs:
           bash gate/scripts/perf/prepare-watchdog-toolchain.sh "$watchdog" "$real_lean"
           echo "path=$watchdog" >> "$GITHUB_OUTPUT"
 
-      # Host perf owns RUNNER_TEMP and wraps landrun. The raw files are not in
-      # any landrun mount, while all Lean/Lake execution is inside landrun.
-      - name: Measure base modules (host metric around offline landrun)
+      # Host perf owns RUNNER_TEMP and wraps bwrap. The raw files are not bound
+      # into the sandbox, while all Lean/Lake execution is inside it.
+      - name: Measure base modules (host metric around offline bwrap sandbox)
         id: base_perf
         if: ${{ steps.manifest.outputs.count != '0' }}
         continue-on-error: true
         env:
           LAKE_NO_CACHE: 'true'
         run: |
-          export PATH="$HOME/.local/bin:$HOME/.elan/bin:$PATH"
+          export PATH="$HOME/.elan/bin:$PATH"
           python3 gate/scripts/perf/measure.py --root base \
             --watchdog-toolchain '${{ steps.base_watchdog.outputs.path }}' \
             --metric '${{ steps.metric.outputs.mode }}' \
@@ -419,14 +584,14 @@ jobs:
             --output "$RUNNER_TEMP/perf-manifest.json" \
             --heartbeat-dir head/.lake/tmp/profile
 
-      - name: Measure head modules (host metric around offline landrun)
+      - name: Measure head modules (host metric around offline bwrap sandbox)
         id: head_perf
         if: ${{ steps.manifest.outputs.count != '0' }}
         continue-on-error: true
         env:
           LAKE_NO_CACHE: 'true'
         run: |
-          export PATH="$HOME/.local/bin:$HOME/.elan/bin:$PATH"
+          export PATH="$HOME/.elan/bin:$PATH"
           python3 gate/scripts/perf/measure.py --root head \
             --watchdog-toolchain '${{ steps.head_watchdog.outputs.path }}' \
             --metric '${{ steps.metric.outputs.mode }}' \
@@ -448,8 +613,8 @@ jobs:
             --run-url '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
 
       # Advisory heartbeat profile remains available, but it has no bearing on
-      # the required perf status. It executes under the same landrun + watchdog.
-      - name: Measure advisory heartbeats (landrun, offline)
+      # the required perf status. It executes under the same bwrap + watchdog.
+      - name: Measure advisory heartbeats (bwrap, offline)
         id: heartbeats
         if: ${{ steps.manifest.outputs.count != '0' && steps.head_perf.outcome == 'success' }}
         continue-on-error: true
@@ -457,13 +622,33 @@ jobs:
           LAKE_NO_CACHE: 'true'
           WATCHDOG_TOOLCHAIN: ${{ steps.head_watchdog.outputs.path }}
         run: |
-          export PATH="$HOME/.local/bin:$HOME/.elan/bin:$PATH"
-          landrun --rox /usr --rox /etc \
-            --rw /dev/null --rox /dev/zero --rox /dev/urandom --rox /dev/random \
-            --rox "$HOME/.elan" --rox "$WATCHDOG_TOOLCHAIN" \
-            --rox "$PWD/head" --rw "$PWD/head/.lake" --rox "$PWD/gate" \
-            --env PATH --env HOME --env CI --env LAKE_NO_CACHE --env WATCHDOG_TOOLCHAIN \
-            -- bash -euo pipefail -c 'cd head && exec bash ../gate/scripts/profile/measure.sh .lake/tmp/profile'
+          export PATH="$HOME/.elan/bin:$PATH"
+          # `env -i` and `--remount-ro /` are both load-bearing. `--clearenv` clears the child's
+          # environment but bwrap keeps its own and is PID 1 here, so the launcher's environment
+          # would otherwise be readable at /proc/1/environ (containers/bubblewrap#725). And
+          # `--tmpfs /` gives a WRITABLE synthetic root: the directories bwrap creates to hang the
+          # binds off, $HOME among them, are writable until this remounts them read-only, which
+          # would let candidate code drop a `lake` or `bash` earlier on PATH than the real one and
+          # have the later audits run it. The explicit PATH below is the other half of that: it
+          # never contains a directory the sandbox can write.
+          env -i /usr/bin/bwrap --tmpfs / \
+            --ro-bind /usr /usr --ro-bind /etc /etc \
+            --symlink usr/bin /bin --symlink usr/sbin /sbin \
+            --symlink usr/lib /lib --symlink usr/lib64 /lib64 \
+            --dev /dev --proc /proc --tmpfs /tmp \
+            --ro-bind "$HOME/.elan" "$HOME/.elan" \
+            --ro-bind "$WATCHDOG_TOOLCHAIN" "$WATCHDOG_TOOLCHAIN" \
+            --ro-bind "$PWD/gate" "$PWD/gate" \
+            --ro-bind "$PWD/head" "$PWD/head" --bind "$PWD/head/.lake" "$PWD/head/.lake" \
+            --remount-ro / \
+            --setenv PATH "$HOME/.elan/bin:/usr/bin:/bin" \
+            --setenv HOME "$HOME" --setenv CI "${CI:-}" \
+            --setenv LAKE_NO_CACHE "${LAKE_NO_CACHE:-}" \
+            --setenv WATCHDOG_TOOLCHAIN "${WATCHDOG_TOOLCHAIN:-}" \
+            --chdir "$PWD/head" \
+            --unshare-user --unshare-ipc --unshare-pid --unshare-net --unshare-uts \
+            --unshare-cgroup --disable-userns --die-with-parent --new-session \
+            -- bash -euo pipefail -c 'exec bash ../gate/scripts/profile/measure.sh .lake/tmp/profile'
 
       - name: Safely collect heartbeat logs from the untrusted writable tree
         id: collect_heartbeats

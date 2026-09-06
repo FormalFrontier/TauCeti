@@ -11,7 +11,6 @@ public import TauCeti.Algebra.Coalgebra.Comodule.Flag.Induction
 import TauCeti.Algebra.AlgebraicGroup.Representation.UnipotentPoint.Naturality
 import TauCeti.Algebra.AlgebraicGroup.Unipotent.ClosedSubgroup
 import TauCeti.Algebra.AlgebraicGroup.UpperUnitriangular.Unipotent
-import TauCeti.Algebra.Coalgebra.Comodule.PointAction
 import TauCeti.Algebra.Coalgebra.Comodule.Transport
 import TauCeti.CategoryTheory.Comma.Over
 import TauCeti.LinearAlgebra.Eigenspace.JointEigenvector.Kolchin

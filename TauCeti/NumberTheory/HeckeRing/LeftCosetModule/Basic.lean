@@ -44,6 +44,8 @@ Mathlib stack.
 
 * `HeckeCoset.smulOrbit_congr`, `HeckeCoset.smulOrbit_disjoint`: the orbit depends
   only on the left coset, and orbits of distinct double cosets are disjoint.
+* `HeckeCoset.mk_bot_mem_smulOrbit_iff`: membership in an orbit, characterized by
+  membership in the corresponding double coset.
 * `LeftCosetModule.instFaithfulSMul`: the scalar multiplication of the (opposite) Hecke
   ring on the module of left cosets is faithful.
 -/
@@ -115,6 +117,40 @@ lemma mem_smulOrbit {g β : Δ} {x : HeckeCoset Δ ⊥ H} :
       mk ⊥ H ⟨(β : G) * i.out * g,
         Δ.mul_mem (Δ.mul_mem β.2 (IsHeckeTriple.mem_of_mem_left H i.out.2)) g.2⟩ = x := by
   simp [smulOrbit]
+
+/-- Membership in an orbit, tested at an arbitrary representative: the left coset `ξH` lies
+in the orbit of `g` on `wH` iff `w⁻¹ * ξ` lies in the double coset `HgH`. -/
+lemma mk_bot_mem_smulOrbit_iff {g w ξ : Δ} :
+    mk ⊥ H ξ ∈ smulOrbit H g w ↔
+      ((w : G))⁻¹ * (ξ : G) ∈ doubleCoset (g : G) (H : Set G) H := by
+  constructor
+  · intro hx
+    obtain ⟨i, hi⟩ := mem_smulOrbit.mp hx
+    have hrep := mk_bot_eq_mk_bot.mp hi
+    -- hrep : (w·σᵢ·g)⁻¹·ξ ∈ H, so w⁻¹·ξ = σᵢ·g·(w·σᵢ·g)⁻¹·ξ with σᵢ ∈ H
+    exact mem_doubleCoset.mpr ⟨(i.out : G), i.out.2,
+      ((w : G) * (i.out : G) * (g : G))⁻¹ * (ξ : G), hrep, by group⟩
+  · intro hmem
+    obtain ⟨h₁, hh₁, h₂, hh₂, heq⟩ := mem_doubleCoset.mp hmem
+    set i : DecompQuotient H H (g : G) := QuotientGroup.mk ⟨h₁, hh₁⟩ with hi
+    obtain ⟨n, hn⟩ := QuotientGroup.mk_out_eq_mul
+      ((ConjAct.toConjAct (g : G) • H).subgroupOf H) (⟨h₁, hh₁⟩ : H)
+    have hout : ((i.out : H) : G) = h₁ * n := by
+      rw [hi]
+      simpa [Subgroup.coe_mul] using congrArg (Subtype.val : H → G) hn
+    refine mem_smulOrbit.mpr ⟨i, ?_⟩
+    refine mk_bot_eq_mk_bot.mpr ?_
+    -- as in `smulOrbit_subset`, the setoid membership is stated through the coercions
+    change ((w : G) * ((i.out : H) : G) * (g : G))⁻¹ * (ξ : G) ∈ H
+    have key : ((w : G) * ((i.out : H) : G) * (g : G))⁻¹ * (ξ : G) =
+        ((g : G)⁻¹ * (n : G)⁻¹ * g) * h₂ := by
+      have hξ : (ξ : G) = (w : G) * (h₁ * (g : G) * h₂) := by
+        rw [← heq]; group
+      rw [hout, hξ]
+      group
+    rw [key]
+    exact H.mul_mem
+      (by simpa [mul_assoc] using H.inv_mem (DoubleCoset.conj_mem_of_stabilizer (g : G) n)) hh₂
 
 lemma smulOrbit_nonempty (g β : Δ) : (smulOrbit H g β).Nonempty := by
   classical

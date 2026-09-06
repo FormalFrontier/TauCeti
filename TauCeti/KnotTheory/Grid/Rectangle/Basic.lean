@@ -53,6 +53,15 @@ changing it requires a separate update of the blocked-rectangle and small-grid d
 * `TauCeti.GridRectangleBetween.all`: all oriented rectangles from `x` to `y`.
 * `TauCeti.GridRectangleBetween.emptyRectangles`: the empty rectangles from `x` to `y`.
 
+## Main results
+
+* `TauCeti.GridRectangle.isEmptyFor_iff_forall_notMem_cIoo`: emptiness of a toroidal rectangle
+  for a grid state, quantified over the columns strictly inside it, and
+  `TauCeti.GridRectangleBetween.isEmpty_iff_forall_notMem_cIoo`, its form for an oriented
+  rectangle and its source state.
+* `TauCeti.GridRectangleBetween.toGridRectangle_eq`: the toroidal rectangle underlying an
+  oriented rectangle, in terms of its two side columns.
+
 ## References
 
 This supplies a prerequisite for the Tau Ceti Heegaard Floer roadmap,
@@ -259,11 +268,44 @@ theorem isEmptyFor_iff (x : GridState n) :
     subst hpq
     exact h p hp hq
 
+/-- A rectangle is empty for a grid state exactly when the state sends every column strictly
+between its two side columns to a row outside the open arc between its two side rows.
+
+This is the one-dimensional form of emptiness that the rectangle-pairing arguments for the grid
+differential use: it quantifies over columns rather than over grid points. -/
+theorem isEmptyFor_iff_forall_notMem_cIoo (x : GridState n) :
+    R.IsEmptyFor x ↔ ∀ c ∈ Grid.cIoo R.left R.right, x c ∉ Grid.cIoo R.bottom R.top := by
+  rw [isEmptyFor_iff]
+  simp only [GridState.mem_pointSet, mem_interior, mem_columnInterior, mem_rowInterior, not_and]
+  constructor
+  · intro h c hc
+    exact h (c, x c) rfl hc
+  · intro h p hp hc
+    exact hp ▸ h p.1 hc
+
 /-- In a grid of size at most two, every toroidal rectangle is empty for every grid state. -/
 theorem isEmptyFor_of_le_two (hn : n ≤ 2) (R : GridRectangle n) (x : GridState n) :
     R.IsEmptyFor x := by
   rw [IsEmptyFor, R.interior_eq_empty_of_le_two hn]
   simp
+
+/-- Emptiness transfers between two grid states that agree away from two columns, once the two
+points of the first state on those columns are known to lie outside the rectangle: every other
+point of the first state is a point of the second. -/
+theorem isEmptyFor_of_eq_away {u v : GridState n} (a b : Fin n)
+    (ha : (a, u a) ∉ R.interior) (hb : (b, u b) ∉ R.interior)
+    (haway : ∀ p : Fin n × Fin n, p.1 ≠ a → p.1 ≠ b → (p ∈ u.pointSet ↔ p ∈ v.pointSet))
+    (hv : R.IsEmptyFor v) : R.IsEmptyFor u := by
+  rw [R.isEmptyFor_iff]
+  intro p hp hmem
+  have hpu : u p.1 = p.2 := (u.mem_pointSet p).mp hp
+  by_cases hpa : p.1 = a
+  · apply ha
+    simpa [hpa, ← hpu] using hmem
+  by_cases hpb : p.1 = b
+  · apply hb
+    simpa [hpb, ← hpu] using hmem
+  exact (R.isEmptyFor_iff v).mp hv p ((haway p hpa hpb).mp hp) hmem
 
 /-- A rectangle avoids the markings of a grid diagram when none of the squares it covers
 carries an `O` or `X` marking. -/
@@ -459,6 +501,20 @@ theorem toGridRectangle_bottom : R.toGridRectangle.bottom = R.bottom :=
 @[simp]
 theorem toGridRectangle_top : R.toGridRectangle.top = R.top :=
   rfl
+
+/-- The associated toroidal rectangle in terms of the two side columns: its two horizontal
+sides are the rows the source state assigns to them. -/
+theorem toGridRectangle_eq :
+    R.toGridRectangle =
+      { left := R.left, right := R.right, bottom := x R.left, top := x R.right } :=
+  rfl
+
+/-- Membership in the interior of an oriented rectangle is membership in the open cyclic
+intervals between its side columns and the corresponding source-state rows. -/
+theorem mem_toGridRectangle_interior (p : Fin n × Fin n) :
+    p ∈ R.toGridRectangle.interior ↔
+      p.1 ∈ Grid.cIoo R.left R.right ∧ p.2 ∈ Grid.cIoo (x R.left) (x R.right) := by
+  simp [bottom, top]
 
 /-- The opposite oriented rectangle, obtained by reversing the two side columns.
 
@@ -673,6 +729,15 @@ interior. -/
 theorem isEmpty_iff :
     R.IsEmpty ↔ ∀ p ∈ x.pointSet, p ∉ R.toGridRectangle.interior :=
   R.toGridRectangle.isEmptyFor_iff x
+
+/-- A rectangle between states is empty exactly when the source state sends every column strictly
+between its two side columns to a row outside the open arc between its two side rows.
+
+This is the one-dimensional form of emptiness that the rectangle-pairing arguments for the grid
+differential use: it quantifies over columns rather than over grid points. -/
+theorem isEmpty_iff_forall_notMem_cIoo :
+    R.IsEmpty ↔ ∀ c ∈ Grid.cIoo R.left R.right, x c ∉ Grid.cIoo R.bottom R.top :=
+  R.toGridRectangle.isEmptyFor_iff_forall_notMem_cIoo x
 
 /-- If a target-state point lies on a side column, then it is not in the associated
 rectangle's interior. -/

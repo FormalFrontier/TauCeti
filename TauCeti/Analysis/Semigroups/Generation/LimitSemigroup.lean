@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Semigroups.Generation.Yosida.Basic
-import TauCeti.Analysis.Normed.Operator.Basic
 import TauCeti.Analysis.Normed.Operator.Exponential
 import Mathlib.Topology.UniformSpace.UniformApproximation
 
@@ -471,13 +470,6 @@ theorem continuousOn_yosidaLimit (hA : IsMDissipative A) (hdense : Dense (A.doma
     (x : X) : ContinuousOn (fun t : ℝ => yosidaLimit A t x) (Set.Ici 0) :=
   continuousOn_Ici_of_forall_continuousOn_Icc fun _T hT =>
     hA.continuousOn_yosidaLimit_Icc hdense x hT
-
-/-- Strong continuity at time `0` of the Yosida limit, in the nonnegative-time parametrisation
-used by `StronglyContinuousSemigroup`. -/
-private theorem continuousAt_yosidaLimit_zero (hA : IsMDissipative A)
-    (hdense : Dense (A.domain : Set X)) (x : X) :
-    ContinuousAt (fun t : ℝ≥0 => yosidaLimit A t x) 0 :=
-  continuousAt_nnreal_zero_of_continuousOn_Ici (hA.continuousOn_yosidaLimit hdense x)
 
 /-! ## The contraction semigroup -/
 

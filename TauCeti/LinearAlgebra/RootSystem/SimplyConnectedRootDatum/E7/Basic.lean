@@ -8,8 +8,6 @@ module
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
 public import Mathlib.Data.Fin.Tuple.Embedding
 
-public section
-
 /-!
 # The integral roots of type E7
 
@@ -23,6 +21,8 @@ in `TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E7.Lattice`.
 The enumeration is the root-data input for Layer 6 of the root-systems roadmap. It follows
 Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Plate VI.
 -/
+
+public section
 
 namespace TauCeti
 

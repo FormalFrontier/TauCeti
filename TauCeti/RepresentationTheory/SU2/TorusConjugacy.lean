@@ -25,12 +25,12 @@ Hermitian part of `G` to be a scalar,
 
 `G + G* = (tr G) • 1`   (`TauCeti.SU2.coe_add_star`),
 
-because `G* = G⁻¹` is the adjugate of `G` (`TauCeti.Matrix.specialUnitaryGroup.star_eq_adjugate`)
+because `G* = G⁻¹` is the adjugate of `G` (`Matrix.specialUnitaryGroup.star_eq_adjugate`)
 and a `2 × 2` matrix and its adjugate add up to the trace. So `G` differs from the Hermitian
 matrix `H = i (G - G*)` by a scalar matrix, and any unitary that diagonalises `H` diagonalises
 `G`. The eigenvector unitary supplied by the spectral theorem need not have determinant one, but
 it can be rescaled by a scalar of modulus one until it does
-(`TauCeti.Matrix.exists_circle_smul_mem_specialUnitaryGroup`), and rescaling by a scalar does not
+(`Matrix.exists_circle_smul_mem_specialUnitaryGroup`), and rescaling by a scalar does not
 change the conjugation it induces.
 
 ## Main results

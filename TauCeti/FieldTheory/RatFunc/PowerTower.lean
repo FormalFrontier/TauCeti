@@ -17,15 +17,15 @@ For a field `K` and an exponent `n`, this file computes the degree of `K(X)` ove
 
 * `TauCeti.RatFunc.finrank_adjoin_X_pow`: `[K(X) : K(X ^ n)] = n`.
 
-## Roadmap
+## Mathematical context
 
-`TauCetiRoadmap/EllipticCurves/README.md`, **Layer 1**. The relative and finite-field Frobenius
-degree computations use this as the inner degree in the tower `K(W) / K(x) / K(x^n)`.
+Relative and finite-field Frobenius degree computations use this as the inner degree in the tower
+`K(W) / K(x) / K(x^n)`.
 
 ## Provenance
 
 The statement was extracted while porting the finite-field Frobenius tower from the AINTLIB
-`HasseWeil` project (`github.com/CBirkbeck/AINTLIB`, Apache-2.0, pinned by that roadmap at
+`HasseWeil` project (`github.com/CBirkbeck/AINTLIB`, Apache-2.0,
 `dev/hasse-weil @ 513e83879e2f`). The source proves only the finite-field exponent; the arbitrary
 field and exponent statement here is new, and follows directly from Mathlib's rational-function
 degree formula.

@@ -98,15 +98,15 @@ theorem mem_doubleCoset_iff_mk_mem_orbit (s : G) (H K : Subgroup G) {x : G} :
       ((x : G ⧸ H)) ∈ orbit K ((s : G ⧸ H)) := by
   rw [DoubleCoset.mem_doubleCoset, mem_orbit_iff]
   -- `K` acts on `G ⧸ H` through `Subgroup.subtype K` (`MulAction.mulLeftCosetsCompSubtypeVal`),
-  -- so `MulAction.compHom_smul_def` is what turns a `K`-translate back into a `G`-translate.
+  -- so `Subgroup.smul_def` is what turns a `K`-translate back into a `G`-translate.
   constructor
   · rintro ⟨k, hk, h, hh, rfl⟩
     refine ⟨⟨k, hk⟩, ?_⟩
-    rw [compHom_smul_def (Subgroup.subtype K), Subgroup.coe_subtype, Quotient.smul_coe,
+    rw [Subgroup.smul_def, Quotient.smul_coe,
       smul_eq_mul, QuotientGroup.eq]
     simpa [mul_assoc] using hh
   · rintro ⟨k, hkx⟩
-    rw [compHom_smul_def (Subgroup.subtype K), Subgroup.coe_subtype, Quotient.smul_coe,
+    rw [Subgroup.smul_def, Quotient.smul_coe,
       smul_eq_mul, QuotientGroup.eq] at hkx
     exact ⟨k, k.2, ((k : G) * s)⁻¹ * x, hkx, (mul_inv_cancel_left _ _).symm⟩
 
@@ -270,15 +270,15 @@ theorem orbitOfCosetTranslate_eq_iff {𝒢 ℋ : Subgroup G} (hle : 𝒢 ≤ ℋ
           (SetLike.mem_coe.1 hy))⟩, ?_⟩
         -- the action is left translation (the idiom at `mem_doubleCoset_iff_mk_mem_orbit`), so
         -- the goal is a coset equality, with witness `x⁻¹`
-        rw [compHom_smul_def (Subgroup.subtype (stabilizer ℋ p)), Subgroup.coe_subtype,
-          Quotient.smul_coe, smul_eq_mul, QuotientGroup.eq, Subgroup.mem_subgroupOf]
+        rw [Subgroup.smul_def, Quotient.smul_coe, smul_eq_mul, QuotientGroup.eq,
+          Subgroup.mem_subgroupOf]
         have hval : ((((⟨y, hyH⟩ : ℋ)⁻¹ * b)⁻¹ * a : ℋ) : G) = x⁻¹ := by
           rw [Subgroup.coe_mul, Subgroup.coe_inv, Subgroup.coe_mul, Subgroup.coe_inv, ha]
           simp [mul_assoc]
         exact hval ▸ SetLike.mem_coe.1 (inv_mem hx)
       · rintro ⟨s, hs⟩
-        rw [compHom_smul_def (Subgroup.subtype (stabilizer ℋ p)), Subgroup.coe_subtype,
-          Quotient.smul_coe, smul_eq_mul, QuotientGroup.eq, Subgroup.mem_subgroupOf] at hs
+        rw [Subgroup.smul_def, Quotient.smul_coe, smul_eq_mul, QuotientGroup.eq,
+          Subgroup.mem_subgroupOf] at hs
         refine ⟨(((((s : ℋ) * b)⁻¹ * a : ℋ)⁻¹ : ℋ) : G), SetLike.mem_coe.2 (inv_mem hs),
           ((s : ℋ) : G)⁻¹,
           SetLike.mem_coe.2 (inv_mem ((Subgroup.mem_subgroupOf (H := stabilizer G p)).1 s.2)), ?_⟩

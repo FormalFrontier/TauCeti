@@ -7,7 +7,7 @@ module
 
 public import Mathlib.Algebra.Polynomial.AlgebraMap
 public import Mathlib.Algebra.Polynomial.Degree.Lemmas
-public import Mathlib.Data.Real.Basic
+public import Mathlib.Basic.Real.Basic
 public import Mathlib.RingTheory.Polynomial.Hermite.Basic
 
 /-!

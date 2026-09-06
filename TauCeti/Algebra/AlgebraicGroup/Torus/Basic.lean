@@ -7,6 +7,8 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.MultiplicativeType.Basic
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Basic
+import TauCeti.Algebra.Coalgebra.BaseChange
+import TauCeti.Algebra.Coalgebra.Cocommutative
 
 /-!
 # Tori over a field
@@ -37,8 +39,13 @@ distinguishes tori from general groups of multiplicative type.
   finite-rank split torus over `AlgebraicClosure k`.
 * `TauCeti.splitTorusCommHopfAlgProperty.torus`: every split torus is a torus.
 * `TauCeti.torusCommHopfAlgProperty.multiplicativeType`: every torus is of multiplicative type.
+* `TauCeti.torusCommHopfAlgProperty.isCocomm`: the coordinate Hopf algebra of a torus is
+  cocommutative.
 * `TauCeti.SplitTorus.splitTorus_coordinateRing`: the standard finite-rank split tori satisfy the
   split predicate.
+* `TauCeti.rankZeroSplitTorusIso`: the rank-zero split torus is the trivial affine group.
+* `TauCeti.splitTorusCommHopfAlgProperty_trivial`: the trivial affine group is the rank-zero
+  split torus.
 
 ## References
 
@@ -120,6 +127,25 @@ instance (k : Type u) [Field k] :
   unfold torusCommHopfAlgProperty
   infer_instance
 
+/-- The coordinate Hopf algebra of a torus is cocommutative. -/
+@[grind →]
+theorem torusCommHopfAlgProperty.isCocomm
+    (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k)
+    (hH : torusCommHopfAlgProperty k H) :
+    _root_.Coalgebra.IsCocomm k H.obj := by
+  rw [torusCommHopfAlgProperty_iff] at hH
+  obtain ⟨n, ⟨i⟩⟩ := hH
+  let hsplit : _root_.Coalgebra.IsCocomm (AlgebraicClosure k)
+      (DiagonalizableGroup.coordinateRing (AlgebraicClosure k)
+        (SplitTorus.characterGroup (ULift.{u} (Fin n)))).obj := inferInstance
+  let hbase : _root_.Coalgebra.IsCocomm (AlgebraicClosure k)
+      (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H).obj :=
+    Coalgebra.IsCocomm.of_bialgEquiv
+      (_root_.CommHopfAlgCat.ofIso <|
+        (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k))
+          (_root_.CommHopfAlgCat.{u} (AlgebraicClosure k))).mapIso i) (hA := hsplit)
+  exact Coalgebra.IsCocomm.of_baseChange (h := hbase)
+
 /-- The category of finite-type torus coordinate Hopf algebras over a field.
 
 Objects need not be split over the base field; they become split after extension to an algebraic
@@ -173,5 +199,33 @@ theorem splitTorus_coordinateRing (k : Type u) [CommRing k] (σ : Type u) [Finit
   exact ⟨Nat.card σ, ⟨i.symm⟩⟩
 
 end SplitTorus
+
+noncomputable section
+
+/-- The rank-zero split torus is the trivial affine group: the group algebra of the trivial
+character group is the base field. -/
+def rankZeroSplitTorusIso (k : Type u) [CommRing k] :
+    DiagonalizableGroup.coordinateRing k
+        (SplitTorus.characterGroup (ULift.{u} (Fin 0))) ≅
+      FiniteTypeCommHopfAlgCat.of k k :=
+  ObjectProperty.isoMk _ <| _root_.CommHopfAlgCat.isoMk <|
+    MonoidAlgebra.bialgEquivOfSubsingleton (R := k) _
+
+/-- The rank-zero split-torus isomorphism is the counit on its coordinate ring. -/
+@[simp]
+theorem rankZeroSplitTorusIso_hom_apply (k : Type u) [CommRing k]
+    (x : DiagonalizableGroup.coordinateRing k
+      (SplitTorus.characterGroup (ULift.{u} (Fin 0)))) :
+    (rankZeroSplitTorusIso k).hom x = Coalgebra.counit (R := k) x := by
+  exact Bialgebra.counitBialgHom_apply (R := k) x
+
+/-- The trivial affine group is the split torus of rank zero. -/
+@[grind =>]
+theorem splitTorusCommHopfAlgProperty_trivial (k : Type u) [CommRing k] :
+    splitTorusCommHopfAlgProperty k (FiniteTypeCommHopfAlgCat.of k k) :=
+  (splitTorusCommHopfAlgProperty k).prop_of_iso (rankZeroSplitTorusIso k)
+    (SplitTorus.splitTorus_coordinateRing k (ULift.{u} (Fin 0)))
+
+end
 
 end TauCeti

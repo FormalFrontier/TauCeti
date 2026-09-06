@@ -9,8 +9,6 @@ public import TauCeti.LinearAlgebra.RootSystem.DynkinType
 public import Mathlib.Data.Fin.Tuple.Embedding
 public import Mathlib.LinearAlgebra.Matrix.Dual
 
-public section
-
 /-!
 # The integral roots of type E8
 
@@ -27,6 +25,8 @@ the last 120 entries are the negatives of the first 120.
 The enumeration is the root-data input for Layer 6 of the root-systems roadmap. It follows
 Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Plate VII.
 -/
+
+public section
 
 namespace TauCeti
 

@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Combinatorics.Young.Dominance
-public import TauCeti.RepresentationTheory.AsAlgebraHom
 public import TauCeti.RepresentationTheory.Symmetric.PermutationModule.Basic
 public import TauCeti.RepresentationTheory.Symmetric.Symmetrizer
 

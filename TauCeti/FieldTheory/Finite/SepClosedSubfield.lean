@@ -27,6 +27,8 @@ extension of the prime field.
 
 ## Main results
 
+* `TauCeti.finite_frobeniusFixedSubfield` and `TauCeti.finite_frobeniusFixedSubring`: over any field
+  of characteristic `p` and for `n ≠ 0` it is finite, being a set of roots of `X ^ p ^ n - X`.
 * `TauCeti.card_frobeniusFixedSubfield`: over a separably closed field and for `n ≠ 0` it has
   exactly `p ^ n` elements.
 * `TauCeti.eq_frobeniusFixedSubfield_of_natCard`: it is the unique subfield with that many elements.
@@ -38,11 +40,10 @@ extension of the prime field.
 ## References
 
 This is the field-theoretic half of "the fixed points of the `q`-power Frobenius are the
-`𝔽_q`-points", the ring-theoretic half being `TauCeti.frobeniusFixedSubring` itself. It is a
-prerequisite of the "points over an algebraically closed field, functorially in the field" target
-of Layer 9 of `TauCetiRoadmap/ReductiveGroups/README.md`, and of milestone L1 of
-`TauCetiRoadmap/CFSGStatement/README.md`, whose ordinary and graph-twisted Steinberg maps start
-from the `q`-power Frobenius of an algebraic closure of `ZMod p`.
+`𝔽_q`-points", the ring-theoretic half being `TauCeti.frobeniusFixedSubring` itself. It supplies
+the finite-field input for studying points over an algebraically closed field and for ordinary and
+graph-twisted Steinberg maps, which start from the `q`-power Frobenius of an algebraic closure of
+`ZMod p`.
 
 * S. Lang, *Algebra*, 3rd ed., V.5.
 * R. Lidl and H. Niederreiter, *Finite Fields*, §2.1.
@@ -76,13 +77,24 @@ of `X ^ p ^ n - X`, a separable polynomial of degree `p ^ n`. The public form of
 `coe_frobeniusFixedSubfield_eq_rootSet`. -/
 private def frobeniusFixedSubfieldEquivRootSet (hn : n ≠ 0) :
     frobeniusFixedSubfield K p n ≃ (X ^ p ^ n - X : K[X]).rootSet K :=
-  Equiv.setCongr (coe_frobeniusFixedSubfield_eq_rootSet K p n hn)
+  Set.equivOfEq (coe_frobeniusFixedSubfield_eq_rootSet K p n hn)
 
 /-- The Frobenius-fixed subfield of a field of characteristic `p` is finite once `n ≠ 0`, being a
 set of roots of a nonzero polynomial. This is not an instance: at `n = 0` the subfield is the whole
 of `K`, which need not be finite. -/
 theorem finite_frobeniusFixedSubfield (hn : n ≠ 0) : Finite (frobeniusFixedSubfield K p n) :=
   .of_equiv _ (frobeniusFixedSubfieldEquivRootSet K p n hn).symm
+
+/-- The Frobenius-fixed *subring* of a field of characteristic `p` is finite once `n ≠ 0`. This is
+`TauCeti.finite_frobeniusFixedSubfield` read through
+`TauCeti.toSubring_frobeniusFixedSubfield`, the two having the same elements; it is the form a
+consumer working with `TauCeti.frobeniusFixedSubring` over a field asks for. Not an instance, for
+the reason given at `TauCeti.finite_frobeniusFixedSubfield`. -/
+theorem finite_frobeniusFixedSubring (hn : n ≠ 0) : Finite ↥(frobeniusFixedSubring K p n) :=
+  have := finite_frobeniusFixedSubfield K p n hn
+  .of_equiv _ (Equiv.subtypeEquivRight fun a =>
+    by rw [← Subfield.mem_toSubring, toSubring_frobeniusFixedSubfield] :
+      ↥(frobeniusFixedSubfield K p n) ≃ ↥(frobeniusFixedSubring K p n))
 
 /-- **Uniqueness of the subfield of `q` elements.** A subfield with `p ^ n` elements of a field of
 characteristic `p` is the subfield fixed by the `p ^ n`-power Frobenius.

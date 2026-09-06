@@ -300,7 +300,7 @@ theorem stabilizer_eq_mackeySubgroup_subgroupOf (s : G) (H K : Subgroup G) :
   -- `K` acts on `G ⧸ H` through `Subgroup.subtype K`, so stabilizing in `K` is stabilizing in
   -- `G` while lying in `K`, and `stabilizer_quotientGroup_mk` identifies the latter with `sHs⁻¹`.
   rw [Subgroup.mem_subgroupOf, mem_mackeySubgroup_iff, mem_stabilizer_iff,
-    compHom_smul_def (Subgroup.subtype K), Subgroup.coe_subtype, ← mem_stabilizer_iff,
+    Subgroup.smul_def, ← mem_stabilizer_iff,
     stabilizer_quotientGroup_mk, mem_conj_smul]
   exact ⟨fun hg => ⟨g.2, hg⟩, fun hg => hg.2⟩
 

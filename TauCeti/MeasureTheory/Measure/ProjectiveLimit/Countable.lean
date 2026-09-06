@@ -65,9 +65,9 @@ private def reindexProjectiveFamily (e : κ ≃ ι)
 
 private instance reindexProjectiveFamily.instIsProbabilityMeasure (e : κ ≃ ι)
     (P : ∀ I : Finset ι, Measure (∀ i : I, X i)) [∀ I, IsProbabilityMeasure (P I)]
-    (J : Finset κ) : IsProbabilityMeasure (reindexProjectiveFamily e P J) :=
-  MeasureTheory.Measure.isProbabilityMeasure_map
-    (finitePiCongrLeft e J).symm.measurable.aemeasurable
+    (J : Finset κ) : IsProbabilityMeasure (reindexProjectiveFamily e P J) := by
+  rw [reindexProjectiveFamily]
+  infer_instance
 
 private theorem isProjectiveMeasureFamily_reindex (e : κ ≃ ι)
     (P : ∀ I : Finset ι, Measure (∀ i : I, X i)) (hP : IsProjectiveMeasureFamily P) :
@@ -106,7 +106,7 @@ private theorem exists_isProjectiveLimit_of_finite [Finite ι]
   let E : (∀ j : (Finset.univ : Finset ι), X j) ≃ᵐ (∀ i, X i) :=
     MeasurableEquiv.piCongrLeft X e
   refine ⟨(P Finset.univ).map E,
-    MeasureTheory.Measure.isProbabilityMeasure_map E.measurable.aemeasurable, fun I ↦ ?_⟩
+    inferInstance, fun I ↦ ?_⟩
   rw [MeasureTheory.Measure.map_map (Finset.measurable_restrict I) E.measurable]
   have hrestrict : I.restrict ∘ E =
       Finset.restrict₂ (Finset.subset_univ I) := by
@@ -131,7 +131,7 @@ private theorem exists_isProjectiveLimit_of_countable_infinite [Countable ι] [I
   obtain ⟨ν, hνprob, hν⟩ :=
     exists_isProjectiveLimit_nat (X := fun n ↦ X (e n)) Q hQ
   let E : (∀ n, X (e n)) ≃ᵐ (∀ i, X i) := MeasurableEquiv.piCongrLeft X e
-  refine ⟨ν.map E, MeasureTheory.Measure.isProbabilityMeasure_map E.measurable.aemeasurable,
+  refine ⟨ν.map E, inferInstance,
     fun I ↦ ?_⟩
   let J : Finset ℕ := I.map e.symm.toEmbedding
   have hmap : J.map e.toEmbedding = I := by

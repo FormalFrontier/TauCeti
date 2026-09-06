@@ -9,8 +9,6 @@ public import Mathlib.LinearAlgebra.Matrix.PosDef
 public import Mathlib.RingTheory.Localization.Integer
 import Mathlib.Data.Rat.Star
 
-public section
-
 /-!
 # Positive definiteness over the rationals
 
@@ -37,6 +35,8 @@ it as `Bᴴ * B` for an explicit `B`, and check that it is invertible.
 * `TauCeti.Matrix.posDef_conjTranspose_mul_self_of_isUnit`: an invertible rational matrix of the
   form `Bᴴ * B` is positive definite.
 -/
+
+public section
 
 open scoped Matrix
 

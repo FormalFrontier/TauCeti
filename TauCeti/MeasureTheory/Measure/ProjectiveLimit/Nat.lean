@@ -87,8 +87,9 @@ private def successorLaw (P : ∀ n : ℕ, Measure (∀ i : Iic n, X i)) (n : �
 
 private instance successorLaw.instIsProbabilityMeasure
     (P : ∀ n : ℕ, Measure (∀ i : Iic n, X i)) [∀ n, IsProbabilityMeasure (P n)] (n : ℕ) :
-    IsProbabilityMeasure (successorLaw P n) :=
-  MeasureTheory.Measure.isProbabilityMeasure_map (prefixSuccEquiv n).symm.measurable.aemeasurable
+    IsProbabilityMeasure (successorLaw P n) := by
+  rw [successorLaw]
+  infer_instance
 
 private theorem fst_successorLaw (P : ∀ n : ℕ, Measure (∀ i : Iic n, X i))
     (hP : ∀ n, (P (n + 1)).map (frestrictLe₂ n.le_succ) = P n) (n : ℕ) :
@@ -121,9 +122,9 @@ private def initialLaw (P : ∀ n : ℕ, Measure (∀ i : Iic n, X i)) : Measure
 
 private instance initialLaw.instIsProbabilityMeasure
     (P : ∀ n : ℕ, Measure (∀ i : Iic n, X i)) [∀ n, IsProbabilityMeasure (P n)] :
-    IsProbabilityMeasure (initialLaw P) :=
-  MeasureTheory.Measure.isProbabilityMeasure_map
-    (MeasurableEquiv.piUnique fun i : Iic 0 ↦ X i).measurable.aemeasurable
+    IsProbabilityMeasure (initialLaw P) := by
+  rw [initialLaw]
+  infer_instance
 
 /-- The Ionescu--Tulcea path law built by successively disintegrating prescribed prefix laws. -/
 private def prefixLimit (P : ∀ n : ℕ, Measure (∀ i : Iic n, X i))
@@ -144,10 +145,9 @@ private theorem map_frestrictLe_zero_prefixLimit
     (prefixLimit P).map (frestrictLe 0) = P 0 := by
   let e : (∀ i : Iic 0, X i) ≃ᵐ X 0 := MeasurableEquiv.piUnique _
   have hprefix : (prefixLimit P).map (frestrictLe 0) = (initialLaw P).map e.symm := by
-    rw [prefixLimit, Kernel.trajMeasure, MeasureTheory.Measure.map_comp,
+    rw [prefixLimit, Kernel.trajMeasure,
+      MeasureTheory.Measure.map_comp _ _ (measurable_frestrictLe 0),
       Kernel.traj_map_frestrictLe, Kernel.partialTraj_self, MeasureTheory.Measure.id_comp]
-    · rfl
-    · fun_prop
   calc
     (prefixLimit P).map (frestrictLe 0) = (initialLaw P).map e.symm := hprefix
     _ = ((P 0).map e).map e.symm := rfl

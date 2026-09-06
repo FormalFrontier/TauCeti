@@ -8,8 +8,6 @@ module
 public import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
 public import Mathlib.LinearAlgebra.Matrix.Trace
 
-public section
-
 /-!
 # The homogeneous characteristic form of a `2 × 2` matrix
 
@@ -47,6 +45,8 @@ rewrites the identity under hypotheses `M.det = q` and `M.trace = t`, and `det_o
 the `r = s = -1` instance. Both are one-line consequences better written at their call sites than
 carried as API.
 -/
+
+public section
 
 open Matrix
 

@@ -12,28 +12,21 @@ public import TauCeti.Analysis.Fredholm.Criteria
 # Fredholm operators from finite-codimension restrictions
 
 Let `T : E →L[𝕜] F` carry a closed finite-codimensional subspace `E₁` into a closed
-finite-codimensional subspace `F₁`. If the induced operator `E₁ →L[𝕜] F₁` is Fredholm,
-then so is `T`. The index of `T` is the index of the restriction plus `codim E₁ - codim F₁`.
-
-The proof chooses topological complements `E = E₁ ⊕ E₀` and `F = F₁ ⊕ F₀`. Extending the
-restricted operator by projection onto `E₁` and inclusion from `F₁` gives a Fredholm operator
-which agrees with `T` on `E₁`; their difference therefore has finite-dimensional range. The result
-then follows from stability under finite-rank perturbations.
-
-This is the finite-codimension reduction recorded as the missing
-`ContinuousLinearMap.IsFredholm.of_restrict` in Mathlib's Fredholm API. It is a basic reduction for
-the Fredholm-operator substrate in Lane F0 of the analytic Heegaard Floer roadmap, in particular
-when an operator is first controlled after discarding finitely many modes.
+finite-codimensional subspace `F₁`. Mathlib's `ContinuousLinearMap.IsFredholm.of_restrict`
+shows that `T` is Fredholm when the induced operator `E₁ →L[𝕜] F₁` is. This file records the
+accompanying index formula: the index of `T` is the index of the restriction plus
+`codim E₁ - codim F₁`. It is a basic reduction for the Fredholm-operator substrate in Lane F0
+of the analytic Heegaard Floer roadmap, in particular when an operator is first controlled
+after discarding finitely many modes.
 
 ## Main declarations
 
-* `ContinuousLinearMap.IsFredholm.of_restrict`: a continuous linear map is Fredholm when its
-  restriction between closed finite-codimensional subspaces is Fredholm.
-* `TauCeti.ContinuousLinearMap.index_restrict`: the corresponding index formula.
+* `TauCeti.ContinuousLinearMap.index_restrict`: the index formula for the restriction of a
+  continuous linear map to closed finite-codimensional subspaces.
 
 The finite-codimension reduction and index convention follow McDuff--Salamon,
-*J-holomorphic Curves and Symplectic Topology*, Appendix A.1. The proof reuses Mathlib's
-topological complements and quasi-inverse characterization of Fredholm operators.
+*J-holomorphic Curves and Symplectic Topology*, Appendix A.1. The proof factors `T` through
+the inclusions of the subspaces and applies Mathlib's composition formula for the index.
 -/
 
 public section
@@ -41,75 +34,6 @@ public section
 namespace TauCeti
 
 open Module
-
-section Topological
-
-variable {K E F : Type*} [NontriviallyNormedField K] [CompleteSpace K]
-variable [AddCommGroup E] [Module K E] [TopologicalSpace E]
-  [IsTopologicalAddGroup E] [ContinuousSMul K E] [T2Space E]
-variable [AddCommGroup F] [Module K F] [TopologicalSpace F]
-  [IsTopologicalAddGroup F] [ContinuousSMul K F] [T2Space F]
-variable {T : E →L[K] F} {E₁ : Submodule K E} {F₁ : Submodule K F}
-
-omit [CompleteSpace K] [IsTopologicalAddGroup E] [ContinuousSMul K E] [T2Space E] in
-private theorem isFredholm_subtypeL {p : Submodule K E} (hp : IsClosed (p : Set E)) [p.CoFG] :
-    ContinuousLinearMap.IsFredholm p.subtypeL where
-  isStrictMap := (Submodule.isEmbedding_subtypeL p).isStrictMap
-  isClosed_range := by
-    rw [Submodule.toLinearMap_subtypeL, Submodule.range_subtype]
-    exact hp
-  finite_ker := by
-    rw [Submodule.toLinearMap_subtypeL, Submodule.ker_subtype]
-    infer_instance
-  finite_coker := by
-    rw [Submodule.toLinearMap_subtypeL, Submodule.range_subtype]
-    infer_instance
-  closedComplemented_ker := by
-    rw [Submodule.toLinearMap_subtypeL, Submodule.ker_subtype]
-    exact Submodule.closedComplemented_bot
-
-/-- A continuous linear map between Hausdorff topological vector spaces is Fredholm if its
-restriction between closed finite-codimensional subspaces is Fredholm. -/
-theorem _root_.ContinuousLinearMap.IsFredholm.of_restrict (hE₁ : IsClosed (E₁ : Set E))
-    [E₁.CoFG] (hF₁ : IsClosed (F₁ : Set F)) [F₁.CoFG] (hT : Set.MapsTo T E₁ F₁)
-    (hT₁ : ContinuousLinearMap.IsFredholm (T.restrict hT)) :
-    ContinuousLinearMap.IsFredholm T := by
-  obtain ⟨E₀, hE⟩ :=
-    (Submodule.ClosedComplemented.of_finiteDimensional_quotient hE₁).exists_isTopCompl
-  obtain ⟨F₀, hF⟩ :=
-    (Submodule.ClosedComplemented.of_finiteDimensional_quotient hF₁).exists_isTopCompl
-  let : FiniteDimensional K E₀ :=
-    .of_fg <| (inferInstance : E₁.CoFG).fg_of_isCompl hE.isCompl
-  let : FiniteDimensional K F₀ :=
-    .of_fg <| (inferInstance : F₁.CoFG).fg_of_isCompl hF.isCompl
-  let P : E →L[K] E₁ := E₁.projectionOntoL E₀ hE
-  let ι : F₁ →L[K] F := F₁.subtypeL
-  let S : E →L[K] F := ι.comp ((T.restrict hT).comp P)
-  obtain ⟨Q, hQ⟩ := hT₁.exists_isQuasiInverse
-  have hS : ContinuousLinearMap.IsFredholm S := by
-    apply ContinuousLinearMap.IsFredholm.of_isQuasiInverse
-      (v := (E₁.subtypeL.comp Q).comp (F₁.projectionOntoL F₀ hF))
-    simpa only [S, P, ι, ContinuousLinearMap.toLinearMap_comp,
-      Submodule.toLinearMap_subtypeL, Submodule.toLinearMap_projectionOntoL] using
-      ((LinearMap.isQuasiInverse_subtype_projectionOnto hE.isCompl).comp hQ).comp
-        (LinearMap.isQuasiInverse_subtype_projectionOnto hF.isCompl).symm
-  have hS_on (x : E₁) : S (x : E) = T x := by
-    simp only [ContinuousLinearMap.comp_apply, Submodule.projectionOntoL_apply_left,
-      Submodule.coe_subtypeL, Submodule.subtype_apply, S, ι, P]
-    exact congrArg Subtype.val (ContinuousLinearMap.restrict_apply hT x)
-  have hker : E₁ ≤ LinearMap.ker ((T - S : E →L[K] F) : E →ₗ[K] F) := by
-    intro x hx
-    rw [LinearMap.mem_ker]
-    exact sub_eq_zero.mpr (hS_on ⟨x, hx⟩).symm
-  have hfinite : LinearMap.HasFiniteRange ((T - S : E →L[K] F) : E →ₗ[K] F) :=
-    LinearMap.ker_coFG_iff_hasFiniteRange.mp (Submodule.CoFG.of_le hker inferInstance)
-  have hTS : S + (T - S) = T := by
-    rw [add_comm]
-    exact sub_add_cancel T S
-  rw [← hTS]
-  exact hS.add_hasFiniteRange hfinite
-
-end Topological
 
 variable {K E F : Type*} [NontriviallyNormedField K] [CompleteSpace K]
 variable [NormedAddCommGroup E] [NormedSpace K E]
@@ -127,8 +51,8 @@ theorem index_restrict (hE₁ : IsClosed (E₁ : Set E)) [E₁.CoFG]
     (hT₁ : ContinuousLinearMap.IsFredholm (T.restrict hT)) :
     index (T.restrict hT) = index T - (finrank K (E ⧸ E₁) : ℤ) + finrank K (F ⧸ F₁) := by
   have hTfull := ContinuousLinearMap.IsFredholm.of_restrict hE₁ hF₁ hT hT₁
-  have hιE := isFredholm_subtypeL hE₁
-  have hιF := isFredholm_subtypeL hF₁
+  have hιE := Submodule.isFredholm_subtypeL hE₁
+  have hιF := Submodule.isFredholm_subtypeL hF₁
   have hfactor : T.comp E₁.subtypeL = F₁.subtypeL.comp (T.restrict hT) := by
     ext x
     exact (congrArg Subtype.val (ContinuousLinearMap.restrict_apply hT x)).symm

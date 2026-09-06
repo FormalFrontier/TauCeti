@@ -38,7 +38,8 @@ are fundamental are classical; see Cox, *Primes of the Form x² + ny²*, and Lem
 *Reciprocity Laws*, following the same prime-discriminant convention as the sibling files in this
 directory. The `-20` and `-84` worked examples of the `Worked examples` section of
 `TauCetiRoadmap/Multiquadratic/README.md` have their fundamental-discriminant component established
-in `FundamentalDiscriminant/Examples.lean`; their class-group and genus-field claims are later work.
+in `FundamentalDiscriminant/Examples.lean`; their class-group and concrete genus-field
+identifications remain future work.
 
 ## Main definitions and results
 

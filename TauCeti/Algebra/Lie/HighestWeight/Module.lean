@@ -8,8 +8,6 @@ module
 public import TauCeti.Algebra.Lie.HighestWeight.Basic
 import TauCeti.Algebra.Lie.Submodule.Atom
 
-public section
-
 /-!
 # Highest weight modules: the weight cone and the highest weight line
 
@@ -78,6 +76,8 @@ simple roots)`, and its `λ`-weight space is the line `K·v`".
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §20.2.
 -/
+
+public section
 
 namespace TauCeti
 

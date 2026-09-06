@@ -10,8 +10,6 @@ import Mathlib.Tactic.Module
 import Mathlib.Tactic.NormNum
 import Mathlib.Tactic.Ring
 
-public section
-
 /-!
 # The pinned coordinate model of the roots of type `Bₙ`
 
@@ -84,6 +82,8 @@ The coordinates and the node numbering follow Bourbaki, *Lie Groups and Lie Alge
 12.1. This is part of the `Bₙ` branch of the target "a named datum per valid type" in Layer 6 of
 `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`.
 -/
+
+public section
 
 namespace TauCeti.DynkinType.TypeB
 

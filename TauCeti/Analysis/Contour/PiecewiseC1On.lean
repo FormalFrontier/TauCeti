@@ -292,7 +292,7 @@ private theorem piecewise_gluing_induction {p : Finset ℝ} {Q : ℝ → ℝ →
     intro c d hcard hcd hsub
     rcases (p.filter (· ∈ Ioo c d)).eq_empty_or_nonempty with he | hne
     · exact hbase c d hcd hsub (hdisj he)
-    set m := (p.filter (· ∈ Ioo c d)).max' hne with hm_def
+    set m := (p.filter (· ∈ Ioo c d)).max' hne
     obtain ⟨hmp, hm⟩ := Finset.mem_filter.mp ((p.filter (· ∈ Ioo c d)).max'_mem hne)
     have hssub : p.filter (· ∈ Ioo c m) ⊂ p.filter (· ∈ Ioo c d) :=
       (Finset.ssubset_iff_of_subset (Finset.monotone_filter_right _ fun x _ hx =>

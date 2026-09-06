@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.NumberTheory.RamificationInertia.Galois
+import TauCeti.RingTheory.Unramified.AlgEquiv
 
 /-!
 # Ramification and inertia counting criteria
@@ -34,10 +35,13 @@ upstairs.
   subgroup unchanged.
 * `Ideal.inertia_eq_of_liesOver`: for a commutative Galois group, all the primes above a fixed
   prime of the base have the same inertia subgroup.
+* `Ideal.isUnramifiedAt_pointwise_smul_iff`: unramifiedness is invariant under translation by
+  an algebra automorphism.
 
 ## Provenance
 
-Built directly on Mathlib's Galois fundamental identity
+Built directly on Mathlib's unramifiedness transport
+(`AlgEquiv.isUnramifiedAt_of_eq_comap`), on its Galois fundamental identity
 (`Ideal.ncard_primesOver_mul_ramificationIdxIn_mul_inertiaDegIn`), on its inertia count
 (`Ideal.card_inertia_eq_ramificationIdxIn`), and on its transitivity statement
 (`Ideal.exists_smul_eq_of_isGaloisGroup`).
@@ -46,6 +50,31 @@ Built directly on Mathlib's Galois fundamental identity
 public section
 
 open Ideal Module
+
+namespace Ideal
+
+open scoped Pointwise
+
+variable {R S : Type*} [CommRing R] [CommRing S] [Algebra R S]
+  {G : Type*} [Group G] [MulSemiringAction G S] [SMulCommClass G R S]
+
+/-- **Unramifiedness is invariant under algebra automorphisms.** Translating a prime by an
+`R`-algebra action automorphism preserves unramifiedness over `R`. -/
+@[simp]
+theorem isUnramifiedAt_pointwise_smul_iff (Q : Ideal S) [Q.IsPrime] (g : G) :
+    Algebra.IsUnramifiedAt R (g • Q) ↔ Algebra.IsUnramifiedAt R Q := by
+  constructor
+  · intro h
+    let _ : Algebra.IsUnramifiedAt R (g • Q) := h
+    apply (MulSemiringAction.toAlgEquiv R S g).isUnramifiedAt_of_eq_comap (q := g • Q)
+    rw [Ideal.pointwise_smul_eq_comap]
+    exact (Ideal.comap_of_equiv (MulSemiringAction.toRingEquiv G S g)).symm
+  · intro h
+    let _ : Algebra.IsUnramifiedAt R Q := h
+    apply (MulSemiringAction.toAlgEquiv R S g).symm.isUnramifiedAt_of_eq_comap (q := Q)
+    exact Ideal.pointwise_smul_eq_comap Q
+
+end Ideal
 
 namespace Ideal
 

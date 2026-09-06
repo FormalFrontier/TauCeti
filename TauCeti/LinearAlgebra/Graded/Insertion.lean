@@ -5,7 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Homology.ComplexShapeSigns
+public import TauCeti.Algebra.Ring.NegOnePow
+public import Mathlib.Data.Fin.VecNotation
+import Mathlib.Data.Fin.Tuple.Reflection
 public import TauCeti.LinearAlgebra.Graded.Multilinear
 
 /-!
@@ -28,6 +30,9 @@ proves that insertion adds the degrees of the outer and inner operations.
 
 ## Main definitions
 
+* `MultilinearMap.evalNat`: evaluate a finite-arity map on a natural-indexed input family.
+* `TauCeti.replaceBlock`: collapse a consecutive block in a natural-indexed family.
+* `Fin.blockEquiv` and `Fin.oneSlotEquiv`: canonical reindexings for one-slot substitution.
 * `MultilinearMap.oneSlot`: substitute one multilinear map into a specified block of another.
 * `MultilinearMap.koszulSign`: the sign acquired by crossing the prefix inputs.
 * `MultilinearMap.signedOneSlot`: one-slot substitution scaled by the Koszul sign for supplied
@@ -48,6 +53,61 @@ open MultilinearMap
 universe uR uα uβ uγ uM uN
 
 namespace MultilinearMap
+
+section EvalNat
+
+variable {R : Type uR} {M : Type uM} [Semiring R] [AddCommMonoid M] [Module R M]
+
+/-- Evaluate an arity-`k` operation on the first `k` entries of a family indexed by the naturals. -/
+def evalNat {k : ℕ} {N : Type uN} [AddCommMonoid N] [Module R N]
+    (f : MultilinearMap R (fun _ : Fin k ↦ M) N) (x : ℕ → M) : N :=
+  f fun i ↦ x i.1
+
+theorem evalNat_def {k : ℕ} {N : Type uN} [AddCommMonoid N] [Module R N]
+    (f : MultilinearMap R (fun _ : Fin k ↦ M) N) (x : ℕ → M) :
+    evalNat f x = f (fun i ↦ x i.1) := (rfl)
+
+/-- `evalNat` only reads the entries whose indices are below the operation's arity. -/
+theorem evalNat_congr {k : ℕ} {N : Type uN} [AddCommMonoid N] [Module R N]
+    (f : MultilinearMap R (fun _ : Fin k ↦ M) N) {x y : ℕ → M}
+    (h : ∀ i < k, x i = y i) : evalNat f x = evalNat f y := by
+  rw [evalNat_def, evalNat_def]
+  congr 1
+  funext i
+  exact h i i.isLt
+
+@[simp]
+theorem evalNat_smul {k : ℕ} {N : Type uN} [AddCommMonoid N] [Module R N]
+    [SMulCommClass R R N]
+    (c : R) (f : MultilinearMap R (fun _ : Fin k ↦ M) N) (x : ℕ → M) :
+    evalNat (c • f) x = c • evalNat f x := by
+  simp [evalNat]
+
+@[simp]
+theorem evalNat_one {N : Type uN} [AddCommMonoid N] [Module R N]
+    (f : MultilinearMap R (fun _ : Fin 1 ↦ M) N) (x : ℕ → M) :
+    evalNat f x = f ![x 0] := by
+  exact congrArg f (FinVec.etaExpand_eq _).symm
+
+@[simp]
+theorem evalNat_two {N : Type uN} [AddCommMonoid N] [Module R N]
+    (f : MultilinearMap R (fun _ : Fin 2 ↦ M) N) (x : ℕ → M) :
+    evalNat f x = f ![x 0, x 1] := by
+  exact congrArg f (FinVec.etaExpand_eq _).symm
+
+@[simp]
+theorem evalNat_three {N : Type uN} [AddCommMonoid N] [Module R N]
+    (f : MultilinearMap R (fun _ : Fin 3 ↦ M) N) (x : ℕ → M) :
+    evalNat f x = f ![x 0, x 1, x 2] := by
+  exact congrArg f (FinVec.etaExpand_eq _).symm
+
+@[simp]
+theorem evalNat_four {N : Type uN} [AddCommMonoid N] [Module R N]
+    (f : MultilinearMap R (fun _ : Fin 4 ↦ M) N) (x : ℕ → M) :
+    evalNat f x = f ![x 0, x 1, x 2, x 3] := by
+  exact congrArg f (FinVec.etaExpand_eq _).symm
+
+end EvalNat
 
 section OneSlot
 
@@ -120,6 +180,78 @@ end OneSlot
 
 end MultilinearMap
 
+namespace TauCeti
+
+/-- Replace the block of `s` entries at position `p` of a natural-indexed family by `v`. -/
+def replaceBlock {α : Type*} (x : ℕ → α) (p s : ℕ) (v : α) : ℕ → α := fun i ↦
+  if i < p then x i else if i = p then v else x (i + s - 1)
+
+@[simp]
+theorem replaceBlock_of_lt {α : Type*} (x : ℕ → α) (p s : ℕ) (v : α) {i : ℕ} (h : i < p) :
+    replaceBlock x p s v i = x i := by simp [replaceBlock, h]
+
+@[simp]
+theorem replaceBlock_self {α : Type*} (x : ℕ → α) (p s : ℕ) (v : α) :
+    replaceBlock x p s v p = v := by simp [replaceBlock]
+
+@[simp]
+theorem replaceBlock_of_gt {α : Type*} (x : ℕ → α) (p s : ℕ) (v : α) {i : ℕ} (h : p < i) :
+    replaceBlock x p s v i = x (i + s - 1) := by
+  simp only [replaceBlock]
+  split_ifs with h₁ h₂
+  · exact absurd h₁ (by omega)
+  · exact absurd h₂ (by omega)
+  · rfl
+
+end TauCeti
+
+namespace Fin
+
+/-- Identify a prefix, inserted block, and suffix with their total finite arity. -/
+def blockEquiv (p s t : ℕ) : Fin p ⊕ (Fin s ⊕ Fin t) ≃ Fin (p + s + t) :=
+  (Equiv.sumCongr (Equiv.refl (Fin p))
+      (finSumFinEquiv : Fin s ⊕ Fin t ≃ Fin (s + t))).trans <|
+    (finSumFinEquiv : Fin p ⊕ Fin (s + t) ≃ Fin (p + (s + t))).trans
+      (finCongr (by omega))
+
+@[simp]
+theorem blockEquiv_inl_val (p s t : ℕ) (i : Fin p) :
+    (blockEquiv p s t (.inl i) : ℕ) = i := by
+  simp [blockEquiv]
+
+@[simp]
+theorem blockEquiv_middle_val (p s t : ℕ) (j : Fin s) :
+    (blockEquiv p s t (.inr (.inl j)) : ℕ) = p + j := by
+  simp [blockEquiv]
+
+@[simp]
+theorem blockEquiv_suffix_val (p s t : ℕ) (j : Fin t) :
+    (blockEquiv p s t (.inr (.inr j)) : ℕ) = p + s + j := by
+  simp [blockEquiv]
+  omega
+
+/-- Identify a prefix, one collapsed slot, and suffix with their total finite arity. -/
+def oneSlotEquiv (p t : ℕ) : Fin p ⊕ (Unit ⊕ Fin t) ≃ Fin (p + 1 + t) :=
+  (Equiv.sumCongr (Equiv.refl (Fin p))
+    (Equiv.sumCongr finOneEquiv.symm (Equiv.refl (Fin t)))).trans (blockEquiv p 1 t)
+
+@[simp]
+theorem oneSlotEquiv_inl_val (p t : ℕ) (i : Fin p) :
+    (oneSlotEquiv p t (.inl i) : ℕ) = i := by
+  simp [oneSlotEquiv]
+
+@[simp]
+theorem oneSlotEquiv_middle_val (p t : ℕ) :
+    (oneSlotEquiv p t (.inr (.inl ())) : ℕ) = p := by
+  simp [oneSlotEquiv]
+
+@[simp]
+theorem oneSlotEquiv_suffix_val (p t : ℕ) (j : Fin t) :
+    (oneSlotEquiv p t (.inr (.inr j)) : ℕ) = p + 1 + j := by
+  simp [oneSlotEquiv]
+
+end Fin
+
 namespace TauCeti.MultilinearMap
 
 section Homogeneous
@@ -175,19 +307,17 @@ variable [Ring R]
 /-- The Koszul coefficient acquired when a degree-`q` operation crosses homogeneous inputs with
 degrees `d i`. -/
 def koszulSign {α : Type uα} [Fintype α] (q : ℤ) (d : α → ℤ) : R :=
-  (((ComplexShape.up ℤ).ε (q * ∑ i, d i) : ℤ) : R)
+  TauCeti.negOnePowCast R (q * ∑ i, d i)
 
-/-- The tensor-sign character on cochain degrees is the usual power of negative one. -/
+/-- The Koszul coefficient is the ground-ring power of negative one. -/
 @[simp]
-theorem koszulSign_eq_negOnePow {α : Type uα} [Fintype α] (q : ℤ) (d : α → ℤ) :
-    koszulSign (R := R) q d = (((q * ∑ i, d i).negOnePow : ℤ) : R) := by
-  simp [koszulSign]
+theorem koszulSign_eq_negOnePowCast {α : Type uα} [Fintype α] (q : ℤ) (d : α → ℤ) :
+    koszulSign (R := R) q d = TauCeti.negOnePowCast R (q * ∑ i, d i) := (rfl)
 
 theorem koszulSign_add_degree {α : Type uα} [Fintype α] (q q' : ℤ) (d : α → ℤ) :
     koszulSign (R := R) (q + q') d =
       koszulSign (R := R) q d * koszulSign (R := R) q' d := by
-  simp only [koszulSign, add_mul, ComplexShape.ε_add, Units.val_mul]
-  norm_cast
+  simp only [koszulSign, add_mul, TauCeti.negOnePowCast_add]
 
 end KoszulSign
 

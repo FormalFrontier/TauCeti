@@ -64,12 +64,11 @@ abstract index type does not supply; over `ℕ` that reference is `X 0`, and
 `MixedIIDWith.of_iIndepFun_identDistrib` recovers that form. -/
 theorem MixedIIDWith.of_iIndepFun_map_eq {μ : Measure Ω} {X : ι → Ω → α}
     {p : ProbabilityMeasure α} (hindep : iIndepFun X μ)
+    (hX : ∀ i, AEMeasurable (X i) μ)
     (hlaw : ∀ i, μ.map (X i) = (p : Measure α)) :
     MixedIIDWith μ X fun _ => p := by
   have := hindep.isProbabilityMeasure
-  have hX : ∀ i, AEMeasurable (X i) μ := fun i =>
-    AEMeasurable.of_map_ne_zero (by rw [hlaw i]; exact IsProbabilityMeasure.ne_zero _)
-  refine MixedIIDWith.intro measurable_const fun m k hk => ?_
+  refine MixedIIDWith.intro hX measurable_const fun m k hk => ?_
   have hindep_k : iIndepFun (fun i : Fin m => X (k i)) μ := hindep.precomp hk
   have hblock : blockLaw μ X k = Measure.pi (fun _ : Fin m => (p : Measure α)) := by
     have h1 : blockLaw μ X k = Measure.pi (fun i : Fin m => μ.map (X (k i))) := by
@@ -91,10 +90,11 @@ theorem MixedIIDWith.of_iIndepFun_identDistrib_at {μ : Measure Ω}
     haveI := hindep.isProbabilityMeasure
     MixedIIDWith μ X
       (fun _ => (⟨μ.map (X i₀),
-        Measure.isProbabilityMeasure_map (hident i₀).aemeasurable_fst⟩ :
+        inferInstance⟩ :
           ProbabilityMeasure α)) := by
   have := hindep.isProbabilityMeasure
-  exact MixedIIDWith.of_iIndepFun_map_eq hindep fun i => (hident i).map_eq
+  exact MixedIIDWith.of_iIndepFun_map_eq hindep (fun i => (hident i).aemeasurable_fst)
+    fun i => (hident i).map_eq
 
 /-- **An i.i.d. sequence is mixed i.i.d.**, with the common law `μ.map (X 0)` as constant mixing
 representative. The `ℕ`-indexed specialization of `MixedIIDWith.of_iIndepFun_identDistrib_at` at
@@ -105,7 +105,7 @@ theorem MixedIIDWith.of_iIndepFun_identDistrib {μ : Measure Ω}
     haveI := hindep.isProbabilityMeasure
     MixedIIDWith μ X
       (fun _ => (⟨μ.map (X 0),
-        Measure.isProbabilityMeasure_map (hident 0).aemeasurable_fst⟩ :
+        inferInstance⟩ :
           ProbabilityMeasure α)) :=
   MixedIIDWith.of_iIndepFun_identDistrib_at 0 hindep hident
 

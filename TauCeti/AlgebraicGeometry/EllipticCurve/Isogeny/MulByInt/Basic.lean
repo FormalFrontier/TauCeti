@@ -82,6 +82,10 @@ is `WeierstrassCurve.Affine`'s, in `Affine/FunctionField/GenericPoint.lean`.
 * `TauCeti.Isogeny.psiFunctionField_ne_zero_of_Δ_ne_zero`: the same conclusion from `W.Δ ≠ 0`
   and `n ≠ 0`, with no hypothesis on the characteristic. These are the two discharges of
   `mulByIntPullback`'s hypothesis; neither subsumes the other.
+* `TauCeti.Isogeny.phiFunctionField_eq_algebraMap`: `Φₙ` at the generic point is the image of
+  the univariate `Φₙ`, the companion of `psiFunctionField_sq` for the numerator.
+* `TauCeti.Isogeny.mulByIntX_mul_aeval_ΨSq`: the coordinate identity `[n]*x · ΨSqₙ(x) = Φₙ(x)`
+  at the generic point, where `ψₙ` does not vanish.
 * `TauCeti.Isogeny.mulByIntPullback_mk`: the pullback of an arbitrary class, as evaluation of a
   bivariate polynomial at `(φₙ/ψₙ², ωₙ/ψₙ³)`, with `TauCeti.Isogeny.mulByIntPullback_X` and
   `TauCeti.Isogeny.mulByIntPullback_Y` its values on the two coordinates.
@@ -153,6 +157,13 @@ theorem omegaFunctionField_def (n : ℤ) : omegaFunctionField W n =
 theorem phiFunctionField_def (n : ℤ) : phiFunctionField W n =
     algebraMap W.CoordinateRing W.FunctionField (Affine.CoordinateRing.mk W (W.φ n)) := (rfl)
 
+/-- **`Φₙ` at the generic point is the image of the univariate `Φₙ`.** -/
+theorem phiFunctionField_eq_algebraMap (n : ℤ) :
+    phiFunctionField W n = algebraMap F[X] W.FunctionField (W.Φ n) := by
+  rw [phiFunctionField_def, Affine.CoordinateRing.mk_φ,
+    TauCeti.WeierstrassCurve.Affine.CoordinateRing.mk_C_eq_algebraMap,
+    ← IsScalarTower.algebraMap_apply]
+
 /-- **The defining equation of `mulByIntX`**: the `x`-coordinate of `[n]` is `φₙ / ψₙ²`. -/
 theorem mulByIntX_def (n : ℤ) :
     mulByIntX W n = phiFunctionField W n / psiFunctionField W n ^ 2 := (rfl)
@@ -202,6 +213,18 @@ private theorem smulEval_genericPoint_Y (n : ℤ) :
 theorem psiFunctionField_sq (n : ℤ) : psiFunctionField W n ^ 2 =
       algebraMap W.CoordinateRing W.FunctionField (Affine.CoordinateRing.mk W (C (W.ΨSq n))) := by
   rw [psiFunctionField, ← map_pow, Affine.CoordinateRing.mk_ψ, Affine.CoordinateRing.mk_Ψ_sq]
+
+/-- **The coordinate identity at the generic point**: `[n]*x · ΨSqₙ(x) = Φₙ(x)`. -/
+theorem mulByIntX_mul_aeval_ΨSq (n : ℤ) (hn : psiFunctionField W n ≠ 0) :
+    mulByIntX W n * aeval W.genericX (W.ΨSq n) = aeval W.genericX (W.Φ n) := by
+  have hphi : phiFunctionField W n = aeval W.genericX (W.Φ n) := by
+    rw [phiFunctionField_eq_algebraMap, W.algebraMap_eq_aeval_genericX]
+  have hpsi : psiFunctionField W n ^ 2 = aeval W.genericX (W.ΨSq n) := by
+    rw [psiFunctionField_sq, TauCeti.WeierstrassCurve.Affine.CoordinateRing.mk_C_eq_algebraMap,
+      ← IsScalarTower.algebraMap_apply F[X] W.CoordinateRing W.FunctionField,
+      W.algebraMap_eq_aeval_genericX]
+  rw [← hphi, ← hpsi, mulByIntX_def]
+  exact div_mul_cancel₀ _ (pow_ne_zero 2 hn)
 
 /-- **The coordinates of `[n]` satisfy the equation of `W` over its function field.**
 
@@ -263,13 +286,9 @@ theorem psiFunctionField_ne_zero_of_Δ_ne_zero (hΔ : W.Δ ≠ 0) {n : ℤ} (hn 
   fun h ↦ WeierstrassCurve.ΨSq_ne_zero_of_Δ_ne_zero W hΔ hn
     (ΨSq_eq_zero_of_psiFunctionField_eq_zero W h)
 
-/-- **The coordinate pullback of `[n]`.** The coordinate ring is `F[X]` with a root of the
-Weierstrass polynomial adjoined, so a map out of it is exactly a value for `X` together with a
-value for `Y` satisfying that polynomial — here `φₙ/ψₙ²` and `ωₙ/ψₙ³`, which satisfy it by
-`equation_mulByInt`.
-
-`CoordinatePullback` asks for an `F`-algebra hom, which is what `AdjoinRoot.liftAlgHom` produces
-from the `F`-algebra map `F[X] → W.FunctionField` sending `X` to `φₙ/ψₙ²`.
+/-- **The coordinate pullback of `[n]`.** The point `(φₙ/ψₙ², ωₙ/ψₙ³)` over `W.FunctionField`,
+which `equation_mulByInt` says lies on `W`, defines a pullback through
+`WeierstrassCurve.Affine.CoordinateRing.evalAlgHom`.
 
 The hypothesis is the weakest one the construction uses: `ψₙ` must not vanish at the generic
 point, which is what makes `φₙ/ψₙ²` and `ωₙ/ψₙ³` defined. Two lemmas discharge it —
@@ -297,8 +316,8 @@ rule; `mulByIntPullback_X` and `mulByIntPullback_Y` are its two special cases. -
 theorem mulByIntPullback_mk [W.IsElliptic] {n : ℤ} (hn : psiFunctionField W n ≠ 0) (p : F[X][Y]) :
     mulByIntPullback W hn (Affine.CoordinateRing.mk W p) =
       (p.map (mapRingHom (algebraMap F W.FunctionField))).evalEval (mulByIntX W n)
-        (mulByIntY W n) := by
-  exact Affine.CoordinateRing.evalAlgHom_mk _ p
+        (mulByIntY W n) :=
+  Affine.CoordinateRing.evalAlgHom_mk _ p
 
 /-- The pullback of `[n]` sends the class of `X` to `φₙ/ψₙ²`.
 
@@ -308,15 +327,13 @@ already normalised this way by the time this fires. -/
 @[simp]
 theorem mulByIntPullback_X [W.IsElliptic] {n : ℤ} (hn : psiFunctionField W n ≠ 0) :
     mulByIntPullback W hn (AdjoinRoot.of W.polynomial X) = mulByIntX W n := by
-  simpa [mulByIntPullback] using
-    Affine.CoordinateRing.evalAlgHom_mk_C_X (equation_mulByInt W hn)
+  simp [mulByIntPullback]
 
 /-- The pullback of `[n]` sends the class of `Y` to `ωₙ/ψₙ³`. -/
 @[simp]
 theorem mulByIntPullback_Y [W.IsElliptic] {n : ℤ} (hn : psiFunctionField W n ≠ 0) :
     mulByIntPullback W hn (AdjoinRoot.root W.polynomial) = mulByIntY W n := by
-  simpa [mulByIntPullback] using
-    Affine.CoordinateRing.evalAlgHom_mk_Y (equation_mulByInt W hn)
+  simp [mulByIntPullback]
 
 end Isogeny
 

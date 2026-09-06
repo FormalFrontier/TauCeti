@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Analysis.PositiveDefinite.Function.Kernel
 public import TauCeti.LinearAlgebra.Matrix.PosSemidef
-public import Mathlib.Data.NNReal.Basic
+public import Mathlib.Basic.NNReal.Basic
 
 /-!
 # Positive-definite functions on `[0, ∞) × V`

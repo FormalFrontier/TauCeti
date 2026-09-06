@@ -11,8 +11,6 @@ public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 -- Non-public: `TauCeti.isIrreducible_iff_isAtom` appears only inside the proof.
 import TauCeti.Algebra.Lie.Submodule.Atom
 
-public section
-
 /-!
 # Complements make a finite-dimensional Lie module a direct sum of irreducibles
 
@@ -46,6 +44,8 @@ This is the shared tail of the two complete-reducibility theorems of
 (`TauCeti/Algebra/Lie/HighestWeight/CompleteReducibility.lean`), both of which ask for the module
 to be exhibited as a direct sum of irreducibles.
 -/
+
+public section
 
 namespace TauCeti
 

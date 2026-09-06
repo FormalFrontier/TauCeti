@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.AddSubMap
-public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.Point.Duplication
 
 /-!
 # The addition-and-subtraction map on symmetric `x`-coordinates

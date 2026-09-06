@@ -9,8 +9,6 @@ public import Mathlib.Algebra.Lie.Rank
 import Mathlib.Algebra.Module.Submodule.Union
 public import Mathlib.Algebra.Lie.Weights.Killing
 
-public section
-
 /-!
 # A Cartan subalgebra contains a generic element
 
@@ -46,6 +44,8 @@ Cartan-dimension argument and is deliberately not asserted here.
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, Springer GTM 9
   (1972), §15.1--15.3.
 -/
+
+public section
 
 namespace TauCeti
 

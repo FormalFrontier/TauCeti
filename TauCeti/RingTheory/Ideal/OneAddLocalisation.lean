@@ -9,6 +9,7 @@ public import TauCeti.RingTheory.Ideal.Nilpotent
 public import Mathlib.RingTheory.Localization.Defs
 public import Mathlib.RingTheory.Finiteness.Ideal
 import Mathlib.Tactic.NoncommRing
+import TauCeti.RingTheory.Ideal.PowerStabilization
 
 /-!
 # Localising at `1 + I`
@@ -17,7 +18,11 @@ For an ideal `I` of a semiring `B`, the set `1 + I` is a submonoid of `B`. If `B
 `I` is finitely generated, and its image in a localisation at `1 + I` lies in every prime there,
 then a single element of `1 + I` annihilates a power of `I`.
 
-Only that implication is proved here, and only under `I.FG`; the converse is not stated.
+Over a commutative *ring* that annihilator makes the powers of `I` constant, which is the form
+Wedhorn's argument actually uses and the one stated last below: its conclusion mentions neither the
+localisation nor the submonoid.
+
+Only these implications are proved here, and only under `I.FG`; the converses are not stated.
 
 The nilpotence step is not about localisation at all and lives in
 `TauCeti.RingTheory.Ideal.Nilpotent` as `Ideal.exists_pow_map_eq_bot`. Localisation enters here,
@@ -30,6 +35,8 @@ to turn "the image of `I ^ n` is zero" into an annihilator lying in `1 + I`.
 * `Ideal.exists_mem_oneAdd_forall_mul_eq_zero`: if `I` is finitely generated and its image in a
   localisation `C` at `1 + I` is contained in every prime of `C`, there is a single `s ∈ 1 + I`
   with `s * x = 0` for every `x ∈ I ^ n`.
+* `Ideal.exists_forall_pow_eq_pow`: over a commutative ring, the same hypotheses make the powers
+  of `I` constant from some point on.
 
 ## References
 
@@ -101,5 +108,31 @@ theorem exists_mem_oneAdd_forall_mul_eq_zero (hfg : I.FG)
     | smul c y _ hy => rw [smul_eq_mul, mul_comm c y, ← mul_assoc, hy, zero_mul]
 
 end Localisation
+
+section CommRing
+
+variable {B C : Type*} [CommRing B] [CommSemiring C] [Algebra B C] {I : Ideal B}
+  [IsLocalization (oneAdd I) C]
+
+/-- **The powers of `I` are eventually constant.** If `I` is a finitely generated ideal of a
+commutative ring `B` whose image in a localisation `C` at `1 + I` lies in every prime of `C`, then
+`I ^ k = I ^ n` for some `n` and all `k ≥ n`.
+
+This is the closing step of Wedhorn's proof of Proposition 7.49(2), and the reason the localisation
+is introduced there at all. Note what the conclusion does *not* mention: neither `C` nor `1 + I`
+survives it, so a caller who has discharged the hypothesis is left with a statement purely about
+`I`. -/
+theorem exists_forall_pow_eq_pow (hfg : I.FG)
+    (hprime : ∀ P : Ideal C, P.IsPrime → I.map (algebraMap B C) ≤ P) :
+    ∃ n : ℕ, ∀ k, n ≤ k → I ^ k = I ^ n := by
+  -- The two halves are `exists_mem_oneAdd_forall_mul_eq_zero`, which produces the annihilator,
+  -- and `pow_eq_pow_of_forall_mul_eq_zero`, which turns an annihilator of the shape `1 + i` into
+  -- stabilization; membership in `1 + I` is exactly the shape that second lemma expects, which is
+  -- why the submonoid is recorded existentially.
+  obtain ⟨n, s, hs, hann⟩ := exists_mem_oneAdd_forall_mul_eq_zero (C := C) hfg hprime
+  obtain ⟨a, ha, rfl⟩ := (mem_oneAdd I).mp hs
+  exact ⟨n, fun k hk ↦ pow_eq_pow_of_forall_mul_eq_zero ha hann hk⟩
+
+end CommRing
 
 end Ideal

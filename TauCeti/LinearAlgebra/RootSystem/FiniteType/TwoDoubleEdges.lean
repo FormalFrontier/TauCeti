@@ -8,8 +8,6 @@ module
 public import TauCeti.LinearAlgebra.RootSystem.Chain
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
 
-public section
-
 /-!
 # A chain of a finite-type diagram carries at most one multiple edge
 
@@ -74,6 +72,8 @@ Bourbaki, *Lie Groups and Lie Algebras, Chapters 4-6*, Ch. VI §4. The two affin
 labels are Table Aff 2 of V. G. Kac, *Infinite Dimensional Lie Algebras*, CUP (1990), whose
 convention `aᵢⱼ = ⟨αⱼ, αᵢ^∨⟩` is the transpose of the one used here.
 -/
+
+public section
 
 namespace TauCeti
 

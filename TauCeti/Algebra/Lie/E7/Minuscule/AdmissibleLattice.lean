@@ -311,6 +311,14 @@ theorem isCartanWeightVector_single (a : Fin 56) :
     simp [Matrix.mulVec, dotProduct, cartanMatrixRat_apply, Pi.single_apply]
   · simp [Matrix.mulVec, dotProduct, cartanMatrixRat_apply, Pi.single_apply, h]
 
+/-- Every minuscule lattice-basis vector is a Cartan weight vector with its minuscule weight. -/
+theorem isCartanWeightVector_latticeBasis (a : Fin 56) :
+    TauCeti.UniversalEnvelopingAlgebra.IsCartanWeightVector
+      (TauCeti.serreH ℚ (CartanMatrix.E 7)) rep (e7MinusculeWeight a)
+      ((latticeBasis a : lattice) : Fin 56 → ℚ) := by
+  rw [coe_latticeBasis]
+  exact isCartanWeightVector_single a
+
 /-- **The minuscule coordinate lattice is admissible for the type-`E₇` Serre Kostant form.** -/
 theorem rep_serreKostantForm_apply_mem_lattice
     {u : _root_.UniversalEnvelopingAlgebra ℚ

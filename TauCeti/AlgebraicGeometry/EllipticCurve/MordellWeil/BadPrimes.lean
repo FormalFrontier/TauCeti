@@ -12,7 +12,6 @@ public import Mathlib.RingTheory.Localization.Integral
 public import TauCeti.AlgebraicGeometry.EllipticCurve.MordellWeil.XSubT
 public import TauCeti.RingTheory.AdjoinRoot.Factors
 public import TauCeti.RingTheory.DedekindDomain.PrimesAbove
-import Mathlib.Tactic.ComputeDegree
 import Mathlib.Tactic.LinearCombination
 import TauCeti.RingTheory.DedekindDomain.SelmerGroup
 import TauCeti.RingTheory.Valuation.RootMonic
@@ -62,12 +61,14 @@ group theory back and reads it as membership in a Selmer group.
 
 ## Implementation notes
 
-The three `Valuation` lemmas about the monic cubic `t³ + at² + bt + c` are `private`. They are
-specializations of `TauCeti.RingTheory.Valuation.RootMonic` to the shape of a Weierstrass
-equation, used only to discharge coefficient hypotheses in this file and its sequel, so they are
-proof plumbing rather than API. The general statements they specialize are the exported ones. This
-is also why the `Core` section lives in this file rather than in `SelmerGroupA`: it is the last
-consumer of those private helpers.
+The `Valuation` lemmas about the monic cubic `t³ + at² + bt + c` used to live here as `private`
+plumbing, on the grounds that this file and its sequel were their only consumers. The two public
+statements now sit with the general statements they specialize, in
+`TauCeti.RingTheory.Valuation.RootMonic`, and are used from here as `Valuation` dot notation; one
+of them, `map_cubic_eq_of_one_lt`, has since gained a consumer outside `MordellWeil/`. The
+coefficient helper they share stays `private` there.
+The `Core` section still lives in this file rather than in `SelmerGroupA` because it is the last
+consumer of the `RingOfIntegers` estimates above.
 
 ## Roadmap
 
@@ -80,8 +81,8 @@ primes defined here.
 Adapted, with the author's proofs, from Michael Stoll's `EllipticCurves` project
 (`github.com/MichaelStollBayreuth/EllipticCurves`, Apache-2.0, pinned by
 `TauCetiRoadmap/EllipticCurves/README.md` at `66889eada51a`),
-`EllipticCurves/WeakMordellWeil.lean`, sections `Cubic`, `BadPrimes`, `RingOfIntegers` and
-`Core`. The
+`EllipticCurves/WeakMordellWeil.lean`, sections `BadPrimes`, `RingOfIntegers` and `Core` (the
+source's `Cubic` section is now in `TauCeti.RingTheory.Valuation.RootMonic`). The
 source carries its own `HeightOneSpectrum.below`; at our Mathlib pin that map is
 `HeightOneSpectrum.under`, which is used here instead. The source is written against Lean
 `v4.32.0`; this is a forward port.
@@ -90,46 +91,6 @@ source carries its own `HeightOneSpectrum.below`; at our Mathlib pin that map is
 public section
 
 open Polynomial
-
-section Cubic
-
--- `Nontrivial L` is what `compute_degree!` needs to know the leading coefficient `1` is nonzero,
--- i.e. that the cubic really has degree `3`.
-variable {L Γ : Type*} [CommRing L] [Nontrivial L] [LinearOrderedCommGroupWithZero Γ]
-  (ν : Valuation L Γ) {t a b c : L}
-
-/-- The non-leading coefficients of `X³ + aX² + bX + c` are `a`, `b`, `c` (and zeros), so they
-are integral as soon as `a`, `b`, `c` are. This is the coefficient hypothesis that
-`RootMonic`'s general lemmas take. -/
-private lemma cubic_coeff_le_one (ha : ν a ≤ 1) (hb : ν b ≤ 1) (hc : ν c ≤ 1) :
-    ∀ i < (X ^ 3 + C a * X ^ 2 + C b * X + C c).natDegree,
-      ν ((X ^ 3 + C a * X ^ 2 + C b * X + C c).coeff i) ≤ 1 := by
-  have hdeg : (X ^ 3 + C a * X ^ 2 + C b * X + C c).natDegree = 3 := by compute_degree!
-  intro i hi
-  rw [hdeg] at hi
-  interval_cases i <;> simp [ha, hb, hc]
-
-/-- A monic cubic with integral coefficients, evaluated at an element of value `> 1`, is
-dominated by its leading term. -/
-private lemma Valuation.map_cubic_of_one_lt (ha : ν a ≤ 1) (hb : ν b ≤ 1) (hc : ν c ≤ 1)
-    (ht : 1 < ν t) :
-    ν (t ^ 3 + a * t ^ 2 + b * t + c) = ν t ^ 3 := by
-  have hp : (X ^ 3 + C a * X ^ 2 + C b * X + C c).Monic := by monicity!
-  have hdeg : (X ^ 3 + C a * X ^ 2 + C b * X + C c).natDegree = 3 := by compute_degree!
-  have h := ν.map_eval_eq_of_one_lt hp (cubic_coeff_le_one ν ha hb hc) ht
-  rw [hdeg] at h
-  simpa using h
-
-/-- A root of a monic cubic with integral coefficients is integral. -/
-private lemma Valuation.le_one_of_root_cubic (ha : ν a ≤ 1) (hb : ν b ≤ 1) (hc : ν c ≤ 1)
-    (heq : t ^ 3 + a * t ^ 2 + b * t + c = 0) :
-    ν t ≤ 1 := by
-  have hp : (X ^ 3 + C a * X ^ 2 + C b * X + C c).Monic := by monicity!
-  have hdeg : (X ^ 3 + C a * X ^ 2 + C b * X + C c).natDegree = 3 := by compute_degree!
-  refine ν.le_one_of_root_monic hp (cubic_coeff_le_one ν ha hb hc) ?_
-  simpa using heq
-
-end Cubic
 
 namespace WeierstrassCurve.Affine
 
@@ -504,7 +465,8 @@ private lemma even_valuationOfNeZero_sub_root_of_one_lt
       algebraMap K L W.a₄ * algebraMap K L x + algebraMap K L W.a₆ := by
     rw [← W.map_eval_f, (equation_iff_eval_f_eq_sq W x y).mp h, map_pow]
   have hval : ν (algebraMap K L y) ^ 2 = ν (algebraMap K L x) ^ 3 := by
-    rw [← map_pow, heq, ν.map_cubic_of_one_lt (W.valuation_a₂_le_one_of_notMem_primesAbove R p hw)
+    rw [← map_pow, heq,
+      ν.map_cubic_eq_of_one_lt (W.valuation_a₂_le_one_of_notMem_primesAbove R p hw)
       (W.valuation_a₄_le_one_of_notMem_primesAbove R p hw)
       (W.valuation_a₆_le_one_of_notMem_primesAbove R p hw) hx']
   -- `ν (x - θ) = ν x`, since `θ` is integral and `x` is not

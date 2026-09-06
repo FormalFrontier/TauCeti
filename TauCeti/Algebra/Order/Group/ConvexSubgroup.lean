@@ -11,6 +11,7 @@ public import Mathlib.Algebra.Order.Hom.Monoid
 public import Mathlib.Algebra.Order.Hom.MonoidWithZero
 public import Mathlib.GroupTheory.QuotientGroup.Basic
 public import Mathlib.Order.Quotient
+public import TauCeti.Algebra.Order.Group.Subgroup
 
 /-!
 # Convex subgroups of linearly ordered groups
@@ -55,6 +56,8 @@ built from `closure` in the forthcoming valuation-spectrum development of `Spv (
 * `TauCeti.ConvexSubgroup.mulArchimedean_iff_forall_eq_bot_or_eq_top` : A linearly ordered
   commutative group is `MulArchimedean` exactly when its only convex subgroups are `⊥`
   and `⊤`.
+* `TauCeti.ConvexSubgroup.quotientBotOrderIso` : The quotient by `⊥` is the group itself, as an
+  order isomorphism, so order-theoretic properties transfer across it.
 
 ## References
 
@@ -179,6 +182,11 @@ theorem coe_toSubgroup (H : ConvexSubgroup Γ) : ((H.toSubgroup : Subgroup Γ) :
 @[simp]
 theorem toSubgroup_le {H K : ConvexSubgroup Γ} : H.toSubgroup ≤ K.toSubgroup ↔ H ≤ K :=
   Iff.rfl
+
+/-- Strict inclusion of convex subgroups is strict inclusion of the underlying subgroups. -/
+@[simp]
+theorem toSubgroup_lt {H K : ConvexSubgroup Γ} : H.toSubgroup < K.toSubgroup ↔ H < K := by
+  simp [lt_iff_le_not_ge, toSubgroup_le]
 
 /-- A convex subgroup is determined by the subgroup underlying it: convexity is a property,
 not extra data. -/
@@ -533,23 +541,11 @@ theorem eq_bot_or_eq_top_of_mulArchimedean [MulArchimedean Γ] (H : ConvexSubgro
   by_contra hH
   push Not at hH
   obtain ⟨hbot, htop⟩ := hH
-  obtain ⟨y, hy, hy1⟩ : ∃ y ∈ H, 1 < y := by
-    obtain ⟨y, hy, hy1⟩ : ∃ y ∈ H, y ≠ 1 := by
-      by_contra h
-      push Not at h
-      exact hbot (ext fun x ↦ ⟨fun hx ↦ mem_bot.mpr (h x hx), fun hx ↦ mem_bot.mp hx ▸ one_mem H⟩)
-    rcases lt_or_gt_of_ne hy1 with h | h
-    · exact ⟨y⁻¹, inv_mem hy, one_lt_inv'.mpr h⟩
-    · exact ⟨y, hy, h⟩
-  obtain ⟨x, hx, hx1⟩ : ∃ x, x ∉ H ∧ 1 < x := by
-    obtain ⟨x, hxH⟩ : ∃ x, x ∉ H := by
-      by_contra h
-      push Not at h
-      exact htop (ext fun x ↦ ⟨fun _ ↦ mem_top, fun _ ↦ h x⟩)
-    have hx_ne_one : x ≠ 1 := fun h ↦ hxH (h ▸ one_mem H)
-    rcases lt_or_gt_of_ne hx_ne_one with h | h
-    · exact ⟨x⁻¹, inv_mem_iff.not.mpr hxH, one_lt_inv'.mpr h⟩
-    · exact ⟨x, hxH, h⟩
+  obtain ⟨y, hy, -, hy1⟩ := Subgroup.exists_one_lt_of_lt
+    (by simpa using toSubgroup_lt.mpr (bot_lt_iff_ne_bot.mpr hbot))
+  obtain ⟨x, -, hx, hx1⟩ := Subgroup.exists_one_lt_of_lt
+    (by simpa using toSubgroup_lt.mpr (lt_top_iff_ne_top.mpr htop))
+  rw [mem_toSubgroup] at hy hx
   obtain ⟨n, hn⟩ := MulArchimedean.arch x hy1
   exact hx (H.convex (one_mem H) (pow_mem hy n) hx1.le hn)
 
@@ -655,6 +651,93 @@ theorem quotientMk_lt_one_of_notMem {a : Γ} (ha : a ≤ 1) (haH : a ∉ H) :
     simpa using H.quotientMk_monotone ha
   refine hle.lt_of_ne fun heq ↦ haH ?_
   exact (QuotientGroup.eq_one_iff a).mp (by simpa using heq)
+
+/-- **The quotient by `⊥` is the group itself.** `QuotientGroup.quotientBot` identifies the two
+groups once `bot_toSubgroup` has rewritten which subgroup is being quotiented by.
+
+Private implementation detail: this is only the underlying multiplicative equivalence of
+`quotientBotOrderIso`, which is the reusable object. It is named at all so that the order
+comparison below can be stated before that isomorphism exists. -/
+private noncomputable def quotientBotMulEquiv : (Γ ⧸ (⊥ : ConvexSubgroup Γ).toSubgroup) ≃* Γ :=
+  (QuotientGroup.quotientMulEquivOfEq (bot_toSubgroup (Γ := Γ))).trans QuotientGroup.quotientBot
+
+omit [IsOrderedMonoid Γ] in
+/-- **`quotientBotMulEquiv` sends the class of `a` to `a`.** Not `@[simp]`; see
+`quotientBotOrderIso_mk` for why none of these application lemmas can be. -/
+private theorem quotientBotMulEquiv_mk (a : Γ) :
+    quotientBotMulEquiv ((a : Γ ⧸ (⊥ : ConvexSubgroup Γ).toSubgroup)) = a := rfl
+
+omit [IsOrderedMonoid Γ] in
+/-- **`quotientBotMulEquiv.symm` sends `a` to its class.** Not `@[simp]`; see
+`quotientBotOrderIso_mk`. -/
+private theorem quotientBotMulEquiv_symm_apply (a : Γ) :
+    quotientBotMulEquiv.symm a = (a : Γ ⧸ (⊥ : ConvexSubgroup Γ).toSubgroup) := rfl
+
+/-- **`quotientBotMulEquiv` is an order equivalence.** Quotienting by `⊥` leaves the order alone:
+`a ≤ b` in the quotient unfolds to `b⁻¹ * a ≤ 1` or `b⁻¹ * a = 1`, and both give `a ≤ b`.
+
+This exists to supply the `map_le_map_iff'` field of `quotientBotOrderIso`, so it is stated before
+that isomorphism is available. Downstream, prefer `map_le_map_iff` on `quotientBotOrderIso`. -/
+private theorem quotientBotMulEquiv_le_quotientBotMulEquiv_iff
+    {a b : Γ ⧸ (⊥ : ConvexSubgroup Γ).toSubgroup} :
+    quotientBotMulEquiv a ≤ quotientBotMulEquiv b ↔ a ≤ b := by
+  induction a using QuotientGroup.induction_on with | _ a =>
+  induction b using QuotientGroup.induction_on with | _ b =>
+  have key : b⁻¹ * a ≤ 1 ↔ a ≤ b := by
+    rw [mul_comm, ← div_eq_mul_inv]; exact div_le_one'
+  simp only [quotientBotMulEquiv_mk]
+  rw [quotient_le_iff]
+  simp only [bot_toSubgroup, Subgroup.mem_bot]
+  constructor
+  · intro h; exact Or.inl (key.mpr h)
+  · rintro (h | h)
+    · exact key.mp h
+    · exact le_of_eq (inv_mul_eq_one.mp h).symm
+
+/-- **The quotient by `⊥` is the group itself, as an ordered group.** This is the reusable object
+of this section: it carries order-theoretic properties such as `Nontrivial` and `MulArchimedean`
+across the identification.
+
+Its body is sealed. Consumers work through `quotientBotOrderIso_mk` and
+`quotientBotOrderIso_symm_apply` rather than by unfolding the construction, exactly as they do for
+`quotientLinearOrder`. -/
+noncomputable def quotientBotOrderIso : (Γ ⧸ (⊥ : ConvexSubgroup Γ).toSubgroup) ≃*o Γ :=
+  { quotientBotMulEquiv with
+    map_le_map_iff' := quotientBotMulEquiv_le_quotientBotMulEquiv_iff }
+
+/-- The `rfl` proof of `quotientBotOrderIso_mk`, kept private because it unfolds the sealed
+`quotientBotOrderIso`, which an exported theorem may not do. -/
+private theorem quotientBotOrderIso_mk_aux (a : Γ) :
+    quotientBotOrderIso ((a : Γ ⧸ (⊥ : ConvexSubgroup Γ).toSubgroup)) = a := rfl
+
+/-- **`quotientBotOrderIso` sends the class of `a` to `a`.**
+
+Deliberately not `@[simp]`, and the same holds for every application lemma in this group. Each
+mentions `Γ ⧸ (⊥ : ConvexSubgroup Γ).toSubgroup`, and `bot_toSubgroup` is itself a `simp` lemma
+rewriting `(⊥ : ConvexSubgroup Γ).toSubgroup` to `(⊥ : Subgroup Γ)`. So `simp` normalises that
+subterm — in the coercion's type arguments, which come from the isomorphism's own domain, not just
+in the argument — and a left-hand side spelled this way could never match afterwards. Marking these
+`@[simp]` would add rules that can never fire.
+
+The normal form is not reachable either: `quotientLinearOrder` has head
+`LinearOrder (Γ ⧸ ?H.toSubgroup)`, so synthesis cannot invert the projection and
+`LinearOrder (Γ ⧸ (⊥ : Subgroup Γ))` does not exist — there is no ordered quotient to state the
+simp-normal form over. These therefore stay explicit rewrites, which is what lets consumers avoid
+unfolding the sealed construction. -/
+theorem quotientBotOrderIso_mk (a : Γ) :
+    quotientBotOrderIso ((a : Γ ⧸ (⊥ : ConvexSubgroup Γ).toSubgroup)) = a :=
+  quotientBotOrderIso_mk_aux a
+
+/-- The `rfl` proof of `quotientBotOrderIso_symm_apply`, private for the same reason as
+`quotientBotOrderIso_mk_aux`. -/
+private theorem quotientBotOrderIso_symm_apply_aux (a : Γ) :
+    quotientBotOrderIso.symm a = (a : Γ ⧸ (⊥ : ConvexSubgroup Γ).toSubgroup) := rfl
+
+/-- **`quotientBotOrderIso.symm` sends `a` to its class.** Not `@[simp]`; see
+`quotientBotOrderIso_mk`. -/
+theorem quotientBotOrderIso_symm_apply (a : Γ) :
+    quotientBotOrderIso.symm a = (a : Γ ⧸ (⊥ : ConvexSubgroup Γ).toSubgroup) :=
+  quotientBotOrderIso_symm_apply_aux a
 
 end Quotient
 

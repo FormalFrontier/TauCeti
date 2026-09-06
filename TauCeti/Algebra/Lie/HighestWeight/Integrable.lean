@@ -9,8 +9,6 @@ public import TauCeti.Algebra.Lie.HighestWeight.Integrability
 public import TauCeti.Algebra.Lie.Sl2.WeightString
 public import TauCeti.Algebra.Lie.Submodule.LocallyFinite
 
-public section
-
 /-!
 # An irreducible highest weight module of dominant integral weight is integrable
 
@@ -72,6 +70,8 @@ milestone of Layer 4, "the classification of finite-dimensional irreducibles", o
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §21.2.
 * V. G. Kac, *Infinite Dimensional Lie Algebras*, 3rd ed., §3.6.
 -/
+
+public section
 
 namespace TauCeti
 

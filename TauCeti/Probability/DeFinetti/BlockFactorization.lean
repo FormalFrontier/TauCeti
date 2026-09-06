@@ -174,7 +174,7 @@ theorem mixedIIDWith_of_iCondIndepFun_tailProcess
         (tailProcess X) (tailProcess_le_ambient 0 fun j _ => hX_meas j) (fun i => X (k i)) μ) :
     MixedIIDWith μ X (directingProbabilityMeasure μ X) := by
   have hTail : tailProcess X ≤ mΩ := tailProcess_le_ambient 0 fun j _ => hX_meas j
-  refine mixedIIDWith_of_forall_rectangles
+  refine mixedIIDWith_of_forall_rectangles (fun n => (hX_meas n).aemeasurable)
     (measurable_directingProbabilityMeasure (μ := μ) hTail) ?_
   intro m k hk B hB
   rw [blockLaw_eq_lintegral_prod_directingMeasure_of_iCondIndepFun_tailProcess
@@ -268,7 +268,7 @@ theorem mixedIIDWith_of_contractable
     {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n)) :
     MixedIIDWith μ X (directingProbabilityMeasure μ X) := by
   have hTail : tailProcess X ≤ mΩ := tailProcess_le_ambient 0 fun j _ => hX_meas j
-  refine mixedIIDWith_of_forall_rectangles
+  refine mixedIIDWith_of_forall_rectangles (fun n => (hX_meas n).aemeasurable)
     (measurable_directingProbabilityMeasure (μ := μ) hTail) ?_
   intro m k hk B hB
   rw [blockLaw_injective_eq_lintegral_prod_directingMeasure hX hX_meas hk hB]

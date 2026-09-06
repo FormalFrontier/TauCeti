@@ -23,11 +23,11 @@ topology and a bornology, being about components and boundedness and nothing els
 does not make a set wider needs a real normed space and lives in
 `TauCeti/Analysis/Normed/Module/FilledHull.lean`.
 
-The shape in which the structural side is spent is `TauCeti.IsPreconnected.subset_filledHull`: a
+The shape in which the structural side is spent is `IsPreconnected.subset_filledHull`: a
 preconnected set disjoint from `K` is trapped inside the filled hull as soon as it meets it, since
 it then lies in a single bounded component. Together with the width bound of the normed file it
 says that *a connected set that a small `K` cuts off from infinity is itself small*, with no
-regularity asked of `K`; that composite is `TauCeti.IsPreconnected.diam_le_diam_of_disjoint` there.
+regularity asked of `K`; that composite is `IsPreconnected.diam_le_diam_of_disjoint` there.
 
 The negation of membership — that the component of a point in the complement of `K` is *unbounded*
 — already occurs, unfolded, in the winding-number layer: it is the hypothesis of
@@ -43,17 +43,14 @@ needed downstream, and the first two of which fail without hypotheses on `K`.
 
 ## Roadmap role
 
-Plane separation for Jordan curves is the open frontier item of layer **L5** of
-`TauCetiRoadmap/ConformalMapping/README.md`, the Carathéodory boundary correspondence:
-`ConformalMapping/STATUS.md` records that nothing in the repository establishes that a Jordan curve
-separates the plane, and asks that how much of it the boundary work needs be settled first. What
-that work needs is the single statement that every point of a Jordan curve is a limit of points
-inside it,
-
-> `J ⊆ closure (filledHull J \ J)`,
-
-which is written in the vocabulary defined here — the inside of `J` is `filledHull J \ J`. So this
-file supplies what the missing stage is stated with rather than presuming it: nothing here assumes
+Plane separation for Jordan curves was the open frontier item of layer **L5** of
+`TauCetiRoadmap/ConformalMapping/README.md`, the Carathéodory boundary correspondence. The
+enclosure step now runs through `IsPreconnected (K \ {f z₀})` and the winding-number two-sidedness
+theorem
+(`TauCeti.image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff_singleton`),
+which `IsJordanCurve.isPathConnected_sdiff_singleton` discharges; `Caratheodory.lean` is
+unconditional.
+The inside of `J` is `filledHull J \ J` in the vocabulary defined here. Nothing here assumes
 separation, or any other regularity of `K`.
 
 ## Main results
@@ -62,7 +59,7 @@ separation, or any other regularity of `K`.
   `TauCeti.filledHull_mono` its two structural properties.
 * `TauCeti.filledHull_eq_self` — filling a set whose complement is preconnected and unbounded
   changes nothing.
-* `TauCeti.IsPreconnected.subset_filledHull` — a preconnected set disjoint from `K` that meets the
+* `IsPreconnected.subset_filledHull` — a preconnected set disjoint from `K` that meets the
   filled hull lies in it.
 * `TauCeti.subset_filledHull_of_frontier_subset` — a bounded set whose frontier `K` swallows
   lies in the filled hull, with no connectivity asked of it.
@@ -110,7 +107,7 @@ theorem filledHull_eq_self (h : IsPreconnected Kᶜ) (hu : ¬ IsBounded Kᶜ) : 
 /-- **A preconnected set that a set cuts off from infinity lies in its filled hull.** If `S` is
 preconnected and disjoint from `K`, then `S` lies in a single connected component of `Kᶜ`; meeting
 the filled hull says that component is bounded, so all of `S` is in the hull. -/
-theorem IsPreconnected.subset_filledHull (hS : IsPreconnected S) (hSK : Disjoint S K)
+theorem _root_.IsPreconnected.subset_filledHull (hS : IsPreconnected S) (hSK : Disjoint S K)
     (hne : (S ∩ filledHull K).Nonempty) : S ⊆ filledHull K := by
   obtain ⟨x, hxS, hxH⟩ := hne
   have hScompl : S ⊆ Kᶜ := fun y hy => Set.disjoint_left.mp hSK hy
@@ -122,14 +119,14 @@ theorem IsPreconnected.subset_filledHull (hS : IsPreconnected S) (hSK : Disjoint
 /-- **A bounded set whose frontier lies in `K` is cut off from infinity by `K`.** A point of
 `S \ K` lies in `interior S`, since every non-interior point of `S` lies on `frontier S ⊆ K`. Its
 connected component in `Kᶜ` cannot leave `interior S`: were it to, it would meet
-`frontier (interior S) ⊆ frontier S ⊆ K` by `TauCeti.IsPreconnected.inter_frontier_nonempty`,
+`frontier (interior S) ⊆ frontier S ⊆ K` by `IsPreconnected.inter_frontier_nonempty`,
 while lying in `Kᶜ`. So that component is bounded because `S` is. Points of `S ∩ K` lie in the
 filled hull directly.
 
-Unlike `TauCeti.IsPreconnected.subset_filledHull` this asks nothing of the connectivity of `S` and
+Unlike `IsPreconnected.subset_filledHull` this asks nothing of the connectivity of `S` and
 nothing about the hull being met, at the price of asking `K` to swallow the whole frontier — the
 same trade as between `TauCeti.diam_le_diam_of_frontier_subset` and
-`TauCeti.IsPreconnected.diam_le_diam_of_disjoint`. -/
+`IsPreconnected.diam_le_diam_of_disjoint`. -/
 theorem subset_filledHull_of_frontier_subset (hSb : IsBounded S) (hfr : frontier S ⊆ K) :
     S ⊆ filledHull K := by
   intro x hx
@@ -140,8 +137,8 @@ theorem subset_filledHull_of_frontier_subset (hSb : IsBounded S) (hfr : frontier
   have hcomp : connectedComponentIn Kᶜ x ⊆ interior S := by
     by_contra h
     obtain ⟨y, hy, hyi⟩ := not_subset.mp h
-    obtain ⟨z, hz, hzf⟩ := IsPreconnected.inter_frontier_nonempty
-      isPreconnected_connectedComponentIn ⟨x, mem_connectedComponentIn hxKc, hxi⟩ ⟨y, hy, hyi⟩
+    obtain ⟨z, hz, hzf⟩ := isPreconnected_connectedComponentIn.inter_frontier_nonempty
+      ⟨x, mem_connectedComponentIn hxKc, hxi⟩ ⟨y, hy, hyi⟩
     exact connectedComponentIn_subset _ _ hz (hfr (frontier_interior_subset hzf))
   exact mem_filledHull_iff.mpr (hSb.subset (hcomp.trans interior_subset))
 

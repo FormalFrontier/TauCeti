@@ -137,6 +137,105 @@ theorem isNilpotent_typeDSpinRep_rootGenerator (k : Fin n ⊕ Fin n) :
         (TauCeti.serreRootGenerator (CartanMatrix.D n) k))) :=
   ⟨2, P.typeDSpinRep_rootGenerator_sq b hn k⟩
 
+private theorem typeDSpinRep_serreE_eq_spinAction (i : Fin n) :
+    P.typeDSpinRep b hn
+        (_root_.UniversalEnvelopingAlgebra.ι ℚ (TauCeti.serreE ℚ (CartanMatrix.D n) i)) =
+      spinAction Q P (P.typeDSimpleRootBivector b (by omega) i) := by
+  rw [P.typeDSpinRep_ι b hn, P.typeDSpinSerreRepresentation_serreE b hn]
+
+private theorem typeDSpinRep_serreF_eq_spinAction (i : Fin n) :
+    P.typeDSpinRep b hn
+        (_root_.UniversalEnvelopingAlgebra.ι ℚ (TauCeti.serreF ℚ (CartanMatrix.D n) i)) =
+      spinAction Q P (P.typeDSimpleNegativeRootBivector b (by omega) i) := by
+  rw [P.typeDSpinRep_ι b hn, P.typeDSpinSerreRepresentation_serreF b hn]
+
+/-- At a chain node, the positive type-`D` root generator moves the singleton exterior-basis
+vector at `i + 1` to the singleton at `i`. -/
+theorem typeDSpinRep_serreE_exteriorBasis_singleton {i : Fin n}
+    (hnext : (i : ℕ) + 1 < n) :
+    P.typeDSpinRep b hn
+        (_root_.UniversalEnvelopingAlgebra.ι ℚ (TauCeti.serreE ℚ (CartanMatrix.D n) i))
+        (b.ExteriorAlgebra {⟨(i : ℕ) + 1, hnext⟩}) =
+      b.ExteriorAlgebra {i} := by
+  rw [P.typeDSpinRep_serreE_eq_spinAction b hn,
+    P.typeDSimpleRootBivector_def b, dite_eq_left hnext, map_mul, Module.End.mul_apply,
+    TauCeti.spinAction_ι_wedge, TauCeti.spinAction_ι_contract, P.pairingEquiv_dualVector,
+    TauCeti.ExteriorAlgebra.basis_singleton, CliffordAlgebra.contractLeft_ι]
+  simp [TauCeti.ExteriorAlgebra.basis_singleton]
+
+/-- At a chain node, the negative type-`D` root generator moves the singleton exterior-basis
+vector at `i` to the singleton at `i + 1`. -/
+theorem typeDSpinRep_serreF_exteriorBasis_singleton {i : Fin n}
+    (hnext : (i : ℕ) + 1 < n) :
+    P.typeDSpinRep b hn
+        (_root_.UniversalEnvelopingAlgebra.ι ℚ (TauCeti.serreF ℚ (CartanMatrix.D n) i))
+        (b.ExteriorAlgebra {i}) =
+      b.ExteriorAlgebra {⟨(i : ℕ) + 1, hnext⟩} := by
+  rw [P.typeDSpinRep_serreF_eq_spinAction b hn,
+    P.typeDSimpleNegativeRootBivector_def b, dite_eq_left hnext, map_mul,
+    Module.End.mul_apply, TauCeti.spinAction_ι_wedge, TauCeti.spinAction_ι_contract,
+    P.pairingEquiv_dualVector, TauCeti.ExteriorAlgebra.basis_singleton,
+    CliffordAlgebra.contractLeft_ι]
+  simp [TauCeti.ExteriorAlgebra.basis_singleton]
+
+/-- At the fork node, the positive type-`D` root generator creates the last two coordinates from
+the exterior vacuum. -/
+theorem typeDSpinRep_serreE_exteriorBasis_empty {i : Fin n}
+    (hlast : ¬(i : ℕ) + 1 < n) :
+    P.typeDSpinRep b hn
+        (_root_.UniversalEnvelopingAlgebra.ι ℚ (TauCeti.serreE ℚ (CartanMatrix.D n) i))
+        (b.ExteriorAlgebra ∅) =
+      TauCeti.ExteriorAlgebra.basisEraseSign (⟨n - 2, by omega⟩ : Fin n)
+          {(⟨n - 2, by omega⟩ : Fin n), (⟨n - 1, by omega⟩ : Fin n)} •
+        b.ExteriorAlgebra {⟨n - 2, by omega⟩, ⟨n - 1, by omega⟩} := by
+  rw [P.typeDSpinRep_serreE_eq_spinAction b hn,
+    P.typeDSimpleRootBivector_def b, dite_eq_right hlast, map_mul, Module.End.mul_apply,
+    TauCeti.spinAction_ι_wedge, TauCeti.spinAction_ι_wedge]
+  have hEmpty : b.ExteriorAlgebra (∅ : Finset (Fin n)) = 1 := by
+    rw [ExteriorAlgebra.basis_apply]
+    simp
+  rw [hEmpty, mul_one]
+  rw [← TauCeti.ExteriorAlgebra.basis_singleton,
+    ← TauCeti.ExteriorAlgebra.basis_singleton]
+  have h := TauCeti.ExteriorAlgebra.basis_singleton_mul_basis_erase b
+    ⟨n - 2, by omega⟩ {⟨n - 2, by omega⟩, ⟨n - 1, by omega⟩} (by simp)
+  rw [Finset.erase_insert (by
+    simp only [Finset.mem_singleton]
+    intro hEq
+    have := congrArg Fin.val hEq
+    dsimp only at this
+    omega)] at h
+  exact h
+
+/-- At the fork node, the negative type-`D` root generator annihilates the last two coordinates
+to the exterior vacuum. -/
+theorem typeDSpinRep_serreF_exteriorBasis_pair {i : Fin n}
+    (hlast : ¬(i : ℕ) + 1 < n) :
+    P.typeDSpinRep b hn
+        (_root_.UniversalEnvelopingAlgebra.ι ℚ (TauCeti.serreF ℚ (CartanMatrix.D n) i))
+        (b.ExteriorAlgebra {⟨n - 2, by omega⟩, ⟨n - 1, by omega⟩}) =
+      (TauCeti.ExteriorAlgebra.basisEraseSign (⟨n - 2, by omega⟩ : Fin n)
+          {(⟨n - 2, by omega⟩ : Fin n), (⟨n - 1, by omega⟩ : Fin n)} *
+        TauCeti.ExteriorAlgebra.basisEraseSign (⟨n - 1, by omega⟩ : Fin n)
+          {(⟨n - 1, by omega⟩ : Fin n)}) • b.ExteriorAlgebra ∅ := by
+  rw [P.typeDSpinRep_serreF_eq_spinAction b hn,
+    P.typeDSimpleNegativeRootBivector_def b, dite_eq_right hlast, map_mul,
+    Module.End.mul_apply, TauCeti.spinAction_ι_contract, P.pairingEquiv_dualVector,
+    TauCeti.spinAction_ι_contract, P.pairingEquiv_dualVector,
+    TauCeti.ExteriorAlgebra.contractLeft_coord_basis]
+  rw [ite_eq_left (by simp), Finset.erase_insert (by
+    simp only [Finset.mem_singleton]
+    intro hEq
+    have := congrArg Fin.val hEq
+    dsimp only at this
+    omega), Units.smul_def,
+    ← Int.cast_smul_eq_zsmul ℚ, map_smul]
+  rw [TauCeti.ExteriorAlgebra.contractLeft_coord_basis]
+  simp only [Finset.mem_singleton, ↓reduceIte, Finset.erase_singleton, Units.smul_def,
+    Units.val_mul]
+  simp_rw [← Int.cast_smul_eq_zsmul ℚ]
+  rw [smul_smul, Int.cast_mul]
+
 /-- Every represented positive or negative simple-root generator preserves the coordinate spinor
 lattice. -/
 theorem typeDSpinRep_rootGenerator_apply_mem_integralLattice

@@ -10,8 +10,6 @@ public import Mathlib.Data.Rat.Star
 public import TauCeti.LinearAlgebra.Matrix.Triangular
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
 
-public section
-
 /-!
 # The classical Cartan matrices are of finite type
 
@@ -80,6 +78,8 @@ This file supplies the classical half of the "finite-type condition" item of Lay
 ones of Bourbaki, *Lie Groups and Lie Algebras, Chapters 4-6*, plates I-IV, and of J. E. Humphreys,
 *Introduction to Lie Algebras and Representation Theory*, section 12.1.
 -/
+
+public section
 
 open scoped Matrix
 

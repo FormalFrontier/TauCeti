@@ -199,21 +199,19 @@ at a prime `p ∣ N`, leaving `T_{p^{r+1}} = T_p T_{p^r}`. In that case, read th
 `heckeUNat_eq_heckeTNat`, the statement is `T_{p^r} = U_p ^ r`; there is no second operator. -/
 theorem heckeTNat_pow_of_dvd (hpN : p ∣ N) (r : ℕ) :
     heckeTNat (N := N) k (p ^ r)
-        (_hn := ⟨pow_ne_zero r fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩)
+        (_hn := haveI := NeZero.of_dvd hpN; NeZero.pow)
       = heckeTNat (N := N) k p
-          (_hn := ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩) ^ r :=
-  let _ : NeZero p :=
-    ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩
+          (_hn := NeZero.of_dvd hpN) ^ r :=
+  let _ : NeZero p := NeZero.of_dvd hpN
   heckeTNat_pow_of_primeFactors_subset k (Nat.primeFactors_mono hpN (NeZero.ne N)) r
 
 /-- **`T_{p^r} = T_p ^ r` at a divisor `p ∣ N`**, on `S_k(Γ₁(N))`. -/
 theorem heckeTCuspNat_pow_of_dvd (hpN : p ∣ N) (r : ℕ) :
     heckeTCuspNat (N := N) k (p ^ r)
-        (_hn := ⟨pow_ne_zero r fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩)
+        (_hn := haveI := NeZero.of_dvd hpN; NeZero.pow)
       = heckeTCuspNat (N := N) k p
-          (_hn := ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩) ^ r :=
-  let _ : NeZero p :=
-    ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩
+          (_hn := NeZero.of_dvd hpN) ^ r :=
+  let _ : NeZero p := NeZero.of_dvd hpN
   heckeTCuspNat_pow_of_primeFactors_subset k (Nat.primeFactors_mono hpN (NeZero.ne N)) r
 
 section Nebentypus

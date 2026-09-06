@@ -8,8 +8,6 @@ module
 public import TauCeti.Algebra.Lie.HighestWeight.Maximal
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Module
 
-public section
-
 /-!
 # Verma modules
 
@@ -129,6 +127,8 @@ without it.
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §20.3.
 * J. E. Humphreys, *Representations of Semisimple Lie Algebras in the BGG Category `O`*, §1.3.
 -/
+
+public section
 
 open UniversalEnvelopingAlgebra
 

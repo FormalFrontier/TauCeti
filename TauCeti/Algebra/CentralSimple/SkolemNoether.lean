@@ -17,7 +17,7 @@ public import Mathlib.RingTheory.TensorProduct.Basic
 -- modules over a simple Artinian algebra and finiteness of a tensor product are used only inside
 -- proofs, and the matrix, complex and quaternion modules only by the worked examples at the end.
 import Mathlib.Algebra.Central.Matrix
-import Mathlib.Data.Complex.Basic
+import Mathlib.Basic.Complex.Basic
 import Mathlib.RingTheory.SimpleRing.Matrix
 import Mathlib.RingTheory.TensorProduct.Finite
 import TauCeti.Algebra.Central.Quaternion
@@ -122,7 +122,7 @@ theorem skolemNoether [IsSimpleRing A] [FiniteDimensional K A]
   -- (`IsArtinianRing.of_finite` is a theorem, not an instance, so it is supplied by hand).
   -- A right inverse therefore already presents the conjugator as a unit.
   have : IsArtinianRing A := IsArtinianRing.of_finite K A
-  set u : A := (Bimodule.of g).symm (ψ (Bimodule.of f 1)) with hu
+  set u : A := (Bimodule.of g).symm (ψ (Bimodule.of f 1))
   -- Name the two coercions of the constructed unit through the stable `Units` API rather than
   -- relying on `Units.mkOfMulEqOne` reducing definitionally.
   have hUval : ((Units.mkOfMulEqOne u v huv : Aˣ) : A) = u := Units.val_mkOfMulEqOne huv

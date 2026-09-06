@@ -45,10 +45,6 @@ legitimate to state a theorem for one and use it for the other.
 * `TauCeti.mem_perfectClosure_iff_fixed`: the fixed field of `Gal(E/F)` for a normal
   extension `E/F` is the relative perfect closure of `F` in `E`.
 
-This is the "the group, fixed once" milestone of Layer 9 of the human-authored roadmap at
-`TauCetiRoadmap/ProfiniteCohomology/README.md`; that layer's warning about the algebraic closure is
-`mem_perfectClosure_iff_fixed` here.
-
 ## References
 
 * J. Neukirch, A. Schmidt, K. Wingberg, *Cohomology of Number Fields*, 2nd ed., Ch. VI §1, for the

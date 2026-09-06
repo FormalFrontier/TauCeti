@@ -8,8 +8,6 @@ module
 public import Mathlib.Algebra.Lie.Weights.Linear
 public import TauCeti.Algebra.Lie.Prod
 
-public section
-
 /-!
 # Weight spaces of a product of Lie modules
 
@@ -29,6 +27,8 @@ modules with linear weights again has linear weights.
 The first consumer is `TauCeti.formalCharacter_prod`, the product-additivity result supporting the
 "Formal characters" target in Layer 6 of the highest-weight representation-theory roadmap.
 -/
+
+public section
 
 namespace TauCeti
 

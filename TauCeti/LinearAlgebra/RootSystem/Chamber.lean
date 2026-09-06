@@ -8,8 +8,6 @@ module
 public import TauCeti.LinearAlgebra.RootSystem.Positive
 public import TauCeti.LinearAlgebra.RootSystem.Weyl.Group
 
-public section
-
 /-!
 # The dominant chamber of a base
 
@@ -90,6 +88,8 @@ that roadmap's `Suggested.lean`. Uniqueness of the dominant representative is no
 The argument is the one in J. E. Humphreys, *Introduction to Lie Algebras and Representation
 Theory*, GTM 9, Ch. III, §10.3.
 -/
+
+public section
 
 namespace TauCeti
 

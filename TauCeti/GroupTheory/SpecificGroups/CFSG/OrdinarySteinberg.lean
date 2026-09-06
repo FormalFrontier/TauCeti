@@ -95,6 +95,8 @@ points instead of on the root datum.
   root subgroups by the diagram permutation and leaves their parameters alone.
 * `TauCeti.GraphTwistedIndex.geckGraphAut_pow_geckRootSubgroup`: its `m`-th power renumbers them by
   `σ ^ m`.
+* `TauCeti.GraphTwistedIndex.geckGraphAut_geckWeightTorus`: it relabels the coordinates of a
+  weight-torus point by the inverse of that permutation.
 * `TauCeti.GraphTwistedIndex.geckGraphAut_pow_twistOrder`: the twist order of the index annihilates
   the graph automorphism.
 * `TauCeti.GraphTwistedIndex.geckGraphAut_comp_geckFrobenius`: the graph automorphism commutes with
@@ -103,6 +105,10 @@ points instead of on the root datum.
 * `TauCeti.GraphTwistedIndex.geckSteinberg_geckRootSubgroup`: the Steinberg map raises the
   parameter of every numbered root subgroup to the `q`-th power and renumbers it by the diagram
   permutation.
+* `TauCeti.GraphTwistedIndex.geckSteinberg_geckWeightTorus`: it raises every coordinate of a
+  weight-torus point to the `q`-th power and relabels them by the inverse of that permutation.
+* `TauCeti.GraphTwistedIndex.geckWeightTorus_mem_fixedSubgroup_geckSteinberg`: a weight-torus point
+  satisfying the resulting twisted equations `s_{σ⁻¹ k} ^ q = s_k` is fixed by the Steinberg map.
 * `TauCeti.GraphTwistedIndex.geckSteinberg_eq_geckFrobenius_of_diagramPerm_eq_one`: on an untwisted
   family it is the Frobenius.
 * `TauCeti.GraphTwistedIndex.geckSteinberg_pow_eq_geckGraphAut_pow_comp`,
@@ -191,6 +197,18 @@ theorem geckGraphAut_geckRootSubgroup (i : Fin d.1.rank ⊕ Fin d.1.rank)
   exact d.1.dynkinType.geckGraphAutPoints_geckRootSubgroupMatrix d.1.dynkinType_valid
     d.diagramPerm_mem_diagramSymmetry d.1.Closure i u
 
+/-- **The graph automorphism relabels the coordinates of a weight-torus point** by the inverse of
+the diagram permutation, leaving the torus itself invariant. This is the torus half of the pinning
+equation that `TauCeti.GraphTwistedIndex.geckGraphAut_geckRootSubgroup` states on root
+subgroups. -/
+@[simp]
+theorem geckGraphAut_geckWeightTorus (s : Fin d.1.rank → d.1.Closureˣ) :
+    d.geckGraphAut (d.1.geckWeightTorus s) =
+      d.1.geckWeightTorus fun k => s (d.diagramPerm⁻¹ k) := by
+  rw [geckGraphAut_def, ValidLieTypeIndex.geckWeightTorus_def]
+  exact d.1.dynkinType.geckGraphAutPoints_geckWeightTorusPoints d.1.dynkinType_valid
+    d.diagramPerm_mem_diagramSymmetry d.1.Closure s
+
 /-- **The twist order recorded by an index annihilates its graph automorphism.** This is `γ ^ 2 = 1`
 for `²Aₙ`, `²Dₙ` and `²E₆`, `γ ^ 3 = 1` for `³D₄`, and the trivial relation on an untwisted family,
 which is the order relation milestone L1 requires of the graph factor. -/
@@ -275,6 +293,28 @@ theorem geckSteinberg_geckRootSubgroup (i : Fin d.1.rank ⊕ Fin d.1.rank)
         (Multiplicative.ofAdd (Multiplicative.toAdd u ^ d.1.fieldOrder)) := by
   rw [geckSteinberg_apply, ValidLieTypeIndex.geckFrobenius_geckRootSubgroup,
     geckGraphAut_geckRootSubgroup]
+
+/-- **The Steinberg map raises every coordinate of a weight-torus point to the `q`-th power and
+relabels them by the inverse of the diagram permutation.** This is the equation the map satisfies
+on the second half of the pinned data, beside
+`TauCeti.GraphTwistedIndex.geckSteinberg_geckRootSubgroup` on the root subgroups. -/
+@[simp]
+theorem geckSteinberg_geckWeightTorus (s : Fin d.1.rank → d.1.Closureˣ) :
+    d.geckSteinberg (d.1.geckWeightTorus s) =
+      d.1.geckWeightTorus fun k => s (d.diagramPerm⁻¹ k) ^ d.1.fieldOrder := by
+  rw [geckSteinberg_apply, ValidLieTypeIndex.geckFrobenius_geckWeightTorus,
+    geckGraphAut_geckWeightTorus]
+  exact congrArg _ (funext fun k => Pi.pow_apply s d.1.fieldOrder _)
+
+/-- **A weight-torus point satisfying the twisted equations of an index is fixed by its Steinberg
+map.** On an untwisted family, where the diagram permutation is the identity, the condition says
+that every coordinate lies in the field of definition `𝔽_q`; on a graph-twisted family it couples
+instead the coordinates that the permutation exchanges. -/
+theorem geckWeightTorus_mem_fixedSubgroup_geckSteinberg (s : Fin d.1.rank → d.1.Closureˣ)
+    (hs : ∀ k, s (d.diagramPerm⁻¹ k) ^ d.1.fieldOrder = s k) :
+    d.1.geckWeightTorus s ∈ fixedSubgroup d.geckSteinberg := by
+  rw [mem_fixedSubgroup, geckSteinberg_geckWeightTorus]
+  exact congrArg _ (funext hs)
 
 /-- **On a family whose diagram permutation is trivial the Steinberg map is the plain Frobenius.**
 Those are the nine untwisted constructors, where the printed family name carries no superscript. -/

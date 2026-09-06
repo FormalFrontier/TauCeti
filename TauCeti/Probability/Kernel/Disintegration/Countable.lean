@@ -247,7 +247,8 @@ private theorem exists_compProd_countableCondKernel_ne :
   refine ⟨(⊤ : ℝ≥0∞) • Measure.dirac ((), ()), ?_⟩
   set σ : Measure (Unit × Unit) := (⊤ : ℝ≥0∞) • Measure.dirac ((), ()) with hσ
   have hfst : σ.fst {()} = ⊤ := by
-    rw [hσ, Measure.fst, Measure.map_smul, Measure.map_dirac' measurable_fst]
+    rw [hσ, Measure.fst, Measure.map_smul _ measurable_fst.aemeasurable,
+      Measure.map_dirac' measurable_fst]
     simp
   have hzero : countableCondKernel σ = 0 := by
     ext y s

@@ -156,6 +156,28 @@ private lemma natDiagGL_mul_mapGL_eq_mapGL_mul_primeRep_none_of_entries (hp : 0 
   · linear_combination (-(p : ℚ) * ((γ 1 0 : ℤ) : ℚ)) * hσdetQ
   · linear_combination (-(p : ℚ) * ((γ 1 1 : ℤ) : ℚ)) * hσdetQ
 
+/-- The sheared left factor lies in `Γ₁(N)`. Only its bottom row is needed: `mem_Gamma1_iff`
+reduces membership to `Γ₀(N)` plus the lower-right congruence, so the lower-left entry being
+`0` and the lower-right `1` mod `N` suffice — the upper-left congruence is forced by the
+determinant. -/
+private lemma mem_Gamma1_of_lowerRow_eq {γ δ : SL(2, ℤ)}
+    (h10 : (δ 1 0 : ℤ) = (p : ℤ) * (γ 1 0 - γ 1 1 * (N : ℤ)))
+    (h11 : (δ 1 1 : ℤ) = (p : ℤ) * γ 1 1 * σ 0 0 - γ 1 0 * σ 0 1)
+    (hd : ((γ 1 1 : ℤ) : ZMod N) = 1)
+    (hc : ((γ 1 0 : ℤ) : ZMod N) = 0) (hmp : ((σ 0 0 * (p : ℤ) : ℤ) : ZMod N) = 1) :
+    δ ∈ Gamma1 N := by
+  refine mem_Gamma1_iff.mpr ⟨Gamma0_mem.mpr ?_, ?_⟩
+  · have h : (((p : ℤ) * (γ 1 0 - γ 1 1 * (N : ℤ)) : ℤ) : ZMod N) = 0 := by
+      push_cast
+      rw [hc, ZMod.natCast_self]
+      ring
+    simpa [h10] using h
+  · have h : (((p : ℤ) * γ 1 1 * σ 0 0 - γ 1 0 * σ 0 1 : ℤ) : ZMod N) = 1 := by
+      push_cast at hmp ⊢
+      rw [hc]
+      linear_combination (((γ 1 1 : ℤ) : ZMod N)) * hmp + hd
+    simpa [h11] using h
+
 /-- **The forward factorisation through the twisted coset.** For `γ = !![a, b; c, d] ∈ Γ₁(N)`
 with `p ∣ a`, the product `diag(1, p) · γ` lies in the right coset `Γ₁(N) · σ · diag(p, 1)`:
 
@@ -168,7 +190,7 @@ lemma exists_mem_Gamma1_natDiagGL_mul_primeRep_none_of_dvd (hp : 0 < p)
     (hσ11 : σ 1 1 = (p : ℤ)) {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma1 N) (hpa : (p : ℤ) ∣ γ 0 0) :
     ∃ δ : SL(2, ℤ), δ ∈ Gamma1 N ∧
       natDiagGL 2 ![1, p] * mapGL ℚ γ = mapGL ℚ δ * primeRep σ p none := by
-  obtain ⟨ha, hd, hc⟩ := (Gamma1_mem N γ).mp hγ
+  obtain ⟨-, hd, hc⟩ := (Gamma1_mem N γ).mp hγ
   obtain ⟨a', ha'⟩ := hpa
   have hσdet : σ 0 0 * (p : ℤ) - σ 0 1 * (N : ℤ) = 1 :=
     mul_sub_mul_eq_one_of_lowerRow hσ10 hσ11
@@ -189,29 +211,13 @@ lemma exists_mem_Gamma1_natDiagGL_mul_primeRep_none_of_dvd (hp : 0 < p)
   have hmp : ((σ 0 0 * (p : ℤ) : ℤ) : ZMod N) = 1 := by
     have hσΓ0 : σ ∈ Gamma0 N := Gamma0_mem.mpr (by rw [hσ10]; simp)
     simpa [hσ11] using intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0 hσΓ0
-  refine ⟨δ, ?_, ?_⟩
-  · refine (Gamma1_mem N δ).mpr ⟨?_, ?_, ?_⟩
-    · have h : ((γ 0 0 - γ 0 1 * (N : ℤ) : ℤ) : ZMod N) = 1 := by
-        push_cast
-        rw [ha, ZMod.natCast_self]
-        ring
-      simpa [hδmat] using h
-    · have h : (((p : ℤ) * γ 1 1 * σ 0 0 - γ 1 0 * σ 0 1 : ℤ) : ZMod N) = 1 := by
-        push_cast at hmp ⊢
-        rw [hc]
-        linear_combination (((γ 1 1 : ℤ) : ZMod N)) * hmp + hd
-      simpa [hδmat] using h
-    · have h : (((p : ℤ) * (γ 1 0 - γ 1 1 * (N : ℤ)) : ℤ) : ZMod N) = 0 := by
-        push_cast
-        rw [hc, ZMod.natCast_self]
-        ring
-      simpa [hδmat] using h
-  · have e00 : (δ 0 0 : ℤ) = γ 0 0 - γ 0 1 * (N : ℤ) := by rw [hδmat]; simp
-    have e01 : (δ 0 1 : ℤ) = γ 0 1 * σ 0 0 - a' * σ 0 1 := by rw [hδmat]; simp
-    have e10 : (δ 1 0 : ℤ) = (p : ℤ) * (γ 1 0 - γ 1 1 * (N : ℤ)) := by rw [hδmat]; simp
-    have e11 : (δ 1 1 : ℤ) = (p : ℤ) * γ 1 1 * σ 0 0 - γ 1 0 * σ 0 1 := by rw [hδmat]; simp
-    exact natDiagGL_mul_mapGL_eq_mapGL_mul_primeRep_none_of_entries hp hσ10 hσ11 ha'
-      e00 e01 e10 e11
+  have e00 : (δ 0 0 : ℤ) = γ 0 0 - γ 0 1 * (N : ℤ) := by rw [hδmat]; simp
+  have e01 : (δ 0 1 : ℤ) = γ 0 1 * σ 0 0 - a' * σ 0 1 := by rw [hδmat]; simp
+  have e10 : (δ 1 0 : ℤ) = (p : ℤ) * (γ 1 0 - γ 1 1 * (N : ℤ)) := by rw [hδmat]; simp
+  have e11 : (δ 1 1 : ℤ) = (p : ℤ) * γ 1 1 * σ 0 0 - γ 1 0 * σ 0 1 := by rw [hδmat]; simp
+  exact ⟨δ, mem_Gamma1_of_lowerRow_eq e10 e11 hd hc hmp,
+    natDiagGL_mul_mapGL_eq_mapGL_mul_primeRep_none_of_entries hp hσ10 hσ11 ha'
+      e00 e01 e10 e11⟩
 
 /-- **The witness for the reverse inclusion.** The matrix `!![m p, n; N, 1]` lies in `Γ₁(N)` —
 its determinant is the Bézout relation and `m p ≡ 1 (mod N)` — and moving it across
@@ -277,53 +283,51 @@ lemma exists_mem_Gamma1_natDiagGL_mul_primeRep (hp : p.Prime) (hσ10 : σ 1 0 = 
       (by simpa [mul_comm] using hdvd)
     exact ⟨some ⟨j.val, hjlt⟩, δ, hδ, by rw [primeRep_some]; exact heq⟩
 
-/-- **The `p + 1` right cosets are pairwise distinct for any integral subgroup when `1 < p`.**
-The `p` upper-triangular ones are separated by `op_upperTriRep_smul_injective`; separating the
-twisted one from them is integrality. If
-`G · !![1, b; 0, p] = G · σ · diag(p, 1)`, comparing the top rows gives
-`n = p (m b + σ'₀₁)` for some `σ' ∈ G`, so `p ∣ n`, and then `m p − n N = 1` makes `p` a
-divisor of `1`. -/
+/-- **The twisted representative lies in none of the upper-triangular cosets.** For `1 < p`
+and `σ` whose lower-right entry is `p`, the right coset of `σ · diag(p, 1)` modulo any
+subgroup `G ≤ SL(2, ℤ)` differs from that of every `!![1, b; 0, p]`. -/
+private lemma op_primeRep_smul_some_ne_none {G : Subgroup SL(2, ℤ)} (hp : 1 < p)
+    (hσ11 : σ 1 1 = (p : ℤ)) (b : Fin p) :
+    MulOpposite.op (primeRep σ p (some b)) • ((G.map (mapGL ℚ)) : Set (GL (Fin 2) ℚ)) ≠
+      MulOpposite.op (primeRep σ p none) • ((G.map (mapGL ℚ)) : Set (GL (Fin 2) ℚ)) := by
+  have hp0 : 0 < p := by omega
+  have hσdet : σ 0 0 * (p : ℤ) - σ 0 1 * σ 1 0 = 1 := by
+    rw [← hσ11]
+    exact fin_two_mul_sub_mul_eq_one σ
+  intro heq
+  obtain ⟨τ, -, hτeq⟩ := Subgroup.mem_map.mp ((rightCoset_eq_iff _).mp heq)
+  have hmul : (mapGL ℚ τ : GL (Fin 2) ℚ) * upperTriRep p b = primeRep σ p none := by
+    rw [hτeq, ← primeRep_some σ p b, inv_mul_cancel_right]
+  have hmat : (↑(mapGL ℚ τ) : Matrix (Fin 2) (Fin 2) ℚ) * !![1, (b : ℚ); 0, (p : ℚ)] =
+      (↑(primeRep σ p none) : Matrix (Fin 2) (Fin 2) ℚ) := by
+    rw [← coe_upperTriRep, ← Units.val_mul, hmul]
+  rw [coe_mapGL_int_rat_fin_two, coe_primeRep_none hp0, Matrix.mul_fin_two] at hmat
+  have h00 : ((τ 0 0 : ℤ) : ℚ) = ((σ 0 0 : ℤ) : ℚ) * (p : ℚ) := by
+    simpa using congrFun (congrFun hmat 0) 0
+  have h01 : ((τ 0 0 : ℤ) : ℚ) * (b : ℚ) + ((τ 0 1 : ℤ) : ℚ) * (p : ℚ) = ((σ 0 1 : ℤ) : ℚ) := by
+    simpa using congrFun (congrFun hmat 0) 1
+  rw [h00] at h01
+  have hn : (σ 0 1 : ℤ) = (p : ℤ) * (σ 0 0 * (b : ℕ) + τ 0 1) := by
+    have hQ : ((σ 0 1 : ℤ) : ℚ) = (((p : ℤ) * (σ 0 0 * (b : ℕ) + τ 0 1) : ℤ) : ℚ) := by
+      push_cast at h01 ⊢
+      linarith
+    exact_mod_cast hQ
+  have hdvd : (p : ℤ) ∣ 1 :=
+    ⟨σ 0 0 - (σ 0 0 * (b : ℕ) + τ 0 1) * σ 1 0, by linear_combination -hσdet - σ 1 0 * hn⟩
+  have hle := Int.le_of_dvd one_pos hdvd
+  have htwo : 2 ≤ (p : ℤ) := by exact_mod_cast hp
+  omega
+
+/-- **The `p + 1` right cosets are pairwise distinct**, modulo any subgroup `G ≤ SL(2, ℤ)`,
+whenever `1 < p` and `σ` has lower-right entry `p`. -/
 theorem op_primeRep_smul_injective {G : Subgroup SL(2, ℤ)} (hp : 1 < p)
-    (hσ10 : σ 1 0 = (N : ℤ))
     (hσ11 : σ 1 1 = (p : ℤ)) :
     Function.Injective fun i : Option (Fin p) ↦
       MulOpposite.op (primeRep σ p i) • ((G.map (mapGL ℚ)) : Set (GL (Fin 2) ℚ)) := by
-  have hp0 : 0 < p := by omega
-  have hσdet : σ 0 0 * (p : ℤ) - σ 0 1 * (N : ℤ) = 1 :=
-    mul_sub_mul_eq_one_of_lowerRow hσ10 hσ11
-  -- the twisted coset is not one of the upper-triangular ones
-  have hne : ∀ b : Fin p,
-      MulOpposite.op (primeRep σ p (some b)) • ((G.map (mapGL ℚ)) :
-          Set (GL (Fin 2) ℚ)) ≠
-        MulOpposite.op (primeRep σ p none) • ((G.map (mapGL ℚ)) :
-          Set (GL (Fin 2) ℚ)) := by
-    intro b heq
-    obtain ⟨τ, -, hτeq⟩ := Subgroup.mem_map.mp ((rightCoset_eq_iff _).mp heq)
-    have hmul : (mapGL ℚ τ : GL (Fin 2) ℚ) * upperTriRep p b = primeRep σ p none := by
-      rw [hτeq, ← primeRep_some σ p b, inv_mul_cancel_right]
-    have hmat : (↑(mapGL ℚ τ) : Matrix (Fin 2) (Fin 2) ℚ) * !![1, (b : ℚ); 0, (p : ℚ)] =
-        (↑(primeRep σ p none) : Matrix (Fin 2) (Fin 2) ℚ) := by
-      rw [← coe_upperTriRep, ← Units.val_mul, hmul]
-    rw [coe_mapGL_int_rat_fin_two, coe_primeRep_none hp0, Matrix.mul_fin_two] at hmat
-    have h00 : ((τ 0 0 : ℤ) : ℚ) = ((σ 0 0 : ℤ) : ℚ) * (p : ℚ) := by
-      simpa using congrFun (congrFun hmat 0) 0
-    have h01 : ((τ 0 0 : ℤ) : ℚ) * (b : ℚ) + ((τ 0 1 : ℤ) : ℚ) * (p : ℚ) = ((σ 0 1 : ℤ) : ℚ) := by
-      simpa using congrFun (congrFun hmat 0) 1
-    rw [h00] at h01
-    have hn : (σ 0 1 : ℤ) = (p : ℤ) * (σ 0 0 * (b : ℕ) + τ 0 1) := by
-      have hQ : ((σ 0 1 : ℤ) : ℚ) = (((p : ℤ) * (σ 0 0 * (b : ℕ) + τ 0 1) : ℤ) : ℚ) := by
-        push_cast at h01 ⊢
-        linarith
-      exact_mod_cast hQ
-    have hdvd : (p : ℤ) ∣ 1 :=
-      ⟨σ 0 0 - (σ 0 0 * (b : ℕ) + τ 0 1) * (N : ℤ), by linear_combination -hσdet - (N : ℤ) * hn⟩
-    have hle := Int.le_of_dvd one_pos hdvd
-    have htwo : 2 ≤ (p : ℤ) := by exact_mod_cast hp
-    omega
   rintro (_ | b₁) (_ | b₂) h
   · rfl
-  · exact absurd h.symm (hne b₂)
-  · exact absurd h (hne b₁)
+  · exact absurd h.symm (op_primeRep_smul_some_ne_none hp hσ11 b₂)
+  · exact absurd h (op_primeRep_smul_some_ne_none hp hσ11 b₁)
   · simpa using op_upperTriRep_smul_injective (G := G) (by simpa using h)
 
 /-- **The `Tₚ` double coset at a prime `p ∤ N` is the union of `p + 1` right cosets.**

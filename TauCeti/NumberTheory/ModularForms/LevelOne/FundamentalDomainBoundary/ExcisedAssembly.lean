@@ -101,8 +101,7 @@ private theorem intervalIntegral_excised_logDeriv_fdBoundary_of_neg_conj_mem
   have hint34 : IntervalIntegrable (fun t ↦ if ∃ s ∈ Sx, ‖fdBoundary H t - s‖ ≤ ε then 0
       else deriv (fdBoundary H) t • logDeriv (⇑f ∘ ofComplex) (fdBoundary H t)) volume 3 4 := by
     simpa only [smul_ite, smul_zero] using
-      intervalIntegrable_excised_deriv_smul_fdBoundarySegment4
-        (TauCeti.Function.Periodic.logDeriv hper) hrefl
+      intervalIntegrable_excised_deriv_smul_fdBoundarySegment4 hper.logDeriv hrefl
         (by simpa only [smul_ite, smul_zero] using hint01)
   have hint13 := hint12.trans hint23
   have hint35 := hint34.trans hint45
@@ -111,8 +110,7 @@ private theorem intervalIntegral_excised_logDeriv_fdBoundary_of_neg_conj_mem
       -∫ t in (0 : ℝ)..1, (if ∃ s ∈ Sx, ‖fdBoundary H t - s‖ ≤ ε then 0
         else deriv (fdBoundary H) t • logDeriv (⇑f ∘ ofComplex) (fdBoundary H t)) := by
     simpa only [smul_ite, smul_zero] using
-      intervalIntegral_excised_fdBoundarySegment4_eq_neg_segment1 H
-        (TauCeti.Function.Periodic.logDeriv hper) hrefl
+      intervalIntegral_excised_fdBoundarySegment4_eq_neg_segment1 H hper.logDeriv hrefl
   rw [← intervalIntegral.integral_add_adjacent_intervals hint01 (hint13.trans hint35),
     ← intervalIntegral.integral_add_adjacent_intervals hint13 hint35,
     ← intervalIntegral.integral_add_adjacent_intervals hint34 hint45,

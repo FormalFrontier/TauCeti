@@ -34,9 +34,10 @@ def main() -> None:
     require(text, "gate/scripts/check-bump.sh policy base head")
     require(text, "validated pin/toolchain bump; cost ratio intentionally skipped")
 
-    # Cache lookup walks all fetched ancestry, and executable profiling helpers
+    # Cache lookup reads a limited number of ancestors, and executable profiling helpers
     # come from the workflow-pinned trusted checkout rather than the PR.
-    require(text, 'LAKE_CACHE_MAX_REVS: "0"')
+    require(text, 'LAKE_CACHE_MAX_REVS: "100"')
+    forbid(text, 'LAKE_CACHE_MAX_REVS: "0"')
     require(text, "../gate/scripts/profile/measure.sh")
 
     # Do not regress to constructing a synthetic source/configuration overlay.

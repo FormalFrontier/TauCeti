@@ -97,6 +97,9 @@ def toSet (D : HeckeCoset Δ H₁ H₂) : Set G :=
 /-- A representative `g : Δ` of a double coset (via `Quotient.out`). -/
 noncomputable def rep (D : HeckeCoset Δ H₁ H₂) : Δ := Quotient.out D
 
+/-- The chosen representative of a double coset is its `Quotient.out` representative. -/
+theorem rep_def (D : HeckeCoset Δ H₁ H₂) : D.rep = Quotient.out D := (rfl)
+
 @[simp] lemma mk_rep (D : HeckeCoset Δ H₁ H₂) : mk H₁ H₂ D.rep = D := Quotient.out_eq' D
 
 /-- Two elements of `Δ` define the same `HeckeCoset` iff their double cosets coincide. -/
@@ -114,6 +117,22 @@ lemma toSet_injective : Function.Injective (toSet : HeckeCoset Δ H₁ H₂ → 
 
 lemma rep_mem (D : HeckeCoset Δ H₁ H₂) : (D.rep : G) ∈ D.toSet :=
   D.toSet_eq_doubleCoset_rep ▸ mem_doubleCoset_self H₁ H₂ _
+
+/-- **`mk` and `rep` name the same double coset**: the chosen representative of `mk H₁ H₂ w`
+spans the double coset `w` was taken from. -/
+@[simp] lemma doubleCoset_rep_mk (w : Δ) :
+    doubleCoset (((mk H₁ H₂ w).rep : Δ) : G) H₁ H₂ = doubleCoset (w : G) H₁ H₂ :=
+  doubleCoset_eq_of_mem (by simpa using rep_mem (mk H₁ H₂ w))
+
+/-- `w` lies in the double coset of the chosen representative of `mk H₁ H₂ w`. -/
+lemma mem_doubleCoset_rep_mk (w : Δ) :
+    (w : G) ∈ doubleCoset (((mk H₁ H₂ w).rep : Δ) : G) H₁ H₂ :=
+  (doubleCoset_rep_mk w).symm ▸ mem_doubleCoset_self H₁ H₂ _
+
+/-- The chosen representative of `mk H₁ H₂ w` lies in the double coset of `w`. -/
+lemma rep_mk_mem_doubleCoset (w : Δ) :
+    (((mk H₁ H₂ w).rep : Δ) : G) ∈ doubleCoset (w : G) H₁ H₂ :=
+  doubleCoset_rep_mk w ▸ mem_doubleCoset_self H₁ H₂ _
 
 /-- `mk H₁ H₂ g₁ = mk H₁ H₂ g₂` when `g₁` lies in the double coset of `g₂`. -/
 lemma mk_eq_mk_of_mem {g₁ g₂ : Δ} (h : (g₁ : G) ∈ doubleCoset (g₂ : G) H₁ H₂) :
@@ -337,7 +356,8 @@ theorem mem_of_mem_doubleCoset {Δ : Submonoid G} {H₁ H₂ : Subgroup G} [IsHe
 commensurates `H₂`, which is commensurable with `H₁`. -/
 noncomputable instance {Δ : Submonoid G} {H₁ H₂ : Subgroup G} [IsHeckeTriple Δ H₁ H₂]
     (g : Δ) : Fintype (DecompQuotient H₁ H₂ (g : G)) :=
-  Subgroup.fintypeOfIndexNeZero (IsHeckeTriple.commensurable_conjAct_right g).1
+  Subgroup.fintypeOfIndexNeZero
+    (IsHeckeTriple.commensurable_conjAct_right g).1.relIndex_ne_zero
 
 /-- Conjugating the *left* subgroup by the inverse of an element of `Δ` gives a subgroup
 commensurable with the right one. This is `commensurable_conjAct_right` on the other flank:
@@ -361,7 +381,8 @@ compete with the one above. -/
 instance {Δ : Submonoid G} {H₁ H₂ : Subgroup G} [IsHeckeTriple Δ H₁ H₂] (g : Δ) :
     Finite (DecompQuotient H₂ H₁ (g : G)⁻¹) :=
   @Finite.of_fintype _
-    (Subgroup.fintypeOfIndexNeZero (IsHeckeTriple.commensurable_conjAct_inv_left g).1)
+    (Subgroup.fintypeOfIndexNeZero
+      (IsHeckeTriple.commensurable_conjAct_inv_left g).1.relIndex_ne_zero)
 
 end IsHeckeTriple
 

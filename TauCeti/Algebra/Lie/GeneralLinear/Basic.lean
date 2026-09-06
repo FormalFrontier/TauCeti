@@ -43,7 +43,8 @@ sits *inside* the derived ideal and the two are not complementary.
   the spanning core shared by the derived-ideal computation below and by the ideal-generation
   argument of `TauCeti/Algebra/Lie/GeneralLinear/Radical.lean`.
 * `TauCeti.mem_center_matrix_iff`: an element of `gl n R` is central exactly when it is a scalar
-  matrix, and `TauCeti.center_matrix_toSubmodule_eq_span_one` records the centre as the span of `1`.
+  matrix; `TauCeti.one_mem_center_matrix` records that the identity is central, and
+  `TauCeti.center_matrix_toSubmodule_eq_span_one` records the centre as the span of `1`.
 * `TauCeti.derivedSeries_one_eq_slIdeal`: the derived ideal of `gl n R` is `TauCeti.slIdeal R n`, so
   by `TauCeti.mem_slIdeal_iff` it consists of the trace-zero matrices, and
   `TauCeti.derivedSeries_one_toLieSubalgebra_eq_sl` reads this as `LieAlgebra.SpecialLinear.sl n R`.
@@ -210,6 +211,12 @@ theorem mem_center_matrix_iff {A : Matrix n n R} :
     exact ⟨r, by rw [Matrix.scalar_apply, Matrix.smul_one_eq_diagonal]⟩
 
 variable (R n) in
+/-- The identity matrix is central in `gl n R`. -/
+theorem one_mem_center_matrix :
+    (1 : Matrix n n R) ∈ LieAlgebra.center R (Matrix n n R) :=
+  mem_center_matrix_iff.mpr ⟨1, (one_smul R _).symm⟩
+
+variable (R n) in
 /-- The centre of `gl n R` is the `R`-span of the identity matrix. -/
 theorem center_matrix_toSubmodule_eq_span_one :
     (LieAlgebra.center R (Matrix n n R)).toSubmodule = R ∙ (1 : Matrix n n R) := by
@@ -335,7 +342,7 @@ theorem center_matrix_ne_bot [Nonempty n] [Nontrivial R] :
   intro h
   have h1 : (1 : Matrix n n R) = 0 := by
     rw [← LieSubmodule.mem_bot (R := R) (L := Matrix n n R), ← h]
-    exact mem_center_matrix_iff.mpr ⟨1, (one_smul R _).symm⟩
+    exact one_mem_center_matrix R n
   exact one_ne_zero h1
 
 variable (R n) in

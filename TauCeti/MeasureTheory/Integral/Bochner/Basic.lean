@@ -6,24 +6,28 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.MeasureTheory.Integral.Bochner.Set
+public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 import Mathlib.Analysis.Convex.Integral
 import Mathlib.Analysis.Convex.Mul
 
 /-!
 # Additional lemmas for the Bochner integral
 
-This file records general-purpose bridges between real-valued Bochner integrals and
-extended-nonnegative Lebesgue integrals.
+This file records general-purpose lemmas for Bochner integrals, including bridges between
+real-valued Bochner integrals and extended-nonnegative Lebesgue integrals, as well as inequalities
+for set and probability integrals.
 
 ## Positive parts
 
 * `ofReal_integral_le_lintegral_ofReal` bounds the positive part of a real-valued
   function's integral by the integral of its pointwise positive part.
 
-## Set integrals
+## Set and probability integrals
 
 * `sq_setIntegral_le_measureReal_mul_setIntegral_sq` is Cauchy--Schwarz for a real-valued set
   integral, in squared form.
+* The set-integral inequality specializes to the second-moment lower bound for a real-valued
+  function on a probability space.
 
 ## `L¹` convergence
 
@@ -35,6 +39,20 @@ in the seminorm form `eLpNorm (f i - g) 1 μ → 0` (for instance by
 
 The conversion is `MeasureTheory.ofReal_integral_norm_eq_lintegral_enorm`, whose home is
 `Mathlib.MeasureTheory.Integral.Bochner.Basic`, plus continuity of `ENNReal.ofReal` at `0`.
+
+## Tail lower bounds
+
+A function on the real line whose norm stays above a positive constant on a set of infinite
+measure cannot be integrable there.
+
+* `not_integrableOn_Ioi_of_eventually_le_norm` is the half-line form, and
+  `not_integrable_of_eventually_le_atTop` is its real-valued Lebesgue-integrability consequence.
+
+## Kernel averages on the real line
+
+* `integral_kernel_mem_Icc_of_antitoneOn` squeezes the average of a function against a probability
+  density supported in `[-ε, 0]` between the function's values at `t + ε` and `t`, given only
+  antitonicity on the sampled interval `[t, t + ε]`.
 -/
 
 public section
@@ -48,6 +66,30 @@ open scoped ENNReal Topology
 namespace TauCeti
 
 namespace MeasureTheory
+
+/-- A function whose norm is eventually at least a positive constant at `atTop` is not integrable
+on any right half-line: it is bounded below in norm on a set of infinite measure. -/
+theorem not_integrableOn_Ioi_of_eventually_le_norm {E : Type*} [NormedAddCommGroup E]
+    {f : ℝ → E} {ε : ℝ} (hε : 0 < ε) (c : ℝ) (hf : ∀ᶠ x in atTop, ε ≤ ‖f x‖) :
+    ¬ IntegrableOn f (Set.Ioi c) := by
+  intro hint
+  obtain ⟨a, ha⟩ := eventually_atTop.mp hf
+  have htail : IntegrableOn f (Set.Ioi (max a c)) :=
+    hint.mono_set (Set.Ioi_subset_Ioi (le_max_right a c))
+  have hconst : IntegrableOn (fun _ : ℝ => ε) (Set.Ioi (max a c)) volume := by
+    refine Integrable.mono' htail.norm (by fun_prop) ?_
+    filter_upwards [ae_restrict_mem measurableSet_Ioi] with x hx
+    simpa only [Real.norm_eq_abs, abs_of_pos hε] using ha x ((le_max_left a c).trans hx.le)
+  rw [integrableOn_const_iff] at hconst
+  simp [Real.volume_Ioi, hε.ne'] at hconst
+
+/-- A real function that is eventually at least a positive constant at `atTop` is not Lebesgue
+integrable. -/
+theorem not_integrable_of_eventually_le_atTop {f : ℝ → ℝ} {ε : ℝ} (hε : 0 < ε)
+    (hf : ∀ᶠ x in atTop, ε ≤ f x) : ¬ Integrable f volume := fun hint =>
+  not_integrableOn_Ioi_of_eventually_le_norm hε 0
+    (hf.mono fun x hx => by rw [Real.norm_eq_abs]; exact hx.trans (le_abs_self _))
+    hint.integrableOn
 
 /-- Cauchy--Schwarz for a real-valued set integral over a set of finite measure, in squared form. -/
 theorem sq_setIntegral_le_measureReal_mul_setIntegral_sq {Ω : Type*} [MeasurableSpace Ω]
@@ -108,6 +150,43 @@ theorem tendsto_eLpNorm_one_of_tendsto_integral_norm_sub {Ω E ι : Type*} [Meas
     simp [Pi.sub_apply]
   simp_rw [heq]
   simpa [Function.comp_def] using (ENNReal.continuous_ofReal.tendsto 0).comp h
+
+/-- **Averaging against a kernel supported in `[-ε, 0]` samples only `[t, t + ε]`.** If `ψ` is a
+nonnegative probability density with respect to `μ` vanishing outside `[-ε, 0]`, and `F` is antitone
+on `[t, t + ε]`, then the average `∫ s, ψ s * F (t - s) ∂μ` lies between `F (t + ε)` and `F t`.
+
+Use this to bound a mollification of a monotone function by two of its values; no regularity of
+`F` beyond antitonicity on the sampled interval is needed. -/
+theorem integral_kernel_mem_Icc_of_antitoneOn {μ : Measure ℝ} {ψ F : ℝ → ℝ} {ε t : ℝ}
+    (hε : 0 ≤ ε) (hFanti : AntitoneOn F (Set.Icc t (t + ε))) (hψ0 : ∀ s, 0 ≤ ψ s)
+    (hψint : ∫ s, ψ s ∂μ = 1) (hψi : Integrable ψ μ)
+    (hintF : Integrable (fun s => ψ s * F (t - s)) μ)
+    (hsupp : ∀ s : ℝ, ψ s ≠ 0 → s ∈ Set.Icc (-ε) 0) :
+    (∫ s, ψ s * F (t - s) ∂μ) ∈ Set.Icc (F (t + ε)) (F t) := by
+  have hmass : ∀ c : ℝ, ∫ s, ψ s * c ∂μ = c := by
+    intro c
+    rw [integral_mul_const, hψint, one_mul]
+  have hsample : ∀ s : ℝ, -ε ≤ s → s ≤ 0 → t - s ∈ Set.Icc t (t + ε) := fun s h1 h2 =>
+    ⟨by linarith, by linarith⟩
+  have hlo : t ∈ Set.Icc t (t + ε) := ⟨le_rfl, by linarith⟩
+  have hhi : t + ε ∈ Set.Icc t (t + ε) := ⟨by linarith, le_rfl⟩
+  refine Set.mem_Icc.mpr ⟨?_, ?_⟩
+  · have hle : ∀ s : ℝ, ψ s * F (t + ε) ≤ ψ s * F (t - s) := by
+      intro s
+      rcases eq_or_ne (ψ s) 0 with h0 | h0
+      · simp [h0]
+      · obtain ⟨hs1, hs2⟩ := hsupp s h0
+        exact mul_le_mul_of_nonneg_left (hFanti (hsample s hs1 hs2) hhi (by linarith)) (hψ0 s)
+    calc F (t + ε) = ∫ s, ψ s * F (t + ε) ∂μ := (hmass _).symm
+      _ ≤ ∫ s, ψ s * F (t - s) ∂μ := integral_mono (hψi.mul_const _) hintF hle
+  · have hle : ∀ s : ℝ, ψ s * F (t - s) ≤ ψ s * F t := by
+      intro s
+      rcases eq_or_ne (ψ s) 0 with h0 | h0
+      · simp [h0]
+      · obtain ⟨hs1, hs2⟩ := hsupp s h0
+        exact mul_le_mul_of_nonneg_left (hFanti hlo (hsample s hs1 hs2) (by linarith)) (hψ0 s)
+    calc ∫ s, ψ s * F (t - s) ∂μ ≤ ∫ s, ψ s * F t ∂μ := integral_mono hintF (hψi.mul_const _) hle
+      _ = F t := hmass _
 
 end MeasureTheory
 

@@ -11,8 +11,6 @@ import TauCeti.LinearAlgebra.Matrix.Gram
 -- `SimplyConnectedRootDatum.Basic`.
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 
-public section
-
 /-!
 # The simply connected root datum of type `E₆`
 
@@ -73,6 +71,8 @@ The coordinates and the node numbering follow Bourbaki, *Lie Groups and Lie Alge
 12.1. This is the `E₆` branch of the target "a named datum per valid type" in Layer 6 of
 `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`.
 -/
+
+public section
 
 namespace TauCeti
 

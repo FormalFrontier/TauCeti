@@ -25,8 +25,10 @@ The product root squares to `-5`, so its simple extension is the copy of `ℚ(�
 candidate genus field. The relative-degree calculation then specializes
 `TauCeti.Multiquadratic.finrank_top_over_intermediateField_of_finrank_eq_two`. This supplies the
 field-degree part of the roadmap's `ℚ(√-5)` acceptance example (`[K_gen : ℚ(√-5)] = 2 = 2 ^ (t - 1)`
-with `t = 2` ramified primes); identifying the compositum as the maximal unramified abelian
-extension is later work. It is the CM-presented companion of the `ℚ(√-21)` example
+with `t = 2` ramified primes). Maximality is available in general for the canonical
+`candidateGenusField hd` through `isGenusField_candidateGenusField`; identifying the compositum
+presented here with that canonical field is still later work. It is the CM-presented companion of
+the `ℚ(√-21)` example
 `finrank_candidateGenusField_over_sqrtNegTwentyOneSubfield`, whose generators `i√3, i√7` are not
 real square roots of primes and so are not captured by the `cmRoot` family, so that example uses a
 bespoke generator list instead.

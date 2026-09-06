@@ -109,7 +109,7 @@ private lemma condExp_blockCylinder_inter_preimage_ae_eq_mul [StandardBorelSpace
     (MeasurableSpace.comap (fun (ω : Ω) (i : Fin r) => X (i : ℕ) ω) inferInstance)
     (MeasurableSpace.comap (X r) inferInstance)
     (tailFamily_le_ambient (m + 1) fun k _ => hX_meas k)
-    ((measurable_pi_lambda (fun (ω : Ω) (i : Fin r) => X (i : ℕ) ω) fun i => hX_meas i).comap_le)
+    ((Measurable.of_eval (f := fun (ω : Ω) (i : Fin r) => X (i : ℕ) ω) fun i => hX_meas i).comap_le)
     ((hX_meas r).comap_le) μ).mp
       (condIndep_prefix_coord_future hX hX_meas hrm) _ _ hA_meas hB_meas
 

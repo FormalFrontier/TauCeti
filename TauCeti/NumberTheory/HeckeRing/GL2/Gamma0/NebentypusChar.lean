@@ -6,7 +6,7 @@ Authors: Chris Birkbeck, Claude
 module
 
 public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma0.UpperUnit
-public import Mathlib.Data.Complex.Basic
+public import Mathlib.Basic.Complex.Basic
 
 /-!
 # The twisting character of the `χ`-twisted `Γ₀(N)` Hecke ring

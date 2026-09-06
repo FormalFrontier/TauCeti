@@ -7,7 +7,7 @@ module
 
 public import Mathlib.RingTheory.Finiteness.Prod
 public import Mathlib.CategoryTheory.Limits.Constructions.FiniteProductsOfBinaryProducts
-public import Mathlib.CategoryTheory.Limits.Shapes.BinaryProducts
+public import Mathlib.CategoryTheory.Limits.Shapes.BinaryProducts.BinaryProducts
 public import Mathlib.CategoryTheory.Preadditive.Biproducts
 public import TauCeti.Algebra.Coalgebra.Comodule.Finite.Basic
 public import TauCeti.Algebra.Coalgebra.Comodule.Finite.Preadditive

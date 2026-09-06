@@ -11,8 +11,6 @@ public import Mathlib.Algebra.Lie.AdjointAction.Derivation
 import Mathlib.Algebra.Ring.Action.ConjAct
 import TauCeti.Algebra.Ring.Commutator
 
-public section
-
 /-!
 # The inner automorphisms `exp (ad x)`
 
@@ -81,6 +79,8 @@ restricting scalars along `algebraMap ℚ K`.
   where `Int L` is introduced.
 * [R. W. Carter, *Simple Groups of Lie Type*][carter1972], §4.1.
 -/
+
+public section
 
 namespace TauCeti
 

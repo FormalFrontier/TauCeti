@@ -7,6 +7,9 @@ module
 
 public import Mathlib.Algebra.DirectSum.Decomposition
 public import Mathlib.Algebra.Ring.NegOnePow
+public import Mathlib.RingTheory.Finiteness.Basic
+public import TauCeti.LinearAlgebra.Graded.LinearMap
+import TauCeti.Algebra.DirectSum.Internal
 
 /-!
 # Internally graded modules
@@ -21,18 +24,24 @@ Mathlib already provides the direct-sum equivalence and its induction principle 
 the proof that it is internal; the instance below makes Mathlib's decomposition API available
 without duplicating it.
 
-The file also carries the Koszul twist operator used to encode Koszul signs on homogeneous
-elements, and the letterwise tuple operation that applies it on a half-open index interval.
+The file also records that a finitely generated internally graded module has only finitely many
+nonzero pieces, the Koszul twist operator used to encode Koszul signs on homogeneous elements, and
+the letterwise tuple operation that applies it on a half-open index interval.
 
 ## Main definitions
 
 * `InternalGrading`: an internal `ℤ`-grading of a module.
+* `InternalGrading.ofDecomposition`: the internal grading carried by a family of submodules with a
+  `DirectSum.Decomposition`, as graded algebras store it.
+* `InternalGrading.map`: transport an internal grading across a linear equivalence.
 * `InternalGrading.koszulTwist`: the operator scaling degree-`e` elements by `(-1)^(q * e)`.
 * `InternalGrading.twistedTuple`: a tuple with a consecutive block of letters Koszul-twisted.
 
 ## Main results
 
 * `TauCeti.InternalGrading.ext`: internal gradings are determined by their homogeneous pieces.
+* `TauCeti.InternalGrading.finite_piece_ne_bot`: a finitely generated internally graded module has
+  only finitely many nonzero homogeneous pieces.
 * `TauCeti.InternalGrading.koszulTwist_apply_of_mem`: the twist acts by the Koszul scalar on
   each homogeneous piece.
 * `TauCeti.InternalGrading.koszulTwist_comp`: twists compose by adding the twist parameters.
@@ -48,7 +57,7 @@ open scoped DirectSum
 
 namespace TauCeti
 
-universe u v
+universe u v w
 
 variable (R : Type u) (M : Type v) [Semiring R] [AddCommMonoid M] [Module R M]
 
@@ -78,7 +87,189 @@ theorem ext : ∀ {G H : InternalGrading R M}, (∀ p, G.piece p = H.piece p) �
 noncomputable instance (G : InternalGrading R M) : DirectSum.Decomposition G.piece :=
   G.isInternal.chooseDecomposition
 
+/-- The internal grading carried by a family of submodules with a `DirectSum.Decomposition`.  This
+is the bridge from Mathlib's decomposition typeclass, under which graded algebras are stated, to
+the bundled internal grading of this file. -/
+noncomputable def ofDecomposition (ℳ : ℤ → Submodule R M) [DirectSum.Decomposition ℳ] :
+    InternalGrading R M :=
+  ⟨ℳ, DirectSum.Decomposition.isInternal ℳ⟩
+
+@[simp]
+theorem ofDecomposition_piece (ℳ : ℤ → Submodule R M) [DirectSum.Decomposition ℳ] :
+    (ofDecomposition ℳ).piece = ℳ := (rfl)
+
+section Map
+
+variable {N : Type w} [AddCommMonoid N] [Module R N]
+
+private noncomputable def mapPiecesEquiv (G : InternalGrading R M) (e : M ≃ₗ[R] N) :
+    (⨁ p : ℤ, G.piece p) ≃ₗ[R] (⨁ p : ℤ, (G.piece p).map e.toLinearMap) :=
+  DirectSum.congrLinearEquiv fun p ↦
+    Submodule.equivMapOfInjective e.toLinearMap e.injective (G.piece p)
+
+private theorem mapPiecesEquiv_lof (G : InternalGrading R M) (e : M ≃ₗ[R] N)
+    (p : ℤ) (x : G.piece p) :
+    mapPiecesEquiv G e (DirectSum.lof R ℤ (fun i ↦ G.piece i) p x) =
+      DirectSum.lof R ℤ (fun i ↦ (G.piece i).map e.toLinearMap) p
+        ((Submodule.equivMapOfInjective e.toLinearMap e.injective (G.piece p)).toLinearMap x) := by
+  -- Expose the bundled linear map so the direct-sum application lemma can rewrite it.
+  change (mapPiecesEquiv G e).toLinearMap
+    (DirectSum.lof R ℤ (fun i ↦ G.piece i) p x) = _
+  rw [mapPiecesEquiv, DirectSum.congrLinearEquiv_toLinearMap, DirectSum.lmap_lof]
+
+private theorem coeLinearMap_comp_mapPiecesEquiv (G : InternalGrading R M)
+    (e : M ≃ₗ[R] N) :
+    (DirectSum.coeLinearMap fun p : ℤ ↦ (G.piece p).map e.toLinearMap) ∘ₗ
+        (mapPiecesEquiv G e).toLinearMap =
+      e.toLinearMap ∘ₗ DirectSum.coeLinearMap G.piece := by
+  apply DirectSum.linearMap_ext R
+  intro p
+  apply LinearMap.ext
+  intro x
+  simp only [LinearMap.comp_apply]
+  calc
+    (DirectSum.coeLinearMap fun p : ℤ ↦ (G.piece p).map e.toLinearMap)
+        ((mapPiecesEquiv G e).toLinearMap
+          (DirectSum.lof R ℤ (fun i ↦ G.piece i) p x)) =
+        (DirectSum.coeLinearMap fun p : ℤ ↦ (G.piece p).map e.toLinearMap)
+          (DirectSum.lof R ℤ (fun i ↦ (G.piece i).map e.toLinearMap) p
+            ((Submodule.equivMapOfInjective e.toLinearMap e.injective
+              (G.piece p)).toLinearMap x)) :=
+      congrArg _ (mapPiecesEquiv_lof G e p x)
+    _ = e x := by
+      rw [DirectSum.coeLinearMap_lof]
+      exact Submodule.coe_equivMapOfInjective_apply e.toLinearMap e.injective (G.piece p) x
+    _ = e.toLinearMap (DirectSum.coeLinearMap G.piece
+        (DirectSum.lof R ℤ (fun i ↦ G.piece i) p x)) := by
+      rw [DirectSum.coeLinearMap_lof]
+      rfl
+
+/-- Transport an internal grading across a linear equivalence. The degree-`p` piece of the target
+is the image of the degree-`p` piece of the source. -/
+noncomputable def map (G : InternalGrading R M) (e : M ≃ₗ[R] N) : InternalGrading R N where
+  piece p := (G.piece p).map e.toLinearMap
+  isInternal := by
+    -- Expose `coeLinearMap` rather than its definitionally equal additive coercion so it can be
+    -- composed with `mapPiecesEquiv` below.
+    change Function.Bijective
+      (DirectSum.coeLinearMap fun p : ℤ ↦ (G.piece p).map e.toLinearMap)
+    let E := mapPiecesEquiv G e
+    have hcomp : Function.Bijective
+        ((DirectSum.coeLinearMap fun p : ℤ ↦ (G.piece p).map e.toLinearMap) ∘ₗ E.toLinearMap) := by
+      rw [coeLinearMap_comp_mapPiecesEquiv]
+      exact e.bijective.comp G.isInternal
+    constructor
+    · intro x y hxy
+      obtain ⟨x', rfl⟩ := E.surjective x
+      obtain ⟨y', rfl⟩ := E.surjective y
+      exact congrArg E (hcomp.injective (by
+        simpa only [LinearMap.comp_apply, LinearEquiv.coe_toLinearMap] using hxy))
+    · intro y
+      obtain ⟨x, hx⟩ := hcomp.surjective y
+      exact ⟨E x, by
+        simpa only [LinearMap.comp_apply, LinearEquiv.coe_toLinearMap] using hx⟩
+
+/-- The degree-`p` piece of a transported grading is the image of the original piece. -/
+@[simp]
+theorem map_piece (G : InternalGrading R M) (e : M ≃ₗ[R] N) (p : ℤ) :
+    (G.map e).piece p = (G.piece p).map e.toLinearMap :=
+  (rfl)
+
+/-- Membership in a transported piece can be checked after applying the inverse equivalence.
+
+This is not a `simp` lemma: `map_piece` already rewrites the left-hand side to a `Submodule.map`,
+on which the `simp` set fires `Submodule.mem_map_equiv` to reach the same right-hand side. -/
+theorem mem_map_piece_iff (G : InternalGrading R M) (e : M ≃ₗ[R] N) (p : ℤ) (y : N) :
+    y ∈ (G.map e).piece p ↔ e.symm y ∈ G.piece p := by
+  exact Submodule.mem_map_equiv (p := G.piece p) (e := e)
+
+/-- A linear equivalence maps a homogeneous element into the transported piece of the same
+degree. This is the special case of `mem_map_piece_iff` that `simp` already reaches. -/
+theorem apply_mem_map_piece_iff (G : InternalGrading R M) (e : M ≃ₗ[R] N) (p : ℤ) (x : M) :
+    e x ∈ (G.map e).piece p ↔ x ∈ G.piece p := by
+  simp
+
+/-- The equivalence used to transport a grading is homogeneous of degree zero. -/
+theorem isHomogeneous_map (G : InternalGrading R M) (e : M ≃ₗ[R] N) :
+    TauCeti.LinearMap.IsHomogeneous e.toLinearMap G.piece (G.map e).piece 0 := by
+  rw [TauCeti.LinearMap.isHomogeneous_def]
+  intro p x hx
+  simpa using hx
+
+/-- The inverse of an equivalence used to transport a grading is homogeneous of degree zero. -/
+theorem isHomogeneous_map_symm (G : InternalGrading R M) (e : M ≃ₗ[R] N) :
+    TauCeti.LinearMap.IsHomogeneous e.symm.toLinearMap (G.map e).piece G.piece 0 := by
+  rw [TauCeti.LinearMap.isHomogeneous_def]
+  intro p y hy
+  simpa using hy
+
+/-- Transport along the identity equivalence leaves an internal grading unchanged. -/
+@[simp]
+theorem map_refl (G : InternalGrading R M) : G.map (LinearEquiv.refl R M) = G := by
+  apply InternalGrading.ext
+  intro p
+  apply Submodule.ext
+  intro x
+  simp
+
+/-- Successive transport agrees with transport along the composite equivalence. -/
+@[simp]
+theorem map_trans {P : Type*} [AddCommMonoid P] [Module R P]
+    (G : InternalGrading R M) (e : M ≃ₗ[R] N) (f : N ≃ₗ[R] P) :
+    (G.map e).map f = G.map (e.trans f) := by
+  apply InternalGrading.ext
+  intro p
+  apply Submodule.ext
+  intro x
+  simp
+
+end Map
+
+/-- An additive map that vanishes on every homogeneous piece except degree `i` sees only the
+degree-`i` component of each argument. -/
+theorem map_eq_map_decompose {N : Type w} [AddCommMonoid N] (G : InternalGrading R M)
+    (f : M →+ N) {i : ℤ}
+    (hf : ∀ j (x : M), x ∈ G.piece j → j ≠ i → f x = 0) (x : M) :
+    f x = f (DirectSum.decompose G.piece x i : M) := by
+  classical
+  conv_lhs => rw [← DirectSum.sum_support_decompose G.piece x]
+  rw [map_sum]
+  refine Finset.sum_eq_single i (fun j _ hj ↦ ?_) fun hi ↦ ?_
+  · exact hf j _ (DirectSum.decompose G.piece x j).2 hj
+  · rw [DFinsupp.notMem_support_iff.mp hi, Submodule.coe_zero, map_zero]
+
 end InternalGrading
+
+section FiniteSupport
+
+variable {R : Type u} {M : Type v} [Semiring R] [AddCommMonoid M] [Module R M]
+
+private theorem InternalGrading.finite_piece_ne_bot_aux (G : InternalGrading R M)
+    [Module.Finite R M] : {p | G.piece p ≠ ⊥}.Finite :=
+  Submodule.finite_ne_bot_of_iSupIndep_of_fg G.isInternal.submodule_iSupIndep
+    (by rw [G.isInternal.submodule_iSup_eq_top]; exact Module.Finite.fg_top)
+
+/-- A finitely generated internally graded module has only finitely many nonzero homogeneous
+pieces. -/
+theorem InternalGrading.finite_piece_ne_bot (G : InternalGrading R M) [Module.Finite R M] :
+    {p | G.piece p ≠ ⊥}.Finite :=
+  G.finite_piece_ne_bot_aux
+
+/-- Summing the homogeneous components over the finite set of nonzero pieces reconstructs the
+original element. -/
+theorem InternalGrading.sum_decompose_toFinset (G : InternalGrading R M)
+    (hG : {p | G.piece p ≠ ⊥}.Finite) (x : M) :
+    ∑ p ∈ hG.toFinset, (DirectSum.decompose G.piece x p : M) = x := by
+  classical
+  conv_rhs => rw [← DirectSum.sum_support_decompose G.piece x]
+  refine (Finset.sum_subset (fun p hp ↦ ?_) fun p _ hp ↦ ?_).symm
+  · refine hG.mem_toFinset.mpr fun hbot ↦ DFinsupp.mem_support_iff.mp hp
+      (Submodule.coe_eq_zero.mp
+        ((Submodule.eq_bot_iff _).mp hbot _ (DirectSum.decompose G.piece x p).2))
+  · rw [DFinsupp.notMem_support_iff.mp hp]
+    simp
+
+end FiniteSupport
 
 section KoszulTwist
 

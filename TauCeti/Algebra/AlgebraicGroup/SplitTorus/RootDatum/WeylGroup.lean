@@ -165,8 +165,7 @@ private theorem coordinatePermRootDatumAutHom_injective :
   apply Finsupp.single_left_injective (one_ne_zero : (1 : ℤ) ≠ 0)
   have h := congrArg
     (fun g : RootPairing.Aut (coordinateRootDatum σ) ↦
-      RootPairing.Equiv.weightEquiv (coordinateRootDatum σ) (coordinateRootDatum σ) g
-        (Finsupp.single i 1)) hef
+      RootPairing.Equiv.weightEquiv g (Finsupp.single i 1)) hef
   simpa only [coordinatePermRootDatumAutHom, MonoidHom.coe_mk, OneHom.coe_mk,
     RootPairing.Equiv.weightEquiv_apply,
     coordinatePermRootDatumAut_weightMap_apply, Finsupp.domLCongr_single] using h

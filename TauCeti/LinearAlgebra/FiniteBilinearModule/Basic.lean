@@ -33,6 +33,7 @@ restriction to a subgroup can be degenerate.
 * `TauCeti.FiniteBilinearModule.IsNondegenerate`: bijectivity of the adjoint pairing.
 * `TauCeti.FiniteBilinearModule.Hom`: a pairing-preserving additive homomorphism.
 * `TauCeti.FiniteBilinearModule.Isometry`: a pairing-preserving additive equivalence.
+* `TauCeti.FiniteBilinearModule.Isometry.prod`: the orthogonal direct sum of two isometries.
 * `TauCeti.FiniteBilinearModule.orthogonalComplement`: the orthogonal complement of a subgroup.
 * `TauCeti.FiniteBilinearModule.IsIsotropicElem`: vanishing of the self-pairing on an element.
 * `TauCeti.FiniteBilinearModule.IsIsotropic`: vanishing of the pairing on a subgroup.
@@ -40,6 +41,8 @@ restriction to a subgroup can be degenerate.
 
 ## Main results
 
+* `TauCeti.FiniteBilinearModule.radical_restrict`: the radical of a restricted pairing is
+  the part of the orthogonal complement lying in the subgroup.
 * `TauCeti.FiniteBilinearModule.Isometry.map_orthogonalComplement`: an isometry carries
   orthogonal complements to orthogonal complements.
 * `TauCeti.FiniteBilinearModule.Isometry.orthogonalComplementEquiv`: the induced equivalence
@@ -48,13 +51,15 @@ restriction to a subgroup can be degenerate.
   subgroups.
 * `TauCeti.FiniteBilinearModule.Isometry.isLagrangian_map_iff`: an isometry transports Lagrangian
   subgroups.
+* `TauCeti.FiniteBilinearModule.isIsotropic_prod_iff`: isotropy of a product subgroup in an
+  orthogonal direct sum is isotropy of each factor subgroup.
 -/
 
 public section
 
 namespace TauCeti
 
-universe u v w
+universe u v w x
 
 section CharacterModuleDuality
 
@@ -634,6 +639,26 @@ theorem isNondegenerate_prod (B : FiniteBilinearModule) :
       exact h1.symm.trans (heq.trans h2)
     exact Prod.ext (hA hx) (hB hy)
 
+section IsometryProd
+
+variable {A : FiniteBilinearModule.{u}} {B : FiniteBilinearModule.{v}}
+  {C : FiniteBilinearModule.{w}} {D : FiniteBilinearModule.{x}}
+
+/-- **The orthogonal direct sum of two isometries.** -/
+def Isometry.prod (f : Isometry A C) (g : Isometry B D) :
+    Isometry (A.prod B) (C.prod D) where
+  toAddEquiv := f.toAddEquiv.prodCongr g.toAddEquiv
+  map_pairing' z w := by
+    rw [prod_pairing, prod_pairing]
+    exact congrArg₂ (· + ·) (f.map_pairing z.1 w.1) (g.map_pairing z.2 w.2)
+
+/-- An orthogonal direct sum of isometries acts componentwise. -/
+@[simp]
+theorem Isometry.prod_apply (f : Isometry A C) (g : Isometry B D) (z : A.carrier × B.carrier) :
+    f.prod g z = (f z.1, g z.2) := (rfl)
+
+end IsometryProd
+
 /-- The radical is the kernel of the adjoint pairing. -/
 def radical : AddSubgroup A := A.pairing.ker
 
@@ -673,9 +698,19 @@ def orthogonalComplement (H : AddSubgroup A) : AddSubgroup A :=
 @[simp]
 theorem mem_orthogonalComplement_iff (H : AddSubgroup A) (x : A) :
     x ∈ A.orthogonalComplement H ↔ ∀ y ∈ H, A.pairing x y = 0 := by
-  rw [orthogonalComplement, Submodule.mem_toAddSubgroup, Submodule.mem_orthogonalBilin_iff]
+  rw [orthogonalComplement, Submodule.mem_toAddSubgroup, Submodule.mem_orthogonalBilin]
   simp_rw [toBilin_apply, A.pairing_comm]
   exact ⟨fun h y hy ↦ h y hy, fun h y hy ↦ h y hy⟩
+
+/-- **The radical of a restricted pairing.** Restricting the pairing of `A` to a subgroup `S`
+makes degenerate exactly the vectors of `S` which are orthogonal to all of `S`. -/
+@[simp]
+theorem radical_restrict (S : AddSubgroup A) :
+    (A.restrict S).radical = (A.orthogonalComplement S).addSubgroupOf S := by
+  ext x
+  rw [mem_radical_iff, AddSubgroup.mem_addSubgroupOf, A.mem_orthogonalComplement_iff]
+  exact ⟨fun hx y hy ↦ by simpa only [A.restrict_pairing S] using hx ⟨y, hy⟩,
+    fun hx y ↦ by simpa only [A.restrict_pairing S] using hx y.1 y.2⟩
 
 /-- Orthogonal complements reverse inclusions. -/
 theorem orthogonalComplement_anti {H K : AddSubgroup A} (h : H ≤ K) :
@@ -781,6 +816,24 @@ theorem IsIsotropic.mono {H K : AddSubgroup A} (hK : A.IsIsotropic K) (h : H ≤
 /-- The trivial subgroup is isotropic. -/
 @[simp]
 theorem isIsotropic_bot : A.IsIsotropic ⊥ := by simp [IsIsotropic]
+
+/-- **Isotropy of a product subgroup is componentwise.** -/
+@[simp]
+theorem isIsotropic_prod_iff (B : FiniteBilinearModule) (H : AddSubgroup A) (K : AddSubgroup B) :
+    (A.prod B).IsIsotropic (H.prod K) ↔ A.IsIsotropic H ∧ B.IsIsotropic K := by
+  simp only [isIsotropic_def]
+  constructor
+  · intro h
+    refine ⟨fun x hx y hy ↦ ?_, fun x hx y hy ↦ ?_⟩
+    · have hxy := h (x, 0) (AddSubgroup.mem_prod.mpr ⟨hx, K.zero_mem⟩)
+        (y, 0) (AddSubgroup.mem_prod.mpr ⟨hy, K.zero_mem⟩)
+      rwa [prod_pairing, pairing_zero_left, add_zero] at hxy
+    · have hxy := h (0, x) (AddSubgroup.mem_prod.mpr ⟨H.zero_mem, hx⟩)
+        (0, y) (AddSubgroup.mem_prod.mpr ⟨H.zero_mem, hy⟩)
+      rwa [prod_pairing, pairing_zero_left, zero_add] at hxy
+  · rintro ⟨hH, hK⟩ x hx y hy
+    rw [AddSubgroup.mem_prod] at hx hy
+    rw [prod_pairing, hH x.1 hx.1 y.1 hy.1, hK x.2 hx.2 y.2 hy.2, add_zero]
 
 /-- A Lagrangian is a subgroup equal to its orthogonal complement. -/
 def IsLagrangian (H : AddSubgroup A) : Prop := H = A.orthogonalComplement H

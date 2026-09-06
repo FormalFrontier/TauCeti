@@ -100,7 +100,7 @@ theorem measurable_probabilityMeasure_toMeasure_apply_toReal {s : Set α} (hs : 
 theorem measurable_probabilityMeasure_eval_family {ι : Type*}
     (B : ι → Set α) (hB : ∀ i, MeasurableSet (B i)) :
     Measurable fun P : ProbabilityMeasure α => fun i => (P (B i) : ℝ) :=
-  measurable_pi_lambda _ fun i => measurable_probabilityMeasure_apply_real (hB i)
+  Measurable.of_eval fun i => measurable_probabilityMeasure_apply_real (hB i)
 
 /-- The defining equation of `evalReal`, stated so that proofs about it cite the unfolding
 explicitly rather than relying on definitional equality. -/
@@ -108,7 +108,7 @@ private theorem evalReal_apply (P : ProbabilityMeasure α) (s : MeasIdx α) :
     evalReal P s = (P s.1 : ℝ) := rfl
 
 private theorem measurable_evalReal : Measurable (evalReal (α := α)) :=
-  measurable_pi_lambda _ fun s => by
+  Measurable.of_eval fun s => by
     simpa only [evalReal_apply] using measurable_probabilityMeasure_apply_real s.2
 
 /-- The Giry σ-algebra on `Measure α` is the pullback of the product σ-algebra along the
@@ -183,7 +183,7 @@ theorem Measure.ext_of_forall_map_probabilityMeasure_eval_eq
       set B : Fin I.card → Set α := fun j => ((e.symm j : MeasIdx α) : Set α) with hB
       have hBm : ∀ j, MeasurableSet (B j) := fun j => (e.symm j : MeasIdx α).2
       set Φ : (Fin I.card → ℝ) → (I → ℝ) := fun x i => x (e i) with hΦ
-      have hΦm : Measurable Φ := measurable_pi_lambda _ fun i => measurable_pi_apply _
+      have hΦm : Measurable Φ := Measurable.of_eval fun i => measurable_pi_apply _
       have hfam := measurable_probabilityMeasure_eval_family B hBm
       have hfun : I.restrict ∘ (evalReal (α := α))
           = Φ ∘ fun P : ProbabilityMeasure α => fun j => (P (B j) : ℝ) := by
@@ -232,7 +232,7 @@ theorem IsZeroOneMeasure.exists_eq_dirac_probabilityMeasure [CountablyGenerated 
   let e : ProbabilityMeasure α → ({s : Set α // s ∈ 𝒜} → ℝ≥0∞) :=
     fun P s => (P : Measure α) s.1
   have he : Measurable e :=
-    measurable_pi_lambda _ fun s => measurable_probabilityMeasure_toMeasure_apply
+    Measurable.of_eval fun s => measurable_probabilityMeasure_toMeasure_apply
       (hmeas s.1 s.2)
   have he_inj : Function.Injective e := by
     intro P Q hPQ

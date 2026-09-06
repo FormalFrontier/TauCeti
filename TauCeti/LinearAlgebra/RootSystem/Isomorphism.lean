@@ -11,8 +11,6 @@ module
 -- It re-exports `Mathlib.LinearAlgebra.RootSystem.CartanMatrix`, hence that theorem.
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
 
-public section
-
 /-!
 # Root systems of the same Dynkin type are isomorphic
 
@@ -45,6 +43,8 @@ This file proves `nonempty_equiv_of_hasCartanType`, the final isomorphism step o
 Algebras, Chapters 4-6*, chapter VI, §4, and Humphreys, *Introduction to Lie Algebras and
 Representation Theory*, §11.1, for the isomorphism theorem in the classical language.
 -/
+
+public section
 
 namespace TauCeti
 
@@ -80,13 +80,13 @@ chosen simple coroot to the simple coroot selected by the supplied relabelling. 
     (b : P.Base) (b₂ : P₂.Base) (e : b.support ≃ b₂.support)
     (he : ∀ i j, b₂.cartanMatrix (e i) (e j) = b.cartanMatrix i j)
     (i : b.support) :
-    (_root_.RootPairing.Equiv.coweightEquiv P P₂
+    (_root_.RootPairing.Equiv.coweightEquiv
       (b.equivOfCartanMatrixEq b₂ e he)).symm (P.coroot i) = P₂.coroot (e i) := by
   let E := b.equivOfCartanMatrixEq b₂ e he
   have hindex : E.indexEquiv.symm (e i) = i := by
     rw [← equivOfCartanMatrixEq_indexEquiv_apply b b₂ e he i]
     exact E.indexEquiv.symm_apply_apply i
-  apply (_root_.RootPairing.Equiv.coweightEquiv P P₂ E).injective
+  apply (_root_.RootPairing.Equiv.coweightEquiv E).injective
   rw [LinearEquiv.apply_symm_apply, _root_.RootPairing.Equiv.coweightEquiv_apply]
   simpa only [hindex] using
     (_root_.RootPairing.Hom.coroot_coweightMap_apply P P₂ (e i) E.toHom).symm

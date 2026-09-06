@@ -85,8 +85,9 @@ reproved.
   Frobenius by the pinned symmetry matrix.
 * `TauCeti.DynkinType.geckTwistedFrobenius_geckRootSubgroupMatrix`: the defining equation on the
   pinned numbered root subgroups.
-* `TauCeti.DynkinType.geckTwistedFrobenius_geckTorusMatrix`: the equation on the pinned weight
-  torus.
+* `TauCeti.DynkinType.geckTwistedFrobenius_geckWeightTorusPoints` and
+  `TauCeti.DynkinType.geckTwistedFrobenius_geckTorusMatrix`: the equation on the pinned weight
+  torus, on the represented torus homomorphism and on the matrix that homomorphism produces.
 * `TauCeti.DynkinType.geckFrobenius_pow` and `TauCeti.DynkinType.geckTwistedFrobenius_pow`: the
   powers of the two endomorphisms, the second separating into `γ ^ m ∘ Frob_(q ^ m)`, pointwise in
   `TauCeti.DynkinType.geckTwistedFrobenius_pow_apply`, and, by
@@ -197,11 +198,28 @@ theorem geckTwistedFrobenius_geckRootSubgroupMatrix (i : Fin t.rank ⊕ Fin t.ra
           ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm
             (Multiplicative.ofAdd (Multiplicative.toAdd u ^ p ^ k))),
         t.geckRootSubgroupMatrix_mem_geckPoints ht A _ _⟩ := by
-  rw [geckTwistedFrobenius_apply, geckFrobenius_geckRootSubgroupMatrix,
+  have hroot (j : Fin t.rank ⊕ Fin t.rank) (v : Multiplicative A) :
+      (⟨t.geckRootSubgroupMatrix ht j
+          ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm v),
+        t.geckRootSubgroupMatrix_mem_geckPoints ht A j _⟩ : t.geckPoints ht A) =
+        t.geckRootSubgroupPoints ht j A v := by
+    apply Subtype.ext
+    exact (t.coe_geckRootSubgroupPoints ht j A v).symm
+  rw [geckTwistedFrobenius_apply, hroot, geckFrobenius_geckRootSubgroupPoints, ← hroot,
     geckGraphAutPoints_geckRootSubgroupMatrix]
 
-/-- **The twisted Frobenius raises a point of the pinned Geck weight torus to its `p ^ k`-th power
-and relabels its coordinates** by the inverse of the diagram symmetry. -/
+/-- **The twisted Frobenius raises a point of the represented Geck weight torus to its `p ^ k`-th
+power and relabels its coordinates** by the inverse of the diagram symmetry. -/
+@[simp]
+theorem geckTwistedFrobenius_geckWeightTorusPoints (s : Fin t.rank → Aˣ) :
+    t.geckTwistedFrobenius ht hsigma p k A (t.geckWeightTorusPoints ht A s) =
+      t.geckWeightTorusPoints ht A fun j => s (sigma⁻¹ j) ^ p ^ k := by
+  rw [geckTwistedFrobenius_apply, geckFrobenius_geckWeightTorusPoints,
+    geckGraphAutPoints_geckWeightTorusPoints]
+  exact congrArg _ (funext fun j => Pi.pow_apply s (p ^ k) _)
+
+/-- **The twisted Frobenius on the pinned Geck weight torus**, written on the matrix that the
+represented torus produces. -/
 @[simp]
 theorem geckTwistedFrobenius_geckTorusMatrix (s : Fin t.rank → Aˣ) :
     t.geckTwistedFrobenius ht hsigma p k A
@@ -210,9 +228,12 @@ theorem geckTwistedFrobenius_geckTorusMatrix (s : Fin t.rank → Aˣ) :
             t.geckTorusMatrix_mem_geckPoints ht A s⟩ =
       ⟨t.geckTorusMatrix ht fun j => (s (sigma⁻¹ j)) ^ p ^ k,
         t.geckTorusMatrix_mem_geckPoints ht A _⟩ := by
-  rw [geckTwistedFrobenius_apply, geckFrobenius_geckTorusMatrix, geckPoints_mk_geckTorusMatrix,
-    geckGraphAutPoints_geckTorusMatrix]
-  exact Subtype.ext (congrArg (t.geckTorusMatrix ht) (funext fun j => Pi.pow_apply s (p ^ k) _))
+  have htorus (r : Fin t.rank → Aˣ) :
+      (⟨t.geckTorusMatrix ht r, t.geckTorusMatrix_mem_geckPoints ht A r⟩ :
+          t.geckPoints ht A) = t.geckWeightTorusPoints ht A r :=
+    Subtype.ext (t.coe_geckWeightTorusPoints ht A r).symm
+  rw [← geckPoints_mk_geckTorusMatrix, htorus, geckTwistedFrobenius_geckWeightTorusPoints,
+    ← htorus]
 
 /-! ## The degenerate parameters
 
@@ -310,7 +331,14 @@ theorem geckTwistedFrobenius_pow_geckRootSubgroupMatrix (m : ℕ) (i : Fin t.ran
           ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm
             (Multiplicative.ofAdd (Multiplicative.toAdd u ^ p ^ (k * m)))),
         t.geckRootSubgroupMatrix_mem_geckPoints ht A _ _⟩ := by
-  rw [geckTwistedFrobenius_pow_apply, geckFrobenius_geckRootSubgroupMatrix,
+  have hroot (j : Fin t.rank ⊕ Fin t.rank) (v : Multiplicative A) :
+      (⟨t.geckRootSubgroupMatrix ht j
+          ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm v),
+        t.geckRootSubgroupMatrix_mem_geckPoints ht A j _⟩ : t.geckPoints ht A) =
+        t.geckRootSubgroupPoints ht j A v := by
+    apply Subtype.ext
+    exact (t.coe_geckRootSubgroupPoints ht j A v).symm
+  rw [geckTwistedFrobenius_pow_apply, hroot, geckFrobenius_geckRootSubgroupPoints, ← hroot,
     geckGraphAutPoints_pow_geckRootSubgroupMatrix]
 
 /-- **A diagram symmetry of order dividing `m` makes the `m`-th power of the twisted Frobenius the

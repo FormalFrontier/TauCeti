@@ -29,18 +29,13 @@ rather than the single `q`-power map.
 Nothing is assumed of `L` beyond being a field extension: in particular it need not be
 algebraically closed, which is the only case the source states.
 
-This belongs to the **Hasse-bound strand** of `TauCetiRoadmap/EllipticCurves/README.md`, Layer 3
-("elliptic curves over finite fields"). That roadmap's §Ordering splits the layer: "the Hasse bound
-is the earliest PR, its existing proof self-contained; the zeta strand needs Layer 1's Frobenius
-identities". This is the self-contained side — the elementary field-theoretic input to the
-Silverman V.1 route, saying that the `K`-rational coordinates are exactly the Frobenius-fixed ones.
-In the roadmap's pinned Hasse provenance the corresponding file sits inside the import closure of
-the capstone `hasse_bound` proof, not in the zeta material.
+This is the elementary field-theoretic input to the Silverman V.1 route to the Hasse bound: it says
+that the `K`-rational coordinates are exactly the Frobenius-fixed ones.
 
 ## Provenance
 
-Ported from the AINTLIB `HasseWeil` project (`github.com/CBirkbeck/AINTLIB`, Apache-2.0, pinned by
-that roadmap at `dev/hasse-weil @ 513e83879e2f`),
+Ported from the AINTLIB `HasseWeil` project (`github.com/CBirkbeck/AINTLIB`, Apache-2.0,
+`dev/hasse-weil @ 513e83879e2f`),
 `HasseWeil/Curves/FrobeniusFixedLocus.lean`, declaration `frobenius_fixed_iff_mem_baseField`.
 
 Changes from the source. It is stated there only for `L = AlgebraicClosure K`; here `L` is an

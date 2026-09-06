@@ -5,12 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.Classification
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Star.Classification
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Star.Components
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.TypeA
-
-public section
 
 /-!
 # Reindexing a simply-laced branch diagram onto a star
@@ -39,6 +36,8 @@ Layer 5 of `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`. See J. E
 *Introduction to Lie Algebras and Representation Theory*, Section 11.4, and Bourbaki, *Lie Groups
 and Lie Algebras, Chapters 4--6*, Chapter VI, Section 4.
 -/
+
+public section
 
 namespace TauCeti
 

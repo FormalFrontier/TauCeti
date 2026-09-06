@@ -157,7 +157,7 @@ private lemma pair_law_eq_of_contractable [IsFiniteMeasure μ]
       μ.map (fun ω (i : ℕ) => X (φ i) ω) = pathLaw μ X :=
     fun φ hφ => hContr.map_reindex_pathLaw_eq hX_ae hφ
   -- Measurability of the building blocks.
-  have hU_meas : Measurable U := measurable_pi_lambda _ fun i => hX i.val
+  have hU_meas : Measurable U := Measurable.of_eval fun i => hX i.val
   have hW_meas : Measurable W := measurable_processShift fun n => hX (m + 1 + n)
   have hW'_meas : Measurable W' :=
     measurable_processCons (hX r) fun n => (measurable_pi_apply n).comp hW_meas
@@ -198,7 +198,7 @@ private lemma condExp_indicator_eq_of_contractable [IsFiniteMeasure μ]
       =ᵐ[μ]
     μ[(U ⁻¹' A).indicator (fun _ => (1 : ℝ)) | MeasurableSpace.comap W inferInstance] := by
   intro U W W'
-  have hU : Measurable U := measurable_pi_lambda _ fun i => hX_meas i.val
+  have hU : Measurable U := Measurable.of_eval fun i => hX_meas i.val
   have hW : Measurable W := measurable_processShift fun n => hX_meas (m + 1 + n)
   have hW' : Measurable W' :=
     measurable_processCons (hX_meas r) fun n => (measurable_pi_apply n).comp hW
@@ -222,7 +222,7 @@ theorem Contractable.condIndep_coord_prefix_tail [StandardBorelSpace Ω] [IsFini
       (measurable_processShift fun n => hX_meas (m + 1 + n)).comap_le μ := by
   intro U W
   let W' : Ω → ℕ → α := processCons (X r) W
-  have hU_meas : Measurable U := measurable_pi_lambda _ fun i => hX_meas i.val
+  have hU_meas : Measurable U := Measurable.of_eval fun i => hX_meas i.val
   have hW_meas : Measurable W := measurable_processShift fun n => hX_meas (m + 1 + n)
   have hmU : MeasurableSpace.comap U inferInstance ≤ ‹MeasurableSpace Ω› := hU_meas.comap_le
   have hmW : MeasurableSpace.comap W inferInstance ≤ ‹MeasurableSpace Ω› := hW_meas.comap_le
@@ -261,7 +261,7 @@ theorem Contractable.condExp_indicator_prefix_sup_tail_eq [StandardBorelSpace Ω
       =ᵐ[μ]
     μ[(Y ⁻¹' B).indicator (fun _ => (1 : ℝ)) | MeasurableSpace.comap W inferInstance] := by
   intro Y U W
-  have hU_meas : Measurable U := measurable_pi_lambda _ fun i => hX_meas i.val
+  have hU_meas : Measurable U := Measurable.of_eval fun i => hX_meas i.val
   have hW_meas : Measurable W := measurable_processShift fun n => hX_meas (m + 1 + n)
   have hmU : MeasurableSpace.comap U inferInstance ≤ ‹MeasurableSpace Ω› := hU_meas.comap_le
   have hmW : MeasurableSpace.comap W inferInstance ≤ ‹MeasurableSpace Ω› := hW_meas.comap_le

@@ -28,10 +28,8 @@ of a polynomial ring in a separable extension is no longer a polynomial ring.
 
 ## Provenance
 
-Roadmap: EllipticCurves, the Layers 0-1 target *Function-field foundations and isogenies*
-(`TauCetiRoadmap/EllipticCurves/README.md:1096`), through the support module
-`RingTheory/IntegralClosure/NormalizationFinite`. The mathematics is Stacks, Fields,
-Lemma 9.27.3(2) (tag 030M), the splitting used by Stacks 10.161.12 (tag 032N).
+The mathematics is Stacks, Fields, Lemma 9.27.3(2) (tag 030M), the splitting used by Stacks
+10.161.12 (tag 032N) in its normalization-finiteness argument.
 -/
 
 public section

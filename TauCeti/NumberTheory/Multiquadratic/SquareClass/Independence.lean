@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.NumberTheory.Multiquadratic.Degree
-public import TauCeti.FieldTheory.SquareClassGroup
+public import TauCeti.FieldTheory.SquareClassGroup.Basic
 import TauCeti.Algebra.Group.Units.Basic
 
 /-!
@@ -19,7 +19,7 @@ arguments instead want the structural form: the classes of the `d i` in the squa
 `Kˣ ⧸ (Kˣ)²` are `ZMod 2`-linearly independent.
 
 The square-class group, the class of a unit, and the equivalence between linear independence of
-the classes and the Finset form live in `TauCeti.FieldTheory.SquareClassGroup`
+the classes and the Finset form live in `TauCeti.FieldTheory.SquareClassGroup.Basic`
 (`TauCeti.linearIndependent_squareClass_iff`), field-generically and depending only on Mathlib.
 This file consumes that equivalence to restate the degree theorem against the structural form.
 

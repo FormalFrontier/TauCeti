@@ -7,8 +7,6 @@ module
 
 public import TauCeti.LinearAlgebra.RootSystem.Inversions.Length
 
-public section
-
 /-!
 # The deletion condition and the subword property
 
@@ -47,6 +45,8 @@ root level. The deletion condition and the subword property are the standard pac
 step; see J. E. Humphreys, *Reflection Groups and Coxeter Groups*, CUP (1990), §1.7 and §5.8, and
 Bourbaki, *Lie Groups and Lie Algebras*, Chapters 4--6, Ch. IV, §1.5.
 -/
+
+public section
 
 namespace TauCeti
 

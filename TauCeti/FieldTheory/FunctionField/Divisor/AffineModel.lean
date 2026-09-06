@@ -41,8 +41,8 @@ model sits inside `Divisor k F` as the divisors supported on the finite chart; c
 Ceti's `fractionalIdealDivisorAddEquiv` turns divisors of the model into invertible fractional
 ideals, so no fractional-ideal calculus is redeveloped here.
 
-This is the affine-bridge subsection of Stichtenoth's Section I.4, in the form the roadmap pins:
-the Dedekind factorization calculus of the model computes divisors on its chart.
+This is the affine-model bridge of Stichtenoth's Section I.4: the Dedekind factorization calculus
+of the model computes divisors on its chart.
 
 ## Main definitions
 

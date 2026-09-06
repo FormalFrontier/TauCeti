@@ -371,7 +371,7 @@ theorem transportCost_le_lintegral_of_hasLaw (hT : HasLaw T ν μ) (c : X × Y �
     transportCost c μ ν ≤ ∫⁻ x, c (x, T x) ∂μ := by
   refine (transportCost_le_lintegral (isCoupling_graphPlan hT) c).trans ?_
   rw [graphPlan_def]
-  exact lintegral_map_le _ _
+  exact lintegral_map_le _ (aemeasurable_id.prodMk hT.aemeasurable)
 
 /-- The graph plan of a transport map is an optimal plan exactly when the transport cost equals
 the cost of the map: the equality case of `TauCeti.transportCost_le_lintegral_of_hasLaw`. -/

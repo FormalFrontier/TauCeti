@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.CharZero.Infinite
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Basic
 public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.Analysis.Complex.Order

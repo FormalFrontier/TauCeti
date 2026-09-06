@@ -17,21 +17,25 @@ This file develops that restriction independently of the manifold structure on s
 
 ## Main definitions
 
-* `TauCeti.LinearIsometryEquiv.unitSphereEquiv`: the equivalence of unit spheres obtained by
+* `LinearIsometryEquiv.unitSphereEquiv`: the equivalence of unit spheres obtained by
   restricting a linear isometry equivalence.
-* `TauCeti.LinearIsometryEquiv.unitSphereIsometryEquiv`: the isometry equivalence of unit spheres
+* `LinearIsometryEquiv.unitSphereIsometryEquiv`: the isometry equivalence of unit spheres
   obtained by restricting a linear isometry equivalence.
 
 ## Main results
 
-* `TauCeti.LinearIsometryEquiv.isometry_unitSphereEquiv`: the restriction is an isometry.
+* `LinearIsometryEquiv.isometry_unitSphereEquiv`: the restriction is an isometry.
 * `TauCeti.LinearMap.eq_of_eqOn_unitSphere`: a real linear map is determined by its
   values on the unit sphere.
+
+## Implementation notes
+
+The declarations extending `LinearIsometryEquiv` live in the root-level `LinearIsometryEquiv`
+namespace, so receiver notation elaborates. The separate linear-map lemma remains in
+`TauCeti.LinearMap`; it has no explicit `LinearMap` receiver for dot notation.
 -/
 
 public section
-
-namespace TauCeti
 
 open Metric Module
 
@@ -108,6 +112,8 @@ theorem unitSphereIsometryEquiv_trans (e : E ≃ₗᵢ[R] F) (e' : F ≃ₗᵢ[R
 end Seminormed
 
 end LinearIsometryEquiv
+
+namespace TauCeti
 
 namespace LinearMap
 

@@ -10,8 +10,6 @@ public import Mathlib.Algebra.Quaternion
 public import Mathlib.Data.Matrix.Basic
 import Mathlib.Tactic.LinearCombination
 
-public section
-
 /-!
 # The centre of the Hamilton quaternions
 
@@ -67,6 +65,8 @@ as `quaternion_isCentral`. The centrality of `ℍ` and the nonsplitting statemen
 of the classical computation of the Brauer group of `ℝ`; see for instance P. Gille and
 T. Szamuely, *Central Simple Algebras and Galois Cohomology*, CUP (2006), §1.1 and §2.1.
 -/
+
+public section
 
 open scoped Quaternion
 

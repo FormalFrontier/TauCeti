@@ -175,8 +175,8 @@ theorem ncard_setOf_finiteDimensional_abs_discr_le_le :
         |discr K| ≤ (N : ℤ)}.ncard ≤
       (2 * coeffBoundOfDiscrBdd N + 1) ^ (rankOfDiscrBdd N + 1) * rankOfDiscrBdd N := by
   classical
-  set D := rankOfDiscrBdd N with hD
-  set C := coeffBoundOfDiscrBdd N with hC
+  set D := rankOfDiscrBdd N
+  set C := coeffBoundOfDiscrBdd N
   set S := {K : {F : IntermediateField ℚ A // FiniteDimensional ℚ F} |
       haveI : _root_.NumberField K := @NumberField.mk _ _ inferInstance K.prop
       |discr K| ≤ (N : ℤ)} with hS

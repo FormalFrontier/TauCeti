@@ -53,6 +53,8 @@ shrinking part.
 * `TauCeti.CommHopfAlgCat.pointsFunctor_faithful` and
   `TauCeti.CommHopfAlgCat.pointsFunctor_full`: points recover coordinate Hopf algebra
   morphisms.
+* `TauCeti.CommHopfAlgCat.isIso_of_isIso_mapPointsFunctor`: a coordinate morphism is an
+  isomorphism when its induced natural map on points is an isomorphism.
 * `TauCeti.CommHopfAlgCat.homOfPointsMap`: the coordinate morphism a natural map of points
   functors comes from, with `TauCeti.CommHopfAlgCat.mapPointsFunctor_homOfPointsMap` its
   defining property, `TauCeti.CommHopfAlgCat.homOfPointsMap_mapPointsFunctor` the converse
@@ -203,7 +205,7 @@ The double-opposite equivalence presents the covariant functor on `CommAlgCat R`
 the opposite category. -/
 noncomputable abbrev pointsGroupPresheaf (H : _root_.CommHopfAlgCat.{v} R) :
     ((CommAlgCat.{v} R)ᵒᵖ)ᵒᵖ ⥤ GrpCat.{v} :=
-  (opOpEquivalence (CommAlgCat.{v} R)).functor ⋙
+  unopUnop (CommAlgCat.{v} R) ⋙
     pointsFunctor (R := R) (H := H)
 
 /-- The underlying type-valued presheaf of convolution points of a commutative Hopf algebra. -/
@@ -501,6 +503,19 @@ instance pointsFunctor_full :
     dsimp [groupYonedaPointsFunctor]
     infer_instance
   exact Functor.Full.of_iso (groupYonedaPointsFunctorIso (R := R))
+
+/-- A coordinate Hopf-algebra morphism is an isomorphism when its induced natural map on
+points is an isomorphism. -/
+theorem isIso_of_isIso_mapPointsFunctor {H K : _root_.CommHopfAlgCat.{u} R} (f : H ⟶ K)
+    [IsIso (mapPointsFunctor.{u, u, u} f)] : IsIso f := by
+  let h : IsIso (mapPointsFunctor.{u, u, u} f) := inferInstance
+  let _ : IsIso ((pointsFunctor.{u, u, u} (R := R)).map f.op) := by
+    rw [pointsFunctor_map, Quiver.Hom.unop_op]
+    exact h
+  let _ : IsIso f.op :=
+    (Functor.FullyFaithful.ofFullyFaithful
+      (pointsFunctor.{u, u, u} (R := R))).isIso_of_isIso_map f.op
+  exact isIso_of_op f
 
 /-- The coordinate Hopf-algebra morphism that a natural transformation of group-valued points
 functors comes from, recovered by fullness of the functor of points.

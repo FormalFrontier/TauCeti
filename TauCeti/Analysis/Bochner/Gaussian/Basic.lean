@@ -161,7 +161,7 @@ theorem posSemidef_cexp_neg_mul_sq_norm {c : ℝ} (hc : 0 ≤ c) :
     have : BorelSpace W := ⟨rfl⟩
     let w : ι → W := fun i => ⟨v i, Submodule.subset_span (Set.mem_range_self i)⟩
     have hnorm : ∀ i j, ‖w i - w j‖ = ‖v i - v j‖ := fun i j => by
-      simp [w, Submodule.coe_norm]
+      simp [w]
     have h := (posSemidef_iff_finite_sum.mp
       (posSemidef_cexp_neg_mul_sq_norm_of_finiteDimensional (V := W) hc)).2 w x
     simpa only [hnorm] using h

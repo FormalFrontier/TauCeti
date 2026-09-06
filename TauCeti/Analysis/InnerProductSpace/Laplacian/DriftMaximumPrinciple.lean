@@ -105,7 +105,7 @@ maximum principle with drift. -/
 @[simp] theorem laplacian_exp_inner (α : ℝ) (u x : E) :
     Δ (fun y : E => Real.exp (α * ⟪u, y⟫)) x
       = α ^ 2 * ‖u‖ ^ 2 * Real.exp (α * ⟪u, x⟫) := by
-  set w : E → ℝ := fun y => Real.exp (α * ⟪u, y⟫) with hw
+  set w : E → ℝ := fun y => Real.exp (α * ⟪u, y⟫)
   -- The first derivative of `w`, as a function of the base point.
   have hfw : fderiv ℝ w = fun y => Real.exp (α * ⟪u, y⟫) • (α • innerSL ℝ u) :=
     funext fun y => (hasFDerivAt_exp_inner α u y).fderiv

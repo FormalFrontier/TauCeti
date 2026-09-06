@@ -8,6 +8,7 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.AdditiveGroup.Basic
 public import TauCeti.Algebra.AlgebraicGroup.BaseChange.Basic
 public import TauCeti.Algebra.Bialgebra.SymmetricAlgebra.BaseChange
+import TauCeti.LinearAlgebra.SymmetricAlgebra.Functoriality
 
 /-!
 # Base change of additive groups
@@ -76,55 +77,22 @@ variable [AddCommMonoid M] [Module k M]
 
 section CoordinateBialgebra
 
-/-- The algebra equivalence on symmetric algebras induced by a linear equivalence. -/
-private noncomputable def symmetricAlgebraAlgEquiv {P N : Type*}
-    [AddCommMonoid P] [Module K P] [AddCommMonoid N] [Module K N]
-    (e : P ≃ₗ[K] N) : SymmetricAlgebra K P ≃ₐ[K] SymmetricAlgebra K N :=
-  AlgEquiv.ofAlgHom
-    (SymmetricAlgebra.lift (SymmetricAlgebra.ι K N ∘ₗ e.toLinearMap))
-    (SymmetricAlgebra.lift (SymmetricAlgebra.ι K P ∘ₗ e.symm.toLinearMap))
-    (by
-      apply SymmetricAlgebra.algHom_ext
-      apply LinearMap.ext
-      intro n
-      simp [LinearMap.comp_apply])
-    (by
-      apply SymmetricAlgebra.algHom_ext
-      apply LinearMap.ext
-      intro m
-      simp [LinearMap.comp_apply])
-
-@[simp]
-private theorem symmetricAlgebraAlgEquiv_ι {P N : Type*}
-    [AddCommMonoid P] [Module K P] [AddCommMonoid N] [Module K N]
-    (e : P ≃ₗ[K] N) (p : P) :
-    symmetricAlgebraAlgEquiv (K := K) e (SymmetricAlgebra.ι K P p) =
-      SymmetricAlgebra.ι K N (e p) := by
-  simp [symmetricAlgebraAlgEquiv, LinearMap.comp_apply]
-
-@[simp]
-private theorem symmetricAlgebraAlgEquiv_symm_ι {P N : Type*}
-    [AddCommMonoid P] [Module K P] [AddCommMonoid N] [Module K N]
-    (e : P ≃ₗ[K] N) (n : N) :
-    (symmetricAlgebraAlgEquiv (K := K) e).symm (SymmetricAlgebra.ι K N n) =
-      SymmetricAlgebra.ι K P (e.symm n) := by
-  simp [symmetricAlgebraAlgEquiv, LinearMap.comp_apply]
-
 /-- The bialgebra equivalence on symmetric algebras induced by a linear equivalence. -/
 private noncomputable def symmetricAlgebraBialgEquiv {P N : Type*}
     [AddCommMonoid P] [Module K P] [AddCommMonoid N] [Module K N] (e : P ≃ₗ[K] N) :
     SymmetricAlgebra K P ≃ₐc[K] SymmetricAlgebra K N :=
-  BialgEquiv.ofAlgEquiv (symmetricAlgebraAlgEquiv (K := K) e)
+  BialgEquiv.ofAlgEquiv (SymmetricAlgebra.mapEquiv K e)
     (by
       apply SymmetricAlgebra.algHom_ext
       apply LinearMap.ext
       intro m
       have h :
           (Bialgebra.counitAlgHom K (SymmetricAlgebra K N))
-              (symmetricAlgebraAlgEquiv (K := K) e (SymmetricAlgebra.ι K P m)) =
+              (SymmetricAlgebra.mapEquiv K e (SymmetricAlgebra.ι K P m)) =
             (Bialgebra.counitAlgHom K (SymmetricAlgebra K P))
               (SymmetricAlgebra.ι K P m) := by
-        rw [symmetricAlgebraAlgEquiv_ι]
+        rw [SymmetricAlgebra.counitAlgHom_eq]
+        rw [SymmetricAlgebra.mapEquiv_apply, SymmetricAlgebra.map_apply_ι]
         exact (SymmetricAlgebra.algebraMapInv_ι _).trans
           (SymmetricAlgebra.algebraMapInv_ι _).symm
       exact h)
@@ -132,7 +100,7 @@ private noncomputable def symmetricAlgebraBialgEquiv {P N : Type*}
       apply SymmetricAlgebra.algHom_ext
       apply LinearMap.ext
       intro m
-      simp [symmetricAlgebraAlgEquiv, LinearMap.comp_apply, SymmetricAlgebra.comul_ι])
+      simp [SymmetricAlgebra.comul_ι])
 
 @[simp]
 private theorem symmetricAlgebraBialgEquiv_ι {P N : Type*}
@@ -140,15 +108,22 @@ private theorem symmetricAlgebraBialgEquiv_ι {P N : Type*}
     (e : P ≃ₗ[K] N) (p : P) :
     symmetricAlgebraBialgEquiv (K := K) e (SymmetricAlgebra.ι K P p) =
       SymmetricAlgebra.ι K N (e p) :=
-  symmetricAlgebraAlgEquiv_ι (K := K) e p
+  by
+    rw [symmetricAlgebraBialgEquiv, BialgEquiv.ofAlgEquiv_apply]
+    exact SymmetricAlgebra.mapEquiv_ι K e p
 
 @[simp]
 private theorem symmetricAlgebraBialgEquiv_symm_ι {P N : Type*}
     [AddCommMonoid P] [Module K P] [AddCommMonoid N] [Module K N]
     (e : P ≃ₗ[K] N) (n : N) :
     (symmetricAlgebraBialgEquiv (K := K) e).symm (SymmetricAlgebra.ι K N n) =
-      SymmetricAlgebra.ι K P (e.symm n) :=
-  symmetricAlgebraAlgEquiv_symm_ι (K := K) e n
+    SymmetricAlgebra.ι K P (e.symm n) :=
+  by
+    have h :
+        symmetricAlgebraBialgEquiv (K := K) e
+            (SymmetricAlgebra.ι K P (e.symm n)) = SymmetricAlgebra.ι K N n := by
+      rw [symmetricAlgebraBialgEquiv_ι, LinearEquiv.apply_symm_apply]
+    rw [← h, BialgEquiv.symm_apply_apply]
 
 section GaCoordinateBialgebra
 

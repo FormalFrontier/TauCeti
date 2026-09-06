@@ -7,6 +7,7 @@ module
 
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.NormCoeff
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Weight
+public import Mathlib.Algebra.CharZero.Infinite
 public import Mathlib.NumberTheory.NumberField.DedekindZeta
 
 /-!
@@ -104,7 +105,7 @@ theorem dedekindZeta_eq_LSeries_normCoeff_one (s : ℂ) :
   rw [normCoeff_one_apply, ite_eq_right hn]
 
 private theorem absNorm_map_ringEquiv {R S : Type*} [CommRing R] [CommRing S]
-    [IsDedekindDomain R] [IsDedekindDomain S] [Module.Free ℤ R] [Module.Free ℤ S]
+    [IsDedekindDomain R] [IsDedekindDomain S] [Infinite R] [Infinite S]
     (e : R ≃+* S) (I : Ideal R) :
     Ideal.absNorm (I.map e) = Ideal.absNorm I := by
   rw [Ideal.absNorm_apply, Ideal.absNorm_apply, Submodule.cardQuot_apply,

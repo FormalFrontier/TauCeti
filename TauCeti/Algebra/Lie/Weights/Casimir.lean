@@ -10,8 +10,6 @@ public import TauCeti.Algebra.Lie.Weights.InvariantForm
 public import TauCeti.Algebra.Lie.Weights.Projection
 public import TauCeti.Algebra.Lie.Weights.Trace
 
-public section
-
 /-!
 # The trace of the Casimir operator on a weight space
 
@@ -81,6 +79,8 @@ itself.
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §22.3.
 -/
+
+public section
 
 namespace TauCeti
 

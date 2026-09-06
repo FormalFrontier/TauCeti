@@ -47,6 +47,7 @@ criterion adds is the production of the pointwise limits that theorem asks for.
 ## Main definitions
 
 * `TauCeti.clusterSetOn` — the cluster set of `f` on `U` at `w`.
+* `TauCeti.IsPreconnectedApproachAt` — a set has preconnected approach regions at a point.
 
 ## Main results
 
@@ -78,6 +79,8 @@ criterion adds is the production of the pointwise limits that theorem asks for.
   is a continuum** once the approach regions `U ∩ t` are preconnected along a neighbourhood basis
   of `w`; `TauCeti.isCompact_clusterSetOn_of_isBounded` and
   `TauCeti.isConnected_clusterSetOn_of_isBounded` are again the proper-metric forms.
+* `TauCeti.isPreconnectedApproachAt_of_forall_exists_isPreconnected_superset` — the
+  metric-space criterion for preconnected approach regions.
 
 ## References
 
@@ -510,5 +513,52 @@ theorem isConnected_clusterSetOn_of_isBounded (hfc : ContinuousOn f U)
     hconn
 
 end ProperContinuum
+
+/-! ### Preconnected approach regions -/
+
+section ApproachRegions
+
+variable {X : Type*} [TopologicalSpace X]
+
+/-- A set has **preconnected approach regions at `a`** if every
+neighbourhood of `a` contains a smaller neighbourhood whose trace on
+the set is preconnected.  This is the exact local input in the
+cluster-set continuum theorem (`TauCeti.isPreconnected_clusterSetOn`). -/
+def IsPreconnectedApproachAt (U : Set X) (a : X) : Prop :=
+  ∀ s ∈ nhds a, ∃ t ∈ nhds a, t ⊆ s ∧ IsPreconnected (U ∩ t)
+
+/-- `TauCeti.IsPreconnectedApproachAt` restated as an `Iff`, so that it can be established and
+consumed in its neighbourhood-basis form without unfolding the definition — which downstream
+modules cannot do, the definition being public but not exposed. -/
+theorem isPreconnectedApproachAt_def {U : Set X} {a : X} :
+    IsPreconnectedApproachAt U a ↔
+      ∀ s ∈ 𝓝 a, ∃ t ∈ 𝓝 a, t ⊆ s ∧ IsPreconnected (U ∩ t) :=
+  Iff.rfl
+
+/-- **Local connectedness gives preconnected approach regions.**  If for every
+`ε > 0` some preconnected `C ⊆ U ∩ ball a ε` contains `U ∩ ball a δ` for a
+`δ > 0`, then `U` has preconnected approach regions at `a`. -/
+theorem isPreconnectedApproachAt_of_forall_exists_isPreconnected_superset
+    {Y : Type*} [PseudoMetricSpace Y] {U : Set Y} {a : Y}
+    (h : ∀ ε > 0, ∃ δ > 0, ∃ C ⊆ U ∩ ball a ε,
+      IsPreconnected C ∧ U ∩ ball a δ ⊆ C) :
+    IsPreconnectedApproachAt U a := by
+  intro s hs
+  obtain ⟨ε, hε, hεs⟩ := Metric.mem_nhds_iff.mp hs
+  obtain ⟨δ, hδ, C, hCU, hCpre, hsub⟩ := h ε hε
+  refine ⟨ball a (min δ ε) ∪ C,
+    mem_of_superset (ball_mem_nhds a (lt_min hδ hε)) subset_union_left, ?_, ?_⟩
+  · exact union_subset ((ball_subset_ball (min_le_right δ ε)).trans hεs)
+      ((hCU.trans inter_subset_right).trans hεs)
+  · have heq : U ∩ (ball a (min δ ε) ∪ C) = C := by
+      apply subset_antisymm
+      · rintro z ⟨hzU, hz | hz⟩
+        · exact hsub ⟨hzU, ball_subset_ball (min_le_left δ ε) hz⟩
+        · exact hz
+      · exact fun z hz => ⟨(hCU hz).1, Or.inr hz⟩
+    rw [heq]
+    exact hCpre
+
+end ApproachRegions
 
 end TauCeti

@@ -10,9 +10,10 @@ public import Mathlib.RingTheory.DedekindDomain.AdicValuation
 public import Mathlib.RingTheory.DedekindDomain.Factorization
 
 /-!
-# Complements on the multiplicity of a height one prime
+# Complements on Dedekind-domain factorization
 
-Four facts about `Associates.count` and `FractionalIdeal.count` that Mathlib does not carry.
+Facts about `Associates.count` and `FractionalIdeal.count` that Mathlib does not carry, together
+with unit-level factorization of invertible fractional ideals.
 
 ## Main results
 
@@ -38,9 +39,13 @@ Four facts about `Associates.count` and `FractionalIdeal.count` that Mathlib doe
   principal fractional ideal of a nonzero rational function `u : Kˣ` is
   `-WithZero.log (v.valuation K u)`. This is the passage between the two ways this library measures
   a principal ideal at a height one prime — Mathlib's `count` and the adic valuation.
+* `IsDedekindDomain.HeightOneSpectrum.unitOfPrime`: a height-one prime regarded as an invertible
+  fractional ideal.
+* `FractionalIdeal.finprod_unitOfPrime_zpow_count`: unique factorization of an invertible
+  fractional ideal, transported along `Units.coeHom`.
 
-All four are general facts about an arbitrary Dedekind domain, mentioning no particular ring
-extension.
+All these declarations are general facts about an arbitrary Dedekind domain, mentioning no
+particular ring extension.
 
 `le_count_associates_iff_le_pow` is adapted from Michael Stoll's elliptic-curves formalisation
 (`github.com/MichaelStollBayreuth/EllipticCurves`, `EllipticCurves/Mathlib/Basic.lean:381` at the
@@ -52,10 +57,31 @@ from `TauCeti/AlgebraicGeometry/WeilDivisor/Dedekind/Basic.lean`: nothing in its
 proof mentions a Weil divisor, and stating it under `TauCeti.AlgebraicGeometry` put it out of
 reach of the `RingTheory` consumers that need it, which is exactly the boundary
 `TauCeti/RingTheory/ClassGroup/HeightOneSpectrum.lean` records in its module docstring.
+
+The unit-level prime factorization `FractionalIdeal.finprod_unitOfPrime_zpow_count` is adapted
+from Michael Stoll's `EllipticCurves/Mathlib/FractionalIdeal.lean` at commit `66889eada51a` of the
+`MichaelStollBayreuth/EllipticCurves` repository (Apache 2.0).
 -/
 public section
 
 namespace IsDedekindDomain.HeightOneSpectrum
+
+open scoped nonZeroDivisors
+
+variable {R : Type*} [CommRing R] [IsDedekindDomain R]
+
+/-- A height-one prime, regarded as an invertible fractional ideal. -/
+noncomputable def unitOfPrime (v : HeightOneSpectrum R) (K : Type*) [Field K] [Algebra R K]
+    [IsFractionRing R K] : (FractionalIdeal R⁰ K)ˣ :=
+  Units.mk0 (v.asIdeal : FractionalIdeal R⁰ K) (FractionalIdeal.coeIdeal_ne_zero.mpr v.ne_bot)
+
+/-- The fractional ideal underlying `v.unitOfPrime K` is `v.asIdeal`. -/
+@[simp]
+theorem coe_unitOfPrime (v : HeightOneSpectrum R) (K : Type*) [Field K] [Algebra R K]
+  [IsFractionRing R K] :
+    (v.unitOfPrime K : FractionalIdeal R⁰ K) = v.asIdeal := by
+  rw [unitOfPrime]
+  exact Units.val_mk0 _
 
 /-- The multiplicity of `v` in a nonzero ideal `J` is at least `k` exactly when `v ^ k` contains
 `J`. -/
@@ -72,6 +98,36 @@ namespace FractionalIdeal
 open IsDedekindDomain
 
 open scoped nonZeroDivisors
+
+variable {R : Type*} [CommRing R] [IsDedekindDomain R]
+variable {K : Type*} [Field K] [Algebra R K] [IsFractionRing R K]
+
+/-- Only finitely many factors in the unit-level prime factorization are nontrivial. -/
+lemma hasFiniteMulSupport_unitOfPrime_zpow (I : (FractionalIdeal R⁰ K)ˣ) :
+    (Function.mulSupport fun v : HeightOneSpectrum R ↦
+      v.unitOfPrime K ^ count K v (I : FractionalIdeal R⁰ K)).Finite := by
+  refine (Filter.eventually_cofinite.mp
+    (finite_factors (I : FractionalIdeal R⁰ K))).subset fun v hv hc ↦ ?_
+  exact hv (by simp only [hc, zpow_zero])
+
+/-- Unique factorization of an invertible fractional ideal as a product of prime powers. -/
+lemma finprod_unitOfPrime_zpow_count (I : (FractionalIdeal R⁰ K)ˣ) :
+    I = ∏ᶠ v : HeightOneSpectrum R,
+      v.unitOfPrime K ^ count K v (I : FractionalIdeal R⁰ K) := by
+  -- State the map equation separately: rewriting would also affect the coercion inside `count`.
+  have hmap : ((∏ᶠ v : HeightOneSpectrum R,
+        v.unitOfPrime K ^ count K v (I : FractionalIdeal R⁰ K)) :
+        (FractionalIdeal R⁰ K)ˣ) =
+      ∏ᶠ v : HeightOneSpectrum R,
+        ((v.unitOfPrime K ^ count K v (I : FractionalIdeal R⁰ K) :
+          (FractionalIdeal R⁰ K)ˣ) : FractionalIdeal R⁰ K) :=
+    MonoidHom.map_finprod (Units.coeHom (FractionalIdeal R⁰ K))
+      (hasFiniteMulSupport_unitOfPrime_zpow I)
+  refine Units.ext ?_
+  rw [hmap]
+  simp only [Units.val_zpow_eq_zpow_val, HeightOneSpectrum.coe_unitOfPrime]
+  exact (finprod_heightOneSpectrum_factorization' (K := K)
+    (I := (I : FractionalIdeal R⁰ K)) (Units.ne_zero I)).symm
 
 /-- **The multiplicity of a quotient is the difference of the multiplicities.** Mathlib's `count`
 API has `count_mul`, `count_inv`, `count_pow` and `count_zpow` but no division form, so every

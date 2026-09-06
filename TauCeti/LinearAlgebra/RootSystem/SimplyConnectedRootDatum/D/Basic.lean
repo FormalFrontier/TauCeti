@@ -8,8 +8,6 @@ module
 public import TauCeti.LinearAlgebra.RootSystem.ClassicalTypeD
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 
-public section
-
 /-!
 # The simply connected root datum of type `Dₙ`
 
@@ -85,6 +83,8 @@ span — now lives in `TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum
 with this file. This is the `Dₙ` branch of the target "a named datum per valid type" in Layer 6 of
 `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`.
 -/
+
+public section
 
 namespace TauCeti
 

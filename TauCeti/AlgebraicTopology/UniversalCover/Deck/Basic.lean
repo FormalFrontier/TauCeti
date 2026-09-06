@@ -6,19 +6,18 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Topology.Homeomorph.Lemmas
-public import TauCeti.Topology.Algebra.Homeomorph.Action
+public import TauCeti.Topology.Algebra.ConstMulAction
 
 /-!
 # Deck transformations of a map
 
 For a map `p : E → B`, its deck transformations are the homeomorphisms of `E` over `B`,
-viewed as a subgroup of the homeomorphism group `E ≃ₜ E`. This is the first algebraic
-piece needed by the universal-covers roadmap Stage 0.4: for a covering projection `p`, the
-subgroup `Deck p` will be the deck transformation group.
+viewed as a subgroup of the homeomorphism group `E ≃ₜ E`. For a covering projection `p` this
+subgroup is the classical deck transformation group.
 
 The action of `Deck p` on the total space is inherited, by subgroup transfer, from the
 tautological action of the ambient homeomorphism group `E ≃ₜ E` on `E`
-(`TauCeti.Homeomorph.applyMulAction`). Each deck transformation preserves `p`, hence
+(`Homeomorph.applyMulAction`). Each deck transformation preserves `p`, hence
 preserves every fibre of `p`.
 
 The deck group only sees `p` through the equalities `p (φ e) = p e`, so postcomposition by an
@@ -26,8 +25,7 @@ injective map leaves it unchanged (`TauCeti.deck_comp_of_injective`).
 
 ## References
 
-This file follows the deck-transformation target in the Tau Ceti universal-covers roadmap,
-Stage 0.4, and the shape of the construction in Kim Morrison's mathlib4#40135.
+The construction follows the shape of Kim Morrison's mathlib4#40135.
 -/
 
 public section
@@ -106,8 +104,8 @@ lemma smul_eq_apply (φ : Deck p) (e : E) : φ • e = φ.1 e :=
 lemma inv_smul_eq_symm_apply (φ : Deck p) (e : E) : (φ⁻¹ : Deck p) • e = φ.1.symm e :=
   rfl
 
--- `FaithfulSMul (Deck p) E` and `ContinuousConstSMul (Deck p) E` are inherited from the generic
--- subgroup instances in `TauCeti.Topology.Algebra.Homeomorph.Action`; `Deck p` is a `Subgroup`.
+-- `FaithfulSMul (Deck p) E` and `ContinuousConstSMul (Deck p) E` are inherited from Mathlib's
+-- generic subgroup action and `TauCeti.Subgroup.continuousConstSMul`; `Deck p` is a `Subgroup`.
 
 end Deck
 

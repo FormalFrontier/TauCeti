@@ -11,8 +11,6 @@ import TauCeti.LinearAlgebra.RootSystem.FiniteType.Classical
 import TauCeti.LinearAlgebra.RootSystem.FiniteType.Dynkin
 import TauCeti.LinearAlgebra.RootSystem.Classification
 
-public section
-
 /-!
 # Classification of finite three-arm stars
 
@@ -45,6 +43,8 @@ Cartan--Killing classification.
 The classification follows N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Chapter VI,
 §4, and J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, §11.4.
 -/
+
+public section
 
 open scoped Matrix
 

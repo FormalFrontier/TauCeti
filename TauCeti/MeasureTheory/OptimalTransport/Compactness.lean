@@ -94,8 +94,8 @@ theorem isClosed_setOfPred_isCoupling [T1Space (ProbabilityMeasure X)]
     [T1Space (ProbabilityMeasure Y)] (μ : ProbabilityMeasure X) (ν : ProbabilityMeasure Y) :
     IsClosed {π : ProbabilityMeasure (X × Y) | IsCoupling π.toMeasure μ.toMeasure ν.toMeasure} := by
   have hset : {π : ProbabilityMeasure (X × Y) | IsCoupling π.toMeasure μ.toMeasure ν.toMeasure} =
-      (fun π : ProbabilityMeasure (X × Y) ↦ π.map measurable_fst.aemeasurable) ⁻¹' {μ} ∩
-        (fun π : ProbabilityMeasure (X × Y) ↦ π.map measurable_snd.aemeasurable) ⁻¹' {ν} := by
+      (fun π : ProbabilityMeasure (X × Y) ↦ π.map Prod.fst) ⁻¹' {μ} ∩
+        (fun π : ProbabilityMeasure (X × Y) ↦ π.map Prod.snd) ⁻¹' {ν} := by
     ext π
     simpa only [mem_ofPred_eq, mem_inter_iff, mem_preimage, mem_singleton_iff] using
       isCoupling_toMeasure_iff
@@ -215,14 +215,14 @@ theorem isCoupling_of_tendsto [l.NeBot]
     (hπ : Tendsto πs l (𝓝 π)) (hμ : Tendsto μs l (𝓝 μ)) (hν : Tendsto νs l (𝓝 ν)) :
     IsCoupling π.toMeasure μ.toMeasure ν.toMeasure := by
   refine isCoupling_toMeasure_iff.mpr ⟨?_, ?_⟩
-  · have h₁ : Tendsto (fun i ↦ (πs i).map measurable_fst.aemeasurable) l
-        (𝓝 (π.map measurable_fst.aemeasurable)) :=
+  · have h₁ : Tendsto (fun i ↦ (πs i).map Prod.fst) l
+        (𝓝 (π.map Prod.fst)) :=
       ((ProbabilityMeasure.continuous_map (f := (Prod.fst : X × Y → X))
         continuous_fst).tendsto π).comp hπ
     refine tendsto_nhds_unique h₁ (hμ.congr' ?_)
     exact hπs.mono fun i hi ↦ (isCoupling_toMeasure_iff.mp hi).1.symm
-  · have h₂ : Tendsto (fun i ↦ (πs i).map measurable_snd.aemeasurable) l
-        (𝓝 (π.map measurable_snd.aemeasurable)) :=
+  · have h₂ : Tendsto (fun i ↦ (πs i).map Prod.snd) l
+        (𝓝 (π.map Prod.snd)) :=
       ((ProbabilityMeasure.continuous_map (f := (Prod.snd : X × Y → Y))
         continuous_snd).tendsto π).comp hπ
     refine tendsto_nhds_unique h₂ (hν.congr' ?_)

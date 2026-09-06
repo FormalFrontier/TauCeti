@@ -65,6 +65,12 @@ concurrency:
 env:
   # Run JavaScript actions on Node 24 (Node 20 is deprecated on GitHub runners).
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # Temporary escape hatch for `lake exe cache get`, kept only for an easy rollback
+  # during the transition to the cache tool's new default read endpoint. Set the
+  # variable to `1` to send cache reads back to the legacy storage endpoint. Clear it to
+  # return reads to the default endpoint on the next run: the cache tool treats unset,
+  # empty, `0`, and `false` alike as off.
+  MATHLIB_CACHE_DEBUG_USE_LEGACY: ${{ vars.MATHLIB_CACHE_DEBUG_USE_LEGACY }}
 
 jobs:
   # Named `build-site`, not `build`, to keep every job name distinct from the required `build` commit
@@ -78,6 +84,14 @@ jobs:
       # This is what `advance-docgen-ref` follows; there is deliberately no output for whether a
       # rebuild was *planned*, because that says nothing about what ended up being published.
       docs-source-sha: ${{ steps.fold.outputs.docs-source-sha }}
+      # Which of the generated data assets could not be regenerated this run. The steps that
+      # produce them are deliberately non-fatal -- a GitHub hiccup should cost a stale chart, not
+      # the whole site deploy -- but "non-fatal" turned into "invisible": the PR statistics step
+      # failed on every run from 2026-09-04, so the snapshot it dumps was never written, so
+      # pipeline-health.json was skipped every time and never existed at all, and the run stayed
+      # green throughout. The report-data-freshness job below turns this back into a red run,
+      # AFTER the deploy, so both properties hold at once.
+      data-failures: ${{ steps.data-failures.outputs.assets }}
     defaults:
       run:
         working-directory: web
@@ -145,6 +159,25 @@ jobs:
             --out web/static_files/participation.svg \
           || echo "::warning::participation graph generation failed; keeping the committed fallback SVG"
 
+      # Walking every pull request's label timeline costs one GraphQL request each, against a
+      # budget of 5000 an hour. At ~4600 open-or-recently-closed pull requests that no longer
+      # fits -- which is how this step started failing outright -- and the project adds about
+      # ninety a day, so it cannot be made to fit again by trimming. The snapshot is therefore
+      # carried between runs: a pull request whose `updatedAt` has not moved keeps its recorded
+      # timeline, and only what actually changed in the last three hours is fetched.
+      #
+      # A restore miss is not a failure. The generator falls back to the full walk and waits out
+      # a depleted budget rather than giving up, so a cold start (first run, or an evicted entry)
+      # still completes; it just costs an hour of waiting instead of three minutes.
+      - name: Restore the previous pull-request snapshot
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/pr-snapshot.json
+          # Always a miss, so the save below always writes a fresh entry; the prefix is what
+          # actually restores the newest previous snapshot.
+          key: pr-snapshot-${{ github.run_id }}
+          restore-keys: pr-snapshot-
+
       # PR history and current queue state come from GitHub rather than git. The generator
       # paginates both the PR connection and each label timeline, and bounds contributor
       # rendering so growth in participation cannot make the deployed SVG unmanageably large.
@@ -153,11 +186,40 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # Reads the restored snapshot and overwrites it with the new one. The generator loads
+          # it fully before writing anything, so naming one path for both is safe.
           python3 scripts/pr_stats_graphs.py \
             --repo "${{ github.repository }}" \
             --out-dir web/static_files \
+            --since-data "$RUNNER_TEMP/pr-snapshot.json" \
             --dump-data "$RUNNER_TEMP/pr-snapshot.json" \
-          || echo "::warning::PR statistics generation failed; keeping the committed fallback assets"
+          || {
+            echo "::warning::PR statistics generation failed; keeping the committed fallback assets"
+            echo "pull-request statistics" >> "$RUNNER_TEMP/data-failures"
+          }
+
+      # Gated on the file existing, because actions/cache/save errors on a missing path and this
+      # step must never be the thing that fails the job it exists to make cheaper.
+      - name: Check whether a snapshot is present to save
+        id: snapshot
+        if: always()
+        working-directory: ${{ github.workspace }}
+        run: |
+          if [ -s "$RUNNER_TEMP/pr-snapshot.json" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Save the pull-request snapshot for the next run
+        # Saved even when the step above failed: an older or partial snapshot still spares the
+        # next run most of the walk, and the alternative is that one bad run condemns every later
+        # one to a cold start.
+        if: always() && steps.snapshot.outputs.present == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/pr-snapshot.json
+          key: pr-snapshot-${{ github.run_id }}
 
       # Pipeline health reuses the snapshot the charts just fetched rather than
       # walking every PR timeline a second time: that walk is thousands of
@@ -167,14 +229,38 @@ jobs:
       - name: Derive pipeline health from the same snapshot
         working-directory: ${{ github.workspace }}
         run: |
-          if [ -f "$RUNNER_TEMP/pr-snapshot.json" ]; then
+          if [ -s "$RUNNER_TEMP/pr-snapshot.json" ]; then
             python3 scripts/pipeline_health.py \
               --data "$RUNNER_TEMP/pr-snapshot.json" \
               --out web/static_files/pipeline-health.json \
               --json > /dev/null \
-            || echo "::warning::pipeline health generation failed"
+            || {
+              echo "::warning::pipeline health generation failed"
+              echo "pipeline health" >> "$RUNNER_TEMP/data-failures"
+            }
           else
             echo "::warning::no PR snapshot; skipping pipeline health"
+            echo "pipeline health (no snapshot)" >> "$RUNNER_TEMP/data-failures"
+          fi
+          # The published file is what every reader of "where is the queue stuck" fetches, so a
+          # run that does not write one has not done its job even if the site deploys.
+          if [ ! -s web/static_files/pipeline-health.json ]; then
+            echo "::warning::pipeline-health.json was not written"
+          fi
+
+      - name: Collect which data assets could not be regenerated
+        id: data-failures
+        if: always()
+        working-directory: ${{ github.workspace }}
+        run: |
+          if [ -s "$RUNNER_TEMP/data-failures" ]; then
+            {
+              echo "assets<<EOF"
+              paste -sd ', ' "$RUNNER_TEMP/data-failures"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "assets=" >> "$GITHUB_OUTPUT"
           fi
 
       # Pinned leanprover/elan release, verified by SHA-256, rather than whatever the installer
@@ -444,6 +530,26 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  # Fail the run when a generated data asset could not be regenerated, without having stopped the
+  # deploy. The two are genuinely different questions and were previously collapsed into one: the
+  # steps that build the charts and pipeline-health.json swallow their failures on purpose, so
+  # that a GitHub hiccup costs a stale chart rather than a whole missed site publish. What was
+  # missing is the other half. A warning annotation notifies nobody, so the PR-statistics step
+  # failed on every run for two days, pipeline-health.json was never published at all, and every
+  # run was green. Running after `deploy` keeps the site publishing while making the run red, and
+  # a red scheduled run is what stuck_alerts.py's failing-scheduler detector watches for.
+  report-data-freshness:
+    needs: [build-site, deploy]
+    if: always() && needs.build-site.outputs.data-failures != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report the assets serving stale data
+        env:
+          ASSETS: ${{ needs.build-site.outputs.data-failures }}
+        run: |
+          echo "::error title=Stale site data::the site deployed, but these could not be regenerated and are now serving whatever was published last: ${ASSETS}"
+          exit 1
 
   # Point `docgen` at the commit whose documentation is now live.
   #

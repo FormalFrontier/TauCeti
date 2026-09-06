@@ -236,21 +236,6 @@ theorem quotientPointsSubgroup_le_center (H : _root_.CommHopfAlgCat.{v} R)
   fun _ hg ↦ HopfAlgebra.mem_center.mpr
     (isCentralPoint_of_mem_quotientPointsSubgroup H I hI A hg)
 
-/-- A point killing the augmentation ideal is the identity point: the trivial subgroup has only
-the identity over every value algebra. -/
-theorem eq_one_of_mem_quotientPointsSubgroup_augmentation (H : _root_.CommHopfAlgCat.{v} R)
-    (A : CommAlgCat.{v} R) {g : HopfAlgebra.points (R := R) (H := H) A}
-    (hg : g ∈ quotientPointsSubgroup H (HopfIdeal.augmentation R ↥H) A) : g = 1 := by
-  refine WithConv.ofConv_injective (AlgHom.ext fun x ↦ ?_)
-  have hx : x - algebraMap R ↥H (Coalgebra.counit (R := R) x) ∈
-      HopfIdeal.augmentation R ↥H := by
-    rw [HopfIdeal.mem_augmentation]
-    simp
-  have hzero := (mem_quotientPointsSubgroup_iff H _ A g).mp hg _ hx
-  rw [map_sub, sub_eq_zero] at hzero
-  rw [hzero, AlgHom.commutes]
-  exact (AlgHom.convOne_apply x).symm
-
 /-- **The trivial subgroup is central.** -/
 theorem isCentral_augmentation (H : _root_.CommHopfAlgCat.{v} R) :
     (HopfIdeal.augmentation R ↥H).IsCentral := by

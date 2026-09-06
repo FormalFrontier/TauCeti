@@ -9,8 +9,6 @@ public import Mathlib.Data.Set.Card
 public import TauCeti.LinearAlgebra.RootSystem.Positive
 public import TauCeti.LinearAlgebra.RootSystem.Weyl.Group
 
-public section
-
 /-!
 # Inversion sets in a Weyl group
 
@@ -35,6 +33,8 @@ This file implements the inversion-set part of Layer 1 in
 `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`. The mathematical convention follows
 Bourbaki, *Lie Groups and Lie Algebras*, Chapters 4--6.
 -/
+
+public section
 
 namespace TauCeti
 

@@ -90,7 +90,7 @@ theorem isPreconnected_iInter_of_directed [T2Space X] [Nonempty ι] (htd : Direc
   -- Cantor's intersection theorem: one member of the family is already covered by `U ∪ V`, and
   -- that member is preconnected and meets both `U` and `V`, so they cannot be disjoint.
   obtain ⟨i, hi⟩ :=
-    exists_subset_nhds_of_isCompact htd htc fun x hx => (hU.union hV).mem_nhds (hCUV hx)
+    exists_subset_nhds_of_isCompact htd htc ((hU.union hV).mem_nhdsSet.mpr hCUV)
   obtain ⟨x, -, hxU, hxV⟩ :=
     htp i U V hU hV hi ⟨a, mem_iInter.mp haC i, hAU haA⟩ ⟨b, mem_iInter.mp hbC i, hBV hbB⟩
   exact disjoint_left.mp hUV hxU hxV

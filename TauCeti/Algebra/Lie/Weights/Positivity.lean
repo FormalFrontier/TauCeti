@@ -8,8 +8,6 @@ module
 public import TauCeti.Algebra.Lie.Weights.InvariantForm
 public import TauCeti.Algebra.Lie.Weights.Integrality
 
-public section
-
 /-!
 # The invariant form is positive definite on the integral weights
 
@@ -64,6 +62,8 @@ and nonzero.
 This is the positivity behind the Casimir argument of Layer 5 of
 `TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`.
 -/
+
+public section
 
 namespace TauCeti
 

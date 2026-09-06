@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.Reflection.Principle
 public import TauCeti.Analysis.Complex.Conformal.Biholomorph
-import TauCeti.Analysis.Complex.Conformal.InverseFunction
+import TauCeti.Analysis.Complex.Conformal.Inverse.Function
 import TauCeti.Analysis.Complex.Conformal.LocalDegree
 
 /-!
@@ -72,7 +72,7 @@ Layer L4 (reflection) and layer L5 (boundary correspondence) are absent from the
 Mathlib Riemann-mapping draft
 [mathlib4#33505](https://github.com/leanprover-community/mathlib4/pull/33505),
 so this is new Lean formalization rather than a shim; the shared L0--L3 infrastructure it consumes
-(`Conformal/Biholomorph.lean`, `Conformal/InverseFunction.lean`) carries its own shim notice.
+(`Conformal/Biholomorph.lean`, `Conformal/Inverse/Function.lean`) carries its own shim notice.
 
 ## References
 
@@ -200,12 +200,10 @@ theorem deriv_schwarzReflection_ne_zero (hΩopen : IsOpen Ω) (hΩ : Set.MapsTo 
     (hupper : Set.MapsTo f (Ω ∩ {z : ℂ | 0 < z.im}) {z : ℂ | 0 < z.im})
     (hinj : Set.InjOn f (Ω ∩ {z : ℂ | 0 ≤ z.im}))
     {z : ℂ} (hz : z ∈ Ω) : deriv (schwarzReflection f) z ≠ 0 := by
-  have hA : AnalyticAt ℂ (schwarzReflection f) z :=
-    (differentiableOn_schwarzReflection_of_symmetric hΩopen hΩ hcont hholo hreal).analyticAt
-      (hΩopen.mem_nhds hz)
-  exact (exists_injOn_nhds_iff_deriv_ne_zero hA).mp
-    ⟨Ω, hΩopen.mem_nhds hz,
-      injOn_schwarzReflection_of_symmetric hΩ hupper (fun w hw h => (hreal w hw h).ge) hinj⟩
+  have hd := differentiableOn_schwarzReflection_of_symmetric hΩopen hΩ hcont hholo hreal
+  have hi := injOn_schwarzReflection_of_symmetric hΩ hupper
+    (fun w hw h => (hreal w hw h).ge) hinj
+  exact deriv_ne_zero_of_injOn hd hΩopen hi hz
 
 /-- **Schwarz reflection of a conformal map is conformal.** Under the hypotheses of the reflection
 principle, together with injectivity of `f` on the closed upper part and the requirement that the

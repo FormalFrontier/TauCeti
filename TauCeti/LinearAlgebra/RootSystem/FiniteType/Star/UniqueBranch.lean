@@ -8,8 +8,6 @@ module
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.AffineD
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Diagram
 
-public section
-
 /-!
 # A simply-laced finite-type diagram has at most one branch vertex
 
@@ -45,6 +43,8 @@ Layer 5 of `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`. See J. E
 *Introduction to Lie Algebras and Representation Theory*, §11.4, and Bourbaki, *Lie Groups and Lie
 Algebras, Chapters 4--6*, Ch. VI, §4.
 -/
+
+public section
 
 namespace TauCeti
 

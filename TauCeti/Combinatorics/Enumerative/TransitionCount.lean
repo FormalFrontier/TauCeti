@@ -97,6 +97,39 @@ theorem occCount_eq_sum [DecidableEq α] {N : ℕ} (w : Fin N → α) (a : α) :
     occCount w a = ∑ i : Fin N, if w i = a then 1 else 0 := by
   rw [occCount_eq_card_filter, card_filter]
 
+/-- **Occurrence counts grow along a letter-preserving embedding of positions.** If `e` embeds the
+positions of `u` into those of `v` in a way that carries each letter of `u` to the same letter of
+`v`, then `v` uses each letter at least as often as `u`. -/
+theorem occCount_le_occCount_of_comp_eq {M N : ℕ} {u : Fin M → α} {v : Fin N → α}
+    (e : Fin M ↪ Fin N) (he : ∀ i, v (e i) = u i) (a : α) : occCount u a ≤ occCount v a := by
+  classical
+  rw [occCount_eq_card_filter, occCount_eq_card_filter]
+  refine card_le_card_of_injOn e (fun i hi => ?_) e.injective.injOn
+  rw [mem_coe, mem_filter] at hi ⊢
+  exact ⟨mem_univ _, (he i).trans hi.2⟩
+
+/-- **A letter-preserving embedding that misses an occurrence loses it.** If in addition to the
+hypotheses of `TauCeti.occCount_le_occCount_of_comp_eq` some position `j` of `v` carrying `a` is
+outside the range of `e`, then `v` uses `a` strictly more often than `u`. -/
+theorem occCount_lt_occCount_of_comp_eq {M N : ℕ} {u : Fin M → α} {v : Fin N → α} {a : α}
+    {j : Fin N} (e : Fin M ↪ Fin N) (he : ∀ i, v (e i) = u i) (hj : v j = a)
+    (hmiss : ∀ i, e i ≠ j) : occCount u a < occCount v a := by
+  classical
+  have hsubset : (filter (fun i => u i = a) univ).image e ⊆ filter (fun i => v i = a) univ := by
+    intro l hl
+    obtain ⟨i, hi, rfl⟩ := mem_image.1 hl
+    rw [mem_filter] at hi ⊢
+    exact ⟨mem_univ _, (he i).trans hi.2⟩
+  have hnot : j ∉ (filter (fun i => u i = a) univ).image e := fun hmem => by
+    obtain ⟨i, _, hi⟩ := mem_image.1 hmem
+    exact hmiss i hi
+  have hlt : (filter (fun i => u i = a) univ).card < (filter (fun i => v i = a) univ).card := by
+    rw [← card_image_of_injective (filter (fun i => u i = a) univ) e.injective]
+    exact card_lt_card ((ssubset_iff_of_subset hsubset).2
+      ⟨j, mem_filter.2 ⟨mem_univ _, hj⟩, hnot⟩)
+  rw [occCount_eq_card_filter, occCount_eq_card_filter]
+  exact hlt
+
 /-- Splitting off the last position: the occurrences of `a` in a word are those in its initial
 segment together with a possible occurrence at the last position. -/
 theorem occCount_comp_castSucc_add_last [DecidableEq α] {n : ℕ} (w : Fin (n + 1) → α) (a : α) :
@@ -204,6 +237,15 @@ theorem prod_consecutivePairs_getD {M : Type*} [CommMonoid M] (p : α → α →
     rw [Finset.prod_congr rfl fun i _ => htail i,
       prod_consecutivePairs_getD p d t.length (y :: t) rfl]
     simp
+
+/-- **The occurrence counts of a word sum to its length.** The index set `S` only has to contain
+the letters the word uses. -/
+theorem sum_occCount_eq_card {N : ℕ} (w : Fin N → α) {S : Finset α} (hS : ∀ i, w i ∈ S) :
+    ∑ a ∈ S, occCount w a = N := by
+  classical
+  have h := card_eq_sum_card_fiberwise (s := (univ : Finset (Fin N))) (f := w) (t := S)
+    fun i _ => hS i
+  simpa only [card_univ, Fintype.card_fin, occCount_eq_card_filter] using h.symm
 
 /-- Summing the transitions out of `a` counts the positions carrying `a` other than the last one.
 The index set `S` only has to contain the successors of transitions in `w`. -/

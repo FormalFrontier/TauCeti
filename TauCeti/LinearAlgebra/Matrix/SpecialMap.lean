@@ -7,8 +7,6 @@ module
 
 public import Mathlib.Data.Matrix.Mul
 
-public section
-
 /-!
 # The identity forced by the character-lattice matrix of a special map
 
@@ -37,6 +35,8 @@ core of the per-type files
 `TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/G2/SpecialMap.lean`, where they were
 first proved.
 -/
+
+public section
 
 namespace TauCeti
 

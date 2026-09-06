@@ -35,21 +35,20 @@ unhypothesised, because `filledHull ∅` is empty in a nontrivial space
 either way.
 
 Because the width of a filled hull is controlled, so is that of anything inside it, and the shape
-in which this is spent is `TauCeti.IsPreconnected.subset_filledHull`: a preconnected set disjoint
-from `K` is trapped inside the filled hull as soon as it meets it. Their composite,
-`TauCeti.IsPreconnected.diam_le_diam_of_disjoint`, says that *a connected set that a small `K` cuts
-off from infinity is itself small*, with no regularity asked of `K`.
+in which this is spent is `IsPreconnected.subset_filledHull`: a preconnected set disjoint from `K`
+is trapped inside the filled hull as soon as it meets it. Their composite,
+`IsPreconnected.diam_le_diam_of_disjoint`, says that *a connected set that a small `K` cuts off
+from infinity is itself small*, with no regularity asked of `K`.
 
 ## Roadmap role
 
-The filled hull is the vocabulary in which the open frontier item of layer **L5** of
-`TauCetiRoadmap/ConformalMapping/README.md` is stated; see the roadmap section of
-`TauCeti/Topology/FilledHull.lean`. The step waiting on that item is the one bounding the piece a
-crosscut cuts off from a Jordan domain: the file
-`TauCeti/Analysis/Complex/Conformal/Crosscut/SmallJordanCurve.lean` encloses a short image crosscut
-in an arbitrarily small Jordan curve `J`, and the cut-off piece is a connected set disjoint from
-`J`; once separation says it is the inside of `J` that the piece falls on,
-`TauCeti.IsPreconnected.diam_le_diam_of_disjoint` makes it no wider than `J`.
+The filled hull is the vocabulary in which the enclosure step of layer **L5** of
+`TauCetiRoadmap/ConformalMapping/README.md` is stated. That step is now unconditional: the
+preconnectedness/winding-number route in `TauCeti/Analysis/Complex/Conformal/Crosscut/Inside.lean`
+places one image piece of a crosscut in the filled hull without plane separation. In the diameter
+bound that follows, `TauCeti/Analysis/Complex/Conformal/Crosscut/SmallJordanCurve.lean` encloses a
+short image crosscut in an arbitrarily small Jordan curve `J`, and
+`IsPreconnected.diam_le_diam_of_disjoint` makes the cut-off piece no wider than `J`.
 
 This is a different route to a diameter bound from `TauCeti.diam_le_diam_of_frontier_subset` of
 `TauCeti/Analysis/Normed/Module/DiamFrontier.lean`, which bounds a set by *any* bounded set
@@ -69,7 +68,7 @@ used, and the separation argument is the general Hahn–Banach one.
 * `TauCeti.diam_filledHull` and `TauCeti.isBounded_filledHull` — filling preserves the diameter, and
   a filled hull is bounded exactly when the set filled is.
 * `TauCeti.diam_le_diam_of_subset_filledHull` and
-  `TauCeti.IsPreconnected.diam_le_diam_of_disjoint` — a set inside the filled hull of a bounded `K`,
+  `IsPreconnected.diam_le_diam_of_disjoint` — a set inside the filled hull of a bounded `K`,
   in particular a preconnected set that `K` cuts off from infinity, is no wider than `K`.
 * `TauCeti.not_isBounded_halfSpace_lt` — an open half-space cut out by a nonzero continuous
   functional is unbounded, and `TauCeti.isBounded_closedConvexHull`,
@@ -205,11 +204,11 @@ theorem diam_le_diam_of_subset_filledHull (hK : IsBounded K) (h : S ⊆ filledHu
 
 /-- **A preconnected set that a bounded `K` cuts off from infinity is no wider than `K`.** If `S` is
 preconnected, disjoint from `K`, and meets the filled hull of `K`, then it lies inside that hull by
-`TauCeti.IsPreconnected.subset_filledHull`, which is no wider than `K` by
+`IsPreconnected.subset_filledHull`, which is no wider than `K` by
 `TauCeti.diam_filledHull`. No regularity is asked of `K`. -/
-theorem IsPreconnected.diam_le_diam_of_disjoint (hS : IsPreconnected S) (hSK : Disjoint S K)
+theorem _root_.IsPreconnected.diam_le_diam_of_disjoint (hS : IsPreconnected S) (hSK : Disjoint S K)
     (hne : (S ∩ filledHull K).Nonempty) (hK : IsBounded K) : diam S ≤ diam K :=
-  diam_le_diam_of_subset_filledHull hK (IsPreconnected.subset_filledHull hS hSK hne)
+  diam_le_diam_of_subset_filledHull hK (hS.subset_filledHull hSK hne)
 
 variable {x y : E}
 

@@ -94,7 +94,7 @@ restricts to an order isomorphism between the intervals of intermediate carriers
 def intermediateCarrierEquiv (e : Isometry L M) :
     L.IntermediateCarrier ≃o M.IntermediateCarrier :=
   (OrderIso.Icc (Submodule.orderIsoMapComap e.ambientEquiv) L.carrier L.dualCarrier).trans
-    (OrderIso.setCongr _ _ (by
+    (Set.orderIsoOfEq _ _ (by
       simp only [Submodule.orderIsoMapComap_apply]
       have hambient : e.ambientEquiv.toLinearMap =
           ((e : V ≃ₗ[ℚ] W).restrictScalars ℤ).toLinearMap := by
@@ -105,7 +105,7 @@ def intermediateCarrierEquiv (e : Isometry L M) :
 /-- The carrier transported along an isometry is the image of the original carrier. -/
 theorem intermediateCarrierEquiv_apply_coe (e : Isometry L M) (P : L.IntermediateCarrier) :
     (e.intermediateCarrierEquiv P).1 = P.1.map e.ambientEquiv.toLinearMap :=
-  -- Mathlib's `OrderIso.Icc` and `OrderIso.setCongr` both act by the underlying map on the
+  -- Mathlib's `OrderIso.Icc` and `Set.orderIsoOfEq` both act by the underlying map on the
   -- coerced element, and `⇑e.ambientEquiv` is `⇑e.ambientEquiv.toLinearMap`, so both sides are
   -- definitionally the same submodule. The parentheses keep `intermediateCarrierEquiv` sealed.
   (rfl)
@@ -586,6 +586,13 @@ theorem isIntegral_orthogonalSumIntermediateCarrier_iff (P : L.IntermediateCarri
     rw [mem_orthogonalSumIntermediateCarrier_iff] at hp hq
     rw [orthogonalSum_form, orthogonalSumForm_apply]
     exact Submodule.add_mem _ (hP p.1 hp.1 q.1 hq.1) (hQ p.2 hp.2 q.2 hq.2)
+
+/-- The assembled carrier `P ⊕ Q` of two integral intermediate carriers is integral. -/
+theorem IntermediateCarrier.IsIntegral.orthogonalSum {P : L.IntermediateCarrier}
+    {Q : M.IntermediateCarrier} (hP : IntermediateCarrier.IsIntegral P)
+    (hQ : IntermediateCarrier.IsIntegral Q) :
+    IntermediateCarrier.IsIntegral (orthogonalSumIntermediateCarrier L M P Q) :=
+  (isIntegral_orthogonalSumIntermediateCarrier_iff P Q).mpr ⟨hP, hQ⟩
 
 /-- **Evenness of an assembled carrier is componentwise.** -/
 @[simp]

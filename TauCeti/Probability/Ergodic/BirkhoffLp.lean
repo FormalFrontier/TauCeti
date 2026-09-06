@@ -55,14 +55,14 @@ theorem coeFn_birkhoffSum_compMeasurePreserving {T : Ω → Ω} (hT : MeasurePre
       birkhoffSum T (⇑g) n := by
   induction n with
   | zero =>
-      simp only [birkhoffSum_zero', Pi.zero_apply]
+      simp only [birkhoffSum_zero, Pi.zero_apply]
       exact Lp.coeFn_zero E p μ
   | succ n ih =>
-      rw [birkhoffSum_succ]
+      rw [birkhoffSum_succ_apply]
       filter_upwards [ih, coeFn_iterate_compMeasurePreserving hT g n,
         Lp.coeFn_add (birkhoffSum (Lp.compMeasurePreserving (E := E) (p := p) T hT) id n g)
           (id ((Lp.compMeasurePreserving (E := E) (p := p) T hT)^[n] g))] with ω hsum hiter hadd
-      rw [hadd, birkhoffSum_succ]
+      rw [hadd, birkhoffSum_succ_apply]
       exact congrArg₂ _ hsum hiter
 
 /-- The Birkhoff averages of the `Lᵖ` composition operator are represented by the pointwise

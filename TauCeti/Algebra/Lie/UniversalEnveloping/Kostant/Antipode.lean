@@ -10,10 +10,6 @@ public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Form
 public import TauCeti.Algebra.Polynomial.Smeval
 public import TauCeti.RingTheory.Binomial
 
-public section
-
-open scoped UniversalEnvelopingAlgebra
-
 /-!
 # The Kostant integral form is stable under the antipode
 
@@ -59,6 +55,10 @@ Chevalley--Demazure group scheme; the comultiplication is not proved here.
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, §26.
 * J. C. Jantzen, *Representations of Algebraic Groups*, II.1.
 -/
+
+public section
+
+open scoped UniversalEnvelopingAlgebra
 
 namespace TauCeti.UniversalEnvelopingAlgebra
 

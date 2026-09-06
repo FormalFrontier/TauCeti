@@ -7,7 +7,7 @@ module
 
 public import TauCeti.AlgebraicTopology.FundamentalGroup.Homeomorph
 public import TauCeti.AlgebraicTopology.NotSimplyConnected
-public import TauCeti.AlgebraicTopology.UniversalCover.ComplexCircleFundamentalGroup
+public import TauCeti.AlgebraicTopology.UniversalCover.Circle.FundamentalGroup
 public import TauCeti.AlgebraicTopology.UniversalCover.RealProjective.Circle
 
 /-!
@@ -17,7 +17,7 @@ For `n = 1`, real projective space `RP¹` is homeomorphic to the circle `Circle`
 `TauCeti.RealProjectiveSpace.Line.homeomorphCircle`.
 
 Transporting the circle computation `π₁(Circle, z) ≃* Multiplicative ℤ`
-(`TauCeti.Circle.fundamentalGroupMulEquiv`) across `RP¹ ≃ₜ Circle` gives
+(`Circle.fundamentalGroupMulEquiv`) across `RP¹ ≃ₜ Circle` gives
 
   `π₁(RP¹, x) ≃* Multiplicative ℤ`
 
@@ -33,6 +33,8 @@ For `2 ≤ n`, the fundamental group computation is developed in the sibling mod
   any basepoint.
 * `TauCeti.RealProjectiveSpace.Line.nontrivial_fundamentalGroup`: `π₁(RP¹, x)` is nontrivial.
 * `TauCeti.RealProjectiveSpace.Line.infinite_fundamentalGroup`: `π₁(RP¹, x)` is infinite.
+* `TauCeti.RealProjectiveSpace.Line.card_fundamentalGroup`: `Nat.card (π₁(RP¹, x)) = 0`,
+  expressing infinitude under the `Nat.card` convention.
 * `TauCeti.RealProjectiveSpace.Line.not_simplyConnectedSpace`: `RP¹` is not simply connected.
 * `TauCeti.RealProjectiveSpace.Line.not_contractibleSpace`: `RP¹` is not contractible.
 
@@ -57,17 +59,16 @@ obtained by transporting the complex-circle computation across `homeomorphCircle
 def fundamentalGroupMulEquiv (x : RealProjectiveSpace 1) :
     FundamentalGroup (RealProjectiveSpace 1) x ≃* Multiplicative ℤ :=
   (FundamentalGroup.homeomorphMulEquiv homeomorphCircle x).trans
-    (Circle.fundamentalGroupMulEquiv (homeomorphCircle x))
+    (homeomorphCircle x).fundamentalGroupMulEquiv
 
-/-- `fundamentalGroupMulEquiv` factors through the homeomorphism from the real projective line
-to the circle and the circle fundamental-group computation. -/
+/-- `fundamentalGroupMulEquiv` factors as transport along `homeomorphCircle : RP¹ ≃ₜ Circle`,
+followed by the circle fundamental-group computation `Circle.fundamentalGroupMulEquiv` at the
+image basepoint. -/
 theorem fundamentalGroupMulEquiv_def (x : RealProjectiveSpace 1) :
     fundamentalGroupMulEquiv x =
       (FundamentalGroup.homeomorphMulEquiv homeomorphCircle x).trans
-        (Circle.fundamentalGroupMulEquiv (homeomorphCircle x)) :=
-  by
-    unfold fundamentalGroupMulEquiv
-    rfl
+        (homeomorphCircle x).fundamentalGroupMulEquiv :=
+  (rfl)
 
 /-- The fundamental group of `RP¹` at any basepoint is nontrivial. -/
 theorem nontrivial_fundamentalGroup (x : RealProjectiveSpace 1) :
@@ -78,6 +79,13 @@ theorem nontrivial_fundamentalGroup (x : RealProjectiveSpace 1) :
 theorem infinite_fundamentalGroup (x : RealProjectiveSpace 1) :
     Infinite (FundamentalGroup (RealProjectiveSpace 1) x) :=
   Infinite.of_injective _ (fundamentalGroupMulEquiv x).symm.injective
+
+/-- The fundamental group of `RP¹` has `Nat.card` zero because it is infinite. -/
+@[simp]
+theorem card_fundamentalGroup (x : RealProjectiveSpace 1) :
+    Nat.card (FundamentalGroup (RealProjectiveSpace 1) x) = 0 := by
+  let := infinite_fundamentalGroup x
+  exact Nat.card_eq_zero_of_infinite
 
 /-- The real projective line is not simply connected. -/
 theorem not_simplyConnectedSpace : ¬ SimplyConnectedSpace (RealProjectiveSpace 1) :=

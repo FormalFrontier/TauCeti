@@ -25,6 +25,8 @@ anti-equivalence.
 
 * `TauCeti.AffineGroupSchemeCat.hopfSpecBaseChangeIso`: pullback of a Hopf spectrum is the
   Hopf spectrum of the scalar-extended coordinate Hopf algebra.
+* `TauCeti.AffineGroupSchemeCat.hopfSpecBaseChangeGrpIso_hom_naturality`: the underlying
+  group-object comparison intertwines pullback and coordinate scalar extension on morphisms.
 * `TauCeti.AffineGroupSchemeCat.hopfSpecBaseChangeNatIso`: the comparison is natural in the
   coordinate Hopf algebra.
 
@@ -85,13 +87,6 @@ private theorem pullbackSpecBaseChangeIso_inv_snd (H : CommHopfAlgCat.{u} R) :
         (Algebra.TensorProduct.includeLeftRingHom : S →+* S ⊗[R] H)) := by
   simp [pullbackSpecBaseChangeIso]
 
-private theorem hopfSpec_map_left {T : Type u} [CommRing T]
-    {H K : CommHopfAlgCat.{u} T} (f : H ⟶ K) :
-    ((hopfSpec (CommRingCat.of T)).map f.op).hom.hom.left =
-      Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom) := by
-  -- `hopfSpec.map` is built by lifting this `Spec.map`; no separate projection lemma is exposed.
-  rfl
-
 private theorem pullbackSpecIso'_natural {H K : CommHopfAlgCat.{u} R}
     (f : H ⟶ K) :
     (pullbackSpecBaseChangeIso (R := R) (S := S) K).inv ≫
@@ -133,7 +128,9 @@ private theorem pullbackSpecIso'_natural {H K : CommHopfAlgCat.{u} R}
     ext x
     simp
 
-private theorem hopfSpecPullbackIso_natural {H K : CommHopfAlgCat.{u} R}
+/-- The group-object comparison between pullback of Hopf spectra and Hopf spectra of scalar
+extensions intertwines the pullback of a coordinate morphism with its scalar extension. -/
+theorem hopfSpecBaseChangeGrpIso_hom_naturality {H K : CommHopfAlgCat.{u} R}
     (f : H ⟶ K) :
     (Over.pullback (Spec.map (CommRingCat.ofHom (algebraMap R S)))).mapGrp.map
           ((hopfSpec (CommRingCat.of R)).map f.op) ≫
@@ -160,7 +157,7 @@ private noncomputable def hopfSpecPullbackNatIso :
         hopfSpec (CommRingCat.of S) :=
   NatIso.ofComponents
     (fun H ↦ hopfSpecBaseChangeGrpIso (R := R) (S := S) H.unop)
-    (fun f ↦ hopfSpecPullbackIso_natural (R := R) (S := S) f.unop)
+    (fun f ↦ hopfSpecBaseChangeGrpIso_hom_naturality (R := R) (S := S) f.unop)
 
 /-- The base-change comparison after including affine group schemes into all group objects. -/
 private noncomputable def hopfSpecBaseChangeιNatIso :

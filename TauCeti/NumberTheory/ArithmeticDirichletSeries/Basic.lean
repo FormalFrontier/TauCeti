@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Data.Complex.Basic
+public import Mathlib.Basic.Complex.Basic
 public import Mathlib.NumberTheory.NumberField.Basic
 public import Mathlib.RingTheory.DedekindDomain.Ideal.Lemmas
 import TauCeti.RingTheory.DedekindDomain.Ideal

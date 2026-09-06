@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.MeasureTheory.Measure.DiracProba
+public import TauCeti.MeasureTheory.Measure.Measurability
 public import TauCeti.Probability.Exchangeability.MixedMarkovChain
 public import TauCeti.Probability.Exchangeability.RowExchangeable
 public import TauCeti.Probability.Exchangeability.SuccessorArray
@@ -93,13 +94,13 @@ theorem mixedMarkovChainWith_of_rowExchangeable_successorProcess [Countable α]
     (hrow : RowExchangeable μ (successorProcess X))
     (hlam : MixedIIDWith μ (arrayColumn (successorProcess X)) lam) :
     MixedMarkovChainWith μ X (fun _ => diracProba a₀) fun ω a =>
-      (lam ω).map (measurable_pi_apply a).aemeasurable := by
+      (lam ω).map (fun x => x a) := by
   classical
   have hSA : ∀ p, AEMeasurable (successorProcess X p) μ := aemeasurable_successorProcess hX
   -- Taking the `a`-th row marginal is measurable in the Giry structure.
   have hmarg : ∀ a : α, Measurable fun P : ProbabilityMeasure (α → α) =>
-      P.map (measurable_pi_apply a).aemeasurable := fun a =>
-    ((Measure.measurable_map _ (measurable_pi_apply a)).comp measurable_subtype_coe).subtype_mk
+      P.map (fun x => x a) := fun a =>
+    TauCeti.MeasureTheory.measurable_probabilityMeasure_map (measurable_pi_apply a)
   refine MixedMarkovChainWith.intro hX measurable_const
     (fun a => (hmarg a).comp hlam.measurable_mixingRepresentative) ?_
   intro n w
@@ -146,7 +147,7 @@ theorem mixedMarkovChainWith_of_rowExchangeable_successorProcess [Countable α]
         successorProcess X (visitCell w' t.val) ω ∈ ({w' (t.val + 1)} : Set α)} : Set Ω) =ᵐ[μ]
       {ω | ∀ t : Fin n,
         successorProcess X (visitCell w' t.val) ω ∈ ({w' (t.val + 1)} : Set α)} := by
-      rw [Filter.eventuallyEq_set]
+      rw [Filter.eventuallyEqSet_iff]
       filter_upwards [h0] with ω hω
       have hmem : ω ∈ {ω | X 0 ω = w' 0} := by simp [hω, hw0, hstart]
       exact ⟨fun h => h.2, fun h => ⟨hmem, h⟩⟩

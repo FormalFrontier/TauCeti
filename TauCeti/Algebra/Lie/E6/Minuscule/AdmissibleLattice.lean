@@ -322,4 +322,17 @@ theorem rep_serreKostantForm_mem_lattice
     (wt := e6MinusculeWeight) rep_serreRootGenerator_sq
     (fun k _ hw ↦ rep_serreRootGenerator_mem_lattice k hw) isCartanWeightVector_single hu hv
 
+/-- The minuscule coordinate lattice is stable under the generic Kostant form built from the
+type-`E₆` Serre generators. This is the form consumed by the carrier and base-change APIs. -/
+theorem rep_kostantForm_mem_lattice
+    (u : _root_.UniversalEnvelopingAlgebra ℚ
+      (Matrix.ToLieAlgebra ℚ (CartanMatrix.E 6)ᵀ))
+    (hu : u ∈ TauCeti.UniversalEnvelopingAlgebra.kostantForm
+      (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
+      (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ))
+    (v : Fin 27 → ℚ) (hv : v ∈ lattice) : rep u v ∈ lattice :=
+  rep_serreKostantForm_mem_lattice (by
+    rw [TauCeti.serreKostantForm_def]
+    exact hu) hv
+
 end TauCeti.E6Minuscule

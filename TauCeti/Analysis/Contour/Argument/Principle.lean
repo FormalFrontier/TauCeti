@@ -174,7 +174,7 @@ private theorem circleIntegral_logDeriv_toMeromorphicNFOn {f : ℂ → ℂ} {c :
     (hf : MeromorphicOn f (Metric.closedBall c R)) :
     circleIntegral (logDeriv f) c R
       = circleIntegral (logDeriv (toMeromorphicNFOn f (Metric.closedBall c R))) c R := by
-  set F := toMeromorphicNFOn f (Metric.closedBall c R) with hF_def
+  set F := toMeromorphicNFOn f (Metric.closedBall c R)
   refine circleIntegral.circleIntegral_congr_codiscreteWithin ?_ hR.ne'
   have hspU : Metric.sphere c |R| ⊆ Metric.closedBall c R := by
     rw [abs_of_pos hR]; exact Metric.sphere_subset_closedBall
@@ -186,7 +186,7 @@ private theorem circleIntegral_logDeriv_toMeromorphicNFOn {f : ℂ → ℂ} {c :
 
 /-- The circle integral of the principal part `∑_{s∈S} ord s · (z − s)⁻¹`, with all poles `s`
 strictly inside the disc, is `2πi · ∑_{s∈S} ord s` (each simple pole contributes `2πi · ord s`). -/
-private theorem circleIntegral_principalPart {c : ℂ} {R : ℝ} (hR : 0 < R) (S : Finset ℂ)
+private theorem circleIntegral_principalPart {c : ℂ} {R : ℝ} (hR : 0 ≤ R) (S : Finset ℂ)
     (ord : ℂ → ℤ) (hS : (S : Set ℂ) ⊆ Metric.ball c R) :
     circleIntegral (fun z => ∑ s ∈ S, (ord s : ℂ) * (z - s)⁻¹) c R
       = 2 * (Real.pi : ℂ) * Complex.I * (∑ z ∈ S, (ord z : ℂ)) := by
@@ -195,7 +195,7 @@ private theorem circleIntegral_principalPart {c : ℂ} {R : ℝ} (hR : 0 < R) (S
     rw [Metric.mem_sphere] at hz
     exact absurd hz (ne_of_lt (Metric.mem_ball.1 (hS (Finset.mem_coe.2 hsS))))
   have hP_intble : ∀ s ∈ S, CircleIntegrable (fun z => (ord s : ℂ) * (z - s)⁻¹) c R := fun s hsS =>
-    ContinuousOn.circleIntegrable hR.le (continuousOn_const.mul
+    ContinuousOn.circleIntegrable hR (continuousOn_const.mul
       ((continuousOn_id.sub continuousOn_const).inv₀
         fun z hz => sub_ne_zero.2 (hzs_ne z hz s hsS)))
   have hterm : ∀ s ∈ S, (∮ z in C(c, R), (ord s : ℂ) * (z - s)⁻¹)
@@ -209,7 +209,7 @@ private theorem circleIntegral_principalPart {c : ℂ} {R : ℝ} (hR : 0 < R) (S
 on the disc with order `ord z` at each `z ∈ S` and is analytic and non-vanishing off `S`, then
 `logDeriv F − ∑_{s∈S} ord s · (· − s)⁻¹` is pole-free, so its circle integral vanishes. -/
 private theorem circleIntegral_logDeriv_sub_principalPart_eq_zero {F : ℂ → ℂ} {c : ℂ} {R : ℝ}
-    (hR : 0 < R) (S : Finset ℂ) (ord : ℂ → ℤ) (hF_mero : MeromorphicOn F (Metric.closedBall c R))
+    (hR : 0 ≤ R) (S : Finset ℂ) (ord : ℂ → ℤ) (hF_mero : MeromorphicOn F (Metric.closedBall c R))
     (hord_F : ∀ z ∈ S, meromorphicOrderAt F z = (ord z : WithTop ℤ))
     (hoffF : ∀ z ∈ Metric.closedBall c R, z ∉ S → AnalyticAt ℂ F z ∧ F z ≠ 0) :
     circleIntegral (fun z => logDeriv F z - ∑ s ∈ S, (ord s : ℂ) * (z - s)⁻¹) c R = 0 := by
@@ -218,7 +218,7 @@ private theorem circleIntegral_logDeriv_sub_principalPart_eq_zero {F : ℂ → �
     refine MeromorphicOn.fun_sum fun s _ z _ => ?_
     exact (MeromorphicAt.const (ord s : ℂ) z).mul
       (((MeromorphicAt.id z).sub (MeromorphicAt.const s z)).inv)
-  refine circleIntegral_eq_zero_of_meromorphicOrderAt_nonneg hR.le (hF_mero.logDeriv.sub hP_mero) ?_
+  refine circleIntegral_eq_zero_of_meromorphicOrderAt_nonneg hR (hF_mero.logDeriv.sub hP_mero) ?_
   intro z hz
   by_cases hzS : z ∈ S
   · have hz_ord : meromorphicOrderAt F z = (ord z : WithTop ℤ) := hord_F z hzS
@@ -281,9 +281,9 @@ theorem argumentPrinciple {f : ℂ → ℂ} {c : ℂ} {R : ℝ} (hR : 0 < R) (S 
       ((continuousOn_id.sub continuousOn_const).inv₀ fun z hz => sub_ne_zero.2 (hzs_ne z hz s hsS))
   have hsub := (circleIntegral.integral_sub (hlogF_cont.circleIntegrable hR.le)
     (hP_cont.circleIntegrable hR.le)).symm
-  rw [circleIntegral_logDeriv_sub_principalPart_eq_zero hR S ord hF_mero hord_F hoffF,
+  rw [circleIntegral_logDeriv_sub_principalPart_eq_zero hR.le S ord hF_mero hord_F hoffF,
     sub_eq_zero] at hsub
-  rw [hsub, circleIntegral_principalPart hR S ord hS]
+  rw [hsub, circleIntegral_principalPart hR.le S ord hS]
 
 /-- **Local argument principle.** If `f` is meromorphic on the closed disc `C(c, R)` (`R > 0`) and
 the centre `c` is the only point of the disc that may have nonzero meromorphic order — every other

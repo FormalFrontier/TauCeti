@@ -23,9 +23,9 @@ discriminants and that at most one is even. Their radicands are therefore square
 independent (`not_isSquare_prod_genusPrimeDiscriminantRadicands`), and the degree formula is the
 corresponding specialization of `finrank_adjoin_range`.
 
-This is the degree step in proving that the candidate genus field is multiquadratic. Identifying
-this candidate with the maximal extension satisfying the genus-field ramification conditions is
-later work.
+This is the degree step in proving that the candidate genus field is multiquadratic. For negative
+`d`, `isGenusField_candidateGenusField` identifies this candidate with the maximal extension
+satisfying the genus-field ramification conditions. The real case remains future work.
 
 The prime-discriminant description of the genus field is classical; see D. A. Cox,
 *Primes of the Form x² + ny²*, and F. Lemmermeyer, *Reciprocity Laws*.

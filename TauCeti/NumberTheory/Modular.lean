@@ -16,7 +16,9 @@ import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
 The measure theory of the standard fundamental domain `𝒟 = ModularGroup.fd` for `SL₂(ℤ)`,
 complementing its topology from `Mathlib/NumberTheory/Modular.lean`: `𝒟` has finite
 invariant measure, its frontier is null, and therefore integrals over `𝒟` and its interior
-`𝒟ᵒ` agree.
+`𝒟ᵒ` agree. The last section records that the translates `γ • 𝒟ᵒ` are open and that two are
+disjoint unless their translating elements differ by a sign; these facts turn suitable finite
+sums of integrals over translates into a single integral over their union.
 
 ## Main results
 
@@ -25,11 +27,19 @@ invariant measure, its frontier is null, and therefore integrals over `𝒟` and
 * `ModularGroup.volume_frontier_fd`: the frontier of `𝒟` has zero invariant measure.
 * `ModularGroup.fd_ae_eq_fdo`: `𝒟` and `𝒟ᵒ` agree almost everywhere (so set integrals
   over them coincide, via `MeasureTheory.setIntegral_congr_set`).
+* `ModularGroup.sl_smul_set`: the `SL(2, ℤ)`-action on subsets of `ℍ` is the `GL(2, ℝ)`-action
+  along the coercion.
+* `ModularGroup.isOpen_smul_fdo` and `ModularGroup.disjoint_smul_fdo`: the translates of the
+  open fundamental domain are open, and two of them are disjoint unless the translating
+  elements differ by a sign.
 
 Split out of the Petersson inner-product development ported from the AINTLIB
 `LeanModularForms` project
 (<https://github.com/CBirkbeck/AINTLIB/tree/main/projects/LeanModularForms>,
 `Modularforms/PeterssonInnerProduct.lean`, Chris Birkbeck).
+
+The final section on translates of `𝒟ᵒ` was developed in Tau Ceti and has no counterpart in
+that AINTLIB source.
 -/
 
 public section
@@ -38,7 +48,7 @@ noncomputable section
 
 open MeasureTheory Measure UpperHalfPlane Complex Set ENNReal
 
-open scoped NNReal
+open scoped NNReal MatrixGroups Pointwise
 
 namespace ModularGroup
 
@@ -158,5 +168,34 @@ theorem volume_frontier_fd : (volume : Measure ℍ) (frontier (fd : Set ℍ)) = 
 theorem fd_ae_eq_fdo : (fd : Set ℍ) =ᶠ[ae (volume : Measure ℍ)] fdo :=
   ((fdo_eq_interior_fd.symm ▸ interior_ae_eq_of_null_frontier volume_frontier_fd :
     (fdo : Set ℍ) =ᶠ[ae (volume : Measure ℍ)] fd)).symm
+
+/-! ### Disjointness of translates of the open fundamental domain -/
+
+/-- **The `SL(2, ℤ)`-action on subsets of `ℍ` is the `GL(2, ℝ)`-action along the coercion**, the
+pointwise-image counterpart of `ModularGroup.sl_moeb`. This is useful as a rewrite even though
+the two actions are definitionally equal. -/
+@[simp]
+theorem sl_smul_set (γ : SL(2, ℤ)) (S : Set ℍ) : γ • S = (γ : GL (Fin 2) ℝ) • S := (rfl)
+
+/-- Every translate of the open fundamental domain is open: translation is a homeomorphism
+of `ℍ`. -/
+theorem isOpen_smul_fdo (γ : SL(2, ℤ)) : IsOpen (γ • fdo) := by
+  rw [sl_smul_set]
+  exact isOpen_fdo.smul _
+
+/-- **Distinct translates of the open fundamental domain are disjoint.** A point of
+`γ • 𝒟ᵒ ∩ δ • 𝒟ᵒ` exhibits two points of `𝒟ᵒ` in the same `SL(2, ℤ)`-orbit, which forces
+`γ⁻¹δ = ±I` by `ModularGroup.eq_one_or_neg_one_of_mem_fdo_mem_fdo`. Both signs must be excluded,
+`−I` acting trivially on `ℍ`: it is the translates indexed by `SL(2, ℤ)/{±I}`, not by
+`SL(2, ℤ)`, that are genuinely distinct. -/
+theorem disjoint_smul_fdo {γ δ : SL(2, ℤ)} (h₁ : γ⁻¹ * δ ≠ 1) (h₂ : γ⁻¹ * δ ≠ -1) :
+    Disjoint (γ • fdo) (δ • fdo) := by
+  rw [Set.disjoint_left]
+  rintro w ⟨z, hz, rfl⟩ ⟨z', hz', hw⟩
+  -- Beta-reduce the pointwise-set action recorded by membership in the translated set.
+  have hw' : δ • z' = γ • z := hw
+  refine (eq_one_or_neg_one_of_mem_fdo_mem_fdo hz' (g := γ⁻¹ * δ) ?_).elim h₁ h₂
+  rw [mul_smul, hw', inv_smul_smul]
+  exact hz
 
 end ModularGroup

@@ -10,8 +10,6 @@ public import Mathlib.LinearAlgebra.Matrix.Dual
 -- `LinearMap.IsPerfPair` occurs in the statement below.
 public import Mathlib.LinearAlgebra.PerfectPairing.Basic
 
-public section
-
 /-!
 # The dot product on `ι → R` is a perfect pairing
 
@@ -26,6 +24,8 @@ the dot product may be used directly as the pairing of a `RootPairing` or a `Roo
 * `TauCeti.linearIndependent_of_dotProduct_diagonal`: a family whose dot products against a second
   family vanish off the diagonal and are nonzero on it is linearly independent.
 -/
+
+public section
 
 namespace TauCeti
 

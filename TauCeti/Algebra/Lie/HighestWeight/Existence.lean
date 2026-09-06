@@ -10,8 +10,6 @@ import TauCeti.Algebra.Lie.HighestWeight.Module
 import TauCeti.Algebra.Lie.Submodule.Atom
 public import TauCeti.Algebra.Lie.Weights.Diagonalizable
 
-public section
-
 /-!
 # Existence and uniqueness of highest weights
 
@@ -91,6 +89,8 @@ The uniqueness statement is the target
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §20.2 and §21.1.
 -/
+
+public section
 
 namespace TauCeti
 

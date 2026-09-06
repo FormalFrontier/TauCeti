@@ -10,6 +10,9 @@ public import Mathlib.Algebra.Algebra.Subalgebra.Basic
 public import Mathlib.Algebra.Lie.Killing
 public import Mathlib.LinearAlgebra.BilinearForm.Properties
 
+-- Non-public: the enveloping-algebra dictionary appears only inside proofs.
+import TauCeti.Algebra.Lie.UniversalEnveloping.Module
+
 /-!
 # The Casimir element of a universal enveloping algebra
 
@@ -318,37 +321,6 @@ theorem ι_mul_casimirElement (z : L) :
   rw [sum_congr rfl fun i _ ↦ step i, Finset.sum_add_distrib]
   exact sum_apply_lie_killingDualBasis_add_eq_zero (genMul K L) b z
 
-/-- **The Casimir element commutes with the Lie action.**  This is the pointwise form of
-`TauCeti.ι_mul_casimirElement`: the Casimir operator of a module is a homomorphism of Lie
-modules. -/
-@[simp]
-theorem representation_casimirElement_lie
-    {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
-    (x : L) (m : M) :
-    UniversalEnvelopingAlgebra.representation K L M (casimirElement K L) ⁅x, m⁆ =
-      ⁅x, UniversalEnvelopingAlgebra.representation K L M (casimirElement K L) m⁆ := by
-  have h := congrArg (UniversalEnvelopingAlgebra.representation K L M)
-    (ι_mul_casimirElement (K := K) (L := L) x)
-  rw [map_mul, map_mul, UniversalEnvelopingAlgebra.representation_ι] at h
-  have h₁ := congrArg (fun g : Module.End K M ↦ g m) h
-  simpa only [Module.End.mul_apply, LieModule.toEnd_apply_apply] using h₁.symm
-
-/-- **The Casimir operator is natural in the module.**  A homomorphism of Lie modules intertwines
-the two Casimir operators, since it intertwines each of the double brackets `⁅xᵢ, ⁅yᵢ, -⁆⁆` that
-make up the action. -/
-@[simp]
-theorem map_representation_casimirElement
-    {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
-    {N : Type*} [AddCommGroup N] [Module K N] [LieRingModule L N] [LieModule K L N]
-    (f : M →ₗ⁅K,L⁆ N) (m : M) :
-    f (UniversalEnvelopingAlgebra.representation K L M (casimirElement K L) m) =
-      UniversalEnvelopingAlgebra.representation K L N (casimirElement K L) (f m) := by
-  classical
-  rw [casimirElement_eq_sum (Module.finBasis K L)]
-  simp only [map_sum, LinearMap.sum_apply, map_mul, Module.End.mul_apply,
-    UniversalEnvelopingAlgebra.representation_ι, LieModule.toEnd_apply_apply,
-    LieModuleHom.map_lie]
-
 variable (K L) in
 /-- **The Casimir element is central in `U(L)`.**  It commutes with the canonical Lie generators,
 which generate `U(L)` as an algebra. -/
@@ -360,5 +332,28 @@ theorem casimirElement_mem_center :
   | algebraMap r => exact Algebra.commutes r _
   | add x y hx hy => rw [add_mul, mul_add, hx, hy]
   | mul x y hx hy => rw [mul_assoc, hy, ← mul_assoc, hx, mul_assoc]
+
+/-- **The Casimir element commutes with the Lie action.**  This is the centrality of the Casimir
+element, read on a module: the Casimir operator of a module is a homomorphism of Lie modules. -/
+@[simp]
+theorem representation_casimirElement_lie
+    {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
+    (x : L) (m : M) :
+    UniversalEnvelopingAlgebra.representation K L M (casimirElement K L) ⁅x, m⁆ =
+      ⁅x, UniversalEnvelopingAlgebra.representation K L M (casimirElement K L) m⁆ :=
+  UniversalEnvelopingAlgebra.representation_lie_of_mem_center K L M
+    (casimirElement_mem_center K L) x m
+
+/-- **The Casimir operator is natural in the module.**  A homomorphism of Lie modules intertwines
+the two Casimir operators, being equivariant for the whole enveloping algebra.  This is
+`TauCeti.UniversalEnvelopingAlgebra.map_representation`, which carries the `simp` attribute, at the
+Casimir element. -/
+theorem map_representation_casimirElement
+    {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
+    {N : Type*} [AddCommGroup N] [Module K N] [LieRingModule L N] [LieModule K L N]
+    (f : M →ₗ⁅K,L⁆ N) (m : M) :
+    f (UniversalEnvelopingAlgebra.representation K L M (casimirElement K L) m) =
+      UniversalEnvelopingAlgebra.representation K L N (casimirElement K L) (f m) :=
+  UniversalEnvelopingAlgebra.map_representation K L M N f (casimirElement K L) m
 
 end TauCeti

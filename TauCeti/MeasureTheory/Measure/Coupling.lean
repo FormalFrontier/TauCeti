@@ -150,8 +150,8 @@ diagonal coupling below is the case `f = g = id`. -/
 theorem isCoupling_map_prodMk {f : Ω → Ω₁} {g : Ω → Ω₂} (hf : MeasurePreserving f μ μ₁)
     (hg : MeasurePreserving g μ μ₂) : IsCoupling μ₁ μ₂ (μ.map fun x => (f x, g x)) :=
   isCoupling_iff.2
-    ⟨by rw [Measure.fst_map_prodMk hg.measurable, hf.map_eq],
-      by rw [Measure.snd_map_prodMk hf.measurable, hg.map_eq]⟩
+    ⟨by rw [Measure.fst_map_prodMk hf.measurable hg.measurable, hf.map_eq],
+      by rw [Measure.snd_map_prodMk hf.measurable hg.measurable, hg.map_eq]⟩
 
 end Graph
 

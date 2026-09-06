@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Data.Complex.Basic
+public import Mathlib.Basic.Complex.Basic
 -- The two subalgebras of functions on `GL n k` the definitions below are stated against; this
 -- module also supplies `MvPolynomial.eval`, in which their coordinate form is written.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.PolynomialFunctions

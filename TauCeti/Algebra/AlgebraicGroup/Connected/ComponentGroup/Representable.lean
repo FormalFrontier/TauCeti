@@ -380,7 +380,7 @@ noncomputable def componentPointwiseQuotientPresheafGrpIso
       CommHopfAlgCat.pointsPresheafGrp
         (CommHopfAlgCat.of k
           (ConstantGroup.coordinateRing k (ConnectedComponents (PrimeSpectrum H)))) := by
-  let e := Functor.isoWhiskerLeft (opOpEquivalence (CommAlgCat.{u} k)).functor
+  let e := Functor.isoWhiskerLeft (unopUnop (CommAlgCat.{u} k))
     (componentPointwiseQuotientNatIso H)
   let e' := Functor.isoWhiskerRight e GrpCat.uliftFunctor.{u + 1, u}
   exact eqToIso (CommHopfAlgCat.pointwiseQuotientPresheafGrp_def H.obj
@@ -566,7 +566,7 @@ private noncomputable def componentCoordinatePresheafGrpHom
           (ConstantGroup.coordinateRing k (ConnectedComponents (PrimeSpectrum H)))) :=
   eqToHom (CommHopfAlgCat.pointsPresheafGrp.eq_1 H.obj) ≫
     CommHopfAlgCat.groupFunctorGrpMap (Functor.whiskerRight
-      (Functor.whiskerLeft (opOpEquivalence (CommAlgCat.{u} k)).functor
+      (Functor.whiskerLeft (unopUnop (CommAlgCat.{u} k))
         (CommHopfAlgCat.mapPointsFunctor (componentCoordinateHom H)))
       GrpCat.uliftFunctor.{u + 1, u}) ≫
     eqToHom (CommHopfAlgCat.pointsPresheafGrp.eq_1
@@ -593,11 +593,11 @@ private theorem pointwiseQuotientPresheafGrpProjection_comp_componentIso_hom
             (isNormal_identityComponentHopfIdeal H))
           GrpCat.uliftFunctor.{u + 1, u}) ≫
         (CommHopfAlgCat.groupFunctorGrpIso (Functor.isoWhiskerRight
-          (Functor.isoWhiskerLeft (opOpEquivalence (CommAlgCat.{u} k)).functor
+          (Functor.isoWhiskerLeft (unopUnop (CommAlgCat.{u} k))
             (componentPointwiseQuotientNatIso H))
           GrpCat.uliftFunctor.{u + 1, u})).hom =
       CommHopfAlgCat.groupFunctorGrpMap (Functor.whiskerRight
-        (Functor.whiskerLeft (opOpEquivalence (CommAlgCat.{u} k)).functor
+        (Functor.whiskerLeft (unopUnop (CommAlgCat.{u} k))
           (CommHopfAlgCat.mapPointsFunctor (componentCoordinateHom H)))
         GrpCat.uliftFunctor.{u + 1, u}) := by
     rw [CommHopfAlgCat.groupFunctorGrpIso_hom,
@@ -606,7 +606,7 @@ private theorem pointwiseQuotientPresheafGrpProjection_comp_componentIso_hom
     simpa only [Functor.whiskerLeft_comp, Functor.whiskerRight_comp,
       Functor.isoWhiskerLeft_hom, Functor.isoWhiskerRight_hom] using congrArg
         (fun f ↦ Functor.whiskerRight
-          (Functor.whiskerLeft (opOpEquivalence (CommAlgCat.{u} k)).functor f)
+          (Functor.whiskerLeft (unopUnop (CommAlgCat.{u} k)) f)
           GrpCat.uliftFunctor.{u + 1, u})
         (pointwiseQuotientProjection_comp_componentNatIso_hom H)
   simpa only [Category.assoc] using congrArg (fun f ↦

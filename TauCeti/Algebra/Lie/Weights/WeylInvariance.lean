@@ -14,8 +14,6 @@ public import TauCeti.Algebra.Lie.Weights.Integrality
 public import TauCeti.Algebra.Lie.Weights.Reflection
 public import TauCeti.LinearAlgebra.Eigenspace.Separation
 
-public section
-
 /-!
 # Weyl invariance of the weight multiplicities of a module
 
@@ -73,6 +71,8 @@ This is the "Weyl-invariance of multiplicities, directly from `sl₂`" item of L
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §21.2.
 -/
+
+public section
 
 namespace TauCeti
 

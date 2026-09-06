@@ -9,8 +9,6 @@ public import TauCeti.Algebra.Lie.Basic
 public import TauCeti.Algebra.Lie.HighestWeight.Module
 public import TauCeti.Algebra.Lie.Prod
 
-public section
-
 /-!
 # Irreducible highest weight modules are classified by their weight
 
@@ -74,6 +72,8 @@ two Verma modules.
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §20.3.
 -/
+
+public section
 
 namespace TauCeti
 
@@ -182,18 +182,6 @@ private theorem prodComm_mem_lieSpan_diagonal
   rw [map_lieSpan_diagonal_prodComm] at hmap
   simpa using hmap
 
-omit [CharZero K] [LieAlgebra K L] [IsKilling K L] [FiniteDimensional K L]
-  [LieModule K L M] [LieModule K L N] in
-private theorem diagonalComapInr_eq_diagonalComapInl_swap :
-    diagonalComapInr K L v w = diagonalComapInl K L w v := by
-  ext n
-  rw [mem_diagonalComapInr, mem_diagonalComapInl]
-  constructor
-  · intro hn
-    simpa using prodComm_mem_lieSpan_diagonal hn
-  · intro hn
-    simpa using prodComm_mem_lieSpan_diagonal (M := N) (N := M) hn
-
 omit [CharZero K] [LieAlgebra K L] [IsKilling K L] [FiniteDimensional K L] [LieModule K L M]
   [LieModule K L N] in
 /-- If the diagonal submodule contains both factors whole, it is everything. -/
@@ -237,13 +225,6 @@ private theorem diagonalComapInr_eq_bot [LieModule.IsIrreducible K L M]
   refine (IsSimpleOrder.eq_bot_or_eq_top _).resolve_right fun hr => ?_
   exact lieSpan_diagonal_ne_top hv hw (lieSpan_diagonal_eq_top_of_eq_top
     (diagonalComapInl_eq_top_of_diagonalComapInr_eq_top hv.ne_zero hr) hr)
-
-/-- **The diagonal submodule meets the first factor trivially.** -/
-private theorem diagonalComapInl_eq_bot [LieModule.IsIrreducible K L M]
-    [LieModule.IsIrreducible K L N] (hv : IsHighestWeightVector b lam v)
-    (hw : IsHighestWeightVector b lam w) : diagonalComapInl K L v w = ⊥ := by
-  have h := diagonalComapInr_eq_bot (M := N) (N := M) hw hv
-  rwa [diagonalComapInr_eq_diagonalComapInl_swap] at h
 
 /-! ### The diagonal submodule is the graph of an isomorphism -/
 

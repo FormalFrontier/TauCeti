@@ -12,8 +12,6 @@ public import TauCeti.Algebra.Lie.Weights.Diagonalizable
 public import TauCeti.LinearAlgebra.Dimension.DirectSum
 public import TauCeti.LinearAlgebra.RootSystem.Positive
 
-public section
-
 /-!
 # The dimension count of the root-space decomposition
 
@@ -69,6 +67,8 @@ subalgebra; it is not proved here, and no declaration below claims that pin.
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, Springer GTM 9 (1972),
   §8.1 (the root-space decomposition) and §10.1 (the pairing of positive and negative roots).
 -/
+
+public section
 
 namespace TauCeti
 

@@ -9,8 +9,6 @@ public import TauCeti.LinearAlgebra.Matrix.Dual
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
 public import Mathlib.LinearAlgebra.RootSystem.Base
 
-public section
-
 /-!
 # Scaffolding shared by the pinned simply connected root data
 
@@ -46,6 +44,8 @@ and reflection preservation of the quadratic form carried by the Cartan matrix a
 `TauCeti.vecMul_dotProduct_comm` and `TauCeti.reflect_vecMul_dotProduct_self` in
 `TauCeti/LinearAlgebra/Matrix/Gram.lean`.
 -/
+
+public section
 
 namespace TauCeti
 
@@ -167,7 +167,7 @@ theorem hasCartanType_of_pairing_eq [FaithfulSMul ℤ R] {P : RootPairing ι R M
     · rintro ⟨k, hk⟩
       obtain ⟨i, rfl⟩ := (mem_simpleSupport he).mp (hb ▸ hk)
       exact ⟨i, rfl⟩
-  set q := (Equiv.ofBijective _ hbij).symm with hq
+  set q := (Equiv.ofBijective _ hbij).symm
   refine (hasCartanType_iff b t).mpr ⟨q, fun i j => ?_⟩
   have hval : ∀ x : b.support, (x : ι) = e (q x) := fun x =>
     congrArg Subtype.val (Equiv.apply_symm_apply (Equiv.ofBijective _ hbij) x).symm

@@ -73,7 +73,7 @@ theorem FullyExchangeable.exchangeableAt {μ : Measure Ω} {X : ℕ → Ω → �
     _ = (μ.map fun ω i => X (π i) ω).map (prefixProj α n) :=
         (map_reindex_prefixProj hX_meas π n).symm
     _ = (pathLaw μ X).map (prefixProj α n) := by rw [hX π]
-    _ = prefixLaw μ X n := map_prefixProj_pathLaw μ (aemeasurable_pi_lambda _ hX_meas) n
+    _ = prefixLaw μ X n := map_prefixProj_pathLaw μ (AEMeasurable.of_eval hX_meas) n
 
 /-- **Full exchangeability implies finite exchangeability.** -/
 theorem FullyExchangeable.exchangeable {μ : Measure Ω} {X : ℕ → Ω → α}
@@ -88,7 +88,7 @@ theorem Exchangeable.fullyExchangeable {μ : Measure Ω} {X : ℕ → Ω → α}
   refine measure_eq_of_prefixProj_map_eq ?_
   intro n
   rw [map_reindex_prefixProj hX_meas π n,
-    map_prefixProj_pathLaw μ (aemeasurable_pi_lambda _ hX_meas) n]
+    map_prefixProj_pathLaw μ (AEMeasurable.of_eval hX_meas) n]
   exact Exchangeable.blockLaw_eq_prefixLaw_of_injective hX hX_meas _
     (fun _ _ h => Fin.val_injective (π.injective h))
 

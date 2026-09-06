@@ -96,18 +96,6 @@ private lemma cosetRightMul_apply {α : SL(2, ℤ)}
   rfl
 
 omit [Γ.FiniteIndex] in
-/-- Slashing by an element of `Γ·{±I}` is invisible to the level-one-domain pairing, even after
-a further slash: the two forms pick up the same unimodular constant, and the pairing is
-conjugate-linear in one argument and linear in the other. -/
-private theorem peterssonInner_slash_slash_of_mem_withCenter (f g : CuspForm (Γ.map (mapGL ℝ)) k)
-    {γ : SL(2, ℤ)} (hγ : γ ∈ Γ.withCenter) (β : SL(2, ℤ)) :
-    UpperHalfPlane.peterssonInner k fd ((⇑f ∣[k] γ) ∣[k] β) ((⇑g ∣[k] γ) ∣[k] β) =
-      UpperHalfPlane.peterssonInner k fd (⇑f ∣[k] β) (⇑g ∣[k] β) := by
-  obtain ⟨c, hc, hslash⟩ := exists_slash_eq_smul_of_mem_withCenter (k := k) hγ
-  rw [hslash f, hslash g, ModularForm.SL_smul_slash, ModularForm.SL_smul_slash,
-    peterssonInner_smul_left, peterssonInner_smul_right, ← mul_assoc, hc, one_mul]
-
-omit [Γ.FiniteIndex] in
 /-- **The summand of the Petersson product is a function of the coset.** Replacing the chosen
 representative `q.out` of a coset by any other element of it does not change the level-one-domain
 pairing of the correspondingly slashed forms. -/

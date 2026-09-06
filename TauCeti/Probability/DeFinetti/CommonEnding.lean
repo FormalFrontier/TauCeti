@@ -12,7 +12,8 @@ public import TauCeti.Probability.Exchangeability.MixedIID.Basic
 
 This file provides the first shared de Finetti common-ending adapter.  If a measurable random
 probability measure `ν : Ω → ProbabilityMeasure α` has the expected rectangle factorization for
-every finite injective block of a family, then the family is `MixedIID`.
+every finite injective block of a coordinatewise `μ`-a.e. measurable family, then the family is
+`MixedIID`.
 
 The work is done by the `MixedIIDWith` rectangle characterization
 (`mixedIIDWith_of_forall_rectangles`, next to its definition): rectangles generate the
@@ -44,13 +45,14 @@ variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 /-- **Common de Finetti ending.** Rectangle-wise product-kernel factorization against a named
 mixing representative supplies a `MixedIID` witness for the family. -/
 theorem mixedIID_of_mixingRepresentative {ι : Type*} {μ : Measure Ω} [IsFiniteMeasure μ]
-    {X : ι → Ω → α} {ν : Ω → ProbabilityMeasure α} (hν : Measurable ν)
+    {X : ι → Ω → α} {ν : Ω → ProbabilityMeasure α}
+    (hX : ∀ i, AEMeasurable (X i) μ) (hν : Measurable ν)
     (h_rect : ∀ (m : ℕ) (k : Fin m → ι), Function.Injective k →
       ∀ B : Fin m → Set α, (∀ i, MeasurableSet (B i)) →
         blockLaw μ X k (Set.univ.pi B) =
           ∫⁻ ω, ∏ i : Fin m, (ν ω : Measure α) (B i) ∂μ) :
     MixedIID μ X :=
-  MixedIID.of_mixingRepresentative (mixedIIDWith_of_forall_rectangles hν h_rect)
+  MixedIID.of_mixingRepresentative (mixedIIDWith_of_forall_rectangles hX hν h_rect)
 
 end Probability
 

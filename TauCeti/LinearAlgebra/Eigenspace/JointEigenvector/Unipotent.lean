@@ -53,13 +53,13 @@ theorem exists_common_fixed_vector_of_pairwise_commute_of_isUnipotent
     (hcomm hij).units_val
   have htri (i : ι) : ⨆ μ, (fEnd i).maxGenEigenspace μ = ⊤ := by
     apply top_unique
-    rw [← TauCeti.GeneralLinearGroup.IsUnipotent.maxGenEigenspace_one_eq_top (hunipotent i)]
+    rw [← (hunipotent i).maxGenEigenspace_one_eq_top]
     exact le_iSup (fun μ ↦ (fEnd i).maxGenEigenspace μ) 1
   obtain ⟨χ, v, hv, heigen⟩ :=
     exists_jointEigenvector_of_pairwise_commute fEnd hcommEnd htri
   refine ⟨v, hv, fun i ↦ ?_⟩
   have hχ : χ i = 1 :=
-    TauCeti.GeneralLinearGroup.IsUnipotent.eigenvalue_eq_one (hunipotent i) hv
+    (hunipotent i).eigenvalue_eq_one hv
       (Module.End.mem_eigenspace_iff.mp (heigen i))
   simpa [fEnd, hχ] using Module.End.mem_eigenspace_iff.mp (heigen i)
 

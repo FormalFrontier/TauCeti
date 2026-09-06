@@ -10,8 +10,6 @@ public import Mathlib.Data.Fintype.Fin
 public import Mathlib.Data.Fintype.Prod
 public import Mathlib.Order.Monotone.Defs
 
-public section
-
 /-!
 # Finite sets of cells, closed in the row direction
 
@@ -43,6 +41,8 @@ the row direction is imposed, because that is the condition the consumers need: 
 makes the raising operators of `gl ι` annihilate the wedge of the basis vectors indexed by the
 cells, in `TauCeti.isGlHighestWeightVector_basisWedge`.
 -/
+
+public section
 
 namespace TauCeti.CellDiagram
 

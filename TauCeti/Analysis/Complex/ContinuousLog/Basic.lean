@@ -67,7 +67,7 @@ component of `a` is preconnected, hence entirely good.
 Only one implication of the classical criterion is proved here. Its converse — that a Borsuk map
 with a continuous logarithm on a *bounded* closed `K` forces `a` and `b` into one component of
 `Kᶜ` — is the deeper half, and is proved separately, in
-`TauCeti/Analysis/Complex/PlaneSeparation.lean`, as
+`TauCeti/Analysis/Complex/PlaneSeparation/Basic.lean`, as
 `TauCeti.mem_connectedComponentIn_of_hasContinuousLogOn`. Boundedness is essential there and is
 not assumed here. Nothing below uses that converse, and no statement below is phrased so as to
 presume it; in particular the naive route to it, through winding numbers of curves drawn inside
@@ -76,13 +76,13 @@ at all.
 
 ## Roadmap role
 
-**Plane separation for Jordan curves** is the open frontier item of layer **L5** of
-`TauCetiRoadmap/ConformalMapping/README.md`, the Carathéodory boundary correspondence. Two
-statements of the development wait on it, and each is a separation statement about a pair of
-points: `J ⊆ closure (filledHull J \ J)`, recorded in the roadmap section of
-`TauCeti/Topology/FilledHull.lean` and consumed as a hypothesis by
-`TauCeti.image_inter_ball_subset_filledHull_of_diam_lt` of
-`TauCeti/Analysis/Complex/Conformal/Crosscut/Inside.lean`; and
+**Plane separation for Jordan curves** was an open frontier item of layer **L5** of
+`TauCetiRoadmap/ConformalMapping/README.md`, the Carathéodory boundary correspondence.
+`TauCeti.image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff_singleton` of
+`TauCeti/Analysis/Complex/Conformal/Crosscut/Inside.lean` avoids the plane-separation hypothesis
+entirely by taking `IsPreconnected (K \ {f z₀})` instead, which
+`IsJordanCurve.isPathConnected_sdiff_singleton` discharges; `Caratheodory.lean` is now
+unconditional. The remaining open statement is
 `frontier Ω ∩ closure A ∩ closure B ⊆ closure γ`, the input
 `TauCeti/Analysis/Complex/Conformal/Crosscut/BoundarySplit.lean` names as missing before its
 dichotomy `TauCeti.subset_or_subset_of_isPreconnected_frontier_image_sdiff` can be fed a boundary
@@ -93,7 +93,7 @@ intersection, neither of which separates a pair of points, have a union that doe
 either — and Janiszewski is proved by translating "does not separate" into "the Borsuk map has a
 continuous logarithm" and gluing the two logarithms over the connected intersection. This file
 supplies that translation in the direction that holds without duality, together with the gluing;
-`TauCeti/Analysis/Complex/PlaneSeparation.lean` adds the converse direction and assembles the
+`TauCeti/Analysis/Complex/PlaneSeparation/Basic.lean` adds the converse direction and assembles the
 three into `TauCeti.janiszewski`.
 
 The one statement below already phrased in the vocabulary of that development is
@@ -436,7 +436,7 @@ filled hull outright, or they lie in different components of `Kᶜ`, of which at
 unbounded component of a bounded set's complement.
 
 It is the form in which an obstruction to a logarithm delivers the enclosure hypothesis of
-`TauCeti.image_inter_ball_subset_filledHull_of_diam_lt`. -/
+`TauCeti.image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff_singleton`. -/
 theorem mem_filledHull_or_mem_filledHull_of_not_hasContinuousLogOn (hK : IsClosed K)
     (hKb : Bornology.IsBounded K)
     (h : ¬ HasContinuousLogOn (fun z => (z - a) / (z - b)) K) :

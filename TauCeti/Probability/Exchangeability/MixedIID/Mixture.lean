@@ -75,7 +75,7 @@ theorem pathLaw_eq_bind_infinitePi_of_mixedIIDWith {μ : Measure Ω} [IsFiniteMe
     (h : MixedIIDWith μ X ν) :
     pathLaw μ X = (μ.map ν).bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α) := by
   have hΦ : AEMeasurable (fun ω => fun i => X i ω : Ω → ℕ → α) μ :=
-    aemeasurable_pi_lambda _ h.aemeasurable
+    AEMeasurable.of_eval h.aemeasurable
   have hν : AEMeasurable ν μ := h.measurable_mixingRepresentative.aemeasurable
   have hpow : AEMeasurable (fun P : ProbabilityMeasure α =>
       Measure.infinitePi fun _ : ℕ => (P : Measure α)) (μ.map ν) :=
@@ -158,8 +158,7 @@ theorem MixedIID.existsUnique_mixingLaw {μ : Measure Ω} [IsProbabilityMeasure 
         fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α) := by
   obtain ⟨ν, hν⟩ := h.exists_mixingRepresentative
   let π : ProbabilityMeasure (ProbabilityMeasure α) :=
-    ProbabilityMeasure.map (⟨μ, inferInstance⟩ : ProbabilityMeasure Ω)
-      hν.measurable_mixingRepresentative.aemeasurable
+    ProbabilityMeasure.map (⟨μ, inferInstance⟩ : ProbabilityMeasure Ω) ν
   refine ⟨π, ?_, ?_⟩
   · change pathLaw μ X = (Measure.map ν μ).bind
       fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)

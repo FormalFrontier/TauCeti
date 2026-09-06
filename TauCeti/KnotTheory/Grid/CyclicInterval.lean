@@ -34,6 +34,12 @@ directions before taking products.
 * `TauCeti.Grid.mem_cIoo_or_mem_cIoo_swap_iff`: a point lies in one opposite arc exactly when
   it is not an endpoint.
 * `TauCeti.Grid.cIoo_union_swap`: the two opposite arcs cover the endpoint complement.
+* `TauCeti.Grid.mem_cIoo_swap_of_notMem`: a point off both endpoints that misses one arc lies on
+  the opposite arc.
+* `TauCeti.Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap`: if `a` and `b` lie on opposite arcs from
+  `c` to `d`, then `d` lies on the clockwise arc from `a` to `b`.
+* `TauCeti.Grid.mem_cIoo_and_mem_cIoo_swap_of_notMem`: cyclic separation is symmetric, so `c` and
+  `d` then lie on the two opposite arcs between `a` and `b`.
 * `TauCeti.Grid.card_cIoo_add_card_cIoo_swap`: the two arc lengths add to `n - 2`.
 * `TauCeti.Grid.cIoo_image_rev`: reversing a clockwise open arc by `Fin.rev` gives the clockwise
   open arc with reversed, exchanged endpoints.
@@ -43,6 +49,11 @@ directions before taking products.
 * `TauCeti.Grid.cIco_union_cIco_eq_cIco_of_mem_cIoo`: an interior point cuts a half-open arc
   into two adjacent half-open arcs.
 * `TauCeti.Grid.disjoint_cIco_cIco_of_mem_cIoo`: the two pieces of such a cut are disjoint.
+* `TauCeti.Grid.cIoo_union_insert_cIoo_eq_cIoo_of_mem_cIoo`: an interior point cuts an open arc
+  into two open arcs and the cutting point itself.
+* `TauCeti.Grid.cIoo_subset_cIoo_right_of_mem_cIoo`,
+  `TauCeti.Grid.cIoo_subset_cIoo_left_of_mem_cIoo`: the two pieces of that cut are contained in
+  the arc they cut.
 * `TauCeti.Grid.Noninterleaving`: two endpoint pairs lie on the same cyclic side of each other.
 * `TauCeti.Grid.noninterleaving_rev`: non-interleaving is preserved by reversing every endpoint
   with `Fin.rev`, exchanging the two endpoints within each pair.
@@ -131,6 +142,16 @@ theorem right_notMem_cIoo (a b : Fin n) : b ∉ cIoo a b := by
     cases hinside with
     | inl hlt => exact hab hlt
     | inr hlt => exact Nat.lt_irrefl b.val hlt
+
+/-- A point in an open cyclic interval differs from its initial endpoint. -/
+theorem ne_left_of_mem_cIoo {a b x : Fin n} (h : x ∈ cIoo a b) : x ≠ a := by
+  rintro rfl
+  exact left_notMem_cIoo _ _ h
+
+/-- A point in an open cyclic interval differs from its terminal endpoint. -/
+theorem ne_right_of_mem_cIoo {a b x : Fin n} (h : x ∈ cIoo a b) : x ≠ b := by
+  rintro rfl
+  exact right_notMem_cIoo _ _ h
 
 /-- The clockwise half-open cyclic interval from `a` to `b` in `Fin n`.
 
@@ -401,6 +422,26 @@ theorem disjoint_cIco_cIco_of_mem_cIoo {a b c : Fin n} (h : b ∈ cIoo a c) :
   rw [mem_cIoo] at h
   split_ifs at h hxab hxbc <;> omega
 
+/-- An interior point cuts a clockwise open arc into two open arcs and the cutting point. -/
+theorem cIoo_union_insert_cIoo_eq_cIoo_of_mem_cIoo {a b c : Fin n} (h : b ∈ cIoo a c) :
+    cIoo a b ∪ insert b (cIoo b c) = cIoo a c := by
+  ext x
+  rw [mem_cIoo] at h
+  simp only [Finset.mem_union, Finset.mem_insert, mem_cIoo, ne_eq, Fin.ext_iff]
+  split_ifs at h ⊢ <;> omega
+
+/-- The initial piece of a cut open arc is contained in the whole arc. -/
+theorem cIoo_subset_cIoo_right_of_mem_cIoo {a b c : Fin n} (h : b ∈ cIoo a c) :
+    cIoo a b ⊆ cIoo a c := by
+  rw [← cIoo_union_insert_cIoo_eq_cIoo_of_mem_cIoo h]
+  exact Finset.subset_union_left
+
+/-- The terminal piece of a cut open arc is contained in the whole arc. -/
+theorem cIoo_subset_cIoo_left_of_mem_cIoo {a b c : Fin n} (h : b ∈ cIoo a c) :
+    cIoo b c ⊆ cIoo a c := by
+  rw [← cIoo_union_insert_cIoo_eq_cIoo_of_mem_cIoo h]
+  exact Finset.subset_union_right.trans' (Finset.subset_insert _ _)
+
 /-- A point outside the clockwise interval from `a` to `b` is either an endpoint or lies in
 the opposite clockwise interval. -/
 theorem not_mem_cIoo_iff {a b x : Fin n} (h : a ≠ b) :
@@ -420,6 +461,31 @@ theorem not_mem_cIoo_iff {a b x : Fin n} (h : a ≠ b) :
       exact right_notMem_cIoo a b
     · intro hxab
       exact not_mem_cIoo_and_cIoo_swap a b x ⟨hxab, hx⟩
+
+/-- A point off both endpoints and outside one cyclic arc lies on the opposite arc. -/
+theorem mem_cIoo_swap_of_notMem {a b u : Fin n} (hab : a ≠ b)
+    (hua : u ≠ a) (hub : u ≠ b) (hout : u ∉ cIoo a b) : u ∈ cIoo b a :=
+  ((mem_cIoo_or_mem_cIoo_swap_iff hab).mpr ⟨hua, hub⟩).resolve_left hout
+
+/-- If `a` and `b` lie on opposite arcs from `c` to `d`, then `d` lies on the clockwise arc from
+`a` to `b`.
+
+If `a` lies on the clockwise arc from `c` to `d` while `b` lies on the opposite arc, then the four
+points occur in the cyclic order `c`, `a`, `d`, `b`, so `d` lies on the clockwise arc from `a` to
+`b`. -/
+theorem mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap {a b c d : Fin n} (ha : a ∈ cIoo c d)
+    (hb : b ∈ cIoo d c) : d ∈ cIoo a b := by
+  simp only [cIoo, Set.Finite.mem_toFinset, Set.mem_cIoo] at ha hb ⊢
+  exact sbtw_cyclic_left (sbtw_trans_left (sbtw_cyclic_left hb) ha)
+
+/-- Cyclic separation is symmetric: if `a` lies on the clockwise arc from `c` to `d` while `b`,
+distinct from both endpoints, lies off it, then `c` and `d` lie on the two opposite arcs between
+`a` and `b`. -/
+theorem mem_cIoo_and_mem_cIoo_swap_of_notMem {a b c d : Fin n} (hbc : b ≠ c) (hbd : b ≠ d)
+    (hbout : b ∉ cIoo c d) (ha : a ∈ cIoo c d) :
+    d ∈ cIoo a b ∧ c ∈ cIoo b a :=
+  have hb := mem_cIoo_swap_of_notMem ((mem_cIoo c d a).mp ha).1 hbc hbd hbout
+  ⟨mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap ha hb, mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap hb ha⟩
 
 /-- The two opposite cyclic intervals cover exactly the complement of their endpoints. -/
 @[simp]

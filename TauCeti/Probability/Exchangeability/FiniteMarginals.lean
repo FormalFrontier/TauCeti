@@ -69,7 +69,7 @@ theorem measure_eq_of_prefixProj_map_eq {μ ν : Measure (ℕ → α)} [IsFinite
     obtain ⟨n, hn⟩ : ∃ n, ∀ i ∈ I, i < n :=
       ⟨I.sup id + 1, fun i hi => Nat.lt_succ_of_le (Finset.le_sup (f := id) hi)⟩
     let g : (Fin n → α) → ((i : I) → α) := fun y i => y ⟨i.1, hn i.1 i.2⟩
-    have hg : Measurable g := measurable_pi_lambda _ fun i => measurable_pi_apply _
+    have hg : Measurable g := Measurable.of_eval fun i => measurable_pi_apply _
     have hcomp : (Finset.restrict I : (ℕ → α) → ((i : I) → α)) = g ∘ prefixProj α n := by
       simpa [g] using finsetRestrict_eq_comp_prefixProj (α := α) I hn
     calc μ.map I.restrict
@@ -104,7 +104,7 @@ theorem prefixProjPair_apply {T α : Type*} (n : ℕ) (q : T × (ℕ → α)) :
 path coordinates. -/
 theorem measurable_prefixProjPair (T α : Type*) [MeasurableSpace T] [MeasurableSpace α]
     (n : ℕ) : Measurable (prefixProjPair T α n) :=
-  measurable_fst.prodMk (measurable_pi_lambda _ fun i =>
+  measurable_fst.prodMk (Measurable.of_eval fun i =>
     (measurable_pi_apply (i : ℕ)).comp measurable_snd)
 
 
@@ -129,14 +129,14 @@ theorem measure_eq_of_prefixProjPair_map_eq {T : Type*} [MeasurableSpace T]
     (h : ∀ n, μ.map (prefixProjPair T α n) = ν.map (prefixProjPair T α n)) : μ = ν := by
   -- Replicate the first factor at every coordinate, turning the pair into an honest path.
   set R : T × (ℕ → α) → (ℕ → T × α) := fun q n => (q.1, q.2 n) with hR
-  have hRm : Measurable R := measurable_pi_lambda _ fun n =>
+  have hRm : Measurable R := Measurable.of_eval fun n =>
     measurable_fst.prodMk ((measurable_pi_apply n).comp measurable_snd)
   -- `R` has an explicit measurable left inverse, so it is injective on measures.
   have hL : Function.LeftInverse (fun y : ℕ → T × α => ((y 0).1, fun n => (y n).2)) R := by
     intro q; ext <;> rfl
   have hLm : Measurable (fun y : ℕ → T × α => ((y 0).1, fun n => (y n).2)) :=
     (measurable_fst.comp (measurable_pi_apply 0)).prodMk
-      (measurable_pi_lambda _ fun n => measurable_snd.comp (measurable_pi_apply n))
+      (Measurable.of_eval fun n => measurable_snd.comp (measurable_pi_apply n))
   have : IsFiniteMeasure (μ.map R) := Measure.isFiniteMeasure_map _ _
   -- Enough to identify the replicated measures: the left inverse recovers the originals.
   suffices hmap : (μ.map R) = (ν.map R) by
@@ -151,7 +151,7 @@ theorem measure_eq_of_prefixProjPair_map_eq {T : Type*} [MeasurableSpace T]
     intro ρ
     have hcut : Measurable (fun r : T × (Fin (n + 1) → α) => fun i : Fin n =>
         (r.1, r.2 i.castSucc)) :=
-      measurable_pi_lambda _ fun i =>
+      Measurable.of_eval fun i =>
         measurable_fst.prodMk ((measurable_pi_apply i.castSucc).comp measurable_snd)
     have hfun : prefixProj (T × α) n ∘ R
         = (fun r : T × (Fin (n + 1) → α) => fun i : Fin n => (r.1, r.2 i.castSucc))

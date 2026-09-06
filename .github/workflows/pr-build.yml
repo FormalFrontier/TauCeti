@@ -5,7 +5,7 @@ name: pr-build
 # candidate, the workflow proves that its lakefile is an ordinary file byte-identical to the
 # PR's merge base and that its pins are either inherited unchanged or a validated forward bump.
 # Workflow-pinned audit tooling is mounted separately; candidate scripts are never invoked by
-# the required build. Candidate Lean code runs only under landrun (offline; writes confined to
+# the required build. Candidate Lean code runs only under bwrap (offline; writes confined to
 # the checkout's .lake; no secrets or token in reach). Scope is a separate policy status, so an
 # old PR keeps its own historical pins and sources rather than being synthetically merged or
 # overlaid onto today's main. The `build` status on the exact head SHA is the required check.
@@ -42,6 +42,14 @@ concurrency:
   group: pr-build-${{ github.event.pull_request.number || inputs.pr || github.event.merge_group.head_sha }}
   cancel-in-progress: true
 
+env:
+  # Temporary escape hatch for `lake exe cache get`, kept only for an easy rollback
+  # during the transition to the cache tool's new default read endpoint. Set the
+  # variable to `1` to send cache reads back to the legacy storage endpoint. Clear it to
+  # return reads to the default endpoint on the next run: the cache tool treats unset,
+  # empty, `0`, and `false` alike as off.
+  MATHLIB_CACHE_DEBUG_USE_LEGACY: ${{ vars.MATHLIB_CACHE_DEBUG_USE_LEGACY }}
+
 jobs:
   # Name kept distinct from `build` on purpose — see the header note. The required merge check is the
   # `build` commit STATUS posted in the final step, not this job's auto-created check-run.
@@ -54,13 +62,14 @@ jobs:
       publication-required: ${{ steps.report.outputs.publication-required }}
       reported-toolchain: ${{ steps.cache_stage.outputs.toolchain }}
     env:
-      LANDRUN_SHA256: 645178e3239cd33760560834e50efea0864183a2a8a82faf199760dffee6dd71
-      LANDRUN_VER: v0.1.14
+      BWRAP_VER: 0.9.0-1build1
+      BWRAP_DEB_SHA256: dde30d1f24da50446d647ed504ec8dc5a714f171974d054c70a589b48ba38b48
+      BWRAP_SHA256: 3e33f8255e1411ada346db27028c25ef5ba4fa3327754a2321ea4c8732a3bc10
       # Lake artifact-cache knobs, off by default. The "Configure the Lake artifact cache"
       # step flips these on (and sets LAKE_CACHE_DIR) ONLY when the public cache endpoints
       # are installed as repo variables; until then they stay empty and the build runs
-      # exactly as before (a full recompile of TauCeti/). Declared here so the landrun
-      # build's `--env` list always has a defined value to pass.
+      # exactly as before (a full recompile of TauCeti/). Declared here so the sandboxed
+      # build's `--setenv` list always has a defined value to pass.
       LAKE_ARTIFACT_CACHE: ""
       LAKE_RESTORE_ARTIFACTS: ""
       LAKE_CACHE_DIR: ""
@@ -68,7 +77,7 @@ jobs:
       # sandbox then stages the fully audited root-package outputs for the isolated publisher.
       STAGE_LAKE_CACHE: ""
     steps:
-      # --- Trusted setup: no PR code runs until the landrun build phase ---
+      # --- Trusted setup: no PR code runs until the sandboxed build phase ---
       - name: Resolve PR head
         id: pr
         env: { GH_TOKEN: "${{ github.token }}" }
@@ -174,6 +183,13 @@ jobs:
           # runs the workflow-pinned scripts/check-bump.sh and routes to a human if it is
           # anything other than a forward move (mathlib forward on its nominated branch,
           # transitive pins derived from mathlib, toolchain monotonic).
+          # docbuild/docs/references.bib is permitted too. It is the bibliography doc-gen4
+          # resolves docstring citations against, so a docstring that cites a work no one has
+          # entered renders as a bare bracketed key. Filling that in is the same kind of work as
+          # writing the docstring, and holding it for a human merge stalled exactly that. It is
+          # BibTeX consumed only by the pages build, never by Lake or the harness, so nothing
+          # here executes it. The rest of docbuild/ stays human-owned: lakefile.toml, the pin,
+          # and the two generator scripts all feed the docs build itself.
           # Two independent questions: does this reach outside TauCeti/, and does it change the
           # Lake pins. They used to share an `elif`, so a PR doing both was only ever answered as
           # out-of-scope: BUMP stayed unset, check-bump.sh never ran, and the report step could
@@ -183,7 +199,7 @@ jobs:
           if [ -z "$files" ]; then
             echo "INFRA=1" >> "$GITHUB_ENV"; echo "::warning::no files / unable to list — cannot determine scope, routing to human"
           else
-            if echo "$files" | grep -vqE '^TauCeti/|^TauCeti\.lean$|^lake-manifest\.json$|^lean-toolchain$'; then
+            if echo "$files" | grep -vqE '^TauCeti/|^TauCeti\.lean$|^lake-manifest\.json$|^lean-toolchain$|^docbuild/docs/references\.bib$'; then
               if echo "$files" | grep -qE '^lakefile\.(toml|lean)$'; then
                 echo "HUMAN_LAKEFILE=1" >> "$GITHUB_ENV"
               fi
@@ -214,6 +230,7 @@ jobs:
             pins_known=1
           fi
           pins_changed=0
+          toolchain_changed=0
           # Whole tree entries, not just blob IDs. Git keeps the mode beside the object, and a
           # symlink is a blob holding its target path — so `lean-toolchain` can be re-pointed at
           # mode 120000 while REUSING the existing blob. Its ID would be unchanged, this would
@@ -238,12 +255,25 @@ jobs:
                  echo "::error::$f is not an ordinary file at the head ($head_entry)"
                  continue ;;
             esac
-            if [ "$mb_entry" != "$head_entry" ]; then pins_changed=1; fi
+            if [ "$mb_entry" != "$head_entry" ]; then
+              pins_changed=1
+              # Which pin moved matters to the cache step below, not just whether one did. The
+              # Lake cache keys each revision map by toolchain, so when lean-toolchain moves no
+              # ancestor can hold a map under the new one and the lookup is known-futile before
+              # it starts. A manifest-only bump keeps the toolchain and still hits.
+              if [ "$f" = "lean-toolchain" ]; then toolchain_changed=1; fi
+            fi
           done
           if [ "$pins_known" = "1" ]; then echo "PINS_KNOWN=1" >> "$GITHUB_ENV"; fi
           if [ "$pins_changed" = "1" ]; then
             echo "BUMP=1" >> "$GITHUB_ENV"
             echo "::notice::PR changes Lake pins — validating as a forward bump before building"
+          fi
+          # Set only when both tree entries were read and differ, so an unresolved merge base
+          # leaves it unset and the lookup runs as before: unknown means look, never means skip.
+          if [ "$toolchain_changed" = "1" ]; then
+            echo "TOOLCHAIN_CHANGED=1" >> "$GITHUB_ENV"
+            echo "::notice::PR moves lean-toolchain — the Lake cache lookup will ask about this revision only, since the maps are keyed by toolchain and every ancestor was published under the old one"
           fi
 
           # The report step runs under `if: always()`. Mark successful completion explicitly so an
@@ -326,10 +356,11 @@ jobs:
           persist-credentials: false
           fetch-depth: 1
 
-      # Full history is intentional. lake cache get --max-revs=0 walks all available ancestors
-      # until it reaches a published main commit, then Lake's input hashes invalidate only changed
-      # modules and their downstream dependents. The checkout is the immutable event head itself:
-      # no refs/pull/N/merge, no local merge, and no source/config overlay.
+      # Full history is intentional. lake cache get walks ancestors until it reaches a published
+      # main commit, then Lake's input hashes invalidate only changed modules and their downstream
+      # dependents. The cache step below limits how many ancestors it reads. The checkout is the
+      # immutable event head itself: no refs/pull/N/merge, no local merge, and no source/config
+      # overlay.
       - name: Checkout the exact candidate head (untrusted contents, no credentials)
         if: ${{ env.INFRA != '1' }}
         uses: actions/checkout@v4
@@ -340,6 +371,33 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
           allow-unsafe-pr-checkout: true
+
+      # `.lake` sits inside a checkout whose contents the candidate controls, and a symlink
+      # committed there gets followed by everything that later writes to that path, each of
+      # which then writes outside the checkout as the runner user. Replacing it with a real,
+      # empty directory first stops that. `rm -rf` unlinks a symlink rather than following it,
+      # which is what makes this work; the absent trailing slash is what keeps it true.
+      #
+      # There are two reasons this step exists, and they expire differently.
+      #
+      # The first is the pinned bubblewrap. Noble ships 0.9.0, which follows such a symlink
+      # while creating the sandbox's mount point (GHSA-pxhw-h44j-8pfx). Upstream fixed that in
+      # 0.12.0, so THIS REASON GOES AWAY once noble carries 0.12.0 or newer and the pin below
+      # moves to it.
+      #
+      # The second does not. `mkdir -p <tree>/.lake/tmp` and the Mathlib cache restore both run
+      # in the trusted phase, before any sandbox exists, and both follow the symlink themselves.
+      # No bubblewrap version fixes that, because bubblewrap is not involved. So this step stays
+      # after the pin moves, unless those two callers are made symlink-safe at the same time.
+      - name: Normalise the candidate's .lake before anything touches it
+        if: ${{ env.INFRA != '1' }}
+        run: |
+          set -euo pipefail
+          rm -rf pr/.lake
+          mkdir -p pr/.lake
+          if [ -L pr/.lake ] || [ ! -d pr/.lake ]; then
+            echo "::error::pr/.lake is not a real directory after normalisation"; exit 1
+          fi
 
       - name: Attest exact-head Lake configuration before executing Lake
         if: ${{ env.INFRA != '1' }}
@@ -442,9 +500,9 @@ jobs:
 
       # Take elan from a pinned leanprover/elan release verified by SHA-256, not from whatever
       # the installer URL serves at the moment of the request. This elan chooses the `lake` the
-      # sandboxed build runs, and it is installed here, in the trusted phase, before landrun
+      # sandboxed build runs, and it is installed here, in the trusted phase, before bwrap
       # confines anything, so a substituted one would sit outside the sandbox by construction.
-      # Same idiom as the landrun pin below; scripts/test_elan_pin.py keeps the copies honest.
+      # Same idiom as the bwrap pin below; scripts/test_elan_pin.py keeps the copies honest.
       - name: Install elan (trusted, pinned + checksum)
         if: ${{ env.INFRA != '1' }}
         env:
@@ -459,27 +517,150 @@ jobs:
           rm -f elan.tar.gz elan-init
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
-      - name: Install landrun (pinned + checksum) and self-test (fail closed)
+      - name: Install bubblewrap (pinned + checksum) and self-test (fail closed)
         if: ${{ env.INFRA != '1' }}
         run: |
-          curl -sSL -H "Accept: application/octet-stream" \
-            "https://github.com/Zouuup/landrun/releases/download/${LANDRUN_VER}/landrun-linux-amd64" -o landrun
-          echo "${LANDRUN_SHA256}  landrun" | sha256sum -c -
-          mkdir -p "$HOME/.local/bin"; install -m 0755 landrun "$HOME/.local/bin/landrun"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          export PATH="$HOME/.local/bin:$PATH"
-          landrun --version || true
-          # Prove the sandbox enforces before trusting it with PR code: run works, out-of-tree
-          # write denied, /dev/shm write denied, network denied without the flag.
+          set -euo pipefail
+          # Pinned Ubuntu package, verified twice: the .deb that was fetched, and the binary it
+          # installed. A bare `apt-get install bubblewrap` would take whatever the archive holds on
+          # the day, which is not a pin.
+          #
+          # Noble's RELEASE pocket, which is the part of the archive Ubuntu never rewrites: a
+          # version published there stays published for the life of the release. The pocket
+          # matters more than the suite. `0.9.0-1ubuntu0.1` in noble-security looks like the
+          # better package, but security and updates entries are superseded and then deleted
+          # when the next one lands, so pinning that would expire the first time Ubuntu ships a
+          # bubblewrap fix. A development suite is worse again, deleted on the next upload.
+          #
+          # What we give up is the noble-security revision, whose only change is a backport
+          # Flatpak needed for CVE-2024-42472. That is an enabling change for Flatpak rather
+          # than a bubblewrap vulnerability fix, and nothing here uses Flatpak.
+          #
+          # 0.9.0 predates the fix for GHSA-pxhw-h44j-8pfx (2026-08-27, no CVE assigned yet),
+          # where a symlink in attacker-controlled content redirects the files bwrap creates
+          # while setting the sandbox up. That reaches these policies through exactly one path:
+          # `.lake`, the only place they create a mount point inside a candidate checkout. The
+          # "Normalise ... .lake" step above replaces it with a real directory before anything
+          # reads or writes it, which removes the precondition rather than patching the symptom,
+          # and closes the same hole for `mkdir -p` and the cache restore, neither of which the
+          # upstream fix would have covered.
+          #
+          # So this pin is safe because of that step, not because 0.9.0 is fixed. Moving to
+          # 0.12.0 when noble carries it would make the sandbox safe on its own and retire that
+          # half of the step's job; the trusted-phase half stays either way. Until then the step
+          # is load-bearing, and scripts/test_bwrap_pin.py checks it is still present and still
+          # runs before anything that touches a candidate `.lake`.
+          deb="bubblewrap_${BWRAP_VER}_amd64.deb"
+          if ! curl -sSL --fail "https://archive.ubuntu.com/ubuntu/pool/main/b/bubblewrap/${deb}" -o bwrap.deb \
+             && ! curl -sSL --fail "https://security.ubuntu.com/ubuntu/pool/main/b/bubblewrap/${deb}" -o bwrap.deb; then
+            echo "::error::bubblewrap ${BWRAP_VER} is gone from the Ubuntu pool. The sandbox cannot be installed, so no PR can build until the pin is moved."
+            printf '%s\n' \
+              '' \
+              "WHAT HAPPENED: BWRAP_VER is pinned to ${BWRAP_VER} from noble's release pocket," \
+              'which Ubuntu does not rewrite for the life of the release. Reaching this is' \
+              'unexpected: an archive outage, a runner image no longer on 24.04, or 24.04 gone' \
+              'end of life.' \
+              '' \
+              'HOW TO FIX IT. Take the version from a RELEASE pocket, never from -updates,' \
+              '-security or a development suite: those are superseded and deleted, so a pin' \
+              'to one expires and brings every required build down with it.' \
+              '' \
+              '  suite=noble        # or the release pocket of whatever image CI runs on' \
+              '  curl -s "https://archive.ubuntu.com/ubuntu/dists/$suite/main/binary-amd64/Packages.gz" \' \
+              "    | gunzip | awk '/^Package: bubblewrap\$/{f=1} f&&/^Version:/{print \$2; exit}'" \
+              '' \
+              'Download it and take both hashes:' \
+              '' \
+              '  curl -sSLO "https://archive.ubuntu.com/ubuntu/pool/main/b/bubblewrap/bubblewrap_${ver}_amd64.deb"' \
+              '  sha256sum "bubblewrap_${ver}_amd64.deb"   # BWRAP_DEB_SHA256' \
+              '  sudo dpkg -i "bubblewrap_${ver}_amd64.deb"' \
+              '  sha256sum /usr/bin/bwrap                  # BWRAP_SHA256' \
+              '' \
+              'Set BWRAP_VER, BWRAP_DEB_SHA256 and BWRAP_SHA256 in all three of' \
+              '.github/workflows/{pr-build,pr-profile,nightly-verify}.yml. They must agree;' \
+              'scripts/test_bwrap_pin.py fails if they do not.' \
+              '' \
+              'ON VERSIONS: 0.12.0 or newer is safe on its own. Below that, the' \
+              '"Normalise ... .lake" step is what keeps it safe, because earlier bubblewrap' \
+              'follows a symlink in a candidate checkout while creating the sandbox mount point' \
+              '(GHSA-pxhw-h44j-8pfx). If you pin below 0.12.0, check that step still runs before' \
+              'anything else touches .lake. Keep the step either way: the trusted-phase callers' \
+              'follow the symlink themselves and no bubblewrap version fixes that.' \
+              '' >&2
+            exit 1
+          fi
+          if ! echo "${BWRAP_DEB_SHA256}  bwrap.deb" | sha256sum -c -; then
+            echo "::error::bubblewrap ${BWRAP_VER} downloaded but does not match BWRAP_DEB_SHA256. Ubuntu does not rewrite published packages, so either the pin is wrong or the download was tampered with. Re-derive the hashes rather than relaxing this check."
+            exit 1
+          fi
+          sudo dpkg -i bwrap.deb >/dev/null
+          if ! echo "${BWRAP_SHA256}  /usr/bin/bwrap" | sha256sum -c -; then
+            echo "::error::the installed /usr/bin/bwrap does not match BWRAP_SHA256, so the binary that would run is not the one that was vetted. Re-derive it with: sudo dpkg -i ${deb} && sha256sum /usr/bin/bwrap"
+            exit 1
+          fi
+          rm -f bwrap.deb
+          /usr/bin/bwrap --version
+
+          # Ubuntu 24.04 denies unprivileged user namespaces through AppArmor, so bwrap cannot build
+          # its sandbox as shipped. Grant the capability to this one binary rather than clearing
+          # kernel.apparmor_restrict_unprivileged_userns, which would lift it for everything on the
+          # runner. Measured on ubuntu-24.04: without this, bwrap fails with
+          # "loopback: Failed RTM_NEWADDR: Operation not permitted".
+          printf '%s\n' \
+            'abi <abi/4.0>,' \
+            'include <tunables/global>' \
+            'profile bwrap /usr/bin/bwrap flags=(unconfined) {' \
+            '  userns,' \
+            '  include if exists <local/bwrap>' \
+            '}' | sudo tee /etc/apparmor.d/bwrap >/dev/null
+          sudo apparmor_parser -r /etc/apparmor.d/bwrap
+
+          # Prove the sandbox enforces before trusting it with candidate code. bwrap fails closed
+          # where landrun's --best-effort could degrade to no sandbox at all, but `--unshare-all`
+          # expands to `--unshare-user-try`, which SKIPS the user namespace rather than failing
+          # when it cannot be created, so the policies name `--unshare-user` explicitly and this
+          # compares the resulting namespace against the host's.
+          #
+          # `env -i`: `--clearenv` clears the CHILD's environment, but bwrap keeps its own and is
+          # PID 1 of the sandbox's PID namespace, so without this the launcher's environment stays
+          # readable at /proc/1/environ from inside (containers/bubblewrap#725).
+          probe() {
+            env -i /usr/bin/bwrap --tmpfs / --ro-bind /usr /usr --ro-bind /etc /etc \
+              --symlink usr/bin /bin --symlink usr/sbin /sbin \
+              --symlink usr/lib /lib --symlink usr/lib64 /lib64 \
+              --dev /dev --proc /proc --tmpfs /tmp --remount-ro / \
+              --setenv PATH /usr/bin \
+              --unshare-user --unshare-ipc --unshare-pid --unshare-net --unshare-uts \
+              --unshare-cgroup --disable-userns --die-with-parent --new-session \
+              -- /usr/bin/bash -c "$1"
+          }
+          # Canaries, so each check can fail for the right reason. Testing that a host path is
+          # merely absent proves nothing if it never existed; these are known to exist outside.
+          canary=$(mktemp -d); echo secret > "$canary/file"
+          echo secret > /dev/shm/bwrap-host-canary-$$
           set +e
-          landrun --rox /usr --rox /etc --rw /dev/null -- bash -c 'echo ok' >/dev/null 2>&1; ok=$?
-          landrun --rox /usr --rox /etc --rw /dev/null -- bash -c 'echo x > /etc/landrun-probe' >/dev/null 2>&1; wr=$?
-          landrun --rox /usr --rox /etc --rw /dev/null -- bash -c 'echo x > /dev/shm/landrun-probe' >/dev/null 2>&1; shm=$?
-          landrun --rox /usr --rox /etc --rw /dev/null -- bash -c 'curl -sS --max-time 8 https://example.com >/dev/null' >/dev/null 2>&1; net=$?
+          probe 'echo ok' >/dev/null 2>&1; ok=$?
+          probe 'echo x > /etc/bwrap-probe' >/dev/null 2>&1; wr=$?
+          probe 'mkdir /bwrap-probe-dir' >/dev/null 2>&1; rootw=$?
+          probe "cat $canary/file" >/dev/null 2>&1; hostro=$?
+          probe "cat /dev/shm/bwrap-host-canary-$$" >/dev/null 2>&1; shm=$?
+          probe 'curl -sS --max-time 8 https://example.com >/dev/null' >/dev/null 2>&1; net=$?
+          probe 'unshare --user --map-root-user true' >/dev/null 2>&1; nest=$?
+          host_ns=$(readlink /proc/self/ns/user)
+          sb_ns=$(probe 'readlink /proc/self/ns/user' 2>/dev/null)
+          sb_env=$(probe 'tr "\0" "\n" < /proc/1/environ | grep -c .' 2>/dev/null)
           set -e
-          echo "self-test: run=$ok write=$wr shm=$shm net=$net (nonzero = denied for w/shm/net)"
-          if [ $ok -ne 0 ] || [ $wr -eq 0 ] || [ $shm -eq 0 ] || [ $net -eq 0 ]; then
-            echo "::error::landrun not enforcing (run=$ok write=$wr shm=$shm net=$net); refusing to run PR code"; exit 1
+          rm -rf "$canary" /dev/shm/bwrap-host-canary-$$
+          echo "self-test: run=$ok etc-write=$wr root-write=$rootw host-read=$hostro shm=$shm" \
+            "net=$net nested-userns=$nest pid1-env=$sb_env userns=$host_ns->$sb_ns"
+          # Every one of these but `ok` must FAIL inside the sandbox.
+          if [ "$ok" -ne 0 ] || [ "$wr" -eq 0 ] || [ "$rootw" -eq 0 ] || [ "$hostro" -eq 0 ] \
+             || [ "$shm" -eq 0 ] || [ "$net" -eq 0 ] || [ "$nest" -eq 0 ] \
+             || [ "$sb_env" != "0" ] || [ -z "$sb_ns" ] || [ "$sb_ns" = "$host_ns" ]; then
+            echo "::error::bwrap not enforcing (run=$ok etc-write=$wr root-write=$rootw" \
+              "host-read=$hostro shm=$shm net=$net nested-userns=$nest pid1-env=$sb_env" \
+              "userns=$host_ns->$sb_ns); refusing to run candidate code"
+            exit 1
           fi
 
       # Restore only Mathlib's compressed, content-addressed `.ltar` download store from a
@@ -495,8 +676,9 @@ jobs:
         uses: ./gate/.github/actions/restore-mathlib-ltars
         with:
           # The action's default cache directory is outside pr/, which is later mounted into
-          # landrun. Although MATHLIB_CACHE_DIR is job-wide, landrun's explicit `--env` allowlist
-          # excludes it and the cache directory is not mounted, so the sandbox never receives it.
+          # the sandbox. Although MATHLIB_CACHE_DIR is job-wide, bwrap's explicit
+          # `--setenv` allowlist excludes it and the cache directory is not bound in,
+          # so the sandbox never receives it.
           project-dir: pr
 
       # `lake exe cache get` runs the `cache` exe built from the pinned Mathlib, unsandboxed,
@@ -504,7 +686,7 @@ jobs:
       # pin is inherited from its trusted merge base. For a validated bump it is the new pin — which
       # bump-guard proved is a *forward commit on Mathlib's own master* (same repo, never a fork),
       # so the code run here is still trusted Mathlib master under the project's "track master"
-      # policy; only the PR's TauCeti/ code stays untrusted and runs solely under landrun below.
+      # policy; only the PR's TauCeti/ code stays untrusted and runs solely under bwrap below.
       - name: Fetch Mathlib with the (bump-validated) config (network, no token; no PR code)
         if: ${{ env.INFRA != '1' }}
         # `set -o pipefail` is not optional here. A `run:` step with no explicit `shell:`
@@ -561,10 +743,10 @@ jobs:
 
       # Enable Lake's built-in artifact cache for the build below ONLY when the public read
       # endpoints are configured (repo variables). Until then this is a no-op: LAKE_*
-      # stay empty and the landrun build recompiles TauCeti/ from scratch exactly as before.
-      # The cache dir lives under pr/.lake/ so the offline landrun build (which mounts
-      # pr/.lake rw) can read what the network `lake cache get` step populates. We never
-      # pass the cache *endpoints* into landrun, so the sandboxed build stays offline and
+      # stay empty and the sandboxed build recompiles TauCeti/ from scratch exactly as before.
+      # The cache dir lives under pr/.lake/ so the offline sandboxed build (which binds
+      # pr/.lake writable) can read what the network `lake cache get` step populates. We
+      # never pass the cache *endpoints* into the sandbox, so the build stays offline and
       # can only consult the locally-populated cache.
       - name: Configure the Lake artifact cache (no-op unless the public endpoints are set)
         if: ${{ env.INFRA != '1' }}
@@ -604,7 +786,24 @@ jobs:
           # environment variables; the script hands it the endpoints through a `--service` config.
           PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
           PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
-          LAKE_CACHE_MAX_REVS: "0"
+          # How far back it is worth asking, which depends on whether an ancestor could hold
+          # a usable map at all. The maps are keyed by toolchain, so once lean-toolchain moves
+          # every ancestor was published under the old one and walking them cannot hit: ask
+          # about HEAD alone and stop. HEAD itself is still worth one request, because a
+          # merge-group re-run of a bump that already built once finds its own published
+          # outputs there — the case an outright skip would recompile from scratch.
+          #
+          # Otherwise a walk can pay, so bound it only as a backstop against something we have
+          # not characterised. Overrunning the bound is indistinguishable from a genuine miss,
+          # and a miss costs a full recompile (~2h) against the ~4 minutes a 1000-revision walk
+          # costs at the rate observed in the run that motivated #5396 — so it is sized to be
+          # reached only by the genuinely unexpected. At main's current rate 1000 is about three
+          # weeks of history, against roughly 39 hours for the 100 it replaces.
+          #
+          # The scope guard above answers the toolchain question from the immutable tree entries
+          # at the merge base and the head, and leaves it unset whenever it could not read them,
+          # so unknown falls through to the walk rather than to the single lookup.
+          LAKE_CACHE_MAX_REVS: ${{ env.TOOLCHAIN_CHANGED == '1' && '1' || '1000' }}
         run: bash gate/scripts/lake-cache-get.sh pr
 
       - name: Prepare trusted read-only Lean watchdog toolchain
@@ -617,33 +816,56 @@ jobs:
           bash gate/scripts/perf/prepare-watchdog-toolchain.sh "$watchdog" "$real_lean"
           echo "WATCHDOG_TOOLCHAIN=$watchdog" >> "$GITHUB_ENV"
 
-      - name: Build exact candidate under landrun with workflow-pinned audits, offline
+      - name: Build exact candidate under bwrap with workflow-pinned audits, offline
         id: build
         if: ${{ env.INFRA != '1' }}
         env:
           # The sandboxed build is always offline: never let Lake reach out to a remote
-          # cache from inside landrun. When the artifact cache is enabled above, it restores
-          # TauCeti's oleans purely from the locally-populated $LAKE_CACHE_DIR; when it is
+          # cache from inside the sandbox. When the artifact cache is enabled above, it
+          # restores TauCeti's oleans purely from the locally-populated $LAKE_CACHE_DIR; when it is
           # not, this is a normal full build. Either way, no network from in here.
           LAKE_NO_CACHE: "true"
         run: |
-          export PATH="$HOME/.local/bin:$HOME/.elan/bin:$PATH"
+          export PATH="$HOME/.elan/bin:$PATH"
           # The sandboxed build/audit/lint body comes from the separately mounted, workflow-pinned
-          # gate checkout; candidate scripts are never invoked. Keeping the landrun bash payload
+          # gate checkout; candidate scripts are never invoked. Keeping the bwrap bash payload
           # a fixed, comment-free one-liner
           # is deliberate: a comment's apostrophe once closed this single-quoted string
           # early and reddened every PR build (#694). All prose now lives in the script.
           export TAUCETI_PROJECT_ROOT="$PWD/pr"
           export TAUCETI_TRUSTED_SCRIPTS="$PWD/gate/scripts"
-          landrun --rox /usr --rox /etc \
-            --rw /dev/null --rox /dev/zero --rox /dev/urandom --rox /dev/random \
-            --rox "$HOME/.elan" --rox "$WATCHDOG_TOOLCHAIN" \
-            --rox "$PWD/pr" --rw "$PWD/pr/.lake" --rox "$PWD/gate" \
-            --env PATH --env HOME --env CI \
-            --env LAKE_NO_CACHE --env LAKE_ARTIFACT_CACHE --env LAKE_RESTORE_ARTIFACTS --env LAKE_CACHE_DIR \
-            --env WATCHDOG_TOOLCHAIN --env STAGE_LAKE_CACHE \
-            --env TAUCETI_PROJECT_ROOT --env TAUCETI_TRUSTED_SCRIPTS \
-            -- bash -euxo pipefail -c 'cd pr && exec bash ../gate/scripts/sandbox-build.sh'
+          # `env -i` and `--remount-ro /` are both load-bearing. `--clearenv` clears the child's
+          # environment but bwrap keeps its own and is PID 1 here, so the launcher's environment
+          # would otherwise be readable at /proc/1/environ (containers/bubblewrap#725). And
+          # `--tmpfs /` gives a WRITABLE synthetic root: the directories bwrap creates to hang the
+          # binds off, $HOME among them, are writable until this remounts them read-only, which
+          # would let candidate code drop a `lake` or `bash` earlier on PATH than the real one and
+          # have the later audits run it. The explicit PATH below is the other half of that: it
+          # never contains a directory the sandbox can write.
+          env -i /usr/bin/bwrap --tmpfs / \
+            --ro-bind /usr /usr --ro-bind /etc /etc \
+            --symlink usr/bin /bin --symlink usr/sbin /sbin \
+            --symlink usr/lib /lib --symlink usr/lib64 /lib64 \
+            --dev /dev --proc /proc --tmpfs /tmp \
+            --ro-bind "$HOME/.elan" "$HOME/.elan" \
+            --ro-bind "$WATCHDOG_TOOLCHAIN" "$WATCHDOG_TOOLCHAIN" \
+            --ro-bind "$PWD/gate" "$PWD/gate" \
+            --ro-bind "$PWD/pr" "$PWD/pr" --bind "$PWD/pr/.lake" "$PWD/pr/.lake" \
+            --remount-ro / \
+            --setenv PATH "$HOME/.elan/bin:/usr/bin:/bin" \
+            --setenv HOME "$HOME" --setenv CI "${CI:-}" \
+            --setenv LAKE_NO_CACHE "${LAKE_NO_CACHE:-}" \
+            --setenv LAKE_ARTIFACT_CACHE "${LAKE_ARTIFACT_CACHE:-}" \
+            --setenv LAKE_RESTORE_ARTIFACTS "${LAKE_RESTORE_ARTIFACTS:-}" \
+            --setenv LAKE_CACHE_DIR "${LAKE_CACHE_DIR:-}" \
+            --setenv WATCHDOG_TOOLCHAIN "${WATCHDOG_TOOLCHAIN:-}" \
+            --setenv STAGE_LAKE_CACHE "${STAGE_LAKE_CACHE:-}" \
+            --setenv TAUCETI_PROJECT_ROOT "$TAUCETI_PROJECT_ROOT" \
+            --setenv TAUCETI_TRUSTED_SCRIPTS "$TAUCETI_TRUSTED_SCRIPTS" \
+            --chdir "$PWD/pr" \
+            --unshare-user --unshare-ipc --unshare-pid --unshare-net --unshare-uts \
+            --unshare-cgroup --disable-userns --die-with-parent --new-session \
+            -- bash -euxo pipefail -c 'exec bash ../gate/scripts/sandbox-build.sh'
 
       - name: Prepare merge-group cache artifact metadata
         id: cache_stage
@@ -837,7 +1059,7 @@ jobs:
           elif [ "${{ env.NEWFILE_TOO_LONG }}" = "1" ]; then
             sc_state=failure; sc_desc="a newly added .lean file exceeds 1000 lines — split it (existing files may grow to 1500)"
           else
-            sc_state=success; sc_desc="changes are in scope (TauCeti/ and the allowed root files only)"
+            sc_state=success; sc_desc="changes are in scope (TauCeti/, the allowed root files, and the bibliography only)"
           fi
           post_status scope "$sc_state" "$sc_desc"
 

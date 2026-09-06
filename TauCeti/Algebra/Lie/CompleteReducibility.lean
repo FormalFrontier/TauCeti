@@ -13,8 +13,6 @@ public import Mathlib.LinearAlgebra.Projection
 import TauCeti.Algebra.Lie.Submodule.Atom
 import TauCeti.Algebra.Lie.Submodule.Finrank
 
-public section
-
 /-!
 # Complete reducibility from a single irreducible input
 
@@ -80,6 +78,8 @@ independent weight-string / primitive-vector route prescribed for Layer 0 of the
 * [J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*][humphreys1972],
   §6.2 and §6.3.
 -/
+
+public section
 
 namespace TauCeti
 

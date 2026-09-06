@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Basic
 public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Time.Difference
-public import Mathlib.Data.NNReal.Star
+public import Mathlib.Basic.NNReal.Star
 public import Mathlib.Topology.Constructions.SumProd
 
 /-!

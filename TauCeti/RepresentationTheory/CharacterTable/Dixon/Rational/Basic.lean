@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Data.ZMod.ValMinAbs
 public import TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.CentralCharacterCount
 
 /-!

@@ -136,7 +136,7 @@ variable {X : Fin 2 → Type v} [∀ i, MeasurableSpace (X i)]
 
 /-- A two-marginal coupling, viewed as a `Fin 2`-indexed multi-marginal coupling. -/
 def toMultiCouplingFinTwo (π : Coupling (μ 0) (μ 1)) : MultiCoupling μ :=
-  ⟨π.1.map (MeasurableEquiv.piFinTwo X).symm.measurable.aemeasurable,
+  ⟨π.1.map (MeasurableEquiv.piFinTwo X).symm,
     π.2.isMultiCoupling_piFinTwo⟩
 
 /-- The measure underlying `toMultiCouplingFinTwo` is the pushforward along the inverse of the
@@ -144,7 +144,7 @@ explicit measurable equivalence between a `Fin 2` product and an ordinary produc
 @[simp]
 theorem coe_toMultiCouplingFinTwo (π : Coupling (μ 0) (μ 1)) :
     (π.toMultiCouplingFinTwo : ProbabilityMeasure (∀ i, X i)) =
-      π.1.map (MeasurableEquiv.piFinTwo X).symm.measurable.aemeasurable :=
+      π.1.map (MeasurableEquiv.piFinTwo X).symm :=
   (rfl)
 
 end Coupling

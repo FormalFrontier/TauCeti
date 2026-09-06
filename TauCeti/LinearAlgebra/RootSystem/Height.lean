@@ -7,8 +7,6 @@ module
 
 public import Mathlib.LinearAlgebra.RootSystem.Base
 
-public section
-
 /-!
 # Height and integral relations among roots
 
@@ -37,6 +35,8 @@ This supports “Simple-root lowering” in Layer 1 of
 `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`. The argument follows Bourbaki,
 *Lie Groups and Lie Algebras*, Chapters 4--6.
 -/
+
+public section
 
 namespace TauCeti
 

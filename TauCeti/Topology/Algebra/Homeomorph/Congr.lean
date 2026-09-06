@@ -20,26 +20,24 @@ inverses.
 
 This is the topological analogue of `Equiv.permCongr` (`Mathlib/Logic/Equiv/Defs.lean`), the
 conjugation isomorphism of permutation groups, and is the target of the forgetful naturality of the
-diffeomorphism-level `TauCeti.Diffeomorph.diffCongr` in
+diffeomorphism-level `Diffeomorph.diffCongr` in
 `TauCeti.Geometry.Diffeomorphism.Congr`.
 
 ## Main definitions
 
-* `TauCeti.Homeomorph.homeoCongr e`: the group isomorphism `(M ≃ₜ M) ≃* (N ≃ₜ N)` conjugating
+* `Homeomorph.homeoCongr e`: the group isomorphism `(M ≃ₜ M) ≃* (N ≃ₜ N)` conjugating
   self-homeomorphisms by a homeomorphism `e : M ≃ₜ N`.
 
 ## Main results
 
-* `TauCeti.Homeomorph.homeoCongr_apply_apply`: the pointwise action
+* `Homeomorph.homeoCongr_apply_apply`: the pointwise action
   `homeoCongr e φ x = e (φ (e.symm x))`.
-* `TauCeti.Homeomorph.homeoCongr_refl`, `TauCeti.Homeomorph.homeoCongr_trans`, and
-  `TauCeti.Homeomorph.homeoCongr_symm`: the functoriality of `homeoCongr` on the groupoid of
+* `Homeomorph.homeoCongr_refl`, `Homeomorph.homeoCongr_trans`, and
+  `Homeomorph.homeoCongr_symm`: the functoriality of `homeoCongr` on the groupoid of
   homeomorphisms.
 -/
 
 public section
-
-namespace TauCeti
 
 variable {M : Type*} [TopologicalSpace M]
   {N : Type*} [TopologicalSpace N]
@@ -50,7 +48,6 @@ namespace Homeomorph
 /-- Conjugation by a homeomorphism `e : M ≃ₜ N` as a group isomorphism between the
 self-homeomorphism groups: `homeoCongr e φ = e ∘ φ ∘ e⁻¹`. This is the homeomorphism analogue of
 `Equiv.permCongrHom` and the target of the forgetful naturality of `Diffeomorph.diffCongr`. -/
-@[expose, simps apply]
 def homeoCongr (e : M ≃ₜ N) : (M ≃ₜ M) ≃* (N ≃ₜ N) where
   toFun φ := (e.symm.trans φ).trans e
   invFun ψ := (e.trans ψ).trans e.symm
@@ -61,7 +58,7 @@ def homeoCongr (e : M ≃ₜ N) : (M ≃ₜ M) ≃* (N ≃ₜ N) where
 /-- The conjugating isomorphism acts pointwise by `homeoCongr e φ x = e (φ (e.symm x))`. -/
 @[simp, grind =]
 theorem homeoCongr_apply_apply (e : M ≃ₜ N) (φ : M ≃ₜ M) (x : N) :
-    homeoCongr e φ x = e (φ (e.symm x)) := rfl
+    homeoCongr e φ x = e (φ (e.symm x)) := (rfl)
 
 /-- The inverse of `homeoCongr e φ` is `homeoCongr e φ⁻¹`, since conjugation is a homomorphism. -/
 theorem homeoCongr_inv (e : M ≃ₜ N) (φ : M ≃ₜ M) :
@@ -69,7 +66,7 @@ theorem homeoCongr_inv (e : M ≃ₜ N) (φ : M ≃ₜ M) :
 
 /-- Conjugating by the identity homeomorphism is the identity isomorphism. -/
 @[simp]
-theorem homeoCongr_refl : homeoCongr (_root_.Homeomorph.refl M) = MulEquiv.refl (M ≃ₜ M) := by
+theorem homeoCongr_refl : homeoCongr (Homeomorph.refl M) = MulEquiv.refl (M ≃ₜ M) := by
   ext φ x
   simp
 
@@ -88,5 +85,3 @@ theorem homeoCongr_symm (e : M ≃ₜ N) : (homeoCongr e).symm = homeoCongr e.sy
   rfl
 
 end Homeomorph
-
-end TauCeti

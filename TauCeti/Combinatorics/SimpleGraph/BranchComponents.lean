@@ -8,8 +8,6 @@ module
 public import TauCeti.Combinatorics.SimpleGraph.PathGraph
 import Mathlib.Combinatorics.SimpleGraph.Ends.Defs
 
-public section
-
 /-!
 # Components left by deleting a branch vertex of a tree
 
@@ -30,6 +28,8 @@ finite-type Dynkin-diagram classification.
 See J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, Section 11.4, for
 the corresponding extraction in the classification of Dynkin diagrams.
 -/
+
+public section
 
 namespace TauCeti
 
