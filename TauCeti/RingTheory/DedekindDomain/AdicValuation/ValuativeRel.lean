@@ -55,6 +55,8 @@ namespace IsDedekindDomain.HeightOneSpectrum
 variable {R : Type*} [CommRing R] [IsDedekindDomain R]
   {K : Type*} [Field K] [Algebra R K] [IsFractionRing R K] (v : HeightOneSpectrum R)
 
+-- The declaration sequence and construction follow the human-authored specification in
+-- `TauCetiRoadmap/NumberFieldArithmetic/Suggested.lean`.
 /-- The valuative relation on an adic completion induced by its canonical adic valuation. -/
 noncomputable instance instValuativeRelAdicCompletion : ValuativeRel (v.adicCompletion K) :=
   .ofValuation Valued.v
