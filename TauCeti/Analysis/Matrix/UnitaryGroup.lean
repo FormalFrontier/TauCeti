@@ -27,8 +27,6 @@ public section
 
 namespace TauCeti
 
-namespace Matrix
-
 variable {n : Type*} [Fintype n] [DecidableEq n]
 
 /-- `U(n) = Circle · SU(n)`: every complex unitary matrix becomes special unitary after
@@ -63,7 +61,5 @@ theorem _root_.Matrix.exists_circle_smul_mem_specialUnitaryGroup (U : Matrix.uni
     push_cast
     field_simp
     ring
-
-end Matrix
 
 end TauCeti
