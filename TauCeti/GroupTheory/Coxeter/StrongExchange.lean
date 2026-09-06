@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Data.ZMod.Basic
 public import Mathlib.GroupTheory.Coxeter.Inversion
 public import TauCeti.GroupTheory.Coxeter.Basic
 
