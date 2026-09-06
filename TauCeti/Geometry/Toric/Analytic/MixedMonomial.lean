@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.BigOperators.Group.Finset.Piecewise
 public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.Analysis.Calculus.Deriv.ZPow
 public import Mathlib.Data.Matrix.Block
@@ -396,7 +397,9 @@ theorem hasDerivAt_mixedMonomialMap_fst_boundary (A : MixedExponent k l k' l')
           ∏ c, z.2 c ^ A.boundaryTorus a c)) := by
     funext t
     simp only [mixedMonomialMap_fst_apply]
-    rw [prod_update_pow univ z.1 (A.boundaryBoundary a) (mem_univ b) t]
+    rw [funext fun j ↦
+        Function.apply_update (fun i (w : ℂ) ↦ w ^ A.boundaryBoundary a i) z.1 b t j,
+      prod_update_of_mem (mem_univ b)]
     simp only [mul_assoc]
   rw [hfun]
   exact (hasDerivAt_pow (A.boundaryBoundary a b) (z.1 b)).mul_const
@@ -419,7 +422,9 @@ theorem hasDerivAt_mixedMonomialMap_fst_torus (A : MixedExponent k l k' l')
           ∏ c ∈ univ \ {b}, z.2 c ^ A.boundaryTorus a c)) := by
     funext t
     simp only [mixedMonomialMap_fst_apply]
-    rw [prod_update_zpow univ z.2 (A.boundaryTorus a) (mem_univ b) t]
+    rw [funext fun j ↦
+        Function.apply_update (fun i (w : ℂ) ↦ w ^ A.boundaryTorus a i) z.2 b t j,
+      prod_update_of_mem (mem_univ b)]
   rw [hfun]
   simpa only [mul_assoc, mul_left_comm, mul_comm] using
     ((hasDerivAt_zpow (A.boundaryTorus a b) (z.2 b) (Or.inl (hz b))).mul_const
@@ -447,7 +452,9 @@ theorem hasDerivAt_mixedMonomialMap_snd_torus (A : MixedExponent k l k' l')
         ∏ c ∈ univ \ {b}, z.2 c ^ A.torusTorus a c) := by
     funext t
     simp only [mixedMonomialMap_snd_apply]
-    rw [prod_update_zpow univ z.2 (A.torusTorus a) (mem_univ b) t]
+    rw [funext fun j ↦
+        Function.apply_update (fun i (w : ℂ) ↦ w ^ A.torusTorus a i) z.2 b t j,
+      prod_update_of_mem (mem_univ b)]
   rw [hfun]
   exact (hasDerivAt_zpow (A.torusTorus a b) (z.2 b) (Or.inl (hz b))).mul_const
     (∏ c ∈ univ \ {b}, z.2 c ^ A.torusTorus a c)

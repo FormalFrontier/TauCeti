@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.BigOperators.Group.Finset.Sigma
-public import Mathlib.Algebra.BigOperators.Group.Finset.Piecewise
 public import Mathlib.Algebra.GroupWithZero.Units.Basic
 
 /-!
@@ -24,8 +23,6 @@ allowed to vanish.
 ## Main results
 
 * `Finset.prod_zpow_eq_zpow_sum`: `∏ i ∈ s, y ^ e i = y ^ ∑ i ∈ s, e i` for `y ≠ 0`.
-* `Finset.prod_update_pow` and `Finset.prod_update_zpow`: isolate one factor of a product after
-  updating its base.
 * `Finset.prod_prod_pow`, `Finset.prod_prod_zpow` and `Finset.prod_prod_zpow_pow`: substituting
   monomials into a monomial multiplies the exponent matrices, for the three combinations of
   natural and integral exponents that make sense.
@@ -45,26 +42,6 @@ theorem prod_zpow_eq_zpow_sum [CommGroupWithZero G₀] (s : Finset ι) {y : G₀
   induction s using Finset.cons_induction with
   | empty => simp
   | cons a s ha ih => rw [prod_cons, sum_cons, ih, zpow_add₀ hy]
-
-/-- Updating one base in a finite product of natural powers isolates the updated factor. -/
-theorem prod_update_pow [CommMonoid M] [DecidableEq ι] (s : Finset ι) (x : ι → M)
-    (e : ι → ℕ) {i : ι} (hi : i ∈ s) (y : M) :
-    ∏ j ∈ s, Function.update x i y j ^ e j = y ^ e i * ∏ j ∈ s \ {i}, x j ^ e j := by
-  have hupdate : (fun j ↦ Function.update x i y j ^ e j) =
-      Function.update (fun j ↦ x j ^ e j) i (y ^ e i) := by
-    funext j
-    exact Function.apply_update (fun j z ↦ z ^ e j) x i y j
-  rw [hupdate, prod_update_of_mem hi]
-
-/-- Updating one base in a finite product of integral powers isolates the updated factor. -/
-theorem prod_update_zpow [CommMonoid M] [Pow M ℤ] [DecidableEq ι] (s : Finset ι) (x : ι → M)
-    (e : ι → ℤ) {i : ι} (hi : i ∈ s) (y : M) :
-    ∏ j ∈ s, Function.update x i y j ^ e j = y ^ e i * ∏ j ∈ s \ {i}, x j ^ e j := by
-  have hupdate : (fun j ↦ Function.update x i y j ^ e j) =
-      Function.update (fun j ↦ x j ^ e j) i (y ^ e i) := by
-    funext j
-    exact Function.apply_update (fun j z ↦ z ^ e j) x i y j
-  rw [hupdate, prod_update_of_mem hi]
 
 /-- Substituting the monomials `∏ b ∈ t, x b ^ e a b` into the monomial with natural exponents
 `g` produces the monomial whose exponent matrix is the product `∑ a ∈ s, g a * e a b`. -/
