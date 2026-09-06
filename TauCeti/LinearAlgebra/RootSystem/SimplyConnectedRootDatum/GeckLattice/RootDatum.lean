@@ -40,6 +40,9 @@ of a root datum carried by the group scheme; those are separate Layer 9 targets.
   read as a named simple root.
 * `TauCeti.DynkinType.geckWeightTorus_conj_geckRootSubgroup_root_simpleIndex` and its
   negative-root counterpart: the corresponding equations on scheme-valued points.
+* `TauCeti.DynkinType.geckWeightTorusPoints_conj_geckRootSubgroupPoints_root_simpleIndex` and its
+  negative-root counterpart: the corresponding equations inside the matrix point group, where the
+  represented torus and the represented root subgroups are group homomorphisms.
 
 ## References
 
@@ -65,6 +68,14 @@ universe v
 noncomputable section
 
 variable (t : DynkinType) (ht : t.Valid)
+
+/-! The character by which a torus point rescales the parameter of the raising subgroup at node `i`
+and the simple root `α_i` of `TauCeti.DynkinType.simplyConnectedRootDatum` are the same element of
+the character lattice, both being row `i` of `t.cartanMatrix`, and the lowering subgroup at node
+`i` is rescaled by `-α_i`. The equations below are the conjugation equations of the carrier in that
+named-root reading, in which the pinned root datum rather than the Cartan matrix is the object the
+equation is about, at the three tiers the carrier offers: on parameters, on schemes, and on the
+points of the group scheme. -/
 
 /-! ## The pointwise conjugation equations -/
 
@@ -142,6 +153,43 @@ theorem geckWeightTorus_conj_geckRootSubgroup_neg_root_simpleIndex (i : Fin t.ra
         (t.geckRootSubgroup ht (.inr i)).hom.hom := by
   rw [← t.rootGeneratorWeight_inr_eq_neg_root_simpleIndex ht i]
   exact t.geckWeightTorus_conj_geckRootSubgroup ht (.inr i) A s u
+
+/-! ## The conjugation equations inside the matrix point group -/
+
+/-- **The pinning equation in the point group of the Geck carrier, at a named simple root.**
+Conjugating the numbered raising subgroup at node `i` by a represented weight-torus point rescales
+its parameter by `α_i(s)`, where `α_i` is the simple root of the pinned simply connected datum with
+the same Bourbaki node number.
+
+This is the form in which a consumer working with the matrix points rather than with the group
+scheme uses the pinning: `TauCeti.DynkinType.geckWeightTorusPoints` and
+`TauCeti.DynkinType.geckRootSubgroupPoints` are group homomorphisms into
+`TauCeti.DynkinType.geckPoints`, so both sides are elements of one group. -/
+theorem geckWeightTorusPoints_conj_geckRootSubgroupPoints_root_simpleIndex (i : Fin t.rank)
+    (A : Type v) [CommRing A] (s : Fin t.rank → Aˣ) (u : Multiplicative A) :
+    t.geckWeightTorusPoints ht A s * t.geckRootSubgroupPoints ht (.inl i) A u *
+        (t.geckWeightTorusPoints ht A s)⁻¹ =
+      t.geckRootSubgroupPoints ht (.inl i) A
+        (Multiplicative.ofAdd
+          ((TauCeti.torusCharacter s
+              ((t.simplyConnectedRootDatum ht).root (t.simpleIndex ht i)) : A) *
+            Multiplicative.toAdd u)) := by
+  rw [← t.rootGeneratorWeight_inl_eq_root_simpleIndex ht i]
+  exact t.geckWeightTorusPoints_conj_geckRootSubgroupPoints ht (.inl i) A s u
+
+/-- **The pinning equation in the point group of the Geck carrier, at the negative of a named
+simple root.** -/
+theorem geckWeightTorusPoints_conj_geckRootSubgroupPoints_neg_root_simpleIndex (i : Fin t.rank)
+    (A : Type v) [CommRing A] (s : Fin t.rank → Aˣ) (u : Multiplicative A) :
+    t.geckWeightTorusPoints ht A s * t.geckRootSubgroupPoints ht (.inr i) A u *
+        (t.geckWeightTorusPoints ht A s)⁻¹ =
+      t.geckRootSubgroupPoints ht (.inr i) A
+        (Multiplicative.ofAdd
+          ((TauCeti.torusCharacter s
+              (-(t.simplyConnectedRootDatum ht).root (t.simpleIndex ht i)) : A) *
+            Multiplicative.toAdd u)) := by
+  rw [← t.rootGeneratorWeight_inr_eq_neg_root_simpleIndex ht i]
+  exact t.geckWeightTorusPoints_conj_geckRootSubgroupPoints ht (.inr i) A s u
 
 end
 

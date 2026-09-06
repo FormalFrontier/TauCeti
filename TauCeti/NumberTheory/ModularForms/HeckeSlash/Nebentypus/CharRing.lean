@@ -36,6 +36,7 @@ a general principle.
 
 ## Main results
 
+* `HeckeRing.GL2.twistedHeckeSlashRingCharLinearMap_apply`: evaluation as a finite sum.
 * `HeckeRing.GL2.twistedHeckeSlashRingCharLinearMap_single`: the value on a basis element is the
   scaled twisted operator of that double coset. With `map_zero`/`map_add` this determines the map.
 
@@ -80,6 +81,14 @@ why `Finsupp.linearCombination` applies at this type. -/
 noncomputable def twistedHeckeSlashRingCharLinearMap :
     𝕋 (Delta0 N) ((Gamma0 N).map (mapGL ℚ)) ℤ →ₗ[ℤ] Module.End ℂ (functionCharSpace k χ) :=
   Finsupp.linearCombination ℤ fun D ↦ twistedHeckeSlashSumCharEnd k χ D
+
+/-- Evaluation of the linear extension as a finite sum over the double cosets in its support. -/
+lemma twistedHeckeSlashRingCharLinearMap_apply
+    (T : 𝕋 (Delta0 N) ((Gamma0 N).map (mapGL ℚ)) ℤ) :
+    twistedHeckeSlashRingCharLinearMap k χ T =
+      T.sum fun D c ↦ c • twistedHeckeSlashSumCharEnd k χ D :=
+  Finsupp.linearCombination_apply (R := ℤ)
+    (v := fun D ↦ twistedHeckeSlashSumCharEnd k χ D) T
 
 /-- The value on a basis element is the scaled twisted operator of that double coset. -/
 @[simp] lemma twistedHeckeSlashRingCharLinearMap_single
