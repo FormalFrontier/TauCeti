@@ -624,9 +624,8 @@ private theorem diagonalProjector_apply (d : ℕ)
     · simp only [h, ite_false, zero_smul]
   rw [diagonalProjector]
   rw [hprod]
-  rw [TauCeti.Module.End.list_prod_indicator_eq_if_eq (l := Finset.univ.toList)
-    (fun i ↦ by simp) s.1 t.1]
-  simp [Subtype.ext_iff]
+  rw [Finset.prod_map_toList, Finset.prod_boole]
+  simp [Finset.ext_iff, Subtype.ext_iff]
 
 private theorem diagonalProjector_mem (d : ℕ)
     (N : LieSubmodule K (Matrix ι ι K) (⋀[K]^d (ι → K)))
