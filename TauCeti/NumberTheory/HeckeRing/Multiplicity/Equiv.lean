@@ -36,8 +36,7 @@ variable {G K : Type*} [Group G] [Group K]
 
 /-- Membership in a double coset is preserved by a group equivalence. -/
 @[simp] lemma mem_doubleCoset_map_equiv_iff (e : G ≃* K) (H₁ H₂ : Subgroup G) (g x : G) :
-    (e : G →* K) x ∈ doubleCoset ((e : G →* K) g) (H₁.map (e : G →* K))
-        (H₂.map (e : G →* K)) ↔
+    e x ∈ doubleCoset (e g) (e '' (H₁ : Set G)) (e '' (H₂ : Set G)) ↔
       x ∈ doubleCoset g H₁ H₂ := by
   constructor
   · intro hx
@@ -49,13 +48,13 @@ variable {G K : Type*} [Group G] [Group K]
     exact hab
   · intro hx
     obtain ⟨a, ha, b, hb, rfl⟩ := mem_doubleCoset.mp hx
-    exact mem_doubleCoset.mpr ⟨(e : G →* K) a, ⟨a, ha, rfl⟩,
-      (e : G →* K) b, ⟨b, hb, rfl⟩, by simp only [map_mul]⟩
+    exact mem_doubleCoset.mpr ⟨e a, ⟨a, ha, rfl⟩,
+      e b, ⟨b, hb, rfl⟩, by simp only [map_mul]⟩
 
 /-- A group equivalence carries the decomposition quotient of `g` to that of its image. -/
 noncomputable def decompQuotientEquivMap (e : G ≃* K) (H₁ H₂ : Subgroup G) (g : G) :
     DecompQuotient H₁ H₂ g ≃
-      DecompQuotient (H₁.map (e : G →* K)) (H₂.map (e : G →* K)) ((e : G →* K) g) := by
+      DecompQuotient (H₁.map (e : G →* K)) (H₂.map (e : G →* K)) (e g) := by
   apply Quotient.congr (e.subgroupMap H₁).toEquiv
   intro x y
   simp only [QuotientGroup.leftRel_apply, Subgroup.mem_subgroupOf,
@@ -127,7 +126,6 @@ equivalence, without any finiteness hypothesis. -/
         congrArg (c i • ·) (QuotientGroup.out_eq' (eh j)).symm
       _ = _ := by
         rw [MulAction.Quotient.smul_mk, smul_eq_mul]
-        rfl
   have hqmem := conj_mem_of_mk_eq ((e : G →* K) h) hq
   have hjmem := decompQuotientEquivMap_out e H₂ H₃ h j
   have hprod :
