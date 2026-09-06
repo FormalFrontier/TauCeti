@@ -114,10 +114,7 @@ multiplies by composition, so `D₁` acts first — exactly as the untwisted
 left to do.
 
 The multiplicity-weighted theorem corresponds to AINTLIB's
-`twistedHeckeSlashGen_comp_eq_m_sum` in the same file. Its proof is not transcribed: AINTLIB
-builds a separate left-coset fibre and correction-map apparatus, while the proof here combines
-the existing right-coset `pairCoset` count from `HeckeSlash/Composition.lean` with the uniformly
-repeating weighted-family theorem from `Nebentypus/Independence.lean`.
+`twistedHeckeSlashGen_comp_eq_m_sum` in the same file.
 
 ⚠ Not adapted, so that the source line numbers are not read as a wider claim:
 `twisted_weighted_slash_product_eq` (`:494`) is a per-pair step that carries a summand into a third

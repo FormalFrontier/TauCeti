@@ -43,9 +43,7 @@ The uniformly repeating-family theorem corresponds to the role of
 `twisted_filtered_sum_collapse_of_qOf` in AINTLIB's
 `LeanModularForms/HeckeRIngs/GL2/Unified/TwistedHeckeRing.lean` (Chris Birkbeck, Apache-2.0,
 <https://github.com/CBirkbeck/AINTLIB> at commit
-`2baa76f742bdb4fb8ee323fabba41203bd390e08`). No code is transcribed: the statement and proof are
-the weighted analogue of this repository's `sum_slash_eq_nsmul_heckeSlashSum`, using
-`smul_slash_eq_of_rightCoset_eq` for the one per-fibre substitution.
+`2baa76f742bdb4fb8ee323fabba41203bd390e08`).
 
 ## References
 
