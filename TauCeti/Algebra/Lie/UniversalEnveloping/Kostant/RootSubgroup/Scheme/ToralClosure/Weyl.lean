@@ -34,7 +34,7 @@ group of the root datum.
 * `TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralWeylPoint`: its matrix is the integral Weyl
   automorphism in the chosen basis.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantToralWeylPoint_conj_rootSubgroupPoints`: conjugation
-  exchanges the two root subgroups in the `sl₂` pair.
+  sends the `i` root subgroup to the `j` root subgroup, negating the parameter.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantToralWeylPoint_conj_weightTorusPoints`: its conjugation
   action on the represented split torus.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantToralWeylPoint_mem_normalizer_weightTorusPoints`: the
@@ -70,15 +70,6 @@ variable (hnil : ∀ i, IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι �
 variable {n : ℕ} (b : Module.Basis (Fin n) ℤ M)
 variable (wt : Fin n → κ → ℤ)
 
-omit [Module ℚ V] in
-private theorem basisMatrix_eq_of_val_eq {A : Type v} [CommRing A]
-    {x y : LinearMap.GeneralLinearGroup A (A ⊗[ℤ] M)}
-    (hxy : x.val = y.val) :
-    Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom x =
-      Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom y :=
-  congrArg (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom)
-    (Units.ext hxy)
-
 omit [Fintype κ] in
 private theorem coe_kostantRootSubgroupParam {A : Type v} [CommRing A] (i : I)
     (t : Multiplicative A) :
@@ -101,7 +92,8 @@ private theorem basisMatrix_kostantWeylProduct (i j : I) (A : Type v) [CommRing 
             (Multiplicative.ofAdd 1)) =
       Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom
         (kostantWeylGL e h ρ M hM (hnil i) (hnil j) A) := by
-  apply basisMatrix_eq_of_val_eq (A := A) M b
+  refine congrArg (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom)
+    (Units.ext ?_)
   rw [Units.val_mul, Units.val_mul, coe_kostantRootSubgroupParam (i := i),
     coe_kostantRootSubgroupParam (i := j), toAdd_ofAdd, kostantWeylGL_val]
   exact (kostantWeylPoints_toLinearMap_eq
@@ -157,7 +149,8 @@ private theorem basisMatrix_kostantWeylConjRoot (A : Type v) [CommRing A] (u : A
       Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom
         (kostantRootSubgroupParam e h ρ M hM j (hnil j) (CommAlgCat.of ℤ A)
           (Multiplicative.ofAdd (-u))) := by
-  apply basisMatrix_eq_of_val_eq (A := A) M b
+  refine congrArg (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom)
+    (Units.ext ?_)
   rw [Units.val_mul, Units.val_mul, kostantWeylGL_val, kostantWeylGL_inv_val,
     coe_kostantRootSubgroupParam (i := i), coe_kostantRootSubgroupParam (i := j),
     toAdd_ofAdd]
@@ -165,8 +158,8 @@ private theorem basisMatrix_kostantWeylConjRoot (A : Type v) [CommRing A] (u : A
     e h ρ M hM (hnil i) (hnil j) hT u
 
 include hT in
-/-- Conjugation by the carrier's Weyl representative exchanges the two root subgroups of the
-`sl₂` pair, negating the parameter: `nᵢ xᵢ(u) nᵢ⁻¹ = xⱼ(-u)`. -/
+/-- Conjugation by the carrier's Weyl representative sends the `i` root subgroup to the `j` root
+subgroup, negating the parameter: `nᵢ xᵢ(u) nᵢ⁻¹ = xⱼ(-u)`. -/
 theorem kostantToralWeylPoint_conj_rootSubgroupPoints (A : Type v) [CommRing A] (u : A) :
     kostantToralWeylPoint e h ρ M hM hnil b wt i j A *
         kostantToralRootSubgroupPoints e h ρ M hM hnil b wt i A
