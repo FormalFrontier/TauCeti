@@ -14,7 +14,7 @@ If the neighbourhood filter of a point of a uniform space is countably generated
 neighbourhood filter of its image in the separated completion. Nothing is assumed of the space
 beyond its uniformity — no separation, no completeness, no algebraic structure.
 
-`TauCeti.Topology.Algebra.IsUniformGroup.Completion` specialises this to the zero of a uniform
+`TauCeti.Topology.Algebra.GroupCompletion` specialises this to the zero of a uniform
 space with a zero, which is the form typeclass resolution consumes.
 
 ## Main results
