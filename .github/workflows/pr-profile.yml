@@ -69,9 +69,9 @@ jobs:
        (github.event.comment.user.login == github.event.issue.user.login ||
         contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)))
     env:
-      BWRAP_VER: 0.9.0-1ubuntu0.1
-      BWRAP_DEB_SHA256: 1b506492bd9c7fd0cdb4f02ac822f1d3e336b0aead5113c1239baf8db5db562a
-      BWRAP_SHA256: 52231e1caf55bcbc667b269f49c63599a6f7db4767ae6a039580d0ff853db712
+      BWRAP_VER: 0.9.0-1build1
+      BWRAP_DEB_SHA256: dde30d1f24da50446d647ed504ec8dc5a714f171974d054c70a589b48ba38b48
+      BWRAP_SHA256: 3e33f8255e1411ada346db27028c25ef5ba4fa3327754a2321ea4c8732a3bc10
       LAKE_ARTIFACT_CACHE: ""
       LAKE_RESTORE_ARTIFACTS: ""
       LAKE_CACHE_DIR: ""
@@ -321,10 +321,16 @@ jobs:
           # installed. A bare `apt-get install bubblewrap` would take whatever the archive holds on
           # the day, which is not a pin.
           #
-          # Noble's own bubblewrap, so the pin holds for the life of 24.04. Pinning a package
-          # from a suite the runner does not track expires instead on Ubuntu's schedule: pool
-          # entries in a development suite are deleted as soon as a newer upload lands, which
-          # would take every required build down with it.
+          # Noble's RELEASE pocket, which is the part of the archive Ubuntu never rewrites: a
+          # version published there stays published for the life of the release. The pocket
+          # matters more than the suite. `0.9.0-1ubuntu0.1` in noble-security looks like the
+          # better package, but security and updates entries are superseded and then deleted
+          # when the next one lands, so pinning that would expire the first time Ubuntu ships a
+          # bubblewrap fix. A development suite is worse again, deleted on the next upload.
+          #
+          # What we give up is the noble-security revision, whose only change is a backport
+          # Flatpak needed for CVE-2024-42472. That is an enabling change for Flatpak rather
+          # than a bubblewrap vulnerability fix, and nothing here uses Flatpak.
           #
           # 0.9.0 predates the fix for GHSA-pxhw-h44j-8pfx (2026-08-27, no CVE assigned yet),
           # where a symlink in attacker-controlled content redirects the files bwrap creates
@@ -346,15 +352,16 @@ jobs:
             echo "::error::bubblewrap ${BWRAP_VER} is gone from the Ubuntu pool. The sandbox cannot be installed, so no PR can build until the pin is moved."
             printf '%s\n' \
               '' \
-              "WHAT HAPPENED: BWRAP_VER is pinned to ${BWRAP_VER} from noble, whose pool entries" \
-              'last as long as 24.04 is supported. Reaching this is unexpected: either the' \
-              'archive is having an outage, or the runner image has moved off 24.04, or the' \
-              'release has gone end of life.' \
+              "WHAT HAPPENED: BWRAP_VER is pinned to ${BWRAP_VER} from noble's release pocket," \
+              'which Ubuntu does not rewrite for the life of the release. Reaching this is' \
+              'unexpected: an archive outage, a runner image no longer on 24.04, or 24.04 gone' \
+              'end of life.' \
               '' \
-              'HOW TO FIX IT. Find the current version in any suite whose bubblewrap is 0.12.0' \
-              'or newer:' \
+              'HOW TO FIX IT. Take the version from a RELEASE pocket, never from -updates,' \
+              '-security or a development suite: those are superseded and deleted, so a pin' \
+              'to one expires and brings every required build down with it.' \
               '' \
-              '  suite=stonking' \
+              '  suite=noble        # or the release pocket of whatever image CI runs on' \
               '  curl -s "https://archive.ubuntu.com/ubuntu/dists/$suite/main/binary-amd64/Packages.gz" \' \
               "    | gunzip | awk '/^Package: bubblewrap\$/{f=1} f&&/^Version:/{print \$2; exit}'" \
               '' \

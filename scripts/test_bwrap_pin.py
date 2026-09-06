@@ -95,38 +95,82 @@ class BwrapPin(unittest.TestCase):
                 self.assertContains('[ "$sb_ns" = "$host_ns" ]', text, workflow.name)
                 self.assertContains("refusing to run candidate code", text, workflow.name)
 
-    def test_every_policy_hardens_the_synthetic_root(self):
-        # `--tmpfs /` leaves a writable synthetic root, including the directories bwrap creates
-        # to hang the binds off. Without `--remount-ro /` candidate code can plant an executable
-        # under $HOME and win the PATH lookup for the audits that run after the build.
-        for workflow in WORKFLOWS:
-            with self.subTest(workflow=workflow.name):
-                text = workflow.read_text()
-                for policy in self._policies(text):
-                    self.assertIn("--remount-ro /", policy)
-                    # bwrap is PID 1 of the sandbox and keeps its own environment, so it has to
-                    # be started without one (containers/bubblewrap#725).
-                    self.assertTrue(policy.startswith("env -i /usr/bin/bwrap"), policy[:60])
-                    # `--unshare-all` would use the "try" form for the user namespace.
-                    self.assertIn("--unshare-user ", policy)
-                    self.assertNotIn("--unshare-all", policy)
-                    # A PATH the sandbox can write is the other half of the hijack above.
-                    self.assertNotIn("$HOME/.local/bin", policy)
+    # Which trees each workflow checks out and must normalise before touching.
+    TREES = {
+        "pr-build.yml": ("pr",),
+        "pr-profile.yml": ("base", "head"),
+        "nightly-verify.yml": ("reference",),
+    }
 
-    def _policies(self, text):
-        """Every bwrap invocation in a workflow, joined back into one line each."""
-        out, cur = [], None
-        for line in text.splitlines():
+    # Any bwrap invocation must look exactly like this. Anything else is either an unsafe
+    # policy or a form this test cannot reason about; both must fail.
+    SAFE_PREFIX = "env -i /usr/bin/bwrap"
+    BWRAP_TOKEN = re.compile(
+        r"(?:^|[;&|(]\s*|\bthen\s+|\belse\s+|--\s+)((?:env -i\s+)?(?:/usr/bin/)?bwrap)\s")
+
+    @staticmethod
+    def _is_prose(stripped):
+        # Comments and the quoted arguments of the printf failure message both talk about
+        # bwrap without invoking it.
+        return stripped.startswith("#") or stripped.startswith("'") or stripped.startswith('"')
+
+    def _invocations(self, text):
+        """Every bwrap invocation in a workflow, each joined back into a single line."""
+        lines, out, cur = text.splitlines(), [], None
+        for line in lines:
             stripped = line.strip()
-            if cur is None and stripped.startswith("env -i /usr/bin/bwrap"):
+            if cur is None and not self._is_prose(stripped) \
+                    and self.BWRAP_TOKEN.match(stripped):
                 cur = [stripped]
             elif cur is not None:
                 cur.append(stripped)
             if cur is not None and not stripped.endswith("\\"):
                 out.append(" ".join(x.rstrip("\\").strip() for x in cur))
                 cur = None
-        assert out, "no bwrap policy found"
         return out
+
+    def test_every_bwrap_invocation_uses_the_safe_form(self):
+        # The earlier version of this test only looked at lines already beginning with the
+        # safe prefix, so rewriting a policy to bare `bwrap` removed it from the test rather
+        # than failing it. Now every invocation has to be accounted for.
+        for workflow in WORKFLOWS:
+            with self.subTest(workflow=workflow.name):
+                text = workflow.read_text()
+                invocations = self._invocations(text)
+                self.assertTrue(invocations, f"{workflow.name}: no bwrap invocation found")
+                for inv in invocations:
+                    if inv.startswith("/usr/bin/bwrap --version"):
+                        continue  # the post-install smoke check, which runs no policy
+                    self.assertTrue(
+                        inv.startswith(self.SAFE_PREFIX),
+                        f"{workflow.name}: bwrap invocation not in the safe form: {inv[:110]}")
+                    for required in ("--tmpfs /", "--remount-ro /", "--unshare-user ",
+                                     "--disable-userns"):
+                        self.assertIn(required, inv, f"{workflow.name}: {inv[:80]}")
+                    self.assertNotIn("--unshare-all", inv)
+                    self.assertNotIn("$HOME/.local/bin", inv)
+
+    def test_lake_is_the_only_destination_inside_a_candidate_tree(self):
+        # The whole argument for pinning a bubblewrap older than 0.12.0 is that `.lake` is the
+        # only place bwrap creates a mount point inside content the candidate controls. A
+        # second such destination would silently invalidate it.
+        dest = re.compile(r"--(?:ro-)?bind \S+ \"?(\$PWD/[A-Za-z0-9_.-]+[^\"\s]*)")
+        for workflow in WORKFLOWS:
+            with self.subTest(workflow=workflow.name):
+                for inv in self._invocations(workflow.read_text()):
+                    if not inv.startswith(self.SAFE_PREFIX):
+                        continue
+                    dests = [d.strip('"') for d in dest.findall(inv)]
+                    roots = [d for d in dests if "/" not in d[len("$PWD/"):]]
+                    for d in dests:
+                        under = [r for r in roots if d.startswith(r + "/")]
+                        if under:
+                            self.assertTrue(
+                                d == under[0] + "/.lake",
+                                f"{workflow.name}: {d} is a bwrap destination inside the "
+                                f"candidate tree {under[0]}, but only <tree>/.lake may be. "
+                                f"Either normalise it too or move the pin to bubblewrap "
+                                f">= 0.12.0.")
 
     def test_the_self_test_runs_before_any_candidate_code(self):
         # Ordering, not mere presence: a self-test placed after the build would satisfy a
@@ -153,31 +197,67 @@ class BwrapPin(unittest.TestCase):
         (GHSA-pxhw-h44j-8pfx); upstream fixed that in 0.12.0, so that reason retires when the
         pin can move. The other does not: `mkdir -p` and the trusted Mathlib cache restore
         follow the same symlink themselves, before any sandbox exists, and no bubblewrap
-        version fixes that. Either way the step has to exist and has to come before every other
-        step that names a candidate `.lake`.
+        version fixes that.
+
+        Checked per job, per tree, against the exact commands, because a test that merely
+        finds a step whose name starts with "Normalise" is satisfied by a step that does
+        nothing.
         """
         import yaml
         for workflow in WORKFLOWS:
-            with self.subTest(workflow=workflow.name):
-                doc = yaml.safe_load(workflow.read_text())
-                steps = [s for job in doc["jobs"].values() for s in job.get("steps", [])]
-                names = [str(s.get("name", "")) for s in steps]
-                norm = [i for i, n in enumerate(names) if n.startswith("Normalise")]
-                self.assertTrue(norm, f"{workflow.name}: no .lake normalisation step")
-                first_norm = min(norm)
-                # It must unlink rather than follow, and must verify what it left behind.
-                body = str(steps[first_norm].get("run", ""))
-                self.assertIn("rm -rf", body)
-                self.assertNotIn("/.lake/", body.replace("mkdir -p", ""))  # no trailing slash
-                self.assertIn("-L", body)  # asserts the result is not a symlink
-                # Nothing earlier may name a candidate .lake.
-                for i, step in enumerate(steps[:first_norm]):
-                    blob = yaml.safe_dump(step)
-                    for tree in ("pr/.lake", "head/.lake", "base/.lake", "reference/.lake"):
-                        self.assertNotIn(
-                            tree, blob,
-                            f"{workflow.name}: step {names[i]!r} touches {tree} "
-                            f"before it is normalised")
+            trees = self.TREES[workflow.name]
+            doc = yaml.safe_load(workflow.read_text())
+            for job_name, job in doc["jobs"].items():
+                steps = job.get("steps") or []
+                if not any(str(s.get("with", {}).get("path", "")) in trees for s in steps):
+                    continue  # this job checks nothing out
+                for tree in trees:
+                    with self.subTest(workflow=workflow.name, job=job_name, tree=tree):
+                        checkout = [i for i, s in enumerate(steps)
+                                    if str((s.get("with") or {}).get("path", "")) == tree]
+                        self.assertTrue(checkout, f"no checkout with path: {tree}")
+                        norm = [i for i, s in enumerate(steps)
+                                if f"rm -rf {tree}/.lake" in str(s.get("run", ""))]
+                        self.assertTrue(norm, f"nothing runs `rm -rf {tree}/.lake`")
+                        self.assertGreater(min(norm), min(checkout),
+                                           f"{tree}/.lake is normalised before it is checked out")
+                        body = str(steps[min(norm)].get("run", ""))
+                        self.assertIn(f"mkdir -p {tree}/.lake", body)
+                        self.assertIn(f"[ -L {tree}/.lake ]", body)
+                        self.assertNotIn(f"rm -rf {tree}/.lake/", body)  # would follow the link
+                        # Nothing between checkout and normalisation may name it.
+                        for i in range(min(checkout) + 1, min(norm)):
+                            self.assertNotIn(
+                                f"{tree}/.lake", yaml.safe_dump(steps[i]),
+                                f"step {steps[i].get('name')!r} touches {tree}/.lake "
+                                f"before it is normalised")
+
+    def test_measure_py_builds_the_same_policy(self):
+        # scripts/perf/measure.py assembles the policy in Python, so the workflow-shaped
+        # checks above cannot see it.
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "measure", ROOT / "scripts" / "perf" / "measure.py")
+        measure = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(measure)
+        root = pathlib.Path("/w/head")
+        argv = measure.sandbox_command(root, "/usr/bin/bwrap", pathlib.Path("/w/wd"), ["M"])
+        self.assertEqual(argv[:3], ["/usr/bin/env", "-i", "/usr/bin/bwrap"],
+                         "bwrap must start with an empty environment; it is PID 1 of the "
+                         "sandbox and keeps its own env at /proc/1/environ")
+        joined = " ".join(argv)
+        for required in ("--tmpfs /", "--remount-ro /", "--unshare-user", "--disable-userns",
+                         "--die-with-parent", "--new-session"):
+            self.assertIn(required, joined)
+        self.assertNotIn("--unshare-all", joined)
+        # The only writable bind, and the only destination inside the candidate tree.
+        binds = [(argv[i], argv[i + 1], argv[i + 2]) for i, a in enumerate(argv)
+                 if a in ("--bind", "--ro-bind")]
+        inside = [d for _, _, d in binds if d.startswith(str(root) + "/")]
+        self.assertEqual(inside, [str(root / ".lake")], f"unexpected destinations: {inside}")
+        self.assertEqual([d for k, _, d in binds if k == "--bind"], [str(root / ".lake")])
+        path = argv[argv.index("PATH", argv.index("--setenv")) + 1]
+        self.assertNotIn(".local", path, "a sandbox-writable directory on PATH")
 
     def test_no_workflow_still_invokes_landrun(self):
         # Comments may still name landrun to explain what changed and why; what must be gone
