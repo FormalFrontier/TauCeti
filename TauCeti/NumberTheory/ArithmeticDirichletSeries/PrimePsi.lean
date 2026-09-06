@@ -40,6 +40,8 @@ system does not get that hypothesis for free; what it has to supply is the domin
 * `TauCeti.primePowerSummatory_indicator_sub_primeTheta` splits the exponent-one part off the
   standard weight restricted to any set of prime powers containing exactly the primes of `S`.
 * `TauCeti.primePsi_sub_primeTheta` identifies `ψ - ϑ` with the higher-prime-power sum.
+* `TauCeti.primePsi_isLittleO_of_finite`: a finite set of primes is negligible for `ψ`, the form
+  the Chebotarev roadmap's Layer 11.3 third discard estimate consumes.
 * `TauCeti.standardPrimePowerRemoval` proves `HasNegligibleHigherPrimePowers K S` for every `S`,
   from the Layer 5 estimate `ψ(x) - ϑ(x) = O(√x log² x)`.
 * `TauCeti.primeTheta_asymptotic_of_primePsi` and
@@ -228,6 +230,19 @@ theorem standardPrimePowerRemoval (K : Type*) [Field K] [NumberField K]
     (S : Set (HeightOneSpectrum (𝓞 K))) : HasNegligibleHigherPrimePowers K S := by
   rw [hasNegligibleHigherPrimePowers_iff]
   simpa only [primePsi_sub_primeTheta] using primePowerSummatory_indicator_isLittleO K S
+
+open Asymptotics Filter in
+/-- **A finite set of primes carries a negligible weight in `ψ` too.** Unlike `ϑ`, the sum does not
+become constant — higher powers of a fixed prime keep entering as the cutoff grows — but the whole
+higher-power tail is `o(x)` for any set at all, so the two estimates add.
+
+This is the `ψ` form the Chebotarev roadmap's Layer 11.3 asks for in its third discard estimate,
+where the exceptional set is `ramifiedPrimes`, the primes of an intermediate field above it, or the
+primes ramified in a compositum but not below. `TauCeti.primeTheta_isLittleO_of_finite` is the `ϑ`
+companion. -/
+theorem primePsi_isLittleO_of_finite (hS : S.Finite) :
+    primePsi K S =o[atTop] fun x : ℝ ↦ x := by
+  simpa using (standardPrimePowerRemoval K S).add (primeTheta_isLittleO_of_finite hS)
 
 /-- **Transfer of a linear asymptotic from `ψ` to `ϑ`.**  If the higher prime powers of `S` are
 negligible and `ψ(x) = δ x + o(x)`, then `ϑ(x) = δ x + o(x)`. -/
