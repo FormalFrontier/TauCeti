@@ -204,10 +204,6 @@ def prodShift : M × M →ₗ[R] M × M :=
 def prodContraction : M × M →ₗ[R] M × M :=
   (LinearMap.inr R M M).comp (LinearMap.fst R M M)
 
-/-- `prodShift` unfolded, so that its body need not be exposed. -/
-theorem prodShift_eq_comp :
-    prodShift R M = (LinearMap.inl R M M).comp (LinearMap.snd R M M) := (rfl)
-
 @[simp] theorem prodShift_apply (p : M × M) : prodShift R M p = (p.2, 0) := (rfl)
 
 @[simp] theorem prodContraction_apply (p : M × M) : prodContraction R M p = (0, p.1) := (rfl)
@@ -219,14 +215,9 @@ theorem prodShift_prodContraction_add (p : M × M) :
   obtain ⟨x, y⟩ := p
   exact Prod.ext (add_zero x) (zero_add y)
 
-theorem prodContraction_prodShift_add (p : M × M) :
-    prodContraction R M (prodShift R M p) + prodShift R M (prodContraction R M p) = p := by
-  rw [add_comm]
-  exact prodShift_prodContraction_add R M p
-
 theorem range_prodShift :
     LinearMap.range (prodShift R M) = LinearMap.range (LinearMap.inl R M M) := by
-  rw [prodShift_eq_comp]
+  rw [prodShift]
   exact LinearMap.range_comp_of_range_eq_top _
     (LinearMap.range_eq_top_of_surjective _ Prod.snd_surjective)
 
@@ -255,7 +246,7 @@ theorem isStronglyGorensteinProjective_of_projective [Module.Projective R M] :
       rw [prodShift_prodShift, map_zero]
     · refine LinearMap.ext fun p => ?_
       simp only [LinearMap.add_apply, LinearMap.comp_apply]
-      rw [← map_add, prodContraction_prodShift_add]
+      rw [← map_add, add_comm, prodShift_prodContraction_add]
 
 /-- A strongly Gorenstein projective module embeds in a projective module,
 being the image of a differential on one. This is what makes the predicate
