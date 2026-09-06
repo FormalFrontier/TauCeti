@@ -41,6 +41,8 @@ dictionary.
   by the kernel to the codomain.
 * `TauCeti.HopfIdeal.kerOfSurjective_mkBialgHom`: the kernel of the quotient morphism by `I`
   is `I`.
+* `TauCeti.HopfIdeal.tensor_map_ker_eq_left_sup_right`: the tensor square of a surjective
+  algebra map has the expected kernel in tensor-ideal notation.
 * `TauCeti.HopfIdeal.ker_lTensor_eq_rightTensorIdeal`: tensoring on the left by a flat algebra
   carries the kernel of an algebra map to the corresponding right tensor ideal.
 
@@ -64,7 +66,7 @@ variable {R : Type u} {H : Type v} {K : Type w}
 variable [CommRing R] [Ring H] [Ring K]
 
 /-- The tensor-kernel exactness theorem in the tensor-ideal notation used by `HopfIdeal`. -/
-private theorem tensor_map_ker_eq_left_sup_right [Algebra R H] {A : Type*} [Ring A] [Algebra R A]
+theorem tensor_map_ker_eq_left_sup_right [Algebra R H] {A : Type*} [Ring A] [Algebra R A]
     (f : H →ₐ[R] A)
     (hf : Function.Surjective f) :
     RingHom.ker (Algebra.TensorProduct.map f f) =

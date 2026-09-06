@@ -5,27 +5,18 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.RingTheory.Ideal.Quotient.Nilpotent
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Basic
+public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Reduction
 
 /-!
-# The reduced closed subgroup of an affine group
+# The reduced quotient of an affine group
 
-Let `H` be a commutative Hopf algebra over a reduced commutative ring. Its nilradical is
-automatically stable under the counit and antipode. It is stable under comultiplication provided
-the tensor square of the reduced coordinate algebra is reduced: the image of a nilpotent element
-under comultiplication is nilpotent, hence vanishes in that tensor square. This packages the
-nilradical as a Hopf ideal under precisely that hypothesis.
-
-The tensor-square hypothesis is the algebraic condition needed for reduction to commute with the
-product of the underlying affine scheme. It holds, in particular, for finite-type algebras over a
-perfect field once the standard geometric-reducedness theorem is available. Keeping it explicit
-here separates the Hopf-algebra argument from that commutative-algebra input.
+This file packages the quotient by the generic nilradical Hopf ideal from
+`TauCeti.Algebra.HopfAlgebra.HopfIdeal.Reduction` as a commutative Hopf-algebra object and records
+that its underlying coordinate ring is reduced.
 
 ## Main declarations
 
-* `TauCeti.HopfIdeal.reduction`: the nilradical, packaged as a Hopf ideal.
-* `TauCeti.HopfIdeal.reduction_toIdeal`: its underlying ideal is the nilradical.
 * `TauCeti.HopfIdeal.isReduced_quotient_reduction`: the resulting quotient is reduced.
 
 ## References
@@ -45,86 +36,18 @@ universe u v
 variable (R : Type u) [CommRing R] [IsReduced R]
 variable (H : Type v) [CommRing H] [HopfAlgebra R H]
 
-private theorem nilradical_counit_eq_zero {x : H} (hx : x ∈ nilradical H) :
-    Coalgebra.counit (R := R) x = 0 := by
-  rw [mem_nilradical] at hx
-  exact isNilpotent_iff_eq_zero.mp (hx.map (Bialgebra.counitAlgHom R H))
-
-omit [IsReduced R] in
-private theorem nilradical_antipode_mem {x : H} (hx : x ∈ nilradical H) :
-    HopfAlgebra.antipode R x ∈ nilradical H := by
-  rw [mem_nilradical] at hx ⊢
-  simpa only [HopfAlgebra.antipodeAlgHom_apply] using
-    hx.map (HopfAlgebra.antipodeAlgHom R H)
-
-omit [IsReduced R] in
-private theorem nilradical_comul_mem
-    [IsReduced ((H ⧸ nilradical H) ⊗[R] (H ⧸ nilradical H))]
-    {x : H} (hx : x ∈ nilradical H) :
-    Coalgebra.comul (R := R) x ∈
-      leftTensorIdeal (R := R) (H := H) (nilradical H) ⊔
-        rightTensorIdeal (R := R) (H := H) (nilradical H) := by
-  let q : H →ₐ[R] H ⧸ nilradical H := Ideal.Quotient.mkₐ R (nilradical H)
-  have hnil : IsNilpotent (Coalgebra.comul (R := R) x) :=
-    (mem_nilradical.mp hx).map (Bialgebra.comulAlgHom R H)
-  have hzero : Algebra.TensorProduct.map q q (Coalgebra.comul (R := R) x) = 0 :=
-    isNilpotent_iff_eq_zero.mp (hnil.map (Algebra.TensorProduct.map q q))
-  have hker : RingHom.ker (Algebra.TensorProduct.map q q).toRingHom =
-      leftTensorIdeal (R := R) (H := H) (nilradical H) ⊔
-        rightTensorIdeal (R := R) (H := H) (nilradical H) := by
-    have hqker : RingHom.ker (q : H →+* H ⧸ nilradical H) = nilradical H :=
-      Ideal.Quotient.mkₐ_ker R (nilradical H)
-    change RingHom.ker (Algebra.TensorProduct.map q q) =
-      Ideal.map Algebra.TensorProduct.includeLeft.toRingHom (nilradical H) ⊔
-        Ideal.map Algebra.TensorProduct.includeRight.toRingHom (nilradical H)
-    calc
-      RingHom.ker (Algebra.TensorProduct.map q q) =
-          Ideal.map Algebra.TensorProduct.includeLeft
-              (RingHom.ker (q : H →+* H ⧸ nilradical H)) ⊔
-            Ideal.map Algebra.TensorProduct.includeRight
-              (RingHom.ker (q : H →+* H ⧸ nilradical H)) :=
-        Algebra.TensorProduct.map_ker (f := q) (g := q)
-          (Ideal.Quotient.mkₐ_surjective R (nilradical H))
-          (Ideal.Quotient.mkₐ_surjective R (nilradical H))
-      _ = Ideal.map Algebra.TensorProduct.includeLeft.toRingHom (nilradical H) ⊔
-          Ideal.map Algebra.TensorProduct.includeRight.toRingHom (nilradical H) := by
-        rw [hqker]
-        rfl
-  rw [← hker, RingHom.mem_ker]
-  exact hzero
-
-/-- The nilradical of a commutative Hopf algebra, as a Hopf ideal.
-
-The tensor square of the reduced coordinate algebra must be reduced. This is exactly what makes
-the comultiplication descend: a nilpotent element maps to a nilpotent element of that tensor
-square and therefore to zero. -/
-noncomputable def reduction
-    [IsReduced ((H ⧸ nilradical H) ⊗[R] (H ⧸ nilradical H))] : HopfIdeal R H :=
-  ofIdeal (nilradical H)
-    (fun {x} hx ↦ nilradical_comul_mem R H (x := x) hx)
-    (fun {x} hx ↦ nilradical_counit_eq_zero R H (x := x) hx)
-    (fun {x} hx ↦ nilradical_antipode_mem R H (x := x) hx)
-
-/-- The underlying ideal of the reduction Hopf ideal is the nilradical. -/
-@[simp]
-theorem reduction_toIdeal
-    [IsReduced ((H ⧸ nilradical H) ⊗[R] (H ⧸ nilradical H))] :
-    (reduction R H).toIdeal = nilradical H := by
-  rw [reduction, toIdeal_carrier, ofIdeal_carrier]
-
-/-- Membership in the reduction Hopf ideal is nilpotence. -/
-@[simp]
-theorem mem_reduction
-    [IsReduced ((H ⧸ nilradical H) ⊗[R] (H ⧸ nilradical H))] {x : H} :
-    x ∈ reduction R H ↔ IsNilpotent x := by
-  rw [← mem_toIdeal, reduction_toIdeal, mem_nilradical]
-
 /-- The quotient by the reduction Hopf ideal has reduced coordinate ring. -/
 theorem isReduced_quotient_reduction
     [IsReduced ((H ⧸ nilradical H) ⊗[R] (H ⧸ nilradical H))] :
     IsReduced (CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of R H) (reduction R H)) := by
-  change IsReduced (H ⧸ nilradical H)
-  exact (Ideal.isRadical_iff_quotient_reduced (nilradical H)).mp
-    (Ideal.radical_isRadical ⊥)
+  let _ : IsReduced (H ⧸ (reduction R H).toIdeal) :=
+    (Ideal.isRadical_iff_quotient_reduced (reduction R H).toIdeal).mp (by
+      rw [reduction_toIdeal]
+      exact Ideal.radical_isRadical ⊥)
+  exact isReduced_of_injective
+    (CommHopfAlgCat.quotientRingEquiv
+      (_root_.CommHopfAlgCat.of R H) (reduction R H)).toRingHom
+    (CommHopfAlgCat.quotientRingEquiv
+      (_root_.CommHopfAlgCat.of R H) (reduction R H)).injective
 
 end TauCeti.HopfIdeal
