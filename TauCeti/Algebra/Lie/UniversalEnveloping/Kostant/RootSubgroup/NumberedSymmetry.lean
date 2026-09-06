@@ -211,7 +211,7 @@ theorem kostantElementaryNumberedSymmetryAut_pow_eq_one (A : CommAlgCat.{w} ℤ)
         rw [pow_succ', MulAut.mul_apply, val_kostantElementaryNumberedSymmetryAut, ih g, pow_succ']
         group
   have hn' : ∀ v, (θ.toAddEquiv.toIntLinearEquiv ^ n) v = v := fun v =>
-    (AddEquiv.toIntLinearEquiv_pow_apply θ.toAddEquiv n v).trans
+    (LinearEquiv.pow_apply θ.toAddEquiv.toIntLinearEquiv n v).trans
       ((LinearEquiv.pow_apply θ n v).symm.trans (hn v))
   rw [hpow n g, baseChangeInvariantRestrictUnit_pow_eq_one θ.toAddEquiv M hθM hn', one_mul,
     inv_one, mul_one]

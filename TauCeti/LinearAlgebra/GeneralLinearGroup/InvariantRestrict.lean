@@ -37,13 +37,6 @@ namespace AddEquiv
 universe u v w
 
 variable {V : Type u} [AddCommGroup V]
-
-/-- Viewing an additive automorphism as an integral linear automorphism preserves the action of
-all its powers. -/
-theorem toIntLinearEquiv_pow_apply (θ : V ≃+ V) (n : ℕ) (v : V) :
-    (θ.toIntLinearEquiv ^ n) v = (θ : V → V)^[n] v := by
-  simpa only [AddEquiv.coe_toIntLinearEquiv] using LinearEquiv.pow_apply θ.toIntLinearEquiv n v
-
 variable {S : Type*} [SetLike S V] [AddSubgroupClass S V]
 
 /-! ## Restriction to an invariant subgroup -/
