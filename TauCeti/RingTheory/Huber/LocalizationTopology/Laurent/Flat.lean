@@ -216,7 +216,8 @@ theorem flat_restrictionRingHomOfSubset (ht : t ∈ T') (hsplit : ∀ u ∈ T', 
       = algebraMap (UniformSpace.Completion S) _ r := by
     intro r
     rw [RingHom.algebraMap_toAlgebra, ← hecomm, RingEquiv.symm_apply_apply,
-      ← Ideal.Quotient.mk_algebraMap, algebraMap_weightedRestrictedSubring]
+      ← Ideal.Quotient.mk_algebraMap,
+      RingHom.algebraMap_toAlgebra (weightedC _ isWeightFamily_one_weight)]
   exact Module.Flat.of_linearEquiv (AlgEquiv.ofRingEquiv (f := e.symm) hsymm).toLinearEquiv
 
 /-- **Proposition 8.30, the elementary case**, for a topologically nilpotent denominator over a
