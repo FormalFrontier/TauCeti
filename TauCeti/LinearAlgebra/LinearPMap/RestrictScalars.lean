@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.LinearPMap
+import TauCeti.LinearAlgebra.LinearPMap.Basic
 
 /-!
 # Restriction of scalars for partial linear maps
@@ -27,6 +28,10 @@ change, and negation commutes with the restriction.
   membership and evaluation agree with those of the original map.
 * `LinearPMap.restrictScalars_neg` and `LinearPMap.restrictScalars_smul`: restriction of scalars
   commutes with negation and with scalar multiplication of the map.
+* `LinearPMap.restrictScalars_injective`: a map is determined by its restriction.
+* `LinearPMap.restrictScalars_graph` and `LinearPMap.congr_fun_restrictScalars`: the graph is the
+  restriction of scalars of the graph, and a map equal to a restriction takes the restricted map's
+  values.
 -/
 
 public section
@@ -74,6 +79,44 @@ theorem restrictScalars_smul {M : Type*} [Monoid M] [DistribMulAction M F] [SMul
     [SMulCommClass S M F] (a : M) (A : E →ₗ.[R] F) :
     (a • A).restrictScalars S = a • A.restrictScalars S :=
   LinearPMap.ext rfl fun _ _ _ => rfl
+
+
+/-- Restriction of scalars is injective: a partial linear map is determined by its restriction. -/
+theorem restrictScalars_injective :
+    Function.Injective (LinearPMap.restrictScalars S : (E →ₗ.[R] F) → (E →ₗ.[S] F)) := by
+  intro A B h
+  refine LinearPMap.ext (Submodule.restrictScalars_injective S _ _ ?_) fun x hxA hxB => ?_
+  · rw [← A.restrictScalars_domain S, ← B.restrictScalars_domain S, h]
+  · rw [← A.restrictScalars_apply S ⟨x, (A.mem_restrictScalars_domain S).mpr hxA⟩,
+      ← B.restrictScalars_apply S ⟨x, (B.mem_restrictScalars_domain S).mpr hxB⟩]
+    exact LinearPMap.congr_fun h _ _
+
+/-- The graph of the restriction of scalars is the restriction of scalars of the graph. -/
+@[simp]
+theorem restrictScalars_graph (A : E →ₗ.[R] F) :
+    (A.restrictScalars S).graph = A.graph.restrictScalars S := by
+  ext p
+  simp only [Submodule.restrictScalars_mem, LinearPMap.mem_graph_iff]
+  constructor
+  · rintro ⟨x, hx1, hx2⟩
+    rw [A.restrictScalars_apply S] at hx2
+    exact ⟨⟨x, (A.mem_restrictScalars_domain S).mp x.property⟩, hx1, hx2⟩
+  · rintro ⟨x, hx1, hx2⟩
+    exact ⟨⟨x, (A.mem_restrictScalars_domain S).mpr x.property⟩, hx1,
+      by rw [A.restrictScalars_apply S]; exact hx2⟩
+
+/-- Restricting scalars does not change the graph, as a set. -/
+theorem restrictScalars_coe_graph (A : E →ₗ.[R] F) :
+    ((A.restrictScalars S).graph : Set (E × F)) = (A.graph : Set (E × F)) := by
+  rw [restrictScalars_graph, Submodule.coe_restrictScalars]
+
+/-- A partial linear map equal to a restriction of scalars takes the values of the restricted
+map. -/
+theorem congr_fun_restrictScalars {B : E →ₗ.[S] F} {A : E →ₗ.[R] F}
+    (h : B = A.restrictScalars S) {x : E} (hx : x ∈ B.domain) (hxA : x ∈ A.domain) :
+    B ⟨x, hx⟩ = A ⟨x, hxA⟩ :=
+  (LinearPMap.congr_fun h hx ((A.mem_restrictScalars_domain S).mpr hxA)).trans
+    (A.restrictScalars_apply S _)
 
 end LinearPMap
 

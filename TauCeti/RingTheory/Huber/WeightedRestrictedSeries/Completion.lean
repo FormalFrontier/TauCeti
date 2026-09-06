@@ -112,6 +112,19 @@ theorem continuous_algebraMap_completion_weightedRestrictedSubring {T : Fin k �
   exact ((UniformSpace.Completion.continuous_coe _).comp h).congr fun a ↦
     (UniformSpace.Completion.algebraMap_def _ _ a).symm
 
+/-- **The structure map into the completion is the constant series**, read in the completion.
+
+This is what lets a statement about the generators — phrased with `weightedC` — meet one about the
+`A`-algebra structure, phrased with `algebraMap`. -/
+@[simp]
+theorem algebraMap_completion_weightedRestrictedSubring_apply {T : Fin k → Set A}
+    (hT : IsWeightFamily T) (a : A) :
+    algebraMap A (UniformSpace.Completion (weightedRestrictedSubring T hT)) a
+      = ((weightedC T hT a : weightedRestrictedSubring T hT) :
+        UniformSpace.Completion (weightedRestrictedSubring T hT)) := by
+  rw [UniformSpace.Completion.algebraMap_def]
+  exact congrArg _ (Subtype.ext (by rw [coe_algebraMap_weightedRestrictedSubring, coe_weightedC]))
+
 /-- The structure map `A → A⟨X₁,…,Xₖ⟩` is continuous. -/
 theorem continuous_algebraMap_restrictedMvPowerSeriesCompletion :
     Continuous (algebraMap A (restrictedMvPowerSeriesCompletion k A)) :=
