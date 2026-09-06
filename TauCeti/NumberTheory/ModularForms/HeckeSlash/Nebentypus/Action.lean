@@ -104,8 +104,15 @@ theorem multiplicity_inv_reverse_eq (D₁ D₂ D : Coset₀(N)) :
         (b₂ : GL (Fin 2) ℚ) (b₁ : GL (Fin 2) ℚ) (D.rep : GL (Fin 2) ℚ) :=
       multiplicity_doubleCoset_congr _ _ hb
     _ = multiplicity (Γ₀Q(N)) (Γ₀Q(N)) (Γ₀Q(N))
+        (b₁ : GL (Fin 2) ℚ) (b₂ : GL (Fin 2) ℚ) (D.rep : GL (Fin 2) ℚ) :=
+      hcomm b₂ b₁ D.rep
+    _ = multiplicity (Γ₀Q(N)) (Γ₀Q(N)) (Γ₀Q(N))
+        (b₁ : GL (Fin 2) ℚ) (D₂.rep : GL (Fin 2) ℚ) (D.rep : GL (Fin 2) ℚ) :=
+      multiplicity_doubleCoset_congr_second (Γ₀Q(N)) (Γ₀Q(N)) (Γ₀Q(N))
+        b₁ D.rep hb₂
+    _ = multiplicity (Γ₀Q(N)) (Γ₀Q(N)) (Γ₀Q(N))
         (D₂.rep : GL (Fin 2) ℚ) (b₁ : GL (Fin 2) ℚ) (D.rep : GL (Fin 2) ℚ) :=
-      multiplicity_doubleCoset_congr_first_of_comm (Γ₀Q(N)) hcomm b₁ D.rep hb₂
+      (hcomm D₂.rep b₁ D.rep).symm
     _ = multiplicity (Γ₀Q(N)) (Γ₀Q(N)) (Γ₀Q(N))
         (D₂.rep : GL (Fin 2) ℚ) (D₁.rep : GL (Fin 2) ℚ) (D.rep : GL (Fin 2) ℚ) :=
       multiplicity_doubleCoset_congr_second (Γ₀Q(N)) (Γ₀Q(N)) (Γ₀Q(N))
@@ -244,6 +251,9 @@ lemma coe_twistedHeckeSlashModularFormCharLinearMap
       rw [twistedHeckeSlashModularFormCharLinearMap_single,
         twistedHeckeSlashRingCharLinearMap_single]
       ext τ
+      -- Scalar multiplication is bundled independently on `Module.End`, the character
+      -- submodule, `ModularForm`, and functions. After evaluating at `τ`, `change` only exposes
+      -- those coercions; the two named `coe_...` lemmas then supply the substantive equality.
       change c • (⇑((twistedHeckeSlashModularFormCharEnd k χ D f :
         ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) : ℍ → ℂ) τ =
           c • (twistedHeckeSlashSumCharEnd k χ D
@@ -334,6 +344,8 @@ lemma coe_twistedHeckeSlashCuspFormCharLinearMap
       rw [twistedHeckeSlashCuspFormCharLinearMap_single,
         twistedHeckeSlashRingCharLinearMap_single]
       ext τ
+      -- As in the modular-form proof, this exposes only the four bundled scalar/coercion
+      -- layers after evaluation; the explicit coercion lemmas prove the mathematical step.
       change c • (⇑((twistedHeckeSlashCuspFormCharEnd k χ D f :
         CuspForm ((Gamma1 N).map (mapGL ℝ)) k)) : ℍ → ℂ) τ =
           c • (twistedHeckeSlashSumCharEnd k χ D

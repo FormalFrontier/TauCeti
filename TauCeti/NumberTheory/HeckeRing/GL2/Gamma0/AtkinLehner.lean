@@ -304,27 +304,33 @@ noncomputable def atkinLehnerAutomorphism : GL (Fin 2) ℚ ≃* GL (Fin 2) ℚ :
       (transposeGLEquiv 2 x⁻¹).unop * (natDiagGL 2 ![1, N])⁻¹ :=
   (rfl)
 
+/-- Coercing the ambient automorphism to a monoid hom does not change its value. -/
+private lemma atkinLehnerAutomorphism_toMonoidHom_apply (x : GL (Fin 2) ℚ) :
+    (atkinLehnerAutomorphism N : GL (Fin 2) ℚ →* GL (Fin 2) ℚ) x =
+      atkinLehnerAutomorphism N x :=
+  (rfl)
+
 /-- The ambient Atkin–Lehner automorphism is involutive. -/
-lemma atkinLehnerAutomorphism_involutive (x : GL (Fin 2) ℚ) :
+@[simp] lemma atkinLehnerAutomorphism_involutive (x : GL (Fin 2) ℚ) :
     atkinLehnerAutomorphism N (atkinLehnerAutomorphism N x) = x := by
-  change (atkinLehnerHom N ((atkinLehnerHom N x⁻¹).unop)⁻¹).unop = x
+  rw [atkinLehnerAutomorphism_apply, ← atkinLehnerHom_unop,
+    atkinLehnerAutomorphism_apply, ← atkinLehnerHom_unop]
   rw [map_inv, MulOpposite.unop_inv, atkinLehnerHom_involutive, inv_inv]
 
 /-- The ambient Atkin–Lehner automorphism preserves the image of `Γ₀(N)`. -/
-theorem atkinLehnerAutomorphism_map_Gamma0 [NeZero N] :
+@[simp] theorem atkinLehnerAutomorphism_map_Gamma0 [NeZero N] :
     ((Gamma0 N).map (mapGL ℚ)).map (atkinLehnerAutomorphism N :
         GL (Fin 2) ℚ →* GL (Fin 2) ℚ) = (Gamma0 N).map (mapGL ℚ) := by
   ext x
   constructor
   · rintro ⟨y, hy, rfl⟩
-    change atkinLehnerAutomorphism N y ∈ (Gamma0 N).map (mapGL ℚ)
-    change (atkinLehnerHom N y⁻¹).unop ∈ (Gamma0 N).map (mapGL ℚ)
+    rw [atkinLehnerAutomorphism_toMonoidHom_apply, atkinLehnerAutomorphism_apply,
+      ← atkinLehnerHom_unop]
     rw [← Gamma0Image_def] at hy ⊢
     exact atkinLehnerHom_mem_Gamma0Image N y⁻¹ (inv_mem hy)
   · intro hx
     refine ⟨atkinLehnerAutomorphism N x, ?_, atkinLehnerAutomorphism_involutive N x⟩
-    change atkinLehnerAutomorphism N x ∈ (Gamma0 N).map (mapGL ℚ)
-    change (atkinLehnerHom N x⁻¹).unop ∈ (Gamma0 N).map (mapGL ℚ)
+    rw [atkinLehnerAutomorphism_apply, ← atkinLehnerHom_unop]
     rw [← Gamma0Image_def] at hx ⊢
     exact atkinLehnerHom_mem_Gamma0Image N x⁻¹ (inv_mem hx)
 
