@@ -104,9 +104,17 @@ theorem trace_quotient_pow [Module.Finite A B] (hP : P ≠ ⊥) (n : ℕ)
         ((Submodule.mapQ (P ^ (n + 1)) (P ^ n) LinearMap.id hfac).restrictScalars
           A).extendScalarsOfSurjective hsurj with hpi_def
       have hi_apply (x : B) : i (Ideal.Quotient.mk P x) = Ideal.Quotient.mk (P ^ (n + 1)) (a * x) :=
-        rfl
+        by
+          rw [hi_def, LinearMap.extendScalarsOfSurjective_apply,
+            LinearMap.restrictScalars_apply]
+          simpa only [← Ideal.Quotient.mk_eq_mk, LinearMap.mulLeft_apply] using
+            Submodule.mapQ_apply P (P ^ (n + 1)) (LinearMap.mulLeft B a) x
       have hpi_apply (x : B) :
-          pi (Ideal.Quotient.mk (P ^ (n + 1)) x) = Ideal.Quotient.mk (P ^ n) x := rfl
+          pi (Ideal.Quotient.mk (P ^ (n + 1)) x) = Ideal.Quotient.mk (P ^ n) x := by
+        rw [hpi_def, LinearMap.extendScalarsOfSurjective_apply,
+          LinearMap.restrictScalars_apply]
+        simpa only [← Ideal.Quotient.mk_eq_mk, LinearMap.id_apply] using
+          Submodule.mapQ_apply (P ^ (n + 1)) (P ^ n) LinearMap.id x
       -- the sequence `0 → B ⧸ P → B ⧸ P ^ (n + 1) → B ⧸ P ^ n → 0` is exact
       have hinj : Function.Injective i := by
         rw [injective_iff_map_eq_zero]

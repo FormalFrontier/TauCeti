@@ -98,11 +98,14 @@ theorem not_pow_dvd_differentIdeal_of_isCoprime_of_isSeparable
     { __ := (Ideal.quotEquivOfEq hmul.symm).trans
         (Ideal.quotientMulEquivQuotientProd (P ^ e) Q hPQ)
       commutes' := Quotient.ind fun _ ↦ rfl }
+  have ee_snd_mk (b : B) :
+      (ee (Ideal.Quotient.mk (Ideal.map (algebraMap A B) p) b)).2 =
+        Ideal.Quotient.mk Q b := by
+    simp [ee]
   obtain ⟨y, hy⟩ := Ideal.Quotient.mk_surjective (ee.symm (Ideal.Quotient.mk _ z, 0))
   refine not_dvd_differentIdeal_of_intTrace_not_mem A (P ^ e) Q hmul y ?_ ?_
-  · have h2 := congr((ee $hy).2)
-    simp at h2
-    simpa [ee, Ideal.Quotient.eq_zero_iff_mem] using h2
+  · rw [← Ideal.Quotient.eq_zero_iff_mem, ← ee_snd_mk]
+    simpa using congrArg (fun x ↦ (ee x).2) hy
   · rw [← Ideal.Quotient.eq_zero_iff_mem, ← Algebra.trace_quotient_eq_of_isDedekindDomain,
       hy, Algebra.trace_eq_of_algEquiv, Algebra.trace_prod_apply]
     simpa using hx

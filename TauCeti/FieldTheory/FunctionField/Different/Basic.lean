@@ -172,6 +172,7 @@ theorem algebraMap_mem_integers_of_mem_integralClosure
 /-- **The prime of `𝒪_P` below the centre of `P'` on the local model is the maximal ideal of
 `𝒪_P`**: the residue extension read on the local model is the residue-field extension of the two
 places. -/
+@[simp]
 theorem center_restrict_asIdeal_eq_maximalIdeal :
     ((P'.restrict k F).center (algebraMap_mem_integers_restrict
         (R := ((P'.restrict k F).integers)) k F P'
