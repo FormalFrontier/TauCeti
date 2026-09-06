@@ -32,9 +32,9 @@ results that identify the operator as the derivative of the gradient and prove s
 ## Main declarations
 
 * `TauCeti.hessianOperator`: the Riesz-represented Hessian as an endomorphism of the Hilbert space.
-* `TauCeti.ContDiffAt.isSelfAdjoint_hessianOperator`: symmetry of the second derivative becomes
+* `ContDiffAt.isSelfAdjoint_hessianOperator`: symmetry of the second derivative becomes
   self-adjointness of the Hessian operator.
-* `TauCeti.ContDiffAt.hasFDerivAt_neg_gradient`: the derivative of `-∇ f` is the negative Hessian
+* `ContDiffAt.hasFDerivAt_neg_gradient`: the derivative of `-∇ f` is the negative Hessian
   operator.
 * `TauCeti.IsNondegenerateCriticalPoint.neg_gradient_sub_linearization_isLittleO`: the nonlinear
   remainder after subtracting the linearization is little-o of the displacement.
@@ -89,9 +89,18 @@ theorem inner_hessianOperator_left (f : E → ℝ) (x v w : E) :
     hessianOperator f x) v w = _
   rw [toDual_hessianOperator]
 
+end TauCeti
+
+namespace ContDiffAt
+
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+  {f : E → ℝ} {x : E}
+
+open TauCeti
+
 /-- Twice continuous differentiability makes the Hessian operator self-adjoint. This is the
 operator form of symmetry of the second Fréchet derivative. -/
-theorem ContDiffAt.isSelfAdjoint_hessianOperator (hf : ContDiffAt ℝ 2 f x) :
+theorem isSelfAdjoint_hessianOperator (hf : ContDiffAt ℝ 2 f x) :
     IsSelfAdjoint (hessianOperator f x) := by
   apply LinearMap.IsSymmetric.isSelfAdjoint
   intro v w
@@ -102,6 +111,31 @@ theorem ContDiffAt.isSelfAdjoint_hessianOperator (hf : ContDiffAt ℝ 2 f x) :
     _ = ⟪(hessianOperator f x : E → E) w, v⟫_ℝ :=
       (inner_hessianOperator_left f x w v).symm
     _ = ⟪v, (hessianOperator f x : E → E) w⟫_ℝ := real_inner_comm _ _
+
+/-- The gradient is differentiable at a twice continuously differentiable point, with derivative
+the Hessian operator. -/
+theorem hasFDerivAt_gradient (hf : ContDiffAt ℝ 2 f x) :
+    HasFDerivAt (∇ f) (hessianOperator f x) x := by
+  have hfd : HasFDerivAt (fderiv ℝ f) (fderiv ℝ (fderiv ℝ f) x) x :=
+    (hf.fderiv_right (m := 1) (by norm_num)).differentiableAt one_ne_zero |>.hasFDerivAt
+  have h := (InnerProductSpace.toDual ℝ E).symm.toContinuousLinearEquiv.hasFDerivAt.comp x hfd
+  convert h using 1
+  · ext y
+    rfl
+  · rfl
+
+/-- The negative-gradient vector field is differentiable at a twice continuously differentiable
+point, with derivative minus the Hessian operator. -/
+theorem hasFDerivAt_neg_gradient (hf : ContDiffAt ℝ 2 f x) :
+    HasFDerivAt (-∇ f) (-hessianOperator f x) x :=
+  (hasFDerivAt_gradient hf).neg
+
+end ContDiffAt
+
+namespace TauCeti
+
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+  {f : E → ℝ} {x : E}
 
 /-- The Hessian operator is invertible exactly when the dual-valued second derivative is. Thus
 the Hilbert-space operator formulation is equivalent to the Banach-space formulation used in
@@ -116,24 +150,6 @@ theorem isInvertible_hessianOperator_iff :
 theorem IsNondegenerateCriticalPoint.isInvertible_hessianOperator
     (h : IsNondegenerateCriticalPoint f x) : (hessianOperator f x).IsInvertible :=
   isInvertible_hessianOperator_iff.2 h.isInvertible
-
-/-- The gradient is differentiable at a twice continuously differentiable point, with derivative
-the Hessian operator. -/
-theorem ContDiffAt.hasFDerivAt_gradient (hf : ContDiffAt ℝ 2 f x) :
-    HasFDerivAt (∇ f) (hessianOperator f x) x := by
-  have hfd : HasFDerivAt (fderiv ℝ f) (fderiv ℝ (fderiv ℝ f) x) x :=
-    (hf.fderiv_right (m := 1) (by norm_num)).differentiableAt one_ne_zero |>.hasFDerivAt
-  have h := (InnerProductSpace.toDual ℝ E).symm.toContinuousLinearEquiv.hasFDerivAt.comp x hfd
-  convert h using 1
-  · ext y
-    rfl
-  · rfl
-
-/-- The negative-gradient vector field is differentiable at a twice continuously differentiable
-point, with derivative minus the Hessian operator. -/
-theorem ContDiffAt.hasFDerivAt_neg_gradient (hf : ContDiffAt ℝ 2 f x) :
-    HasFDerivAt (-∇ f) (-hessianOperator f x) x :=
-  (ContDiffAt.hasFDerivAt_gradient hf).neg
 
 /-- The gradient vanishes at a nondegenerate critical point. This translates the dual-valued
 criticality condition in `TauCeti.IsNondegenerateCriticalPoint` through the Riesz equivalence. -/
