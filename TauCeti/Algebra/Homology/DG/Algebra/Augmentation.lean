@@ -5,7 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.LinearAlgebra.Projection
 public import Mathlib.RingTheory.GradedAlgebra.Homogeneous.Submodule
+public import Mathlib.RingTheory.TwoSidedIdeal.Kernel
 public import TauCeti.Algebra.Homology.DG.Algebra.Hom.Basic
 public import TauCeti.RingTheory.GradedAlgebra.Trivial
 
@@ -25,6 +27,7 @@ augmentation ideal rather than from the unit-containing algebra.
 
 * `TauCeti.DGAlgAugmentation`: a DG algebra morphism from `A` to the trivially graded base ring.
 * `TauCeti.DGAlgAugmentation.augmentationIdeal`: the homogeneous kernel of an augmentation.
+* `TauCeti.DGAlgAugmentation.twoSidedIdeal`: the same kernel as a two-sided ideal of `A`.
 * `TauCeti.DGAlgAugmentation.splitLinearEquiv`: the canonical linear splitting
   `A ≃ R × ker ε`.
 * `TauCeti.IsDGAlgebra.unitHom`: the canonical unit morphism from the trivially graded base.
@@ -84,9 +87,13 @@ variable {h : IsDGAlgebra 𝒜 d} (e : DGAlgAugmentation h)
 
 /-- An augmentation restricts to the identity on the image of the ground ring. -/
 @[simp]
-theorem map_algebraMap (r : R) : e (algebraMap R A r) = r := by
-  change e (algebraMap R A r) = algebraMap R R r
-  exact e.toGradedAlgHom.commutes r
+theorem map_algebraMap (r : R) : e (algebraMap R A r) = r :=
+  (e.toGradedAlgHom.commutes r).trans (Algebra.algebraMap_self_apply r)
+
+/-- An augmentation is surjective, since it restricts to the identity on the image of the ground
+ring. -/
+theorem surjective : Function.Surjective e :=
+  fun r => ⟨algebraMap R A r, e.map_algebraMap r⟩
 
 /-- An augmentation annihilates every differential. -/
 @[simp]
@@ -112,15 +119,32 @@ noncomputable def augmentationIdeal :
 theorem mem_augmentationIdeal {a : A} : a ∈ e.augmentationIdeal ↔ e a = 0 :=
   LinearMap.mem_ker
 
+/-- The augmentation ideal, as a two-sided ideal of `A`.  This is the same kernel as
+`TauCeti.DGAlgAugmentation.augmentationIdeal`, packaged so that the two-sided ideal lattice,
+quotient, and multiplication API applies to it. -/
+def twoSidedIdeal : TwoSidedIdeal A :=
+  TwoSidedIdeal.ker e
+
+/-- Membership in the two-sided augmentation ideal is equivalent to vanishing under the
+augmentation. -/
+@[simp]
+theorem mem_twoSidedIdeal {a : A} : a ∈ e.twoSidedIdeal ↔ e a = 0 :=
+  TwoSidedIdeal.mem_ker e
+
+/-- The two-sided augmentation ideal and its homogeneous submodule view have the same elements. -/
+theorem mem_twoSidedIdeal_iff_mem_augmentationIdeal {a : A} :
+    a ∈ e.twoSidedIdeal ↔ a ∈ e.augmentationIdeal := by
+  rw [mem_twoSidedIdeal, mem_augmentationIdeal]
+
 /-- The augmentation ideal absorbs multiplication on the left. -/
 theorem mul_mem_augmentationIdeal_left (a : A) {x : A} (hx : x ∈ e.augmentationIdeal) :
     a * x ∈ e.augmentationIdeal := by
-  rw [mem_augmentationIdeal, map_mul, (mem_augmentationIdeal e).mp hx, mul_zero]
+  simpa using e.twoSidedIdeal.mul_mem_left a x (by simpa using hx)
 
 /-- The augmentation ideal absorbs multiplication on the right. -/
 theorem mul_mem_augmentationIdeal_right {x : A} (hx : x ∈ e.augmentationIdeal) (a : A) :
     x * a ∈ e.augmentationIdeal := by
-  rw [mem_augmentationIdeal, map_mul, (mem_augmentationIdeal e).mp hx, zero_mul]
+  simpa using e.twoSidedIdeal.mul_mem_right x a (by simpa using hx)
 
 /-- The differential of every element lies in the augmentation ideal. -/
 theorem map_mem_augmentationIdeal (x : A) :
@@ -139,22 +163,12 @@ theorem sub_algebraMap_mem_augmentationIdeal (a : A) :
     a - algebraMap R A (e a) ∈ e.augmentationIdeal := by
   rw [mem_augmentationIdeal, map_sub, e.map_algebraMap, sub_self]
 
-/-- The linear projection from an augmented DG algebra onto its augmentation ideal. -/
-noncomputable def reducedPart : A →ₗ[R] e.augmentationIdeal.toSubmodule where
-  toFun a := ⟨a - algebraMap R A (e a), e.sub_algebraMap_mem_augmentationIdeal a⟩
-  map_add' a b := by
-    apply Subtype.ext
-    change a + b - algebraMap R A (e (a + b)) =
-      (a - algebraMap R A (e a)) + (b - algebraMap R A (e b))
-    rw [map_add, map_add]
-    abel
-  map_smul' r a := by
-    apply Subtype.ext
-    change r • a - (Algebra.linearMap R A) (e (r • a)) =
-      r • (a - (Algebra.linearMap R A) (e a))
-    rw [show e (r • a) = r • e a from
-        e.toGradedAlgHom.toAlgHom.toLinearMap.map_smul r a,
-      (Algebra.linearMap R A).map_smul, smul_sub]
+/-- The linear projection from an augmented DG algebra onto its augmentation ideal, subtracting
+the scalar part of an element. -/
+noncomputable def reducedPart : A →ₗ[R] e.augmentationIdeal.toSubmodule :=
+  LinearMap.codRestrict _
+    (LinearMap.id - (Algebra.linearMap R A).comp e.toGradedAlgHom.toAlgHom.toLinearMap)
+    e.sub_algebraMap_mem_augmentationIdeal
 
 /-- The reduced-part projection subtracts the scalar part of an element. -/
 @[simp]
@@ -163,29 +177,16 @@ theorem coe_reducedPart (a : A) :
 
 /-- The reduced-part projection fixes the augmentation ideal pointwise. -/
 @[simp]
-theorem reducedPart_apply_mem (x : e.augmentationIdeal) :
+theorem reducedPart_coe (x : e.augmentationIdeal) :
     e.reducedPart (x : A) = x := by
   apply Subtype.ext
   rw [coe_reducedPart, (mem_augmentationIdeal e).mp x.property, map_zero, sub_zero]
 
 /-- The canonical splitting of an augmented DG algebra into its scalar and reduced parts. -/
-noncomputable def splitLinearEquiv : A ≃ₗ[R] R × e.augmentationIdeal where
-  toFun a := (e a, e.reducedPart a)
-  invFun x := algebraMap R A x.1 + x.2
-  map_add' a b := Prod.ext (map_add e a b) (map_add e.reducedPart a b)
-  map_smul' r a := Prod.ext (map_smul e r a) (map_smul e.reducedPart r a)
-  left_inv a := by
-    simp only [coe_reducedPart]
-    abel
-  right_inv x := by
-    ext
-    · change e (algebraMap R A x.1 + (x.2 : A)) = x.1
-      rw [map_add, e.map_algebraMap, (mem_augmentationIdeal e).mp x.2.property, add_zero]
-    · rw [coe_reducedPart, map_add, e.map_algebraMap,
-        (mem_augmentationIdeal e).mp x.2.property, add_zero]
-      -- Normalize the inverse lambda before applying the additive cancellation law.
-      change (algebraMap R A x.1 + (x.2 : A)) - algebraMap R A x.1 = x.2
-      exact add_sub_cancel_left _ _
+noncomputable def splitLinearEquiv : A ≃ₗ[R] R × e.augmentationIdeal :=
+  LinearMap.equivProdOfSurjectiveOfIsCompl e.toGradedAlgHom.toAlgHom.toLinearMap e.reducedPart
+    (LinearMap.range_eq_top.2 e.surjective) (LinearMap.range_eq_of_proj e.reducedPart_coe)
+    (LinearMap.isCompl_of_proj e.reducedPart_coe)
 
 /-- The splitting sends an element to its scalar part and its reduced part. -/
 @[simp]
@@ -195,7 +196,12 @@ theorem splitLinearEquiv_apply (a : A) :
 /-- The inverse splitting adds the scalar and reduced parts. -/
 @[simp]
 theorem splitLinearEquiv_symm_apply (x : R × e.augmentationIdeal) :
-    e.splitLinearEquiv.symm x = algebraMap R A x.1 + x.2 := (rfl)
+    e.splitLinearEquiv.symm x = algebraMap R A x.1 + x.2 := by
+  have hx : e (x.2 : A) = 0 := (mem_augmentationIdeal e).mp x.2.property
+  rw [LinearEquiv.symm_apply_eq, splitLinearEquiv_apply]
+  refine Prod.ext ?_ (Subtype.ext ?_)
+  · rw [map_add, e.map_algebraMap, hx, add_zero]
+  · rw [coe_reducedPart, map_add, e.map_algebraMap, hx, add_zero, add_sub_cancel_left]
 
 end DGAlgAugmentation
 

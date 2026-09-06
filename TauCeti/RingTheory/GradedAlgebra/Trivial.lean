@@ -18,6 +18,7 @@ It is the canonical target grading for augmentations of integer-graded algebras.
 ## Main definitions
 
 * `TauCeti.trivialGrading`: the internal integer grading with the whole algebra in degree zero.
+* `TauCeti.toTrivialGradingZero`: the algebra viewed as the degree-zero piece of that grading.
 
 ## Main results
 
@@ -32,7 +33,7 @@ open DirectSum
 
 namespace TauCeti
 
-variable (R A : Type*) [CommRing R] [Ring A] [Algebra R A]
+variable (R A : Type*) [CommSemiring R] [Semiring A] [Algebra R A]
 
 /-- The trivial integer grading of an `R`-algebra: all elements have degree zero and every other
 homogeneous piece is zero. -/
@@ -57,41 +58,52 @@ theorem mem_trivialGrading_iff {p : ℤ} {a : A} :
   · simp [hp]
   · simp [trivialGrading, hp]
 
-noncomputable instance instGradedAlgebraTrivialGrading :
-    GradedAlgebra (trivialGrading R A) := by
-  letI : SetLike.GradedMonoid (trivialGrading R A) := {
-    one_mem := by simp
-    mul_mem := by
-      intro p q a b ha hb
-      rcases (mem_trivialGrading_iff R A).mp ha with rfl | rfl
-      · rcases (mem_trivialGrading_iff R A).mp hb with rfl | rfl <;> simp
-      · simp }
-  apply DirectSum.IsInternal.gradedAlgebra
-  rw [DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top]
-  constructor
-  · rw [iSupIndep_def]
-    intro p
-    by_cases hp : p = 0
-    · subst hp
-      simp only [trivialGrading_zero, top_disjoint, iSup_eq_bot]
-      exact fun i hi ↦ trivialGrading_eq_bot R A hi
-    · rw [trivialGrading_eq_bot R A hp]
-      exact disjoint_bot_left
-  · apply top_unique
-    exact le_iSup_of_le 0 (by simp)
+/-- Every element of the algebra, viewed as an element of the degree-zero piece of the trivial
+grading. -/
+def toTrivialGradingZero : A →+ trivialGrading R A 0 where
+  toFun a := ⟨a, by simp⟩
+  map_zero' := rfl
+  map_add' _ _ := rfl
+
+@[simp]
+theorem coe_toTrivialGradingZero (a : A) : (toTrivialGradingZero R A a : A) = a := (rfl)
+
+/-- The trivial grading is an internal grading: an element is its own degree-zero component, and
+all higher components vanish. -/
+instance instGradedAlgebraTrivialGrading : GradedAlgebra (trivialGrading R A) where
+  one_mem := by simp
+  mul_mem := by
+    intro p q a b ha hb
+    rcases (mem_trivialGrading_iff R A).mp ha with rfl | rfl
+    · rcases (mem_trivialGrading_iff R A).mp hb with rfl | rfl <;> simp
+    · simp
+  decompose' a := DirectSum.of (fun p ↦ trivialGrading R A p) 0 (toTrivialGradingZero R A a)
+  left_inv a := by simp
+  right_inv x := by
+    induction x using DirectSum.induction_on with
+    | zero => simp
+    | of p y =>
+      rw [DirectSum.coeAddMonoidHom_of]
+      by_cases hp : p = 0
+      · subst hp
+        exact congrArg _ (Subtype.ext rfl)
+      · have hy : y = 0 :=
+          Subtype.ext (((mem_trivialGrading_iff R A).mp y.2).resolve_left hp)
+        rw [hy]
+        simp
+    | add x y hx hy => simp only [map_add, hx, hy]
 
 /-- The homogeneous projection for the trivial grading is the identity in degree zero and the
 zero map in every other degree. -/
 @[simp]
 theorem proj_trivialGrading (p : ℤ) (a : A) :
     ((DirectSum.decompose (trivialGrading R A) a) p : A) = if p = 0 then a else 0 := by
+  have ha : a ∈ trivialGrading R A 0 := by simp
   by_cases hp : p = 0
   · subst hp
     rw [ite_eq_left rfl]
-    exact DirectSum.decompose_of_mem_same (trivialGrading R A)
-      (show a ∈ trivialGrading R A 0 by simp)
-  · rw [DirectSum.decompose_of_mem_ne _
-      (show a ∈ trivialGrading R A 0 by simp) (Ne.symm hp)]
+    exact DirectSum.decompose_of_mem_same (trivialGrading R A) ha
+  · rw [DirectSum.decompose_of_mem_ne _ ha (Ne.symm hp)]
     simp [hp]
 
 /-- Scalar multiplication by the trivially graded base ring preserves every homogeneous piece of
