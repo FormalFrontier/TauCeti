@@ -7,6 +7,7 @@ module
 
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.CoordinateRing
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.Hom
+public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.TautologicalPoint
 
 /-!
 # Negation
@@ -16,7 +17,9 @@ law. Its pullback on functions is `CoordinateRing.conj`, the conjugation of the 
 over `F[X]`, so negation is an isogeny of `W` with itself, an involution, and of degree one.
 
 Postcomposing with it negates on the hom carrier, which is the `Neg` structure the carrier's
-additive group is built from.
+additive group is built from. That this pullback really is negation, and not just some involution
+of degree one, is `tautologicalPoint_negPullback`: its tautological point is the negated generic
+point.
 
 ## Main definitions
 
@@ -31,6 +34,9 @@ additive group is built from.
   fixing the point at infinity.
 * `TauCeti.Isogeny.Hom.neg_comp` and `TauCeti.Isogeny.Hom.degree_neg`: negation passes through
   composition, and preserves degrees, on the carrier.
+* `TauCeti.Isogeny.tautologicalPoint_negPullback`: read at the generic point, negation is the
+  group law's inverse — which is what identifies this pullback as negation rather than merely
+  some degree-one involution.
 
 The `MapsInfinity` condition says each `x` of the coordinate ring is integral over the pulled-back
 copy. Conjugation is an *equivalence*, so every function is the pullback of its own conjugate — the
@@ -50,6 +56,8 @@ public section
 open TauCeti.WeierstrassCurve.Affine.CoordinateRing
 
 namespace TauCeti
+
+open _root_.WeierstrassCurve.Affine
 
 variable {F : Type*} [Field F] (W : WeierstrassCurve.Affine F)
 
@@ -94,6 +102,23 @@ theorem negIsogeny_comp_negIsogeny : (negIsogeny W).comp (negIsogeny W) = id W :
 @[simp]
 theorem degree_negIsogeny : (negIsogeny W).degree = 1 :=
   (degree_eq_one_of_comp_eq_id (negIsogeny_comp_negIsogeny W)).1
+
+/-- **Negation's tautological point is the negated generic point.** This is what identifies
+`negIsogeny` as negation: read at the generic point of `W`, it is the group law's inverse. -/
+@[simp]
+theorem tautologicalPoint_negPullback [W.IsElliptic] :
+    (negPullback W).tautologicalPoint = -W.genericPoint := by
+  have hg : W.genericPoint ≠ 0 := by
+    rw [genericPoint_eq_some]; exact Point.some_ne_zero _
+  refine Point.eq_of_coords (CoordinatePullback.tautologicalPoint_ne_zero _)
+    (neg_ne_zero.mpr hg) ?_ ?_
+  · rw [CoordinatePullback.xCoord_tautologicalPoint, Point.xCoord_neg, xCoord_genericPoint,
+      negPullback_apply, conj_mk_C, genericX_def, AdjoinRoot.mk_C]
+  · rw [CoordinatePullback.yCoord_tautologicalPoint, Point.yCoord_neg hg,
+      xCoord_genericPoint, yCoord_genericPoint,
+      negPullback_apply, conj_mk_Y, ← evalEval_genericX_genericY,
+      ← map_negPolynomial, evalEval_negPolynomial]
+    rfl
 
 namespace Hom
 
