@@ -41,7 +41,8 @@ away from a finite set of primes.
   `TauCeti.GlobalNumberFields.unitsCongruenceSubgroup`: the subgroups of `Kˣ` and `(𝓞 K)ˣ` these
   conditions define.
 * `TauCeti.GlobalNumberFields.idealsPrimeTo`,
-  `TauCeti.GlobalNumberFields.integralIdealsPrimeTo`: ideals prime to the finite part.
+  `TauCeti.GlobalNumberFields.integralIdealsPrimeTo`: ideals prime to the finite part, with the
+  inclusion `TauCeti.GlobalNumberFields.integralIdealsPrimeToInclusion` along divisibility.
 
 ## Main results
 
@@ -156,14 +157,14 @@ theorem exponent_mono {𝔪 𝔫 : Modulus K} (h : 𝔪 ∣ 𝔫) (v : HeightOne
 
 /-- The **trivial modulus**: unit finite part and no real places.  It imposes no condition, so its
 ray class group is the ordinary class group. -/
-@[expose] def one (K : Type*) [Field K] [NumberField K] : Modulus K where
+def one (K : Type*) [Field K] [NumberField K] : Modulus K where
   finitePart := ⊤
   finitePart_ne_bot := top_ne_bot
   infinitePart := ∅
 
-@[simp] theorem one_finitePart : (one K).finitePart = ⊤ := rfl
+@[simp] theorem one_finitePart : (one K).finitePart = ⊤ := (rfl)
 
-@[simp] theorem one_infinitePart : (one K).infinitePart = ∅ := rfl
+@[simp] theorem one_infinitePart : (one K).infinitePart = ∅ := (rfl)
 
 /-- The trivial modulus has empty support: no height-one prime divides the unit ideal. -/
 @[simp] theorem support_one : (one K).support = ∅ := by
@@ -178,20 +179,22 @@ end Modulus
 
 /-- The modulus with unit finite part and **every** real place.  Its ray class group is the narrow
 class group. -/
-@[expose] noncomputable def narrowModulus (K : Type*) [Field K] [NumberField K] : Modulus K :=
+noncomputable def narrowModulus (K : Type*) [Field K] [NumberField K] : Modulus K :=
   { Modulus.one K with
     infinitePart := (Set.finite_univ (α := {w : InfinitePlace K // w.IsReal})).toFinset }
 
-@[simp] theorem narrowModulus_finitePart : (narrowModulus K).finitePart = ⊤ := rfl
+@[simp] theorem narrowModulus_finitePart : (narrowModulus K).finitePart = ⊤ := (rfl)
 
 @[simp] theorem mem_narrowModulus_infinitePart (w : {w : InfinitePlace K // w.IsReal}) :
     w ∈ (narrowModulus K).infinitePart :=
   (Set.Finite.mem_toFinset _).mpr (Set.mem_univ w)
 
+/-- The narrow modulus has the same finite part as the trivial one, hence the same support. -/
 @[simp] theorem narrowModulus_support : (narrowModulus K).support = ∅ := by
+  refine Eq.trans ?_ Modulus.support_one
   ext v
-  rw [Modulus.mem_support_iff, narrowModulus_finitePart]
-  simpa only [Finset.notMem_empty, iff_false] using Modulus.not_dvd_top v
+  rw [Modulus.mem_support_iff, Modulus.mem_support_iff, narrowModulus_finitePart,
+    Modulus.one_finitePart]
 
 /-! ### Multiplicative congruence -/
 
@@ -384,5 +387,26 @@ noncomputable abbrev integralIdealsPrimeTo (𝔪 : Modulus K) : Submonoid (Ideal
 theorem Modulus.mem_integralIdealsPrimeTo {𝔪 : Modulus K} {I : Ideal (𝓞 K)} :
     I ∈ integralIdealsPrimeTo 𝔪 ↔ 𝔪.IsCoprimeTo I :=
   NumberFieldArithmetic.mem_integralIdealsAway_iff.trans Modulus.isCoprimeTo_iff.symm
+
+/-- **The integral prime-to monoid is antitone in the modulus**: the support of a divisor `𝔪` of
+`𝔫` is contained in that of `𝔫`, so an ideal prime to `𝔫` is prime to `𝔪`. -/
+theorem integralIdealsPrimeTo_antitone {𝔪 𝔫 : Modulus K} (h : 𝔪 ∣ 𝔫) :
+    integralIdealsPrimeTo 𝔫 ≤ integralIdealsPrimeTo 𝔪 := by
+  intro I hI
+  rw [Modulus.mem_integralIdealsPrimeTo, Modulus.isCoprimeTo_iff] at hI ⊢
+  exact ⟨hI.1, fun v hv ↦ hI.2 v (Modulus.support_mono h hv)⟩
+
+/-- The inclusion of the integral ideals prime to `𝔫` into those prime to `𝔪`, for a divisor `𝔪`
+of `𝔫`.  It is the literal inclusion, matching `NumberFieldArithmetic.idealsAwayInclusion` on the
+fractional side. -/
+noncomputable def integralIdealsPrimeToInclusion {𝔪 𝔫 : Modulus K} (h : 𝔪 ∣ 𝔫) :
+    integralIdealsPrimeTo 𝔫 →* integralIdealsPrimeTo 𝔪 :=
+  Submonoid.inclusion (integralIdealsPrimeTo_antitone h)
+
+/-- The inclusion between integral prime-to monoids does not change the underlying ideal. -/
+@[simp] theorem coe_integralIdealsPrimeToInclusion {𝔪 𝔫 : Modulus K} (h : 𝔪 ∣ 𝔫)
+    (I : integralIdealsPrimeTo 𝔫) :
+    ((integralIdealsPrimeToInclusion h I : integralIdealsPrimeTo 𝔪) : Ideal (𝓞 K)) =
+      (I : Ideal (𝓞 K)) := (rfl)
 
 end TauCeti.GlobalNumberFields
