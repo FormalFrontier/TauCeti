@@ -84,8 +84,7 @@ noncomputable instance instGradedAlgebraTrivialGrading :
 zero map in every other degree. -/
 @[simp]
 theorem proj_trivialGrading (p : ℤ) (a : A) :
-    GradedRing.proj (trivialGrading R A) p a = if p = 0 then a else 0 := by
-  rw [GradedRing.proj_apply]
+    ((DirectSum.decompose (trivialGrading R A) a) p : A) = if p = 0 then a else 0 := by
   by_cases hp : p = 0
   · subst hp
     rw [ite_eq_left rfl]
@@ -97,7 +96,7 @@ theorem proj_trivialGrading (p : ℤ) (a : A) :
 
 /-- Scalar multiplication by the trivially graded base ring preserves every homogeneous piece of
 an internally graded algebra. -/
-instance instGradedSMulTrivialGrading (𝒜 : ℤ → Submodule R A) [GradedAlgebra 𝒜] :
+instance instGradedSMulTrivialGrading (𝒜 : ℤ → Submodule R A) :
     SetLike.GradedSMul (trivialGrading R R) 𝒜 where
   smul_mem := by
     intro p q r a hr ha
