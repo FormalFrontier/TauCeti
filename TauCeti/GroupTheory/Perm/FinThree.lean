@@ -36,6 +36,8 @@ permutations.
   transposition.
 * `TauCeti.card_stabilizer_perm_fin_three`: it has order two.
 * `TauCeti.not_normal_stabilizer_perm_fin_three`: it is not normal.
+* `TauCeti.sign_eq_one_or_card_fixedPoints_eq_one_perm_fin_three`: a permutation of three points
+  is even or fixes exactly one point.
 * `TauCeti.card_alternatingGroup_fin_three`: the alternating subgroup has order three.
 * `TauCeti.centralizer_alternatingGroup_fin_three_le`: only the alternating subgroup centralizes
   the alternating subgroup.
@@ -105,6 +107,20 @@ theorem not_normal_stabilizer_perm_fin_three (a : Fin 3) :
     (mem_stabilizer_perm_fin_three_iff a _).mpr (Or.inr rfl)
   exact conj_swap_notMem_stabilizer_perm_fin_three a
     (hnormal.conj_mem _ hmem (Equiv.swap a (a + 1)))
+
+/-- **An odd permutation of three points fixes exactly one point**, stated as a disjunction: a
+permutation of three points is either even or has exactly one fixed point. The two alternatives
+overlap -- a transposition of three points is odd and fixes exactly one point, while the identity
+is even and fixes all three -- so the disjunction is what a case split on the parity consumes. -/
+theorem sign_eq_one_or_card_fixedPoints_eq_one_perm_fin_three (σ : Equiv.Perm (Fin 3)) :
+    Equiv.Perm.sign σ = 1 ∨ Nat.card {x : Fin 3 // σ • x = x} = 1 := by
+  have h : ∀ τ : Equiv.Perm (Fin 3), Equiv.Perm.sign τ = 1 ∨
+      ({x : Fin 3 | τ x = x} : Finset (Fin 3)).card = 1 := by decide
+  rcases h σ with h | h
+  · exact Or.inl h
+  · refine Or.inr ?_
+    rw [Nat.card_eq_fintype_card, Fintype.card_subtype]
+    simpa only [Equiv.Perm.smul_def] using h
 
 /-- **The alternating subgroup of `S₃` has order three**: half of `3! = 6`. -/
 theorem card_alternatingGroup_fin_three : Nat.card (alternatingGroup (Fin 3)) = 3 := by

@@ -29,18 +29,14 @@ representation of `H`, not only for a linear character: `H` is a non-normal subg
 order, so `TauCeti.not_simple_indFDRep_of_prime_card_of_not_normal` applies with no information
 about the representation at all.
 
-For the sign character of `H` the decomposition itself is available, and this file proves it:
-`Ind_H^{S₃} (sgn|_H) ≅ sgn ⊕ standard`. The sign character of `H` is the restriction of the sign
-character of `S₃`, so `TauCeti.character_indFDRep_ofLinearCharacter_comp_subtype` turns the
-induced character into `sgn` times the permutation character of the three points, which
-`TauCeti.char_ind_trivial_stabilizer_eq_one_add_char_standardRepresentation` writes as
-`1 + χ_standard`. What remains is the one place where three points are special: an odd permutation
-of three points has exactly one fixed point, so `sgn σ · χ_standard σ = χ_standard σ` for every
-`σ`, and `sgn · (1 + χ_standard) = sgn + χ_standard`. Since `S₃` is finite and the coefficients
-are algebraically closed of characteristic zero, that identity of characters is an isomorphism of
-representations, by `Representation.nonempty_equiv_of_character_eq`. The complementary
-summand is `TauCeti.standardRepresentation` of `S₃`: the two-dimensional constituent that the
-permutation representation of three points splits off.
+For the sign character of `H` the two constituents can be named. Over any field, the character of
+`Ind_H^{S₃} (sgn|_H)` is `sgn + χ_standard`, where `sgn` is the sign character of `S₃` and
+`χ_standard` is the character of `TauCeti.standardRepresentation` -- the two-dimensional
+constituent that the permutation representation of three points splits off. Over an algebraically
+closed field of characteristic zero, where a finite group's representations are determined by their
+characters, this identity of characters is a decomposition of representations,
+`Ind_H^{S₃} (sgn|_H) ≅ sgn ⊕ standard`, exhibiting the reducibility that the Mackey criterion
+detects without naming the pieces.
 
 From the *normal* subgroup `A₃`, on the other hand, every **faithful** linear character induces
 irreducibly, producing the two-dimensional irreducible of `S₃`. Here the normal-subgroup Mackey
@@ -64,12 +60,13 @@ is what makes it a *worked* example rather than a further piece of theory.
 
 * `TauCeti.not_simple_indFDRep_stabilizer_perm_fin_three`: **nothing induced from a point
   stabilizer of `S₃` is irreducible**, in particular not the roadmap's linear characters.
-* `TauCeti.signLinearCharacter_comp_stabilizer_subtype_ne_one`: the character being induced is the
-  nontrivial one, so the example is the roadmap's and not the permutation representation again.
-* `TauCeti.character_indFDRep_sign_stabilizer_perm_fin_three`: the induced character is
-  `sgn + χ_standard`, the character identity the roadmap asks to check term by term.
-* `TauCeti.nonempty_equiv_indFDRep_sign_stabilizer_perm_fin_three`: hence
-  `Ind_{C₂}^{S₃} (sgn) ≅ sgn ⊕ standard`, the roadmap's reducible decomposition.
+* `TauCeti.signLinearCharacter_comp_stabilizer_subtype_ne_one`: the sign character of the point
+  stabilizer is nontrivial, in characteristic other than two.
+* `TauCeti.character_indFDRep_sign_stabilizer_perm_fin_three`: **the character of
+  `Ind_{C₂}^{S₃} (sgn)` is `sgn + χ_standard`**, over any field.
+* `TauCeti.nonempty_equiv_indFDRep_sign_stabilizer_perm_fin_three`: **hence
+  `Ind_{C₂}^{S₃} (sgn) ≅ sgn ⊕ standard`** over an algebraically closed field of characteristic
+  zero.
 * `TauCeti.simple_indFDRep_ofLinearCharacter_alternatingGroup_fin_three`: **a faithful linear
   character of `A₃` induces irreducibly to `S₃`**.
 * `TauCeti.finrank_indFDRep_ofLinearCharacter_alternatingGroup_fin_three`: what it induces to is
@@ -113,9 +110,9 @@ theorem not_simple_indFDRep_stabilizer_perm_fin_three (a : Fin 3)
 
 omit [IsAlgClosed k] in
 /-- **The sign character of a point stabilizer of `S₃` is nontrivial.** The stabilizer is generated
-by a transposition, on which the sign character takes the value `-1`; that value differs from `1`
-because the coefficient field has characteristic zero. So the representation induced below really
-is the roadmap's `Ind_{C₂}^{S₃}(sign)`, and not `Ind_{C₂}^{S₃}(1)` under another name. -/
+by a transposition, on which the sign character takes the value `-1`, and `-1 ≠ 1` because the
+coefficient field has characteristic zero. So the representation induced below is not the
+permutation representation of the trivial character under another name. -/
 theorem signLinearCharacter_comp_stabilizer_subtype_ne_one (a : Fin 3) :
     (signLinearCharacter k (Fin 3)).comp
       (MulAction.stabilizer (Equiv.Perm (Fin 3)) a).subtype ≠ 1 := by
@@ -134,53 +131,42 @@ theorem signLinearCharacter_comp_stabilizer_subtype_ne_one (a : Fin 3) :
   exact two_ne_zero h2
 
 omit [IsAlgClosed k] [CharZero k] in
-/-- **An odd permutation of three points has exactly one fixed point**, in the form the character
-computation consumes. Either `sgn σ = 1`, and the identity is `F = 1 + F - 1`, or the number `F` of
-fixed points is `1`, and both sides are `sgn σ`. The disjunction itself is decidable, `S₃` having
-six elements. -/
+/-- The field-valued form of `TauCeti.sign_eq_one_or_card_fixedPoints_eq_one_perm_fin_three`:
+writing `F` for the number of points fixed by `σ`, one has `sgn σ · F = sgn σ + F - 1` in `k`.
+Either alternative of the disjunction gives it: if `sgn σ = 1` both sides are `F`, and if `F = 1`
+both sides are `sgn σ`. -/
 private theorem sign_mul_card_fixedPoints_fin_three (σ : Equiv.Perm (Fin 3)) :
     ((Equiv.Perm.sign σ : ℤ) : k) * (Nat.card {x : Fin 3 // σ • x = x} : k)
       = ((Equiv.Perm.sign σ : ℤ) : k) + (Nat.card {x : Fin 3 // σ • x = x} : k) - 1 := by
-  have hkey : Equiv.Perm.sign σ = 1 ∨ Nat.card {x : Fin 3 // σ • x = x} = 1 := by
-    have h : ∀ τ : Equiv.Perm (Fin 3), Equiv.Perm.sign τ = 1 ∨
-        ({x : Fin 3 | τ x = x} : Finset (Fin 3)).card = 1 := by decide
-    rcases h σ with h | h
-    · exact Or.inl h
-    · refine Or.inr ?_
-      rw [Nat.card_eq_fintype_card, Fintype.card_subtype]
-      simpa only [Equiv.Perm.smul_def] using h
-  rcases hkey with h | h
+  rcases sign_eq_one_or_card_fixedPoints_eq_one_perm_fin_three σ with h | h
   · rw [h]; push_cast; ring
   · rw [h]; push_cast; ring
 
-omit [IsAlgClosed k] in
-/-- **The character of `Ind_{C₂}^{S₃}(sign)` is `sgn + χ_standard`.** This is the roadmap's
-character identity for the reducible half of the `S₃` example, checked at every `σ` at once. The
-sign character of the stabilizer is the restriction of the sign character of `S₃`, so the induced
-character is `sgn` times the permutation character `1 + χ_standard`. The factor `sgn` then only
-survives on the constant `1`: the standard character of `S₃` is the fixed-point count less one, so
-it vanishes on the odd permutations, which are exactly the ones fixing a single point. -/
+omit [IsAlgClosed k] [CharZero k] in
+/-- **The character of `Ind_{C₂}^{S₃}(sign)` is `sgn + χ_standard`**, at every `σ` and over any
+field: inducing the sign character of a point stabilizer of `S₃` gives a three-dimensional
+representation whose character is the sum of the sign character of `S₃` and the character of the
+two-dimensional standard representation. No hypothesis on the characteristic is needed; in
+characteristic two, where the sign character is trivial, this degenerates to the permutation
+character of the three points. -/
 theorem character_indFDRep_sign_stabilizer_perm_fin_three (a : Fin 3) (σ : Equiv.Perm (Fin 3)) :
     (indFDRep (FDRep.ofLinearCharacter ((signLinearCharacter k (Fin 3)).comp
         (MulAction.stabilizer (Equiv.Perm (Fin 3)) a).subtype))).character σ
       = (signLinearCharacter k (Fin 3) σ : k)
         + (standardRepresentation k (Fin 3)).character σ := by
-  have hN : IsUnit (Nat.card (MulAction.stabilizer (Equiv.Perm (Fin 3)) a) : k) := by
-    rw [card_stabilizer_perm_fin_three]
-    exact isUnit_iff_ne_zero.mpr (Nat.cast_ne_zero.mpr (by norm_num))
-  rw [character_indFDRep_ofLinearCharacter_comp_subtype hN,
+  rw [character_indFDRep_ofLinearCharacter_comp_subtype,
     character_indFDRep (FDRep.of (Representation.trivial k _ k)) σ, FDRep.of_ρ',
     char_ind_trivial_stabilizer_eq_one_add_char_standardRepresentation k a σ,
     char_standardRepresentation, char_ofMulAction, coe_signLinearCharacter_apply]
   linear_combination sign_mul_card_fixedPoints_fin_three (k := k) σ
 
-/-- **`Ind_{C₂}^{S₃}(sign) ≅ sgn ⊕ standard`.** The roadmap's reducible half of the `S₃` example,
-as a decomposition of representations and not only of characters: over an algebraically closed
-field of characteristic zero a finite group's representations are determined by their characters,
-so `TauCeti.character_indFDRep_sign_stabilizer_perm_fin_three` upgrades to an equivalence. Its two
-summands are a line and the two-dimensional standard representation, so the induced representation
-is reducible -- which is what `TauCeti.not_simple_indFDRep_stabilizer_perm_fin_three` says without
-naming the pieces. -/
+/-- **`Ind_{C₂}^{S₃}(sign) ≅ sgn ⊕ standard`**, over an algebraically closed field of
+characteristic zero: the sign character of a point stabilizer of `S₃` induces to the direct sum of
+the sign character of `S₃` and the two-dimensional standard representation. The two summands are a
+line and an irreducible plane, so this names the constituents whose existence
+`TauCeti.not_simple_indFDRep_stabilizer_perm_fin_three` asserts. The hypotheses on `k` are those
+under which characters determine representations; the underlying identity of characters,
+`TauCeti.character_indFDRep_sign_stabilizer_perm_fin_three`, needs neither. -/
 theorem nonempty_equiv_indFDRep_sign_stabilizer_perm_fin_three (a : Fin 3) :
     Nonempty (Representation.Equiv
       (indFDRep (FDRep.ofLinearCharacter ((signLinearCharacter k (Fin 3)).comp
