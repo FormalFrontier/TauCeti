@@ -15,22 +15,24 @@ import TauCeti.RingTheory.Huber.LocalizationTopology.Laurent.Identification
 /-!
 # Flatness of the Laurent quotient, and of a numerator enlargement
 
-`A⟨T/s⟩⟨X⟩ ⧸ (t/s - X)` is a flat `A⟨T/s⟩`-module over a complete noetherian Tate ring, and so —
-the elementary case of **Wedhorn's Proposition 8.30** at the ring level — is `A⟨T'/s⟩` when `T'`
-adjoins the single numerator `t` and the Laurent relation ideal is closed. The
-`..._of_isStronglyNoetherian` variants supply closedness and Tate-ness from a topologically
-nilpotent `s` over a strongly noetherian base, which is how the hypotheses are met in practice.
+Restriction maps between the rings of a Laurent presentation are flat, at the ring level. Three
+statements, in increasing generality:
 
-The enlargement `T ⊆ T'` is then reached one numerator at a time. That chain result carries the
-hypotheses its induction needs, and only for a *proper* enlargement: `s` topologically nilpotent,
-and `A⟨U/s⟩` strongly noetherian for every `U` with `T ⊆ U ⊂ T'`. It is therefore **not** Wedhorn's
-Proposition 8.30, which assumes strong noetherianity of `A` alone; see *What this is not*.
+* the Laurent quotient `A⟨T/s⟩⟨X⟩ ⧸ (t/s - X)` is a flat `A⟨T/s⟩`-module when that base is a
+  complete noetherian Tate ring;
+* **Wedhorn's Proposition 8.30, elementary case**: the restriction map `A⟨T/s⟩ → A⟨T'/s⟩` is flat
+  when `T'` is `T` with one numerator `t` adjoined. It asks the hypotheses above of `A⟨T/s⟩`,
+  together with closedness of the Laurent relation ideal, **only when `t ∉ T`**; for `t ∈ T` the
+  two numerator sets coincide and the map is an identity enlargement, which needs nothing;
+* the restriction map of an arbitrary enlargement `T ⊆ T'` is flat, assuming `s` topologically
+  nilpotent and `A⟨U/s⟩` strongly noetherian for every `U` with `T ⊆ U ⊂ T'`. This is **not**
+  Wedhorn's Proposition 8.30, which assumes strong noetherianity of `A` alone; see
+  *What this is not*.
 
-The results stand in one line. The Laurent quotient's flatness is the base; the elementary case is
-that statement transported along Remark 7.55's identification; the chain is the elementary case
-iterated; and the identity enlargement — `flat_restrictionRingHomOfSubset_self`, which assumes
-nothing — is both the chain's `T = T'` case and what carries its conclusion to an arbitrary
-localisation of `T'`.
+Changing the localisation that carries a presentation is flat with no hypotheses at all.
+
+Each `..._of_isStronglyNoetherian` variant states the analytic hypotheses in the form they are met
+in: `s` topologically nilpotent over a strongly noetherian base.
 
 ## Main results
 
@@ -41,8 +43,9 @@ localisation of `T'`.
   which the hypotheses are met in practice.
 * `TauCeti.Huber.PairOfDefinition.flat_restrictionRingHomOfSubset` : **Proposition 8.30's
   elementary case** — the restriction map `A⟨T/s⟩ → A⟨T'/s⟩` is flat when `T'` adds the single
-  numerator `t`; the `..._of_isStronglyNoetherian` variant takes the hypotheses in their usual
-  form.
+  numerator `t`, its analytic hypotheses being asked only for `t ∉ T`; the
+  `..._of_isStronglyNoetherian` variant takes them in their usual form, and asks them equally only
+  for `t ∉ T`.
 * `TauCeti.Huber.PairOfDefinition.flat_restrictionRingHomOfSubset_self` : the identity
   enlargement — two presentations with the same numerator set, on possibly different localisations,
   are compared by a flat map. This one is hypothesis-free.
@@ -167,25 +170,62 @@ theorem flat_quotient_laurentRelationIdeal_of_isStronglyNoetherian
     (isNoetherianRing_of_isStronglyNoetherian
       (by rw [IsUniformAddGroup.rightUniformSpace_eq]; infer_instance))
 
+/-- **Changing the localisation that carries a presentation is flat.** Two presentations with the
+same numerator set are compared by restriction maps that are mutually inverse, so each is bijective.
+
+This is the identity enlargement, and it assumes nothing: no nilpotence, no noetherianity. It is
+the `T = T'` case of the chain below, what lets that chain end at an arbitrary localisation of
+`T'` rather than the one its induction runs on, and what the elementary case falls back on when
+its new numerator is already present. -/
+theorem flat_restrictionRingHomOfSubset_self (P : PairOfDefinition A) (T : Finset A)
+    (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
+    (hden : HasDenominatorPower P T s S)
+    (S' : Type*) [CommRing S'] [Algebra A S'] [IsLocalization.Away s S']
+    (hden' : HasDenominatorPower P T s S') :
+    letI := locUniformSpace P T s S hden
+    letI := isUniformAddGroup_locUniformSpace P T s S hden
+    letI := isTopologicalRing_locUniformSpace P T s S hden
+    letI := locUniformSpace P T s S' hden'
+    letI := isUniformAddGroup_locUniformSpace P T s S' hden'
+    letI := isTopologicalRing_locUniformSpace P T s S' hden'
+    (restrictionRingHomOfSubset P T s S hden T S' hden' fun _ hu ↦ hu).Flat := by
+  let _ := locUniformSpace P T s S hden
+  have _ := isUniformAddGroup_locUniformSpace P T s S hden
+  have _ := isTopologicalRing_locUniformSpace P T s S hden
+  let _ := locUniformSpace P T s S' hden'
+  have _ := isUniformAddGroup_locUniformSpace P T s S' hden'
+  have _ := isTopologicalRing_locUniformSpace P T s S' hden'
+  have h : (restrictionRingHomOfSubset P T s S' hden' T S hden fun _ hu ↦ hu).comp
+      (restrictionRingHomOfSubset P T s S hden T S' hden' fun _ hu ↦ hu) = RingHom.id _ := by
+    simp
+  have h' : (restrictionRingHomOfSubset P T s S hden T S' hden' fun _ hu ↦ hu).comp
+      (restrictionRingHomOfSubset P T s S' hden' T S hden fun _ hu ↦ hu) = RingHom.id _ := by
+    simp
+  refine RingHom.Flat.of_bijective (Function.bijective_iff_has_inverse.mpr
+    ⟨restrictionRingHomOfSubset P T s S' hden' T S hden fun _ hu ↦ hu, fun x ↦ ?_, fun x ↦ ?_⟩)
+  · simpa only [RingHom.comp_apply, RingHom.id_apply] using DFunLike.congr_fun h x
+  · simpa only [RingHom.comp_apply, RingHom.id_apply] using DFunLike.congr_fun h' x
+
 /-- **Proposition 8.30, the elementary case**: the restriction map `A⟨T/s⟩ → A⟨T'/s⟩` of a
 one-numerator enlargement is flat.
 
 `hsplit` says that `T'` is the numerators of `T` together with the single `t`; `hTate` and
 `hnoeth` are Lemma 8.31's hypotheses on the base `A⟨T/s⟩`, and `hcl` asks the Laurent relation
-ideal to be closed. The `..._of_isStronglyNoetherian` variant below takes them in the form they
-are met in. -/
+ideal to be closed. All three are asked only for `t ∉ T`: when `t` is already a numerator the two
+sets coincide and `flat_restrictionRingHomOfSubset_self` settles the map. The
+`..._of_isStronglyNoetherian` variant below takes them in the form they are met in. -/
 theorem flat_restrictionRingHomOfSubset (ht : t ∈ T') (hsplit : ∀ u ∈ T', u ∈ T ∨ u = t)
-    (hTate : letI := locUniformSpace P T s S hden
+    (hTate : t ∉ T → letI := locUniformSpace P T s S hden
       letI := isUniformAddGroup_locUniformSpace P T s S hden
       letI := isTopologicalRing_locUniformSpace P T s S hden
       letI := isHuberRing_locUniformSpace P T s S hden
       IsTateRing (UniformSpace.Completion S))
-    (hnoeth : letI := locUniformSpace P T s S hden
+    (hnoeth : t ∉ T → letI := locUniformSpace P T s S hden
       letI := isUniformAddGroup_locUniformSpace P T s S hden
       letI := isTopologicalRing_locUniformSpace P T s S hden
       letI := isHuberRing_locUniformSpace P T s S hden
       IsNoetherianRing (UniformSpace.Completion S))
-    (hcl : letI := locUniformSpace P T s S hden
+    (hcl : t ∉ T → letI := locUniformSpace P T s S hden
       letI := isUniformAddGroup_locUniformSpace P T s S hden
       letI := isTopologicalRing_locUniformSpace P T s S hden
       letI := isHuberRing_locUniformSpace P T s S hden
@@ -208,6 +248,12 @@ theorem flat_restrictionRingHomOfSubset (ht : t ∈ T') (hsplit : ∀ u ∈ T', 
   have _ := isUniformAddGroup_locUniformSpace P T' s S' hden'
   have _ := isTopologicalRing_locUniformSpace P T' s S' hden'
   have _ := isHuberRing_locUniformSpace P T' s S' hden'
+  -- if `t` is already a numerator then `T' = T`, and the identity enlargement needs nothing
+  by_cases htT : t ∈ T
+  · obtain rfl : T = T' :=
+      (Finset.ext fun u ↦ ⟨fun hu ↦ (hsplit u hu).elim id fun h ↦ h ▸ htT, hTT' u⟩).symm
+    exact flat_restrictionRingHomOfSubset_self P T s S hden S' hden'
+  have hcl := hcl htT
   have hecomm : ∀ a, laurentQuotientRingEquiv P T s t S hden T' S' hden' hTT' ht hsplit hcl
       (Ideal.Quotient.mk (laurentRelationIdeal P T s t S hden)
         (weightedC _ isWeightFamily_one_weight a))
@@ -226,15 +272,16 @@ theorem flat_restrictionRingHomOfSubset (ht : t ∈ T') (hsplit : ∀ u ∈ T', 
       RingHom.algebraMap_toAlgebra (weightedC _ isWeightFamily_one_weight), hecomm]
   rw [← hcomp]
   exact (RingHom.flat_algebraMap_iff.mpr
-    (flat_quotient_laurentRelationIdeal P T s t S hden hTate hnoeth)).comp
+    (flat_quotient_laurentRelationIdeal P T s t S hden (hTate htT) (hnoeth htT))).comp
       (RingHom.Flat.of_bijective e.bijective)
 
 /-- **Proposition 8.30, the elementary case**, for a topologically nilpotent denominator over a
 strongly noetherian base: the hypotheses of
-`TauCeti.Huber.PairOfDefinition.flat_restrictionRingHomOfSubset` in the form they are met in. -/
+`TauCeti.Huber.PairOfDefinition.flat_restrictionRingHomOfSubset` in the form they are met in, and
+asked — as there — only for `t ∉ T`. -/
 theorem flat_restrictionRingHomOfSubset_of_isStronglyNoetherian (ht : t ∈ T')
-    (hsplit : ∀ u ∈ T', u ∈ T ∨ u = t) (hnil : IsTopologicallyNilpotent s)
-    (hSN : letI := locUniformSpace P T s S hden
+    (hsplit : ∀ u ∈ T', u ∈ T ∨ u = t) (hnil : t ∉ T → IsTopologicallyNilpotent s)
+    (hSN : t ∉ T → letI := locUniformSpace P T s S hden
       letI := isUniformAddGroup_locUniformSpace P T s S hden
       letI := isTopologicalRing_locUniformSpace P T s S hden
       letI := isHuberRing_locUniformSpace P T s S hden
@@ -256,12 +303,14 @@ theorem flat_restrictionRingHomOfSubset_of_isStronglyNoetherian (ht : t ∈ T')
   have _ := isUniformAddGroup_locUniformSpace P T' s S' hden'
   have _ := isTopologicalRing_locUniformSpace P T' s S' hden'
   have _ := isHuberRing_locUniformSpace P T' s S' hden'
-  have _ := hSN
-  exact flat_restrictionRingHomOfSubset P T s t S hden T' S' hden' hTT' ht hsplit
-    (isTateRing_completion_locTopology_of_isTopologicallyNilpotent P T s S hden hnil)
-    (isNoetherianRing_of_isStronglyNoetherian
-      (by rw [IsUniformAddGroup.rightUniformSpace_eq]; infer_instance))
-    (isClosed_laurentRelationIdeal_of_isStronglyNoetherian P T s t S hden hnil hSN)
+  refine flat_restrictionRingHomOfSubset P T s t S hden T' S' hden' hTT' ht hsplit
+    (fun htT ↦ isTateRing_completion_locTopology_of_isTopologicallyNilpotent P T s S hden
+      (hnil htT))
+    (fun htT ↦ ?_) fun htT ↦ isClosed_laurentRelationIdeal_of_isStronglyNoetherian P T s t S hden
+      (hnil htT) (hSN htT)
+  have _ := hSN htT
+  exact isNoetherianRing_of_isStronglyNoetherian
+    (by rw [IsUniformAddGroup.rightUniformSpace_eq]; infer_instance)
 
 /-- **Flatness composes along `T ⊆ U ⊆ V`**: if the restriction maps of `T ⊆ U` and of `U ⊆ V` are
 flat then so is the one of `T ⊆ V`. The far end may be carried by a different localisation of `A`
@@ -306,41 +355,6 @@ private theorem flat_comp_restrictionRingHomOfSubset (P : PairOfDefinition A) (T
   have hcomp := RingHom.Flat.comp h₁ h₂
   rwa [restrictionRingHomOfSubset_comp_restrictionRingHomOfSubset P T s S hden U S
     (hden.mono hTU) hTU V SV hdenV hUV] at hcomp
-
-/-- **Changing the localisation that carries a presentation is flat.** Two presentations with the
-same numerator set are compared by restriction maps that are mutually inverse, so each is bijective.
-
-This is the identity enlargement, and it assumes nothing: no nilpotence, no noetherianity. It is
-what lets the chain below end at an arbitrary localisation of `T'` rather than the one its
-induction runs on, and it is the `T = T'` case of that chain. -/
-theorem flat_restrictionRingHomOfSubset_self (P : PairOfDefinition A) (T : Finset A)
-    (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
-    (hden : HasDenominatorPower P T s S)
-    (S' : Type*) [CommRing S'] [Algebra A S'] [IsLocalization.Away s S']
-    (hden' : HasDenominatorPower P T s S') :
-    letI := locUniformSpace P T s S hden
-    letI := isUniformAddGroup_locUniformSpace P T s S hden
-    letI := isTopologicalRing_locUniformSpace P T s S hden
-    letI := locUniformSpace P T s S' hden'
-    letI := isUniformAddGroup_locUniformSpace P T s S' hden'
-    letI := isTopologicalRing_locUniformSpace P T s S' hden'
-    (restrictionRingHomOfSubset P T s S hden T S' hden' fun _ hu ↦ hu).Flat := by
-  let _ := locUniformSpace P T s S hden
-  have _ := isUniformAddGroup_locUniformSpace P T s S hden
-  have _ := isTopologicalRing_locUniformSpace P T s S hden
-  let _ := locUniformSpace P T s S' hden'
-  have _ := isUniformAddGroup_locUniformSpace P T s S' hden'
-  have _ := isTopologicalRing_locUniformSpace P T s S' hden'
-  have h : (restrictionRingHomOfSubset P T s S' hden' T S hden fun _ hu ↦ hu).comp
-      (restrictionRingHomOfSubset P T s S hden T S' hden' fun _ hu ↦ hu) = RingHom.id _ := by
-    simp
-  have h' : (restrictionRingHomOfSubset P T s S hden T S' hden' fun _ hu ↦ hu).comp
-      (restrictionRingHomOfSubset P T s S' hden' T S hden fun _ hu ↦ hu) = RingHom.id _ := by
-    simp
-  refine RingHom.Flat.of_bijective (Function.bijective_iff_has_inverse.mpr
-    ⟨restrictionRingHomOfSubset P T s S' hden' T S hden fun _ hu ↦ hu, fun x ↦ ?_, fun x ↦ ?_⟩)
-  · simpa only [RingHom.comp_apply, RingHom.id_apply] using DFunLike.congr_fun h x
-  · simpa only [RingHom.comp_apply, RingHom.id_apply] using DFunLike.congr_fun h' x
 
 -- The induction behind Proposition 8.30: for every `W ⊆ T' \ T`, the restriction map of
 -- `T ⊆ T ∪ W` is flat.
@@ -399,7 +413,7 @@ private theorem flat_restrictionRingHomOfSubset_union [DecidableEq A]
       (flat_restrictionRingHomOfSubset_of_isStronglyNoetherian P (T ∪ W) s a S
         (hden.mono hTU) (insert a (T ∪ W)) S (hden.mono hV) hUV (Finset.mem_insert_self _ _)
         (fun u hu ↦ (Finset.mem_insert.mp hu).symm.imp id id)
-        (hnil ⟨hTT', fun h ↦ ha.2 (h ha.1)⟩) (hSN (T ∪ W) hTU hlt))
+        (fun _ ↦ hnil ⟨hTT', fun h ↦ ha.2 (h ha.1)⟩) fun _ ↦ hSN (T ∪ W) hTU hlt)
 
 /-- **The chain form of Proposition 8.30, with strong noetherianity assumed at every proper
 intermediate presentation**: the restriction map `A⟨T/s⟩ → A⟨T'/s⟩` of an arbitrary enlargement is
