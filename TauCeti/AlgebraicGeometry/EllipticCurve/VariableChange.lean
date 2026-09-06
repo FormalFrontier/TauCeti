@@ -86,7 +86,7 @@ lemma negVariableChange_ne_one [Nontrivial R] [E.IsElliptic] : E.negVariableChan
   · have hs := congrArg VariableChange.s h
     have ht := congrArg VariableChange.t h
     simp only [negVariableChange, VariableChange.one_def, neg_eq_zero] at hs ht
-    grind [a₁_ne_zero_or_a₃_ne_zero_of_two_eq_zero]
+    grind [a₁_ne_zero_or_a₃_ne_zero_of_Δ_ne_zero_of_two_eq_zero E E.isUnit_Δ.ne_zero]
   · contrapose h2
     have hv : (-1 : R) = 1 := by
       simpa [VariableChange.one_def] using congrArg (fun C : VariableChange R ↦ (C.u : R)) h

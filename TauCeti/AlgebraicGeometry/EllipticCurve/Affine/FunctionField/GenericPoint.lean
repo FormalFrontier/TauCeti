@@ -42,6 +42,10 @@ consumer may rely on that.
 * `WeierstrassCurve.Affine.nonsingular_genericX_genericY`: they are nonsingular, on an elliptic
   curve.
 * `WeierstrassCurve.Affine.evalEval_genericX_genericY`: evaluation there is reduction.
+* `WeierstrassCurve.Affine.aeval_genericY_polynomial`: the generic `y`-coordinate is a root of
+  the Weierstrass polynomial.
+* `WeierstrassCurve.Affine.isIntegral_genericY`: it is integral over any commutative
+  `R[X]`-algebra mapping compatibly to the function field.
 * `WeierstrassCurve.Affine.algebraMap_eq_aeval_genericX`: the image of `R[X]` in the
   function field is the polynomials in the generic `x`-coordinate.
 * `WeierstrassCurve.Affine.algebraMap_mem_adjoin_genericX_genericY`: the coordinate ring, read
@@ -124,6 +128,25 @@ theorem equation_genericX_genericY :
     (W⁄W.FunctionField).toAffine.Equation W.genericX W.genericY :=
   CoordinateRing.equation_of_algHom
     (IsScalarTower.toAlgHom R W.CoordinateRing W.FunctionField)
+
+/-- The generic `y`-coordinate is a root of the Weierstrass polynomial.
+
+This is AINTLIB's `root_aeval_polynomial_map` of `projects/HasseWeil/HasseWeil/Ramification.lean`
+at revision `513e83879e2f`, Apache-2.0, stated over `R[X]` rather than over a fraction field. -/
+@[simp]
+theorem aeval_genericY_polynomial : aeval (genericY W) W.polynomial = 0 := by
+  rw [genericY_def, AdjoinRoot.mk_X]
+  exact AdjoinRoot.aeval_algHom_eq_zero W.polynomial
+    (IsScalarTower.toAlgHom R[X] W.CoordinateRing W.FunctionField)
+
+/-- The generic `y`-coordinate is integral over any commutative `R[X]`-algebra `L` mapping
+compatibly to the function field. `L` need not embed: no injectivity is assumed. -/
+theorem isIntegral_genericY (L : Type*) [CommRing L] [Algebra R[X] L]
+    [Algebra L W.FunctionField] [IsScalarTower R[X] L W.FunctionField] :
+    IsIntegral L (genericY W) :=
+  ⟨_, W.monic_polynomial.map _, by
+    rw [← aeval_def, Polynomial.aeval_map_algebraMap]
+    exact aeval_genericY_polynomial W⟩
 
 /-- **The image of `R[X]` in the function field consists of the polynomials in the generic
 `x`-coordinate.** -/

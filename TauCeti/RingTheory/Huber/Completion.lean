@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Topology.Algebra.Nonarchimedean.Completion
+public import TauCeti.Topology.Algebra.Nonarchimedean.Completion.Basic
 public import TauCeti.RingTheory.Huber.Basic
 
 /-!
