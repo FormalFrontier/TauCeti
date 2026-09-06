@@ -61,14 +61,8 @@ other by `⟨_, _⟩`.
 
 ## References
 
-This discharges the `frobeniusSchurIndicator_eq_one_iff_exists_structureMap` target of Layer 6b of
-the [compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md),
-the structure-map reading that its
-[`Suggested.lean`](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/Suggested.lean)
-pins on top of the invariant-form dictionary of
-`TauCeti/RepresentationTheory/Compact/FrobeniusSchur/InvariantForm.lean`, together with the
-quaternionic case `ν₂ = -1` that the same entry names.  The mathematical development follows:
-
+* [Compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md),
+  the source of the structure-map reading of the reality criterion that this file follows.
 * T. Bröcker, T. tom Dieck, *Representations of Compact Lie Groups*, Springer GTM 98 (1985),
   Chapter II, §6.
 * Daniel Bump, *Lie Groups*, second edition, Chapter 2.
