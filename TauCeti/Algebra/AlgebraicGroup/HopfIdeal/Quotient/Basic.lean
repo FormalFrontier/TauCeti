@@ -11,6 +11,7 @@ public import TauCeti.Algebra.AlgebraicGroup.FiniteType.CommHopfAlgCat
 public import TauCeti.Algebra.Bialgebra.Quotient
 public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Basic
 public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Map
+import Mathlib.RingTheory.Ideal.Quotient.Nilpotent
 
 /-!
 # Hopf-ideal quotients of finite-type commutative Hopf algebras
@@ -30,6 +31,8 @@ the finite-type coordinate-Hopf-algebra category.
 ## Main declarations
 
 * `TauCeti.CommHopfAlgCat.quotient`: the quotient object in `CommHopfAlgCat`.
+* `TauCeti.CommHopfAlgCat.isReduced_quotient_iff`: characterizes when its underlying ring is
+  reduced.
 * `TauCeti.CommHopfAlgCat.mkQuotient_surjective`: the quotient morphism is surjective.
 * `TauCeti.CommHopfAlgCat.mkQuotient_hom_ext`: morphisms out of a quotient are determined
   after precomposition with the quotient morphism.
@@ -120,6 +123,12 @@ Hopf algebra. -/
 noncomputable abbrev quotient (H : _root_.CommHopfAlgCat.{v} R) (I : HopfIdeal R H) :
     _root_.CommHopfAlgCat.{v} R :=
   _root_.CommHopfAlgCat.of R (H ⧸ I.toIdeal)
+
+/-- The underlying ring of a Hopf-ideal quotient is reduced exactly when its defining ideal is
+radical. -/
+theorem isReduced_quotient_iff (H : _root_.CommHopfAlgCat.{v} R) (I : HopfIdeal R H) :
+    IsReduced (quotient H I) ↔ I.toIdeal.IsRadical :=
+  (Ideal.isRadical_iff_quotient_reduced I.toIdeal).symm
 
 /-- The quotient morphism `H ⟶ H ⧸ I` in `CommHopfAlgCat`. -/
 noncomputable abbrev mkQuotient (H : _root_.CommHopfAlgCat.{v} R) (I : HopfIdeal R H) :

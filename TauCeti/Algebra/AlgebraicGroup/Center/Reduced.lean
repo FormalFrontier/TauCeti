@@ -31,7 +31,6 @@ thickening controls the original center.
 
 ## Main declarations
 
-* `TauCeti.CommHopfAlgCat.centerCoordinateRing`: the coordinate Hopf algebra of the center.
 * `TauCeti.CommHopfAlgCat.reducedCenterDefiningIdeal`: the ambient ideal cutting out the reduced
   center.
 * `TauCeti.CommHopfAlgCat.reducedCenterCoordinateRing`: its coordinate Hopf algebra.
@@ -41,8 +40,8 @@ thickening controls the original center.
   agree.
 * `TauCeti.CommHopfAlgCat.smooth_reducedCenterCoordinateRing`: over an algebraically closed
   field, a finite-type reduced center is smooth.
-* `TauCeti.CommHopfAlgCat.isNilpotent_reducedCenterKernel`: in finite type, the thickening from
-  the reduced center to the full center is nilpotent.
+* `TauCeti.CommHopfAlgCat.isNilpotent_reducedCenterKernel`: over a Noetherian center coordinate
+  ring, the thickening from the reduced center to the full center is nilpotent.
 
 ## References
 
@@ -60,11 +59,6 @@ namespace TauCeti.CommHopfAlgCat
 universe u v
 
 variable {k : Type u} [Field k]
-
-/-- The coordinate Hopf algebra of the center of an affine group. -/
-noncomputable abbrev centerCoordinateRing (H : _root_.CommHopfAlgCat.{v} k) :
-    _root_.CommHopfAlgCat.{v} k :=
-  quotient H (centerDefiningIdeal H)
 
 variable (H : _root_.CommHopfAlgCat.{v} k)
 
@@ -111,6 +105,7 @@ theorem isReduced_reducedCenterCoordinateRing :
   HopfIdeal.isReduced_quotient_reduction k (centerCoordinateRing H)
 
 /-- The ambient ideal defining the reduced center is the radical of the center ideal. -/
+@[simp]
 theorem reducedCenterDefiningIdeal_toIdeal :
     (reducedCenterDefiningIdeal H).toIdeal = (centerDefiningIdeal H).toIdeal.radical := by
   rw [reducedCenterDefiningIdeal, HopfIdeal.comapOfSurjective_toIdeal,
@@ -118,6 +113,13 @@ theorem reducedCenterDefiningIdeal_toIdeal :
   congr 1
   rw [Ideal.zero_eq_bot, ← RingHom.ker_eq_comap_bot]
   exact mkQuotient_ker H (centerDefiningIdeal H)
+
+/-- An element belongs to the reduced-center ideal exactly when it belongs to the radical of the
+center ideal. -/
+@[simp]
+theorem mem_reducedCenterDefiningIdeal {x : H} :
+    x ∈ reducedCenterDefiningIdeal H ↔ x ∈ (centerDefiningIdeal H).toIdeal.radical := by
+  rw [← HopfIdeal.mem_toIdeal, reducedCenterDefiningIdeal_toIdeal]
 
 /-- The quotient by the ambient reduced-center ideal is canonically the iterated quotient formed
 by taking the center and then killing its nilradical. -/
@@ -127,30 +129,6 @@ noncomputable def quotientReducedCenterIso :
     (mkQuotient_surjective H (centerDefiningIdeal H))
       (HopfIdeal.reduction k (centerCoordinateRing H))
 
-/-- The forward reduced-center quotient isomorphism maps an ambient quotient class to its class
-in the iterated quotient. -/
-@[simp]
-theorem quotientReducedCenterIso_hom_mk (x : H) :
-    (quotientReducedCenterIso H).hom.hom
-        (Ideal.Quotient.mk (reducedCenterDefiningIdeal H).toIdeal x) =
-      Ideal.Quotient.mkₐ k (HopfIdeal.reduction k (centerCoordinateRing H)).toIdeal
-        ((mkQuotient H (centerDefiningIdeal H)).hom x) := by
-  exact quotientIsoOfSurjective_hom_mk (mkQuotient H (centerDefiningIdeal H))
-    (mkQuotient_surjective H (centerDefiningIdeal H))
-      (HopfIdeal.reduction k (centerCoordinateRing H)) x
-
-/-- The forward reduced-center quotient isomorphism commutes with the ambient and iterated
-quotient morphisms. -/
-@[simp]
-theorem mkQuotient_comp_quotientReducedCenterIso_hom :
-    mkQuotient H (reducedCenterDefiningIdeal H) ≫ (quotientReducedCenterIso H).hom =
-      mkQuotient H (centerDefiningIdeal H) ≫
-        mkQuotient (centerCoordinateRing H) (HopfIdeal.reduction k (centerCoordinateRing H)) := by
-  exact mkQuotient_comp_quotientIsoOfSurjective_hom
-    (mkQuotient H (centerDefiningIdeal H))
-      (mkQuotient_surjective H (centerDefiningIdeal H))
-        (HopfIdeal.reduction k (centerCoordinateRing H))
-
 /-- The ambient quotient model of the reduced center has reduced coordinate ring. -/
 theorem isReduced_quotient_reducedCenterDefiningIdeal :
     IsReduced (quotient H (reducedCenterDefiningIdeal H)) := by
@@ -159,14 +137,12 @@ theorem isReduced_quotient_reducedCenterDefiningIdeal :
   exact isReduced_of_injective (quotientReducedCenterIso H).hom.hom.toAlgHom.toRingHom
     (ConcreteCategory.bijective_of_isIso (quotientReducedCenterIso H).hom).1
 
-/-- For a finite-type affine group, the ideal removed from the center to form its reduction is
-nilpotent. This records that the reduced center and the full center differ by a nilpotent
-thickening. -/
-theorem isNilpotent_reducedCenterKernel [Algebra.FiniteType k H] :
+/-- If the center coordinate ring is Noetherian, the ideal removed from the center to form its
+reduction is nilpotent. This records that the reduced center and the full center differ by a
+nilpotent thickening. -/
+theorem isNilpotent_reducedCenterKernel [IsNoetherianRing (centerCoordinateRing H)] :
     IsNilpotent (HopfIdeal.reduction k (centerCoordinateRing H)).toIdeal := by
   rw [HopfIdeal.reduction_toIdeal]
-  let _ : IsNoetherianRing (centerCoordinateRing H) :=
-    Algebra.FiniteType.isNoetherianRing k (centerCoordinateRing H)
   exact IsNoetherianRing.isNilpotent_nilradical (centerCoordinateRing H)
 
 section Smooth
