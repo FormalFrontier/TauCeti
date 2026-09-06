@@ -17,20 +17,20 @@ import TauCeti.RingTheory.Huber.LocalizationTopology.Laurent.Identification
 
 `A⟨T/s⟩⟨X⟩ ⧸ (t/s - X)` is a flat `A⟨T/s⟩`-module over a complete noetherian Tate ring, and so —
 the elementary case of **Wedhorn's Proposition 8.30** at the ring level — is `A⟨T'/s⟩` when `T'`
-adjoins the single numerator `t`.
+adjoins the single numerator `t` and the Laurent relation ideal is closed. The
+`..._of_isStronglyNoetherian` variants supply closedness and Tate-ness from a topologically
+nilpotent `s` over a strongly noetherian base, which is how the hypotheses are met in practice.
 
 The enlargement `T ⊆ T'` is then reached one numerator at a time. That chain result carries the
-hypotheses its induction needs: `s` topologically nilpotent, and `A⟨U/s⟩` strongly noetherian for
-every `U` with `T ⊆ U ⊂ T'`. It is therefore **not** Wedhorn's Proposition 8.30, which assumes
-strong noetherianity of `A` alone; see *What this is not*.
+hypotheses its induction needs, and only for a *proper* enlargement: `s` topologically nilpotent,
+and `A⟨U/s⟩` strongly noetherian for every `U` with `T ⊆ U ⊂ T'`. It is therefore **not** Wedhorn's
+Proposition 8.30, which assumes strong noetherianity of `A` alone; see *What this is not*.
 
-The argument runs in three steps. Over a complete noetherian Tate ring `B` the quotient
-`B ⟨X⟩ ⧸ (f - X)` is flat over `B` (Wedhorn, Lemma 8.31(2)); with `B = A⟨T/s⟩` and `f = t/s` that
-is the flatness of the Laurent quotient. Remark 7.55 identifies that quotient with `A⟨T'/s⟩`
-whenever the numerators of `T'` are those of `T` together with `t`, which turns the first step
-into flatness of the restriction map itself for a one-numerator enlargement. A general `T ⊆ T'` is
-then reached by adjoining the elements of `T' \ T` one at a time, and flatness composes along the
-tower.
+The results stand in one line. The Laurent quotient's flatness is the base; the elementary case is
+that statement transported along Remark 7.55's identification; the chain is the elementary case
+iterated; and the identity enlargement — `flat_restrictionRingHomOfSubset_self`, which assumes
+nothing — is both the chain's `T = T'` case and what carries its conclusion to an arbitrary
+localisation of `T'`.
 
 ## Main results
 
@@ -43,6 +43,9 @@ tower.
   elementary case** — the restriction map `A⟨T/s⟩ → A⟨T'/s⟩` is flat when `T'` adds the single
   numerator `t`; the `..._of_isStronglyNoetherian` variant takes the hypotheses in their usual
   form.
+* `TauCeti.Huber.PairOfDefinition.flat_restrictionRingHomOfSubset_self` : the identity
+  enlargement — two presentations with the same numerator set, on possibly different localisations,
+  are compared by a flat map. This one is hypothesis-free.
 * `TauCeti.Huber.PairOfDefinition.flat_restrictionRingHomOfSubset_of_forall_isStronglyNoetherian`
   : the chain form — the restriction map of an arbitrary enlargement `T ⊆ T'` is flat, **assuming
   `A⟨U/s⟩` strongly noetherian for every `U` with `T ⊆ U ⊂ T'`**. That family hypothesis is what
@@ -301,11 +304,13 @@ private theorem flat_comp_restrictionRingHomOfSubset (P : PairOfDefinition A) (T
   rwa [restrictionRingHomOfSubset_comp_restrictionRingHomOfSubset P T s S hden U S
     (hden.mono hTU) hTU V SV hdenV hUV] at hcomp
 
-/-- **Changing the localization that carries a presentation.** Two presentations with the same
-numerators are compared by restriction maps that are mutually inverse, so each is bijective and
-therefore flat. This is what lets the chain below end at an arbitrary localization of `T'` instead
-of the one its induction runs on. -/
-private theorem flat_restrictionRingHomOfSubset_self' (P : PairOfDefinition A) (T : Finset A)
+/-- **Changing the localisation that carries a presentation is flat.** Two presentations with the
+same numerator set are compared by restriction maps that are mutually inverse, so each is bijective.
+
+This is the identity enlargement, and it assumes nothing: no nilpotence, no noetherianity. It is
+what lets the chain below end at an arbitrary localisation of `T'` rather than the one its
+induction runs on, and it is the `T = T'` case of that chain. -/
+theorem flat_restrictionRingHomOfSubset_self (P : PairOfDefinition A) (T : Finset A)
     (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
     (hden : HasDenominatorPower P T s S)
     (S' : Type*) [CommRing S'] [Algebra A S'] [IsLocalization.Away s S']
@@ -334,13 +339,14 @@ private theorem flat_restrictionRingHomOfSubset_self' (P : PairOfDefinition A) (
   · simpa only [RingHom.comp_apply, RingHom.id_apply] using DFunLike.congr_fun h x
   · simpa only [RingHom.comp_apply, RingHom.id_apply] using DFunLike.congr_fun h' x
 
-/-- The induction behind Proposition 8.30: for every `W ⊆ T' \ T`, the restriction map of
-`T ⊆ T ∪ W` is flat. -/
+-- The induction behind Proposition 8.30: for every `W ⊆ T' \ T`, the restriction map of
+-- `T ⊆ T ∪ W` is flat.
+
 private theorem flat_restrictionRingHomOfSubset_union [DecidableEq A]
     (P : PairOfDefinition A) (T : Finset A)
     (s : A) (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
     (hden : HasDenominatorPower P T s S) (T' : Finset A) (hTT' : T ⊆ T')
-    (hnil : IsTopologicallyNilpotent s)
+    (hnil : T ⊂ T' → IsTopologicallyNilpotent s)
     (hSN : ∀ (U : Finset A) (hU : T ⊆ U), U ⊂ T' →
       letI := locUniformSpace P U s S (hden.mono hU)
       letI := isUniformAddGroup_locUniformSpace P U s S (hden.mono hU)
@@ -389,7 +395,8 @@ private theorem flat_restrictionRingHomOfSubset_union [DecidableEq A]
       (hden.mono hV) hUV (ih (T ∪ W) rfl hWsub hTU)
       (flat_restrictionRingHomOfSubset_of_isStronglyNoetherian P (T ∪ W) s a S
         (hden.mono hTU) (insert a (T ∪ W)) S (hden.mono hV) hUV (Finset.mem_insert_self _ _)
-        (fun u hu ↦ (Finset.mem_insert.mp hu).symm.imp id id) hnil (hSN (T ∪ W) hTU hlt))
+        (fun u hu ↦ (Finset.mem_insert.mp hu).symm.imp id id)
+        (hnil ⟨hTT', fun h ↦ ha.2 (h ha.1)⟩) (hSN (T ∪ W) hTU hlt))
 
 /-- **The chain form of Proposition 8.30, with strong noetherianity assumed at every proper
 intermediate presentation**: the restriction map `A⟨T/s⟩ → A⟨T'/s⟩` of an arbitrary enlargement is
@@ -405,11 +412,12 @@ The enlargement is arbitrary and so is the localisation `S'` carrying the target
 `TauCeti.Huber.PairOfDefinition.flat_restrictionRingHomOfSubset` and the rest of the restriction
 API.
 
-Strong noetherianity is asked at every `U` with `T ⊆ U ⊂ T'`, not only at `T`, because the
-elementary step needs it at its own base and it does not descend along an enlargement; the
-endpoint `T'` is excluded because the identity enlargement assumes nothing. -/
+Both hypotheses are asked only of a *proper* enlargement, and for the same reason: the identity
+enlargement is `TauCeti.Huber.PairOfDefinition.flat_restrictionRingHomOfSubset_self`, which assumes
+nothing. Strong noetherianity is then asked at every `U` with `T ⊆ U ⊂ T'`, not only at `T`, because
+the elementary step needs it at its own base and it does not descend along an enlargement. -/
 theorem flat_restrictionRingHomOfSubset_of_forall_isStronglyNoetherian
-    (hnil : IsTopologicallyNilpotent s)
+    (hnil : T ⊂ T' → IsTopologicallyNilpotent s)
     (hSN : ∀ (U : Finset A) (hU : T ⊆ U), U ⊂ T' →
       letI := locUniformSpace P U s S (hden.mono hU)
       letI := isUniformAddGroup_locUniformSpace P U s S (hden.mono hU)
@@ -433,7 +441,7 @@ theorem flat_restrictionRingHomOfSubset_of_forall_isStronglyNoetherian
   exact flat_comp_restrictionRingHomOfSubset P T s S hden T' hTT' T' S' hden' le_rfl
     (flat_restrictionRingHomOfSubset_union P T s S hden T' hTT' hnil hSN (T' \ T) T'
       (Finset.union_sdiff_of_subset hTT').symm le_rfl hTT')
-    (flat_restrictionRingHomOfSubset_self' P T' s S (hden.mono hTT') S' hden')
+    (flat_restrictionRingHomOfSubset_self P T' s S (hden.mono hTT') S' hden')
 
 
 end PairOfDefinition
