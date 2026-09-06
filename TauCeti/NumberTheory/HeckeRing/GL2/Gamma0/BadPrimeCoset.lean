@@ -5,9 +5,8 @@ Authors: Chris Birkbeck, Claude
 -/
 module
 
--- `ZMod.coe_int_isUnit_iff_isCoprime` is used only inside a proof, so this stays private.
-import Mathlib.Data.ZMod.Units
 import TauCeti.Data.Int.LinearCongruence
+import TauCeti.Data.ZMod.Units
 public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma0.DoubleCoset
 public import TauCeti.NumberTheory.HeckeRing.GLn.DiagonalCosets
 
@@ -247,9 +246,7 @@ theorem mem_doubleCoset_natDiagGL_of_dvd_pow (N m : ℕ) (k : ℕ) (hm_dvd : m �
     β ∈ DoubleCoset.doubleCoset (natDiagGL 2 ![1, m])
       ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)) := by
   obtain ⟨A, hA, -, hAN, hAunit⟩ := (mem_Delta0_iff N).mp hβ
-  have hAcop : Int.gcd (A 0 0) N = 1 :=
-    Int.isCoprime_iff_gcd_eq_one.mp
-      (isCoprime_comm.mp ((ZMod.coe_int_isUnit_iff_isCoprime _ _).mp hAunit))
+  have hAcop : Int.gcd (A 0 0) N = 1 := Int.gcd_eq_one_of_isUnit_intCast hAunit
   exact mem_doubleCoset_natDiagGL_of_intWitness N m β A hA hAN hdet
     (Nat.Coprime.coprime_dvd_right hm_dvd (Nat.Coprime.pow_right k hAcop))
 
