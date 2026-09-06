@@ -12,21 +12,17 @@ public import TauCeti.Algebra.Lie.SpecialLinear.StandardCarrier.FieldPoints
 
 Over an infinite field, the standard carrier's weight-torus points are precisely the
 determinant-one diagonal matrices and form a maximal commutative subgroup of the carrier points.
-The proof first uses the distinct standard weights to compute the centralizer of the weight torus,
-then identifies its image by an explicit partial-product inverse to the weight parametrization.
+The centralizer calculation and maximality theorem identify the subgroup singled out by the
+standard weights as the distinguished torus used in the type `A` pinning.
 
 ## Main declarations
 
-* `TauCeti.SlStd.weight_injective`: the weights of the standard representation are distinct.
 * `TauCeti.SlStd.centralizer_range_weightTorusPoints`: the centralizer of the weight torus is the
   determinant-one diagonal subgroup.
 * `TauCeti.SlStd.range_weightTorusPoints_eq_diagonalPoints`: the weight torus consists of all
   determinant-one diagonal carrier points.
 * `TauCeti.SlStd.eq_range_weightTorusPoints_of_le_of_isMulCommutative`: the weight torus is maximal
   among commutative subgroups of the carrier points.
-
-This advances the "Pinnings" target in Layer 9 of the ReductiveGroups roadmap. Its consumer is
-milestone L0, "pinned ambient groups", of the CFSGStatement roadmap.
 -/
 
 public section
@@ -38,25 +34,6 @@ universe u
 noncomputable section
 
 variable (r : ℕ)
-
-/-! ## The standard weights -/
-
-/-- The weights of the standard representation of `sl_{r+1}` are pairwise distinct. -/
-theorem weight_injective : Function.Injective (weight r) := by
-  intro k l hkl
-  by_contra hne
-  have aux {a b : Fin (r + 1)} (hab : (a : ℕ) < b)
-      (hweight : weight r a = weight r b) : False := by
-    have ha : (a : ℕ) < r := by omega
-    let i : Fin r := ⟨a, ha⟩
-    have hvalue := congrFun hweight i
-    simp only [weight_def, Fin.ext_iff, Fin.val_castSucc, Fin.val_succ] at hvalue
-    dsimp only [i] at hvalue
-    split_ifs at hvalue <;> omega
-  have hval : (k : ℕ) ≠ l := fun h ↦ hne (Fin.ext h)
-  rcases lt_or_gt_of_ne hval with hlt | hgt
-  · exact aux hlt hkl
-  · exact aux hgt hkl.symm
 
 /-- The standard weight at coordinate `k` evaluates as the quotient of two adjacent partial
 products. Missing factors at the two ends are interpreted as one. -/
@@ -150,9 +127,10 @@ private theorem torusCharacter_partialProducts {K : Type u} [CommRing K]
         (∏ j ∈ Finset.range r,
             if hj : j < r + 1 then t ⟨j, hj⟩ else 1) *
               t ⟨r, Nat.lt_succ_self r⟩ = 1 := by
-      conv_lhs => rhs; rw [← show
+      have hlast :
         (if hj : r < r + 1 then t ⟨r, hj⟩ else 1) =
-          t ⟨r, Nat.lt_succ_self r⟩ by simp]
+          t ⟨r, Nat.lt_succ_self r⟩ := by simp
+      rw [← hlast]
       rw [← Finset.prod_range_succ]
       simpa only [Finset.prod_fin_eq_prod_range] using ht
     rw [one_mul, eq_inv_of_mul_eq_one_left htotal, inv_inv]
@@ -194,11 +172,10 @@ theorem centralizer_range_weightTorusPoints (K : Type u) [Field K] [Infinite K] 
     let d := weightTorusPoints r K s
     have hcomm : Commute d g :=
       Subgroup.mem_centralizer_iff.mp hg d ⟨s, rfl⟩
-    have hmatrix : Commute
-        d.1.1 g.1.1 :=
-      congrArg (fun x : points r K ↦
-        x.1.1) hcomm.eq
-    change Commute (weightTorusPoints r K s).1.1 g.1.1 at hmatrix
+    have hmatrix : Commute d.1.1 g.1.1 :=
+      congrArg (fun x : points r K ↦ x.1.1) hcomm.eq
+    have hd : d = weightTorusPoints r K s := rfl
+    rw [hd] at hmatrix
     rw [coe_weightTorusPoints,
       UniversalEnvelopingAlgebra.kostantTorusMatrix_apply, diagGL_coe] at hmatrix
     apply apply_eq_zero_of_commute_diagonal hmatrix
@@ -222,10 +199,9 @@ theorem centralizer_range_weightTorusPoints (K : Type u) [Field K] [Infinite K] 
     apply Subtype.ext
     exact hcomm.eq
 
-/-- **Over a field, the standard weight torus consists of all determinant-one diagonal carrier
-points.** The partial products of the diagonal entries give an explicit inverse to the weight
-parametrization. -/
-theorem range_weightTorusPoints_eq_diagonalPoints (K : Type u) [Field K] :
+/-- **Over a commutative ring, the standard weight torus consists of all diagonal carrier
+points.** Thus every diagonal carrier point admits a standard weight-torus parametrization. -/
+theorem range_weightTorusPoints_eq_diagonalPoints (K : Type u) [CommRing K] :
     (weightTorusPoints r K).range = diagonalPoints r K := by
   apply le_antisymm
   · rintro g ⟨s, rfl⟩
@@ -238,7 +214,7 @@ theorem range_weightTorusPoints_eq_diagonalPoints (K : Type u) [Field K] :
     obtain ⟨t, ht⟩ := mem_diagonalTorus_iff_exists_diagGL.mp
       (mem_diagonalTorus_iff.mpr hg)
     have hprod : ∏ i, t i = 1 := by
-      have hdet := (mem_points_iff_det_eq_one r g.1).mp g.property
+      have hdet := det_eq_one_of_mem_points r g.property
       have hdet' := congrArg Matrix.GeneralLinearGroup.det ht
       rw [det_diagGL] at hdet'
       exact hdet'.trans hdet

@@ -236,6 +236,23 @@ theorem weight_def (k : Fin (r + 1)) (i : Fin r) :
       (if k = i.castSucc then 1 else 0) - (if k = i.succ then 1 else 0) :=
   by rw [weight]
 
+/-- The weights of the standard representation of `sl_{r+1}` are pairwise distinct. -/
+theorem weight_injective : Function.Injective (weight r) := by
+  intro k l hkl
+  by_contra hne
+  have aux {a b : Fin (r + 1)} (hab : (a : ℕ) < b)
+      (hweight : weight r a = weight r b) : False := by
+    have ha : (a : ℕ) < r := by omega
+    let i : Fin r := ⟨a, ha⟩
+    have hvalue := congrFun hweight i
+    simp only [weight_def, Fin.ext_iff, Fin.val_castSucc, Fin.val_succ] at hvalue
+    dsimp only [i] at hvalue
+    split_ifs at hvalue <;> omega
+  have hval : (k : ℕ) ≠ l := fun h ↦ hne (Fin.ext h)
+  rcases lt_or_gt_of_ne hval with hlt | hgt
+  · exact aux hlt hkl
+  · exact aux hgt hkl.symm
+
 /-- The weights of the standard representation sum to zero. -/
 theorem sum_weight_eq_zero : ∑ k, weight r k = 0 := by
   funext i
