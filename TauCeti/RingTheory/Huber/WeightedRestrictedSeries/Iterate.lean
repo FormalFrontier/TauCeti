@@ -252,6 +252,7 @@ theorem iterateFirstBlockHom_coe_weightedC (a : A) :
 /-! ### The two maps are mutually inverse -/
 
 /-- The structure map of the iterated algebra is the constant series of a constant series. -/
+@[simp]
 theorem iterateStructureHom_apply (a : A) :
     iterateStructureHom k m A a
       = ((weightedC (fun _ : Fin m ↦ ({1} : Set (restrictedMvPowerSeriesCompletion k A)))
