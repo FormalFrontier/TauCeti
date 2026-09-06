@@ -17,12 +17,10 @@ images of the generic coordinates of `W₂` under the function-field map `φ^*`,
 point is nothing but the generic point of `W₂` transported along `φ^*` by Mathlib's
 `WeierstrassCurve.Affine.Point.map`.
 
-That transport is an `AddMonoidHom`, and it is functorial, which is what makes the identification
-useful: reading a composite `ψ ∘ φ` through it turns a question about the composite's pullback
-into one about the *point* `ψ`'s tautological point moved along `φ^*`, where the group law of
-`W₂⁄F(W₁)` is available. Every identity between composites of concretely given isogenies proved
-downstream — `[m] ∘ [n] = [m n]` first among them — is that translation followed by an
-additive computation.
+The transport is an `AddMonoidHom` and is functorial, so the tautological point of a composite
+`ψ ∘ φ` is the tautological point of `ψ` transported along `φ^*`. This expresses a composite of
+pullbacks as a statement in the group `W₂⁄F(W₁)`, which is how `[m] ∘ [n] = [m n]` is proved in
+`MulByInt/Comp.lean`.
 
 ## Main results
 

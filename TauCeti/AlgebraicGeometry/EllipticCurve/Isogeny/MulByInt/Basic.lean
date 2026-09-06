@@ -177,11 +177,10 @@ theorem mulByIntX_def (n : ℤ) :
 theorem mulByIntY_def (n : ℤ) :
     mulByIntY W n = omegaFunctionField W n / psiFunctionField W n ^ 3 := (rfl)
 
-/-- The `Z`-coordinate of the Jacobian triple of `[n]` at the generic point is `ψₙ`.
-
-Not `@[simp]`, like the two below: `smulEval` is an `abbrev`, so `simp` unfolds the left-hand
-side through `Function.comp_apply` and `map_ψ` before these could fire, and `simpNF` rejects
-them. -/
+/-- The `Z`-coordinate of the Jacobian triple of `[n]` at the generic point is `ψₙ`. -/
+-- Not `@[simp]`, like the two below: `smulEval` is an `abbrev`, so `simp` unfolds the left-hand
+-- side through `Function.comp_apply` and `map_ψ` before these could fire, and `simpNF` rejects
+-- them.
 theorem smulEval_genericPoint_Z (n : ℤ) :
   smulEval (W⁄W.FunctionField).toAffine W.genericX W.genericY n 2 =
       psiFunctionField W n := by
