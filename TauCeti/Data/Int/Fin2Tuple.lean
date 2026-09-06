@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.EuclideanDomain.Int
-public import Mathlib.Data.Int.GCD
 
 import Mathlib.Data.Fin.VecNotation
 import Mathlib.Data.Fintype.Fin
