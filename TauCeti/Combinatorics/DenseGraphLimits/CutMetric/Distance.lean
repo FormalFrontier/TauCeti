@@ -6,6 +6,7 @@ Authors: Claude
 module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.CutMetric.Coupling
+public import TauCeti.Combinatorics.DenseGraphLimits.Graphon.Pullback
 public import TauCeti.Combinatorics.DenseGraphLimits.Kernel.CutNorm
 import TauCeti.Combinatorics.DenseGraphLimits.Kernel.Pullback
 
@@ -51,6 +52,8 @@ overlaid difference, and the cut norm is even and drops along a pushforward
   measure-preserving maps, and `cutDist_le_cutNorm_sub_of_measurePreserving` bounds the cut
   distance by that value; `cutDist_le_cutNorm_sub` is its identity case, and `cutDist_self`
   follows;
+* `cutDist_le_cutDist_comap_right` compares the cut distance with its value against a
+  measure-preserving pullback of the right-hand graphon;
 * `cutNorm_overlayDiff_diagonalCoupling` computes the value the diagonal coupling contributes to
   that infimum: it is exactly the same-carrier cut norm of the difference.
 
@@ -235,6 +238,42 @@ theorem cutDist_le_cutNorm_sub_of_measurePreserving [IsFiniteMeasure μ]
   exact (cutDist_le U W (isCoupling_map_prodMk hf hg)).trans_eq
     (cutNorm_overlayDiff_map_prodMk U W hf.measurable hg.measurable
       ⟨hf.measurable.prodMk hg.measurable, rfl⟩)
+
+/-- **Reading the right-hand graphon along a measure-preserving map does not decrease the cut
+distance:** if `f : Ω₂' → Ω₂` is measure preserving, then
+`cutDist U W ≤ cutDist U (W.comap f hf.measurable μ₂')`.
+
+The two sides are in fact equal; the reverse inequality needs the triangle inequality and is
+`TauCeti.DenseGraphLimits.cutDist_comap_right` in
+`TauCeti.Combinatorics.DenseGraphLimits.CutMetric.Triangle`. -/
+theorem cutDist_le_cutDist_comap_right
+    {Ω₂' : Type*} [MeasurableSpace Ω₂'] {μ₂' : Measure Ω₂'} [IsProbabilityMeasure μ₂']
+    (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) {f : Ω₂' → Ω₂}
+    (hf : MeasurePreserving f μ₂' μ₂) :
+    cutDist U W ≤ cutDist U (W.comap f hf.measurable μ₂') := by
+  refine le_cutDist U (W.comap f hf.measurable μ₂') fun π hπ => ?_
+  let _ := hπ.isProbabilityMeasure
+  have hg : Measurable fun p : Ω₁ × Ω₂' => f p.2 := hf.measurable.comp measurable_snd
+  let ρ : Measure (Ω₁ × Ω₂) := π.map fun p => (p.1, f p.2)
+  have hρ : IsCoupling μ₁ μ₂ ρ :=
+    isCoupling_map_prodMk hπ.measurePreserving_fst (hf.comp hπ.measurePreserving_snd)
+  let _ := hρ.isProbabilityMeasure
+  have hmp : MeasurePreserving (fun p : Ω₁ × Ω₂' => (p.1, f p.2)) π ρ :=
+    ⟨measurable_fst.prodMk hg, rfl⟩
+  have hid : MeasurePreserving (fun p : Ω₁ × Ω₂' => (p.1, p.2)) π π :=
+    ⟨measurable_fst.prodMk measurable_snd, by simp⟩
+  calc
+    cutDist U W ≤ cutNorm ρ (overlayDiff U W ρ) := cutDist_le U W hρ
+    _ = cutNorm π (U.toSymmKernel.comap Prod.fst measurable_fst π -
+          W.toSymmKernel.comap (fun p => f p.2) hg π) :=
+      cutNorm_overlayDiff_map_prodMk U W measurable_fst hg hmp
+    _ = cutNorm π (overlayDiff U (W.comap f hf.measurable μ₂') π) := by
+      rw [cutNorm_overlayDiff_map_prodMk U (W.comap f hf.measurable μ₂') measurable_fst
+        measurable_snd hid, Graphon.toSymmKernel_comap, SymmKernel.comap_comap]
+      -- Both sides now pull `W` back along the same map: `f ∘ Prod.snd` is `fun p => f p.2`.
+      -- Rewriting that spelling is not motive correct, since the measurability proof depends on
+      -- the map, so the two are identified definitionally instead.
+      rfl
 
 variable [IsProbabilityMeasure μ]
 

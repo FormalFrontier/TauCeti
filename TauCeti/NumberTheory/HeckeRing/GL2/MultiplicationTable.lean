@@ -201,21 +201,17 @@ private lemma mulSupport_pp_dvd_p_aux (p : ℕ) (hp : p.Prime)
 /-- Divisibility constraint: if a `T(1,p) · T(1,pᵏ)`-shaped product lies in the double
 coset of `diag a`, the first invariant `a 0` divides `p`. -/
 private lemma mulSupport_pp_dvd_p (p : ℕ) (hp : p.Prime) (k : ℕ) (a : Fin 2 → ℕ)
-    (ha_pos : ∀ i, 0 < a i) (hdiv : IsDvdChain a) (D1c D2c i₀_gl j₀_gl : GL (Fin 2) ℚ)
+    (ha_pos : ∀ i, 0 < a i) (hdiv : IsDvdChain a) (D1c D2c : GL (Fin 2) ℚ)
     (SL_L₁ SL_R₁ SL_L₂ SL_R₂ SL_La SL_Ra SL_i₀ SL_j₀ : SpecialLinearGroup (Fin 2) ℤ)
     (hD1_eq : D1c = mapGL ℚ SL_L₁ * natDiagGL 2 (![1, p]) * mapGL ℚ SL_R₁)
     (hD2_eq : D2c = mapGL ℚ SL_L₂ * natDiagGL 2 (![1, p ^ k]) * mapGL ℚ SL_R₂)
-    (hi₀ : i₀_gl = mapGL ℚ SL_i₀) (hj₀ : j₀_gl = mapGL ℚ SL_j₀)
-    (h_prod_eq_a : i₀_gl * D1c * (j₀_gl * D2c) =
+    (h_prod_eq_a : mapGL ℚ SL_i₀ * D1c * (mapGL ℚ SL_j₀ * D2c) =
       mapGL ℚ SL_La * natDiagGL 2 a * mapGL ℚ SL_Ra) : a 0 ∣ p := by
   apply mulSupport_pp_dvd_p_aux p hp (SL_R₁ * SL_j₀ * SL_L₂) (SL_La⁻¹ * SL_i₀ * SL_L₁)
     (SL_R₂ * SL_Ra⁻¹) a ha_pos hdiv k
-  have hprod : mapGL ℚ SL_i₀ * (mapGL ℚ SL_L₁ * natDiagGL 2 (![1, p]) * mapGL ℚ SL_R₁) *
-      (mapGL ℚ SL_j₀ * (mapGL ℚ SL_L₂ * natDiagGL 2 (![1, p ^ k]) * mapGL ℚ SL_R₂)) =
-      mapGL ℚ SL_La * natDiagGL 2 a * mapGL ℚ SL_Ra := by
-    rwa [← hi₀, ← hj₀, ← hD1_eq, ← hD2_eq]
+  rw [hD1_eq, hD2_eq] at h_prod_eq_a
   have hiso := congr_arg (· * (mapGL ℚ SL_Ra)⁻¹)
-    (congr_arg ((mapGL ℚ SL_La)⁻¹ * ·) hprod)
+    (congr_arg ((mapGL ℚ SL_La)⁻¹ * ·) h_prod_eq_a)
   simp only [mul_assoc, inv_mul_cancel_left] at hiso
   simp only [map_mul, map_inv]
   convert hiso using 1
@@ -303,25 +299,21 @@ end DegreeCount
 
 section SupportSubset
 
-include hp in
-/-- The support of `T(1,p) · T(1,pᵏ)` is contained in `{T(1,p^(k+1)), T(p,pᵏ)}`. -/
-private lemma mulSupport_pp_subset (k : ℕ)
-    (A : HeckeCoset (posDetInt 2) (SLnZ 2) (SLnZ 2))
+/-- Unpacking a support coset of `T(1,p) · T(1,pᵏ)`. If `T(a)` occurs in the product then some
+pair of coset representatives multiplies into the double coset of `natDiagGL 2 a`; naming the
+`SL₂(ℤ)` lift of each of the four `SL₂` factors turns that membership into an explicit
+equation. -/
+private lemma mulSupport_pp_exists_prod_eq (k : ℕ) (a : Fin 2 → ℕ)
     (hA : multiplicity (SLnZ 2) (SLnZ 2) (SLnZ 2)
       (((diagCoset ![1, p]).rep : GL (Fin 2) ℚ))
-      (((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ)) ((A.rep : GL (Fin 2) ℚ)) ≠ 0) :
-    A = diagCoset ![1, p ^ (k + 1)] ∨ A = diagCoset ![p, p ^ k] := by
-  classical
-  -- Stage 1: positivity of the two input diagonals, and a diagonal representative `a` for `A`.
-  have h1p_pos : ∀ i : Fin 2, 0 < (![1, p] : Fin 2 → ℕ) i := fun i ↦ by
-    fin_cases i <;> simp [hp.pos]
-  have h1pk_pos : ∀ i : Fin 2, 0 < (![1, p ^ k] : Fin 2 → ℕ) i := fun i ↦ by
-    fin_cases i <;> simp [pow_pos hp.pos k]
-  obtain ⟨a, ha_pos, hdiv, hA_eq⟩ := exists_diagonal_representative A
-  -- Stage 2: `A` occurs in the product, so some pair `q` of coset representatives multiplies
-  -- into the double coset of `natDiagGL 2 a`; unpack that into an explicit `La · D · Ra`.
+      (((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ))
+      (((diagCoset a).rep : GL (Fin 2) ℚ)) ≠ 0) :
+    ∃ SL_i₀ SL_j₀ SL_La SL_Ra : SpecialLinearGroup (Fin 2) ℤ,
+      mapGL ℚ SL_i₀ * ((diagCoset ![1, p]).rep : GL (Fin 2) ℚ) *
+        (mapGL ℚ SL_j₀ * ((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ)) =
+        mapGL ℚ SL_La * natDiagGL 2 a * mapGL ℚ SL_Ra := by
   have hmem := (HeckeCoset.mem_image_mulMap_iff (diagCoset ![1, p]).rep
-    (diagCoset ![1, p ^ k]).rep A).mpr hA
+    (diagCoset ![1, p ^ k]).rep (diagCoset a)).mpr hA
   simp only [Finset.mem_image, Finset.mem_univ, true_and] at hmem
   obtain ⟨q, hq⟩ := hmem
   have h_prod_mem : ((q.1.out : GL (Fin 2) ℚ) * ((diagCoset ![1, p]).rep : GL (Fin 2) ℚ) *
@@ -333,47 +325,58 @@ private lemma mulSupport_pp_subset (k : ℕ)
           (diagCoset ![1, p]).rep (diagCoset ![1, p ^ k]).rep q).toSet := by
       rw [HeckeCoset.mulMap_eq_mk, HeckeCoset.toSet_mk]
       exact mem_doubleCoset_self _ _ _
-    rwa [hq, hA_eq, diagCoset_toSet] at hself
+    rwa [hq, diagCoset_toSet] at hself
   rw [mem_doubleCoset] at h_prod_mem
   obtain ⟨La, hLa, Ra, hRa, h_prod_eq⟩ := h_prod_mem
-  -- Stage 3: every `SLnZ 2` element appearing above is `mapGL ℚ` of an honest integral `SL₂`
-  -- matrix; name those lifts, and likewise for the two input cosets' own decompositions.
   obtain ⟨SL_La, hSL_La⟩ := (mem_SLnZ_iff 2).mp hLa
   obtain ⟨SL_Ra, hSL_Ra⟩ := (mem_SLnZ_iff 2).mp hRa
   obtain ⟨SL_i₀, hSL_i₀⟩ := (mem_SLnZ_iff 2).mp q.1.out.2
   obtain ⟨SL_j₀, hSL_j₀⟩ := (mem_SLnZ_iff 2).mp q.2.out.2
+  refine ⟨SL_i₀, SL_j₀, SL_La, SL_Ra, ?_⟩
+  rw [hSL_i₀, hSL_j₀, hSL_La, hSL_Ra]
+  exact h_prod_eq
+
+include hp in
+/-- The support of `T(1,p) · T(1,pᵏ)` is contained in `{T(1,p^(k+1)), T(p,pᵏ)}`. -/
+private lemma mulSupport_pp_subset (k : ℕ)
+    (A : HeckeCoset (posDetInt 2) (SLnZ 2) (SLnZ 2))
+    (hA : multiplicity (SLnZ 2) (SLnZ 2) (SLnZ 2)
+      (((diagCoset ![1, p]).rep : GL (Fin 2) ℚ))
+      (((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ)) ((A.rep : GL (Fin 2) ℚ)) ≠ 0) :
+    A = diagCoset ![1, p ^ (k + 1)] ∨ A = diagCoset ![p, p ^ k] := by
+  -- Stage 1: positivity of the two input diagonals, and a diagonal representative `a` for `A`.
+  have h1p_pos : ∀ i : Fin 2, 0 < (![1, p] : Fin 2 → ℕ) i := fun i ↦ by
+    fin_cases i <;> simp [hp.pos]
+  have h1pk_pos : ∀ i : Fin 2, 0 < (![1, p ^ k] : Fin 2 → ℕ) i := fun i ↦ by
+    fin_cases i <;> simp [pow_pos hp.pos k]
+  obtain ⟨a, ha_pos, hdiv, rfl⟩ := exists_diagonal_representative A
+  -- Stage 2: `T(a)` occurs in the product, so the two coset representatives multiply into the
+  -- double coset of `natDiagGL 2 a`, with every factor lifted to an integral `SL₂` matrix.
+  obtain ⟨SL_i₀, SL_j₀, SL_La, SL_Ra, h_prod_eq⟩ := mulSupport_pp_exists_prod_eq p k a hA
+  -- Stage 3: the two input cosets' own decompositions, lifted the same way.
   obtain ⟨L₁, hL₁, R₁, hR₁, hD1⟩ := exists_rep_diagCoset_eq_mul_natDiagGL_mul (![1, p])
   obtain ⟨SL_L₁, hSL_L₁⟩ := (mem_SLnZ_iff 2).mp hL₁
   obtain ⟨SL_R₁, hSL_R₁⟩ := (mem_SLnZ_iff 2).mp hR₁
   obtain ⟨L₂, hL₂, R₂, hR₂, hD2⟩ := exists_rep_diagCoset_eq_mul_natDiagGL_mul (![1, p ^ k])
   obtain ⟨SL_L₂, hSL_L₂⟩ := (mem_SLnZ_iff 2).mp hL₂
   obtain ⟨SL_R₂, hSL_R₂⟩ := (mem_SLnZ_iff 2).mp hR₂
-  have h_prod_eq' : (q.1.out : GL (Fin 2) ℚ) *
-      ((diagCoset ![1, p]).rep : GL (Fin 2) ℚ) *
-      ((q.2.out : GL (Fin 2) ℚ) * ((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ)) =
-      mapGL ℚ SL_La * natDiagGL 2 a * mapGL ℚ SL_Ra := by
-    rw [hSL_La, hSL_Ra]
-    exact h_prod_eq
   -- Stage 4: determinants. Both sides of the product have determinant `p^(k+1)`, which pins
   -- `a 0 * a 1`; the two coset representatives' determinants come from `diagCoset_rep_det`, and
-  -- the two `SL₂` factors' from `det_eq_one_of_mem_SLnZ`.
-  have h_det := diag_entries_mul_eq_pow_succ p k a ha_pos (q.1.out : GL (Fin 2) ℚ)
-    ((diagCoset ![1, p]).rep : GL (Fin 2) ℚ) (q.2.out : GL (Fin 2) ℚ)
+  -- the two `SL₂` factors' from `SpecialLinearGroup.det_mapGL`.
+  have h_det := diag_entries_mul_eq_pow_succ p k a ha_pos (mapGL ℚ SL_i₀)
+    ((diagCoset ![1, p]).rep : GL (Fin 2) ℚ) (mapGL ℚ SL_j₀)
     ((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ)
-    (det_eq_one_of_mem_SLnZ 2 q.1.out.2)
+    (congrArg Units.val (SpecialLinearGroup.det_mapGL (S := ℚ) SL_i₀))
     (by rw [diagCoset_rep_det _ h1p_pos]; simp [Fin.prod_univ_two])
-    (det_eq_one_of_mem_SLnZ 2 q.2.out.2)
+    (congrArg Units.val (SpecialLinearGroup.det_mapGL (S := ℚ) SL_j₀))
     (by rw [diagCoset_rep_det _ h1pk_pos]; simp [Fin.prod_univ_two])
-    SL_La SL_Ra h_prod_eq'
+    SL_La SL_Ra h_prod_eq
   -- Stage 5: the first invariant factor divides `p`, because conjugating the middle matrix
   -- keeps it integral. With `a 0 * a 1 = p^(k+1)` that leaves only the two claimed cosets.
   have h_dvd := mulSupport_pp_dvd_p p hp k a ha_pos hdiv
     ((diagCoset ![1, p]).rep : GL (Fin 2) ℚ) ((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ)
-    (q.1.out : GL (Fin 2) ℚ) (q.2.out : GL (Fin 2) ℚ)
     SL_L₁ SL_R₁ SL_L₂ SL_R₂ SL_La SL_Ra SL_i₀ SL_j₀
-    (by rw [hD1, hSL_L₁, hSL_R₁]) (by rw [hD2, hSL_L₂, hSL_R₂])
-    hSL_i₀.symm hSL_j₀.symm h_prod_eq'
-  rw [hA_eq]
+    (by rw [hD1, hSL_L₁, hSL_R₁]) (by rw [hD2, hSL_L₂, hSL_R₂]) h_prod_eq
   exact mulSupport_pp_case_split p hp k a h_det h_dvd
 
 include hp in
@@ -471,6 +474,35 @@ private lemma multiplicity_one_prime_pow_succ_pos (k : ℕ) :
   group
 
 include hp in
+/-- The degree balance for `T(1,p) · T(1,pᵏ)` over `ℤ`: the multiplicity-weighted degrees of the
+two output cosets `T(1, p^(k+1))` and `T(p, pᵏ)` sum to the product `(p + 1) · p^(k-1)(p + 1)` of
+the input degrees. -/
+private lemma multiplicity_degree_sum_prime_pow (k : ℕ) (hk : 0 < k) :
+    (multiplicity (SLnZ 2) (SLnZ 2) (SLnZ 2)
+        (((diagCoset ![1, p]).rep : GL (Fin 2) ℚ))
+        (((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ))
+        (((diagCoset ![1, p ^ (k + 1)]).rep : GL (Fin 2) ℚ)) : ℤ) *
+        ((p : ℤ) ^ k * ((p : ℤ) + 1)) +
+      (multiplicity (SLnZ 2) (SLnZ 2) (SLnZ 2)
+        (((diagCoset ![1, p]).rep : GL (Fin 2) ℚ))
+        (((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ))
+        (((diagCoset ![p, p ^ k]).rep : GL (Fin 2) ℚ)) : ℤ) *
+        ((diagCoset (![p, p ^ k] : Fin 2 → ℕ)).degree : ℤ) =
+      ((p : ℤ) + 1) * ((p : ℤ) ^ (k - 1) * ((p : ℤ) + 1)) := by
+  have h_deg := multiplicity_degree_sum_eq (diagCoset ![1, p]) (diagCoset ![1, p ^ k])
+    (diagCoset ![1, p ^ (k + 1)]) (diagCoset ![p, p ^ k])
+    (diagCoset_one_prime_pow_succ_ne p hp k hk) (multiplicity_eq_zero_of_ne_diagCoset p hp k)
+  -- All three degrees are the `i = 0` case of `degree_diagCoset_prime_pow`; `simpa` absorbs
+  -- the `p ^ 0 = 1` and `0 + j = j` normalisations.
+  rw [show (diagCoset (![1, p] : Fin 2 → ℕ)).degree = p + 1 by
+      simpa using degree_diagCoset_prime_pow p hp 0 1 one_pos,
+    show (diagCoset (![1, p ^ k] : Fin 2 → ℕ)).degree = p ^ (k - 1) * (p + 1) by
+      simpa using degree_diagCoset_prime_pow p hp 0 k hk,
+    show (diagCoset (![1, p ^ (k + 1)] : Fin 2 → ℕ)).degree = p ^ k * (p + 1) by
+      simpa using degree_diagCoset_prime_pow p hp 0 (k + 1) (by omega)] at h_deg
+  exact_mod_cast h_deg
+
+include hp in
 /-- The multiplicities in `T(1,p) · T(1,pᵏ)`: the coset `T(1, p^(k+1))` appears once, and
 `T(p, pᵏ)` appears `p + 1` times for `k = 1` and `p` times for `k ≥ 2`. -/
 private lemma multiplicity_values (k : ℕ) (hk : 0 < k) :
@@ -492,19 +524,8 @@ private lemma multiplicity_values (k : ℕ) (hk : 0 < k) :
     (((diagCoset ![1, p]).rep : GL (Fin 2) ℚ))
     (((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ))
     (((diagCoset ![p, p ^ k]).rep : GL (Fin 2) ℚ)) with hm2_def
-  have h_ne := diagCoset_one_prime_pow_succ_ne p hp k hk
-  have h_deg := multiplicity_degree_sum_eq (diagCoset ![1, p]) (diagCoset ![1, p ^ k])
-    (diagCoset ![1, p ^ (k + 1)]) (diagCoset ![p, p ^ k]) h_ne
-    (multiplicity_eq_zero_of_ne_diagCoset p hp k)
+  have h_deg := multiplicity_degree_sum_prime_pow p hp k hk
   rw [← hm1_def, ← hm2_def] at h_deg
-  -- All three degrees are the `i = 0` case of `degree_diagCoset_prime_pow`; `simpa` absorbs
-  -- the `p ^ 0 = 1` and `0 + j = j` normalisations.
-  rw [show (diagCoset (![1, p] : Fin 2 → ℕ)).degree = p ^ 0 * (p + 1) by
-      simpa using degree_diagCoset_prime_pow p hp 0 1 one_pos,
-    show (diagCoset (![1, p ^ k] : Fin 2 → ℕ)).degree = p ^ (k - 1) * (p + 1) by
-      simpa using degree_diagCoset_prime_pow p hp 0 k hk,
-    show (diagCoset (![1, p ^ (k + 1)] : Fin 2 → ℕ)).degree = p ^ k * (p + 1) by
-      simpa using degree_diagCoset_prime_pow p hp 0 (k + 1) (by omega)] at h_deg
   have hm1_pos : 0 < m1 := multiplicity_one_prime_pow_succ_pos p hp k
   have hp2 : (2 : ℤ) ≤ (p : ℤ) := by exact_mod_cast hp.two_le
   by_cases hk1 : k = 1
@@ -512,14 +533,8 @@ private lemma multiplicity_values (k : ℕ) (hk : 0 < k) :
     -- `![p, p ^ 1]` is the constant vector, so the generic `degree_diagCoset_const` applies.
     rw [show (![p, p ^ 1] : Fin 2 → ℕ) = fun _ ↦ p from by funext i; fin_cases i <;> simp,
       degree_diagCoset_const 2 p] at h_deg
-    have h_degZ : (m1 : ℤ) * ((p : ℤ) ^ 1 * ((p : ℤ) + 1)) + (m2 : ℤ) * 1 =
-        ((p : ℤ) + 1) * ((p : ℤ) + 1) := by
-      have := h_deg
-      push_cast at this ⊢
-      norm_num at this ⊢
-      linarith
     obtain ⟨h1, h2⟩ := m1_eq_one_and_m2_eq_of_eq_one (p : ℤ) (m1 : ℤ) (m2 : ℤ) hp2
-      (by exact_mod_cast hm1_pos) (by positivity) h_degZ
+      (by exact_mod_cast hm1_pos) (by positivity) (by push_cast at h_deg; linarith)
     simp only [ite_true]
     exact ⟨by exact_mod_cast h1, by exact_mod_cast h2⟩
   · have hk2 : 2 ≤ k := by omega
@@ -528,15 +543,8 @@ private lemma multiplicity_values (k : ℕ) (hk : 0 < k) :
         have h := degree_diagCoset_prime_pow p hp 1 (k - 1) (by omega)
         rw [show 1 + (k - 1) = k by omega, pow_one] at h
         rw [h, show k - 1 - 1 = k - 2 by omega]] at h_deg
-    have h_degZ : (m1 : ℤ) * ((p : ℤ) ^ k * ((p : ℤ) + 1)) +
-        (m2 : ℤ) * ((p : ℤ) ^ (k - 2) * ((p : ℤ) + 1)) =
-        ((p : ℤ) + 1) * ((p : ℤ) ^ (k - 1) * ((p : ℤ) + 1)) := by
-      have := h_deg
-      zify at this
-      ring_nf at this ⊢
-      linarith
     obtain ⟨h1, h2⟩ := m1_eq_one_and_m2_eq_of_two_le (p : ℤ) (m1 : ℤ) (m2 : ℤ) k hk2 hp2
-      (by exact_mod_cast hm1_pos) (by positivity) h_degZ
+      (by exact_mod_cast hm1_pos) (by positivity) (by push_cast at h_deg; linarith)
     simp only [hk1, ite_false]
     exact ⟨by exact_mod_cast h1, by exact_mod_cast h2⟩
 

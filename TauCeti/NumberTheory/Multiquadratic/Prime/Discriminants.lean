@@ -39,6 +39,8 @@ discriminant `D ∈ {-4, 8, -8}`, the radicand is `D / 4`, so the three even cas
 * `TauCeti.Multiquadratic.primeDiscriminantPrime`: the single rational prime lying under a prime
   discriminant, with `TauCeti.Multiquadratic.natCast_dvd_primeDiscriminant_iff` saying that it is
   the only prime divisor.
+* `TauCeti.Multiquadratic.isCoprime_primeDiscriminant_of_ne_of_not_both_even`: distinct prime
+  discriminants are coprime, unless both are even.
 -/
 
 public section
@@ -465,5 +467,36 @@ theorem injOn_primeDiscriminantPrime {s : Set ℤ} (hs : ∀ D ∈ s, IsPrimeDis
     (heven : ∀ D ∈ s, ∀ E ∈ s, IsEvenPrimeDiscriminant D → IsEvenPrimeDiscriminant E → D = E) :
     Set.InjOn primeDiscriminantPrime s :=
   fun D hD E hE h => eq_of_primeDiscriminantPrime_eq (hs D hD) (hs E hE) (heven D hD E hE) h
+
+/-- A prime discriminant is nonzero. -/
+theorem IsPrimeDiscriminant.ne_zero {D : ℤ} (hD : IsPrimeDiscriminant D) : D ≠ 0 := by
+  rcases isPrimeDiscriminant_iff.mp hD with hev | ⟨p, hp, _, rfl⟩
+  · rcases hev with rfl | rfl | rfl <;> norm_num
+  · exact oddPrimeDiscriminant_ne_zero.mpr hp.ne_zero
+
+/-- An even prime discriminant is coprime to every odd prime discriminant. -/
+theorem isCoprime_evenPrimeDiscriminant_oddPrimeDiscriminant {D : ℤ} {p : ℕ}
+    (hD : IsEvenPrimeDiscriminant D) (hp : Odd p) :
+    IsCoprime D (oddPrimeDiscriminant p) := by
+  rw [Int.isCoprime_iff_nat_coprime, oddPrimeDiscriminant_natAbs]
+  rcases hD with rfl | rfl | rfl
+  · exact hp.coprime_two_left.pow_left 2
+  · exact hp.coprime_two_left.pow_left 3
+  · exact hp.coprime_two_left.pow_left 3
+
+/-- **Distinct prime discriminants are coprime**, provided they are not two distinct even prime
+discriminants; the proviso is necessary, since `-4`, `8` and `-8` all lie over `2`. -/
+theorem isCoprime_primeDiscriminant_of_ne_of_not_both_even {D E : ℤ}
+    (hD : IsPrimeDiscriminant D) (hE : IsPrimeDiscriminant E) (hne : D ≠ E)
+    (heven : ¬ (IsEvenPrimeDiscriminant D ∧ IsEvenPrimeDiscriminant E)) : IsCoprime D E := by
+  rcases isPrimeDiscriminant_iff.mp hD with hDeven | ⟨p, hp, hpodd, rfl⟩
+  · rcases isPrimeDiscriminant_iff.mp hE with hEeven | ⟨q, _hq, hqodd, rfl⟩
+    · exact (heven ⟨hDeven, hEeven⟩).elim
+    · exact isCoprime_evenPrimeDiscriminant_oddPrimeDiscriminant hDeven hqodd
+  · rcases isPrimeDiscriminant_iff.mp hE with hEeven | ⟨q, hq, _hqodd, rfl⟩
+    · exact (isCoprime_evenPrimeDiscriminant_oddPrimeDiscriminant hEeven hpodd).symm
+    · rw [Int.isCoprime_iff_nat_coprime, oddPrimeDiscriminant_natAbs,
+        oddPrimeDiscriminant_natAbs]
+      exact (Nat.coprime_primes hp hq).mpr fun hpq => hne (by rw [hpq])
 
 end TauCeti.Multiquadratic

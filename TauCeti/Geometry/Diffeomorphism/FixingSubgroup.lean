@@ -26,24 +26,24 @@ relative subgroup is closed are deliberately left to the later `C^∞`-topology 
 
 ## Main definitions
 
-* `TauCeti.Diffeomorph.fixingSubgroup s`: self-diffeomorphisms fixing every point of `s`.
+* `Diffeomorph.fixingSubgroup s`: self-diffeomorphisms fixing every point of `s`.
 * `TauCeti.RelativeDiff I M n s`: the corresponding relative diffeomorphism group,
   as a type abbreviation for that subgroup.
 
 ## Main results
 
-* `mem_fixingSubgroup_iff`: membership is the pointwise equation `∀ x ∈ s, f x = x`.
-* `fixingSubgroup_empty` / `fixingSubgroup_univ`: the empty-set fixer is all of `Diff(M)`, and
+* `Diffeomorph.mem_fixingSubgroup_iff`: membership is the pointwise equation `∀ x ∈ s, f x = x`.
+* `Diffeomorph.fixingSubgroup_empty` / `Diffeomorph.fixingSubgroup_univ`: the empty-set fixer is all
+  of `Diff(M)`, and
   the whole-space fixer is trivial.
-* `fixingSubgroup_antitone`: fixing a larger set gives a smaller subgroup.
-* `fixingSubgroup_le_stabilizer`: pointwise fixing a subset implies stabilizing it setwise.
-* `toHomeomorph_mem_fixingSubgroup`: forgetting smoothness sends a relative diffeomorphism to the
-  corresponding relative homeomorphism.
+* `Diffeomorph.fixingSubgroup_antitone`: fixing a larger set gives a smaller subgroup.
+* `Diffeomorph.fixingSubgroup_le_stabilizer`: pointwise fixing a subset implies stabilizing it
+  setwise.
+* `Diffeomorph.toHomeomorph_mem_fixingSubgroup`: forgetting smoothness sends a relative
+  diffeomorphism to the corresponding relative homeomorphism.
 -/
 
 public section
-
-namespace TauCeti
 
 open scoped Manifold ContDiff Pointwise
 
@@ -51,11 +51,6 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
   {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners 𝕜 E H}
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M] {n : ℕ∞ω}
-
-/-- The relative diffeomorphism group fixing the subset `s` pointwise. -/
-abbrev RelativeDiff (I : ModelWithCorners 𝕜 E H) (M : Type*) [TopologicalSpace M]
-    [ChartedSpace H M] (n : ℕ∞ω) (s : Set M) : Type _ :=
-  _root_.fixingSubgroup (M ≃ₘ^n⟮I, I⟯ M) s
 
 namespace Diffeomorph
 
@@ -147,6 +142,13 @@ theorem toRelativeHomeomorphHom_apply (s : Set M) (f : fixingSubgroup (I := I) (
   simp [toRelativeHomeomorphHom, toHomeomorphHom_apply]
 
 end Diffeomorph
+
+namespace TauCeti
+
+/-- The relative diffeomorphism group fixing the subset `s` pointwise. -/
+abbrev RelativeDiff (I : ModelWithCorners 𝕜 E H) (M : Type*) [TopologicalSpace M]
+    [ChartedSpace H M] (n : ℕ∞ω) (s : Set M) : Type _ :=
+  _root_.fixingSubgroup (M ≃ₘ^n⟮I, I⟯ M) s
 
 /-- A relative diffeomorphism fixes every point of the subset defining it. -/
 @[simp]

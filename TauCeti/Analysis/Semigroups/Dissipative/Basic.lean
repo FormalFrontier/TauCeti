@@ -6,6 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Semigroups.Resolvent.Identity
+public import TauCeti.LinearAlgebra.LinearPMap.SmulSub
+public import TauCeti.Analysis.Normed.Operator.LinearPMap.SmulSub
 
 /-!
 # Dissipative operators
@@ -105,16 +107,8 @@ theorem IsDissipative.norm_le_of_smul_sub_eq {A : X →ₗ.[ℝ] X} (hA : IsDiss
 `lambda > 0`. -/
 theorem IsDissipative.smul_sub_injective {A : X →ₗ.[ℝ] X} (hA : IsDissipative A)
     {lambda : ℝ} (hlambda : 0 < lambda) :
-    Function.Injective fun x : A.domain => lambda • (x : X) - A x := by
-  intro x y hxy
-  replace hxy : lambda • (x : X) - A x = lambda • (y : X) - A y := hxy
-  have hzero : lambda • ((x - y : A.domain) : X) - A (x - y) = 0 := by
-    rw [Submodule.coe_sub, A.map_sub, smul_sub, sub_sub_sub_comm, hxy, sub_self]
-  have h := hA lambda hlambda (x - y)
-  rw [hzero, norm_zero, ← mul_zero lambda] at h
-  have hnorm : ‖((x - y : A.domain) : X)‖ ≤ 0 := le_of_mul_le_mul_left h hlambda
-  rw [Submodule.coe_sub] at hnorm
-  exact Subtype.ext (sub_eq_zero.mp (norm_le_zero_iff.mp hnorm))
+    Function.Injective fun x : A.domain => lambda • (x : X) - A x :=
+  LinearPMap.smul_sub_injective_of_norm_le hlambda (hA lambda hlambda)
 
 /-- Dissipativity passes to restrictions: if `A ≤ B` as unbounded operators and `B` is
 dissipative, then so is `A`. -/
@@ -209,19 +203,17 @@ private theorem IsDissipative.exists_bounded_rightInverse {A : X →ₗ.[ℝ] X}
     ∃ (g : X → A.domain) (J : X →L[ℝ] X), ‖J‖ ≤ lambda⁻¹ ∧ (∀ y : X, (g y : X) = J y) ∧
       ∀ y : X, lambda • (g y : X) - A (g y) = y := by
   -- `lambda • I - A`, packaged as a linear equivalence `D(A) ≃ₗ X`
-  let S : A.domain →ₗ[ℝ] X := lambda • A.domain.subtype - A.toFun
-  have hSapp : ∀ x : A.domain, S x = lambda • (x : X) - A x := fun x => by simp [S]
-  have hbij : Function.Bijective S := by
+  have hbij : Function.Bijective (A.smulSub lambda) := by
     constructor
     · intro x y h
-      exact hA.smul_sub_injective hlambda (by simpa [hSapp] using h)
+      exact hA.smul_sub_injective hlambda (by simpa [A.smulSub_apply] using h)
     · intro y
       obtain ⟨x, hx⟩ := hrange y
-      exact ⟨x, by simpa [hSapp] using hx⟩
-  let e : A.domain ≃ₗ[ℝ] X := LinearEquiv.ofBijective S hbij
+      exact ⟨x, by simpa [A.smulSub_apply] using hx⟩
+  let e : A.domain ≃ₗ[ℝ] X := LinearEquiv.ofBijective (A.smulSub lambda) hbij
   have he : ∀ y : X, lambda • ((e.symm y : A.domain) : X) - A (e.symm y) = y := by
     intro y
-    rw [← hSapp]
+    rw [← A.smulSub_apply]
     exact e.apply_symm_apply y
   -- its inverse, bounded by `1 / lambda` through dissipativity
   set J : X →ₗ[ℝ] X := A.domain.subtype ∘ₗ (e.symm : X →ₗ[ℝ] A.domain) with hJ_def

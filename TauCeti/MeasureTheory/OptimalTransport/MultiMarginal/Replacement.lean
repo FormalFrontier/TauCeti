@@ -63,10 +63,6 @@ def replaceMarginal (π : ProbabilityMeasure (∀ j, X j)) (i : ι)
     dsimp only [γ]
     infer_instance
   letI := Classical.decEq ι
-  let hu : AEMeasurable (fun q : (∀ j, X j) × X i × X i ↦
-      Function.update q.1 i q.2.2) γ :=
-    (measurable_update'.comp
-      (measurable_fst.prodMk (measurable_snd.comp measurable_snd))).aemeasurable
   exact (⟨γ.map (fun q ↦ Function.update q.1 i q.2.2),
     inferInstance⟩ : ProbabilityMeasure (∀ j, X j))
 

@@ -1,7 +1,7 @@
 name: CI
 
 on:
-  # PR builds moved to pr-build.yml, which sandboxes untrusted PR code under landrun in a
+  # PR builds moved to pr-build.yml, which sandboxes untrusted PR code under bwrap in a
   # trusted (base-defined) workflow. This run is only the post-merge health check on main.
   push:
     branches: [main]
@@ -68,8 +68,9 @@ jobs:
           python3 scripts/pr_status/test_conflicts.py
           python3 scripts/test_structure_nudge.py
           python3 scripts/test_workflow_pins.py
-          python3 scripts/test_landrun_pin.py
+          python3 scripts/test_bwrap_pin.py
           python3 scripts/test_elan_pin.py
+          python3 scripts/test_web_pins.py
           python3 scripts/test_attest_pr_config.py
           python3 scripts/test_profile_workflow.py
           python3 scripts/test_lake_cache_probe.py
@@ -255,7 +256,7 @@ jobs:
       # a ratchet reminder. `@[nolint <linter>]` applications must be accounted for
       # in scripts/lint-nolints-allowlist.txt, per (linter, declaration) pair.
       # PR-time enforcement runs inside the
-      # landrun sandbox in pr-build.yml (this lint executes the linted code); this
+      # bwrap sandbox in pr-build.yml (this lint executes the linted code); this
       # post-merge run is the health check on main, like the audits above.
       - name: Environment lint (default linters + docstring scan vs grandfathered baseline)
         env:

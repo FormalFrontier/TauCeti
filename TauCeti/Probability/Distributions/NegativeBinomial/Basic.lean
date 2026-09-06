@@ -10,6 +10,7 @@ public import Mathlib.MeasureTheory.Measure.Dirac.Basic
 public import TauCeti.Analysis.Analytic.Binomial
 public import TauCeti.Probability.GeneratingFunction
 import Mathlib.MeasureTheory.Integral.Bochner.SumMeasure
+import TauCeti.Probability.Distributions.Geometric
 
 /-!
 # The negative-binomial distribution
@@ -232,6 +233,22 @@ theorem negativeBinomialMeasure_real_singleton {r p : ℝ} (hr : 0 ≤ r) (hp : 
     (negativeBinomialMeasure r p).real {k} = negativeBinomialWeightReal r p k := by
   rw [measureReal_def, negativeBinomialMeasure_singleton hr hp hp1,
     negativeBinomialWeight_toReal hr hp.le hp1]
+
+/-- For nonzero success probability, the geometric law is the negative-binomial law of shape
+one. -/
+theorem geometricMeasure_eq_negativeBinomialMeasure_one (p : unitInterval) (hp : p ≠ 0) :
+    geometricMeasure p = negativeBinomialMeasure 1 p := by
+  have hpR : (0 : ℝ) < p := by grind
+  let _ : IsProbabilityMeasure (negativeBinomialMeasure 1 p) :=
+    isProbabilityMeasure_negativeBinomialMeasure zero_le_one hpR p.2.2
+  refine Measure.ext_of_measureReal_singleton fun k => ?_
+  rw [geometricMeasure_real_singleton hp,
+    negativeBinomialMeasure_real_singleton zero_le_one hpR p.2.2,
+    negativeBinomialWeightReal_eq_coeff zero_lt_one]
+  have hp_rpow : Real.rpow (p : ℝ) 1 = p := Real.rpow_one _
+  rw [hp_rpow]
+  simp only [Ring.multichoose_one, one_mul]
+  ring
 
 /-! ### Support -/
 

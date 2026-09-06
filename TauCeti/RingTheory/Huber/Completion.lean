@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Topology.Algebra.Nonarchimedean.Completion
+public import TauCeti.Topology.Algebra.Nonarchimedean.Completion.Basic
 public import TauCeti.RingTheory.Huber.Basic
 
 /-!
@@ -511,6 +511,7 @@ theorem isPowerBounded_of_isPowerBounded_completion_coe [IsHuberRing A] {a : A}
 
 /-- **Wedhorn Lemma 7.47(1), at the level of elements: `A⁰` is the preimage of `Â⁰`.** An element of
 `A` is power-bounded exactly when its image in the completion is. -/
+@[simp]
 theorem isPowerBounded_completion_coe_iff [IsHuberRing A] {a : A} :
     IsPowerBounded ((a : Completion A)) ↔ IsPowerBounded a :=
   ⟨isPowerBounded_of_isPowerBounded_completion_coe,

@@ -97,7 +97,7 @@ theorem adjointContinuousLinearMap_one :
   have h := congrArg
     (fun f : TauCeti.Diff I G 1 ↦ (f : G → G))
     (map_one (conj (I := I) (n := 1)))
-  simpa only [conj_apply, TauCeti.Diffeomorph.coe_one] using h
+  simpa only [conj_apply, Diffeomorph.coe_one] using h
 
 @[simp]
 theorem adjointContinuousLinearMap_mul (g h : G) :
@@ -114,7 +114,7 @@ theorem adjointContinuousLinearMap_mul (g h : G) :
     have hmap := congrArg
       (fun f : TauCeti.Diff I G 1 ↦ (f : G → G))
       (map_mul (conj (I := I) (n := 1)) g h)
-    simpa only [conj_apply, TauCeti.Diffeomorph.coe_mul] using hmap
+    simpa only [conj_apply, Diffeomorph.coe_mul] using hmap
   rw [mfderiv_congr (I := I) (I' := I) hfun]
   rw [mfderiv_comp (I := I) (I' := I) (I'' := I) _
     (((conjDiffeomorph (I := I) (n := 1) g).mdifferentiable (by simp)) _)
@@ -130,7 +130,7 @@ private theorem conjDiffeomorph_inv (g : G) :
     conjDiffeomorph (I := I) (n := 1) g⁻¹ =
       (conjDiffeomorph (I := I) (n := 1) g).symm := by
   have h := map_inv (conj (I := I) (n := 1)) g
-  simpa only [conj_apply, TauCeti.Diffeomorph.inv_def] using h
+  simpa only [conj_apply, Diffeomorph.inv_def] using h
 
 /-- The inverse of the derivative of conjugation by `g` is the derivative of conjugation by
 `g⁻¹` at the conjugated point. -/

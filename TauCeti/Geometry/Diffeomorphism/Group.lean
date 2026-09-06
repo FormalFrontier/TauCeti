@@ -32,20 +32,18 @@ construction works for every smoothness exponent `n`, with `n = ∞` the case na
 * `TauCeti.Diff I M n`: notation/abbreviation for the group `M ≃ₘ^n⟮I, I⟯ M` of `Cⁿ`
   self-diffeomorphisms of `M`.
 * the `One`, `Mul`, `Inv`, and `Group` instances on `M ≃ₘ^n⟮I, I⟯ M`.
-* `TauCeti.Diffeomorph.toPerm`: the forgetful group homomorphism to the underlying permutation
+* `Diffeomorph.toPerm`: the forgetful group homomorphism to the underlying permutation
   group `Equiv.Perm M`, which is injective.
-* `TauCeti.Diffeomorph.toHomeomorphHom`: the forgetful group homomorphism to the underlying
+* `Diffeomorph.toHomeomorphHom`: the forgetful group homomorphism to the underlying
   homeomorphism group, which is injective.
 
 ## Main results
 
-* `TauCeti.Diffeomorph.mul_apply` / `one_apply` / `inv_apply` and the `coe_*` companions: the group
+* `Diffeomorph.mul_apply` / `one_apply` / `inv_apply` and the `coe_*` companions: the group
   operations act by composition, the identity, and the inverse diffeomorphism.
 -/
 
 public section
-
-namespace TauCeti
 
 open scoped Manifold ContDiff
 
@@ -57,7 +55,7 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
 namespace Diffeomorph
 
 /-- The identity diffeomorphism is the unit of the self-diffeomorphism group. -/
-instance instOne : One (M ≃ₘ^n⟮I, I⟯ M) where one := _root_.Diffeomorph.refl I M n
+instance instOne : One (M ≃ₘ^n⟮I, I⟯ M) where one := Diffeomorph.refl I M n
 
 /-- Multiplication of self-diffeomorphisms is composition: `f * g` follows `g` then `f`, so that it
 acts as `f ∘ g`, matching the `Equiv.Perm` convention. -/
@@ -77,18 +75,18 @@ theorem trans_assoc {E' : Type*} [NormedAddCommGroup E'] [NormedSpace 𝕜 E']
     {N' : Type*} [TopologicalSpace N'] [ChartedSpace G' N']
     (f : M ≃ₘ^n⟮I, I'⟯ M') (g : M' ≃ₘ^n⟮I', J⟯ N) (h : N ≃ₘ^n⟮J, J'⟯ N') :
     (f.trans g).trans h = f.trans (g.trans h) :=
-  _root_.Diffeomorph.ext fun _ => rfl
+  Diffeomorph.ext fun _ => rfl
 
 /-- The `Cⁿ` self-diffeomorphisms of `M` form a group under composition, with multiplication
 acting as function composition. -/
 instance instGroup : Group (M ≃ₘ^n⟮I, I⟯ M) where
   mul_assoc _ _ _ := (trans_assoc _ _ _).symm
-  one_mul := _root_.Diffeomorph.trans_refl
-  mul_one := _root_.Diffeomorph.refl_trans
-  inv_mul_cancel := _root_.Diffeomorph.self_trans_symm
+  one_mul := Diffeomorph.trans_refl
+  mul_one := Diffeomorph.refl_trans
+  inv_mul_cancel := Diffeomorph.self_trans_symm
 
 /-- The unit of the self-diffeomorphism group is the identity diffeomorphism. -/
-theorem one_def : (1 : M ≃ₘ^n⟮I, I⟯ M) = _root_.Diffeomorph.refl I M n := rfl
+theorem one_def : (1 : M ≃ₘ^n⟮I, I⟯ M) = Diffeomorph.refl I M n := rfl
 
 /-- Multiplication in the self-diffeomorphism group is `Diffeomorph.trans` in composition order. -/
 theorem mul_def (f g : M ≃ₘ^n⟮I, I⟯ M) : f * g = g.trans f := rfl
@@ -134,15 +132,19 @@ theorem toEquiv_inv (f : M ≃ₘ^n⟮I, I⟯ M) : (f⁻¹).toEquiv = f.toEquiv�
 
 /-- The forgetful group homomorphism from the self-diffeomorphism group to the permutation group of
 the underlying set, sending a diffeomorphism to its underlying equivalence. -/
-@[expose, simps]
 def toPerm : (M ≃ₘ^n⟮I, I⟯ M) →* Equiv.Perm M where
   toFun f := f.toEquiv
   map_one' := rfl
   map_mul' _ _ := rfl
 
+/-- The forgetful homomorphism to permutations sends a diffeomorphism to its underlying
+equivalence. -/
+@[simp]
+theorem toPerm_apply (f : M ≃ₘ^n⟮I, I⟯ M) : toPerm f = f.toEquiv := (rfl)
+
 /-- The forgetful homomorphism to permutations is injective. -/
 theorem toPerm_injective : Function.Injective (toPerm : (M ≃ₘ^n⟮I, I⟯ M) → Equiv.Perm M) :=
-  _root_.Diffeomorph.toEquiv_injective
+  Diffeomorph.toEquiv_injective
 
 /-- The forgetful group homomorphism from self-diffeomorphisms to self-homeomorphisms. -/
 def toHomeomorphHom : (M ≃ₘ^n⟮I, I⟯ M) →* (M ≃ₜ M) where
@@ -162,11 +164,13 @@ theorem toHomeomorphHom_apply (f : M ≃ₘ^n⟮I, I⟯ M) :
 theorem toHomeomorphHom_injective :
     Function.Injective (toHomeomorphHom : (M ≃ₘ^n⟮I, I⟯ M) → (M ≃ₜ M)) := by
   intro f g h
-  apply _root_.Diffeomorph.ext
+  apply Diffeomorph.ext
   intro x
   exact congr_fun (congrArg DFunLike.coe h) x
 
 end Diffeomorph
+
+namespace TauCeti
 
 /-- `Diff I M n` is the group of `Cⁿ` self-diffeomorphisms of the manifold `M` modelled on `I`,
 under composition. With `n = ∞` this is the group underlying `Diff(M)` of the geometric-topology

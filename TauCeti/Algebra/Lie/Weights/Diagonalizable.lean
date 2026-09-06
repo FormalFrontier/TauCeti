@@ -44,6 +44,8 @@ to honest.
 * `TauCeti.isInternal_genWeightSpace`: a finite-dimensional triangularizable module is the internal
   direct sum of its *generalized* weight spaces. This needs no diagonalizability and is the form
   the dimension counts consume; the honest-weight-space refinement is below.
+* `TauCeti.eq_zero_of_forall_genWeightSpace`: a linear functional vanishing on every generalized
+  weight space is zero.
 * `TauCeti.isSemisimple_toEnd_coroot`: a coroot acts semisimply on a finite-dimensional module.
 * `TauCeti.isSemisimple_toEnd_cartan`: **every element of the Cartan subalgebra acts semisimply.**
 * `TauCeti.genWeightSpace_eq_weightSpace`: **the generalized weight spaces are honest weight
@@ -103,6 +105,16 @@ theorem isInternal_genWeightSpace [IsTriangularizable K L M] [DecidableEq (Weigh
     exact iSupIndep_genWeightSpace' K L M
   · rw [← LieSubmodule.iSup_toSubmodule, iSup_genWeightSpace_eq_top' K L M]
     simp
+
+variable {K L M} in
+/-- **A functional vanishing on every generalized weight space is zero.** The generalized weight
+spaces of a finite-dimensional triangularizable module span it
+(`LieModule.iSup_genWeightSpace_eq_top`), so a linear functional killing each of them kills `M`. -/
+theorem eq_zero_of_forall_genWeightSpace [IsTriangularizable K L M] {g : Dual K M}
+    (hg : ∀ χ : L → K, ∀ m ∈ genWeightSpace M χ, g m = 0) : g = 0 := by
+  refine LinearMap.ker_eq_top.mp (top_le_iff.mp ?_)
+  rw [← LieSubmodule.iSup_toSubmodule_eq_top.mpr (iSup_genWeightSpace_eq_top K L M)]
+  exact iSup_le fun χ m hm => hg χ m hm
 
 end Triangularizable
 
