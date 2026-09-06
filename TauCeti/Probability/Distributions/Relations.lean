@@ -8,7 +8,7 @@ module
 public import Mathlib.Probability.CDF
 public import Mathlib.Probability.HasLaw
 public import Mathlib.Probability.Independence.Basic
-public import TauCeti.Probability.Distributions.Exponential
+import TauCeti.MeasureTheory.Order.Lattice
 
 /-!
 # The extremes of an independent identically distributed family
@@ -29,10 +29,8 @@ formula acquires the default value that an empty family would force on a `Finset
 equal factors, which is where the two powers come from. The minimum is then read off its
 complementary event, which is why its formula is the one with the two subtractions.
 
-As an application, the minimum of a finite independent identically distributed exponential family
-is again exponential, with the rates added: `hasLaw_min_iid_expMeasure`. This is the
-`d`-fold form of `TauCeti.Probability.hasLaw_min_expMeasure_of_indepFun`, which handles two
-independent exponentials of possibly different rates.
+`cdf_min_iid` specialises to the exponential family as `hasLaw_min_iid_expMeasure`: the minimum
+of `d` i.i.d. exponentials of rate `r` is exponential of rate `d * r`.
 
 ## Main results
 
@@ -42,9 +40,7 @@ independent exponentials of possibly different rates.
   `TauCeti.Probability.measureReal_setOf_min_le_iid` — the minimum exceeds `x` with probability
   `(1 - cdf μ x) ^ d`, hence is at most `x` with probability `1 - (1 - cdf μ x) ^ d`;
 * `TauCeti.Probability.cdf_max_iid`, `TauCeti.Probability.cdf_min_iid` — the same two formulas for
-  the laws of the two extremes;
-* `TauCeti.Probability.hasLaw_min_iid_expMeasure` — the minimum of `d` independent exponentials of
-  rate `r` is exponential of rate `d * r`.
+  the laws of the two extremes.
 
 A general theory of order statistics is outside the scope of the roadmap target below.
 
@@ -68,44 +64,19 @@ namespace Probability
 variable {Ω ι : Type*} {mΩ : MeasurableSpace Ω} [Fintype ι] [Nonempty ι] {P : Measure Ω}
   {μ : Measure ℝ} {X : ι → Ω → ℝ} {r : ℝ}
 
-/-- The maximum of a measurable finite family is measurable. Mathlib's `Finset.measurable_sup'`
-states this in the pointwise lattice on `Ω → ℝ`; `Finset.sup'_apply` moves it to the
-coordinatewise spelling used here. -/
-private theorem measurable_max {f : ι → Ω → ℝ} (hf : ∀ i, Measurable (f i)) :
-    Measurable fun ω => Finset.univ.sup' Finset.univ_nonempty fun i => f i ω := by
-  have heq : (fun ω => Finset.univ.sup' Finset.univ_nonempty fun i => f i ω)
-      = Finset.univ.sup' (Finset.univ_nonempty (α := ι)) f :=
-    funext fun ω => (Finset.sup'_apply _ f ω).symm
-  rw [heq]
-  exact Finset.measurable_sup' _ fun i _ => hf i
-
-/-- The minimum of a measurable finite family is measurable. -/
-private theorem measurable_min {f : ι → Ω → ℝ} (hf : ∀ i, Measurable (f i)) :
-    Measurable fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => f i ω := by
-  have heq : (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => f i ω)
-      = Finset.univ.inf' (Finset.univ_nonempty (α := ι)) f :=
-    funext fun ω => (Finset.inf'_apply _ f ω).symm
-  rw [heq]
-  exact Finset.inf'_induction (p := fun g : Ω → ℝ => Measurable g) _ f
-    (fun _ h₁ _ h₂ => h₁.inf h₂) fun i _ => hf i
-
 /-- The maximum of an almost-everywhere measurable finite family is almost everywhere
-measurable. -/
+measurable: `Finset.aemeasurable_sup'` in the coordinatewise spelling. -/
 private theorem aemeasurable_max (hX : ∀ i, AEMeasurable (X i) P) :
-    AEMeasurable (fun ω => Finset.univ.sup' Finset.univ_nonempty fun i => X i ω) P := by
-  refine ⟨fun ω => Finset.univ.sup' Finset.univ_nonempty fun i => (hX i).mk (X i) ω,
-    measurable_max fun i => (hX i).measurable_mk, ?_⟩
-  filter_upwards [(ae_all_iff.2 fun i => (hX i).ae_eq_mk : ∀ᵐ ω ∂P, ∀ i, X i ω = _)] with ω hω
-  exact Finset.sup'_congr _ rfl fun i _ => hω i
+    AEMeasurable (fun ω => Finset.univ.sup' Finset.univ_nonempty fun i => X i ω) P :=
+  (Finset.aemeasurable_sup' Finset.univ_nonempty fun i _ => hX i).congr
+    (Filter.Eventually.of_forall fun ω => Finset.sup'_apply _ X ω)
 
 /-- The minimum of an almost-everywhere measurable finite family is almost everywhere
-measurable. -/
+measurable: `Finset.aemeasurable_inf'` in the coordinatewise spelling. -/
 private theorem aemeasurable_min (hX : ∀ i, AEMeasurable (X i) P) :
-    AEMeasurable (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω) P := by
-  refine ⟨fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => (hX i).mk (X i) ω,
-    measurable_min fun i => (hX i).measurable_mk, ?_⟩
-  filter_upwards [(ae_all_iff.2 fun i => (hX i).ae_eq_mk : ∀ᵐ ω ∂P, ∀ i, X i ω = _)] with ω hω
-  exact Finset.inf'_congr _ rfl fun i _ => hω i
+    AEMeasurable (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω) P :=
+  (Finset.aemeasurable_inf' Finset.univ_nonempty fun i _ => hX i).congr
+    (Filter.Eventually.of_forall fun ω => Finset.inf'_apply _ X ω)
 
 /-- The maximum of a finite family is at most `x` exactly when every member is. -/
 private theorem setOf_max_le (X : ι → Ω → ℝ) (x : ℝ) :
@@ -210,32 +181,6 @@ theorem cdf_min_iid [IsProbabilityMeasure μ] (hindep : iIndepFun X P)
   rw [cdf_eq_real, map_measureReal_apply_of_aemeasurable hmin measurableSet_Iic,
     ← measureReal_setOf_min_le_iid hindep hlaw x]
   rfl
-
-/-- The minimum of `d` independent exponential variables of a common positive rate `r` is
-exponential of rate `d * r`. This is the `d`-fold form of
-`TauCeti.Probability.hasLaw_min_expMeasure_of_indepFun`, which allows two different rates. -/
-theorem hasLaw_min_iid_expMeasure (hr : 0 < r) (hindep : iIndepFun X P)
-    (hlaw : ∀ i, HasLaw (X i) (expMeasure r) P) :
-    HasLaw (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω)
-      (expMeasure ((Fintype.card ι : ℝ) * r)) P := by
-  have hd : (0 : ℝ) < Fintype.card ι := by
-    exact_mod_cast Fintype.card_pos_iff.2 ‹Nonempty ι›
-  have _ : IsProbabilityMeasure (expMeasure r) := isProbabilityMeasure_expMeasure hr
-  have _ : IsProbabilityMeasure (expMeasure ((Fintype.card ι : ℝ) * r)) :=
-    isProbabilityMeasure_expMeasure (mul_pos hd hr)
-  have hmin : AEMeasurable (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω) P :=
-    aemeasurable_min fun i => (hlaw i).aemeasurable
-  have _ : IsProbabilityMeasure P := (hlaw (Classical.arbitrary ι)).isProbabilityMeasure
-  refine ⟨hmin, ?_⟩
-  refine Measure.eq_of_cdf _ _ ?_
-  ext x
-  rw [cdf_min_iid hindep hlaw x, cdf_expMeasure_eq hr x,
-    cdf_expMeasure_eq (mul_pos hd hr) x]
-  by_cases hx : 0 ≤ x
-  · rw [ite_eq_left hx, ite_eq_left hx, sub_sub_cancel, ← Real.exp_nat_mul]
-    congr 2
-    ring
-  · rw [ite_eq_right hx, ite_eq_right hx, sub_zero, one_pow, sub_self]
 
 end Probability
 

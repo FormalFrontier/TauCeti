@@ -12,6 +12,9 @@ public import Mathlib.MeasureTheory.Measure.CharacteristicFunction.Basic
 public import Mathlib.Probability.ConditionalProbability
 import TauCeti.Probability.Distributions.PDFInstances
 import TauCeti.MeasureTheory.Integral.ExpDecay
+-- Non-public: the finite-extrema CDF formulas are used only inside proofs.
+import TauCeti.Probability.Distributions.Relations
+import TauCeti.MeasureTheory.Order.Lattice
 
 /-!
 # Elementary theory of the exponential distribution
@@ -44,7 +47,9 @@ evaluates `∫ t in Ioi 0, t ^ n * exp (-(a * t))` as `n ! / a ^ (n + 1)`,
 * `charFun_expMeasure` — characteristic function `(r : ℂ) / (r - I * t)`;
 * `measureReal_Ioi_expMeasure`, `measure_Ioi_expMeasure` — tail probabilities;
 * `memoryless_expMeasure` — the conditional tail is unchanged by elapsed time;
-* `hasLaw_min_expMeasure_of_indepFun` — minimum of independent exponentials.
+* `hasLaw_min_expMeasure_of_indepFun` — minimum of two independent exponentials;
+* `hasLaw_min_iid_expMeasure` — minimum of `d` i.i.d. exponentials of rate `r` is exponential of
+  rate `d * r`.
 
 ## References
 
@@ -380,6 +385,34 @@ theorem hasLaw_min_expMeasure_of_indepFun {Ω : Type*} {mΩ : MeasurableSpace Ω
     rw [ite_eq_left hx, ite_eq_left hx, ite_eq_left hx, ← exp_add, hexp]
   · rw [ite_eq_right hx, ite_eq_right hx, ite_eq_right hx]
     norm_num
+
+/-- The minimum of `d` independent exponential variables of a common positive rate `r` is
+exponential of rate `d * r`. This is the `d`-fold form of
+`TauCeti.Probability.hasLaw_min_expMeasure_of_indepFun`, which allows two different rates. -/
+theorem hasLaw_min_iid_expMeasure {Ω ι : Type*} {mΩ : MeasurableSpace Ω} [Fintype ι] [Nonempty ι]
+    {P : Measure Ω} {X : ι → Ω → ℝ} (hr : 0 < r) (hindep : iIndepFun X P)
+    (hlaw : ∀ i, HasLaw (X i) (expMeasure r) P) :
+    HasLaw (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω)
+      (expMeasure ((Fintype.card ι : ℝ) * r)) P := by
+  have hd : (0 : ℝ) < Fintype.card ι := by
+    exact_mod_cast Fintype.card_pos_iff.2 ‹Nonempty ι›
+  have _ : IsProbabilityMeasure (expMeasure r) := isProbabilityMeasure_expMeasure hr
+  have _ : IsProbabilityMeasure (expMeasure ((Fintype.card ι : ℝ) * r)) :=
+    isProbabilityMeasure_expMeasure (mul_pos hd hr)
+  have hmin : AEMeasurable (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω) P :=
+    (Finset.aemeasurable_inf' Finset.univ_nonempty fun i _ => (hlaw i).aemeasurable).congr
+      (Filter.Eventually.of_forall fun ω => Finset.inf'_apply _ X ω)
+  have _ : IsProbabilityMeasure P := (hlaw (Classical.arbitrary ι)).isProbabilityMeasure
+  refine ⟨hmin, ?_⟩
+  refine Measure.eq_of_cdf _ _ ?_
+  ext x
+  rw [cdf_min_iid hindep hlaw x, cdf_expMeasure_eq hr x,
+    cdf_expMeasure_eq (mul_pos hd hr) x]
+  by_cases hx : 0 ≤ x
+  · rw [ite_eq_left hx, ite_eq_left hx, sub_sub_cancel, ← Real.exp_nat_mul]
+    congr 2
+    ring
+  · rw [ite_eq_right hx, ite_eq_right hx, sub_zero, one_pow, sub_self]
 
 end Probability
 
