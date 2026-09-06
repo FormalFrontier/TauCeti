@@ -56,9 +56,8 @@ namespace CoordinatePullback
 
 /-- **Pointedness is decided by the `x`-coordinate.** A coordinate pullback maps infinity to
 infinity exactly when the generic `x`-coordinate of the source is integral over the target
-coordinate ring acting through it. One direction is a special case; for the other, the
-`y`-coordinate follows from the Weierstrass equation and the two coordinates generate the
-coordinate ring. -/
+coordinate ring acting through it, so a construction producing a coordinate pullback has to
+exhibit one integral witness. -/
 -- Deliberately not `@[simp]`: `CoordinatePullback.mapsInfinity_iff` already carries that attribute
 -- and rewrites `MapsInfinity` to its quantified form, so this left-hand side is not in simp-normal
 -- form and the `simpNF` linter rejects the pair.

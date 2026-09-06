@@ -196,14 +196,13 @@ theorem isIntegral_map (φ : CoordinatePullback W₁ W₂) (f : F →+* K) {z : 
   rw [RingHom.algebraMap_toAlgebra, RingHom.algebraMap_toAlgebra]
   exact map_comp_coordinateRingMap φ f
 
-/-- **Pointedness survives base change.** The `x`-coordinate of `W₁` stays integral over the
-pulled-back coordinate ring of `W₂`, which is all pointedness asks. -/
+/-- **Pointedness survives base change**: a coordinate pullback that maps infinity to infinity
+still does so after base change along a homomorphism of the base field. -/
 theorem MapsInfinity.map {φ : CoordinatePullback W₁ W₂} (hφ : φ.MapsInfinity) (f : F →+* K) :
     (φ.map f).MapsInfinity := by
-  rw [mapsInfinity_iff] at hφ
   rw [mapsInfinity_iff_isIntegralElem_genericX]
-  have h := isIntegral_map φ f (hφ (CoordinateRing.mk W₁ (C X)))
-  rwa [← genericX_def, FunctionField.map_genericX] at h
+  have h := isIntegral_map φ f ((mapsInfinity_iff_isIntegralElem_genericX φ).1 hφ)
+  rwa [FunctionField.map_genericX] at h
 
 end CoordinatePullback
 
