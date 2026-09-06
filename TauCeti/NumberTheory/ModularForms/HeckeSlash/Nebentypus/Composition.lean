@@ -13,10 +13,10 @@ public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Nebentypus.Independen
 # The composite of two nebentypus-twisted slash sums
 
 `HeckeSlash/Composition.lean` computes the composite of two *unweighted* slash sums. This file is
-the weighted counterpart. It first treats a product supported on one double coset, then proves the
-general multiplicity-weighted formula by partitioning all products according to the double coset
-they meet. The statements are bundled both for functions and as endomorphisms of the character
-space.
+the weighted counterpart. It first proves the general multiplicity-weighted formula, by
+partitioning all products according to the double coset they meet, and then specialises to a
+product supported on a single double coset. The statements are bundled both for functions and as
+endomorphisms of the character space.
 
 ⚠ The multiplicity in the general formula is
 `m(D₂⁻¹, D₁⁻¹; D⁻¹)`, because the slash sum uses right cosets whereas the Hecke-ring structure
