@@ -35,9 +35,8 @@ identity is `LinearMap.trace_eq_add_of_exact`.
 The formula is what makes the tame case of Dedekind's different theorem work: it produces an
 element of `B ⧸ P ^ e` with nonzero trace as soon as the residue extension is separable and the
 characteristic of `κ` does not divide `e` (see
-`TauCeti.RingTheory.DedekindDomain.Different`).  Mathlib computes the trace of `B ⧸ p · B` over
-`κ` (`Algebra.trace_quotient_eq_of_isDedekindDomain`) but has nothing about the individual
-`P`-primary factors.
+`TauCeti.RingTheory.DedekindDomain.Different`, where it is combined with Mathlib's trace
+computation for `B ⧸ p · B`, `Algebra.trace_quotient_eq_of_isDedekindDomain`).
 
 ## Main results
 
@@ -47,19 +46,6 @@ characteristic of `κ` does not divide `e` (see
 public section
 
 open Module
-
-namespace Ideal.Quotient
-
-/-- A quotient of a module-finite algebra by an ideal is finite over the residue ring of the
-base. -/
-theorem finite_of_module_finite {A B : Type*} [CommRing A] [CommRing B] [Algebra A B]
-    [Module.Finite A B] (p : Ideal A) (I : Ideal B) [Algebra (A ⧸ p) (B ⧸ I)]
-    [IsScalarTower A (A ⧸ p) (B ⧸ I)] : Module.Finite (A ⧸ p) (B ⧸ I) := by
-  have : Module.Finite A (B ⧸ I) :=
-    Module.Finite.of_surjective (Ideal.Quotient.mkₐ A I).toLinearMap Ideal.Quotient.mk_surjective
-  exact Module.Finite.of_restrictScalars_finite A (A ⧸ p) (B ⧸ I)
-
-end Ideal.Quotient
 
 namespace Algebra
 
@@ -88,7 +74,7 @@ theorem trace_quotient_pow [Module.Finite A B] (hP : P ≠ ⊥) (n : ℕ)
         exact Ideal.one_eq_top
       rw [Subsingleton.elim (Ideal.Quotient.mk (P ^ 0) z) 0, map_zero, zero_smul]
   | succ n ih =>
-      have := Ideal.Quotient.finite_of_module_finite p (P ^ (n + 1))
+      have := Module.Finite.of_restrictScalars_finite A (A ⧸ p) (B ⧸ P ^ (n + 1))
       -- the base ideal is carried into `P ^ (n + 1)`, hence into `P ^ n`
       have hcomap : p ≤ Ideal.comap (algebraMap A B) (P ^ (n + 1)) := by
         intro x hx
@@ -100,8 +86,8 @@ theorem trace_quotient_pow [Module.Finite A B] (hP : P ≠ ⊥) (n : ℕ)
         hcomap.trans (Ideal.comap_mono (Ideal.pow_le_pow_right n.le_succ))
       let instA' : Algebra (A ⧸ p) (B ⧸ P ^ n) := Ideal.Quotient.algebraQuotientOfLEComap hcomap'
       let instT' : IsScalarTower A (A ⧸ p) (B ⧸ P ^ n) := IsScalarTower.of_algebraMap_eq' rfl
-      have := Ideal.Quotient.finite_of_module_finite p (P ^ n)
-      have := Ideal.Quotient.finite_of_module_finite p P
+      have := Module.Finite.of_restrictScalars_finite A (A ⧸ p) (B ⧸ P ^ n)
+      have := Module.Finite.of_restrictScalars_finite A (A ⧸ p) (B ⧸ P)
       -- an element generating `P ^ n` modulo `P ^ (n + 1)`
       obtain ⟨a, ha, ha'⟩ := Ideal.exists_mem_pow_notMem_pow_succ P hP
         (Ideal.IsPrime.ne_top inferInstance) n
@@ -141,13 +127,12 @@ theorem trace_quotient_pow [Module.Finite A B] (hP : P ≠ ⊥) (n : ℕ)
           obtain ⟨x, w, hw, rfl⟩ :=
             Ideal.exists_mul_add_mem_pow_succ hP a u ha ha' hu
           refine ⟨Ideal.Quotient.mk P x, ?_⟩
-          rw [hi_apply, Ideal.Quotient.mk_eq_mk_iff_sub_mem,
-            show a * x - (a * x + w) = -w by ring]
+          rw [hi_apply, Ideal.Quotient.mk_eq_mk_iff_sub_mem, sub_add_cancel_left]
           exact neg_mem hw
         · rintro ⟨y, hy⟩
           obtain ⟨x, rfl⟩ := Ideal.Quotient.mk_surjective y
           rw [hi_apply, Ideal.Quotient.mk_eq_mk_iff_sub_mem] at hy
-          rw [show u = a * x - (a * x - u) by ring]
+          rw [← sub_sub_cancel (a * x) u]
           exact sub_mem (Ideal.mul_mem_right x _ ha) (Ideal.pow_le_pow_right n.le_succ hy)
       -- multiplication by `z` is an endomorphism of the whole sequence
       set f : Module.End (A ⧸ p) (B ⧸ P ^ (n + 1)) :=
@@ -156,19 +141,20 @@ theorem trace_quotient_pow [Module.Finite A B] (hP : P ≠ ⊥) (n : ℕ)
         Algebra.lmul (A ⧸ p) _ (Ideal.Quotient.mk _ z) with hfN
       set fQ : Module.End (A ⧸ p) (B ⧸ P ^ n) :=
         Algebra.lmul (A ⧸ p) _ (Ideal.Quotient.mk _ z) with hfQ
+      have hf_apply (y : B ⧸ P ^ (n + 1)) : f y = Ideal.Quotient.mk (P ^ (n + 1)) z * y := rfl
+      have hfN_apply (y : B ⧸ P) : fN y = Ideal.Quotient.mk P z * y := rfl
+      have hfQ_apply (y : B ⧸ P ^ n) : fQ y = Ideal.Quotient.mk (P ^ n) z * y := rfl
       have hN : f ∘ₗ i = i ∘ₗ fN := by
         refine LinearMap.ext fun y ↦ ?_
         obtain ⟨x, rfl⟩ := Ideal.Quotient.mk_surjective y
-        change Ideal.Quotient.mk (P ^ (n + 1)) z * i (Ideal.Quotient.mk P x)
-          = i (Ideal.Quotient.mk P z * Ideal.Quotient.mk P x)
-        rw [hi_apply, ← map_mul, ← map_mul, hi_apply]
+        rw [LinearMap.comp_apply, LinearMap.comp_apply, hf_apply, hfN_apply, hi_apply, ← map_mul,
+          ← map_mul, hi_apply]
         exact congrArg _ (by ring)
       have hQ : pi ∘ₗ f = fQ ∘ₗ pi := by
         refine LinearMap.ext fun y ↦ ?_
         obtain ⟨x, rfl⟩ := Ideal.Quotient.mk_surjective y
-        change pi (Ideal.Quotient.mk (P ^ (n + 1)) z * Ideal.Quotient.mk (P ^ (n + 1)) x)
-          = Ideal.Quotient.mk (P ^ n) z * pi (Ideal.Quotient.mk (P ^ (n + 1)) x)
-        rw [← map_mul, hpi_apply, hpi_apply, map_mul]
+        rw [LinearMap.comp_apply, LinearMap.comp_apply, hf_apply, hfQ_apply, ← map_mul, hpi_apply,
+          hpi_apply, map_mul]
       have e1 : Algebra.trace (A ⧸ p) (B ⧸ P ^ (n + 1)) (Ideal.Quotient.mk _ z)
           = LinearMap.trace (A ⧸ p) _ f := Algebra.trace_apply _ _
       have e2 : Algebra.trace (A ⧸ p) (B ⧸ P) (Ideal.Quotient.mk _ z)

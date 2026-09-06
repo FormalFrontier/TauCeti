@@ -46,6 +46,9 @@ fields, and nothing needs `k` perfect.
 
 ## Main results
 
+* `TauCeti.Place.center_restrict_asIdeal_eq_maximalIdeal`: the prime of `𝒪_P` below the centre of
+  `P'` on the local model is the maximal ideal of `𝒪_P`, so the residue extension the different
+  exponent reads is the residue-field extension of the two places.
 * `TauCeti.Place.pow_dvd_differentIdeal_iff_le_differentExponent`: the characteristic property of
   the different exponent, `𝔓'^n ∣ differentIdeal 𝒪_P 𝒪'_P ↔ n ≤ d(P' ∣ P)`.
 * `TauCeti.Place.ramificationIdx_le_differentExponent_add_one`: **Dedekind's different theorem**
@@ -166,6 +169,18 @@ theorem algebraMap_mem_integers_of_mem_integralClosure
   exact P'.mem_integers_of_isIntegral (R := ((P'.restrict k F).integers))
     (fun a ↦ (mem_integers_restrict_iff k F P' (a : F)).mp a.2) b.2
 
+/-- **The prime of `𝒪_P` below the centre of `P'` on the local model is the maximal ideal of
+`𝒪_P`**: the residue extension read on the local model is the residue-field extension of the two
+places. -/
+theorem center_restrict_asIdeal_eq_maximalIdeal :
+    ((P'.restrict k F).center (algebraMap_mem_integers_restrict
+        (R := ((P'.restrict k F).integers)) k F P'
+        (algebraMap_mem_integers_of_mem_integralClosure k F P'))).asIdeal
+      = IsLocalRing.maximalIdeal ((P'.restrict k F).integers) := by
+  ext f
+  rw [mem_center_asIdeal, mem_maximalIdeal_iff_valuation_lt_one]
+  exact Iff.rfl
+
 variable [Algebra.IsSeparable F F']
 
 /-- **The centre of `P'` on the local model `𝒪'_P`**: the height one prime of the integral closure
@@ -176,6 +191,14 @@ noncomputable def centerIntegralClosure :
 
 theorem centerIntegralClosure_def : centerIntegralClosure k F P' =
     P'.center (algebraMap_mem_integers_of_mem_integralClosure k F P') := (rfl)
+
+/-- The centre of `P'` on the local model lies over the maximal ideal of `𝒪_P`, so the residue
+extension of the local model is read at the residue field of `P`. -/
+instance centerIntegralClosure_liesOver_maximalIdeal :
+    (centerIntegralClosure k F P').asIdeal.LiesOver
+      (IsLocalRing.maximalIdeal ((P'.restrict k F).integers)) := by
+  rw [← center_restrict_asIdeal_eq_maximalIdeal k F P', centerIntegralClosure_def]
+  exact center_liesOver k F P' _
 
 /-- **The different exponent `d(P' ∣ P)`** of a place `P'` of `F' / k'` over the place
 `P = P'.restrict k F` of `F / k` (Stichtenoth, Definition 3.4.3), for `F' / F` finite and

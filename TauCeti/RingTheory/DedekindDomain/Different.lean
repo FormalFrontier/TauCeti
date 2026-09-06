@@ -14,8 +14,8 @@ public import TauCeti.RingTheory.Trace.QuotientPow
 Let `B` be a Dedekind domain, module-finite over a Dedekind domain `A` with `Frac B / Frac A`
 separable, let `p` be a maximal ideal of `A` and `P` a maximal ideal of `B` over it with
 ramification index `e = e(P ∣ p)`.  Mathlib's `pow_sub_one_dvd_differentIdeal` gives the universal
-half of Dedekind's different theorem, `P ^ (e - 1) ∣ 𝔡(B/A)`, and leaves the exact value in the
-tame case as an explicit TODO.  This file supplies it: when the residue extension
+half of Dedekind's different theorem, `P ^ (e - 1) ∣ 𝔡(B/A)`.  This file supplies the matching
+non-divisibility that pins the exact value in the tame case: when the residue extension
 `(B ⧸ P) / (A ⧸ p)` is separable and the residue characteristic does not divide `e`, the divisor
 `P ^ e` does *not* divide the different, so the different exponent at `P` is exactly `e - 1`.
 
@@ -83,9 +83,9 @@ theorem not_pow_dvd_differentIdeal_of_isCoprime_of_isSeparable
   have : IsScalarTower A (A ⧸ p) (B ⧸ Q) := .of_algebraMap_eq' rfl
   let instPe : Algebra (A ⧸ p) (B ⧸ P ^ e) := Ideal.Quotient.algebraQuotientOfLEComap hPle
   have : IsScalarTower A (A ⧸ p) (B ⧸ P ^ e) := .of_algebraMap_eq' rfl
-  have hfQ : Module.Finite (A ⧸ p) (B ⧸ Q) := Ideal.Quotient.finite_of_module_finite p Q
-  have hfP : Module.Finite (A ⧸ p) (B ⧸ P ^ e) := Ideal.Quotient.finite_of_module_finite p (P ^ e)
-  have hfP1 : Module.Finite (A ⧸ p) (B ⧸ P) := Ideal.Quotient.finite_of_module_finite p P
+  have hfQ : Module.Finite (A ⧸ p) (B ⧸ Q) := .of_restrictScalars_finite A _ _
+  have hfP : Module.Finite (A ⧸ p) (B ⧸ P ^ e) := .of_restrictScalars_finite A _ _
+  have hfP1 : Module.Finite (A ⧸ p) (B ⧸ P) := .of_restrictScalars_finite A _ _
   -- a residue with nonzero trace; its lift to `B ⧸ P ^ e` has trace `e` times as large
   obtain ⟨w, hw⟩ : ∃ w, Algebra.trace (A ⧸ p) (B ⧸ P) w ≠ 0 := by
     simpa [LinearMap.ext_iff] using Algebra.trace_ne_zero (A ⧸ p) (B ⧸ P)
