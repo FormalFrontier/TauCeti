@@ -106,6 +106,7 @@ private theorem exists_smul_mem_traceDual_of_mem_traceDual {x : L}
 
 omit [IsDomain R] [IsDomain Rₘ] [IsFractionRing Rₘ K] in
 /-- The trace dual of a finite algebra commutes with localization. -/
+@[simp]
 theorem span_traceDual_one_eq_traceDual_one :
     Submodule.span Sₘ (Submodule.traceDual R K (1 : Submodule S L) : Set L) =
       Submodule.traceDual Rₘ K (1 : Submodule Sₘ L) := by
@@ -181,6 +182,7 @@ variable [IsDomain S] [IsDomain Sₘ]
 
 omit [IsTorsionFree R S] [IsTorsionFree Rₘ Sₘ] in
 /-- The trace-dual fractional ideal commutes with localization. -/
+@[simp]
 theorem extendedHom'_dual_one_eq_dual_one :
     FractionalIdeal.extendedHom' L
         (nonZeroDivisors_le_comap_nonZeroDivisors_of_injective _
@@ -227,6 +229,7 @@ variable [IsDedekindDomain S] [IsDedekindDomain Sₘ]
 omit [IsTorsionFree R S] [IsTorsionFree Rₘ Sₘ] in
 include K L in
 /-- The different ideal commutes with localization. -/
+@[simp]
 theorem map_differentIdeal_eq_differentIdeal :
     let _ : IsTorsionFree R L := .trans_faithfulSMul R K L
     let _ : IsTorsionFree Rₘ L := .trans_faithfulSMul Rₘ K L
