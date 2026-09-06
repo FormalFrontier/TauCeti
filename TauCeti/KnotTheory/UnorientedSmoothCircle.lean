@@ -138,7 +138,6 @@ theorem range_forgetOrientation (f : SmoothCircleEmbedding I M) :
   by simp [range, SmoothCircleEmbedding.forgetOrientation]
 
 /-- Reversing a representative does not change the underlying unoriented embedded circle. -/
-@[simp]
 theorem range_forgetOrientation_reverse (f : SmoothCircleEmbedding I M) :
     range (SmoothCircleEmbedding.forgetOrientation f.reverse) = Set.range f := by
   rw [range_forgetOrientation, SmoothCircleEmbedding.range_reverse]
