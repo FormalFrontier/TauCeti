@@ -13,9 +13,7 @@ public import TauCeti.LinearAlgebra.SymmetricAlgebra.Homogeneous
 
 The degree-`n` piece of a symmetric algebra is defined to be the `n`-th power of the range of its
 canonical generator map. When the underlying module of a Lie algebra `L` over a commutative ring
-`R` is free, these pieces form an internal direct sum; that is proved in
-`TauCeti/LinearAlgebra/SymmetricAlgebra/Grading.lean`, which this file does not need. The
-canonical map
+`R` is free, these pieces form an internal direct sum. The canonical map
 
 `SymmetricAlgebra R L →ₐ[R] gr U(L)`
 
@@ -27,9 +25,12 @@ product of degree-one classes. A shorter word represents zero in the `n`-th succ
 Consequently every class in that quotient has a homogeneous symmetric representative of degree
 `n`.
 
-In the free-module case, injectivity of these component maps now gives the remaining
-linear-independence half of the Poincaré--Birkhoff--Witt theorem. Thus the componentwise
-surjections isolate the outstanding obstruction degree by degree, while retaining the global
+The component maps also govern injectivity when `L` is free as an `R`-module. An element of the
+kernel of the canonical map decomposes into homogeneous terms, each of which lands in a distinct
+summand of the associated graded and hence lies in the kernel of its own component map. So the
+canonical map is injective, giving the linear-independence half of the
+Poincaré--Birkhoff--Witt theorem, exactly when every component map is; the componentwise
+description reduces both halves to a degreewise statement, while retaining the global
 associated-graded map.
 
 ## Main definitions and results
@@ -46,9 +47,6 @@ associated-graded map.
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, Chapter V, §17.
 * N. Bourbaki, *Lie Groups and Lie Algebras*, Chapter I, §2.7.
-
-This is the degreewise comparison step of the PBW sub-project in Layer 3 of
-`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`.
 -/
 
 public section

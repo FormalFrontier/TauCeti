@@ -16,6 +16,11 @@ Let `M` be a free module over a commutative semiring. The powers of the image of
 symmetric algebra are not merely a spanning family: they form an internal direct sum. Thus every
 element of the symmetric algebra has a unique finite decomposition into homogeneous terms.
 
+Consequently a map out of the symmetric algebra can be studied degree by degree: it is determined
+by its restrictions to the homogeneous pieces, so two such maps agreeing on all of them agree, and
+if it carries each piece into a corresponding summand of an internal decomposition of its target,
+then it is injective as soon as all of those restrictions are.
+
 The proof transports the standard total-degree decomposition of a multivariate polynomial ring
 across the algebra equivalence associated to a basis of `M`. Besides the intrinsic result for a
 free module, the comparison with multivariate homogeneous polynomials is exposed for a specified
@@ -63,7 +68,7 @@ induced by a basis.
 This is not a `simp` lemma: `MvPolynomial.mem_homogeneousSubmodule` already rewrites the
 left-hand side to `MvPolynomial.IsHomogeneous`, so the orientation below is not simp-normal. The
 simp-normal form of the characterisation is
-`SymmetricAlgebra.isHomogeneous_equivMvPolynomial_iff`. -/
+`SymmetricAlgebra.equivMvPolynomial_isHomogeneous_iff`. -/
 theorem _root_.SymmetricAlgebra.equivMvPolynomial_mem_homogeneousSubmodule_iff {ι : Type w}
     (b : Basis ι R M) (n : ℕ) (p : SymmetricAlgebra R M) :
     SymmetricAlgebra.equivMvPolynomial b p ∈ MvPolynomial.homogeneousSubmodule ι R n ↔
@@ -75,7 +80,7 @@ theorem _root_.SymmetricAlgebra.equivMvPolynomial_mem_homogeneousSubmodule_iff {
 /-- An element of a symmetric algebra is homogeneous of degree `n` exactly when its image under
 the polynomial equivalence induced by a basis is. -/
 @[simp]
-theorem _root_.SymmetricAlgebra.isHomogeneous_equivMvPolynomial_iff {ι : Type w}
+theorem _root_.SymmetricAlgebra.equivMvPolynomial_isHomogeneous_iff {ι : Type w}
     (b : Basis ι R M) (n : ℕ) (p : SymmetricAlgebra R M) :
     (SymmetricAlgebra.equivMvPolynomial b p).IsHomogeneous n ↔ p ∈ homogeneousSubmodule R M n :=
   (MvPolynomial.mem_homogeneousSubmodule _ _).symm.trans
@@ -93,10 +98,10 @@ theorem isInternal_homogeneousSubmodule_of_basis {ι : Type w} (b : Basis ι R M
     exact map_homogeneousSubmodule_equivMvPolynomial R M b n
   -- The basis equivalence restricts to an equivalence of each degree-`n` piece.
   let φ (n : ℕ) : homogeneousSubmodule R M n ≃ₗ[R] MvPolynomial.homogeneousSubmodule ι R n :=
-    ((SymmetricAlgebra.equivMvPolynomial b).toLinearEquiv.submoduleMap _).trans
-      (LinearEquiv.ofEq _ _ (hmap n))
+    (SymmetricAlgebra.equivMvPolynomial b).toLinearEquiv.ofSubmodules _ _ (hmap n)
   have hφ : ∀ (n : ℕ) (x : homogeneousSubmodule R M n),
-      (φ n x : MvPolynomial ι R) = SymmetricAlgebra.equivMvPolynomial b x := fun _ _ ↦ rfl
+      (φ n x : MvPolynomial ι R) = SymmetricAlgebra.equivMvPolynomial b x := fun n x ↦ by
+    simp [φ, LinearEquiv.ofSubmodules_apply]
   -- Hence recomposition on the symmetric algebra is conjugate to recomposition on polynomials.
   have hsq : ⇑(SymmetricAlgebra.equivMvPolynomial b) ∘
         ⇑(DirectSum.coeAddMonoidHom (homogeneousSubmodule R M)) =
