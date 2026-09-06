@@ -120,17 +120,14 @@ namespace Subgroup
 
 variable {K M : Type*} [Field K] [Field M] [Algebra K M]
 
-/-- **The field fixed by a finite cyclic group of automorphisms has cyclic Galois group.** The
-automorphisms of `M` fixing `M ^ H` are a quotient of `H` — Mathlib identifies a finite group of
-automorphisms with the Galois group of its fixed points — so they inherit its cyclicity.
+/-- **The field fixed by a finite cyclic group of automorphisms has cyclic Galois group.**
 
 Neither `M / K` Galois nor `M / K` finite is needed; only that `H` be finite. -/
 theorem isCyclic_fixedField (H : Subgroup (M ≃ₐ[K] M)) [Finite H] [IsCyclic H] :
     IsCyclic (M ≃ₐ[IntermediateField.fixedField H] M) :=
   isCyclic_of_surjective _ (FixedPoints.toAlgAutMulEquiv H M).surjective
 
-/-- **A generator of `H` maps to a generator of `Gal(M / M ^ H)`.** Mathlib's identification of
-`H` with that Galois group is surjective, and a surjection carries a generator to a generator.
+/-- **A generator of `H` maps to a generator of `Gal(M / M ^ H)`.**
 
 A fibre count needs the relative Frobenius exhibited as a specific power of a chosen generator,
 which `IsCyclic` alone does not give. -/
@@ -154,10 +151,7 @@ variable {K M : Type*} [Field K] [Field M] [Algebra K M]
 /-- **The field fixed by a cyclic group of automorphisms has cyclic Galois group.** For
 `σ : M ≃ₐ[K] M` generating a finite group, the automorphisms of `M` fixing `M ^ ⟨σ⟩` are cyclic.
 
-Only `Subgroup.zpowers σ` need be finite; `M / K` may be infinite, and need not be Galois.
-
-`TauCetiRoadmap/Chebotarev/README.md`, Layer 8.2, the fixed-field fibre count, asks for this
-cyclic specialisation. -/
+Only `Subgroup.zpowers σ` need be finite; `M / K` may be infinite, and need not be Galois. -/
 theorem isCyclic_fixedField_zpowers (σ : M ≃ₐ[K] M) [Finite (Subgroup.zpowers σ)] :
     IsCyclic (M ≃ₐ[IntermediateField.fixedField (Subgroup.zpowers σ)] M) :=
   Subgroup.isCyclic_fixedField _
@@ -165,8 +159,7 @@ theorem isCyclic_fixedField_zpowers (σ : M ≃ₐ[K] M) [Finite (Subgroup.zpowe
 /-- **And `σ` is a generator.** Its image under Mathlib's identification of `⟨σ⟩` with
 `Gal(M / M ^ ⟨σ⟩)` generates that Galois group; that image acts on `M` as `σ` does.
 
-Layer 8.2 of `TauCetiRoadmap/Chebotarev/README.md` asks for the generator specifically, which
-`IsCyclic` alone does not name. -/
+A fibre count needs a named generator, which `IsCyclic` alone does not give. -/
 @[simp]
 theorem zpowers_toAlgAutMulEquiv_self_eq_top (σ : M ≃ₐ[K] M)
     [Finite (Subgroup.zpowers σ)] :
