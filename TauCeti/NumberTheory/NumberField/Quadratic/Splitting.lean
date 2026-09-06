@@ -11,6 +11,9 @@ public import Mathlib.NumberTheory.NumberField.Ideal.KummerDedekind
 public import Mathlib.RingTheory.Discriminant
 public import TauCeti.NumberTheory.NumberField.Quadratic.Basic
 public import TauCeti.NumberTheory.NumberField.SplitsCompletely
+import Mathlib.Algebra.CharP.Two
+import Mathlib.Algebra.Polynomial.SpecificDegree
+public import TauCeti.NumberTheory.NumberField.Quadratic.RingOfIntegers
 
 /-!
 # The prime-splitting law for a quadratic field
@@ -35,11 +38,21 @@ the absolute norm of a prime of `𝓞 K`
 splitting law enters genus theory, where an ideal of norm `p` is what carries the prescribed
 values of the genus characters.
 
+The prime `2` is handled separately, for `d ≡ 1 (mod 4)`, where `2` is unramified: `2` splits in
+`K` if and only if `d ≡ 1 (mod 8)`, and is inert if and only if `d ≡ 5 (mod 8)`. The generator `θ`
+with `θ² = d` is useless here, since `2` divides its conductor exponent; the law is read off instead
+from the half-integer generator `ω = (1 + θ)/2`, which generates `𝓞 K` over `ℤ` and has minimal
+polynomial `X² - X - (d - 1)/4`.
+
 ## Main results
 
-* `NumberField.ncard_primesOver_quadratic_iff`: the quadratic splitting law.
+* `NumberField.ncard_primesOver_quadratic_iff`: the quadratic splitting law at an odd prime.
 * `NumberField.exists_isPrime_and_absNorm_eq_of_legendreSym_eq_one`: an odd prime `p` with
   `legendreSym p d = 1` is the absolute norm of a prime ideal of `𝓞 K`.
+* `NumberField.minpoly_halfGen`: the minimal polynomial of `(1 + θ)/2` is `X² - X - (d - 1)/4`.
+* `NumberField.ncard_primesOver_two_eq_two_iff_of_mod_four_eq_one` and
+  `NumberField.ncard_primesOver_two_eq_one_iff_of_mod_four_eq_one`: for `d ≡ 1 (mod 4)`, the
+  prime `2` splits in `K` iff `d ≡ 1 (mod 8)`, and is inert iff `d ≡ 5 (mod 8)`.
 
 ## Provenance
 
@@ -201,5 +214,146 @@ theorem exists_isPrime_and_absNorm_eq_of_legendreSym_eq_one {θ : 𝓞 K} {d : �
   -- explicitly rather than installing them as anonymous local instances.
   exact ⟨𝔮, h𝔮, hlo,
     @Ideal.absNorm_eq_of_ncard_primesOver_eq_finrank K _ _ p _ 𝔮 h𝔮 hlo hsplit⟩
+
+/-! ### The prime `2` for `d ≡ 1 (mod 4)` -/
+
+/-- **The minimal polynomial of the half-integer generator.** For `d ≡ 1 (mod 4)`, the algebraic
+integer `ω = (1 + θ)/2` has minimal polynomial `X² - X - (d - 1)/4` over `ℤ`. -/
+theorem minpoly_halfGen {θ : 𝓞 K} {d : ℤ} (hmin : minpoly ℤ θ = X ^ 2 - C d) (hd4 : d % 4 = 1) :
+    minpoly ℤ (halfGen hmin hd4) = X ^ 2 - X - C ((d - 1) / 4) := by
+  set ω := halfGen hmin hd4 with hω
+  set c : ℤ := (d - 1) / 4 with hc
+  have h4 : 4 * c = d - 1 := by omega
+  have hq : (X ^ 2 - X - C c : ℤ[X]) = X ^ 2 - (X + C c) := by ring
+  have hlt : (X + C c : ℤ[X]).natDegree < (X ^ 2 : ℤ[X]).natDegree := by
+    rw [natDegree_X_add_C, natDegree_X_pow]; norm_num
+  have hmonic : (X ^ 2 - X - C c : ℤ[X]).Monic := by
+    rw [hq]
+    exact (monic_X_pow 2).sub_of_left (degree_lt_degree hlt)
+  have hdeg : (X ^ 2 - X - C c : ℤ[X]).natDegree = 2 := by
+    rw [hq, natDegree_sub_eq_left_of_natDegree_lt hlt, natDegree_X_pow]
+  have hint : IsIntegral ℤ ω := Algebra.IsIntegral.isIntegral ω
+  -- `ω` is a root: `4(ω² - ω - c) = (1 + θ)² - 2(1 + θ) - 4c = θ² - 1 - 4c = 0` in `K`.
+  have hroot : aeval ω (X ^ 2 - X - C c : ℤ[X]) = 0 := by
+    apply FaithfulSMul.algebraMap_injective (𝓞 K) K
+    rw [map_zero, ← aeval_algebraMap_apply]
+    have hωK : algebraMap (𝓞 K) K ω = (1 + (θ : K)) / 2 := coe_halfGen hmin hd4
+    have hθ : ((θ : K)) ^ 2 = (d : K) := coe_gen_sq hmin
+    have h4K : (4 : K) * (c : K) = (d : K) - 1 := by exact_mod_cast h4
+    rw [map_sub, map_sub, map_pow, aeval_X, aeval_C, hωK, algebraMap_int_eq, eq_intCast]
+    linear_combination (1 / 4 : K) * hθ - (1 / 4 : K) * h4K
+  -- The minimal polynomial divides this monic quadratic, and has degree at least `2` because `ω`
+  -- is not a rational integer; so the two monic polynomials coincide.
+  obtain ⟨r, hr⟩ := minpoly.isIntegrallyClosed_dvd hint hroot
+  have hrmonic : r.Monic := (minpoly.monic hint).of_mul_monic_left (hr ▸ hmonic)
+  have hnotmem : ω ∉ (algebraMap ℤ (𝓞 K)).range := by
+    rintro ⟨n, hn⟩
+    apply gen_notMem_range hmin
+    refine ⟨2 * n - 1, ?_⟩
+    have hωK : (ω : K) = (1 + (θ : K)) / 2 := coe_halfGen hmin hd4
+    have hnK : (ω : K) = (n : K) := by
+      rw [← hn]; simp [algebraMap_int_eq, eq_intCast]
+    rw [hωK] at hnK
+    rw [map_sub, map_mul, map_one, map_ofNat, map_intCast]
+    linear_combination -2 * hnK
+  have h2le : 2 ≤ (minpoly ℤ ω).natDegree := (minpoly.two_le_natDegree_iff hint).mpr hnotmem
+  have hsum : (minpoly ℤ ω).natDegree + r.natDegree = 2 := by
+    rw [← (minpoly.monic hint).natDegree_mul hrmonic, ← hr, hdeg]
+  have hr1 : r = 1 := Polynomial.eq_one_of_monic_natDegree_zero hrmonic (by omega)
+  rw [hr, hr1, mul_one]
+
+/-- **Factor count mod `2`.** The minimal polynomial `X² - X - c` of the half-integer generator
+has two monic irreducible factors mod `2` when `c = (d - 1)/4` is even, i.e. `d ≡ 1 (mod 8)`, and
+one when `c` is odd. -/
+private theorem card_monicFactorsMod_halfGen_two {θ : 𝓞 K} {d : ℤ}
+    (hmin : minpoly ℤ θ = X ^ 2 - C d) (hd4 : d % 4 = 1) :
+    (monicFactorsMod (halfGen hmin hd4) 2).card = if d % 8 = 1 then 2 else 1 := by
+  classical
+  set c : ℤ := (d - 1) / 4 with hc
+  have h4 : 4 * c = d - 1 := by omega
+  have hmap : (minpoly ℤ (halfGen hmin hd4)).map (Int.castRingHom (ZMod 2)) =
+      X ^ 2 + X + C (c : ZMod 2) := by
+    rw [minpoly_halfGen hmin hd4, Polynomial.map_sub, Polynomial.map_sub, Polynomial.map_pow,
+      Polynomial.map_X, Polynomial.map_C, eq_intCast, sub_eq_add_neg, sub_eq_add_neg,
+      CharTwo.neg_eq, CharTwo.neg_eq]
+  simp only [monicFactorsMod, hmap]
+  by_cases hd8 : d % 8 = 1
+  · -- `c` is even: `X² + X = (X - 0)(X - 1)`, two distinct linear factors.
+    have hc0 : (c : ZMod 2) = 0 := by
+      rw [ZMod.intCast_zmod_eq_zero_iff_dvd]; omega
+    have hfac : (X ^ 2 + X + C (c : ZMod 2) : (ZMod 2)[X]) = (X - C 0) * (X - C 1) := by
+      rw [hc0, C_0, add_zero, sub_zero, C_1, CharTwo.sub_eq_add]; ring
+    rw [ite_eq_left hd8, hfac, normalizedFactors_mul (X_sub_C_ne_zero 0) (X_sub_C_ne_zero 1),
+      normalizedFactors_irreducible (irreducible_X_sub_C (0 : ZMod 2)),
+      normalizedFactors_irreducible (irreducible_X_sub_C (1 : ZMod 2)),
+      (monic_X_sub_C (0 : ZMod 2)).normalize_eq_self,
+      (monic_X_sub_C (1 : ZMod 2)).normalize_eq_self, Multiset.toFinset_add,
+      Multiset.toFinset_singleton, Multiset.toFinset_singleton,
+      Finset.card_union_of_disjoint (Finset.disjoint_singleton.mpr (by
+        rw [Ne, sub_right_inj, C_inj]; exact zero_ne_one))]
+    simp
+  · -- `c` is odd: `X² + X + 1` has no root in `𝔽₂`, hence is irreducible.
+    have hc1 : (c : ZMod 2) = 1 := by
+      rw [← Int.cast_one, ZMod.intCast_eq_intCast_iff']; omega
+    rw [ite_eq_right hd8, hc1, C_1]
+    have hq : (X ^ 2 + X + 1 : (ZMod 2)[X]) = X ^ 2 + (X + C 1) := by rw [C_1]; ring
+    have hlt : (X + C 1 : (ZMod 2)[X]).natDegree < (X ^ 2 : (ZMod 2)[X]).natDegree := by
+      rw [natDegree_X_add_C, natDegree_X_pow]; norm_num
+    have hmonic : (X ^ 2 + X + 1 : (ZMod 2)[X]).Monic := by
+      rw [hq]
+      exact (monic_X_pow 2).add_of_left (degree_lt_degree hlt)
+    have hdeg : (X ^ 2 + X + 1 : (ZMod 2)[X]).natDegree = 2 := by
+      rw [hq, natDegree_add_eq_left_of_natDegree_lt hlt, natDegree_X_pow]
+    have hirr : Irreducible (X ^ 2 + X + 1 : (ZMod 2)[X]) := by
+      rw [Polynomial.Monic.irreducible_iff_roots_eq_zero_of_degree_le_three hmonic (by omega)
+        (by omega), Multiset.eq_zero_iff_forall_notMem]
+      intro x hx
+      rw [mem_roots hmonic.ne_zero, IsRoot.def, eval_add, eval_add, eval_pow, eval_X, eval_one,
+        ZMod.pow_card] at hx
+      have h2 : (x + x + 1 : ZMod 2) = 1 := by
+        have : (2 : ZMod 2) = 0 := by decide
+        linear_combination x * this
+      rw [h2] at hx
+      exact one_ne_zero hx
+    rw [normalizedFactors_irreducible hirr, Multiset.toFinset_singleton, Finset.card_singleton]
+
+/-- **The splitting law at `2` for `d ≡ 1 (mod 4)`.** For `K = ℚ(√d)` with `d` squarefree and
+`d ≡ 1 (mod 4)`, the prime `2` splits completely in `K` if and only if `d ≡ 1 (mod 8)`. -/
+theorem ncard_primesOver_two_eq_two_iff_of_mod_four_eq_one {θ : 𝓞 K} {d : ℤ}
+    (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
+    (hsf : Squarefree d) (hd4 : d % 4 = 1) :
+    (primesOver (span {(2 : ℤ)}) (𝓞 K)).ncard = finrank ℚ K ↔ d % 8 = 1 := by
+  have : Fact (Nat.Prime 2) := ⟨Nat.prime_two⟩
+  have hexp : exponent (halfGen hmin hd4) = 1 :=
+    exponent_eq_one_iff.mpr (adjoin_halfGen_eq_top_of_mod_four_eq_one hmin hgen hsf hd4)
+  have hp : ¬ (2 : ℕ) ∣ exponent (halfGen hmin hd4) := by rw [hexp]; norm_num
+  have hcard : (primesOver (span {((2 : ℕ) : ℤ)}) (𝓞 K)).ncard =
+      (monicFactorsMod (halfGen hmin hd4) 2).card := by
+    rw [← Nat.card_coe_set_eq, Nat.card_congr (primesOverSpanEquivMonicFactorsMod hp)]
+    exact Nat.card_eq_finsetCard _
+  rw [Nat.cast_ofNat] at hcard
+  rw [hcard, finrank_rat_eq_two hmin hgen, card_monicFactorsMod_halfGen_two hmin hd4]
+  split_ifs with h <;> simp [h]
+
+/-- **The inert case at `2` for `d ≡ 1 (mod 4)`.** For `K = ℚ(√d)` with `d` squarefree and
+`d ≡ 1 (mod 4)`, the prime `2` is inert in `K` (there is a single prime above it) if and only if
+`d ≡ 5 (mod 8)`. -/
+theorem ncard_primesOver_two_eq_one_iff_of_mod_four_eq_one {θ : 𝓞 K} {d : ℤ}
+    (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
+    (hsf : Squarefree d) (hd4 : d % 4 = 1) :
+    (primesOver (span {(2 : ℤ)}) (𝓞 K)).ncard = 1 ↔ d % 8 = 5 := by
+  have : Fact (Nat.Prime 2) := ⟨Nat.prime_two⟩
+  have hexp : exponent (halfGen hmin hd4) = 1 :=
+    exponent_eq_one_iff.mpr (adjoin_halfGen_eq_top_of_mod_four_eq_one hmin hgen hsf hd4)
+  have hp : ¬ (2 : ℕ) ∣ exponent (halfGen hmin hd4) := by rw [hexp]; norm_num
+  have hcard : (primesOver (span {((2 : ℕ) : ℤ)}) (𝓞 K)).ncard =
+      (monicFactorsMod (halfGen hmin hd4) 2).card := by
+    rw [← Nat.card_coe_set_eq, Nat.card_congr (primesOverSpanEquivMonicFactorsMod hp)]
+    exact Nat.card_eq_finsetCard _
+  rw [Nat.cast_ofNat] at hcard
+  rw [hcard, card_monicFactorsMod_halfGen_two hmin hd4]
+  split_ifs with h
+  · simp only [OfNat.ofNat_ne_one, false_iff]; omega
+  · simp only [true_iff]; omega
 
 end NumberField
