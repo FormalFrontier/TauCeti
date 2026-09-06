@@ -12,15 +12,18 @@ public import Mathlib.RingTheory.TensorProduct.Finite
 /-!
 # The dimension of a base change
 
-A module specified as a base change of a finite module is finite. If the module being extended is
-free and both rings satisfy the strong rank condition, then the two modules have the same rank.
-Both statements are about Mathlib's `IsBaseChange` predicate rather than about the concrete tensor
-product `S ⊗[R] M`, so they apply to a model of the base change that is not literally a tensor
-product — the situation the `IsBaseChange` interface exists to serve.
+A module specified as a base change of a finite module is finite, and the image of a base-change
+map spans its target. If the module being extended is free and both rings satisfy the strong rank
+condition, then the two modules have the same rank. Compatible maps between base changes commute
+with their scalar-extension equivalences. These results are about Mathlib's `IsBaseChange`
+predicate rather than about the concrete tensor product `S ⊗[R] M`, so they apply to a model of the
+base change that is not literally a tensor product — the situation the `IsBaseChange` interface
+exists to serve.
 
-Mathlib proves the corresponding facts for the concrete tensor product (`Module.finrank_baseChange`
-and the `Module.Finite` instance on `S ⊗[R] M`); transporting them along
-`IsBaseChange.equiv : S ⊗[R] M ≃ₗ[S] N` is all that is needed.
+Mathlib proves the corresponding facts for the concrete tensor product
+(`TensorProduct.span_tmul_eq_top`, `Module.finrank_baseChange`, and the `Module.Finite` instance
+on `S ⊗[R] M`); transporting them along `IsBaseChange.equiv : S ⊗[R] M ≃ₗ[S] N` is all that is
+needed.
 -/
 
 public section
@@ -29,8 +32,10 @@ namespace TauCeti
 
 open scoped TensorProduct
 
-variable {R S M N : Type*} [CommRing R] [CommRing S] [Algebra R S]
-variable [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N] [Module S N]
+section
+
+variable {R S M N : Type*} [CommSemiring R] [CommSemiring S] [Algebra R S]
+variable [AddCommMonoid M] [Module R M] [AddCommMonoid N] [Module R N] [Module S N]
 variable [IsScalarTower R S N] {f : M →ₗ[R] N}
 
 /-- A base change of a finite module is a finite module. -/
@@ -61,6 +66,14 @@ theorem span_range_eq_top_of_baseChange (hf : IsBaseChange S f) :
     rw [hf.equiv_tmul]
     exact Submodule.smul_mem _ s (Submodule.subset_span ⟨m, rfl⟩)
 
+end
+
+section
+
+variable {R S M N : Type*} [CommRing R] [CommRing S] [Algebra R S]
+variable [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N] [Module S N]
+variable [IsScalarTower R S N] {f : M →ₗ[R] N}
+
 /-- A base change of a free module has the same rank as the module it extends when the source and
 target rings satisfy the strong rank condition. -/
 theorem finrank_of_isBaseChange (hf : IsBaseChange S f) [StrongRankCondition R]
@@ -68,9 +81,17 @@ theorem finrank_of_isBaseChange (hf : IsBaseChange S f) [StrongRankCondition R]
     Module.finrank S N = Module.finrank R M := by
   rw [← hf.equiv.finrank_eq, Module.finrank_baseChange]
 
+end
+
+section
+
+variable {R S M N : Type*} [CommSemiring R] [CommSemiring S] [Algebra R S]
+variable [AddCommMonoid M] [Module R M] [AddCommMonoid N] [Module R N] [Module S N]
+variable [IsScalarTower R S N] {f : M →ₗ[R] N}
+
 /-- Compatible maps between two base changes commute with their scalar-extension equivalences. -/
 theorem comp_equiv_eq_equiv_comp_baseChange_of_baseChange
-    {M' N' : Type*} [AddCommGroup M'] [Module R M'] [AddCommGroup N'] [Module R N'] [Module S N']
+    {M' N' : Type*} [AddCommMonoid M'] [Module R M'] [AddCommMonoid N'] [Module R N'] [Module S N']
     [IsScalarTower R S N'] {f' : M' →ₗ[R] N'} (hf : IsBaseChange S f)
     (hf' : IsBaseChange S f') (u : M →ₗ[R] M') (g : N →ₗ[S] N')
     (hcompat : ∀ m, g (f m) = f' (u m)) :
@@ -85,5 +106,7 @@ theorem comp_equiv_eq_equiv_comp_baseChange_of_baseChange
   change g (hf.equiv (1 ⊗ₜ[R] m)) = hf'.equiv (1 ⊗ₜ[R] u m)
   rw [hf.equiv_tmul, hf'.equiv_tmul]
   simpa only [one_smul] using hcompat m
+
+end
 
 end TauCeti
