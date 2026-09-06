@@ -184,15 +184,10 @@ noncomputable def affinePointTopology (g : AddGeneratingFamily S r) :
     TopologicalSpace (AffineSemigroupComplexPoint S) :=
   TopologicalSpace.induced (monomialEmbedding g) inferInstance
 
-/-- The monomial-embedding topology is, by definition, the topology induced by the monomial
-embedding of the family. -/
-theorem affinePointTopology_def (g : AddGeneratingFamily S r) :
-    affinePointTopology g = TopologicalSpace.induced (monomialEmbedding g) inferInstance := (rfl)
-
 /-- The monomial embedding is continuous for the topology it induces. -/
 theorem continuous_monomialEmbedding (g : AddGeneratingFamily S r) :
     Continuous[affinePointTopology g, inferInstance] (monomialEmbedding g) :=
-  continuous_iff_le_induced.mpr (affinePointTopology_def g).le
+  continuous_iff_le_induced.mpr le_rfl
 
 /-- Evaluation at a fixed monomial is continuous for the monomial-embedding topology: it is a
 monomial in the coordinates of the embedding. -/
@@ -239,7 +234,7 @@ theorem affinePointTopology_eq_iInf (g : AddGeneratingFamily S r) :
         (fun x : AffineSemigroupComplexPoint S ↦ x (MonoidAlgebra.single (ofAdd s) 1))
         inferInstance := by
   refine le_antisymm (le_iInf fun s ↦ (continuous_apply_single g s).le_induced) ?_
-  rw [affinePointTopology_def, induced_to_pi]
+  rw [affinePointTopology, induced_to_pi]
   simp only [monomialEmbedding_apply]
   exact le_iInf fun j ↦ iInf_le _ (g.toFun j)
 
@@ -253,7 +248,7 @@ theorem isClosedEmbedding_monomialEmbedding (g : AddGeneratingFamily S r) :
     letI := affinePointTopology g
     Topology.IsClosedEmbedding (monomialEmbedding g) :=
   letI := affinePointTopology g
-  ⟨⟨⟨affinePointTopology_def g⟩, monomialEmbedding_injective g⟩,
+  ⟨⟨⟨rfl⟩, monomialEmbedding_injective g⟩,
     isClosed_range_monomialEmbedding g⟩
 
 /-- The affine complex points of a finitely generated additive monoid are Hausdorff. -/
