@@ -89,6 +89,56 @@ class BwrapPin(unittest.TestCase):
                 self.assertContains('[ "$sb_ns" = "$host_ns" ]', text, workflow.name)
                 self.assertContains("refusing to run candidate code", text, workflow.name)
 
+    def test_every_policy_hardens_the_synthetic_root(self):
+        # `--tmpfs /` leaves a writable synthetic root, including the directories bwrap creates
+        # to hang the binds off. Without `--remount-ro /` candidate code can plant an executable
+        # under $HOME and win the PATH lookup for the audits that run after the build.
+        for workflow in WORKFLOWS:
+            with self.subTest(workflow=workflow.name):
+                text = workflow.read_text()
+                for policy in self._policies(text):
+                    self.assertIn("--remount-ro /", policy)
+                    # bwrap is PID 1 of the sandbox and keeps its own environment, so it has to
+                    # be started without one (containers/bubblewrap#725).
+                    self.assertTrue(policy.startswith("env -i /usr/bin/bwrap"), policy[:60])
+                    # `--unshare-all` would use the "try" form for the user namespace.
+                    self.assertIn("--unshare-user ", policy)
+                    self.assertNotIn("--unshare-all", policy)
+                    # A PATH the sandbox can write is the other half of the hijack above.
+                    self.assertNotIn("$HOME/.local/bin", policy)
+
+    def _policies(self, text):
+        """Every bwrap invocation in a workflow, joined back into one line each."""
+        out, cur = [], None
+        for line in text.splitlines():
+            stripped = line.strip()
+            if cur is None and stripped.startswith("env -i /usr/bin/bwrap"):
+                cur = [stripped]
+            elif cur is not None:
+                cur.append(stripped)
+            if cur is not None and not stripped.endswith("\\"):
+                out.append(" ".join(x.rstrip("\\").strip() for x in cur))
+                cur = None
+        assert out, "no bwrap policy found"
+        return out
+
+    def test_the_self_test_runs_before_any_candidate_code(self):
+        # Ordering, not mere presence: a self-test placed after the build would satisfy a
+        # substring search and prove nothing.
+        import yaml
+        for workflow in WORKFLOWS:
+            with self.subTest(workflow=workflow.name):
+                doc = yaml.safe_load(workflow.read_text())
+                names = [str(s.get("name", "")) for job in doc["jobs"].values()
+                         for s in job.get("steps", [])]
+                install = [i for i, n in enumerate(names) if "Install bubblewrap" in n]
+                sandboxed = [i for i, n in enumerate(names)
+                             if "under bwrap" in n or "heartbeats" in n or "under bwrap," in n]
+                self.assertTrue(install, "no bubblewrap install step")
+                for s in sandboxed:
+                    self.assertTrue(any(i < s for i in install),
+                                    f"{workflow.name}: sandboxed step {names[s]!r} precedes the self-test")
+
     def test_no_workflow_still_invokes_landrun(self):
         # Comments may still name landrun to explain what changed and why; what must be gone
         # is any call to it, and any Landlock-shaped flag left behind in a policy.

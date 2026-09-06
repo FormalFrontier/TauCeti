@@ -64,7 +64,7 @@ jobs:
   # job for exactly that reason.
   verify:
     if: github.repository == 'TauCetiProject/TauCeti'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # The from-scratch build alone ran about 49 minutes as ci.yml's Build step before #3715, and the
     # cache-restored build adds roughly 15. Generous headroom, but bounded; a run that hits this
     # still reports, because the report job keys off the job result.
@@ -115,22 +115,30 @@ jobs:
       # scripts/test_bwrap_pin.py instead, which runs with the infrastructure policy tests.
       - name: Install bubblewrap (pinned + checksum) and self-test (fail closed)
         env:
-          BWRAP_VER: 0.9.0-1ubuntu0.1
-          BWRAP_DEB_SHA256: 1b506492bd9c7fd0cdb4f02ac822f1d3e336b0aead5113c1239baf8db5db562a
-          BWRAP_SHA256: 52231e1caf55bcbc667b269f49c63599a6f7db4767ae6a039580d0ff853db712
+          BWRAP_VER: 0.12.0-1
+          BWRAP_DEB_SHA256: db4d572a7927bfd34cc9b8e24b56983efa8e0483d03da6c810f6caae081dcc36
+          BWRAP_SHA256: 5d1f77a455d3a5cc1a45bdbf2e23b89cbd7b33e640dd9ae3b5ce2573d133889e
         run: |
           set -euo pipefail
           # Pinned Ubuntu package, verified twice: the .deb that was fetched, and the binary it
           # installed. A bare `apt-get install bubblewrap` would take whatever the archive holds on
           # the day, which is not a pin.
+          #
+          # 0.12.0 rather than the 0.9.0 noble ships: every earlier version lets a symlink in
+          # attacker-controlled content redirect the files bwrap creates while setting the sandbox
+          # up, before anything runs inside it (GHSA-pxhw-h44j-8pfx, announced 2026-08-27, no CVE
+          # assigned yet). This policy binds a candidate checkout and creates mount points beneath
+          # it, which is exactly that pattern. noble-security still has only 0.9.0-1ubuntu0.1, so
+          # the fixed package is taken from the archive pool; it needs libc6 >= 2.38 and noble has
+          # 2.39.
           deb="bubblewrap_${BWRAP_VER}_amd64.deb"
-          curl -sSL --fail "http://archive.ubuntu.com/ubuntu/pool/main/b/bubblewrap/${deb}" -o bwrap.deb \
-            || curl -sSL --fail "http://security.ubuntu.com/ubuntu/pool/main/b/bubblewrap/${deb}" -o bwrap.deb
+          curl -sSL --fail "https://archive.ubuntu.com/ubuntu/pool/main/b/bubblewrap/${deb}" -o bwrap.deb \
+            || curl -sSL --fail "https://security.ubuntu.com/ubuntu/pool/main/b/bubblewrap/${deb}" -o bwrap.deb
           echo "${BWRAP_DEB_SHA256}  bwrap.deb" | sha256sum -c -
           sudo dpkg -i bwrap.deb >/dev/null
           echo "${BWRAP_SHA256}  /usr/bin/bwrap" | sha256sum -c -
           rm -f bwrap.deb
-          bwrap --version
+          /usr/bin/bwrap --version
 
           # Ubuntu 24.04 denies unprivileged user namespaces through AppArmor, so bwrap cannot build
           # its sandbox as shipped. Grant the capability to this one binary rather than clearing
@@ -148,36 +156,49 @@ jobs:
 
           # Prove the sandbox enforces before trusting it with candidate code. bwrap fails closed
           # where landrun's --best-effort could degrade to no sandbox at all, but `--unshare-all`
-          # expands to `--unshare-user-try`, which SKIPS the user namespace rather than failing when
-          # it cannot be created -- so a run can still start with far less isolation than was asked
-          # for. The userns comparison below is what catches that; the rest mirror the checks the
-          # landrun self-test made, plus one landrun could not make at all: a network namespace does
-          # not bound AF_UNIX, so confirm no host daemon socket is reachable either.
+          # expands to `--unshare-user-try`, which SKIPS the user namespace rather than failing
+          # when it cannot be created, so the policies name `--unshare-user` explicitly and this
+          # compares the resulting namespace against the host's.
+          #
+          # `env -i`: `--clearenv` clears the CHILD's environment, but bwrap keeps its own and is
+          # PID 1 of the sandbox's PID namespace, so without this the launcher's environment stays
+          # readable at /proc/1/environ from inside (containers/bubblewrap#725).
           probe() {
-            bwrap --tmpfs / --ro-bind /usr /usr --ro-bind /etc /etc \
+            env -i /usr/bin/bwrap --tmpfs / --ro-bind /usr /usr --ro-bind /etc /etc \
               --symlink usr/bin /bin --symlink usr/sbin /sbin \
               --symlink usr/lib /lib --symlink usr/lib64 /lib64 \
-              --dev /dev --proc /proc --tmpfs /tmp \
-              --clearenv --setenv PATH /usr/bin \
-              --unshare-all --die-with-parent --new-session -- /usr/bin/bash -c "$1"
+              --dev /dev --proc /proc --tmpfs /tmp --remount-ro / \
+              --setenv PATH /usr/bin \
+              --unshare-user --unshare-ipc --unshare-pid --unshare-net --unshare-uts \
+              --unshare-cgroup --disable-userns --die-with-parent --new-session \
+              -- /usr/bin/bash -c "$1"
           }
+          # Canaries, so each check can fail for the right reason. Testing that a host path is
+          # merely absent proves nothing if it never existed; these are known to exist outside.
+          canary=$(mktemp -d); echo secret > "$canary/file"
+          echo secret > /dev/shm/bwrap-host-canary-$$
           set +e
           probe 'echo ok' >/dev/null 2>&1; ok=$?
           probe 'echo x > /etc/bwrap-probe' >/dev/null 2>&1; wr=$?
-          probe 'echo x > /dev/shm/bwrap-probe && cat /dev/shm/bwrap-probe' >/dev/null 2>&1; shm=$?
+          probe 'mkdir /bwrap-probe-dir' >/dev/null 2>&1; rootw=$?
+          probe "cat $canary/file" >/dev/null 2>&1; hostro=$?
+          probe "cat /dev/shm/bwrap-host-canary-$$" >/dev/null 2>&1; shm=$?
           probe 'curl -sS --max-time 8 https://example.com >/dev/null' >/dev/null 2>&1; net=$?
-          probe 'test -e /run/docker.sock' >/dev/null 2>&1; sock=$?
+          probe 'unshare --user --map-root-user true' >/dev/null 2>&1; nest=$?
           host_ns=$(readlink /proc/self/ns/user)
           sb_ns=$(probe 'readlink /proc/self/ns/user' 2>/dev/null)
+          sb_env=$(probe 'tr "\0" "\n" < /proc/1/environ | grep -c .' 2>/dev/null)
           set -e
-          echo "self-test: run=$ok write=$wr shm=$shm net=$net docker-sock=$sock userns=$host_ns->$sb_ns"
-          # /dev/shm is a private tmpfs here rather than the host's, so a write to it
-          # succeeds and is simply invisible outside; what must hold is that the host's
-          # own sockets are not there.
-          if [ "$ok" -ne 0 ] || [ "$wr" -eq 0 ] || [ "$net" -eq 0 ] || [ "$sock" -eq 0 ] \
-             || [ -z "$sb_ns" ] || [ "$sb_ns" = "$host_ns" ]; then
-            echo "::error::bwrap not enforcing (run=$ok write=$wr net=$net" \
-              "docker-sock=$sock userns=$host_ns->$sb_ns); refusing to run candidate code"
+          rm -rf "$canary" /dev/shm/bwrap-host-canary-$$
+          echo "self-test: run=$ok etc-write=$wr root-write=$rootw host-read=$hostro shm=$shm" \
+            "net=$net nested-userns=$nest pid1-env=$sb_env userns=$host_ns->$sb_ns"
+          # Every one of these but `ok` must FAIL inside the sandbox.
+          if [ "$ok" -ne 0 ] || [ "$wr" -eq 0 ] || [ "$rootw" -eq 0 ] || [ "$hostro" -eq 0 ] \
+             || [ "$shm" -eq 0 ] || [ "$net" -eq 0 ] || [ "$nest" -eq 0 ] \
+             || [ "$sb_env" != "0" ] || [ -z "$sb_ns" ] || [ "$sb_ns" = "$host_ns" ]; then
+            echo "::error::bwrap not enforcing (run=$ok etc-write=$wr root-write=$rootw" \
+              "host-read=$hostro shm=$shm net=$net nested-userns=$nest pid1-env=$sb_env" \
+              "userns=$host_ns->$sb_ns); refusing to run candidate code"
             exit 1
           fi
 
@@ -321,22 +342,32 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p reference/.lake/tmp
-          export PATH="$HOME/.local/bin:$HOME/.elan/bin:$PATH"
-          bwrap --tmpfs / \
+          export PATH="$HOME/.elan/bin:$PATH"
+          # `env -i` and `--remount-ro /` are both load-bearing. `--clearenv` clears the child's
+          # environment but bwrap keeps its own and is PID 1 here, so the launcher's environment
+          # would otherwise be readable at /proc/1/environ (containers/bubblewrap#725). And
+          # `--tmpfs /` gives a WRITABLE synthetic root: the directories bwrap creates to hang the
+          # binds off, $HOME among them, are writable until this remounts them read-only, which
+          # would let candidate code drop a `lake` or `bash` earlier on PATH than the real one and
+          # have the later audits run it. The explicit PATH below is the other half of that: it
+          # never contains a directory the sandbox can write.
+          env -i /usr/bin/bwrap --tmpfs / \
             --ro-bind /usr /usr --ro-bind /etc /etc \
             --symlink usr/bin /bin --symlink usr/sbin /sbin \
             --symlink usr/lib /lib --symlink usr/lib64 /lib64 \
             --dev /dev --proc /proc --tmpfs /tmp \
             --ro-bind "$HOME/.elan" "$HOME/.elan" \
             --ro-bind "$PWD/reference" "$PWD/reference" --bind "$PWD/reference/.lake" "$PWD/reference/.lake" \
-            --clearenv \
-            --setenv PATH "$PATH" --setenv HOME "$HOME" --setenv CI "${CI:-}" \
+            --remount-ro / \
+            --setenv PATH "$HOME/.elan/bin:/usr/bin:/bin" \
+            --setenv HOME "$HOME" --setenv CI "${CI:-}" \
             --setenv LAKE_NO_CACHE "${LAKE_NO_CACHE:-}" \
             --setenv LAKE_ARTIFACT_CACHE "${LAKE_ARTIFACT_CACHE:-}" \
             --setenv LAKE_RESTORE_ARTIFACTS "${LAKE_RESTORE_ARTIFACTS:-}" \
             --setenv LAKE_CACHE_DIR "${LAKE_CACHE_DIR:-}" \
             --chdir "$PWD/reference" \
-            --unshare-all --die-with-parent --new-session \
+            --unshare-user --unshare-ipc --unshare-pid --unshare-net --unshare-uts \
+            --unshare-cgroup --disable-userns --die-with-parent --new-session \
             -- bash -euo pipefail -c 'export TMPDIR="$PWD/.lake/tmp" && exec lake build'
 
       # Outside the sandbox: the digests must be taken by code the build could not touch.
@@ -381,7 +412,7 @@ jobs:
     # job would fire on every schedule and fail for want of a Zulip secret it should not have.
     if: ${{ always() && github.repository == 'TauCetiProject/TauCeti'
             && (needs.verify.result != 'success' || needs.verify.outputs.compare != 'agree') }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - name: Post the divergence to Zulip

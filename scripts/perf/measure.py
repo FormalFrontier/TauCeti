@@ -21,10 +21,15 @@ def terminate_group(process: subprocess.Popen[bytes]) -> None:
     """Kill a timed-out measurement.
 
     Under landrun the sandboxed processes shared this process group, so the group signal
-    reached them directly. bwrap's `--new-session` puts them in their own, and the group
-    signal now reaches bwrap alone -- which is enough: `--unshare-all` gives the sandbox its
-    own PID namespace whose init is bwrap's child, so killing bwrap tears the whole tree
-    down. `--die-with-parent` covers the case where this process dies first.
+    reached them directly. bwrap's `--new-session` puts them in their own, so the group signal
+    now reaches the `perf`/`time` wrapper and bwrap rather than the tree inside. That is enough
+    on this path: `--unshare-pid` gives the sandbox its own PID namespace whose init is bwrap's
+    child, and killing bwrap tears that namespace down with it.
+
+    `--die-with-parent` does NOT generalise the guarantee: bwrap's immediate parent is the
+    `perf` or `time` wrapper, not this process, so if Python dies without reaching the code
+    below, the wrapper can outlive it and bwrap sees no parent death. Cleanup on abnormal exit
+    of this process is therefore not guaranteed; the timeout path here is.
     """
     try:
         os.killpg(process.pid, signal.SIGTERM)
@@ -57,6 +62,7 @@ def sandbox_command(
     """
     elan = Path.home() / ".elan"
     command = [
+        "/usr/bin/env", "-i",
         bwrap,
         "--tmpfs", "/",
         "--ro-bind", "/usr", "/usr",
@@ -72,12 +78,16 @@ def sandbox_command(
         "--ro-bind", str(watchdog_toolchain), str(watchdog_toolchain),
         "--ro-bind", str(root), str(root),
         "--bind", str(root / ".lake"), str(root / ".lake"),
-        "--clearenv",
+        # `--tmpfs /` leaves a WRITABLE synthetic root: the directories bwrap creates to hang
+        # the binds off, the home directory among them, stay writable until this. Without it a
+        # measured build could plant an executable earlier on PATH than the real one.
+        "--remount-ro", "/",
     ]
-    # landrun's `--env NAME` looked the value up in the parent environment; bwrap needs it
-    # spelled out, and `--clearenv` means a name we do not pass simply is not there.
+    # PATH is set here rather than inherited, so it can never name a directory the sandbox
+    # is able to write.
+    command.extend(("--setenv", "PATH", f"{elan}/bin:/usr/bin:/bin"))
     for name in (
-        "PATH", "HOME", "CI", "LAKE_NO_CACHE", "LAKE_ARTIFACT_CACHE",
+        "HOME", "CI", "LAKE_NO_CACHE", "LAKE_ARTIFACT_CACHE",
         "LAKE_RESTORE_ARTIFACTS", "LAKE_CACHE_DIR", "WATCHDOG_TOOLCHAIN",
     ):
         value = os.environ.get(name)
@@ -86,7 +96,11 @@ def sandbox_command(
     command.extend(
         (
             "--chdir", str(root),
-            "--unshare-all", "--die-with-parent", "--new-session",
+            # Named individually rather than via `--unshare-all`, which expands to
+            # `--unshare-user-try` and would skip the user namespace instead of failing.
+            "--unshare-user", "--unshare-ipc", "--unshare-pid", "--unshare-net",
+            "--unshare-uts", "--unshare-cgroup", "--disable-userns",
+            "--die-with-parent", "--new-session",
             "--", "bash", "-euo", "pipefail", "-c",
             'export LAKE_OVERRIDE_LEAN=true; export LEAN="$WATCHDOG_TOOLCHAIN/bin/lean"; exec lake build "$@"',
             "_", *modules,
@@ -164,7 +178,7 @@ def main() -> int:
     parser.add_argument("--side", choices=("base", "head"), required=True)
     parser.add_argument("--raw-dir", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--bwrap", default="bwrap")
+    parser.add_argument("--bwrap", default="/usr/bin/bwrap")
     parser.add_argument("--watchdog-toolchain", type=Path, required=True)
     parser.add_argument("--perf", default="perf")
     parser.add_argument("--metric", choices=("instructions", "cpu"), required=True)
