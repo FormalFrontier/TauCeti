@@ -10,8 +10,9 @@ public import Mathlib.MeasureTheory.Order.Lattice
 /-!
 # Measurability of finite lattice extrema
 
-The maximum or minimum of finitely many measurable random variables is again measurable, and
-likewise for almost-everywhere measurable ones. This is what lets the extremes of a finite family
+The maximum or minimum of a nonempty finite family of measurable random variables is again
+measurable, and likewise for almost-everywhere measurable ones. This is what lets the extremes of
+a finite family
 — order statistics, the range, the first arrival among finitely many exponential clocks — be
 treated as random variables in their own right: their laws are pushforwards, and their
 distribution functions are computed from those of the family. Mathlib proves
