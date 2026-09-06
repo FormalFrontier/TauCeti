@@ -30,7 +30,7 @@ public section
 
 namespace TauCeti
 
-variable {α M : Type*} [AddCommMonoid M] [PartialOrder M] [IsOrderedCancelAddMonoid M]
+variable {α M : Type*} [AddCommMonoid M] [Preorder M] [IsOrderedCancelAddMonoid M]
   [AddLeftStrictMono M]
 
 /-- **A set whose weights are all smaller than those of a second set of the same size has the
