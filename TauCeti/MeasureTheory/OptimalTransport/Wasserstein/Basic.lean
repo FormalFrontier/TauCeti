@@ -56,6 +56,8 @@ what the gluing lemma consumes.
   property of the infimum, with `TauCeti.wassersteinEDist_map_le` providing the graph-plan
   pushforward bound, `TauCeti.wassersteinEDist_lt_iff` its order-theoretic restatement, and
   `TauCeti.wassersteinEDist_eq_top_iff` the characterization of an infinite value;
+* `TauCeti.wassersteinEDist_add_smul_dirac_le` — the coupling estimate for moving part of a
+  measure to a single point;
 * `TauCeti.wassersteinEDist_top` — the `p = ∞` characterization by coupling-wise essential
   suprema;
 * `TauCeti.wassersteinEDist_self`, `TauCeti.wassersteinEDist_comm` and
@@ -250,6 +252,58 @@ theorem wassersteinEDist_smul (hc₀ : a ≠ 0) (hc_top : a ≠ ∞) :
             (fun z : X × X ↦ edist z.1 z.2) p (a⁻¹ • π)).symm
 
 end EDist
+
+section Perturbation
+
+variable [PseudoEMetricSpace X]
+
+/-- **Moving a piece of mass to a single point.** Replacing the part `τ` of the measure `σ + τ`
+by the Dirac mass at `x₀` carrying the same total mass costs at most the `L^p (τ)` seminorm of
+the distance to `x₀`: the plan that leaves `σ` where it is and sends every point of `τ` to `x₀`
+is a coupling of the two measures, and its objective is exactly that seminorm. -/
+theorem wassersteinEDist_add_smul_dirac_le
+    (hd : Measurable fun z : X × X ↦ edist z.1 z.2) (p : ℝ≥0∞) (σ τ : Measure X) (x₀ : X) :
+    wassersteinEDist p (σ + τ) (σ + τ univ • Measure.dirac x₀) ≤
+      eLpNorm (fun x ↦ edist x x₀) p τ := by
+  set f : X × X → ℝ≥0∞ := fun z ↦ edist z.1 z.2 with hf_def
+  have hdiag : Measurable fun x : X ↦ (x, x) := measurable_id.prodMk measurable_id
+  have hpair : Measurable fun x : X ↦ (x, x₀) := measurable_id.prodMk measurable_const
+  have hcoupling : IsCoupling (σ.map (fun x ↦ (x, x)) + τ.map (fun x ↦ (x, x₀)))
+      (σ + τ) (σ + τ univ • Measure.dirac x₀) := by
+    constructor
+    · rw [Measure.fst_add, Measure.fst, Measure.fst, Measure.map_map measurable_fst hdiag,
+        Measure.map_map measurable_fst hpair]
+      simp [Function.comp_def]
+    · rw [Measure.snd_add, Measure.snd, Measure.snd, Measure.map_map measurable_snd hdiag,
+        Measure.map_map measurable_snd hpair]
+      simp [Function.comp_def, Measure.map_const]
+  refine (wassersteinEDist_le hcoupling p).trans_eq ?_
+  set E : Set (X × X) := {z | f z ≠ 0} with hE_def
+  have hE : MeasurableSet E := hd (measurableSet_singleton (0 : ℝ≥0∞)).compl
+  have hAE : σ.map (fun x ↦ (x, x)) E = 0 := by
+    have hpre : (fun x : X ↦ (x, x)) ⁻¹' E = ∅ := by
+      ext x
+      simp [hE_def, hf_def]
+    rw [Measure.map_apply hdiag hE, hpre, measure_empty]
+  have hind : E.indicator f = f := by
+    funext z
+    by_cases hz : f z = 0
+    · rw [Set.indicator_of_notMem (by simpa [hE_def] using hz), hz]
+    · exact Set.indicator_of_mem hz f
+  calc eLpNorm f p (σ.map (fun x ↦ (x, x)) + τ.map (fun x ↦ (x, x₀)))
+      = eLpNorm (E.indicator f) p (σ.map (fun x ↦ (x, x)) + τ.map (fun x ↦ (x, x₀))) := by
+        rw [hind]
+    _ = eLpNorm f p ((σ.map (fun x ↦ (x, x)) + τ.map (fun x ↦ (x, x₀))).restrict E) :=
+        eLpNorm_indicator_eq_eLpNorm_restrict hE
+    _ = eLpNorm f p ((τ.map (fun x ↦ (x, x₀))).restrict E) := by
+        rw [Measure.restrict_add, Measure.restrict_eq_zero.2 hAE, zero_add]
+    _ = eLpNorm (E.indicator f) p (τ.map (fun x ↦ (x, x₀))) :=
+        (eLpNorm_indicator_eq_eLpNorm_restrict hE).symm
+    _ = eLpNorm f p (τ.map (fun x ↦ (x, x₀))) := by rw [hind]
+    _ = eLpNorm (fun x ↦ edist x x₀) p τ :=
+        eLpNorm_map_measure hd.aestronglyMeasurable hpair.aemeasurable
+
+end Perturbation
 
 section Measurable
 
