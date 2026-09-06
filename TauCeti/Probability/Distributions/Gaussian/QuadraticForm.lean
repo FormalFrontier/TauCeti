@@ -239,7 +239,7 @@ theorem mgf_inner_toEuclideanLin_multivariateGaussian (hS : S.PosSemidef) (hΘ :
     mgf (fun x ↦ ⟪x, Θ.toEuclideanLin x⟫) (multivariateGaussian 0 S) t =
       (1 - (2 * t) • (Θ * S)).det ^ (-1 / 2 : ℝ) := by
   rw [mgf_inner_toEuclideanLin_multivariateGaussian_sqrt S hΘ ht,
-    Matrix.det_one_sub_smul_sqrt_mul_mul_sqrt hS Θ (2 * t)]
+    hS.det_one_sub_smul_sqrt_mul_mul_sqrt Θ (2 * t)]
 
 /-- On its exponential-integrability domain, the cumulant-generating function of the quadratic
 form `x ↦ ⟪x, Θ x⟫` of a real symmetric matrix `Θ` under the centred multivariate Gaussian

@@ -30,7 +30,7 @@ in the original parameters.
   quadratic form of `Aᴴ * B * A` at `x`;
 * `Matrix.isHermitian_sqrt_mul_mul_sqrt` — the sandwich of a Hermitian matrix by a square root
   is Hermitian;
-* `Matrix.det_one_sub_smul_sqrt_mul_mul_sqrt` — the pencil determinants agree.
+* `Matrix.PosSemidef.det_one_sub_smul_sqrt_mul_mul_sqrt` — the pencil determinants agree.
 -/
 
 public section
@@ -62,7 +62,7 @@ theorem isHermitian_sqrt_mul_mul_sqrt (S : Matrix ι ι 𝕜) {Θ : Matrix ι ι
 
 /-- For positive-semidefinite `S`, the pencils of the sandwich `CFC.sqrt S * Θ * CFC.sqrt S` and
 of the product `Θ * S` have the same determinant. -/
-theorem det_one_sub_smul_sqrt_mul_mul_sqrt [DecidableEq ι] {S : Matrix ι ι 𝕜}
+theorem PosSemidef.det_one_sub_smul_sqrt_mul_mul_sqrt [DecidableEq ι] {S : Matrix ι ι 𝕜}
     (hS : S.PosSemidef) (Θ : Matrix ι ι 𝕜) (c : 𝕜) :
     (1 - c • (CFC.sqrt S * Θ * CFC.sqrt S)).det = (1 - c • (Θ * S)).det := by
   have hsq : CFC.sqrt S * CFC.sqrt S = S :=
