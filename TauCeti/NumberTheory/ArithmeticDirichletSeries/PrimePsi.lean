@@ -248,8 +248,6 @@ estimate. -/
 theorem primePsi_le_ncard_mul_log (hS : S.Finite) (hx : 1 ≤ x) :
     primePsi K S x ≤ S.ncard * Real.log x := by
   classical
-  have hx0 : (0 : ℝ) < x := lt_of_lt_of_le zero_lt_one hx
-  have hlogx : 0 ≤ Real.log x := Real.log_nonneg hx
   set T := (primePowersLE K x).filter (fun A ↦ primePowerBase A ∈ S) with hTdef
   have hmemT : ∀ A ∈ T, ((Ideal.absNorm (primePowerBase A).asIdeal : ℝ)) ^ primePowerExponent A
       ≤ x ∧ primePowerBase A ∈ S := by

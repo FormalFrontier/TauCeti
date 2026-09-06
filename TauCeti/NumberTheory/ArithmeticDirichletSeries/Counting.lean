@@ -665,7 +665,7 @@ sum stops growing. A constant is `o(x)`.
 
 This is what lets a counting argument discard an exceptional set outright — the ramified primes of
 an extension, say — rather than only from a density. It is the discard
-`TauCetiRoadmap/Chebotarev/README.md`, Layer 11.3(2), asks for. -/
+`TauCetiRoadmap/Chebotarev/README.md`, Layer 11.3(3), asks for. -/
 theorem primeTheta_isLittleO_of_finite (hS : S.Finite) :
     primeTheta K S =o[atTop] fun x : ℝ ↦ x := by
   refine (isLittleO_const_id_atTop
