@@ -231,15 +231,11 @@ theorem kostantToralWeylPoint_mem_normalizer_weightTorusPoints
   let f := Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom
   let T' := (kostantTorusPoints M b wt A).range
   have hTmap : T'.map f = T := by
-    ext x
-    simp only [Subgroup.mem_map]
-    constructor
-    · rintro ⟨_, ⟨s, rfl⟩, rfl⟩
-      refine ⟨s, ?_⟩
-      exact (basisMatrix_kostantTorusPoints M b wt s).symm
-    · rintro ⟨s, rfl⟩
-      exact ⟨kostantTorusPoints M b wt A s, ⟨s, rfl⟩,
-        basisMatrix_kostantTorusPoints M b wt s⟩
+    rw [MonoidHom.map_range]
+    apply congrArg (fun g : (κ → Aˣ) →* Matrix.GeneralLinearGroup (Fin n) A => g.range)
+    apply MonoidHom.ext
+    intro s
+    exact basisMatrix_kostantTorusPoints M b wt s
   rw [← hTmap]
   apply Subgroup.le_normalizer_map f
   exact Subgroup.mem_map_of_mem f <|
