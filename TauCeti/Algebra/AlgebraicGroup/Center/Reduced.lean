@@ -129,6 +129,18 @@ noncomputable def quotientReducedCenterIso :
     (mkQuotient_surjective H (centerDefiningIdeal H))
       (HopfIdeal.reduction k (centerCoordinateRing H))
 
+/-- The canonical reduced-center isomorphism commutes with the ambient and iterated quotient
+morphisms. -/
+@[simp]
+theorem mkQuotient_comp_quotientReducedCenterIso_hom :
+    mkQuotient H (reducedCenterDefiningIdeal H) ≫ (quotientReducedCenterIso H).hom =
+      mkQuotient H (centerDefiningIdeal H) ≫
+        mkQuotient (centerCoordinateRing H) (HopfIdeal.reduction k (centerCoordinateRing H)) := by
+  exact mkQuotient_comp_quotientIsoOfSurjective_hom
+    (mkQuotient H (centerDefiningIdeal H))
+      (mkQuotient_surjective H (centerDefiningIdeal H))
+        (HopfIdeal.reduction k (centerCoordinateRing H))
+
 /-- The ambient quotient model of the reduced center has reduced coordinate ring. -/
 theorem isReduced_quotient_reducedCenterDefiningIdeal :
     IsReduced (quotient H (reducedCenterDefiningIdeal H)) := by
@@ -154,9 +166,9 @@ variable [IsReduced
     (((centerCoordinateRing G : _root_.CommHopfAlgCat.{u} k) : Type u) ⧸
       nilradical ((centerCoordinateRing G : _root_.CommHopfAlgCat.{u} k) : Type u)))]
 
-/-- Over an algebraically closed field, the reduced center of a finite-type affine group is
-smooth. -/
-theorem smooth_reducedCenterCoordinateRing [IsAlgClosed k] [Algebra.FiniteType k G] :
+/-- Over an algebraically closed field, a finite-type reduced center is smooth. -/
+theorem smooth_reducedCenterCoordinateRing [IsAlgClosed k]
+    [Algebra.FiniteType k (reducedCenterCoordinateRing G)] :
     Algebra.Smooth k (reducedCenterCoordinateRing G) := by
   let _ : IsReduced (reducedCenterCoordinateRing G) :=
     isReduced_reducedCenterCoordinateRing G
