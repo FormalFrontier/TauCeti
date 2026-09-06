@@ -54,7 +54,9 @@ decomposition group, and is identified with Mathlib's `ValuationSubring.decompos
   `TauCeti.Place.ncard_mul_ramificationIdx_mul_relativeDegree_eq_finrank`, the product form
   `r · e · f = [F' : F]` of the fundamental identity (Stichtenoth, Corollary 3.7.2).
 * `TauCeti.Place.stabilizer_eq_decompositionSubgroup`: the stabilizer of a place is the
-  decomposition group of its valuation ring.
+  decomposition group of its valuation ring, and
+  `TauCeti.Place.ncard_mul_card_stabilizer_eq_finrank` is the orbit--stabilizer count of a
+  fibre.
 
 ## References
 
@@ -266,6 +268,14 @@ theorem setOf_restrict_eq_eq_orbit (P : Place k F') :
   refine ⟨fun hQ ↦ restrict_eq_iff_exists_smul_eq.mp hQ.symm, ?_⟩
   rintro ⟨σ, rfl⟩
   exact restrict_smul σ P
+
+/-- **Orbit--stabilizer for the places over a place**: the number of places of `F' / k` lying
+over the place below `P`, times the order of the stabilizer of `P`, is `[F' : F]`. -/
+theorem ncard_mul_card_stabilizer_eq_finrank (P : Place k F') :
+    {Q : Place k F' | Q.restrict k F = P.restrict k F}.ncard *
+      Nat.card (MulAction.stabilizer (F' ≃ₐ[F] F') P) = Module.finrank F F' := by
+  rw [← Nat.card_coe_set_eq, setOf_restrict_eq_eq_orbit P, ← Nat.card_prod,
+    Nat.card_congr (MulAction.orbitProdStabilizerEquivGroup _ P), IsGalois.card_aut_eq_finrank]
 
 /-- **The ramification index is constant on a fibre** (Stichtenoth, Corollary 3.7.2). -/
 theorem ramificationIdx_eq_of_restrict_eq {P Q : Place k F'}
