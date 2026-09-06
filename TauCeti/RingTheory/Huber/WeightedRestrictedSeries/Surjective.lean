@@ -63,9 +63,13 @@ The hypothesis is the filter inequality the proof consumes rather than `IsOpenMa
 strictly stronger; `TauCeti.Huber.weightedMap_one_weight_surjective_of_isOpenMap` is the open-map
 form for a caller who holds one.
 
-This is the step Wedhorn's Proposition & Definition 6.36(ii) needs: a ring topologically of finite
-type over `A` is an open quotient of some `A⟨X₁,…,Xₖ⟩`, and adjoining further variables to that
-quotient has to stay a quotient for noetherianity to descend to it. -/
+This is the step Wedhorn's Proposition & Definition 6.36(ii) needs: a ring *strictly*
+topologically of finite type over `A` is an open quotient of some `A⟨X₁,…,Xₖ⟩`
+(`TauCeti.Huber.IsStrictlyTopologicallyFiniteType`), and adjoining further variables to that
+quotient has to stay a quotient for noetherianity to descend to it.
+`TauCeti.Huber.IsTopologicallyFiniteType` is the weaker notion, taking a quotient of the
+completion of a weighted `A⟨X⟩_T` for an arbitrary finite weight family; it is not what this
+serves. -/
 theorem weightedMap_one_weight_surjective [(𝓝 (0 : A)).IsCountablyGenerated] {φ : A →+* B}
     (hφ : Continuous φ) (hsurj : Function.Surjective φ)
     (hnhds : 𝓝 (0 : B) ≤ Filter.map φ (𝓝 (0 : A))) :
