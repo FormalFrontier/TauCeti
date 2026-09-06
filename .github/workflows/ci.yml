@@ -70,6 +70,7 @@ jobs:
           python3 scripts/test_workflow_pins.py
           python3 scripts/test_landrun_pin.py
           python3 scripts/test_elan_pin.py
+          python3 scripts/test_web_pins.py
           python3 scripts/test_attest_pr_config.py
           python3 scripts/test_profile_workflow.py
           python3 scripts/test_lake_cache_probe.py
