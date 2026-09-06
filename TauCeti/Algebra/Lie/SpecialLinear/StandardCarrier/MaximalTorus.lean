@@ -35,6 +35,17 @@ noncomputable section
 
 variable (r : ℕ)
 
+/-- A product supported at one index selected by an injective coordinate map is that factor. -/
+private theorem prod_zpow_ite_eq {K : Type u} [CommRing K] (s : Fin r → Kˣ)
+    (e : Fin r → Fin (r + 1)) (he : Function.Injective e) (k : Fin (r + 1)) (c : Fin r)
+    (hkc : k = e c) :
+    (∏ i, s i ^ (if k = e i then (1 : ℤ) else 0)) = s c := by
+  rw [Fintype.prod_eq_single c]
+  · simp only [hkc, ↓reduceIte, zpow_one]
+  · intro j hj
+    have hne : k ≠ e j := fun h ↦ hj (he (h.symm.trans hkc))
+    simp [hne]
+
 /-- The standard weight at coordinate `k` evaluates as the quotient of two adjacent partial
 products. Missing factors at the two ends are interpreted as one. -/
 private theorem torusCharacter_weight (K : Type u) [CommRing K]
@@ -46,22 +57,10 @@ private theorem torusCharacter_weight (K : Type u) [CommRing K]
   rw [torusCharacter_def]
   simp only [weight_def, zpow_sub, Finset.prod_mul_distrib]
   congr 1
-  · have hfactor : ∀ i : Fin r,
-        s i ^ (if k = i.castSucc then (1 : ℤ) else 0) =
-          if k = i.castSucc then s i else 1 := by
-      intro i
-      split_ifs <;> simp
-    rw [Finset.prod_congr rfl fun i _ ↦ hfactor i]
-    split_ifs with hk
+  · split_ifs with hk
     · let c : Fin r := ⟨k, hk⟩
       have hkc : k = c.castSucc := Fin.ext (by simp [c])
-      rw [Fintype.prod_eq_single c]
-      · simp only [hkc, ↓reduceIte]
-        exact congrArg s (Fin.ext rfl)
-      · intro j hj
-        split_ifs with h
-        · exact (hj (Fin.castSucc_inj.mp (hkc.symm.trans h)).symm).elim
-        · rfl
+      rw [prod_zpow_ite_eq r s Fin.castSucc (fun _ _ h ↦ Fin.castSucc_inj.mp h) k c hkc]
     · have : ∀ i : Fin r, k ≠ i.castSucc := by
         intro i hi
         apply hk
@@ -70,23 +69,13 @@ private theorem torusCharacter_weight (K : Type u) [CommRing K]
         rw [hv]
         exact i.isLt
       simp [this]
-  · have hfactor : ∀ i : Fin r,
-        (s i ^ (if k = i.succ then (1 : ℤ) else 0))⁻¹ =
-          if k = i.succ then (s i)⁻¹ else 1 := by
-      intro i
-      split_ifs <;> simp
-    rw [Finset.prod_congr rfl fun i _ ↦ hfactor i]
+  · simp_rw [← inv_zpow]
     split_ifs with hk
     · have hi : (k - 1 : ℕ) < r := by omega
       let c : Fin r := ⟨k - 1, hi⟩
       have hkc : k = c.succ := Fin.ext (by simp [c]; omega)
-      rw [Fintype.prod_eq_single c]
-      · simp only [hkc, ↓reduceIte]
-        exact congrArg (fun j ↦ (s j)⁻¹) (Fin.ext (by simp))
-      · intro j hj
-        split_ifs with h
-        · exact (hj (Fin.succ_inj.mp (hkc.symm.trans h)).symm).elim
-        · rfl
+      rw [prod_zpow_ite_eq r (fun i ↦ (s i)⁻¹) Fin.succ
+        (fun _ _ h ↦ Fin.succ_inj.mp h) k c hkc]
     · have : ∀ i : Fin r, k ≠ i.succ := by
         intro i hi
         apply hk
@@ -155,16 +144,15 @@ theorem mem_diagonalPoints_iff {K : Type u} [CommRing K] {g : points r K} :
 point centralizing the weight torus is diagonal. -/
 theorem centralizer_range_weightTorusPoints_of_weightChar_injective
     (K : Type u) [CommRing K] [IsCancelMulZero K]
-    (hchar : Function.Injective (weightChar K (κ := Fin r))) :
+    (hchar : Function.Injective (weightChar K ∘ weight r)) :
     Subgroup.centralizer
         ((weightTorusPoints r K).range : Set (points r K)) = diagonalPoints r K := by
   apply le_antisymm
   · intro g hg
     rw [mem_diagonalPoints_iff]
     intro i j hij
-    have hweight : weight r i ≠ weight r j := fun h ↦ hij (weight_injective r h)
     have hchar_ne : weightChar K (weight r i) ≠ weightChar K (weight r j) :=
-      fun h ↦ hweight (hchar h)
+      fun h ↦ hij (hchar h)
     have hexists : ∃ s, weightChar K (weight r i) s ≠ weightChar K (weight r j) s := by
       by_contra h
       push Not at h
@@ -204,22 +192,12 @@ theorem centralizer_range_weightTorusPoints_of_weightChar_injective
 theorem centralizer_range_weightTorusPoints (K : Type u) [Field K] [Infinite K] :
     Subgroup.centralizer
         ((weightTorusPoints r K).range : Set (points r K)) = diagonalPoints r K :=
-  centralizer_range_weightTorusPoints_of_weightChar_injective r K weightChar_injective
-
-/-- The standard weight-torus parametrization is injective over every commutative ring. -/
-theorem weightTorusPoints_injective (K : Type u) [CommRing K] :
-    Function.Injective (weightTorusPoints r K) := by
-  intro s t hst
-  apply eq_of_span_eq_top_of_torusCharacter_eq (span_range_weight_eq_top r)
-  intro i
-  have hmatrix := congrArg (fun g : points r K ↦ g.1) hst
-  rw [coe_weightTorusPoints, coe_weightTorusPoints,
-    UniversalEnvelopingAlgebra.kostantTorusMatrix_apply,
-    UniversalEnvelopingAlgebra.kostantTorusMatrix_apply] at hmatrix
-  exact congrFun (diagGL_injective hmatrix) i
+  centralizer_range_weightTorusPoints_of_weightChar_injective r K
+    (weightChar_injective.comp (weight_injective r))
 
 /-- **Over a commutative ring, the standard weight torus consists of all diagonal carrier
 points.** Thus every diagonal carrier point admits a standard weight-torus parametrization. -/
+@[simp]
 theorem range_weightTorusPoints_eq_diagonalPoints (K : Type u) [CommRing K] :
     (weightTorusPoints r K).range = diagonalPoints r K := by
   apply le_antisymm
@@ -251,7 +229,7 @@ theorem range_weightTorusPoints_eq_diagonalPoints (K : Type u) [CommRing K] :
 torus is maximal among commutative subgroups of the type `A_r` carrier. -/
 theorem eq_range_weightTorusPoints_of_weightChar_injective_of_le_of_isMulCommutative
     (K : Type u) [CommRing K] [IsCancelMulZero K]
-    (hchar : Function.Injective (weightChar K (κ := Fin r)))
+    (hchar : Function.Injective (weightChar K ∘ weight r))
     (H : Subgroup (points r K)) [IsMulCommutative H]
     (hle : (weightTorusPoints r K).range ≤ H) :
     H = (weightTorusPoints r K).range :=
@@ -271,7 +249,7 @@ theorem eq_range_weightTorusPoints_of_le_of_isMulCommutative
     (hle : (weightTorusPoints r K).range ≤ H) :
     H = (weightTorusPoints r K).range :=
   eq_range_weightTorusPoints_of_weightChar_injective_of_le_of_isMulCommutative r K
-    weightChar_injective H hle
+    (weightChar_injective.comp (weight_injective r)) H hle
 
 end
 

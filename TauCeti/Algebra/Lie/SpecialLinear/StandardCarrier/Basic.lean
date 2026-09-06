@@ -620,6 +620,19 @@ theorem coe_weightTorusPoints (A : Type v) [CommRing A] (s : Fin r → Aˣ) :
   exact TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralWeightTorusPoints
     _ _ _ _ _ _ _ _ A s
 
+/-- The standard weight-torus parametrization is injective over every commutative ring. -/
+theorem weightTorusPoints_injective (A : Type v) [CommRing A] :
+    Function.Injective (weightTorusPoints r A) := by
+  intro s t hst
+  apply torusCharacterHom_injective (span_range_weight_eq_top r)
+  have hmatrix := congrArg (fun g : points r A ↦ g.1) hst
+  rw [coe_weightTorusPoints, coe_weightTorusPoints,
+    UniversalEnvelopingAlgebra.kostantTorusMatrix_apply,
+    UniversalEnvelopingAlgebra.kostantTorusMatrix_apply] at hmatrix
+  funext i
+  rw [torusCharacterHom_apply, torusCharacterHom_apply]
+  exact congrFun (diagGL_injective hmatrix) i
+
 /-- A matrix is a point of the type `A_r` carrier exactly when the associated convolution point
 kills its toral defining Hopf ideal. -/
 @[simp]
