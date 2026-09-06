@@ -37,7 +37,7 @@ on the group. No conjugacy statement is proved here.
   field has a maximal Borel candidate.
 * `TauCeti.HopfIdeal.exists_geometricBorel`: the geometric fibre of every finite-type affine
   group has a Borel subgroup.
-* `TauCeti.HopfIdeal.IsBorelCandidate.of_torus`: every torus is a Borel candidate.
+* `TauCeti.HopfIdeal.torusCommHopfAlgProperty.isBorelCandidate`: every torus is a Borel candidate.
 
 ## References
 
@@ -118,7 +118,7 @@ theorem exists_geometricBorel (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
   exact ⟨I, (isBorelOverAlgClosed_iff _ _ _).mpr ⟨inferInstance, hI⟩⟩
 
 /-- Every torus closed subgroup is a Borel candidate. -/
-theorem IsBorelCandidate.of_torus
+theorem torusCommHopfAlgProperty.isBorelCandidate
     {H : FiniteTypeCommHopfAlgCat.{u, u} k} {I : HopfIdeal k H}
     (hI : torusCommHopfAlgProperty k (FiniteTypeCommHopfAlgCat.quotient H I)) :
     IsBorelCandidate k H I := by

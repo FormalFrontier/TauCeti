@@ -74,8 +74,8 @@ smooth, geometrically connected, geometrically solvable closed subgroup.
 Over an algebraically closed field, a Borel subgroup is a maximal such candidate. Over a general
 field, `IsBorel` instead requires maximality after base change to an algebraic closure. Keeping the
 non-maximal condition named is useful for constructing Borels by a maximal-dimension argument and
-for asking that a Borel contain a prescribed geometrically connected, geometrically solvable
-subgroup. -/
+for asking that a Borel contain a prescribed smooth, geometrically connected, geometrically
+solvable subgroup. -/
 def IsBorelCandidate (k : Type u) [Field k]
     (H : FiniteTypeCommHopfAlgCat.{u, v} k) (I : HopfIdeal k H) : Prop :=
   borelQuotientProperty k (FiniteTypeCommHopfAlgCat.quotient H I)
@@ -264,6 +264,8 @@ theorem comapOfIso (hI : IsBorel k L.obj I) (e : H ≅ L) :
       (I.comapOfSurjective (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
         (ConcreteCategory.bijective_of_isIso e.hom).2) := by
   refine ⟨inferInstance, ?_⟩
+  -- After supplying algebraic closedness, `IsBorel` is definitionally the minimal quotient
+  -- property below; the private predicate has no separate propositional transport lemma.
   change Minimal
     (fun J : HopfIdeal (AlgebraicClosure k)
         (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H).obj ↦
