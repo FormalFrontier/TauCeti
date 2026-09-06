@@ -5,10 +5,12 @@ Authors: Chris Birkbeck
 -/
 module
 
+public import TauCeti.RingTheory.Huber.Basic
 public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Complete
-public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Iterate
 public import TauCeti.Topology.UniformSpace.DiscreteUniformity
 public import Mathlib.RingTheory.Polynomial.Basic
+
+import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Iterate
 
 /-!
 # Strong noetherianness of a nonarchimedean ring
@@ -132,10 +134,11 @@ instance IsStronglyNoetherian.of_discreteTopology [DiscreteTopology A] [IsNoethe
 /-! ### The completed polynomial algebra -/
 
 /-- **Strong noetherianity passes to `A⟨X₁,…,Xₖ⟩`.** Over a Huber base, a completed restricted
-power-series algebra over a strongly noetherian ring is again strongly noetherian.
+power-series algebra over a strongly noetherian ring is again strongly noetherian, so the
+construction can be iterated without leaving the class.
 
-`A⟨X₁,…,Xₖ⟩⟨Y₁,…,Y_m⟩` is `A⟨X₁,…,X_{k+m}⟩` by
-`TauCeti.Huber.iterateRingEquiv`, and the hypothesis on `A` gives the latter noetherian. -/
+`[IsHuberRing A]` is asked here and not by the predicate: it is what the iteration isomorphism
+of `TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Iterate` requires of the base. -/
 instance IsStronglyNoetherian.restrictedMvPowerSeriesCompletion [IsHuberRing A]
     [IsStronglyNoetherian A] (k : ℕ) :
     IsStronglyNoetherian (restrictedMvPowerSeriesCompletion k A) where
