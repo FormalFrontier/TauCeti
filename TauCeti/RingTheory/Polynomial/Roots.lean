@@ -17,10 +17,8 @@ This file relates an explicit numbering of a polynomial's root set to its multis
 * `Polynomial.Separable.roots_map_eq_map_numbering`: for a separable polynomial, a numbering of
   its root set enumerates its full root multiset after base change.
 
-## Roadmap
-
-This is the root-numbering prerequisite for the square root of the discriminant in
-`TauCetiRoadmap/PolynomialGaloisGroups/README.md`, Layer 3.
+The numbering lemma lets root-product formulas be expressed as finite products indexed by
+`Fin f.natDegree`, without choosing a global order on the root set.
 -/
 
 public section

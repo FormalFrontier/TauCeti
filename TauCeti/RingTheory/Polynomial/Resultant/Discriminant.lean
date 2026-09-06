@@ -406,8 +406,7 @@ the numbering is an explicit argument and is never fixed globally. -/
 def discrSqrt (e : Fin f.natDegree ≃ f.rootSet E) : E :=
   ∏ i, ∏ j ∈ Ioi i, ((e i : E) - (e j : E))
 
-/-- The product formula that defines the square root of the discriminant. This is the only way the
-body of `TauCeti.discrSqrt` is read outside its own module. -/
+/-- The unfolding equation for the square root of the discriminant. -/
 theorem discrSqrt_def (e : Fin f.natDegree ≃ f.rootSet E) :
     discrSqrt e = ∏ i, ∏ j ∈ Ioi i, ((e i : E) - (e j : E)) := (rfl)
 

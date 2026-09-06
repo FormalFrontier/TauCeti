@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.FieldTheory.Galois.Infinite
 public import Mathlib.FieldTheory.PolynomialGaloisGroup
 public import Mathlib.GroupTheory.SpecificGroups.Alternating
 public import TauCeti.RingTheory.Polynomial.Resultant.Discriminant
@@ -22,7 +23,7 @@ into an element of `E`. Its square is the image of `Polynomial.discr f`, so `δ`
 of the discriminant; it is only *a* square root, because a different numbering changes `δ` by the
 sign of the permutation relating the two numberings.
 
-That sign is the whole point. In a finite-dimensional Galois splitting extension, a field
+That sign is the whole point. In a Galois splitting extension, a field
 automorphism of `E` over `F` permutes the roots, hence multiplies `δ` by the sign of the
 permutation it induces. When `ringChar F ≠ 2`, consequently `δ` lies in `F` exactly when the
 Galois image consists of even permutations, and — since `δ² = discr f` — that happens exactly
@@ -104,7 +105,7 @@ theorem _root_.AlgEquiv.map_discrSqrt (ϕ : E ≃ₐ[F] E) (e : Fin f.natDegree 
 open scoped Classical in
 /-- Away from characteristic `2`, the product of the root differences comes from the base field
 exactly when the Galois image consists of even permutations of the roots. -/
-theorem _root_.Polynomial.Monic.discrSqrt_mem_range_iff [FiniteDimensional F E] [IsGalois F E]
+theorem _root_.Polynomial.Monic.discrSqrt_mem_range_iff [IsGalois F E]
     (hf : f.Monic) (hsep : f.Separable) (hchar : ringChar F ≠ 2)
     (e : Fin f.natDegree ≃ f.rootSet E) :
     discrSqrt e ∈ Set.range (algebraMap F E) ↔
@@ -112,7 +113,7 @@ theorem _root_.Polynomial.Monic.discrSqrt_mem_range_iff [FiniteDimensional F E] 
   have h2 : (2 : E) ≠ 0 := by
     rw [← map_ofNat (algebraMap F E) 2]
     exact (map_ne_zero_iff _ (algebraMap F E).injective).mpr (Ring.two_ne_zero hchar)
-  rw [IsGalois.mem_range_algebraMap_iff_fixed]
+  rw [InfiniteGalois.mem_range_algebraMap_iff_fixed]
   constructor
   · rintro hfix g ⟨σ, rfl⟩
     obtain ⟨ϕ, rfl⟩ := Gal.restrict_surjective f E σ
@@ -140,7 +141,7 @@ on the roots by even permutations.
 The characteristic hypothesis cannot be dropped: see
 `Polynomial.Monic.isSquare_discr_of_char_two`. -/
 theorem _root_.Polynomial.Monic.isSquare_discr_iff_range_le_alternatingGroup
-    [FiniteDimensional F E] [IsGalois F E] (hf : f.Monic) (hsep : f.Separable)
+    [IsGalois F E] (hf : f.Monic) (hsep : f.Separable)
     (hchar : ringChar F ≠ 2) :
     IsSquare f.discr ↔ (Gal.galActionHom f E).range ≤ alternatingGroup (f.rootSet E) := by
   obtain ⟨e⟩ : Nonempty (Fin f.natDegree ≃ f.rootSet E) :=
