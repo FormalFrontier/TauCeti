@@ -18,27 +18,25 @@ receiving a rational share of the total mass. Concretely it is the range of a ma
 sequence and the resulting weights being normalised to total mass `1`.
 
 Three approximations take an arbitrary law to a member of that family, each costing a quarter of
-the prescribed accuracy. The finite-support approximation
-`TauCeti.exists_ae_mem_finset_wassersteinEDist_le` and rational-weight approximation
-`TauCeti.exists_nat_weights_wassersteinEDist_le` are supplied by the imported finite-support
-module. Between them, `TauCeti.exists_map_range_wassersteinEDist_le` pushes the finitely supported
-law onto terms of the dense sequence, by the measurable map sending a point to the first term of
-the sequence within the accuracy of it.
+the prescribed accuracy, and all three are supplied by the imported finite-support module: the
+finite-support approximation `TauCeti.exists_ae_mem_finset_wassersteinEDist_le`, then
+`TauCeti.exists_map_range_wassersteinEDist_le`, which pushes the resulting finitely supported law
+onto terms of the dense sequence, and finally the rational-weight approximation
+`TauCeti.exists_nat_weights_wassersteinEDist_le`.
 
 The exponent must be finite. Finitely supported laws are not `W_∞`-dense on a general separable
 metric space, and indeed `P_∞ (X)` need not be separable.
 
 ## Main statements
 
-* `TauCeti.exists_map_range_wassersteinEDist_le` — quantization onto a dense sequence;
 * `TauCeti.WassersteinSpace.separableSpace` — separability of `P_p (X)` for `1 ≤ p < ∞`, with
   `TauCeti.WassersteinSpace.instSeparableSpace` its instance form.
 
 ## Implementation notes
 
-The dense-range estimate takes the measurability of the ground distance explicitly, and the
-separability theorem reads it off the Borel structure. Finiteness of the exponent cannot be an
-instance argument, so `TauCeti.WassersteinSpace.separableSpace` takes it explicitly and the
+The imported approximation estimates take the measurability of the ground distance explicitly,
+and the separability theorem reads it off the Borel structure. Finiteness of the exponent cannot
+be an instance argument, so `TauCeti.WassersteinSpace.separableSpace` takes it explicitly and the
 instance reads it off a `Fact`, exactly as the metric structure of `TauCeti.WassersteinSpace`
 reads `1 ≤ p` off `Fact (1 ≤ p)`.
 
@@ -62,35 +60,6 @@ namespace TauCeti
 universe u
 
 variable {X : Type u} [MeasurableSpace X] {p : ℝ≥0∞}
-
-section DenseRange
-
-variable [PseudoMetricSpace X] [OpensMeasurableSpace X] {u : ℕ → X}
-
-/-- **Quantizing to a dense sequence.** A probability measure is within any prescribed accuracy
-of its pushforward along a measurable map taking values in the range of a dense sequence: sending
-a point to the first term of the sequence closer to it than the accuracy is such a map. -/
-theorem exists_map_range_wassersteinEDist_le
-    (hd : Measurable fun z : X × X ↦ edist z.1 z.2) (hu : DenseRange u) {δ : ℝ} (hδ : 0 < δ)
-    (ν : Measure X) [IsProbabilityMeasure ν] (p : ℝ≥0∞) :
-    ∃ T : X → X, Measurable T ∧ (∀ x, T x ∈ Set.range u) ∧
-      wassersteinEDist p ν (ν.map T) ≤ ENNReal.ofReal δ := by
-  classical
-  have hidx : ∀ x : X, ∃ i, dist x (u i) < δ := fun x ↦ Metric.denseRange_iff.1 hu x δ hδ
-  have hidx_meas : Measurable fun x ↦ Nat.find (hidx x) :=
-    measurable_find hidx fun _ ↦ measurableSet_ball
-  have hT_meas : Measurable fun x ↦ u (Nat.find (hidx x)) :=
-    Measurable.of_discrete.comp hidx_meas
-  refine ⟨fun x ↦ u (Nat.find (hidx x)), hT_meas, fun x ↦ ⟨_, rfl⟩, ?_⟩
-  refine (wassersteinEDist_map_le hd hT_meas.aemeasurable p).trans ?_
-  refine le_trans (eLpNorm_mono_enorm (g := fun _ : X ↦ ENNReal.ofReal δ) fun x ↦ ?_) ?_
-  · simpa [edist_dist] using ENNReal.ofReal_le_ofReal (Nat.find_spec (hidx x)).le
-  · rcases eq_or_ne p 0 with rfl | hp0
-    · simp
-    · rw [eLpNorm_const _ hp0 (IsProbabilityMeasure.ne_zero ν)]
-      simp
-
-end DenseRange
 
 namespace WassersteinSpace
 

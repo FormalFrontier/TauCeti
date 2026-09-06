@@ -29,7 +29,9 @@ set, so the finite `p`-moment about `u 0` makes their contribution vanish by dom
 convergence.
 
 This file also provides the finite-support transport estimate and common-denominator weight
-rounding used to approximate a finitely supported law by one with rational weights.
+rounding used to approximate a finitely supported law by one with rational weights, together with
+the companion quantization onto the terms of a prescribed dense sequence, which sends a point to
+the first term of the sequence within the prescribed accuracy of it.
 
 The construction uses a finite exponent: at `p = ∞` a displacement that is small off a set of
 small measure is not small in `L^∞`, and finitely supported laws need not be `W_∞`-dense on a
@@ -58,6 +60,9 @@ the whole ball of radius `0` around its atom, so it is not finite.
   finitely supported law;
 * `TauCeti.exists_nat_weights_wassersteinEDist_le` — approximation by weights with a common
   natural denominator;
+* `TauCeti.exists_map_range_wassersteinEDist_le` — quantization onto a dense sequence: some
+  measurable map with values among the terms of a dense sequence pushes `ν` to within `δ` of
+  itself;
 * `TauCeti.exists_map_wassersteinEDist_le` — the approximation theorem in quantizer form: some
   measurable map with finitely many values pushes `μ` to within `ε` of itself;
 * `TauCeti.exists_ae_mem_finset_wassersteinEDist_le` — its measure form, with the approximating
@@ -75,6 +80,10 @@ any hypothesis on the ground space and carries no attainment claim: a best `N`-p
 need not exist at this generality, and the rate at which the error decays is a separate question
 with its own hypotheses. Only `TauCeti.tendsto_wassersteinQuantizationError` uses the
 approximation theorem.
+
+`TauCeti.exists_map_range_wassersteinEDist_le` takes the measurability of the ground distance
+explicitly, so that a caller with a Borel structure can supply it and one without can still use
+the estimate.
 
 The approximation theorem is stated with a target accuracy `ε : ℝ≥0∞` rather than as a limit
 along a sequence of quantizers, because the sequence of cutoffs is chosen after the radius and
@@ -303,6 +312,35 @@ theorem exists_nat_weights_wassersteinEDist_le
     _ = ε ^ p.toReal := by rw [← mul_assoc, ENNReal.inv_mul_cancel hM0 hMtop, one_mul]
 
 end NatWeights
+
+section DenseRange
+
+variable [PseudoMetricSpace X] [OpensMeasurableSpace X] {u : ℕ → X}
+
+/-- **Quantizing to a dense sequence.** A probability measure is within any prescribed accuracy
+of its pushforward along a measurable map taking values in the range of a dense sequence: sending
+a point to the first term of the sequence closer to it than the accuracy is such a map. -/
+theorem exists_map_range_wassersteinEDist_le
+    (hd : Measurable fun z : X × X ↦ edist z.1 z.2) (hu : DenseRange u) {δ : ℝ} (hδ : 0 < δ)
+    (ν : Measure X) [IsProbabilityMeasure ν] (p : ℝ≥0∞) :
+    ∃ T : X → X, Measurable T ∧ (∀ x, T x ∈ Set.range u) ∧
+      wassersteinEDist p ν (ν.map T) ≤ ENNReal.ofReal δ := by
+  classical
+  have hidx : ∀ x : X, ∃ i, dist x (u i) < δ := fun x ↦ Metric.denseRange_iff.1 hu x δ hδ
+  have hidx_meas : Measurable fun x ↦ Nat.find (hidx x) :=
+    measurable_find hidx fun _ ↦ measurableSet_ball
+  have hT_meas : Measurable fun x ↦ u (Nat.find (hidx x)) :=
+    Measurable.of_discrete.comp hidx_meas
+  refine ⟨fun x ↦ u (Nat.find (hidx x)), hT_meas, fun x ↦ ⟨_, rfl⟩, ?_⟩
+  refine (wassersteinEDist_map_le hd hT_meas.aemeasurable p).trans ?_
+  refine le_trans (eLpNorm_mono_enorm (g := fun _ : X ↦ ENNReal.ofReal δ) fun x ↦ ?_) ?_
+  · simpa [edist_dist] using ENNReal.ofReal_le_ofReal (Nat.find_spec (hidx x)).le
+  · rcases eq_or_ne p 0 with rfl | hp0
+    · simp
+    · rw [eLpNorm_const _ hp0 (IsProbabilityMeasure.ne_zero ν)]
+      simp
+
+end DenseRange
 
 section Approximation
 
