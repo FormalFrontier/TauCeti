@@ -89,7 +89,7 @@ theorem heckeSlashSum_diagCosetGamma1_of_coprime (hp : p.Prime) (h : Nat.Coprime
       (primeRep (gamma0Twist N p h) p)
       (doubleCoset_out_diagCosetGamma1_eq_iUnion_rightCosets_of_prime hp
         (gamma0Twist_apply_one_zero h) (gamma0Twist_apply_one_one h))
-      (op_primeRep_smul_injective (G := Gamma1 N) hp.one_lt (gamma0Twist_apply_one_zero h)
+      (op_primeRep_smul_injective (G := Gamma1 N) hp.one_lt
         (gamma0Twist_apply_one_one h)) f,
     Fintype.sum_option, heckeSlashUpperTri_def]
   simp only [primeRep_some, primeRep_none]
