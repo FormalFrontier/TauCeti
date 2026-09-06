@@ -383,7 +383,8 @@ theorem IsIntegralLattice.of_equiv [Module.Free ℤ N] [Module.Finite ℤ N]
 theorem IsIntegralLattice.finiteDimensional (i : N →+ V) (h : IsIntegralLattice i) :
     FiniteDimensional ℝ V := by
   let _ : Module.Finite ℤ N := h.finite
-  exact TauCeti.finiteDimensional_of_baseChange h.baseChange
+  let _ : Module.Finite ℝ V := TauCeti.finite_of_isBaseChange h.baseChange
+  infer_instance
 
 /-- An integral lattice map is injective. -/
 theorem IsIntegralLattice.injective (i : N →+ V) (h : IsIntegralLattice i) :

@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.Dimension.Constructions
-public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 public import Mathlib.RingTheory.IsTensorProduct
 public import Mathlib.RingTheory.TensorProduct.Finite
 
@@ -86,19 +85,5 @@ theorem comp_equiv_eq_equiv_comp_baseChange_of_baseChange
   change g (hf.equiv (1 ⊗ₜ[R] m)) = hf'.equiv (1 ⊗ₜ[R] u m)
   rw [hf.equiv_tmul, hf'.equiv_tmul]
   simpa only [one_smul] using hcompat m
-
-end TauCeti
-
-namespace TauCeti
-
-variable {R S M N : Type*} [CommRing R] [Field S] [Algebra R S]
-variable [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N] [Module S N]
-variable [IsScalarTower R S N] {f : M →ₗ[R] N}
-
-/-- A base change of a finite module over a field is finite-dimensional. -/
-theorem finiteDimensional_of_baseChange (hf : IsBaseChange S f) [Module.Finite R M] :
-    FiniteDimensional S N := by
-  let _ : Module.Finite S N := finite_of_isBaseChange hf
-  infer_instance
 
 end TauCeti
