@@ -159,16 +159,27 @@ lemma classGroupAddEquiv_divisorClass_ofPoint (v : HeightOneSpectrum R) :
   rw [← fractionalIdealDivisor_asIdeal (K := K) v,
     classGroupAddEquiv_divisorClass_fractionalIdealDivisor, v.classGroupMk_eq_mk K]
 
-/-- The inverse of the class group isomorphism sends the ideal class of a height-one prime `v` to
-the class of its point divisor `[v]`. -/
-lemma classGroupAddEquiv_symm_ofMul_classGroupMk (v : HeightOneSpectrum R) :
-    (classGroupAddEquiv R K).symm (Additive.ofMul v.classGroupMk) =
-      (OrderSystem.ofDedekindDomain R K).divisorClass (ofPoint v) :=
-  (classGroupAddEquiv R K).symm_apply_eq.mpr
-    (classGroupAddEquiv_divisorClass_ofPoint (K := K) v).symm
-
 end WeilDivisor
 
 end AlgebraicGeometry
 
 end TauCeti
+
+namespace IsDedekindDomain.HeightOneSpectrum
+
+variable {R K : Type*} [CommRing R] [IsDedekindDomain R]
+    [Field K] [Algebra R K] [IsFractionRing R K]
+
+/-- The inverse of the class group isomorphism sends the ideal class of a height-one prime `v` to
+the class of its point divisor `[v]`. -/
+@[simp]
+lemma classGroupAddEquiv_symm_apply_classGroupMk (v : HeightOneSpectrum R) :
+    (TauCeti.AlgebraicGeometry.WeilDivisor.classGroupAddEquiv R K).symm
+        (Additive.ofMul v.classGroupMk) =
+      (TauCeti.AlgebraicGeometry.WeilDivisor.OrderSystem.ofDedekindDomain R K).divisorClass
+        (TauCeti.AlgebraicGeometry.WeilDivisor.ofPoint v) :=
+  (TauCeti.AlgebraicGeometry.WeilDivisor.classGroupAddEquiv R K).symm_apply_eq.mpr
+    (TauCeti.AlgebraicGeometry.WeilDivisor.classGroupAddEquiv_divisorClass_ofPoint
+      (K := K) v).symm
+
+end IsDedekindDomain.HeightOneSpectrum
