@@ -139,6 +139,19 @@ theorem rootTarget_ne_rootSource (k : Fin r ⊕ Fin r) : rootTarget r k ≠ root
   | inl i => exact (Fin.castSucc_lt_succ (i := i)).ne
   | inr i => exact (Fin.castSucc_lt_succ (i := i)).ne'
 
+/-- The two coordinates of a numbered root generator are adjacent, so their indices have odd
+sum. -/
+theorem odd_rootTarget_add_rootSource (k : Fin r ⊕ Fin r) :
+    Odd ((rootTarget r k : ℕ) + (rootSource r k : ℕ)) := by
+  rw [Nat.odd_iff]
+  cases k with
+  | inl i =>
+    simp only [rootTarget_inl, rootSource_inl, Fin.val_castSucc, Fin.val_succ]
+    omega
+  | inr i =>
+    simp only [rootTarget_inr, rootSource_inr, Fin.val_castSucc, Fin.val_succ]
+    omega
+
 /-! ## The pinned Chevalley generators -/
 
 /-- The Bourbaki-numbered raising and lowering generators of `sl_{r+1}`: the matrix unit
