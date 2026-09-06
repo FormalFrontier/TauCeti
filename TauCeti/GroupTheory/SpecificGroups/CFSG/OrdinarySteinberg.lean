@@ -46,8 +46,8 @@ F ^ e = Frob_(q ^ e).
 
 That is the group-of-points analogue of the power relation which defines a Steinberg endomorphism,
 namely that some positive iterate is a Frobenius; calling `F` a Steinberg endomorphism in
-Steinberg's sense would need the identification of this carrier that milestone L0 owes, and is not
-claimed here. The relation places the subgroup of the carrier fixed by `F` inside the
+Steinberg's sense would need this carrier identified with the pinned simply connected group, which
+is not done here. The relation places the subgroup of the carrier fixed by `F` inside the
 subgroup fixed by `Frob_(q ^ e)`, whose points have their entries in the degree-`e` extension
 `𝔽_(q ^ e)` of the field of definition. Only that inequality of subgroups is proved: no reverse
 inequality is stated, and nothing below compares the two in size. In the other direction, what is
@@ -67,13 +67,18 @@ The `geck` prefix is the same disclaimer it carries in
 `TauCeti/GroupTheory/SpecificGroups/CFSG/GeckCarrier.lean`. Geck's module is the adjoint module, so
 outside the `E₈`, `F₄` and `G₂` diagrams the characters occurring in the carrier generate the root
 lattice and not the whole character lattice of the pinned torus, and the carrier is therefore not
-yet the simply connected group that milestone L0 asks for. No declaration below asserts that it is,
-nor that any group here is finite, perfect or simple. In particular the fixed subgroups below are
-named as the fixed points of the maps built here; that they are the group `H_d` of a
-classification-list family, and hence that the milestone L3 recipe may be run on them, needs that
-same identification, and no declaration below anticipates it. For the three untwisted unimodular
-families, where the carrier does have full character span, that recipe is
-`TauCeti.UnimodularExceptionalIndex.Group`.
+yet the pinned simply connected Chevalley--Demazure group of
+`TauCeti.DynkinType.simplyConnectedRootDatum`. No declaration below asserts that it is, nor that
+any group here is finite, perfect or simple. In particular the fixed subgroups below are named as
+the fixed points of the maps built here; that they are the group of rational points of a family of
+the classification list needs that same identification, and no declaration below anticipates it.
+For the three untwisted unimodular families, where the carrier does have full character span, the
+group so obtained is `TauCeti.UnimodularExceptionalIndex.Group`.
+
+This file stands to `TauCeti/GroupTheory/SpecificGroups/CFSG/Datum/Steinberg.lean` as
+`TauCeti/GroupTheory/SpecificGroups/CFSG/GeckCarrier.lean` stands to
+`TauCeti/GroupTheory/SpecificGroups/CFSG/Datum/Frobenius.lean`: the same map one layer up, on
+points instead of on the root datum.
 
 ## Main definitions
 
@@ -126,27 +131,6 @@ families, where the carrier does have full character span, that recipe is
   §11.
 * M. Geck, *On the construction of semisimple Lie algebras and Chevalley groups*,
   Proc. Amer. Math. Soc. **145** (2017), 3233--3247, for the matrix realization of the carrier.
-
-## Roadmap
-
-This is the carrier layer of milestone L1, "ordinary and graph Steinberg maps", of
-`TauCetiRoadmap/CFSGStatement/README.md`, whose completion condition is that "the simple-root-
-subgroup equations and the order relations are proved". Those equations and relations are proved
-here for all thirteen ordinary indices at once, in the shape the milestone states them and against
-the diagram permutations that `TauCeti/GroupTheory/SpecificGroups/CFSG/GraphTwisted.lean` pins:
-`γ ^ 2 = 1` and `γ ^ 3 = 1` on the graph factor, and `F ^ e = Frob_(q ^ e)` on the Steinberg map,
-the latter being the group-layer form of what
-`TauCeti/GroupTheory/SpecificGroups/CFSG/Datum/Assembly.lean` calls the defining property of a
-Steinberg endomorphism.
-
-It does not close L1, and it does not close milestone L0: the carrier is the Geck one, whose
-identification with the pinned simply connected Chevalley--Demazure group of
-`TauCeti.DynkinType.simplyConnectedRootDatum` is a Layer 9 target of
-`TauCetiRoadmap/ReductiveGroups/README.md` that this roadmap consumes rather than proves. This file
-stands to `TauCeti/GroupTheory/SpecificGroups/CFSG/Datum/Steinberg.lean` as
-`TauCeti/GroupTheory/SpecificGroups/CFSG/GeckCarrier.lean` stands to
-`TauCeti/GroupTheory/SpecificGroups/CFSG/Datum/Frobenius.lean`: the same map one layer up, on
-points instead of on the root datum.
 -/
 
 public section
@@ -342,13 +326,13 @@ theorem geckSteinberg_pow_eq_geckFrobeniusPow_comp (m : ℕ) :
 /-- **The order relation of the ordinary Steinberg map**: raising `γ ∘ Frob_q` to the twist order
 `e` recorded by the index returns the plain Frobenius `Frob_(q ^ e)`.
 
-This is milestone L1's `γ ^ 2 = 1` and `γ ^ 3 = 1` read on the Steinberg map itself rather than on
-its graph factor, and it is the group-layer counterpart of
+This is the annihilation `γ ^ 2 = 1`, `γ ^ 3 = 1` of the graph factor read on the Steinberg map
+itself, and it is the group-layer counterpart of
 `TauCeti.GraphTwistedIndex.datumSteinberg_pow_twistOrder_eq_smulId`. It is the group-of-points
 analogue of the power relation which defines a Steinberg endomorphism, some positive iterate being
-a Frobenius; that this carrier is the group on which Steinberg's definition is read is the
-identification milestone L0 owes, and is not claimed here. On an untwisted family the twist order
-is `1` and the relation is `pow_one` together with
+a Frobenius; that this carrier is the group on which Steinberg's definition is read needs its
+identification with the pinned simply connected group, and is not claimed here. On an untwisted
+family the twist order is `1` and the relation is `pow_one` together with
 `TauCeti.ValidLieTypeIndex.geckFrobeniusPow_one`. -/
 @[simp]
 theorem geckSteinberg_pow_twistOrder_eq_geckFrobeniusPow :
