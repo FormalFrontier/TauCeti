@@ -47,7 +47,9 @@ private theorem image_closure_image_coe_mem_nhds {f : G →+ H} (hf : Continuous
     rw [hW, AddSubgroup.topologicalClosure_coe, AddSubgroup.coe_map,
       Set.image_congr' toCompl_apply, OpenAddSubgroup.coe_toAddSubgroup]
   have hWbasis : (𝓝 (0 : Completion G)).HasAntitoneBasis fun n ↦ (W n : Set (Completion G)) :=
-    ⟨by simpa only [hWcoe] using hasBasis_nhds_zero_closure_image hV.toHasBasis,
+    ⟨by
+      simpa only [hWcoe, coe_zero] using
+        hV.toHasBasis.hasBasis_of_isDenseInducing (isDenseInducing_coe (α := G)),
       fun _ _ hmn ↦ by simpa only [hWcoe] using closure_mono (Set.image_mono (hV.antitone hmn))⟩
   -- `f` open makes each `f '' V n` an open subgroup of `H`, so the closure of its image is a
   -- neighbourhood of zero in the completion of `H`
@@ -74,9 +76,13 @@ theorem isOpenMap_completion [NonarchimedeanAddGroup G] [(𝓝 (0 : G)).IsCounta
     {f : G →+ H} (hf : Continuous f) (hopen : IsOpenMap f) :
     IsOpenMap (f.completion hf) := by
   obtain ⟨V, hV⟩ := NonarchimedeanAddGroup.exists_antitone_basis_openAddSubgroup (G := G)
+  have hbasis : (𝓝 (0 : Completion G)).HasBasis (fun _ : ℕ ↦ True)
+      fun n ↦ closure (((↑) : G → Completion G) '' (V n : Set G)) := by
+    simpa only [coe_zero] using
+      hV.toHasBasis.hasBasis_of_isDenseInducing (isDenseInducing_coe (α := G))
   rw [IsTopologicalAddGroup.isOpenMap_iff_nhds_zero]
   intro S hS
-  obtain ⟨n, -, hn⟩ := (hasBasis_nhds_zero_closure_image hV.toHasBasis).mem_iff.mp hS
+  obtain ⟨n, -, hn⟩ := hbasis.mem_iff.mp hS
   exact Filter.mem_of_superset
     (image_closure_image_coe_mem_nhds hf hopen
       (hV.comp_strictMono fun a b hab ↦ Nat.add_lt_add_left hab n))
