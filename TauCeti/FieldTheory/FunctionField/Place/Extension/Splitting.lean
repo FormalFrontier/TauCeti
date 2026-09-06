@@ -206,17 +206,7 @@ splitting. -/
 theorem isSplitCompletely_iff_stabilizer_eq_bot (P' : Place k F') :
     (P'.restrict k F).IsSplitCompletely (k' := k) (F' := F') ↔
       MulAction.stabilizer (F' ≃ₐ[F] F') P' = ⊥ := by
-  let _ := Fintype.ofFinite (F' ≃ₐ[F] F')
-  let _ := (Finite.finite_mulAction_orbit (M := F' ≃ₐ[F] F') P').fintype
-  let _ := Fintype.ofFinite (MulAction.stabilizer (F' ≃ₐ[F] F') P')
-  have horbit : MulAction.orbit (F' ≃ₐ[F] F') P' =
-      {Q : Place k F' | Q.restrict k F = P'.restrict k F} :=
-    (setOf_restrict_eq_eq_orbit P').symm
-  have hkey : {Q : Place k F' | Q.restrict k F = P'.restrict k F}.ncard *
-      Nat.card (MulAction.stabilizer (F' ≃ₐ[F] F') P') = Module.finrank F F' := by
-    rw [← Nat.card_coe_set_eq, ← horbit, Nat.card_eq_fintype_card,
-      Nat.card_eq_fintype_card, MulAction.card_orbit_mul_card_stabilizer_eq_card_group,
-      ← Nat.card_eq_fintype_card, IsGalois.card_aut_eq_finrank]
+  have hkey := ncard_mul_card_stabilizer_eq_finrank (F := F) P'
   have hpos : 0 < Module.finrank F F' := Module.finrank_pos
   constructor
   · intro hsplit
