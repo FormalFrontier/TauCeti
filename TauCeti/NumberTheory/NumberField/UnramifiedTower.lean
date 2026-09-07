@@ -7,6 +7,7 @@ module
 
 public import Mathlib.NumberTheory.NumberField.Basic
 public import Mathlib.NumberTheory.RamificationInertia.Unramified
+public import Mathlib.RingTheory.DedekindDomain.Ideal.Lemmas
 import Mathlib.RingTheory.Ideal.GoingUp
 
 /-!
@@ -21,13 +22,22 @@ The hypothesis and conclusion are stated as the quantified `Algebra.IsUnramified
 rather than through `Algebra.IsUnramifiedIn`, which is the form the Artin symbol takes as its
 defining side condition.
 
+The same descent, read simultaneously at every prime outside a finite set of finite places of
+`K`, is `NumberField.isUnramifiedAway_of_intermediateField`; that is the form a construction
+defined away from a finite set of primes consumes, since it turns one hypothesis about the top
+field into the corresponding hypothesis about every subextension.
+
 ## Main results
 
 * `NumberField.isUnramifiedAt_of_intermediateExtension`: unramifiedness above `𝔭` in the top
   field descends to the intermediate field.
+* `NumberField.isUnramifiedAway_of_intermediateField`: unramifiedness outside a finite set of
+  finite places descends to an intermediate field.
 -/
 
 public section
+
+open IsDedekindDomain
 
 open scoped NumberField
 
@@ -52,5 +62,19 @@ theorem isUnramifiedAt_of_intermediateExtension {M L : Type*} [Field M] [NumberF
   let _ : Q.1.LiesOver 𝔭 := Ideal.LiesOver.trans Q.1 P 𝔭
   let _ : Algebra.IsUnramifiedAt (𝓞 K) Q.1 := hur Q.1
   exact Algebra.IsUnramifiedAt.of_liesOver (𝓞 K) P Q.1
+
+/-- **Unramifiedness outside a finite set of finite places descends to an intermediate field.**
+If every prime of `L` above a place of `K` outside `S` is unramified over `K`, then so is every
+prime of an intermediate field `M` above such a place. This is what makes the unramified
+hypothesis for a subextension a consequence of the one for the top field rather than a second
+assumption. -/
+theorem isUnramifiedAway_of_intermediateField (M : Type*) [Field M] [NumberField M]
+    {L : Type*} [Field L] [NumberField L] [Algebra K M] [Algebra M L] [Algebra K L]
+    [IsScalarTower K M L] (S : Finset (HeightOneSpectrum (𝓞 K)))
+    (hur : ∀ v : HeightOneSpectrum (𝓞 K), v ∉ S →
+      ∀ (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver v.asIdeal], Algebra.IsUnramifiedAt (𝓞 K) Q) :
+    ∀ v : HeightOneSpectrum (𝓞 K), v ∉ S →
+      ∀ (Q : Ideal (𝓞 M)) [Q.IsPrime] [Q.LiesOver v.asIdeal], Algebra.IsUnramifiedAt (𝓞 K) Q :=
+  fun v hv ↦ isUnramifiedAt_of_intermediateExtension (M := M) (L := L) v.asIdeal (hur v hv)
 
 end NumberField

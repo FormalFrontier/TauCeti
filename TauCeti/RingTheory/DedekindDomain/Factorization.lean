@@ -41,6 +41,11 @@ with unit-level factorization of invertible fractional ideals.
   a principal ideal at a height one prime — Mathlib's `count` and the adic valuation.
 * `IsDedekindDomain.HeightOneSpectrum.unitOfPrime`: a height-one prime regarded as an invertible
   fractional ideal.
+* `FractionalIdeal.hasFiniteMulSupport_zpow_count`: a family of powers indexed by the height one
+  primes, with the multiplicities of a fixed fractional ideal as exponents, has finite
+  multiplicative support. The bases are an arbitrary family in an arbitrary `DivInvMonoid`, since
+  nothing but the vanishing of almost all exponents is at stake; the unit-level factorization below
+  is the case of the primes themselves.
 * `FractionalIdeal.finprod_unitOfPrime_zpow_count`: unique factorization of an invertible
   fractional ideal, transported along `Units.coeHom`.
 
@@ -102,13 +107,20 @@ open scoped nonZeroDivisors
 variable {R : Type*} [CommRing R] [IsDedekindDomain R]
 variable {K : Type*} [Field K] [Algebra R K] [IsFractionRing R K]
 
+/-- **A prime-indexed family of powers with the multiplicities of a fractional ideal as exponents
+has finite multiplicative support.** Only finitely many primes occur in a fractional ideal, so
+only finitely many exponents are nonzero, whatever `DivInvMonoid` the bases live in. -/
+lemma hasFiniteMulSupport_zpow_count {G : Type*} [DivInvMonoid G] (I : FractionalIdeal R⁰ K)
+    (f : HeightOneSpectrum R → G) :
+    (Function.mulSupport fun v : HeightOneSpectrum R ↦ f v ^ count K v I).Finite := by
+  refine (Filter.eventually_cofinite.mp (finite_factors I)).subset fun v hv hc ↦ ?_
+  exact hv (by simp only [hc, zpow_zero])
+
 /-- Only finitely many factors in the unit-level prime factorization are nontrivial. -/
 lemma hasFiniteMulSupport_unitOfPrime_zpow (I : (FractionalIdeal R⁰ K)ˣ) :
     (Function.mulSupport fun v : HeightOneSpectrum R ↦
-      v.unitOfPrime K ^ count K v (I : FractionalIdeal R⁰ K)).Finite := by
-  refine (Filter.eventually_cofinite.mp
-    (finite_factors (I : FractionalIdeal R⁰ K))).subset fun v hv hc ↦ ?_
-  exact hv (by simp only [hc, zpow_zero])
+      v.unitOfPrime K ^ count K v (I : FractionalIdeal R⁰ K)).Finite :=
+  hasFiniteMulSupport_zpow_count (I : FractionalIdeal R⁰ K) (fun v ↦ v.unitOfPrime K)
 
 /-- Unique factorization of an invertible fractional ideal as a product of prime powers. -/
 lemma finprod_unitOfPrime_zpow_count (I : (FractionalIdeal R⁰ K)ˣ) :
