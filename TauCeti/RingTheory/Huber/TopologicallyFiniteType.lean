@@ -6,6 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Topology.Algebra.Ring.Ideal
+public import TauCeti.RingTheory.Huber.StronglyNoetherian
+public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.FirstCountable
+public import TauCeti.Topology.Algebra.GroupCompletion
 public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Completion
 
 /-!
@@ -79,6 +82,9 @@ it.
 * `TauCeti.Huber.isStrictlyTopologicallyFiniteType_quotientMk_algebraMap`: every quotient of
   `A⟨X₁, …, Xₖ⟩` is strictly topologically of finite type over `A` — the shape of every Laurent
   and rational presentation.
+* `TauCeti.Huber.IsStrictlyTopologicallyFiniteType.isStronglyNoetherian`: over a strongly
+  noetherian Huber ring, an algebra strictly topologically of finite type is again strongly
+  noetherian.
 
 ## References
 
@@ -206,5 +212,34 @@ theorem isStrictlyTopologicallyFiniteType_quotientMk_algebraMap (k : ℕ)
   (isStrictlyTopologicallyFiniteType_algebraMap k).quotientMk I
 
 end OpenQuotient
+
+/-! ### Strong noetherianness
+
+Strong noetherianness passes from `A` to any algebra strictly topologically of finite type over
+it. This is the standing hypothesis of Wedhorn's §8.2 in the form the flatness results consume:
+rational localisations of a strongly noetherian ring are again strongly noetherian, once they are
+known to be strictly topologically of finite type.
+-/
+
+section StronglyNoetherian
+
+variable {A B : Type*} [CommRing A] [UniformSpace A] [NonarchimedeanRing A] [IsHuberRing A]
+  [IsStronglyNoetherian A]
+  [CommRing B] [UniformSpace B] [IsUniformAddGroup B] [NonarchimedeanRing B] [CompleteSpace B]
+  [T0Space B]
+
+/-- **Strong noetherianness passes to an algebra strictly topologically of finite type.**
+
+The presentation `π : A⟨X₁,…,Xₖ⟩ → B` is an open quotient map, and `A⟨X₁,…,Xₖ⟩` is strongly
+noetherian over a strongly noetherian Huber ring by
+`TauCeti.Huber.IsStronglyNoetherian.restrictedMvPowerSeriesCompletion`, so this is
+`IsOpenQuotientMap.isStronglyNoetherian` applied to that presentation. The presenting equation
+is not used: any open quotient out of `A⟨X₁,…,Xₖ⟩` suffices, whatever it does on constants. -/
+theorem IsStrictlyTopologicallyFiniteType.isStronglyNoetherian {φ : A →+* B}
+    (hφ : IsStrictlyTopologicallyFiniteType φ) : IsStronglyNoetherian B := by
+  obtain ⟨k, π, hπ, -⟩ := hφ
+  exact hπ.isStronglyNoetherian
+
+end StronglyNoetherian
 
 end TauCeti.Huber
