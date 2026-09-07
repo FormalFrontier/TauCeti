@@ -7,18 +7,22 @@ module
 
 public import Mathlib.Algebra.EuclideanDomain.Int
 public import Mathlib.Algebra.Module.Lattice
+public import Mathlib.Algebra.Module.ZLattice.Basic
 public import Mathlib.LinearAlgebra.FreeModule.StrongRankCondition
 public import Mathlib.RingTheory.Flat.Basic
 public import Mathlib.RingTheory.IsTensorProduct
+public import TauCeti.LinearAlgebra.Dimension.BaseChange
 
 /-!
-# Full submodule lattices
+# Full submodule and integral lattices
 
-This file provides generic results about full submodules over fraction fields. It relates bases and
-ranks of full submodules to their ambient spaces. It also extends integral linear equivalences
-between full submodules to rational linear equivalences of their ambient spaces, and proves that
-rational linear equivalences preserve fullness. Finally, a free full lattice over an integral
-domain rationalizes to its ambient vector space over the fraction field.
+This file provides generic results about full submodules over fraction fields and full integral
+lattices in real vector spaces. It relates bases and ranks of full submodules to their ambient
+spaces, extends integral linear equivalences between full submodules to rational linear equivalences
+of their ambient spaces, and proves that rational linear equivalences preserve fullness. It also
+records the injectivity, spanning, rank, discreteness, and `IsZLattice` consequences of the
+scalar-extension characterization of an integral lattice. Finally, a free full lattice over an
+integral domain rationalizes to its ambient vector space over the fraction field.
 
 ## Main declarations
 
@@ -40,6 +44,12 @@ domain rationalizes to its ambient vector space over the fraction field.
   tensors in its scalar extension.
 * `TauCeti.TensorProduct.rationalizationEquiv_baseChange_unitTmulEquiv`: rationalizing that
   unit-tensor lattice returns the scalar extension one started from.
+* `AddMonoidHom.IsIntegralLattice`: an additive map from a finite free `ℤ`-module whose scalar
+  extension to `ℝ` is a base change.
+* `AddMonoidHom.IsIntegralLattice.injective`, `span_range_eq_top`, `finrank_eq_finrank`,
+  `isDiscrete_range`, and `isZLattice_range`: the main integral-lattice consequences.
+* `AddMonoidHom.IsIntegralLattice.comp_equiv_eq_equiv_comp_baseChange`: naturality of the
+  scalar-extension equivalence under compatible integral and real-linear maps.
 
 ## References
 
@@ -316,4 +326,178 @@ theorem unitTmulEquiv_baseChange_trans_rationalizationEquiv :
 
 end TensorProduct
 
+/-!
+## Integral lattices in real vector spaces
+
+This section defines the full integral-lattice datum used by the toric geometry development. An
+additive map from a finite free `ℤ`-module is a lattice map precisely when its scalar extension to
+`ℝ` is an equivalence. The resulting API records injectivity, fullness, and equality of the
+integral and real ranks, which are the basic facts needed to make rational cones coordinate-free.
+
+The scalar-extension formulation combines injectivity with full real spanning: it rules out, for
+example, the injective map `ℤ² → ℝ` given by `(a, b) ↦ a + √2 * b`.
+
+## References
+
+* D. Cox, J. Little, and H. Schenck, *Toric Varieties*, §1.1.
+* W. Fulton, *Introduction to Toric Varieties*, §1.2.
+
+-/
+
+attribute [local instance 1001] NormedAddCommGroup.toAddCommGroup AddCommGroup.toAddCommMonoid
+
+universe u' v'
+
+variable {N : Type u} {V : Type v} [AddCommGroup N] [AddCommGroup V] [Module ℝ V]
+
+private noncomputable instance moduleOfNormedSpace (E : Type w) [NormedAddCommGroup E]
+    [NormedSpace ℝ E] : Module ℝ E :=
+  NormedSpace.toModule
+
 end TauCeti
+
+universe u v w u' v'
+
+variable {N : Type u} {V : Type v} [AddCommGroup N] [AddCommGroup V] [Module ℝ V]
+
+namespace AddMonoidHom
+
+/-- An additive map is a full integral lattice when its scalar extension to `ℝ` is a base change.
+
+The base-change condition says that the scalar extension sends each pure tensor `1 ⊗ₜ n` to the
+corresponding lattice vector `i n`. It gives fullness, while the datum records the finiteness and
+freeness needed for the API to derive discreteness. -/
+structure IsIntegralLattice (i : N →+ V) : Prop where
+  free : Module.Free ℤ N
+  finite : Module.Finite ℤ N
+  baseChange : IsBaseChange ℝ i.toIntLinearMap
+
+/-- Construct an integral lattice from its scalar-extension equivalence. -/
+theorem IsIntegralLattice.of_equiv [Module.Free ℤ N] [Module.Finite ℤ N]
+    (i : N →+ V) (e : TensorProduct ℤ ℝ N ≃ₗ[ℝ] V)
+    (he : ∀ n : N, e ((1 : ℝ) ⊗ₜ[ℤ] n) = i n) : IsIntegralLattice i :=
+  ⟨inferInstance, inferInstance, IsBaseChange.of_equiv e fun n ↦ by
+    simpa only [AddMonoidHom.coe_toIntLinearMap] using he n⟩
+
+/-- The ambient real vector space of an integral lattice is finite-dimensional. -/
+theorem IsIntegralLattice.finiteDimensional (i : N →+ V) (h : IsIntegralLattice i) :
+    FiniteDimensional ℝ V := by
+  let _ : Module.Finite ℤ N := h.finite
+  let _ : Module.Finite ℝ V := TauCeti.finite_of_isBaseChange h.baseChange
+  infer_instance
+
+/-- An integral lattice map is injective. -/
+theorem IsIntegralLattice.injective (i : N →+ V) (h : IsIntegralLattice i) :
+    Function.Injective i := by
+  intro m n hmn
+  apply @Module.Flat.tensorProduct_mk_injective ℤ N _ _ _ ℝ _ _ _
+    (@Module.Flat.of_free ℤ N _ _ _ h.free)
+  apply h.baseChange.equiv.injective
+  simp only [TensorProduct.mk_apply, IsBaseChange.equiv_tmul, one_smul,
+    AddMonoidHom.coe_toIntLinearMap, hmn]
+
+/-- The real basis obtained by extending a chosen integral basis through the lattice equivalence. -/
+noncomputable def IsIntegralLattice.realBasis (i : N →+ V) (h : IsIntegralLattice i) :
+    Module.Basis (@Module.Free.ChooseBasisIndex ℤ N _ _ _ h.free) ℝ V := by
+  letI := h.free
+  exact (Module.Free.chooseBasis ℤ N).baseChange ℝ |>.map h.baseChange.equiv
+
+/-- The induced real basis consists of the images of the chosen integral basis vectors. -/
+@[simp]
+theorem IsIntegralLattice.realBasis_apply (i : N →+ V) (h : IsIntegralLattice i)
+    (j : @Module.Free.ChooseBasisIndex ℤ N _ _ _ h.free) :
+    IsIntegralLattice.realBasis i h j =
+      i ((@Module.Free.chooseBasis ℤ N _ _ _ h.free) j) := by
+  simp only [IsIntegralLattice.realBasis, Module.Basis.map_apply, Module.Basis.baseChange_apply]
+  simp only [IsBaseChange.equiv_tmul, one_smul, AddMonoidHom.coe_toIntLinearMap] at ⊢
+
+/-- The image of an integral lattice is the `ℤ`-span of the induced real basis. -/
+theorem IsIntegralLattice.range_eq_span_realBasis (i : N →+ V) (h : IsIntegralLattice i) :
+    Set.range i =
+      (Submodule.span ℤ (Set.range (IsIntegralLattice.realBasis i h)) : Set V) := by
+  have hrange : Set.range i = (LinearMap.range i.toIntLinearMap : Set V) := by
+    simp only [LinearMap.coe_range, AddMonoidHom.coe_toIntLinearMap]
+  rw [hrange]
+  -- Align the tensor product's scalar action with the local integral-module instance.
+  let _ : Module ℤ (ℝ ⊗[ℤ] N) := TensorProduct.instModule
+  let _ : Module.Free ℤ N := h.free
+  have hrange' : LinearMap.range i.toIntLinearMap =
+      Submodule.span ℤ (Set.range (IsIntegralLattice.realBasis i h)) := by
+    have hcomp :
+        h.baseChange.equiv.toLinearMap.restrictScalars ℤ ∘ₗ
+            TensorProduct.mk ℤ ℝ N 1 = i.toIntLinearMap := by
+      ext n
+      -- The goal is phrased using the `restrictScalars` and `LinearMap.comp` wrappers around
+      -- the tensor-product map. Definitional reduction via `change` exposes the pure tensor;
+      -- only then can `IsBaseChange.equiv_tmul` rewrite the scalar-extension equivalence.
+      change h.baseChange.equiv (1 ⊗ₜ[ℤ] n) = i n
+      rw [h.baseChange.equiv_tmul]
+      simp only [one_smul, AddMonoidHom.coe_toIntLinearMap]
+    rw [← hcomp, LinearMap.range_comp,
+      TauCeti.TensorProduct.range_mk_one_eq_span (Module.Free.chooseBasis ℤ N),
+      Submodule.map_span, ← Set.range_comp]
+    congr 1
+  exact congrArg (fun p : Submodule ℤ V => (p : Set V)) hrange'
+
+/-- The real span of the image follows from the generic base-change theorem. -/
+@[simp]
+theorem IsIntegralLattice.span_range_eq_top (i : N →+ V) (h : IsIntegralLattice i) :
+    Submodule.span ℝ (Set.range i) = ⊤ := by
+  exact TauCeti.span_range_eq_top_of_baseChange h.baseChange
+
+/-- The rank of a full integral lattice equals the real dimension of its ambient space. -/
+theorem IsIntegralLattice.finrank_eq_finrank (i : N →+ V) (h : IsIntegralLattice i) :
+    Module.finrank ℤ N = Module.finrank ℝ V := by
+  let _ : Module.Free ℤ N := h.free
+  exact (TauCeti.finrank_of_isBaseChange h.baseChange).symm
+
+variable {V₀ : Type w} [NormedAddCommGroup V₀] [NormedSpace ℝ V₀]
+
+/-- Helper with the instances needed by the Mathlib discreteness theorem. -/
+private theorem isDiscrete_range_of_instances [Module.Finite ℤ N]
+    (i : N →+ V₀) (h : IsIntegralLattice i) :
+    IsDiscrete (Set.range i) := by
+  let b := IsIntegralLattice.realBasis i h
+  have hd : DiscreteTopology (Submodule.span ℤ (Set.range b)) := by
+    infer_instance
+  rw [IsIntegralLattice.range_eq_span_realBasis i h]
+  exact @DiscreteTopology.isDiscrete _ _ _ hd
+
+/-- With its usual real-vector-space topology, the image of an integral lattice is discrete. -/
+theorem IsIntegralLattice.isDiscrete_range (i : N →+ V₀)
+    (h : IsIntegralLattice i) :
+    IsDiscrete (Set.range i) :=
+  @isDiscrete_range_of_instances N _ V₀ _ _ h.finite i h
+
+/-- The image submodule of an integral lattice has the discrete topology. -/
+theorem IsIntegralLattice.discreteTopology_range (i : N →+ V₀)
+    (h : IsIntegralLattice i) :
+    DiscreteTopology (LinearMap.range i.toIntLinearMap) := by
+  apply SetLike.isDiscrete_iff_discreteTopology.mp
+  simpa only [LinearMap.coe_range, AddMonoidHom.coe_toIntLinearMap] using
+    IsIntegralLattice.isDiscrete_range i h
+
+/-- The image submodule of an integral lattice is a Mathlib `IsZLattice`. -/
+theorem IsIntegralLattice.isZLattice_range (i : N →+ V₀)
+    (h : IsIntegralLattice i) :
+    @IsZLattice ℝ _ V₀ _ _ (LinearMap.range i.toIntLinearMap)
+      (IsIntegralLattice.discreteTopology_range i h) := by
+  refine @IsZLattice.mk ℝ _ V₀ _ _ (LinearMap.range i.toIntLinearMap)
+    (IsIntegralLattice.discreteTopology_range i h) ?_
+  simpa only [LinearMap.coe_range, AddMonoidHom.coe_toIntLinearMap] using
+    h.span_range_eq_top i
+
+/-- Compatibility on lattice vectors induces a commuting square between the scalar-extension
+equivalences and the base change of the corresponding integral additive map. -/
+theorem IsIntegralLattice.comp_equiv_eq_equiv_comp_baseChange
+    {N' : Type u'} {V' : Type v'} [AddCommGroup N']
+    [AddCommGroup V'] [Module ℝ V']
+    {i' : N' →+ V'} (h : IsIntegralLattice i) (h' : IsIntegralLattice i')
+    (f : N →+ N') (g : V →ₗ[ℝ] V')
+    (hf : ∀ n, g (i n) = i' (f n)) :
+    g.comp h.baseChange.equiv.toLinearMap =
+      h'.baseChange.equiv.toLinearMap.comp (f.toIntLinearMap.baseChange ℝ) :=
+  TauCeti.comp_equiv_eq_equiv_comp_baseChange_of_baseChange h.baseChange h'.baseChange
+    f.toIntLinearMap g hf
+
+end AddMonoidHom
