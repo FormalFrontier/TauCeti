@@ -32,10 +32,6 @@ onto because every Weil differential is a multiple of `ω` (Proposition 1.5.9, a
 `TauCeti.exists_repartitionDualMul_eq`).  So `ℓ(W - D) = dim_k Ω_F(D) = i(D)`, which rearranges to
 the Riemann–Roch identity.
 
-This completes Section I.5 of Stichtenoth.  It also supplies the divisor whose absence is noted in
-`TauCeti/FieldTheory/FunctionField/Differential/LocalComponent.lean`, where the remaining
-statements of Section I.7 are held back for want of it.
-
 ## Main definitions
 
 * `TauCeti.riemannRochSpaceEquivWeilDifferentialFiltration`: **the duality isomorphism**
@@ -66,8 +62,7 @@ statements of Section I.7 are held back for want of it.
 
 * H. Stichtenoth, *Algebraic Function Fields and Codes*, 2nd ed., GTM 254, Springer, 2009,
   Section I.5, in particular Proposition 1.5.11, Theorem 1.5.14 and Theorem 1.5.15.
-* [The algebraic curves roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/AlgebraicCurves/README.md),
-  Layer 4.
+* [The algebraic curves roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/AlgebraicCurves/README.md).
 -/
 
 public section
@@ -199,16 +194,29 @@ theorem map_riemannRochSpace_repartitionDualMulRight (hF : IsFunctionField k F)
 
 /-- **The duality theorem** (Stichtenoth, Theorem 1.5.14): for `W` the divisor of a nonzero Weil
 differential `ω`, multiplication by `ω` is a `k`-linear isomorphism `L(W - D) ≃ Ω_F(D)`.  It is
-injective by `TauCeti.injective_repartitionDualMulRight` and onto by
+injective by `TauCeti.repartitionDualMulRight_injective` and onto by
 `TauCeti.map_riemannRochSpace_repartitionDualMulRight`. -/
 noncomputable def riemannRochSpaceEquivWeilDifferentialFiltration (hF : IsFunctionField k F)
     (hex : IsIntegrallyClosedIn k F) {ω : Module.Dual k ↥(repartitionSpace k F)} (hω : ω ≠ 0)
     {W : Divisor k F}
     (hW : IsGreatest {D : Divisor k F | ω ∈ weilDifferentialFiltration D} W) (D : Divisor k F) :
     ↥(riemannRochSpace (W - D)) ≃ₗ[k] ↥(weilDifferentialFiltration D) :=
-  (Submodule.equivMapOfInjective _ (injective_repartitionDualMulRight hF hω)
+  (Submodule.equivMapOfInjective _ (repartitionDualMulRight_injective hF hω)
     (riemannRochSpace (W - D))).trans
       (LinearEquiv.ofEq _ _ (map_riemannRochSpace_repartitionDualMulRight hF hex hω hW D))
+
+/-- The duality equivalence sends `x` to the Weil differential `x · ω`. -/
+@[simp]
+theorem riemannRochSpaceEquivWeilDifferentialFiltration_apply (hF : IsFunctionField k F)
+    (hex : IsIntegrallyClosedIn k F) {ω : Module.Dual k ↥(repartitionSpace k F)} (hω : ω ≠ 0)
+    {W : Divisor k F}
+    (hW : IsGreatest {D : Divisor k F | ω ∈ weilDifferentialFiltration D} W) (D : Divisor k F)
+    (x : ↥(riemannRochSpace (W - D))) :
+    (riemannRochSpaceEquivWeilDifferentialFiltration hF hex hω hW D x :
+      Module.Dual k ↥(repartitionSpace k F)) = repartitionDualMul hF x ω := by
+  rw [riemannRochSpaceEquivWeilDifferentialFiltration, LinearEquiv.trans_apply,
+    LinearEquiv.coe_ofEq_apply, Submodule.coe_equivMapOfInjective_apply,
+    repartitionDualMulRight_apply]
 
 /-- **The duality theorem, in dimensions**: `ℓ(W - D) = dim_k Ω_F(D)`. -/
 theorem dim_sub_eq_finrank_weilDifferentialFiltration (hF : IsFunctionField k F)
