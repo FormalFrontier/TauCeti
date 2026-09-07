@@ -359,11 +359,10 @@ private lemma truncated_integral_spec_rho_add_one (hH : Real.sqrt 3 / 2 < H) (h�
   obtain ⟨hδR_pos, hδR_lt, h2sin⟩ :=
     fdBoundaryArcExcisionHalfWidth_pos_and_lt_one_and_two_mul_sin_eq hε hε₃
   set δR := fdBoundaryArcExcisionHalfWidth ε with hδR_def
-  have hHpos : (0 : ℝ) < H - Real.sqrt 3 / 2 := by linarith
   set δL := ε / (H - Real.sqrt 3 / 2) with hδL_def
-  have hδL_pos : 0 < δL := div_pos hε hHpos
-  have hδL_le : δL ≤ 1 := (div_le_one hHpos).2 hεH.le
-  have hlin : δL * (H - Real.sqrt 3 / 2) = ε := div_mul_cancel₀ ε hHpos.ne'
+  have hδL_pos : 0 < δL := div_pos hε (hε.trans hεH)
+  have hδL_le : δL ≤ 1 := (div_le_one (hε.trans hεH)).2 hεH.le
+  have hlin : δL * (H - Real.sqrt 3 / 2) = ε := div_mul_cancel₀ ε (hε.trans hεH).ne'
   obtain ⟨hi_left, hi_right, hval⟩ :=
     ftc_logDeriv_telescope_rho_add_one H hH hδL_pos hδL_le hδR_pos hδR_lt
   have hae_left := Contour.ae_logDeriv_sub_eq_truncated (γ := fdBoundary H)
@@ -382,9 +381,6 @@ private lemma truncated_integral_spec_rho_add_one (hH : Real.sqrt 3 / 2 < H) (h�
   have hi02 := hi_left.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr hae_left)
   have hi25 := hi_right.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr hae_right)
   refine ⟨(hi02.trans himid).trans hi25, ?_⟩
-  have hδ12 : δR * (Real.pi / 12) = Real.arcsin (ε / 2) := by
-    simp only [hδR_def, fdBoundaryArcExcisionHalfWidth_def]
-    field_simp
   rw [← intervalIntegral.integral_add_adjacent_intervals (hi02.trans himid) hi25,
     ← intervalIntegral.integral_add_adjacent_intervals hi02 himid,
     hmid0, add_zero,
@@ -392,7 +388,7 @@ private lemma truncated_integral_spec_rho_add_one (hH : Real.sqrt 3 / 2 < H) (h�
     ← intervalIntegral.integral_congr_ae hae_right,
     hval, log_fdBoundary_one_sub_sub_rho_add_one hH hδL_pos hδL_le,
     log_fdBoundary_one_add_sub_rho_add_one H hδR_pos (hδR_lt.le.trans one_le_two), hlin,
-    h2sin, hδ12]
+    h2sin, hδR_def, fdBoundaryArcExcisionHalfWidth_mul_pi_div_twelve]
   push_cast
   ring
 

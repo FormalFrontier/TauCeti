@@ -28,6 +28,10 @@ maximality only among subgroups defined over the ground field is not the Borel c
 
 ## Main declarations
 
+* `TauCeti.HopfIdeal.IsBorelCandidate`: a smooth, geometrically connected, geometrically
+  solvable closed subgroup, before imposing maximality.
+* `TauCeti.HopfIdeal.IsBorelOverAlgClosed`: the Borel-subgroup predicate over an algebraically
+  closed field.
 * `TauCeti.HopfIdeal.IsBorel`: the Borel-subgroup predicate in Hopf coordinates.
 * `TauCeti.HopfIdeal.IsBorel.comapOfIso_iff`: Borel status is invariant under an ambient
   Hopf-algebra isomorphism.
@@ -64,6 +68,83 @@ private instance (k : Type u) [Field k] :
   unfold borelQuotientProperty
   infer_instance
 
+/-- A Hopf ideal is a **Borel candidate** when its quotient coordinate algebra represents a
+smooth, geometrically connected, geometrically solvable closed subgroup.
+
+Over an algebraically closed field, a Borel subgroup is a maximal such candidate. Over a general
+field, `IsBorel` instead requires maximality after base change to an algebraic closure. Keeping the
+non-maximal condition named is useful for constructing Borels by a maximal-dimension argument and
+for asking that a Borel contain a prescribed smooth, geometrically connected, geometrically
+solvable subgroup. -/
+def IsBorelCandidate (k : Type u) [Field k]
+    (H : FiniteTypeCommHopfAlgCat.{u, v} k) (I : HopfIdeal k H) : Prop :=
+  borelQuotientProperty k (FiniteTypeCommHopfAlgCat.quotient H I)
+
+/-- The three geometric conditions defining a Borel candidate. -/
+@[simp]
+theorem isBorelCandidate_iff (k : Type u) [Field k]
+    (H : FiniteTypeCommHopfAlgCat.{u, v} k) (I : HopfIdeal k H) :
+    IsBorelCandidate k H I ↔
+      smoothCommHopfAlgProperty k
+          (FiniteTypeCommHopfAlgCat.quotient H I).obj ∧
+        geometricallyConnectedCommHopfAlgProperty k
+          (FiniteTypeCommHopfAlgCat.quotient H I).obj ∧
+        geometricallySolvablePointsCommHopfAlgProperty k
+          (FiniteTypeCommHopfAlgCat.quotient H I).obj :=
+  Iff.rfl
+
+namespace IsBorelCandidate
+
+variable {k : Type u} [Field k]
+variable {H : FiniteTypeCommHopfAlgCat.{u, v} k} {I : HopfIdeal k H}
+
+/-- Construct a Borel candidate from smoothness, geometric connectedness, and geometric
+solvability. -/
+theorem mk
+    (h_smooth : smoothCommHopfAlgProperty k
+      (FiniteTypeCommHopfAlgCat.quotient H I).obj)
+    (h_connected : geometricallyConnectedCommHopfAlgProperty k
+      (FiniteTypeCommHopfAlgCat.quotient H I).obj)
+    (h_solvable : geometricallySolvablePointsCommHopfAlgProperty k
+      (FiniteTypeCommHopfAlgCat.quotient H I).obj) :
+    IsBorelCandidate k H I :=
+  ⟨h_smooth, h_connected, h_solvable⟩
+
+/-- A Borel candidate is smooth. -/
+theorem smooth (hI : IsBorelCandidate k H I) :
+    smoothCommHopfAlgProperty k (FiniteTypeCommHopfAlgCat.quotient H I).obj :=
+  hI.1
+
+/-- A Borel candidate is geometrically connected. -/
+theorem geometricallyConnected (hI : IsBorelCandidate k H I) :
+    geometricallyConnectedCommHopfAlgProperty k
+      (FiniteTypeCommHopfAlgCat.quotient H I).obj :=
+  hI.2.1
+
+/-- A Borel candidate has a solvable group of geometric points. -/
+theorem geometricallySolvable (hI : IsBorelCandidate k H I) :
+    geometricallySolvablePointsCommHopfAlgProperty k
+      (FiniteTypeCommHopfAlgCat.quotient H I).obj :=
+  hI.2.2
+
+end IsBorelCandidate
+
+/-- Over an algebraically closed field, a Hopf ideal defines a Borel subgroup when it is minimal
+among Borel candidates. In the contravariant Hopf-ideal order, this means that the represented
+closed subgroup is maximal among smooth, geometrically connected, geometrically solvable closed
+subgroups. -/
+def IsBorelOverAlgClosed (k : Type u) [Field k]
+    (H : FiniteTypeCommHopfAlgCat.{u, v} k) (I : HopfIdeal k H) : Prop :=
+  IsAlgClosed k ∧ Minimal (IsBorelCandidate k H) I
+
+/-- The algebraically-closed-field Borel condition asserts algebraic closedness and minimality
+among Borel candidates. -/
+@[simp]
+theorem isBorelOverAlgClosed_iff (k : Type u) [Field k]
+    (H : FiniteTypeCommHopfAlgCat.{u, v} k) (I : HopfIdeal k H) :
+    IsBorelOverAlgClosed k H I ↔ IsAlgClosed k ∧ Minimal (IsBorelCandidate k H) I :=
+  Iff.rfl
+
 /-- A Hopf ideal defines a Borel subgroup when, after base change to an algebraic closure, its
 quotient coordinate algebra is smooth, geometrically connected, and geometrically solvable, and
 no strictly larger closed subgroup has all three properties.
@@ -76,8 +157,19 @@ def IsBorel (k : Type u) [Field k] (H : _root_.CommHopfAlgCat.{v} k)
   let H' := FiniteTypeCommHopfAlgCat.baseChange (K := K)
     ⟨H, (finiteTypeCommHopfAlgProperty_iff H).2 inferInstance⟩
   let I' := CommHopfAlgCat.baseChangeHopfIdeal (K := K) I
-  Minimal (fun J : HopfIdeal K H'.obj ↦
-    borelQuotientProperty K (FiniteTypeCommHopfAlgCat.quotient H' J)) I'
+  IsBorelOverAlgClosed K H' I'
+
+/-- The general-field Borel predicate is the algebraically-closed-field Borel predicate after
+base change to an algebraic closure. -/
+theorem isBorel_iff_isBorelOverAlgClosed_baseChange
+    (k : Type u) [Field k] (H : _root_.CommHopfAlgCat.{v} k)
+    [Algebra.FiniteType k H] (I : HopfIdeal k H) :
+    let K := AlgebraicClosure k
+    let H' := FiniteTypeCommHopfAlgCat.baseChange (K := K)
+      ⟨H, (finiteTypeCommHopfAlgProperty_iff H).2 inferInstance⟩
+    let I' := CommHopfAlgCat.baseChangeHopfIdeal (K := K) I
+    IsBorel k H I ↔ IsBorelOverAlgClosed K H' I' :=
+  Iff.rfl
 
 /-- The Hopf-ideal criterion for a Borel subgroup: after algebraic-closure base change, its
 quotient is smooth, geometrically connected, and geometrically solvable, and it is maximal among
@@ -110,14 +202,15 @@ theorem isBorel_iff (k : Type u) [Field k] (H : _root_.CommHopfAlgCat.{v} k)
               (FiniteTypeCommHopfAlgCat.quotient
                 H' J).obj →
             J ≤ I' → I' ≤ J := by
+  rw [IsBorel]
   constructor
-  · rintro ⟨⟨hsmooth, hconnected, hsolvable⟩, hmax⟩
+  · rintro ⟨_, ⟨⟨hsmooth, hconnected, hsolvable⟩, hmax⟩⟩
     exact ⟨hsmooth, hconnected, hsolvable,
       fun J hJsmooth hJconnected hJsolvable hJI ↦
         hmax ⟨hJsmooth, hJconnected, hJsolvable⟩ hJI⟩
   · rintro ⟨hsmooth, hconnected, hsolvable, hmax⟩
-    exact ⟨⟨hsmooth, hconnected, hsolvable⟩,
-      fun J hJ hJI ↦ hmax J hJ.1 hJ.2.1 hJ.2.2 hJI⟩
+    exact ⟨inferInstance, ⟨⟨hsmooth, hconnected, hsolvable⟩,
+      fun J hJ hJI ↦ hmax J hJ.1 hJ.2.1 hJ.2.2 hJI⟩⟩
 
 private theorem minimal_borelQuotientProperty_comapOfIso
     {k : Type u} [Field k]
@@ -170,8 +263,9 @@ theorem comapOfIso (hI : IsBorel k L.obj I) (e : H ≅ L) :
     IsBorel k H.obj
       (I.comapOfSurjective (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
         (ConcreteCategory.bijective_of_isIso e.hom).2) := by
-  -- `IsBorel` is definitionally this minimal quotient property; no private `Iff.rfl`
-  -- wrapper is retained solely to unfold and refold it for transport.
+  refine ⟨inferInstance, ?_⟩
+  -- After supplying algebraic closedness, `IsBorel` is definitionally the minimal quotient
+  -- property below; the private predicate has no separate propositional transport lemma.
   change Minimal
     (fun J : HopfIdeal (AlgebraicClosure k)
         (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H).obj ↦
@@ -181,7 +275,7 @@ theorem comapOfIso (hI : IsBorel k L.obj I) (e : H ≅ L) :
     (CommHopfAlgCat.baseChangeHopfIdeal (K := AlgebraicClosure k)
       (I.comapOfSurjective (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
         (ConcreteCategory.bijective_of_isIso e.hom).2))
-  exact minimal_borelQuotientProperty_comapOfIso hI e
+  exact minimal_borelQuotientProperty_comapOfIso hI.2 e
 
 /-- Borel status is invariant under pulling the defining ideal back across an ambient
 Hopf-algebra isomorphism. -/

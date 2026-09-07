@@ -74,6 +74,11 @@ theorem squareClassHom_apply (u : Kˣ) :
     Subgroup.mem_square]
   simp
 
+/-- The square class of a product of two units is the sum of their square classes. -/
+@[simp]
+theorem squareClass_mul (u v : Kˣ) : squareClass (u * v) = squareClass u + squareClass v := by
+  simp only [squareClass_def, ofMul_mul, QuotientAddGroup.mk_add]
+
 /-- The square class of a product is the sum of the square classes. -/
 theorem squareClass_prod {ι : Type*} (S : Finset ι) (d : ι → Kˣ) :
     squareClass (∏ i ∈ S, d i) = ∑ i ∈ S, squareClass (d i) := by
