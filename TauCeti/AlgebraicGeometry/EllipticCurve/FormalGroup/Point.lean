@@ -45,8 +45,9 @@ The same parametrization is formalised in Michael Stoll's elliptic-curve develop
 `formalPoint`, `formalPoint_of_param_eq_zero` and `formalPoint_of_param_ne_zero`. That
 development states them over `v.adicCompletion K` for a height-one prime of a Dedekind domain
 and builds nonsingularity from its own chord lemma; the declarations below are stated over an
-arbitrary complete adic ring with a fraction field, and take nonsingularity from Mathlib's
-`equation_iff_nonsingular_of_Δ_ne_zero` instead.
+arbitrary complete adic ring mapping injectively to a field, and get the point straight from
+Mathlib's `Affine.Point.mk`, which carries the equation-to-nonsingularity step itself, so no
+nonsingularity lemma is restated here.
 -/
 
 public section
