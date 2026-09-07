@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.GroupTheory.SpecificGroups.Cyclic
+public import TauCeti.GroupTheory.SpecificGroups.Cyclic.Basic
 public import TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.Basic
 
 /-!
