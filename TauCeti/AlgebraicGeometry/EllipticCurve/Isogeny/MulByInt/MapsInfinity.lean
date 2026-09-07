@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.MapsInfinity
+public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.GenericPoint
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.MulByInt.Basic
 -- Proof-only, named in no statement here: the monic witness `Φₙ − C c * ΨSqₙ` with its root
 -- equation.
@@ -30,6 +31,8 @@ the pullback of the class of `X`.
 * `TauCeti.Isogeny.mapsInfinity_mulByIntPullback`: the pullback of `[n]` maps infinity to
   infinity.
 * `TauCeti.Isogeny.mulByIntIsogeny`: `[n]` as an `Isogeny W W`.
+* `TauCeti.Isogeny.map_genericPoint_mulByIntIsogeny`: the function-field map of `[n]` carries the
+  generic point to `n • ` the generic point.
 
 ## References
 
@@ -101,6 +104,15 @@ noncomputable def mulByIntIsogeny [W.IsElliptic] {n : ℤ} (hn : psiFunctionFiel
 theorem mulByIntIsogeny_pullback [W.IsElliptic] {n : ℤ} (hn : psiFunctionField W n ≠ 0) :
     (mulByIntIsogeny W hn).pullback = mulByIntPullback W hn :=
   (rfl)
+
+/-- **The function-field map of `[n]` carries the generic point to `n • ` the generic point**,
+the generic point transported along a pullback being that pullback's tautological point. -/
+@[simp]
+theorem map_genericPoint_mulByIntIsogeny [W.IsElliptic] {n : ℤ}
+    (hn : psiFunctionField W n ≠ 0) :
+    Point.map (mulByIntIsogeny W hn).fieldPullback W.genericPoint = n • W.genericPoint := by
+  rw [← tautologicalPoint_eq_map_genericPoint, mulByIntIsogeny_pullback,
+    tautologicalPoint_mulByIntPullback]
 
 /-- **Multiplication by `n` as an isogeny, for every `n ≠ 0`**, the non-vanishing hypothesis
 discharged by `psiFunctionField_ne_zero_of_Δ_ne_zero` as in `mulByIntPullbackOfNeZero`. -/

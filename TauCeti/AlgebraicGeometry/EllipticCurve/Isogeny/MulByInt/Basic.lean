@@ -8,6 +8,7 @@ module
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.GenericPoint
 public import TauCeti.AlgebraicGeometry.EllipticCurve.DivisionPolynomial.ZSMul
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.Basic
+public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.TautologicalPoint
 -- Both `ΨSq ≠ 0` lemmas are used only inside proofs below, so both imports are private:
 -- Mathlib's `ΨSq_ne_zero` for the characteristic-conditional discharge, and this repository's
 -- `ΨSq_ne_zero_of_Δ_ne_zero` for the characteristic-free one.
@@ -89,6 +90,12 @@ is `WeierstrassCurve.Affine`'s, in `Affine/FunctionField/GenericPoint.lean`.
 * `TauCeti.Isogeny.mulByIntPullback_mk`: the pullback of an arbitrary class, as evaluation of a
   bivariate polynomial at `(φₙ/ψₙ², ωₙ/ψₙ³)`, with `TauCeti.Isogeny.mulByIntPullback_X` and
   `TauCeti.Isogeny.mulByIntPullback_Y` its values on the two coordinates.
+* `TauCeti.Isogeny.tautologicalPoint_mulByIntPullback`: the tautological point of `[n]` is
+  `n • ` the generic point. It lives here, next to the Jacobian-coordinate lemmas it is proved
+  from, which stay private.
+* `WeierstrassCurve.Affine.zsmul_genericPoint_ne_zero` and
+  `WeierstrassCurve.Affine.zsmul_genericPoint_injective`: the generic point of an elliptic curve
+  is not torsion, and its multiples are pairwise distinct.
 
 ## References
 
@@ -174,10 +181,10 @@ theorem mulByIntY_def (n : ℤ) :
 
 /-- The `Z`-coordinate of the Jacobian triple of `[n]` at the generic point is `ψₙ`.
 
-Private, like the two below: all three are `rw`-lemmas for `equation_mulByInt`, which is the
-public statement of what they add up to. They are not `@[simp]` either — `smulEval` is an
-`abbrev`, so `simp` unfolds the left-hand side through `Function.comp_apply` and `map_ψ` before
-these could fire, and `simpNF` rejects them. -/
+Private, like the two below: all three are `rw`-lemmas for `equation_mulByInt` and
+`tautologicalPoint_mulByIntPullback`, which are the public statements of what they add up to.
+They are not `@[simp]` either — `smulEval` is an `abbrev`, so `simp` unfolds the left-hand side
+through `Function.comp_apply` and `map_ψ` before these could fire, and `simpNF` rejects them. -/
 private theorem smulEval_genericPoint_Z (n : ℤ) :
   smulEval (W⁄W.FunctionField).toAffine W.genericX W.genericY n 2 =
       psiFunctionField W n := by
@@ -335,6 +342,91 @@ theorem mulByIntPullback_Y [W.IsElliptic] {n : ℤ} (hn : psiFunctionField W n �
     mulByIntPullback W hn (AdjoinRoot.root W.polynomial) = mulByIntY W n := by
   simp [mulByIntPullback]
 
+section TautologicalPoint
+
+open _root_.WeierstrassCurve.Affine
+
+open Jacobian in
+/-- The Jacobian triple `(φₙ, ωₙ, ψₙ)` at the generic point represents the same point as the
+affine representative of `(φₙ/ψₙ², ωₙ/ψₙ³)`: the two differ by the scalar `ψₙ`.
+
+`≈` is the Jacobian equivalence on triples, whose `HasEquiv` instance is scoped, which is why
+the namespace is opened for this declaration alone. -/
+private theorem equiv_mulByInt {n : ℤ} (hn : psiFunctionField W n ≠ 0) :
+    ![phiFunctionField W n, omegaFunctionField W n, psiFunctionField W n] ≈
+      ![mulByIntX W n, mulByIntY W n, 1] := by
+  have hx : psiFunctionField W n ^ 2 * mulByIntX W n = phiFunctionField W n := by
+    rw [mulByIntX_def]; field_simp
+  have hy : psiFunctionField W n ^ 3 * mulByIntY W n = omegaFunctionField W n := by
+    rw [mulByIntY_def]; field_simp
+  have hsm : psiFunctionField W n • ![mulByIntX W n, mulByIntY W n, 1] =
+      ![phiFunctionField W n, omegaFunctionField W n, psiFunctionField W n] := by
+    funext i
+    fin_cases i
+    · simpa [smul_fin3] using hx
+    · simpa [smul_fin3] using hy
+    · simp [smul_fin3]
+  exact hsm ▸ smul_equiv _ (isUnit_iff_ne_zero.2 hn)
+
+/-- **The tautological point of `[n]` is `n` times the generic point.** The Jacobian triple
+`(φₙ : ωₙ : ψₙ)` at the generic point represents `n • ` the generic point, and dividing it
+through by `ψₙ` — which is what `[n]`'s two rational coordinates do — reads that class in affine
+coordinates. -/
+@[simp]
+theorem tautologicalPoint_mulByIntPullback [W.IsElliptic] {n : ℤ}
+    (hn : psiFunctionField W n ≠ 0) :
+    (mulByIntPullback W hn).tautologicalPoint = n • W.genericPoint := by
+  have hns' : (W⁄W.FunctionField).toAffine.Nonsingular (mulByIntX W n) (mulByIntY W n) :=
+    equation_iff_nonsingular.mp (equation_mulByInt W hn)
+  have htriple : smulEval (W⁄W.FunctionField).toAffine W.genericX W.genericY n =
+      ![phiFunctionField W n, omegaFunctionField W n, psiFunctionField W n] := by
+    funext i
+    fin_cases i
+    · exact smulEval_genericPoint_X W n
+    · exact smulEval_genericPoint_Y W n
+    · exact smulEval_genericPoint_Z W n
+  have hJ : n • Jacobian.Point.fromAffine
+        (Affine.Point.some _ _ W.nonsingular_genericX_genericY) =
+      Jacobian.Point.fromAffine (Affine.Point.some _ _ hns') := by
+    rw [Jacobian.Point.ext_iff,
+      zsmul_point_eq_smulEval (W⁄W.FunctionField) W.nonsingular_genericX_genericY n, htriple]
+    exact Quotient.sound (equiv_mulByInt W hn)
+  have hsmul : n • W.genericPoint = Affine.Point.some _ _ hns' := by
+    have h := congrArg (Jacobian.Point.toAffineAddEquiv (W⁄W.FunctionField)) hJ
+    rw [map_zsmul] at h
+    simpa [genericPoint_eq_some, Jacobian.Point.fromAffine_some,
+      Jacobian.Point.toAffineLift_some] using h
+  rw [hsmul]
+  refine Point.eq_of_coords (CoordinatePullback.tautologicalPoint_ne_zero _)
+    (Point.some_ne_zero _) ?_ ?_
+  · rw [CoordinatePullback.xCoord_tautologicalPoint, Point.xCoord_some, mulByIntPullback_X]
+  · rw [CoordinatePullback.yCoord_tautologicalPoint, Point.yCoord_some, mulByIntPullback_Y]
+
+end TautologicalPoint
+
 end Isogeny
 
 end TauCeti
+
+namespace WeierstrassCurve.Affine
+
+variable {F : Type*} [Field F] (W : WeierstrassCurve.Affine F)
+
+/-- **The generic point of an elliptic curve is not torsion.** Its `n`-th multiple is the
+tautological point of `[n]`, and a tautological point is an affine point, never the point at
+infinity. -/
+theorem zsmul_genericPoint_ne_zero [W.IsElliptic] {n : ℤ} (hn : n ≠ 0) :
+    n • W.genericPoint ≠ 0 := by
+  rw [← TauCeti.Isogeny.tautologicalPoint_mulByIntPullback W
+    (TauCeti.Isogeny.psiFunctionField_ne_zero_of_Δ_ne_zero W W.isUnit_Δ.ne_zero hn)]
+  exact TauCeti.CoordinatePullback.tautologicalPoint_ne_zero _
+
+/-- **The multiples of the generic point are pairwise distinct**, the generic point having
+infinite order. -/
+theorem zsmul_genericPoint_injective [W.IsElliptic] :
+    Function.Injective fun n : ℤ => n • W.genericPoint := by
+  intro m n h
+  by_contra hmn
+  exact zsmul_genericPoint_ne_zero W (sub_ne_zero.2 hmn) (by simp [sub_zsmul, h])
+
+end WeierstrassCurve.Affine
