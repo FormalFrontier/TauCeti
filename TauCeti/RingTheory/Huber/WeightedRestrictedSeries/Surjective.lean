@@ -59,9 +59,11 @@ variable {k : ℕ} {A B : Type*} [CommRing A] [TopologicalSpace A] [Nonarchimede
 surjective on restricted series**, provided `𝓝 (0 : A)` is countably generated. Every restricted
 series over `B` is then the image of one over `A`.
 
-The hypothesis is the filter inequality the proof consumes rather than `IsOpenMap φ`, which is
-strictly stronger; `IsOpenQuotientMap.weightedMap_one_weight_surjective` is the form for a caller
-holding the bundled open-quotient structure.
+The hypothesis is stated as the filter inequality the proof consumes. Alongside the surjectivity
+assumed here it is the filter-level formulation of `IsOpenMap φ`, not a weakening of it — for a
+surjective continuous additive map the two say the same thing, since openness of a group
+homomorphism is decided at zero. `IsOpenQuotientMap.weightedMap_one_weight_surjective` is the form
+for a caller holding the bundled open-quotient structure.
 
 This is a step towards what Wedhorn's Proposition & Definition 6.36(ii) needs, not the whole of
 it. `TauCeti.Huber.IsStrictlyTopologicallyFiniteType` asks for an open quotient map whose domain

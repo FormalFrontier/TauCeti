@@ -247,9 +247,11 @@ variable {A B : Type*} [CommRing A] [UniformSpace A] [IsUniformAddGroup A]
 onto neighbourhoods of zero. If `A` is complete, Hausdorff, strongly noetherian and has countably
 generated `𝓝 0`, and `B` is complete and Hausdorff, then `B` is strongly noetherian.
 
-The hypothesis is the filter inequality the proof consumes rather than `IsOpenMap π`, which is
-strictly stronger; `IsOpenQuotientMap.isStronglyNoetherian` is the form for a caller holding
-the bundled open-quotient structure.
+The hypothesis is stated as the filter inequality the proof consumes. Alongside the surjectivity
+assumed here it is the filter-level formulation of `IsOpenMap π`, not a weakening of it — for a
+surjective continuous additive map the two say the same thing, since openness of a group
+homomorphism is decided at zero. `IsOpenQuotientMap.isStronglyNoetherian` is the form for a caller
+holding the bundled open-quotient structure.
 
 Openness of `π` is what carries the hypothesis: it is what makes `A⟨Y₁,…,Yₖ⟩ → B⟨Y₁,…,Yₖ⟩`
 surjective, by `TauCeti.Huber.weightedMap_one_weight_surjective`. Completeness and
