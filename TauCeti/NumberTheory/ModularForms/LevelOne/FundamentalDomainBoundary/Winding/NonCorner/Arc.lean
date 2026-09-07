@@ -467,9 +467,7 @@ theorem hasCauchyPVAt_fdBoundary_arc (hH : 1 < H) (hnorm : ‖w‖ = 1)
       (2 * Real.sin ((3 - t₀) * (Real.pi / 12))))
     (min (1 / 2 - w.re) (min (w.re + 1 / 2) (H - 1))) with hb_def
   have hb : 0 < b := arc_min_radius_pos hH hre ht₀
-  have hIoo : Ioo (0 : ℝ) b ∈ 𝓝[>] (0 : ℝ) := by
-    rw [← Ioi_inter_Iio]
-    exact inter_mem self_mem_nhdsWithin (nhdsWithin_le_nhds (Iio_mem_nhds hb))
+  have hIoo : Ioo (0 : ℝ) b ∈ 𝓝[>] (0 : ℝ) := Ioo_mem_nhdsGT hb
   have hspec : ∀ ε ∈ Ioo (0 : ℝ) b,
       IntervalIntegrable (fun t ↦ if ε < ‖fdBoundary H t - w‖
           then (fdBoundary H t - w)⁻¹ * deriv (fdBoundary H) t else 0) volume 0 5 ∧
