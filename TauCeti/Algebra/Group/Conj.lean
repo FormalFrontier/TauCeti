@@ -83,6 +83,9 @@ division is exact — `#C` is the index of the centralizer of `σ`, and `orderOf
 centralizer's order, so their product divides `#G` — and the second evaluates the quotient as the
 centralizer's order over `orderOf σ`. Neither asserts that either side counts anything; a caller
 wanting a cardinality interpretation must supply it.
+
+`card_carrier_mul_orderOf_dvd` follows `TauCetiRoadmap/Chebotarev/Suggested.lean` lines 377-382 in
+name, argument structure and conclusion.
 -/
 
 public section
@@ -247,9 +250,9 @@ theorem card_carrier_mul_orderOf_dvd {G : Type*} [Group G] (C : ConjClasses G) (
 /-- **That quotient in closed form.** Dividing the order of the group by the class size times the
 order of a member leaves the order of the centralizer divided by that same order.
 
-Only the centralizer of `σ` need have nonzero index; `Subgroup.index_ne_zero_of_finite` discharges
-that for a finite group. Both divisions are exact, so the identity is an equality of ratios rather
-than of truncated quotients. -/
+`hindex` is what lets the centralizer's index cancel from both sides; it holds automatically when
+`G` is finite. Both divisions are exact, so the identity is an equality of ratios rather than of
+truncated quotients. -/
 theorem card_div_mul_card_carrier_orderOf_eq_card_centralizer_div_orderOf {G : Type*} [Group G]
     (C : ConjClasses G) (σ : G) (hσ : σ ∈ C.carrier)
     (hindex : (Subgroup.centralizer {σ}).index ≠ 0) :
