@@ -93,7 +93,7 @@ fractional ideals of the elements of `Kˣ` congruent to one modulo `𝔪`. -/
 noncomputable def ray (𝔪 : Modulus K) : Subgroup (idealsPrimeTo 𝔪) :=
   (rayHom 𝔪).range
 
-theorem mem_ray_iff {𝔪 : Modulus K} {I : idealsPrimeTo 𝔪} :
+@[simp] theorem mem_ray_iff {𝔪 : Modulus K} {I : idealsPrimeTo 𝔪} :
     I ∈ ray 𝔪 ↔ ∃ x : Kˣ, IsCongrOne 𝔪 x ∧
       toPrincipalIdeal (𝓞 K) K x = (I : (FractionalIdeal (𝓞 K)⁰ K)ˣ) := by
   rw [ray, MonoidHom.mem_range]
@@ -119,7 +119,7 @@ noncomputable def rayClassMk (𝔪 : Modulus K) :
 theorem rayClassMk_surjective (𝔪 : Modulus K) : Function.Surjective (rayClassMk 𝔪) :=
   QuotientGroup.mk'_surjective _
 
-theorem rayClassMk_eq_one_iff {𝔪 : Modulus K} {I : idealsPrimeTo 𝔪} :
+@[simp] theorem rayClassMk_eq_one_iff {𝔪 : Modulus K} {I : idealsPrimeTo 𝔪} :
     rayClassMk 𝔪 I = 1 ↔ I ∈ ray 𝔪 :=
   QuotientGroup.eq_one_iff I
 
@@ -136,7 +136,7 @@ noncomputable def idealClass (𝔪 : Modulus K) :
 trivial ray class exactly when it is generated as a *fractional* ideal by an element of `Kˣ` that
 is congruent to one modulo `𝔪`; the congruence already carries both the finite conditions and the
 positivity at the real places of `𝔪`. -/
-theorem idealClass_eq_one_iff {𝔪 : Modulus K} (I : integralIdealsPrimeTo 𝔪) :
+@[simp] theorem idealClass_eq_one_iff {𝔪 : Modulus K} (I : integralIdealsPrimeTo 𝔪) :
     idealClass 𝔪 I = 1 ↔ ∃ x : Kˣ, IsCongrOne 𝔪 x ∧
       ((I : Ideal (𝓞 K)) : FractionalIdeal (𝓞 K)⁰ K) =
         FractionalIdeal.spanSingleton (𝓞 K)⁰ (x : K) := by
