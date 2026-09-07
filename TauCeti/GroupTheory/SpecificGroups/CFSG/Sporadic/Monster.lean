@@ -43,6 +43,39 @@ Monster. Appending `f₃₁₂ = 1` therefore gives the required `80`-relator pr
 The source records length `400` for the `M × 2` presentation. The Coxeter words and spider word
 below reproduce that figure; the final central relator has length `63`, giving total length `463`.
 
+## Independent source-to-Lean read-through
+
+An independent reader has compared every row of the data below against the two cited sources, and
+the citation itself is accurate: Ivanov defines `Yₚᵩᵣ` on p. 413, states the centrality of `f₃₁₂`
+in Lemma 3.2 on p. 419, and identifies the quotient in Section 3.9 on pp. 430--431.
+
+Ivanov's definition on p. 413 takes the Coxeter group on the central node `a` together with the
+first `p`, `q`, and `r` of `b₁ c₁ d₁ e₁ f₁`, `b₂ c₂ d₂ e₂ f₂`, and `b₃ c₃ d₃ e₃ f₃`, with the
+Coxeter relations of the induced subdiagram of `Y₅₅₅`, and quotients it by the spider relation
+`(a b₁ c₁ a b₂ c₂ a b₃ c₃)¹⁰ = 1` displayed in the introduction on p. 412. At `(p,q,r) = (4,4,3)`
+those generators are `a`, `b₁ c₁ d₁ e₁`, `b₂ c₂ d₂ e₂`, and `b₃ c₃ d₃`, which is the twelve-node
+alphabet of `presentation.generatorNames`, and the induced subdiagram is the arm structure `edges`
+records: eleven edges, four along each of the first two arms and three along the third. Reading
+`edges` against the figure found the same eleven adjacent pairs and no others, so the simply laced
+`coxeterMatrix` built from them is the source's Coxeter data. `spiderRelator` is the displayed
+spider word letter for letter.
+
+The `M × 2` figures Bray records, twelve generators, seventy-nine relators, and length `400`, are
+the ones the Coxeter data yields: twelve involutions of length two, eleven order-three edge
+relations of length six, and fifty-five commuting non-edge relations of length four give
+`24 + 66 + 220 = 310`, and the spider word of length ninety brings the total to `400`. Those
+counts are `length_coxeterRelators` and `coxeterAndSpider_totalLength` below, so the arithmetic is
+machine-checked and the read-through is what ties it to the source.
+
+For the final relator, Ivanov's p. 419 defines, for `{i,j,k} = {1,2,3}`,
+`f_ijk = (a bᵢ cᵢ dᵢ b_j c_j b_k)⁹`, the generator of the centre of the `Sp₆(2) × 2` Coxeter group
+on the spherical `E₇` subdiagram `a, bᵢ, cᵢ, dᵢ, b_j, c_j, b_k`. Instantiating `(i,j,k) = (3,1,2)`
+gives `(a b₃ c₃ d₃ b₁ c₁ b₂)⁹`, which is `centralInvolutionRelator` letter for letter, and its
+seven-letter word repeated nine times is the length `63` checked below. Section 3.9 concludes on
+p. 431 that `Y₄₄₃ / ⟨f₃₁₂⟩ ≅ M`, and hence that `Y₄₄₃ ≅ 2 × M`, so appending this one relator to
+Bray's seventy-nine is exactly the passage from `M × 2` to `M`. This closes the row's `S1`
+source-to-Lean read-through.
+
 This file asserts no order, finiteness, or simplicity result for the presented group. The roadmap's
 independent permutation-group cross-check does not cover `M`, whose smallest faithful permutation
 representation is far too large for that construction.
