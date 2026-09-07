@@ -55,6 +55,9 @@ a placement hazard:
   `TauCeti/Topology/Algebra/Nonarchimedean/ZeroAtFilter.lean` because neither direction of it
   looks at the index set or at series.
 * `TauCeti.Huber.twoSidedRestrictedSubmodule_ext`: coefficientwise extensionality.
+* `TauCeti.Huber.single_mem_twoSidedRestrictedSubmodule`: a family supported at one degree is
+  restricted; at `M = A` these are the monomials `a Xⁿ`, and `X⁰ = 1` is the unit of the ring
+  structure built in `TauCeti.RingTheory.Huber.Restricted.TwoSided.Ring`.
 * `TauCeti.Huber.twoSidedRestrictedSubmodule_eq_sup` and
   `TauCeti.Huber.disjoint_twoSidedRestricted_nonneg_neg`: **the degree decomposition and its
   directness** — `A⟨X, X⁻¹⟩` is the sum of its non-negative and negative parts, and that sum is
@@ -72,12 +75,12 @@ a placement hazard:
 
 ## Implementation notes
 
-Only the additive and `A`-module structure is built here. The **ring** structure is deliberately
-absent: the coefficient convolution `(fg)ₙ = ∑_{i + j = n} aᵢ bⱼ` is a *finite* sum for one-sided
-series — which is what `TauCeti.Huber.IsRestricted.mul` exploits, through
-`MvPowerSeries.coeff_mul` over a finite antidiagonal — but over `ℤ` that antidiagonal is infinite,
-so multiplication needs a summability argument in a complete ring rather than a rearrangement of a
-finite sum. That is separate work and does not belong to this rung.
+This file builds the additive and `A`-module structure; the **ring** structure lives in
+`TauCeti.RingTheory.Huber.Restricted.TwoSided.Ring`, which defines the coefficient convolution
+`(fg)ₙ = ∑_{i + j = n} aᵢ bⱼ`. That convolution is a *finite* sum for one-sided series — which is
+what `TauCeti.Huber.IsRestricted.mul` exploits, through `MvPowerSeries.coeff_mul` over a finite
+antidiagonal — but over `ℤ` the antidiagonal is infinite, so it rests on a summability argument in
+a complete ring rather than on a rearrangement of a finite sum.
 
 ## References
 
@@ -124,6 +127,19 @@ map that does not exist until there is a ring structure. -/
 theorem twoSidedRestrictedSubmodule_ext {f g : twoSidedRestrictedSubmodule A M}
     (h : ∀ n, (f : ℤ → M) n = (g : ℤ → M) n) : f = g :=
   Subtype.ext (funext h)
+
+/-- **A family supported at a single degree is restricted**: its support lies in `{n}`, so it is
+eventually zero along the cofinite filter. At `M = A` these are the monomials `a Xⁿ` of
+`A⟨X, X⁻¹⟩`; this is the two-sided counterpart of `TauCeti.Huber.isRestricted_monomial`. Both
+reduce to the support being contained in `{n}`, but by different routes: the one-sided lemma hands
+that to `isRestricted_of_hasFiniteSupport`, whereas this submodule is defined by cofinite
+convergence directly, so the finite support is fed to `tendsto_cofinite_pure_iff`. Not `@[simp]`,
+for the reason given at `mem_twoSidedRestrictedSubmodule_iff_finite_notMem`: the membership lemma
+rewrites this left-hand side first. -/
+theorem single_mem_twoSidedRestrictedSubmodule (n : ℤ) (m : M) :
+    Pi.single n m ∈ twoSidedRestrictedSubmodule A M :=
+  (tendsto_cofinite_pure_iff.mpr
+    ((Set.finite_singleton n).subset Pi.support_single_subset)).mono_right (pure_le_nhds 0)
 
 end Submodule
 
