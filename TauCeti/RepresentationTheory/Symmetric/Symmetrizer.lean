@@ -12,6 +12,7 @@ public import Mathlib.GroupTheory.Perm.Sign
 public import Mathlib.RepresentationTheory.Basic
 public import TauCeti.RepresentationTheory.SubgroupCharSum
 public import TauCeti.RepresentationTheory.Symmetric.RowColumnSubgroup
+public import TauCeti.RepresentationTheory.Symmetric.SignCharacter
 
 /-!
 # Young symmetrizers
@@ -44,7 +45,7 @@ sum `∑ sgn(σ) σ` over the permutations of an arbitrary type fixing everythin
 complement of `X`, so it shares the coefficient formula, the translation law and the vanishing
 criterion with `b_t`, and it is the element the Garnir relations of
 `TauCeti/RepresentationTheory/Symmetric/Specht/Garnir.lean` are stated for.  Nothing about it
-refers to a tableau, only to the sign character defined here.
+refers to a tableau, only to the sign character `TauCeti.signLinearCharacter`.
 
 The symmetrizers are built over `ℚ`, which is what the essential-idempotence theorem and the
 Specht-module constructions downstream of this file work over.  The coefficients of `c_t` are in
@@ -81,17 +82,6 @@ local instance (t : YoungTableau μ) : DecidablePred (· ∈ rowSubgroup t) :=
 /-- Classical decidability of membership in the column group, used to form its finite sum. -/
 local instance (t : YoungTableau μ) : DecidablePred (· ∈ colSubgroup t) :=
   Classical.decPred _
-
-/-- The sign character of the symmetric group, valued in `ℚ`.  Together with the trivial
-character it is one of the two characters whose character sums over a subgroup are the
-symmetrizers of this file. -/
-noncomputable def signChar {α : Type*} [DecidableEq α] [Fintype α] : Equiv.Perm α →* ℚ :=
-  (Int.castRingHom ℚ).toMonoidHom.comp ((Units.coeHom ℤ).comp Equiv.Perm.sign)
-
-@[simp]
-theorem signChar_apply {α : Type*} [DecidableEq α] [Fintype α] (σ : Equiv.Perm α) :
-    signChar σ = ((Equiv.Perm.sign σ : ℤ) : ℚ) :=
-  (rfl)
 
 /-- The **row symmetrizer** `a_t`, the sum of the permutations preserving the rows of `t`. -/
 noncomputable def rowSymmetrizer (t : YoungTableau μ) :
@@ -141,7 +131,9 @@ theorem rowSymmetrizer_eq_subgroupCharSum (t : YoungTableau μ) :
 /-- The column antisymmetrizer is the character sum of the sign character over the column
 group. -/
 theorem columnAntisymmetrizer_eq_subgroupCharSum (t : YoungTableau μ) :
-    columnAntisymmetrizer t = subgroupCharSum signChar (colSubgroup t) := by
+    columnAntisymmetrizer t =
+      subgroupCharSum ((Units.coeHom ℚ).comp (signLinearCharacter ℚ (Fin μ.card)))
+        (colSubgroup t) := by
   rw [columnAntisymmetrizer_def, subgroupCharSum_def]
   simp
 
@@ -185,7 +177,8 @@ theorem mul_columnAntisymmetrizer_left (t : YoungTableau μ) (q : colSubgroup t)
       ((Equiv.Perm.sign (q : Equiv.Perm (Fin μ.card)) : ℤ) : ℚ) •
         columnAntisymmetrizer t := by
   rw [columnAntisymmetrizer_eq_subgroupCharSum, single_mul_subgroupCharSum]
-  simp
+  simp only [MonoidHom.coe_comp, Function.comp_apply, Units.coeHom_apply,
+    coe_signLinearCharacter_apply, Equiv.Perm.sign_inv]
 
 /-- Right multiplication by a member of the column group scales the column antisymmetrizer by
 the sign of that member. -/
@@ -195,7 +188,8 @@ theorem mul_columnAntisymmetrizer_right (t : YoungTableau μ) (q : colSubgroup t
       ((Equiv.Perm.sign (q : Equiv.Perm (Fin μ.card)) : ℤ) : ℚ) •
         columnAntisymmetrizer t := by
   rw [columnAntisymmetrizer_eq_subgroupCharSum, subgroupCharSum_mul_single]
-  simp
+  simp only [MonoidHom.coe_comp, Function.comp_apply, Units.coeHom_apply,
+    coe_signLinearCharacter_apply, Equiv.Perm.sign_inv]
 
 /-- The row symmetrizer squares to the order of the row group times itself. -/
 @[simp]
@@ -325,7 +319,7 @@ theorem asAlgebraHom_columnAntisymmetrizer_apply {V : Type*} [AddCommGroup V] [M
       ∑ q : colSubgroup t,
         ((Equiv.Perm.sign (q : Equiv.Perm (Fin μ.card)) : ℤ) : ℚ) • ρ q v := by
   rw [columnAntisymmetrizer_eq_subgroupCharSum, asAlgebraHom_subgroupCharSum_apply]
-  simp only [signChar_apply]
+  simp
 
 section Transport
 
@@ -399,7 +393,9 @@ theorem youngSymmetrizerOver_eq_sum_of_colSubgroup_eq_top (t : YoungTableau μ)
     youngSymmetrizer_eq_columnAntisymmetrizer t (rowSubgroup_eq_bot_of_colSubgroup_eq_top t h),
     columnAntisymmetrizer_eq_subgroupCharSum, subgroupCharSum_eq_sum_of_eq_top _ _ h, map_sum]
   refine Finset.sum_congr rfl fun σ _ => ?_
-  rw [signChar_apply, Int.cast_smul_eq_zsmul ℚ, map_zsmul, MonoidAlgebra.of_apply,
+  simp only [MonoidHom.coe_comp, Function.comp_apply, Units.coeHom_apply,
+    coe_signLinearCharacter_apply]
+  rw [Int.cast_smul_eq_zsmul ℚ, map_zsmul, MonoidAlgebra.of_apply,
     MonoidAlgebra.mapAlgHom_single, map_one, MonoidAlgebra.of_apply]
 
 end TransportRing
@@ -412,7 +408,7 @@ end YoungTableau
 
 The signed sum over the permutations supported in a finite set is the character sum of the sign
 character over the pointwise fixing subgroup of the complement.  Nothing below refers to a
-tableau, only to `TauCeti.YoungTableau.signChar`. -/
+tableau, only to `TauCeti.signLinearCharacter`. -/
 
 section AntisymmetrizerOn
 
@@ -431,12 +427,12 @@ For `X` the labels lying in one column of a Young tableau this is the factor of 
 column antisymmetrizer belonging to that column; the relations it satisfies on the polytabloids of
 a tableau are the Garnir relations. -/
 noncomputable def antisymmetrizerOn (X : Finset α) : MonoidAlgebra ℚ (Equiv.Perm α) :=
-  subgroupCharSum YoungTableau.signChar
+  subgroupCharSum ((Units.coeHom ℚ).comp (signLinearCharacter ℚ α))
     (fixingSubgroup (Equiv.Perm α) ((X : Set α)ᶜ))
 
 theorem antisymmetrizerOn_def (X : Finset α) :
     antisymmetrizerOn X =
-      subgroupCharSum YoungTableau.signChar
+      subgroupCharSum ((Units.coeHom ℚ).comp (signLinearCharacter ℚ α))
         (fixingSubgroup (Equiv.Perm α) ((X : Set α)ᶜ)) :=
   (rfl)
 
@@ -477,8 +473,8 @@ theorem asAlgebraHom_antisymmetrizerOn_apply {M : Type*} [AddCommGroup M] [Modul
         ((Equiv.Perm.sign σ : ℤ) : ℚ) • V σ v := by
   rw [antisymmetrizerOn_def, asAlgebraHom_subgroupCharSum_apply,
     ← Finset.sum_subtype _ (mem_filter_forall_notMem_iff X)
-      (fun σ => YoungTableau.signChar σ • V σ v)]
-  simp only [YoungTableau.signChar_apply]
+      (fun σ => ((Units.coeHom ℚ).comp (signLinearCharacter ℚ α)) σ • V σ v)]
+  simp
 
 /-- **Right multiplication by a permutation supported in `X` scales the antisymmetrizer of `X` by
 its sign**, since the antisymmetrizer absorbs it up to that sign. -/
@@ -488,7 +484,8 @@ theorem antisymmetrizerOn_mul_single {X : Finset α} {p : Equiv.Perm α} (hp : �
       ((Equiv.Perm.sign p : ℤ) : ℚ) • antisymmetrizerOn X := by
   rw [antisymmetrizerOn_def,
     subgroupCharSum_mul_single _ _ ⟨p, mem_fixingSubgroup_compl_of_forall_notMem hp⟩]
-  simp
+  simp only [MonoidHom.coe_comp, Function.comp_apply, Units.coeHom_apply,
+    coe_signLinearCharacter_apply, Equiv.Perm.sign_inv]
 
 /-- **A signed sum annihilates whatever an odd permutation in it fixes.**  If an odd permutation
 supported in `X` fixes `v`, then the antisymmetrizer of `X` kills `v`: absorbing that permutation
