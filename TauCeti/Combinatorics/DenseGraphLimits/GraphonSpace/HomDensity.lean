@@ -5,8 +5,8 @@ Authors: Codex
 -/
 module
 
+public import TauCeti.Combinatorics.DenseGraphLimits.Counting
 public import TauCeti.Combinatorics.DenseGraphLimits.GraphonSpace.Basic
-public import TauCeti.Combinatorics.DenseGraphLimits.Separation.Forward
 
 /-!
 # Homomorphism densities on graphon space
