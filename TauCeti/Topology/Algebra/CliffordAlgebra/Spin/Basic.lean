@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.CliffordAlgebra.Spin.Real
+public import TauCeti.LinearAlgebra.CliffordAlgebra.Spin.Real.Basic
 public import TauCeti.Topology.Algebra.CliffordAlgebra.Basic
 public import TauCeti.Topology.Algebra.QuadraticForm.SpecialOrthogonal
 
