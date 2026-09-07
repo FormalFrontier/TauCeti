@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.GroupTheory.SpecificGroups.CFSG.Index
+public import TauCeti.GroupTheory.SpecificGroups.CFSG.TypeE7.Index
 public import TauCeti.LinearAlgebra.RootSystem.DiagramPermutations
 
 /-!
@@ -41,11 +42,12 @@ pinned group; and its order is the superscript in the printed family name, recor
 * `TauCeti.TypeALieIndex.toGraphTwistedIndex`, `TauCeti.TypeB2LieIndex.toGraphTwistedIndex`,
   `TauCeti.TypeCLieIndex.toGraphTwistedIndex`,
   `TauCeti.TypeE6LieIndex.toGraphTwistedIndex`,
-  `TauCeti.TypeTwistedE6LieIndex.toGraphTwistedIndex` and
+  `TauCeti.TypeTwistedE6LieIndex.toGraphTwistedIndex`,
+  `TauCeti.TypeE7LieIndex.toGraphTwistedIndex` and
   `TauCeti.TypeDDiagramLieIndex.toGraphTwistedIndex`: the two type-A families, `Aₙ(q)` and
   `²Aₙ(q)`, the untwisted rank-two family `B₂(q)`, the untwisted type-C family, the two families on
-  the `E₆` diagram, and the three families on a type-`D` diagram, as indices of that subtype, so
-  that the permutations above are attached to
+  the `E₆` diagram, the untwisted family `E₇(q)`, and the three families on a type-`D` diagram, as
+  indices of that subtype, so that the permutations above are attached to
   them.
 
 ## Main results
@@ -62,6 +64,8 @@ pinned group; and its order is the superscript in the printed family name, recor
   `TauCeti.TypeTwistedE6LieIndex.diagramPerm_toGraphTwistedIndex`: the two families on the `E₆`
   diagram take the identity and `TauCeti.graphPermE6` respectively, which is the distinction
   between them.
+* `TauCeti.TypeE7LieIndex.diagramPerm_toGraphTwistedIndex`: the single family on the `E₇` diagram
+  takes the identity, that diagram having no symmetry to twist by.
 * `TauCeti.TypeDLieIndex.diagramPerm_toGraphTwistedIndex`,
   `TauCeti.TypeTwistedDLieIndex.twistOrder_toGraphTwistedIndex` and
   `TauCeti.TypeTrialityD4LieIndex.twistOrder_toGraphTwistedIndex`: the three families on a type-`D`
@@ -454,6 +458,28 @@ theorem twistOrder_toGraphTwistedIndex : d.toGraphTwistedIndex.twistOrder = 2 :=
   exact GraphTwistedIndex.twistOrder_twistedE6 (LieTypeIndex.valid_twistedE6 q)
 
 end TypeTwistedE6LieIndex
+
+/-! ### The untwisted family `E₇(q)` as a graph-twisted index -/
+
+namespace TypeE7LieIndex
+
+open LieTypeIndex (not_usesHalfFrobenius_of_isTypeE7)
+
+/-- The untwisted family `E₇(q)`, regarded as an ordinary-or-graph-twisted index. It uses no
+half-Frobenius, so it carries a diagram permutation, namely the identity. -/
+abbrev toGraphTwistedIndex (d : TypeE7LieIndex) : GraphTwistedIndex :=
+  ⟨d.1, not_usesHalfFrobenius_of_isTypeE7 d.2⟩
+
+/-- **The diagram permutation of the untwisted family `E₇(q)` is the identity**, so the Steinberg
+map of the family is the field Frobenius outright. The `E₇` diagram is a tree with no nontrivial
+symmetry, so no second family shares it to be told apart from. -/
+@[simp]
+theorem diagramPerm_toGraphTwistedIndex (d : TypeE7LieIndex) :
+    d.toGraphTwistedIndex.diagramPerm = 1 := by
+  obtain ⟨q, rfl⟩ := d.exists_eq_of
+  exact GraphTwistedIndex.diagramPerm_E7 (LieTypeIndex.valid_E7 q)
+
+end TypeE7LieIndex
 
 /-! ### The families on a type-`D` diagram as graph-twisted indices
 
