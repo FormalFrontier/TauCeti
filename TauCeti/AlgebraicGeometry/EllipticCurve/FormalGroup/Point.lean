@@ -71,6 +71,35 @@ noncomputable def formalPoint {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ 
     (hI.isTopologicallyNilpotent_of_mem ht)
     (W.algebraMap_formalWEval_ne_zero hI ht h0))
 
+omit [W.IsElliptic] in
+/-- **The `x`-coordinate in closed form**: since `w(t) = t ^ 3 * u(t)` with `u(t)` a unit, the
+`x`-coordinate `t / w(t)` is the inverse of `t ^ 2 * u(t)`. This is what makes its pole order
+`2` times the order of `t`. -/
+theorem formalPoint_x_mul_eq_one {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I) (ht0 : t ≠ 0) :
+    (algebraMap O K t / algebraMap O K (W.formalWEval t)) *
+      algebraMap O K (t ^ 2 * W.formalUEval t) = 1 := by
+  have hinj := IsFractionRing.injective O K
+  have hT : algebraMap O K t ≠ 0 := (map_ne_zero_iff _ hinj).mpr ht0
+  have hU : algebraMap O K (W.formalUEval t) ≠ 0 :=
+    (map_ne_zero_iff _ hinj).mpr (W.isUnit_formalUEval hI ht).ne_zero
+  rw [W.formalWEval_eq_pow_mul_formalUEval (hI.isTopologicallyNilpotent_of_mem ht)]
+  push_cast [map_mul, map_pow]
+  field_simp
+
+omit [W.IsElliptic] in
+/-- **The `y`-coordinate in closed form**: `-1 / w(t)` is minus the inverse of `t ^ 3 * u(t)`, so
+its pole order is `3` times the order of `t`. -/
+theorem formalPoint_y_mul_eq_neg_one {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I)
+    (ht0 : t ≠ 0) :
+    (-(algebraMap O K (W.formalWEval t))⁻¹) * algebraMap O K (t ^ 3 * W.formalUEval t) = -1 := by
+  have hinj := IsFractionRing.injective O K
+  have hT : algebraMap O K t ≠ 0 := (map_ne_zero_iff _ hinj).mpr ht0
+  have hU : algebraMap O K (W.formalUEval t) ≠ 0 :=
+    (map_ne_zero_iff _ hinj).mpr (W.isUnit_formalUEval hI ht).ne_zero
+  rw [W.formalWEval_eq_pow_mul_formalUEval (hI.isTopologicallyNilpotent_of_mem ht)]
+  push_cast [map_mul, map_pow]
+  field_simp
+
 open scoped Classical in
 @[simp]
 theorem formalPoint_of_eq_zero {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I) (h0 : t = 0) :
