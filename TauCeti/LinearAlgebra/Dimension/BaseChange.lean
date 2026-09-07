@@ -10,13 +10,13 @@ public import Mathlib.RingTheory.IsTensorProduct
 public import Mathlib.RingTheory.TensorProduct.Finite
 
 /-!
-# The dimension of a base change
+# Dimension and functoriality of base changes
 
-A module specified as a base change of a finite module is finite, and
-`span_range_eq_top_of_baseChange` shows that the image of the base-change map spans its target.
-If the module being extended is free and both rings satisfy the strong rank condition, then the
-two modules have the same rank. The naturality theorem
-`comp_equiv_eq_equiv_comp_baseChange_of_baseChange` shows that compatible maps between base changes
+This file shows that a module specified as a base change of a finite module is finite and that
+the image of the base-change map spans its target (`span_range_eq_top_of_baseChange`). If the
+module being extended is free and both rings satisfy the strong rank condition, then the two
+modules have the same rank. It also proves naturality
+(`comp_equiv_eq_equiv_comp_baseChange_of_baseChange`): compatible maps between base changes
 commute with their scalar-extension equivalences. These results are about Mathlib's
 `IsBaseChange` predicate rather than about the concrete tensor product `S ⊗[R] M`, so they apply to
 a model of the base change that is not literally a tensor product — the situation the
