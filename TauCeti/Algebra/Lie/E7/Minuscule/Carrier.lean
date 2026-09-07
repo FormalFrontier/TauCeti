@@ -46,6 +46,8 @@ roadmap before milestone L0 of the CFSGStatement roadmap can use this carrier.
   `TauCeti.E7Minuscule.coe_rootSubgroupPoints_inr`: the positive and negative simple-root
   matrices in the minuscule basis.
 * `TauCeti.E7Minuscule.weightTorus_conj_rootSubgroup`: the scheme-level pinning equation.
+* `TauCeti.E7Minuscule.weightTorusPoints_conj_rootSubgroupPoints`: the same equation on
+  matrix-valued points.
 
 ## References
 
@@ -315,21 +317,9 @@ theorem mem_points_iff (A : Type v) [CommRing A]
 /-- The parametrized numbered simple root subgroup inside the type-`E₇` carrier points. -/
 noncomputable def rootSubgroupPoints (k : Fin 7 ⊕ Fin 7) (A : Type v) [CommRing A] :
     Multiplicative A →* points A :=
-  MonoidHom.codRestrict
-    ((TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix rootGen cartanGen rep
-      lattice.toAddSubgroup rep_kostantForm_mem_lattice k
-      (isNilpotent_rep_serreRootGenerator k) latticeBasis).comp
-        (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm.toMonoidHom)
-    (points A) fun u ↦ by
-      rw [points]
-      exact TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedPointsSubgroup_le_toralPoints
-        rootGen cartanGen rep lattice.toAddSubgroup
-        rep_kostantForm_mem_lattice
-        isNilpotent_rep_serreRootGenerator latticeBasis e7MinusculeWeight A
-        (TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix_mem_generatedPoints
-          rootGen cartanGen rep lattice.toAddSubgroup
-          rep_kostantForm_mem_lattice
-          isNilpotent_rep_serreRootGenerator latticeBasis A k _)
+  TauCeti.UniversalEnvelopingAlgebra.kostantToralRootSubgroupPoints rootGen cartanGen rep
+    lattice.toAddSubgroup rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator
+    latticeBasis e7MinusculeWeight k A
 
 /-- A numbered simple-root point is the corresponding divided-power exponential matrix. -/
 @[simp]
@@ -339,7 +329,8 @@ theorem coe_rootSubgroupPoints (k : Fin 7 ⊕ Fin 7) (A : Type v) [CommRing A]
       TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix rootGen cartanGen rep
         lattice.toAddSubgroup rep_kostantForm_mem_lattice k
         (isNilpotent_rep_serreRootGenerator k) latticeBasis
-        ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u) := (rfl)
+        ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u) :=
+  TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralRootSubgroupPoints _ _ _ _ _ _ _ _ k A u
 
 private theorem nilpotencyClass_rep_rootGenerator_le_two (i : Fin 7 ⊕ Fin 7) :
     nilpotencyClass
@@ -419,15 +410,9 @@ theorem coe_rootSubgroupPoints_inr (i : Fin 7) (A : Type v) [CommRing A]
 /-- The split weight torus inside the type-`E₇` minuscule carrier points. -/
 noncomputable def weightTorusPoints (A : Type v) [CommRing A] :
     (Fin 7 → Aˣ) →* points A :=
-  MonoidHom.codRestrict
-    (TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix
-      lattice.toAddSubgroup latticeBasis e7MinusculeWeight)
-    (points A) fun s ↦ by
-      rw [points]
-      exact TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix_mem_toralPoints
-        rootGen cartanGen rep lattice.toAddSubgroup
-        rep_kostantForm_mem_lattice
-        isNilpotent_rep_serreRootGenerator latticeBasis e7MinusculeWeight A s
+  TauCeti.UniversalEnvelopingAlgebra.kostantToralWeightTorusPoints rootGen cartanGen rep
+    lattice.toAddSubgroup rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator
+    latticeBasis e7MinusculeWeight A
 
 /-- A split-torus point is the diagonal matrix whose entries are the minuscule weight
 characters. -/
@@ -435,7 +420,8 @@ characters. -/
 theorem coe_weightTorusPoints (A : Type v) [CommRing A] (s : Fin 7 → Aˣ) :
     (weightTorusPoints A s : _root_.Matrix.GeneralLinearGroup (Fin 56) A) =
       TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix
-        lattice.toAddSubgroup latticeBasis e7MinusculeWeight s := (rfl)
+        lattice.toAddSubgroup latticeBasis e7MinusculeWeight s :=
+  TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralWeightTorusPoints _ _ _ _ _ _ _ _ A s
 
 /-! ## Closed subgroups and the pinning equation -/
 
@@ -495,5 +481,20 @@ theorem weightTorus_conj_rootSubgroup (k : Fin 7 ⊕ Fin 7)
   TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral_conj_kostantRootSubgroupToToralParam
     _ _ _ _ _ _ _ isCartanWeightVector_latticeBasis
     isNilpotent_rep_serreRootGenerator A (lie_cartanGenerator_rootGenerator k) s u
+
+/-- The pinning equation on matrix-valued points: conjugation by a point `s` of the weight torus
+rescales the parameter of each numbered simple root subgroup by the corresponding type-`E₇` root
+character evaluated at `s`. -/
+@[simp]
+theorem weightTorusPoints_conj_rootSubgroupPoints (k : Fin 7 ⊕ Fin 7) (A : Type v) [CommRing A]
+    (s : Fin 7 → Aˣ) (u : Multiplicative A) :
+    weightTorusPoints A s * rootSubgroupPoints k A u * (weightTorusPoints A s)⁻¹ =
+      rootSubgroupPoints k A
+        (Multiplicative.ofAdd
+          ((TauCeti.torusCharacter s (rootWeight k) : A) * Multiplicative.toAdd u)) :=
+  TauCeti.UniversalEnvelopingAlgebra.kostantToralWeightTorusPoints_conj_rootSubgroupPoints
+    rootGen cartanGen rep lattice.toAddSubgroup rep_kostantForm_mem_lattice
+    isNilpotent_rep_serreRootGenerator latticeBasis e7MinusculeWeight
+    isCartanWeightVector_latticeBasis (lie_cartanGenerator_rootGenerator k) A s u
 
 end TauCeti.E7Minuscule
