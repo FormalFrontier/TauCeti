@@ -119,11 +119,10 @@ theorem formalPoint_of_param_eq_zero {I : Ideal O} (hI : IsAdic I) {t : O} (ht :
 
 open scoped Classical in
 /-- A nonzero parameter gives the affine point, with its coordinates in the form
-`equation_formalPoint` states them.
-
-Deliberately not `@[simp]`: its right-hand side is `Affine.Point.mk` applied to a large proof
-term, which is not a simpler form, and making it a simp rule takes the coordinate lemmas below
-out of simp-normal form (`simpNF` rejects the pair). Rewrite with it explicitly. -/
+`equation_formalPoint` states them. -/
+-- Not a simp lemma: the right-hand side is `Affine.Point.mk` applied to a large proof term, so
+-- rewriting left to right does not simplify, and it would take the coordinate lemmas below out of
+-- simp-normal form. Rewrite with it explicitly.
 theorem formalPoint_of_param_ne_zero {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I)
     (h0 : t ≠ 0) :
     W.formalPoint (K := K) hI ht =
@@ -151,10 +150,9 @@ theorem yCoord_formalPoint {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I) 
 
 /-- **The `x`-coordinate in closed form**: since `w(t) = t ^ 3 * u(t)` with `u(t)` a unit, the
 `x`-coordinate `t / w(t)` is the inverse of `t ^ 2 * u(t)`. Stated as a product so that it needs
-no inverse; the exponent `2` is what a valuation would read as the pole order.
-
-Deliberately not `@[simp]`: `xCoord_formalPoint` already rewrites the `xCoord` on the left, so
-this left-hand side is not in simp-normal form and `simpNF` rejects the pair. -/
+no inverse; the exponent `2` is what a valuation would read as the pole order. -/
+-- Not a simp lemma: `xCoord_formalPoint` already rewrites the `xCoord` on the left, so this
+-- left-hand side is not in simp-normal form.
 theorem xCoord_formalPoint_mul_eq_one {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I)
     (ht0 : t ≠ 0) :
     (W.formalPoint (K := K) hI ht).xCoord * algebraMap O K (t ^ 2 * W.formalUEval t) = 1 := by
@@ -168,10 +166,9 @@ theorem xCoord_formalPoint_mul_eq_one {I : Ideal O} (hI : IsAdic I) {t : O} (ht 
   field_simp
 
 /-- **The `y`-coordinate in closed form**: `-1 / w(t)` is minus the inverse of `t ^ 3 * u(t)`,
-with exponent `3` where the `x`-coordinate has `2`.
-
-Deliberately not `@[simp]`, for the reason given on the `x`-side: `yCoord_formalPoint` rewrites
-the `yCoord` on the left, so this is not a simp-normal left-hand side. -/
+with exponent `3` where the `x`-coordinate has `2`. -/
+-- Not a simp lemma, for the reason given on the `x`-side: `yCoord_formalPoint` rewrites the
+-- `yCoord` on the left.
 theorem yCoord_formalPoint_mul_eq_neg_one {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I)
     (ht0 : t ≠ 0) :
     (W.formalPoint (K := K) hI ht).yCoord * algebraMap O K (t ^ 3 * W.formalUEval t) = -1 := by
