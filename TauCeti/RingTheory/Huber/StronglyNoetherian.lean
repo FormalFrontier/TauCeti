@@ -11,6 +11,7 @@ public import TauCeti.Topology.UniformSpace.DiscreteUniformity
 public import Mathlib.RingTheory.Polynomial.Basic
 
 import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Iterate
+import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Surjective
 
 /-!
 # Strong noetherianness of a nonarchimedean ring
@@ -61,6 +62,20 @@ discrete case below is proved through it.
   rather than an instance because it must be stated against the group uniformity introduced
   below, not against whichever `UniformSpace A` a consumer has in scope.
 
+* `TauCeti.Huber.IsStronglyNoetherian.of_surjective`: strong noetherianness passes along a
+  continuous surjection carrying neighbourhoods of zero onto neighbourhoods of zero, out of a
+  complete Hausdorff strongly noetherian ring whose `nhds 0` is countably generated.
+  `IsOpenQuotientMap.isStronglyNoetherian` is the form taking the bundled structure. Countable
+  generation is not decoration: it is what supplies the shrinking family the lifted coefficients
+  are drawn from, and a complete Hausdorff strongly noetherian ring need not have it.
+
+  This is the half of Wedhorn's Proposition & Definition 6.36(ii) that does not depend on which
+  presentation is chosen: a ring *strictly* topologically of finite type over `A` is an open
+  quotient of some
+  `A⟨X₁,…,Xₖ⟩`, so once that ring is known to be strongly noetherian the quotient is too. The
+  unqualified `TauCeti.Huber.IsTopologicallyFiniteType` is weaker — it allows an arbitrary finite
+  weight family — and is not what this serves.
+
 * `TauCeti.Huber.isStronglyNoetherian_congr`: strong noetherianness is invariant under a
   bicontinuous ring isomorphism. Layer 4.1 takes `IsStronglyNoetherian A` as a hypothesis while
   the ring in question is presented in more than one way, so the hypothesis has to survive the
@@ -69,9 +84,12 @@ discrete case below is proved through it.
   `UniformSpace.Completion.mapRingHom`, which induces nothing on completions from a
   discontinuous map.
 
-What is not here is the other half of that stability: that a ring topologically of finite type
-over a strongly noetherian `A` — an open quotient of some `A⟨X₁,…,Xₖ⟩` — is again strongly
-noetherian.
+What is not here is the assembly that turns the result above into Wedhorn's statement: that a
+ring *strictly* topologically of finite type over a strongly noetherian `A` is again strongly
+noetherian. That needs `TauCeti.Huber.IsStrictlyTopologicallyFiniteType` unfolded to its open
+quotient `A⟨X₁,…,Xₖ⟩ ↠ B` and the result above applied to it. The unqualified
+`TauCeti.Huber.IsTopologicallyFiniteType` presents `B` as a quotient of the completion of a
+*weighted* `A⟨X⟩_T` for an arbitrary finite weight family, and is not covered at all.
 
 ## Provenance
 
@@ -215,5 +233,60 @@ theorem isStronglyNoetherian_congr (e : A ≃+* B) (he : Continuous e) (he' : Co
   · exact isNoetherianRing_of_ringEquiv _ (restrictedMvPowerSeriesCompletionCongr e he he' k).symm
 
 end Transport
+
+/-! ### Descent along an open quotient map -/
+
+section Quotient
+
+variable {A B : Type*} [CommRing A] [UniformSpace A] [IsUniformAddGroup A]
+  [NonarchimedeanRing A] [CompleteSpace A] [T0Space A] [(nhds (0 : A)).IsCountablyGenerated]
+  [CommRing B] [UniformSpace B] [IsUniformAddGroup B] [NonarchimedeanRing B]
+  [CompleteSpace B] [T0Space B]
+
+/-- **Strong noetherianness passes along a continuous surjection** carrying neighbourhoods of zero
+onto neighbourhoods of zero. If `A` is complete, Hausdorff, strongly noetherian and has countably
+generated `𝓝 0`, and `B` is complete and Hausdorff, then `B` is strongly noetherian.
+
+The hypothesis is stated as the filter inequality the proof consumes. Alongside the surjectivity
+assumed here it is the filter-level formulation of `IsOpenMap π`, not a weakening of it — for a
+surjective continuous additive map the two say the same thing, since openness of a group
+homomorphism is decided at zero. `IsOpenQuotientMap.isStronglyNoetherian` is the form for a caller
+holding the bundled open-quotient structure.
+
+Openness of `π` is what carries the hypothesis: it is what makes `A⟨Y₁,…,Yₖ⟩ → B⟨Y₁,…,Yₖ⟩`
+surjective, by `TauCeti.Huber.weightedMap_one_weight_surjective`. Completeness and
+separation of both rings are what let `TauCeti.Huber.restrictedMvPowerSeriesCompletionEquiv` read
+that surjection back as one of the completed algebras. Countable generation of `𝓝 (0 : A)` is a
+further hypothesis, carried by the section: it is what supplies the shrinking family the lifted
+coefficients are drawn from, and it is not implied by the other three.
+
+This is the presentation-independent half of Wedhorn's Proposition & Definition 6.36(ii): a ring
+*strictly* topologically of finite type over `A` is an open quotient of some `A⟨X₁,…,Xₖ⟩`
+(`TauCeti.Huber.IsStrictlyTopologicallyFiniteType`), so the statement that such a ring is strongly
+noetherian reduces to this together with strong noetherianness of `A⟨X₁,…,Xₖ⟩` itself. The
+unqualified `TauCeti.Huber.IsTopologicallyFiniteType` presents `B` as a quotient of a *weighted*
+`A⟨X⟩_T` instead, and is not covered. -/
+theorem IsStronglyNoetherian.of_surjective [IsStronglyNoetherian A] {π : A →+* B}
+    (hπ : Continuous π) (hsurj : Function.Surjective π)
+    (hnhds : nhds (0 : B) ≤ Filter.map π (nhds (0 : A))) : IsStronglyNoetherian B := by
+  refine ⟨fun k ↦ ?_⟩
+  refine isNoetherianRing_of_surjective _ _
+    (((restrictedMvPowerSeriesCompletionEquiv k B).symm.toRingHom.comp
+      (weightedMap hπ isWeightFamily_one_weight isWeightFamily_one_weight
+        fun _ ↦ by simp)).comp (restrictedMvPowerSeriesCompletionEquiv k A).toRingHom) ?_
+  simp only [RingHom.coe_comp]
+  exact ((restrictedMvPowerSeriesCompletionEquiv k B).symm.surjective.comp
+    (weightedMap_one_weight_surjective hπ hsurj hnhds)).comp
+    (restrictedMvPowerSeriesCompletionEquiv k A).surjective
+
+/-- **The open-quotient form of `TauCeti.Huber.IsStronglyNoetherian.of_surjective`**, for a caller
+holding the bundled structure — which is what `TauCeti.Huber.IsStrictlyTopologicallyFiniteType`
+hands over. -/
+theorem _root_.IsOpenQuotientMap.isStronglyNoetherian [IsStronglyNoetherian A] {π : A →+* B}
+    (hπ : IsOpenQuotientMap π) : IsStronglyNoetherian B :=
+  IsStronglyNoetherian.of_surjective hπ.continuous hπ.surjective
+    (map_zero π ▸ hπ.isOpenMap.nhds_le 0)
+
+end Quotient
 
 end TauCeti.Huber
