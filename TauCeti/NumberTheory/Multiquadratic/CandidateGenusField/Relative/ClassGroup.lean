@@ -10,6 +10,7 @@ public import TauCeti.NumberTheory.Multiquadratic.Quadratic.TwoRank
 import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.RamifiedPrimes
 import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.Relative.Quadratic
 import Mathlib.NumberTheory.NumberField.ClassNumber
+import TauCeti.NumberTheory.NumberField.Quadratic.InfinitePlace
 
 /-!
 # The relative candidate-genus-field Galois group has the same order as `Cl⁺ / Cl⁺²`
@@ -76,25 +77,37 @@ theorem card_aut_candidateGenusField_over_base_eq_card_elementaryTwoQuotient
       (adjoin_candidateGenusFieldBaseGen_eq_top hd) hd]
 
 /-- **The relative candidate-genus-field Galois group and `Cl⁺(K)/Cl⁺(K)²` have equal order.** For a
-quadratic field `K = ℚ(√d)` of either signature (`d` squarefree with `1 < |d|`), `|Gal(K_gen/K)|`
+quadratic field `K = ℚ(√d)` of either signature (`d` squarefree, not a rational square),
+`|Gal(K_gen/K)|`
 equals `|Cl⁺(K)/Cl⁺(K)²|` — both are `2 ^ (t - 1)`, where `t` is the number of rational primes
 ramifying in `K`. This is the cardinality shadow of the expected genus-field isomorphism
 `Gal(K_gen/K) ≅ Cl⁺(K)/Cl⁺(K)²`, established without class field theory. -/
 theorem card_aut_candidateGenusField_over_base_eq_card_narrowElementaryTwoQuotient
-    (hd : Squarefree d) (hd1 : 1 < d.natAbs) :
+    (hd : Squarefree d) (hnsq : ¬ IsSquare ((d : ℤ) : ℚ)) :
     Nat.card (candidateGenusField hd ≃ₐ[candidateGenusFieldBase hd] candidateGenusField hd) =
       Nat.card
         (NumberField.NarrowClassGroup.ElementaryTwoQuotient (candidateGenusFieldBase hd)) := by
-  have hnsq : ¬ IsSquare ((d : ℤ) : ℚ) :=
-    not_isSquare_intCast_of_squarefree_of_ne_one hd (by rintro rfl; norm_num at hd1)
   have : NumberField (candidateGenusFieldBase hd) :=
     NumberField.of_intermediateField (candidateGenusFieldBase hd)
-  rw [card_aut_candidateGenusField_over_base hd hnsq,
-    NumberField.NarrowClassGroup.card_elementaryTwoQuotient_eq_two_pow_twoRank,
-    narrowTwoRank_eq_ncard_ramifiedPrimes_sub_one (minpoly_candidateGenusFieldBaseGen hd hnsq)
-      (adjoin_candidateGenusFieldBaseGen_eq_top hd) hd hd1,
-    card_genusPrimeDiscriminants_eq_ncard_ramifiedPrimes
-      (minpoly_candidateGenusFieldBaseGen hd hnsq)
-      (adjoin_candidateGenusFieldBaseGen_eq_top hd) hd]
+  by_cases hd1 : 1 < d.natAbs
+  · rw [card_aut_candidateGenusField_over_base hd hnsq,
+      NumberField.NarrowClassGroup.card_elementaryTwoQuotient_eq_two_pow_twoRank,
+      narrowTwoRank_eq_ncard_ramifiedPrimes_sub_one (minpoly_candidateGenusFieldBaseGen hd hnsq)
+        (adjoin_candidateGenusFieldBaseGen_eq_top hd) hd hd1,
+      card_genusPrimeDiscriminants_eq_ncard_ramifiedPrimes
+        (minpoly_candidateGenusFieldBaseGen hd hnsq)
+        (adjoin_candidateGenusFieldBaseGen_eq_top hd) hd]
+  · -- The remaining field is `ℚ(√-1)`, which is totally complex: its narrow and ordinary class
+    -- groups coincide, and the imaginary statement applies.
+    have hne1 : d ≠ 1 := fun h => hnsq ⟨1, by rw [h]; norm_num⟩
+    have hneg : d < 0 := by
+      have := hd.ne_zero
+      omega
+    have : NumberField.IsTotallyComplex (candidateGenusFieldBase hd) :=
+      NumberField.isTotallyComplex_of_minpoly_eq_X_sq_sub_C_of_neg
+        (minpoly_candidateGenusFieldBaseGen hd hnsq) hneg
+    rw [card_aut_candidateGenusField_over_base_eq_card_elementaryTwoQuotient hd hneg]
+    exact (Nat.card_congr (NumberField.NarrowClassGroup.toClassGroupElementaryTwoQuotientEquiv
+      (candidateGenusFieldBase hd)).toEquiv).symm
 
 end TauCeti.Multiquadratic
