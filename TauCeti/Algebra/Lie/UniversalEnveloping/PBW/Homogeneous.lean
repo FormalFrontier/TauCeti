@@ -6,14 +6,14 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.PBW.AssociatedGraded
-public import TauCeti.LinearAlgebra.SymmetricAlgebra.Homogeneous
+public import TauCeti.LinearAlgebra.SymmetricAlgebra.Grading
 
 /-!
 # Homogeneous pieces of the PBW map
 
 The degree-`n` piece of a symmetric algebra is defined to be the `n`-th power of the range of its
-canonical generator map; no direct-sum decomposition into those pieces is proven. For a Lie algebra
-`L` over a commutative ring `R`, the canonical map
+canonical generator map, and these pieces form an internal direct sum. For a Lie algebra `L` over a
+commutative ring `R`, the canonical map
 
 `SymmetricAlgebra R L →ₐ[R] gr U(L)`
 
@@ -25,12 +25,12 @@ product of degree-one classes. A shorter word represents zero in the `n`-th succ
 Consequently every class in that quotient has a homogeneous symmetric representative of degree
 `n`.
 
-Under the standard hypotheses ensuring PBW over a commutative ring, such as projectivity of `L` as
-an `R`-module, injectivity of these component maps together with an internal direct-sum
-decomposition of `SymmetricAlgebra R L` into its homogeneous submodules would give the remaining
-linear-independence half of the Poincaré--Birkhoff--Witt theorem. Thus the componentwise
-surjections isolate one part of the next obstruction degree by degree, while retaining the global
-associated-graded map.
+The component maps also govern injectivity. An element of the kernel of the canonical map
+decomposes into homogeneous terms, each of which lands in a distinct summand of the associated
+graded and hence lies in the kernel of its own component map. So the canonical map is injective,
+giving the linear-independence half of the Poincaré--Birkhoff--Witt theorem, exactly when every
+component map is; the componentwise description reduces both halves to a degreewise statement,
+while retaining the global associated-graded map.
 
 ## Main definitions and results
 
@@ -46,9 +46,6 @@ associated-graded map.
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, Chapter V, §17.
 * N. Bourbaki, *Lie Groups and Lie Algebras*, Chapter I, §2.7.
-
-This is the degreewise comparison step of the PBW sub-project in Layer 3 of
-`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`.
 -/
 
 public section
