@@ -10,9 +10,14 @@ public import Mathlib.RingTheory.Frobenius
 /-!
 # Frobenius elements for a group acting on a ring extension
 
-This file supplements Mathlib's `IsArithFrobAt` API with two facts about a group acting on a
-commutative ring extension `S/R`. Both are stated at ring level, so they are available
+This file supplements Mathlib's `IsArithFrobAt` API with facts about a monoid or group acting on
+a commutative ring extension `S/R`. All of them are stated at ring level, so they are available
 independently of any number-field or Legendre-symbol specialization.
+
+Two are properties of a single Frobenius element. The defining congruence has `#(R ⧸ Q ∩ R)` as
+its exponent, so it makes that residue ring finite and therefore forces `Q ≠ ⊥` over an infinite
+base. Iterating it `n` times replaces the exponent by its `n`-th power, which is what a Frobenius
+over an intermediate ring of residue degree `n` is required to satisfy.
 
 For an ideal `p` of `R`, an element `σ` of the acting group cuts out the set of primes of `S` above
 `p` that admit `σ` as an arithmetic Frobenius. These sets need not be disjoint: at a ramified prime
@@ -27,6 +32,10 @@ each of them, which again carries hypotheses of its own, such as those of
 
 * `IsArithFrobAt.eq_of_isUnramifiedAt` — a Frobenius element is unique for a faithful action at an
   unramified prime of a Noetherian ring whose prime complement consists of non-zero-divisors.
+* `IsArithFrobAt.ne_bot` — a prime carrying a Frobenius element over an infinite base ring is
+  nonzero.
+* `IsArithFrobAt.mk_pow_smul` — the `n`-th power of a Frobenius element acts on the residue ring
+  by the `q ^ n`-th power map.
 * `Ideal.nonempty_frobenius_fiber_equiv_of_isConj` — conjugate elements have equipotent fibers
   above a fixed ideal of the base, as a bijection between them.
 * `Ideal.frobenius_fiber_card_eq_of_isConj` — the `Nat.card` form of that equipotence.
@@ -80,6 +89,38 @@ theorem _root_.IsArithFrobAt.eq_of_isUnramifiedAt
     {σ τ : G} (hσ : _root_.IsArithFrobAt R σ Q) (hτ : _root_.IsArithFrobAt R τ Q) : σ = τ := by
   apply MulSemiringAction.toAlgHom_injective R S
   exact AlgHom.IsArithFrobAt.eq_of_isUnramifiedAt hσ hτ hQ
+
+/-- **A prime carrying an arithmetic Frobenius over an infinite base is nonzero.** The defining
+congruence has the cardinality of `R ⧸ Q ∩ R` as its exponent, so it forces that residue ring to
+be finite; over an infinite `R` this rules out `Q = ⊥`. -/
+theorem _root_.IsArithFrobAt.ne_bot {R S G : Type*} [CommRing R] [CommRing S] [Algebra R S]
+    [FaithfulSMul R S] [Infinite R] [Monoid G] [MulSemiringAction G S] [SMulCommClass G R S]
+    {Q : Ideal S} {σ : G} (H : _root_.IsArithFrobAt R σ Q) : Q ≠ ⊥ := by
+  rintro rfl
+  have hfin : Finite (R ⧸ Ideal.under R (⊥ : Ideal S)) := H.finite_quotient
+  rw [Ideal.under_bot] at hfin
+  have : Finite R := Finite.of_equiv _ (RingEquiv.quotientBot R).toEquiv
+  exact not_finite R
+
+/-- **Powers of an arithmetic Frobenius raise the exponent.** If `σ` is an arithmetic Frobenius at
+`Q`, then `σ ^ n` acts on the residue ring `S ⧸ Q` as the `q ^ n`-th power map, where
+`q = #(R ⧸ Q ∩ R)`.
+
+This is the congruence a tower formula rests on: over an intermediate ring whose prime below `Q`
+has residue ring of cardinality `q ^ n`, the `n`-th power of a Frobenius over the base satisfies
+the defining congruence of a Frobenius over that intermediate ring. -/
+theorem _root_.IsArithFrobAt.mk_pow_smul {R S G : Type*} [CommRing R] [CommRing S] [Algebra R S]
+    [Monoid G] [MulSemiringAction G S] [SMulCommClass G R S] {Q : Ideal S} {σ : G}
+    (H : _root_.IsArithFrobAt R σ Q) (n : ℕ) (x : S) :
+    Ideal.Quotient.mk Q ((σ ^ n) • x) =
+      Ideal.Quotient.mk Q x ^ Nat.card (R ⧸ Q.under R) ^ n := by
+  induction n generalizing x with
+  | zero => simp
+  | succ n ih =>
+    have hstep : Ideal.Quotient.mk Q (σ • x) =
+        Ideal.Quotient.mk Q x ^ Nat.card (R ⧸ Q.under R) := H.mk_apply x
+    rw [pow_succ, mul_smul, ih (σ • x), hstep, ← pow_mul]
+    ring
 
 variable {R S G : Type*} [CommRing R] [CommRing S] [Algebra R S] [Group G]
   [MulSemiringAction G S] [SMulCommClass G R S]

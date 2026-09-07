@@ -12,3 +12,8 @@ __pycache__/
 
 # Claude Code agent worktrees are nested checkouts, never repository content.
 .claude/worktrees/
+
+# Generated from the root pins by scripts/sync_web_pins.py; never committed, so that a
+# Mathlib bump touches only the root pins. See that script and web/examples/lakefile.lean.
+web/examples/lake-manifest.json
+web/examples/lean-toolchain

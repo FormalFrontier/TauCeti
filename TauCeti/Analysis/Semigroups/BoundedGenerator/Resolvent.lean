@@ -8,6 +8,7 @@ module
 public import TauCeti.Analysis.Semigroups.BoundedGenerator.Basic
 public import TauCeti.Analysis.Semigroups.Resolvent.Basic
 import Mathlib.Analysis.Normed.Algebra.Spectrum
+import TauCeti.LinearAlgebra.LinearPMap.Basic
 
 /-!
 # Resolvent of a bounded generator
@@ -74,11 +75,11 @@ private theorem inv_smul_tsum_pow_mul_sub (A : X →L[ℝ] X) {lambda : ℝ} (hl
               rw [generator_domain]
               exact (ofBounded A).resolvent_mem_domain
                 (ofBounded_hasGrowthBound A) lambda hlambda x⟩ = A (R x) := by
-      simpa using (LinearPMap.ext_iff.mp (ofBounded_generator A)).2
-        (x := R x) (hf := by
+      simpa using LinearPMap.congr_fun (ofBounded_generator A)
+        (by
           rw [generator_domain]
           exact (ofBounded A).resolvent_mem_domain
-            (ofBounded_hasGrowthBound A) lambda hlambda x) (hg := Submodule.mem_top)
+            (ofBounded_hasGrowthBound A) lambda hlambda x) Submodule.mem_top
     rw [hgen] at h
     simpa using h
   have hseries : R = lambda⁻¹ • ∑' n : ℕ, (lambda⁻¹ • A) ^ n := by calc

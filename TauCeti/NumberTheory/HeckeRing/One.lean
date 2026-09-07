@@ -69,24 +69,18 @@ a single basis element. -/
 lemma structureConstants_one_right [IsHeckeTriple Δ H₁ H₂] [IsHeckeTriple Δ H₂ H₂]
     (g : Δ) : structureConstants R H₁ H₂ H₂ g (1 : HeckeCoset Δ H₂ H₂).rep =
       single R (HeckeCoset.mk H₁ H₂ g) 1 := by
-  classical
-  ext A
-  rw [structureConstants_apply, single_apply]
-  split_ifs with h
-  · rw [(HeckeCoset.multiplicity_mul_one g A.rep).mpr (h.trans A.mk_rep.symm), Nat.cast_one]
-  · rw [multiplicity_one_right_eq_zero g fun hA ↦ h hA.symm, Nat.cast_zero]
+  refine structureConstants_eq_single R
+    ((HeckeCoset.multiplicity_mul_one g _).mpr (HeckeCoset.mk H₁ H₂ g).mk_rep.symm)
+    fun A hA ↦ multiplicity_one_right_eq_zero g fun h ↦ hA h.symm
 
 /-- The structure constants for left convolution by the identity double coset collapse to
 a single basis element. -/
 lemma structureConstants_one_left [IsHeckeTriple Δ H₁ H₁] [IsHeckeTriple Δ H₁ H₂]
     (g : Δ) : structureConstants R H₁ H₁ H₂ (1 : HeckeCoset Δ H₁ H₁).rep g =
       single R (HeckeCoset.mk H₁ H₂ g) 1 := by
-  classical
-  ext A
-  rw [structureConstants_apply, single_apply]
-  split_ifs with h
-  · rw [(HeckeCoset.multiplicity_one_mul g A.rep).mpr (h.trans A.mk_rep.symm), Nat.cast_one]
-  · rw [multiplicity_one_left_eq_zero g fun hA ↦ h hA.symm, Nat.cast_zero]
+  refine structureConstants_eq_single R
+    ((HeckeCoset.multiplicity_one_mul g _).mpr (HeckeCoset.mk H₁ H₂ g).mk_rep.symm)
+    fun A hA ↦ multiplicity_one_left_eq_zero g fun h ↦ hA h.symm
 
 /-- The multiplicative identity of the Hecke ring is the basis element of the identity double
 coset. -/

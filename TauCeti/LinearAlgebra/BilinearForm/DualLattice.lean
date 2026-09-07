@@ -16,15 +16,15 @@ nondegenerate bilinear form over a fraction field.
 
 ## Main declarations
 
-* `TauCeti.LinearMap.BilinForm.dualSubmoduleToDual_surjective`: surjectivity of
+* `LinearMap.BilinForm.dualSubmoduleToDual_surjective`: surjectivity of
   `dualSubmoduleToDual` for a free full lattice and nondegenerate bilinear form.
-* `TauCeti.LinearMap.BilinForm.dualSubmoduleEquivDual`: the perfect linear equivalence
+* `LinearMap.BilinForm.dualSubmoduleEquivDual`: the perfect linear equivalence
   `B.dualSubmodule N ≃ₗ[R] Module.Dual R N`.
-* `TauCeti.LinearMap.BilinForm.dualSubmoduleEquivDual_apply`: evaluation of
+* `LinearMap.BilinForm.dualSubmoduleEquivDual_apply`: evaluation of
   `dualSubmoduleEquivDual` is `B.dualSubmoduleToDual N`.
-* `TauCeti.LinearMap.BilinForm.dualSubmodule_dualSubmodule_flip`: double duality for general
+* `LinearMap.BilinForm.dualSubmodule_dualSubmodule_flip`: double duality for general
   full lattices using `B.flip`.
-* `TauCeti.LinearMap.BilinForm.dualSubmodule_flip_dualSubmodule`: double duality for general
+* `LinearMap.BilinForm.dualSubmodule_flip_dualSubmodule`: double duality for general
   full lattices with `B.flip` on the outside.
 -/
 
@@ -40,11 +40,10 @@ variable {R K V : Type*} [CommRing R] [IsDomain R]
 variable [Field K] [Algebra R K] [IsFractionRing R K] [Module.IsTorsionFree R K]
 variable [AddCommGroup V] [Module R V] [Module K V] [IsScalarTower R K V]
 
-namespace LinearMap.BilinForm
-
 /-- Surjectivity of Mathlib's canonical pairing `dualSubmoduleToDual` for a free full lattice
 and a nondegenerate bilinear form. -/
-theorem dualSubmoduleToDual_surjective (B : LinearMap.BilinForm K V) (hB : B.Nondegenerate)
+theorem _root_.LinearMap.BilinForm.dualSubmoduleToDual_surjective
+    (B : LinearMap.BilinForm K V) (hB : B.Nondegenerate)
     (N : Submodule R V) [N.IsLattice K] [Module.Free R N] :
     Function.Surjective (B.dualSubmoduleToDual N) := by
   intro f
@@ -79,23 +78,26 @@ theorem dualSubmoduleToDual_surjective (B : LinearMap.BilinForm K V) (hB : B.Non
 
 /-- The canonical pairing between the dual submodule of a free full lattice and the lattice
 itself is a linear equivalence over `R` whenever the ambient bilinear form is nondegenerate. -/
-noncomputable def dualSubmoduleEquivDual (B : LinearMap.BilinForm K V) (hB : B.Nondegenerate)
+noncomputable def _root_.LinearMap.BilinForm.dualSubmoduleEquivDual
+    (B : LinearMap.BilinForm K V) (hB : B.Nondegenerate)
     (N : Submodule R V) [hN : N.IsLattice K] [Module.Free R N] :
     B.dualSubmodule N ≃ₗ[R] Module.Dual R N :=
   LinearEquiv.ofBijective (B.dualSubmoduleToDual N)
     ⟨B.dualSubmoduleToDual_injective hB N hN.span_eq_top,
-      dualSubmoduleToDual_surjective B hB N⟩
+      LinearMap.BilinForm.dualSubmoduleToDual_surjective B hB N⟩
 
 /-- The underlying linear map of `dualSubmoduleEquivDual` is `B.dualSubmoduleToDual N`. -/
 @[simp]
-theorem dualSubmoduleEquivDual_apply (B : LinearMap.BilinForm K V) (hB : B.Nondegenerate)
+theorem _root_.LinearMap.BilinForm.dualSubmoduleEquivDual_apply
+    (B : LinearMap.BilinForm K V) (hB : B.Nondegenerate)
     (N : Submodule R V) [N.IsLattice K] [Module.Free R N] (x : B.dualSubmodule N) :
-    dualSubmoduleEquivDual B hB N x = B.dualSubmoduleToDual N x :=
+    LinearMap.BilinForm.dualSubmoduleEquivDual B hB N x = B.dualSubmoduleToDual N x :=
   LinearEquiv.ofBijective_apply (B.dualSubmoduleToDual N) x
 
 omit [IsDomain R] [Module.IsTorsionFree R K] in
 /-- Dualizing by `B.flip` and then by `B` recovers the original free full lattice. -/
-theorem dualSubmodule_dualSubmodule_flip (B : LinearMap.BilinForm K V) (hB : B.Nondegenerate)
+theorem _root_.LinearMap.BilinForm.dualSubmodule_dualSubmodule_flip
+    (B : LinearMap.BilinForm K V) (hB : B.Nondegenerate)
     (N : Submodule R V) [N.IsLattice K] [Module.Free R N] :
     B.dualSubmodule (B.flip.dualSubmodule N) = N := by
   let b := Module.Free.chooseBasis R N
@@ -111,13 +113,12 @@ theorem dualSubmodule_dualSubmodule_flip (B : LinearMap.BilinForm K V) (hB : B.N
 
 omit [IsDomain R] [Module.IsTorsionFree R K] in
 /-- Dualizing by `B` and then by `B.flip` recovers the original free full lattice. -/
-theorem dualSubmodule_flip_dualSubmodule (B : LinearMap.BilinForm K V) (hB : B.Nondegenerate)
+theorem _root_.LinearMap.BilinForm.dualSubmodule_flip_dualSubmodule
+    (B : LinearMap.BilinForm K V) (hB : B.Nondegenerate)
     (N : Submodule R V) [N.IsLattice K] [Module.Free R N] :
     B.flip.dualSubmodule (B.dualSubmodule N) = N := by
-  have h := dualSubmodule_dualSubmodule_flip B.flip hB.flip N
+  have h := LinearMap.BilinForm.dualSubmodule_dualSubmodule_flip B.flip hB.flip N
   have hflip : B.flip.flip = B := by ext; rfl
   rwa [hflip] at h
-
-end LinearMap.BilinForm
 
 end TauCeti
