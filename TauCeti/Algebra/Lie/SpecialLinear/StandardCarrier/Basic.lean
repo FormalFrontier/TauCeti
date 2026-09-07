@@ -236,6 +236,23 @@ theorem weight_def (k : Fin (r + 1)) (i : Fin r) :
       (if k = i.castSucc then 1 else 0) - (if k = i.succ then 1 else 0) :=
   by rw [weight]
 
+/-- The weights of the standard representation of `sl_{r+1}` are pairwise distinct. -/
+theorem weight_injective : Function.Injective (weight r) := by
+  intro k l hkl
+  by_contra hne
+  have aux {a b : Fin (r + 1)} (hab : (a : ℕ) < b)
+      (hweight : weight r a = weight r b) : False := by
+    have ha : (a : ℕ) < r := by omega
+    let i : Fin r := ⟨a, ha⟩
+    have hvalue := congrFun hweight i
+    simp only [weight_def, Fin.ext_iff, Fin.val_castSucc, Fin.val_succ] at hvalue
+    dsimp only [i] at hvalue
+    split_ifs at hvalue <;> omega
+  have hval : (k : ℕ) ≠ l := fun h ↦ hne (Fin.ext h)
+  rcases lt_or_gt_of_ne hval with hlt | hgt
+  · exact aux hlt hkl
+  · exact aux hgt hkl.symm
+
 /-- The weights of the standard representation sum to zero. -/
 theorem sum_weight_eq_zero : ∑ k, weight r k = 0 := by
   funext i
@@ -602,6 +619,19 @@ theorem coe_weightTorusPoints (A : Type v) [CommRing A] (s : Fin r → Aˣ) :
         (lattice r).toAddSubgroup (latticeBasis r) (weight r) s := by
   exact TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralWeightTorusPoints
     _ _ _ _ _ _ _ _ A s
+
+/-- The standard weight-torus parametrization is injective over every commutative ring. -/
+theorem weightTorusPoints_injective (A : Type v) [CommRing A] :
+    Function.Injective (weightTorusPoints r A) := by
+  intro s t hst
+  apply torusCharacterHom_injective (span_range_weight_eq_top r)
+  have hmatrix := congrArg (fun g : points r A ↦ g.1) hst
+  rw [coe_weightTorusPoints, coe_weightTorusPoints,
+    UniversalEnvelopingAlgebra.kostantTorusMatrix_apply,
+    UniversalEnvelopingAlgebra.kostantTorusMatrix_apply] at hmatrix
+  funext i
+  rw [torusCharacterHom_apply, torusCharacterHom_apply]
+  exact congrFun (diagGL_injective hmatrix) i
 
 /-- A matrix is a point of the type `A_r` carrier exactly when the associated convolution point
 kills its toral defining Hopf ideal. -/
