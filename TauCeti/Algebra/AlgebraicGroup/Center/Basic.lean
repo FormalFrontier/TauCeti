@@ -31,6 +31,7 @@ ideal, so the represented closed subgroup is canonical.
 ## Main declarations
 
 * `TauCeti.CommHopfAlgCat.centerDefiningIdeal`: the Hopf ideal cutting out the center.
+* `TauCeti.CommHopfAlgCat.centerCoordinateRing`: the coordinate Hopf algebra of the center.
 * `TauCeti.CommHopfAlgCat.centerGroupScheme`: the center as a closed affine group scheme.
 * `TauCeti.CommHopfAlgCat.mem_centerPointsSubgroup_iff`: its points are exactly the universally
   central points.
@@ -314,6 +315,11 @@ uses coefficients in a chosen vector-space basis internally; `centerDefiningIdea
 characterizes it without that choice. -/
 noncomputable def centerDefiningIdeal (H : _root_.CommHopfAlgCat.{v} k) : HopfIdeal k H :=
   centerCoefficientHopfIdeal (k := k) (H := H)
+
+/-- The coordinate Hopf algebra of the center of an affine group. -/
+noncomputable abbrev centerCoordinateRing (H : _root_.CommHopfAlgCat.{v} k) :
+    _root_.CommHopfAlgCat.{v} k :=
+  quotient H (centerDefiningIdeal H)
 
 /-- The underlying ideal of the center is the coefficient ideal of the cocommutativity defect. -/
 private theorem mem_centerDefiningIdeal_iff (H : _root_.CommHopfAlgCat.{v} k) {x : H} :

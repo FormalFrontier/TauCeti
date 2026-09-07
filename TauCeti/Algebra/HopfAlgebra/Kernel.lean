@@ -41,6 +41,8 @@ dictionary.
   by the kernel to the codomain.
 * `TauCeti.HopfIdeal.kerOfSurjective_mkBialgHom`: the kernel of the quotient morphism by `I`
   is `I`.
+* `AlgHom.tensor_map_ker_eq_left_sup_right`: the tensor square of a surjective
+  algebra map has the expected kernel in tensor-ideal notation.
 * `TauCeti.HopfIdeal.ker_lTensor_eq_rightTensorIdeal`: tensoring on the left by a flat algebra
   carries the kernel of an algebra map to the corresponding right tensor ideal.
 
@@ -54,29 +56,36 @@ public section
 
 open scoped TensorProduct
 
-namespace TauCeti
-
 universe u v w x
 
-namespace HopfIdeal
+namespace AlgHom
 
-variable {R : Type u} {H : Type v} {K : Type w}
-variable [CommRing R] [Ring H] [Ring K]
+variable {R : Type u} {H : Type v}
+variable [CommRing R] [Ring H]
 
 /-- The tensor-kernel exactness theorem in the tensor-ideal notation used by `HopfIdeal`. -/
-private theorem tensor_map_ker_eq_left_sup_right [Algebra R H] {A : Type*} [Ring A] [Algebra R A]
+theorem tensor_map_ker_eq_left_sup_right [Algebra R H] {A : Type*} [Ring A] [Algebra R A]
     (f : H →ₐ[R] A)
     (hf : Function.Surjective f) :
     RingHom.ker (Algebra.TensorProduct.map f f) =
-      leftTensorIdeal (R := R) (H := H) (RingHom.ker f) ⊔
-        rightTensorIdeal (R := R) (H := H) (RingHom.ker f) := by
+      TauCeti.HopfIdeal.leftTensorIdeal (R := R) (H := H) (RingHom.ker f) ⊔
+        TauCeti.HopfIdeal.rightTensorIdeal (R := R) (H := H) (RingHom.ker f) := by
   rw [Algebra.TensorProduct.map_ker (f := f) (g := f) hf hf,
-    leftTensorIdeal_def, rightTensorIdeal_def]
+    TauCeti.HopfIdeal.leftTensorIdeal_def, TauCeti.HopfIdeal.rightTensorIdeal_def]
   simp only [AlgHom.toRingHom_eq_coe]
   -- `map_ker` states the two maps via algebra-hom coercions, while `leftTensorIdeal_def`
   -- and `rightTensorIdeal_def` use their `toRingHom`; after the named coercion rewrite
   -- these are the same ideal maps definitionally.
   apply congr_arg₂ (· ⊔ ·) <;> rfl
+
+end AlgHom
+
+namespace TauCeti
+
+namespace HopfIdeal
+
+variable {R : Type u} {H : Type v} {K : Type w}
+variable [CommRing R] [Ring H] [Ring K]
 
 /-- Tensoring on the left by a flat algebra carries the kernel of an algebra map to the
 corresponding right tensor ideal. -/
@@ -194,7 +203,7 @@ def kerOfSurjective (f : H →ₐc[R] K) (hf : Function.Surjective f) : HopfIdea
     have hker' : Coalgebra.comul (R := R) x ∈
         RingHom.ker (Algebra.TensorProduct.map (f : H →ₐ[R] K) (f : H →ₐ[R] K)) := by
       simpa using hker
-    rwa [tensor_map_ker_eq_left_sup_right (R := R) (f : H →ₐ[R] K) hf] at hker')
+    rwa [AlgHom.tensor_map_ker_eq_left_sup_right (R := R) (f : H →ₐ[R] K) hf] at hker')
 
 /-- The underlying ideal of the kernel Hopf ideal is the ring-hom kernel. -/
 @[simp]
@@ -265,7 +274,8 @@ private theorem comul_mem_left_sup_right_of_mem_ker (f : H →ₐc[k] K) {x : H}
   have hker : RingHom.ker (Algebra.TensorProduct.map q q).toRingHom =
       leftTensorIdeal (R := k) (H := H) I ⊔ rightTensorIdeal (R := k) (H := H) I := by
     simpa only [q, AlgHom.ker_coe, AlgHom.toRingHom_eq_coe, Ideal.Quotient.mkₐ_ker] using
-      tensor_map_ker_eq_left_sup_right (R := k) q (Ideal.Quotient.mkₐ_surjective k I)
+      AlgHom.tensor_map_ker_eq_left_sup_right (R := k) q
+        (Ideal.Quotient.mkₐ_surjective k I)
   rw [← hker, RingHom.mem_ker]
   exact hqzero
 
