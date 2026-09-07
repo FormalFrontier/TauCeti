@@ -65,6 +65,23 @@ noncomputable def structureConstants (H₁ H₂ H₃ : Subgroup G) [IsHeckeTripl
     structureConstants R H₁ H₂ H₃ g₁ g₂ D =
       (multiplicity H₁ H₂ H₃ (g₁ : G) (g₂ : G) (D.rep : G) : R) := (rfl)
 
+/-- **The structure constants collapse to one basis element when the multiplicity does.** Given
+that the multiplicity at `D` is one and vanishes at every other coset, `g₁ * g₂` has `D`'s basis
+element for its structure constants. Every "a product of basis elements is again a basis
+element" result in this development reduces to supplying these two facts. -/
+lemma structureConstants_eq_single [IsHeckeTriple Δ H₁ H₂] [IsHeckeTriple Δ H₂ H₃]
+    {g₁ g₂ : Δ} {D : HeckeCoset Δ H₁ H₃}
+    (hone : multiplicity H₁ H₂ H₃ (g₁ : G) (g₂ : G) (D.rep : G) = 1)
+    (hzero : ∀ A : HeckeCoset Δ H₁ H₃, D ≠ A →
+      multiplicity H₁ H₂ H₃ (g₁ : G) (g₂ : G) (A.rep : G) = 0) :
+    structureConstants R H₁ H₂ H₃ g₁ g₂ = single R D 1 := by
+  classical
+  ext A
+  rw [structureConstants_apply, single_apply]
+  split_ifs with h
+  · rw [← h, hone, Nat.cast_one]
+  · rw [hzero A h, Nat.cast_zero]
+
 open Classical in
 /-- The support of the structure constants is contained in the image of `mulMap`. -/
 lemma support_structureConstants_subset [IsHeckeTriple Δ H₁ H₂]
@@ -123,25 +140,20 @@ lemma mul_single_single_of_mulMap_eq [IsHeckeTriple Δ H₁ H₂] [IsHeckeTriple
     (hmul : multiplicity H₁ H₂ H₃ (D₁.rep : G) (D₂.rep : G) (D₃.rep : G) ≤ 1) :
     mul R (single R D₁ 1) (single R D₂ 1) = single R D₃ 1 := by
   classical
-  have hSC : structureConstants R H₁ H₂ H₃ D₁.rep D₂.rep = single R D₃ 1 := by
-    ext A
-    rw [structureConstants_apply, single_apply]
-    split_ifs with h
-    · rw [← h]
-      have hne : multiplicity H₁ H₂ H₃ (D₁.rep : G) (D₂.rep : G) (D₃.rep : G) ≠ 0 := by
-        rw [← HeckeCoset.mem_image_mulMap_iff]
-        simp only [Finset.mem_image, Finset.mem_univ, true_and]
-        exact ⟨(Classical.arbitrary _, Classical.arbitrary _), hmulMap _⟩
-      have heq : multiplicity H₁ H₂ H₃ (D₁.rep : G) (D₂.rep : G) (D₃.rep : G) = 1 := by omega
-      rw [heq, Nat.cast_one]
-    · have hzero : multiplicity H₁ H₂ H₃ (D₁.rep : G) (D₂.rep : G) ((A.rep : G)) = 0 := by
-        by_contra h0
-        refine h ?_
-        have hmem := (HeckeCoset.mem_image_mulMap_iff _ _ A).mpr h0
-        simp only [Finset.mem_image, Finset.mem_univ, true_and] at hmem
-        obtain ⟨p, hp⟩ := hmem
-        rw [← hp, hmulMap p]
-      rw [hzero, Nat.cast_zero]
+  have hne : multiplicity H₁ H₂ H₃ (D₁.rep : G) (D₂.rep : G) (D₃.rep : G) ≠ 0 := by
+    rw [← HeckeCoset.mem_image_mulMap_iff]
+    simp only [Finset.mem_image, Finset.mem_univ, true_and]
+    exact ⟨(Classical.arbitrary _, Classical.arbitrary _), hmulMap _⟩
+  have hzero : ∀ A : HeckeCoset Δ H₁ H₃, D₃ ≠ A →
+      multiplicity H₁ H₂ H₃ (D₁.rep : G) (D₂.rep : G) (A.rep : G) = 0 := by
+    intro A hA
+    by_contra h0
+    refine hA ?_
+    have hmem := (HeckeCoset.mem_image_mulMap_iff _ _ A).mpr h0
+    simp only [Finset.mem_image, Finset.mem_univ, true_and] at hmem
+    obtain ⟨p, hp⟩ := hmem
+    rw [← hp, hmulMap p]
+  have hSC := structureConstants_eq_single R (D := D₃) (by omega) hzero
   rw [mul_single_single, hSC, smul_single_one, smul_single_one]
 
 /-- The convolution product distributes over addition on the right. -/
