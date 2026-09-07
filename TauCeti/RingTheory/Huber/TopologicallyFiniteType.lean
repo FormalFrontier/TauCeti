@@ -224,7 +224,7 @@ known to be strictly topologically of finite type.
 
 section StronglyNoetherian
 
-variable {A B : Type*} [CommRing A] [TopologicalSpace A] [NonarchimedeanRing A] [IsHuberRing A]
+variable {A B : Type*} [CommRing A] [TopologicalSpace A] [IsTopologicalRing A] [IsHuberRing A]
   [IsStronglyNoetherian A]
   [CommRing B] [UniformSpace B] [IsUniformAddGroup B] [NonarchimedeanRing B] [CompleteSpace B]
   [T0Space B]
