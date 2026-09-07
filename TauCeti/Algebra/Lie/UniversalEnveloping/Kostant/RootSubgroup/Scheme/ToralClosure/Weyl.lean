@@ -31,6 +31,8 @@ group of the root datum.
 
 * `TauCeti.UniversalEnvelopingAlgebra.kostantToralWeylPoint`: the Weyl representative as a point
   of the toral closure.
+* `TauCeti.UniversalEnvelopingAlgebra.map_kostantToralWeylPoint`: the representative is natural
+  in the value ring.
 * `TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralWeylPoint`: its matrix is the integral Weyl
   automorphism in the chosen basis.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantToralWeylPoint_conj_rootSubgroupPoints`: conjugation
@@ -53,7 +55,7 @@ open TensorProduct
 
 namespace TauCeti.UniversalEnvelopingAlgebra
 
-universe u v w
+universe u v v' w
 
 attribute [local instance 100] LieRing.ofAssociativeRing
 attribute [local instance high] Algebra.toModule
@@ -113,6 +115,30 @@ noncomputable def kostantToralWeylPoint (i j : I) (A : Type v) [CommRing A] :
       (Multiplicative.ofAdd (-1 : A)) *
     kostantToralRootSubgroupPoints e h ρ M hM hnil b wt i A
       (Multiplicative.ofAdd (1 : A))
+
+/-- The carrier's Weyl representative is natural in the value ring. Applying a ring homomorphism
+entrywise sends the representative over the source ring to the representative over the target
+ring. -/
+theorem map_kostantToralWeylPoint {A : Type v} {B : Type v'} [CommRing A] [CommRing B]
+    (φ : A →+* B) (i j : I) :
+    GeneralLinear.mapHopfIdealPointsSubgroup n
+        (kostantToralDefiningIdeal e h ρ M hM hnil b wt) φ.toIntAlgHom
+        (MulEquiv.subgroupCongr
+          (kostantToralPointsSubgroup_def e h ρ M hM hnil b wt A)
+          (kostantToralWeylPoint e h ρ M hM hnil b wt i j A)) =
+      MulEquiv.subgroupCongr
+        (kostantToralPointsSubgroup_def e h ρ M hM hnil b wt B)
+        (kostantToralWeylPoint e h ρ M hM hnil b wt i j B) := by
+  apply Subtype.ext
+  have hring : φ.toIntAlgHom.toRingHom = φ := RingHom.ext (RingHom.toIntAlgHom_apply φ)
+  simp only [GeneralLinear.coe_mapHopfIdealPointsSubgroup, kostantToralWeylPoint,
+    MulEquiv.subgroupCongr_apply, Subgroup.coe_mul, map_mul,
+    coe_kostantToralRootSubgroupPoints, hring]
+  rw [map_kostantRootSubgroupMatrix e h ρ M hM i (hnil i) b φ,
+    map_kostantRootSubgroupMatrix e h ρ M hM j (hnil j) b φ,
+    AdditiveGroup.mapValue_gaPointsMulEquiv_symm_apply,
+    AdditiveGroup.mapValue_gaPointsMulEquiv_symm_apply]
+  simp only [toAdd_ofAdd, map_one, map_neg]
 
 /-- In the chosen basis, the carrier's Weyl representative is the matrix of the integral Weyl
 automorphism of the admissible lattice. -/
