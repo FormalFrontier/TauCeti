@@ -68,8 +68,9 @@ If every prime of `L` above a place of `K` outside `S` is unramified over `K`, t
 prime of an intermediate field `M` above such a place. This is what makes the unramified
 hypothesis for a subextension a consequence of the one for the top field rather than a second
 assumption. -/
-theorem isUnramifiedAway_of_intermediateField {L : Type*} [Field L] [NumberField L] [Algebra K L]
-    (M : IntermediateField K L) (S : Finset (HeightOneSpectrum (𝓞 K)))
+theorem isUnramifiedAway_of_intermediateField (M : Type*) [Field M] [NumberField M]
+    {L : Type*} [Field L] [NumberField L] [Algebra K M] [Algebra M L] [Algebra K L]
+    [IsScalarTower K M L] (S : Finset (HeightOneSpectrum (𝓞 K)))
     (hur : ∀ v : HeightOneSpectrum (𝓞 K), v ∉ S →
       ∀ (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver v.asIdeal], Algebra.IsUnramifiedAt (𝓞 K) Q) :
     ∀ v : HeightOneSpectrum (𝓞 K), v ∉ S →
