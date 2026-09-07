@@ -30,7 +30,8 @@ zero, because `ε` annihilates `S`. Hence `Extⁿ_A(S, S) ≅ k` as a `k`-module
 
 * `TauCeti.dualNumberFree` and `TauCeti.dualNumberResidue`: the rank-one free module `A` and the
   residue module `S = A/(ε)`, as objects of `ModuleCat A`.
-* `TauCeti.dualNumberProjectiveResolution`: the `ε`-periodic projective resolution of `S`.
+* `TauCeti.dualNumberProjectiveResolution`: the `ε`-periodic projective resolution of `S`, whose
+  terms are identified with `A` by `TauCeti.dualNumberProjectiveResolutionXIso`.
 * `TauCeti.extDualNumberResidueSuccEquiv`: the `k`-linear equivalence
   `Hom_A(A, S) ≃ₗ[k] Extⁿ⁺¹(S, S)` read off that resolution.
 * `TauCeti.extDualNumberResidueEquiv`: the `k`-linear equivalence `Extⁿ(S, S) ≃ₗ[k] k`, for
@@ -40,6 +41,8 @@ zero, because `ε` annihilates `S`. Hence `Extⁿ_A(S, S) ≅ k` as a `k`-module
 
 * Charles A. Weibel, *An Introduction to Homological Algebra*, Cambridge Studies in Advanced
   Mathematics 38, Cambridge University Press (1994), Section 2.5 and Chapter 4.
+* The Tau Ceti `GrothendieckEulerForms` roadmap, section *The dual numbers*, which lays out the
+  periodic resolution followed here and the resulting `Extⁿ_A(S, S) ≅ k`.
 -/
 
 open CategoryTheory CategoryTheory.Abelian CategoryTheory.Limits TrivSqZeroExt DualNumber
@@ -177,11 +180,7 @@ instance epi_dualNumberProj : Epi (dualNumberProj k) :=
   (ModuleCat.epi_iff_surjective _).2 (dualNumberProj_surjective k)
 
 /-- The `ε`-periodic complex `⋯ ⟶ A --ε--> A --ε--> A` of free modules over the dual numbers. -/
--- `@[expose]`: the terms and the differentials of this complex have to reduce to the free module
--- and to multiplication by `ε`, both for the two characteristic lemmas below and for the
--- statements built on the resolution; a `HomologicalComplex` term is type-valued, so this is
--- needed already to elaborate those statements.
-@[expose] noncomputable def dualNumberComplex : ChainComplex (ModuleCat.{u} (DualNumber k)) ℕ :=
+private noncomputable def dualNumberComplex : ChainComplex (ModuleCat.{u} (DualNumber k)) ℕ :=
   HomologicalComplex.alternatingConst (dualNumberFree k)
     (φ := dualNumberEpsSmul k) (ψ := dualNumberEpsSmul k)
     (dualNumberEpsSmul_comp_dualNumberEpsSmul_eq_zero k)
@@ -189,14 +188,13 @@ instance epi_dualNumberProj : Epi (dualNumberProj k) :=
     fun _ _ => ComplexShape.down_nat_odd_add
 
 /-- Every differential of the periodic complex is multiplication by `ε`. -/
-@[simp]
-theorem dualNumberComplex_d (n : ℕ) :
+private theorem dualNumberComplex_d (n : ℕ) :
     (dualNumberComplex k).d (n + 1) n = dualNumberEpsSmul k := by
   simp only [dualNumberComplex, HomologicalComplex.alternatingConst_d]
   split_ifs with h1 h2 <;> first | rfl | exact absurd rfl h1
 
 /-- The augmentation of the periodic complex by the residue field. -/
-noncomputable def dualNumberComplexπ :
+private noncomputable def dualNumberComplexπ :
     dualNumberComplex k ⟶ (ChainComplex.single₀ (ModuleCat.{u} (DualNumber k))).obj
       (dualNumberResidue k) :=
   ((dualNumberComplex k).toSingle₀Equiv (dualNumberResidue k)).symm
@@ -204,16 +202,11 @@ noncomputable def dualNumberComplexπ :
       rw [dualNumberComplex_d]; exact dualNumberEpsSmul_comp_eq_zero k (dualNumberProj k)⟩
 
 /-- The augmentation is the quotient map in degree zero. -/
-@[simp]
-theorem dualNumberComplexπ_f_zero : (dualNumberComplexπ k).f 0 = dualNumberProj k :=
+private theorem dualNumberComplexπ_f_zero : (dualNumberComplexπ k).f 0 = dualNumberProj k :=
   ChainComplex.toSingle₀Equiv_symm_apply_f_zero _ _
 
 /-- The `ε`-periodic projective resolution `⋯ ⟶ A --ε--> A --ε--> A ⟶ S ⟶ 0` of `k[ε]/(ε)`. -/
--- `@[expose]`: consumers must compute with the terms of this resolution. Already the *statements*
--- of `TauCeti.dualNumberProjectiveResolution_complex_d` and of
--- `TauCeti.extDualNumberResidueSuccEquiv` need `R.complex.X n` to reduce to the free module, so
--- they do not elaborate while the body is hidden.
-@[expose] noncomputable def dualNumberProjectiveResolution :
+noncomputable def dualNumberProjectiveResolution :
     ProjectiveResolution (dualNumberResidue k) where
   complex := dualNumberComplex k
   projective _ := inferInstanceAs (Projective (dualNumberFree k))
@@ -226,26 +219,39 @@ theorem dualNumberComplexπ_f_zero : (dualNumberComplexπ k).f 0 = dualNumberPro
       rw [ChainComplex.quasiIsoAt₀_iff, ShortComplex.quasiIso_iff_of_zeros' _ rfl rfl rfl]
       refine ⟨?_, ?_⟩
       · rw [ShortComplex.moduleCat_exact_iff_range_eq_ker]
-        simpa using! range_dualNumberEpsSmul_eq_ker_proj k
+        simpa [dualNumberComplex_d, dualNumberComplexπ_f_zero] using!
+          range_dualNumberEpsSmul_eq_ker_proj k
       · rw [ModuleCat.epi_iff_surjective]
         exact dualNumberProj_surjective k
     | succ m _ =>
       rw [quasiIsoAt_iff_exactAt' (hL := ChainComplex.exactAt_succ_single_obj ..),
         HomologicalComplex.exactAt_iff' _ (m + 2) (m + 1) m (by simp) (by simp),
         ShortComplex.moduleCat_exact_iff_range_eq_ker]
-      simpa using! range_dualNumberEpsSmul_eq_ker k
+      simpa [dualNumberComplex_d] using! range_dualNumberEpsSmul_eq_ker k
 
-/-- Every term of the periodic resolution is the rank-one free module. -/
-@[simp]
-theorem dualNumberProjectiveResolution_complex_X (n : ℕ) :
-    (dualNumberProjectiveResolution k).complex.X n = dualNumberFree k :=
-  (rfl)
+/-- Every term of the periodic resolution is the rank-one free module `A`. -/
+noncomputable def dualNumberProjectiveResolutionXIso (n : ℕ) :
+    (dualNumberProjectiveResolution k).complex.X n ≅ dualNumberFree k :=
+  Iso.refl _
 
-/-- Every differential of the periodic resolution is multiplication by `ε`. -/
+/-- Every differential of the periodic resolution is multiplication by `ε`, read through
+`TauCeti.dualNumberProjectiveResolutionXIso`. -/
 @[simp]
 theorem dualNumberProjectiveResolution_complex_d (n : ℕ) :
-    (dualNumberProjectiveResolution k).complex.d (n + 1) n = dualNumberEpsSmul k :=
+    (dualNumberProjectiveResolution k).complex.d (n + 1) n =
+      (dualNumberProjectiveResolutionXIso k (n + 1)).hom ≫ dualNumberEpsSmul k ≫
+        (dualNumberProjectiveResolutionXIso k n).inv :=
+  -- the two isomorphisms are identities, so the right-hand side is the differential itself
   dualNumberComplex_d k n
+
+/-- The augmentation of the periodic resolution is the quotient map `k[ε] ↠ k[ε]/(ε)`, read
+through `TauCeti.dualNumberProjectiveResolutionXIso`. -/
+@[simp]
+theorem dualNumberProjectiveResolution_π_f_zero :
+    (dualNumberProjectiveResolutionXIso k 0).inv ≫ (dualNumberProjectiveResolution k).π.f 0 =
+      dualNumberProj k :=
+  -- the isomorphism is an identity, so the left-hand side is the augmentation itself
+  dualNumberComplexπ_f_zero k
 
 /-- Every differential of the periodic resolution dies against the residue field. -/
 theorem dualNumberProjectiveResolution_comp_eq_zero (p q : ℕ)
@@ -253,8 +259,8 @@ theorem dualNumberProjectiveResolution_comp_eq_zero (p q : ℕ)
     (dualNumberProjectiveResolution k).complex.d p q ≫ f = 0 := by
   by_cases h : (ComplexShape.down ℕ).Rel p q
   · obtain rfl : p = q + 1 := (by simpa using h : q + 1 = p).symm
-    rw [dualNumberProjectiveResolution_complex_d]
-    exact dualNumberEpsSmul_comp_eq_zero k f
+    rw [dualNumberProjectiveResolution_complex_d, Category.assoc, Category.assoc,
+      dualNumberEpsSmul_comp_eq_zero, comp_zero]
   · rw [(dualNumberProjectiveResolution k).complex.shape p q h, zero_comp]
 
 /-! ### The `Hom` spaces -/
@@ -289,6 +295,15 @@ noncomputable def homDualNumberResidueEquiv :
         rw [LinearMap.comp_apply, Linear.leftComp_apply, Linear.comp_smul, Category.comp_id,
           LinearEquiv.coe_coe, map_smul, homDualNumberFreeEquiv_proj, smul_eq_mul, mul_one]⟩⟩
 
+/-- `TauCeti.homDualNumberResidueEquiv` reads an endomorphism of `S` off its value on the class
+of `1`, through `TauCeti.dualNumberResidueEquiv`: precomposing with `A ↠ S` and evaluating at `1`
+is the same data as evaluating at the class of `1`. -/
+@[simp]
+theorem homDualNumberResidueEquiv_apply (f : dualNumberResidue k ⟶ dualNumberResidue k) :
+    homDualNumberResidueEquiv k f =
+      dualNumberResidueEquiv k (f.hom ((dualNumberProj k).hom 1)) :=
+  (rfl)
+
 /-! ### The `Ext` groups -/
 
 /-- In every positive degree the periodic resolution identifies `Extⁿ⁺¹_A(S, S)` with the
@@ -296,21 +311,24 @@ noncomputable def homDualNumberResidueEquiv :
 noncomputable def extDualNumberResidueSuccEquiv (n : ℕ) :
     (dualNumberFree k ⟶ dualNumberResidue k) ≃ₗ[k]
       Ext.{u} (dualNumberResidue k) (dualNumberResidue k) (n + 1) :=
-  (dualNumberProjectiveResolution k).extLinearEquiv n
-    (dualNumberProjectiveResolution_comp_eq_zero k _ _)
-    (dualNumberProjectiveResolution_comp_eq_zero k _ _)
+  (Linear.homCongr k (dualNumberProjectiveResolutionXIso k (n + 1))
+        (Iso.refl (dualNumberResidue k))).symm.trans
+    ((dualNumberProjectiveResolution k).extLinearEquiv n
+      (dualNumberProjectiveResolution_comp_eq_zero k _ _)
+      (dualNumberProjectiveResolution_comp_eq_zero k _ _))
 
 /-- The class attached to `f : A ⟶ S` is the one `CategoryTheory.ProjectiveResolution.extMk`
-builds out of `f`. -/
+builds out of `f`, transported to the degree `n + 1` term of the resolution. -/
 @[simp]
 theorem extDualNumberResidueSuccEquiv_apply (n : ℕ)
     (f : dualNumberFree k ⟶ dualNumberResidue k) :
     extDualNumberResidueSuccEquiv k n f =
-      (dualNumberProjectiveResolution k).extMk f (n + 2) rfl
-        (dualNumberProjectiveResolution_comp_eq_zero k _ _ f) :=
-  ProjectiveResolution.extLinearEquiv_apply (k := k) (dualNumberProjectiveResolution k) n
-    (dualNumberProjectiveResolution_comp_eq_zero k _ _)
-    (dualNumberProjectiveResolution_comp_eq_zero k _ _) f
+      (dualNumberProjectiveResolution k).extMk
+        ((dualNumberProjectiveResolutionXIso k (n + 1)).hom ≫ f) (n + 2) rfl
+        (dualNumberProjectiveResolution_comp_eq_zero k _ _ _) := by
+  simp only [extDualNumberResidueSuccEquiv, LinearEquiv.trans_apply,
+    Linear.homCongr_symm_apply, Iso.refl_inv, Category.comp_id,
+    ProjectiveResolution.extLinearEquiv_apply]
 
 /-- **`Extⁿ_A(S, S) ≅ k` for every `n`**, where `A = k[ε]` is the ring of dual numbers and
 `S = A/(ε)`: the periodic resolution of `S` has zero `Hom(-, S)`-differentials. -/

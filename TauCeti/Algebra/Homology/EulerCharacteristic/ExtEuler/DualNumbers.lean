@@ -34,6 +34,8 @@ available for it.
 
 * Charles A. Weibel, *An Introduction to Homological Algebra*, Cambridge Studies in Advanced
   Mathematics 38, Cambridge University Press (1994), Section 2.5 and Chapter 4.
+* The Tau Ceti `GrothendieckEulerForms` roadmap, section *The dual numbers*, which selects the
+  pair `(S, S)` as the example separating `Ext`-finiteness from `Ext`-boundedness.
 -/
 
 open CategoryTheory CategoryTheory.Abelian
