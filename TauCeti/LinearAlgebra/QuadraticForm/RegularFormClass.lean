@@ -7,7 +7,7 @@ module
 
 public import Mathlib.Algebra.BigOperators.Fin
 public import Mathlib.LinearAlgebra.Dimension.Constructions
-public import Mathlib.LinearAlgebra.QuadraticForm.IsometryEquiv
+public import TauCeti.LinearAlgebra.QuadraticForm.Prod
 public import TauCeti.LinearAlgebra.QuadraticForm.Radical
 
 /-!
@@ -66,7 +66,10 @@ variable {K : Type u} [Field K]
 /-! ### Diagonal presentations -/
 
 /-- A diagonal presentation: a rank `n` together with a tuple of units, read as the diagonal
-form `⟨w 0, …, w (n - 1)⟩`. The presented form is regular under this file's standing hypothesis
+form `⟨w 0, …, w (n - 1)⟩`. This presentation, the setoid `TauCeti.regularFormSetoid` and the
+quotient `TauCeti.RegularFormClass` are the carrier design fixed by the human-authored
+`TauCetiRoadmap/QuadraticFormInvariants` roadmap, whose `README.md` and `Suggested.lean` spell out
+the three signatures used here. The presented form is regular under this file's standing hypothesis
 that `2` is invertible in `K` (`TauCeti.nondegenerate_presentedForm`); the definition itself asks
 only for a field, and in characteristic two the polar form of a weighted sum of squares vanishes,
 so the presented form need not be nondegenerate. -/
@@ -114,6 +117,7 @@ instance regularFormSetoid (K : Type u) [Field K] : Setoid (RegularFormPresentat
       trans := fun h h' => h.trans h' }
 
 /-- The relation defining the setoid, unfolded. -/
+@[simp]
 theorem regularFormSetoid_iff {p q : RegularFormPresentation K} :
     p ≈ q ↔ (presentedForm p).Equivalent (presentedForm q) := Iff.rfl
 
@@ -124,6 +128,7 @@ of characteristic two it is only the quotient of the diagonal presentations by i
 abbrev RegularFormClass (K : Type u) [Field K] : Type u := Quotient (regularFormSetoid K)
 
 /-- Two presentations have the same class exactly when they present isometric forms. -/
+@[simp]
 theorem RegularFormClass.mk_eq_mk_iff {p q : RegularFormPresentation K} :
     Quotient.mk (regularFormSetoid K) p = Quotient.mk (regularFormSetoid K) q ↔
       (presentedForm p).Equivalent (presentedForm q) :=
@@ -203,15 +208,6 @@ theorem presentedForm_append_comm (p q : RegularFormPresentation K) :
   exact ((equivalent_presentedForm_append_prod p q).trans h).trans
     (equivalent_presentedForm_append_prod q p).symm
 
-/-- The associator of an orthogonal product of quadratic forms. Mathlib supplies the two
-commutativity isometries of `QuadraticMap.prod` but not this one. -/
-private def prodAssocIsometryEquiv {M₁ M₂ M₃ : Type v} [AddCommGroup M₁] [AddCommGroup M₂]
-    [AddCommGroup M₃] [Module K M₁] [Module K M₂] [Module K M₃]
-    (Q₁ : QuadraticForm K M₁) (Q₂ : QuadraticForm K M₂) (Q₃ : QuadraticForm K M₃) :
-    ((Q₁.prod Q₂).prod Q₃).IsometryEquiv (Q₁.prod (Q₂.prod Q₃)) where
-  toLinearEquiv := LinearEquiv.prodAssoc K M₁ M₂ M₃
-  map_app' _ := by simp [add_assoc]
-
 /-- Concatenation of presentations is associative up to isometry. -/
 theorem presentedForm_append_assoc (p q r : RegularFormPresentation K) :
     (presentedForm (RegularFormPresentation.append
@@ -224,35 +220,18 @@ theorem presentedForm_append_assoc (p q r : RegularFormPresentation K) :
     (equivalent_presentedForm_append_prod p q).prod (QuadraticMap.Equivalent.refl _)
   have h₂ : (((presentedForm p).prod (presentedForm q)).prod (presentedForm r)).Equivalent
       ((presentedForm p).prod ((presentedForm q).prod (presentedForm r))) :=
-    ⟨prodAssocIsometryEquiv _ _ _⟩
+    ⟨QuadraticMap.IsometryEquiv.prodAssoc _ _ _⟩
   have h₃ : ((presentedForm p).prod ((presentedForm q).prod (presentedForm r))).Equivalent
       ((presentedForm p).prod (presentedForm (RegularFormPresentation.append q r))) :=
     (QuadraticMap.Equivalent.refl _).prod (equivalent_presentedForm_append_prod q r).symm
   exact ((((equivalent_presentedForm_append_prod _ r).trans h₁).trans h₂).trans h₃).trans
     (equivalent_presentedForm_append_prod p (RegularFormPresentation.append q r)).symm
 
-/-- The empty presentation presents the zero form on the zero space. -/
-private theorem presentedForm_nil (w : Fin 0 → Kˣ) :
-    presentedForm (⟨0, w⟩ : RegularFormPresentation K) = 0 := by
-  ext x
-  rw [Subsingleton.elim x 0]
-  simp
-
-/-- Deleting a form on the zero space from an orthogonal product. -/
-private def zeroProdIsometryEquiv {M : Type v} [AddCommGroup M] [Module K M]
-    (Q : QuadraticForm K M) :
-    ((0 : QuadraticForm K (Fin 0 → K)).prod Q).IsometryEquiv Q where
-  toLinearEquiv := LinearEquiv.uniqueProd
-  map_app' _ := by simp
-
 /-- Prepending an empty presentation does not change the form up to isometry. -/
 theorem presentedForm_nil_append (w : Fin 0 → Kˣ) (q : RegularFormPresentation K) :
-    (presentedForm (RegularFormPresentation.append ⟨0, w⟩ q)).Equivalent (presentedForm q) := by
-  have h : ((presentedForm (⟨0, w⟩ : RegularFormPresentation K)).prod
-      (presentedForm q)).Equivalent (presentedForm q) := by
-    rw [presentedForm_nil w]
-    exact ⟨zeroProdIsometryEquiv (presentedForm q)⟩
-  exact (equivalent_presentedForm_append_prod ⟨0, w⟩ q).trans h
+    (presentedForm (RegularFormPresentation.append ⟨0, w⟩ q)).Equivalent (presentedForm q) :=
+  (equivalent_presentedForm_append_prod ⟨0, w⟩ q).trans
+    ⟨QuadraticMap.IsometryEquiv.uniqueProd _ _⟩
 
 /-- Orthogonal sum of isometry classes. -/
 instance : Add (RegularFormClass K) :=
