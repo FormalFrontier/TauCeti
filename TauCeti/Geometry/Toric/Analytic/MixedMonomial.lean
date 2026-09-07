@@ -39,7 +39,7 @@ monomial maps really is a different function off that locus.
 * `TauCeti.Toric.MixedExponent`: the exponent data of a mixed monomial map.
 * `TauCeti.Toric.mixedChartDomain`: the open locus where all torus coordinates are invertible.
 * `TauCeti.Toric.mixedMonomialMap`: the ambient coordinate formula.
-* `TauCeti.Toric.mixedMonomialMap_mapsTo`: a mixed monomial map preserves the mixed-chart locus.
+* `TauCeti.Toric.mapsTo_mixedMonomialMap`: a mixed monomial map preserves the mixed-chart locus.
 * `TauCeti.Toric.contDiffAt_mixedMonomialMap` and
   `TauCeti.Toric.differentiableOn_mixedMonomialMap`: a mixed monomial map is holomorphic on the
   mixed-chart locus.
@@ -146,7 +146,7 @@ theorem mixedMonomialMap_snd_ne_zero (A : MixedExponent k l k' l')
 
 /-- A mixed monomial map sends the mixed-chart locus of its source into the mixed-chart locus of
 its target. -/
-theorem mixedMonomialMap_mapsTo (A : MixedExponent k l k' l') :
+theorem mapsTo_mixedMonomialMap (A : MixedExponent k l k' l') :
     Set.MapsTo (mixedMonomialMap A) (mixedChartDomain k l) (mixedChartDomain k' l') :=
   fun _ hz _ ↦ mixedMonomialMap_snd_ne_zero A hz _
 
@@ -473,8 +473,8 @@ noncomputable def mixedMonomialOpenPartialHomeomorph (A : MixedExponent k l k' l
   invFun := mixedMonomialMap B
   source := mixedChartDomain k l
   target := mixedChartDomain k' l'
-  map_source' := mixedMonomialMap_mapsTo A
-  map_target' := mixedMonomialMap_mapsTo B
+  map_source' := mapsTo_mixedMonomialMap A
+  map_target' := mapsTo_mixedMonomialMap B
   left_inv' z hz := by
     have h := mixedMonomialMap_comp B A hz
     rw [hBA, mixedMonomialMap_id] at h
