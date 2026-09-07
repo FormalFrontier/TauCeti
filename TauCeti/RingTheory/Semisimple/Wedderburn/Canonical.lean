@@ -83,8 +83,9 @@ the base field.
   ring.
 * `TauCeti.WedderburnPresentation.exists_equiv_degree_eq_blockMultiplicity`: **the data of any
   Wedderburn presentation are the intrinsic data.**  After one permutation of its blocks, its
-  degrees are the block multiplicities of simple left ideals and its division rings are their
-  opposite endomorphism rings.
+  degrees are the block multiplicities of pairwise non-isomorphic simple left ideals and its
+  division rings are their opposite endomorphism rings, so its blocks match the isomorphism classes
+  of simple modules one for one.
 
 ## References
 
@@ -203,8 +204,9 @@ theorem exists_ringEquiv_pi_matrix_end_mulOpposite_blockMultiplicity :
 variable {R}
 
 /-- **The data of a Wedderburn presentation are the intrinsic data of the ring.**  After one
-permutation of its blocks, the degrees of a presentation are the block multiplicities of simple
-left ideals and its coefficient division rings are their opposite endomorphism rings.
+permutation of its blocks, the degrees of a presentation are the block multiplicities of pairwise
+non-isomorphic simple left ideals and its coefficient division rings are their opposite
+endomorphism rings.
 
 Together with `TauCeti.blockMultiplicity_eq_of_linearEquiv` this is what makes "the degrees" and
 "the division rings" of a semisimple ring well defined: they are read off the isomorphism classes
@@ -212,10 +214,11 @@ of its simple modules, and any presentation exhibits exactly them. -/
 theorem WedderburnPresentation.exists_equiv_degree_eq_blockMultiplicity
     (P : WedderburnPresentation.{u, w} R) :
     ∃ (n : ℕ) (S : Fin n → Submodule R R) (σ : Fin P.blockCount ≃ Fin n),
-      (∀ i, IsSimpleModule R (S i)) ∧ ∀ i, P.degree i = blockMultiplicity R (S (σ i)) ∧
-        Nonempty (P.divisionRing i ≃+* (Module.End R (S (σ i)))ᵐᵒᵖ) := by
+      (∀ i, IsSimpleModule R (S i)) ∧ (∀ i j, Nonempty (S i ≃ₗ[R] S j) → i = j) ∧
+        ∀ i, P.degree i = blockMultiplicity R (S (σ i)) ∧
+          Nonempty (P.divisionRing i ≃+* (Module.End R (S (σ i)))ᵐᵒᵖ) := by
   classical
-  obtain ⟨n, S, d, simple, pos, hmult, -, ⟨g⟩⟩ :=
+  obtain ⟨n, S, d, simple, pos, hmult, hne, ⟨g⟩⟩ :=
     exists_ringEquiv_pi_matrix_end_mulOpposite_blockMultiplicity R
   -- the simplicity of the canonical blocks and the positivity of their sizes are what make their
   -- coefficient rings division rings and their matrix blocks simple, so both are needed as
@@ -223,6 +226,6 @@ theorem WedderburnPresentation.exists_equiv_degree_eq_blockMultiplicity
   have hsimple := simple
   have hdegree := pos
   obtain ⟨σ, hσ⟩ := wedderburn_blocks_unique P.equiv g
-  exact ⟨n, S, σ, simple, fun i ↦ ⟨(hσ i).1.trans (hmult _), (hσ i).2⟩⟩
+  exact ⟨n, S, σ, simple, hne, fun i ↦ ⟨(hσ i).1.trans (hmult _), (hσ i).2⟩⟩
 
 end TauCeti
