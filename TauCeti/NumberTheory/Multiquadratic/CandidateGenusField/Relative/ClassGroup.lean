@@ -9,7 +9,6 @@ public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.Relative.G
 public import TauCeti.NumberTheory.Multiquadratic.Quadratic.TwoRank
 import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.RamifiedPrimes
 import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.Relative.Quadratic
-import Mathlib.NumberTheory.NumberField.ClassNumber
 import TauCeti.NumberTheory.NumberField.Quadratic.InfinitePlace
 
 /-!
