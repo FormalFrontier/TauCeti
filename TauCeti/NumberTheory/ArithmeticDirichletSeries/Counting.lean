@@ -75,12 +75,6 @@ weighted prime counts `primeTheta` and `primeCount` of 4.3. Layer 5 supplies the
 estimates for these counts, and consumes the prime base and exponent of a prime-power ideal to
 fibre those estimates over the primes.
 
-`TauCetiRoadmap/Chebotarev/README.md`, Layer **11.3(3)** is the source for the finite-set estimate:
-a finite set of primes contributes `O(log x)`, hence `o(x)`.  The fibre bound
-`card_mul_log_absNorm_le_of_pow_le_of_base_eq` lives here rather than with either consumer: it holds
-for every exponent `k ≥ 1`, and both the higher-power estimate of 11.3(2) and the finite-set
-estimate of 11.3(3) rest on it.
-
 ## References
 
 * G. Tenenbaum, *Introduction to Analytic and Probabilistic Number Theory*, Chapters I--II.
