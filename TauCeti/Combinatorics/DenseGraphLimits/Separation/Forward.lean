@@ -6,31 +6,25 @@ Authors: Codex
 module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.Counting
-public import TauCeti.Combinatorics.DenseGraphLimits.CutMetric.Distance
 
 /-!
 # Forward separation of graphons by homomorphism densities
 
-The forward half of graphon separation is the quantitative consequence of the counting lemma:
+The forward half of graphon separation is the qualitative consequence of the cut-distance form of
+the counting lemma
 
-`|t(F, U) - t(F, W)| ≤ e(F) * δ□(U, W)`.
+`|t(F, U) - t(F, W)| ≤ e(F) * δ□(U, W)`
 
-Here `U` and `W` may live on different probability spaces.  The coupling form of the counting
-lemma bounds the density gap using the overlaid cut norm along *every* coupling.  Taking the
-infimum over those couplings therefore replaces the overlaid cut norm by the coupling-primary cut
-distance.  No standard-Borel, atomlessness, or common-carrier assumption is needed.
+(`abs_homDensity_sub_le_cutDist`): graphons at cut distance zero have equal homomorphism densities
+for every finite graph.  Here `U` and `W` may live on different probability spaces, and no
+standard-Borel, atomlessness, or common-carrier assumption is needed.
 
-The qualitative theorem `forall_homDensity_eq_of_cutDist_eq_zero` follows immediately: graphons at
-cut distance zero have equal homomorphism densities for every finite graph.  This is the easy
-direction of the inverse-counting/separation theorem and is already enough to show that each
-homomorphism density is well-defined on the future cut-distance quotient.  The converse — equality
-of all homomorphism densities implies cut distance zero — is the hard inverse-counting theorem and
+This is the easy direction of the inverse-counting/separation theorem.  The converse — equality of
+all homomorphism densities implies cut distance zero — is the hard inverse-counting theorem and
 belongs in the subsequent separation development.
 
 ## Main results
 
-* `TauCeti.DenseGraphLimits.abs_homDensity_sub_le_cutDist` — homomorphism density is
-  `e(F)`-Lipschitz for the cross-carrier cut distance;
 * `TauCeti.DenseGraphLimits.forall_homDensity_eq_of_cutDist_eq_zero` — graphons at cut distance
   zero have the same homomorphism densities.
 
@@ -48,7 +42,7 @@ public section
 
 noncomputable section
 
-open MeasureTheory TauCeti.MeasureTheory
+open MeasureTheory
 
 namespace TauCeti
 
@@ -57,29 +51,6 @@ namespace DenseGraphLimits
 variable {V Ω₁ Ω₂ : Type*} [Fintype V] [MeasurableSpace Ω₁] [MeasurableSpace Ω₂]
 variable {μ₁ : Measure Ω₁} {μ₂ : Measure Ω₂} [IsProbabilityMeasure μ₁]
   [IsProbabilityMeasure μ₂]
-
-/-- **Homomorphism density is Lipschitz for the cross-carrier cut distance.** For a finite graph
-`F`, the density gap between graphons on arbitrary probability carriers is at most the number of
-edges of `F` times their coupling cut distance. -/
-theorem abs_homDensity_sub_le_cutDist (F : SimpleGraph V) [DecidableRel F.Adj]
-    (U : Graphon Ω₁ μ₁) (W : Graphon Ω₂ μ₂) :
-    |homDensity F U - homDensity F W| ≤ (F.edgeFinset.card : ℝ) * cutDist U W := by
-  classical
-  by_cases hF : F.edgeFinset.card = 0
-  · have h := counting_lemma_coupling F U W (isCoupling_prod μ₁ μ₂)
-    simpa [hF] using h
-  · have hcard : 0 < (F.edgeFinset.card : ℝ) := by positivity
-    have hdiv : |homDensity F U - homDensity F W| / (F.edgeFinset.card : ℝ) ≤ cutDist U W :=
-      le_cutDist U W fun π hπ => by
-        rw [div_le_iff₀ hcard]
-        simpa only [mul_comm] using counting_lemma_coupling F U W hπ
-    calc
-      |homDensity F U - homDensity F W|
-          = (F.edgeFinset.card : ℝ)
-              * (|homDensity F U - homDensity F W| / (F.edgeFinset.card : ℝ)) := by
-                field_simp
-      _ ≤ (F.edgeFinset.card : ℝ) * cutDist U W :=
-        mul_le_mul_of_nonneg_left hdiv (Nat.cast_nonneg _)
 
 /-- **Forward separation, across arbitrary carriers.** If two graphons have cut distance zero,
 then every finite graph has the same homomorphism density in them.
