@@ -27,8 +27,8 @@ differ only by a permutation of the blocks.  That is uniqueness *between* presen
 not say what the surviving data `nᵢ` and `Dᵢ` **are**.  This file answers that: each block is the
 block of a simple `R`-module `S`, and then
 
-* its coefficient division ring is the opposite endomorphism ring `(Module.End R S)ᵐᵒᵖ`, which is a
-  division ring by Schur's lemma, and
+* its coefficient division ring is `TauCeti.blockDivisionRing R S`, the opposite endomorphism ring
+  `(Module.End R S)ᵐᵒᵖ`, which is a division ring by Schur's lemma, and
 * its matrix size is `TauCeti.blockMultiplicity R S`, the number of copies of `S` in the regular
   module.
 
@@ -58,6 +58,13 @@ indexing the blocks to be pairwise non-isomorphic.
 
 ## Implementation notes
 
+`blockDivisionRing` and `blockMultiplicity` are defined for an arbitrary module `S`, exactly as
+Mathlib defines `isotypicComponent` itself, and simplicity is an assumption of the lemmas that need
+it rather than of the definitions.  Gating the definitions on `[IsSimpleModule R S]` would make
+the canonical presentation unstatable: the simplicity of the modules
+`TauCeti.exists_ringEquiv_pi_matrix_end_mulOpposite_blockMultiplicity` produces is part of its own
+existential, so it is not available as an instance where the statement names their multiplicities.
+
 `blockMultiplicity` takes `ENat.toNat` of a length, so it reads `0` on a module whose isotypic
 component has infinite length; over a semisimple ring, where the regular module has finite length,
 that never happens and `TauCeti.blockMultiplicity_pos` records the positivity.
@@ -71,6 +78,7 @@ the base field.
 
 ## Main definitions
 
+* `TauCeti.blockDivisionRing`: the opposite endomorphism ring of a simple module.
 * `TauCeti.blockMultiplicity`: the multiplicity of a simple module in the regular module.
 
 ## Main results
@@ -79,13 +87,13 @@ the base field.
   power of `S` has exactly `blockMultiplicity R S` factors.
 * `TauCeti.exists_ringEquiv_pi_matrix_end_mulOpposite_blockMultiplicity`: **the canonical Wedderburn
   presentation**, whose blocks are indexed by pairwise non-isomorphic simple left ideals, with the
-  size of a block the multiplicity of its module and its coefficient ring the opposite endomorphism
-  ring.
+  size of a block the multiplicity of its module and its coefficient ring the block division ring of
+  that module.
 * `TauCeti.WedderburnPresentation.exists_equiv_degree_eq_blockMultiplicity`: **the data of any
   Wedderburn presentation are the intrinsic data.**  After one permutation of its blocks, its
   degrees are the block multiplicities of pairwise non-isomorphic simple left ideals and its
-  division rings are their opposite endomorphism rings, so its blocks match the isomorphism classes
-  of simple modules one for one.
+  division rings are their block division rings, so its blocks match the isomorphism classes of
+  simple modules one for one.
 
 ## References
 
@@ -104,11 +112,20 @@ namespace TauCeti
 
 universe u v w
 
-/-! ### The multiplicity of a simple module in the regular module -/
+/-! ### The intrinsic data of a simple module -/
 
-section BlockMultiplicity
+section BlockData
 
 variable (R : Type u) [Ring R] (S : Type v) [AddCommGroup S] [Module R S]
+
+/-- **The block division ring of a simple module `S`**: the opposite `(Module.End R S)ᵐᵒᵖ` of its
+endomorphism ring, which is a division ring by Schur's lemma.  It is the coefficient ring of the
+Wedderburn block of `S`.
+
+This is reducible, so it carries the instances of `(Module.End R S)ᵐᵒᵖ` unchanged, in particular
+the `DivisionRing` structure Schur's lemma puts on that ring for simple `S`, and statements spelled
+with either type are interchangeable. -/
+abbrev blockDivisionRing : Type v := (Module.End R S)ᵐᵒᵖ
 
 /-- **The block multiplicity of a simple module `S`**: the number of copies of `S` in the regular
 module of `R`, defined as the length of the `S`-isotypic component of `R`.
@@ -150,16 +167,16 @@ theorem blockMultiplicity_pos [IsSemisimpleRing R] [IsSimpleModule R S] :
   rw [blockMultiplicity, ENat.toNat_eq_zero] at h
   exact h.elim Module.length_pos.ne' Module.length_ne_top
 
-end BlockMultiplicity
+end BlockData
 
 /-! ### The canonical Wedderburn presentation -/
 
 variable (R : Type u) [Ring R] [IsSemisimpleRing R]
 
 /-- **The canonical Wedderburn presentation of a semisimple ring.**  The blocks are indexed by
-pairwise non-isomorphic simple left ideals `S i`; the coefficient ring of a block is the opposite
-endomorphism ring `(Module.End R (S i))ᵐᵒᵖ`, a division ring by Schur's lemma, and its size is the
-multiplicity of `S i` in the regular module.
+pairwise non-isomorphic simple left ideals `S i`; the coefficient ring of a block is the block
+division ring `blockDivisionRing R (S i)`, and its size is the multiplicity of `S i` in the regular
+module.
 
 Mathlib's `IsSemisimpleRing.exists_ringEquiv_pi_matrix_end_mulOpposite` produces the same shape but
 forgets which block belongs to which simple module, so neither the identification of the sizes with
@@ -169,7 +186,7 @@ theorem exists_ringEquiv_pi_matrix_end_mulOpposite_blockMultiplicity :
     ∃ (n : ℕ) (S : Fin n → Submodule R R) (d : Fin n → ℕ),
       (∀ i, IsSimpleModule R (S i)) ∧ (∀ i, NeZero (d i)) ∧
         (∀ i, d i = blockMultiplicity R (S i)) ∧ (∀ i j, Nonempty (S i ≃ₗ[R] S j) → i = j) ∧
-          Nonempty (R ≃+* Π i, Matrix (Fin (d i)) (Fin (d i)) (Module.End R (S i))ᵐᵒᵖ) := by
+          Nonempty (R ≃+* Π i, Matrix (Fin (d i)) (Fin (d i)) (blockDivisionRing R (S i))) := by
   classical
   -- Split the regular module into its isotypic components, and each component into copies of a
   -- simple left ideal contained in it.
@@ -205,8 +222,8 @@ variable {R}
 
 /-- **The data of a Wedderburn presentation are the intrinsic data of the ring.**  After one
 permutation of its blocks, the degrees of a presentation are the block multiplicities of pairwise
-non-isomorphic simple left ideals and its coefficient division rings are their opposite
-endomorphism rings.
+non-isomorphic simple left ideals and its coefficient division rings are their block division
+rings.
 
 Together with `TauCeti.blockMultiplicity_eq_of_linearEquiv` this is what makes "the degrees" and
 "the division rings" of a semisimple ring well defined: they are read off the isomorphism classes
@@ -216,7 +233,7 @@ theorem WedderburnPresentation.exists_equiv_degree_eq_blockMultiplicity
     ∃ (n : ℕ) (S : Fin n → Submodule R R) (σ : Fin P.blockCount ≃ Fin n),
       (∀ i, IsSimpleModule R (S i)) ∧ (∀ i j, Nonempty (S i ≃ₗ[R] S j) → i = j) ∧
         ∀ i, P.degree i = blockMultiplicity R (S (σ i)) ∧
-          Nonempty (P.divisionRing i ≃+* (Module.End R (S (σ i)))ᵐᵒᵖ) := by
+          Nonempty (P.divisionRing i ≃+* blockDivisionRing R (S (σ i))) := by
   classical
   obtain ⟨n, S, d, simple, pos, hmult, hne, ⟨g⟩⟩ :=
     exists_ringEquiv_pi_matrix_end_mulOpposite_blockMultiplicity R
