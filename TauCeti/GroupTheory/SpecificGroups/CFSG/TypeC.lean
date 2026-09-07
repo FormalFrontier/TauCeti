@@ -5,31 +5,18 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Lie.Symplectic.StandardCarrier.Frobenius
 public import TauCeti.Algebra.Lie.Symplectic.StandardCarrier.RootDatum
-public import TauCeti.GroupTheory.FixedPointCandidate
-public import TauCeti.GroupTheory.SpecificGroups.CFSG.Frobenius
+public import TauCeti.GroupTheory.SpecificGroups.CFSG.Closure
 
 /-!
-# The untwisted family `Cₙ(q)` on the standard symplectic carrier
+# The standard symplectic carrier of a validated type-`C` index
 
 The type-`C` branch of the classification list is built on the type-`C` diagram of rank `n`, and
 Tau Ceti's explicit full-weight Chevalley carrier for that diagram is `TauCeti.SpStd.groupScheme`,
 the Kostant toral closure of the standard representation of `sp_(2n)` inside `GL_(2n)` over `ℤ`.
-This file attaches that carrier to a validated type-`C` index: the group of
-algebraic-closure-valued points of the carrier at the index's rank, its Bourbaki-numbered simple
-root subgroups, the reading of their root characters in the type-`C` root datum the index names,
-the Steinberg endomorphism of the family, and the derived-central quotient of its fixed points
-
-```text
-H_d = fixedSubgroup d.steinberg,        d.Group = [H_d, H_d] / Z([H_d, H_d]).
-```
-
-The Steinberg map is the `q`-power Frobenius outright, `q` being the field order the index records.
-That is what an untwisted family asks for, and `TauCeti.TypeCLieIndex.diagramPerm_eq_one` is the
-check that the diagram permutation this index carries is indeed trivial: the type-`C` diagram has
-no symmetry to twist by, its last node carrying a root of a different length from the others, so
-`Cₙ(q)` is the only classification-list family on it.
+This file attaches that carrier to a validated type-`C` index: the group of algebraic-closure-valued
+points of the carrier at the index's rank, its Bourbaki-numbered simple root subgroups, and the
+reading of their root characters in the type-`C` root datum the index names.
 
 The carrier is indexed by `n` in the spelling `C (n + 1)`, so a validated index of rank `r` uses
 the carrier at `TauCeti.TypeCLieIndex.carrierRank`, which is `r - 1`. That subtraction is harmless
@@ -50,17 +37,7 @@ acquires the swap of the two Bourbaki nodes.
 
 Nothing here asserts that the carrier is reductive, that its weight torus is maximal, that it is
 the symplectic group scheme or the pinned simply connected Chevalley--Demazure group scheme of type
-`Cₙ`, or that any group below is finite, perfect, or simple. In particular
-`TauCeti.TypeCLieIndex.Group` is not asserted to be the finite simple group `Cₙ(q)`: reading it as
-that group needs an identification of the standard symplectic carrier with the pinned simply
-connected group of the same diagram, and no such identification is proved here or in the files this
-one imports.
-
-The same construction on the other branches already built is in
-`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeA.lean`,
-`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeD.lean`,
-`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeE6.lean` and
-`TauCeti/GroupTheory/SpecificGroups/CFSG/Unimodular.lean`.
+`Cₙ`, or that its point group is finite.
 
 ## Main declarations
 
@@ -70,20 +47,10 @@ The same construction on the other branches already built is in
   Bourbaki-numbered node, with
   `TauCeti.TypeCLieIndex.rootGeneratorWeight_carrierNode_eq_root_simpleIndex` identifying the
   character of that subgroup with the corresponding simple root of the type-`C` root datum.
-* `TauCeti.TypeCLieIndex.steinberg`: the Steinberg endomorphism of the family, with
-  `TauCeti.TypeCLieIndex.coe_steinberg_apply` its entrywise description,
-  `TauCeti.TypeCLieIndex.steinberg_simpleRootSubgroup` its pinned equation
-  `Frob_q (x_i(u)) = x_i(u ^ q)`, and
-  `TauCeti.TypeCLieIndex.mem_fixedSubgroup_steinberg_iff` describing the points it fixes as those
-  whose matrix entries lie in the field of definition `𝔽_q`.
-* `TauCeti.TypeCLieIndex.Group`: the derived subgroup of those fixed points modulo its centre,
-  formed on the standard symplectic carrier.
 
 ## References
 
 * R. W. Carter, *Simple Groups of Lie Type*, §§4.4 and 11.3.
-* R. W. Carter, *Finite Groups of Lie Type: Conjugacy Classes and Complex Characters*, §1.17, for
-  the Steinberg endomorphism and its fixed points.
 * N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Plate III, for the numbering of the
   type-`C` diagram that the root subgroups below are indexed by.
 -/
@@ -184,88 +151,6 @@ theorem rootGeneratorWeight_carrierNode_eq_root_simpleIndex (i j : Fin d.1.rank)
   rw [SpStd.rootGeneratorWeight_inl]
   simp only [DynkinType.root_simpleIndex]
   rw [d.dynkinType_cartanMatrix_apply, d.cartanMatrix_C_carrierNode]
-
-/-! ## The Steinberg endomorphism -/
-
-/-- **The Steinberg endomorphism of a validated type-`C` index**: the `q`-power Frobenius of the
-ambient group, `q` being the field order the index records. The family is untwisted, so no diagram
-automorphism and no half-Frobenius enters; `TauCeti.TypeCLieIndex.diagramPerm_eq_one` is the check
-that its diagram permutation is trivial.
-
-It is the Steinberg map of `Cₙ(q)` on the pinned simply connected group of type `Cₙ` only along an
-identification of that group with this carrier, which is not proved here. -/
-def steinberg : d.AmbientGroup →* d.AmbientGroup :=
-  SpStd.frobenius d.carrierRank d.1.characteristic d.1.fieldExponent d.1.Closure
-
--- The unfolding lemma of a sealed definition, and deliberately not a `simp` lemma:
--- `steinberg_simpleRootSubgroup` and `coe_steinberg_apply` are the normal forms the pinned
--- equations of this file are stated against, and unfolding to `TauCeti.SpStd.frobenius` would keep
--- them from firing.
-/-- The Steinberg map of a type-`C` index is the Frobenius of the standard symplectic carrier at
-the characteristic and field exponent that the index records. -/
-theorem steinberg_def :
-    d.steinberg = SpStd.frobenius d.carrierRank d.1.characteristic d.1.fieldExponent d.1.Closure :=
-  (rfl)
-
-/-- The Steinberg map acts on the ambient group by raising every matrix entry to the `q`-th
-power. -/
-@[simp]
-theorem coe_steinberg_apply (g : d.AmbientGroup)
-    (r c : Fin (d.carrierRank + 1 + (d.carrierRank + 1))) :
-    ((d.steinberg g :
-        Matrix.GeneralLinearGroup (Fin (d.carrierRank + 1 + (d.carrierRank + 1))) d.1.Closure) :
-        Matrix (Fin (d.carrierRank + 1 + (d.carrierRank + 1)))
-          (Fin (d.carrierRank + 1 + (d.carrierRank + 1))) d.1.Closure) r c =
-      ((g :
-        Matrix.GeneralLinearGroup (Fin (d.carrierRank + 1 + (d.carrierRank + 1))) d.1.Closure) :
-        Matrix (Fin (d.carrierRank + 1 + (d.carrierRank + 1)))
-          (Fin (d.carrierRank + 1 + (d.carrierRank + 1))) d.1.Closure) r c ^ d.1.fieldOrder := by
-  rw [steinberg_def, d.1.fieldOrder_eq_characteristic_pow]
-  exact SpStd.coe_frobenius_apply _ _ _ _ g r c
-
-/-- **The Steinberg map fixes the Bourbaki numbering of a simple-root subgroup and raises its
-parameter to the `q`-th power**, that is, `Frob_q (x_i(u)) = x_i(u ^ q)`. This is the pinned
-equation of the Steinberg map of an untwisted family. -/
-@[simp]
-theorem steinberg_simpleRootSubgroup (i : Fin d.1.rank) (u : Multiplicative d.1.Closure) :
-    d.steinberg (d.simpleRootSubgroup i u) =
-      d.simpleRootSubgroup i
-        (Multiplicative.ofAdd (Multiplicative.toAdd u ^ d.1.fieldOrder)) := by
-  rw [steinberg_def, simpleRootSubgroup_def, SpStd.frobenius_rootSubgroupPoints,
-    d.1.fieldOrder_eq_characteristic_pow]
-
--- As for `TauCeti.ValidLieTypeIndex.mem_fixedSubgroup_geckFrobenius_iff`, this is not a `simp`
--- lemma: `TauCeti.fixedSubgroup` is `MonoidHom.eqLocus` against the identity, so `simp` rewrites
--- its left-hand side to `d.steinberg g = g` through `MonoidHom.mem_eqLocus`, and the `simpNF`
--- linter rejects the annotation.
-/-- **A point of the ambient group is fixed by the Steinberg map exactly when all of its matrix
-entries lie in the field of definition.** Writing `𝔽_q` for `TauCeti.ValidLieTypeIndex.fixedField`,
-the copy of the field of `q` elements inside the algebraic closure, the group `H_d` whose
-derived-central quotient is formed below is therefore the group of points of the standard symplectic
-carrier whose entries lie in `𝔽_q`. -/
-theorem mem_fixedSubgroup_steinberg_iff (g : d.AmbientGroup) :
-    g ∈ fixedSubgroup d.steinberg ↔
-      ∀ r c, ((g :
-          Matrix.GeneralLinearGroup (Fin (d.carrierRank + 1 + (d.carrierRank + 1))) d.1.Closure) :
-        Matrix (Fin (d.carrierRank + 1 + (d.carrierRank + 1)))
-          (Fin (d.carrierRank + 1 + (d.carrierRank + 1))) d.1.Closure) r c ∈ d.1.fixedField := by
-  rw [mem_fixedSubgroup, steinberg_def, SpStd.frobenius_eq_self_iff]
-  simp only [mem_frobeniusFixedSubring, ValidLieTypeIndex.mem_fixedField,
-    d.1.fieldOrder_eq_characteristic_pow]
-
-/-! ## The derived-central quotient of the fixed points -/
-
-/-- **The derived-central quotient on the standard symplectic carrier**: the derived subgroup of the
-fixed points of the Steinberg map above, modulo the centre of that derived subgroup.
-
-This is the shape the untwisted family `Cₙ(q)` is cut out in, formed here on the standard symplectic
-carrier rather than on the pinned simply connected Chevalley--Demazure group scheme of type `Cₙ`. It
-reads as the candidate simple group of that family only along an identification of those two
-carriers, which is not proved here. Nothing below asserts that it is finite, perfect, or simple. -/
-abbrev Group : Type := FixedPointCandidate d.steinberg
-
-/-- The quotient carries a group instance, supplied by the quotient construction. -/
-example : _root_.Group d.Group := inferInstance
 
 end
 
