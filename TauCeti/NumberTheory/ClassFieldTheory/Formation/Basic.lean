@@ -92,9 +92,6 @@ equal.
 * E. Artin and J. Tate, *Class Field Theory*, Chapter XIV.
 * J. Neukirch, *Class Field Theory*, Chapter III.
 * J.-P. Serre, *Local Fields*, Chapter XI.
-* `Suggested.lean` of the TauCeti `ClassFieldTheory` roadmap, the blueprint whose signatures for
-  the two structures below and for the level, layer representation and norm constructions this
-  file follows.
 -/
 
 public noncomputable section
