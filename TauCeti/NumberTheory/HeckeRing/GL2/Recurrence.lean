@@ -94,6 +94,24 @@ private lemma heckeT_prime_pow_one : heckeT ⟨p ^ 1, pow_pos hp.pos 1⟩ = heck
   congr 1
   exact Subtype.ext (pow_one p)
 
+/-- **The scalar operator is central**, in the form `T(1, p) · T(p,p) = T(p,p) · T(1, p)`.
+Every commutation below is this one transported: the `T(p)` form is it after
+`heckeT_prime`, and the `p • T(p,p)` form is that scaled. Primality plays no part. -/
+private lemma commute_heckeTDiag_one_heckeTScalar :
+    Commute (heckeTDiag 1 p) (heckeTScalar p) :=
+  -- transposition is an anti-involution fixing every Hecke coset, and a ring carrying one is
+  -- commutative on the cosets it fixes
+  HeckeCosetModule.mul_comm_of_antiInvolution ℤ (transposeAntiInvolution 2)
+    (transposeAntiInvolution_onHeckeCoset_eq_self 2) (heckeTDiag 1 p) (heckeTScalar p)
+
+include hp in
+/-- `T(p)` commutes with the scalar operator `T(p,p)`. The shape the recurrence steps meet,
+whose left factor is written `T(p)` rather than `T(1, p)`. -/
+private lemma commute_heckeT_prime_heckeTScalar :
+    Commute (heckeT ⟨p, hp.pos⟩) (heckeTScalar p) := by
+  rw [heckeT_prime p hp]
+  exact commute_heckeTDiag_one_heckeTScalar p
+
 include hp in
 /-- The inductive step of the recurrence for exponents `≥ 3`: substitute the recurrence at
 `k` into the key product identity, then rearrange. -/
@@ -121,11 +139,7 @@ private lemma heckeT_prime_pow_recurrence_step (k : ℕ) (hk_pos : 0 < k)
   -- and `T(p,p)` over the difference on the right
   conv at h5 => rhs; rw [mul_sub]
   -- the scalar operator is central, and the induction hypothesis rewrites `T(p) · T(pᵏ)`
-  have hcomm : heckeT ⟨p, hp.pos⟩ * heckeTScalar p =
-      heckeTScalar p * heckeT ⟨p, hp.pos⟩ := by
-    rw [heckeT_prime p hp]
-    exact HeckeCosetModule.mul_comm_of_antiInvolution ℤ (transposeAntiInvolution 2)
-      (transposeAntiInvolution_onHeckeCoset_eq_self 2) (heckeTDiag 1 p) (heckeTScalar p)
+  have hcomm := (commute_heckeT_prime_heckeTScalar p hp).eq
   have hih : heckeT ⟨p, hp.pos⟩ * heckeT ⟨p ^ k, pow_pos hp.pos k⟩ =
       heckeT ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ +
         (p : ℤ) • (heckeTScalar p * heckeT ⟨p ^ (k - 1), pow_pos hp.pos (k - 1)⟩) := by
@@ -142,6 +156,54 @@ private lemma heckeT_prime_pow_recurrence_step (k : ℕ) (hk_pos : 0 < k)
   linear_combination (norm := module) -h5
 
 include hp in
+/-- The prime-power recurrence at `k = 1`: `T(p²) = T(p)² − p · T(p,p)`. -/
+private lemma heckeT_prime_pow_recurrence_one :
+    heckeT ⟨p ^ (1 + 1), pow_pos hp.pos (1 + 1)⟩ =
+      heckeT ⟨p, hp.pos⟩ * heckeT ⟨p ^ 1, pow_pos hp.pos 1⟩ -
+        (p : ℤ) • (heckeTScalar p * heckeT ⟨p ^ (1 - 1), pow_pos hp.pos (1 - 1)⟩) := by
+  have h5 := heckeT_prime_mul_heckeTDiag_one_prime_pow p hp 1
+  rw [heckeTDiag_p_prime_pow_eq p 1 (by omega)] at h5
+  have h2 := heckeTDiag_one_prime_pow_eq p hp (1 + 1) (by omega)
+  -- `heckeTDiag_one_prime_pow_eq` spells the exponent `(k + 1) - 2`, while `h5` and the goal
+  -- carry it as `k - 1`. Equal, but not syntactically so: normalising either side to the
+  -- numeral instead leaves the `rw [h2] at h5` below with no matching pattern.
+  conv at h2 => rhs; rw [show (1 + 1) - 2 = 1 - 1 by omega]
+  rw [h2] at h5
+  simp only [Nat.sub_self, ite_true] at h5 ⊢
+  rw [heckeT_prime_pow_zero p hp, pow_zero, heckeTDiag_one_one, mul_one] at h5
+  rw [heckeT_prime_pow_zero p hp, mul_one, heckeT_prime_pow_one p hp]
+  rw [heckeTDiag_one_prime_pow_one, heckeT_prime p hp] at h5
+  rw [heckeT_prime p hp]
+  rw [add_smul, one_smul] at h5
+  linear_combination (norm := module) -h5
+
+include hp in
+/-- The prime-power recurrence at `k = 2`: `T(p³) = T(p) · T(p²) − p · T(p,p) · T(p)`. -/
+private lemma heckeT_prime_pow_recurrence_two :
+    heckeT ⟨p ^ (2 + 1), pow_pos hp.pos (2 + 1)⟩ =
+      heckeT ⟨p, hp.pos⟩ * heckeT ⟨p ^ 2, pow_pos hp.pos 2⟩ -
+        (p : ℤ) • (heckeTScalar p * heckeT ⟨p ^ (2 - 1), pow_pos hp.pos (2 - 1)⟩) := by
+  have h5 := heckeT_prime_mul_heckeTDiag_one_prime_pow p hp 2
+  rw [heckeTDiag_p_prime_pow_eq p 2 (by omega)] at h5
+  have h2 := heckeTDiag_one_prime_pow_eq p hp (2 + 1) (by omega)
+  -- as at `k = 1`: the exponent must be respelled the way `h5` writes it, since normalising
+  -- to the numeral leaves the `rw [h2] at h5` below with no matching pattern.
+  conv at h2 => rhs; rw [show (2 + 1) - 2 = 2 - 1 by omega]
+  rw [h2] at h5
+  -- the multiplicity carries an `if k = 1` guard that has to be discharged before the
+  -- exponent can be reduced; the numeral simprocs (`Nat.reduceSub`, `reduceIte`) do both at
+  -- once and over-reduce, leaving the closing `linear_combination` shapes `ring` cannot match
+  simp only [show (2 : ℕ) ≠ 1 by omega, ite_false, show (2 : ℕ) - 1 = 1 by omega] at h5 ⊢
+  rw [heckeTDiag_one_prime_pow_eq p hp 2 (by omega)] at h5
+  rw [mul_sub] at h5
+  simp only [Nat.sub_self] at h5 ⊢
+  rw [heckeT_prime_pow_zero p hp, mul_one, heckeTDiag_one_prime_pow_one, heckeT_prime p hp] at h5
+  rw [heckeT_prime_pow_one p hp] at h5 ⊢
+  rw [heckeT_prime p hp] at h5 ⊢
+  rw [(commute_heckeTDiag_one_heckeTScalar p).eq] at h5
+  linear_combination (norm := module) -h5
+
+include hp in
 /-- **Shimura, Theorem 3.24(4)** — the prime-power recurrence:
 `T(p^(k+1)) = T(p) · T(pᵏ) − p · T(p,p) · T(p^(k−1))` for `k ≥ 1`, which determines every
 `T(pᵏ)` from `T(p)` and the scalar operator. -/
@@ -153,33 +215,12 @@ theorem heckeT_prime_pow_recurrence : ∀ k : ℕ, 0 < k →
   induction k using Nat.strongRecOn with
   | _ k ih =>
   intro hk
-  have h5 := heckeT_prime_mul_heckeTDiag_one_prime_pow p hp k
-  rw [heckeTDiag_p_prime_pow_eq p k hk] at h5
-  have h2 := heckeTDiag_one_prime_pow_eq p hp (k + 1) (by omega)
-  conv at h2 => rhs; rw [show (k + 1) - 2 = k - 1 by omega]
-  rw [h2] at h5
   rcases k with _ | k
   · omega
   rcases k with _ | k
-  · simp only [show (1 : ℕ) - 1 = 0 from rfl, ite_true] at h5 ⊢
-    rw [heckeT_prime_pow_zero p hp, pow_zero, heckeTDiag_one_one, mul_one] at h5
-    rw [heckeT_prime_pow_zero p hp, mul_one, heckeT_prime_pow_one p hp]
-    rw [heckeTDiag_one_prime_pow_one, heckeT_prime p hp] at h5
-    rw [heckeT_prime p hp]
-    -- split the `k = 1` coefficient `p + 1` into `p` and the unit
-    rw [add_smul, one_smul] at h5
-    linear_combination (norm := module) -h5
+  · exact heckeT_prime_pow_recurrence_one p hp
   rcases k with _ | k
-  · simp only [show (2 : ℕ) ≠ 1 by omega, ite_false, show (2 : ℕ) - 1 = 1 by omega] at h5 ⊢
-    rw [heckeTDiag_one_prime_pow_eq p hp 2 (by omega)] at h5
-    rw [mul_sub] at h5
-    simp only [show 2 - 2 = 0 from rfl] at h5 ⊢
-    rw [heckeT_prime_pow_zero p hp, mul_one, heckeTDiag_one_prime_pow_one, heckeT_prime p hp] at h5
-    rw [heckeT_prime_pow_one p hp] at h5 ⊢
-    rw [heckeT_prime p hp] at h5 ⊢
-    rw [HeckeCosetModule.mul_comm_of_antiInvolution ℤ (transposeAntiInvolution 2)
-      (transposeAntiInvolution_onHeckeCoset_eq_self 2) (heckeTDiag 1 p) (heckeTScalar p)] at h5
-    linear_combination (norm := module) -h5
+  · exact heckeT_prime_pow_recurrence_two p hp
   · exact heckeT_prime_pow_recurrence_step p hp (k + 1) (by omega) ih
 
 section Centrality
@@ -193,16 +234,12 @@ sequence over any ring in which `D` and `S` commute — and here they do, the sc
 being central. -/
 
 include hp in
-/-- `T(p)` commutes with the scalar operator `p • T(p,p)`.
-
-The scalar operator is central by `mul_comm_of_antiInvolution`, and an integer multiple of a
-commuting element still commutes. -/
+/-- `T(p)` commutes with the scalar operator `p • T(p,p)`. This is the pair the product
+formula hands to `linearRec₂_mul_eq_sum_pow_mul`, whose hypothesis is exactly that the two
+recurrence coefficients commute. -/
 private lemma commute_heckeT_prime_smul_heckeTScalar :
-    Commute (heckeT ⟨p, hp.pos⟩) ((p : ℤ) • heckeTScalar p) := by
-  refine Commute.smul_right ?_ _
-  rw [heckeT_prime p hp]
-  exact HeckeCosetModule.mul_comm_of_antiInvolution ℤ (transposeAntiInvolution 2)
-    (transposeAntiInvolution_onHeckeCoset_eq_self 2) (heckeTDiag 1 p) (heckeTScalar p)
+    Commute (heckeT ⟨p, hp.pos⟩) ((p : ℤ) • heckeTScalar p) :=
+  (commute_heckeT_prime_heckeTScalar p hp).smul_right _
 
 include hp in
 /-- **Shimura, Theorem 3.24(4)** — the prime-power product formula:

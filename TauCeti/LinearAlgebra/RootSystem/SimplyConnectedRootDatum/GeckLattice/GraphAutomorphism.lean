@@ -75,6 +75,8 @@ reductivity, maximality of the weight torus, or any finiteness or simplicity sta
   points is the map the carrier automorphism induces.
 * `TauCeti.DynkinType.geckGraphAutPoints_geckRootSubgroupMatrix` and
   `TauCeti.DynkinType.geckGraphAutPoints_geckTorusMatrix`: the two pinning equations on points.
+* `TauCeti.DynkinType.geckGraphAutPoints_geckWeightTorusPoints`: the second of those equations
+  read on the represented weight torus, which is the form a consumer of that homomorphism uses.
 * `TauCeti.DynkinType.geckPointsMap_comp_geckGraphAutPoints`: the automorphism on points is natural
   in the value ring.
 * `TauCeti.DynkinType.geckGraphAutPoints_pow_eq_one` and
@@ -464,6 +466,23 @@ theorem geckGraphAutPoints_geckTorusMatrix (hsigma : sigma ∈ t.diagramSymmetry
   simp only [geckGraphAutMatrix]
   simpa only [TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix_apply] using
     hconj.trans (congrArg diagGL (funext hpt))
+
+/-- **The graph automorphism relabels a point of the represented weight torus** by the inverse of
+the diagram symmetry.
+
+This is `TauCeti.DynkinType.geckGraphAutPoints_geckTorusMatrix` stated on
+`TauCeti.DynkinType.geckWeightTorusPoints`, the homomorphism through which the weight torus enters
+the point group, so that both sides are values of that homomorphism. -/
+@[simp]
+theorem geckGraphAutPoints_geckWeightTorusPoints (hsigma : sigma ∈ t.diagramSymmetry)
+    (A : Type v) [CommRing A] (s : Fin t.rank → Aˣ) :
+    t.geckGraphAutPoints ht hsigma A (t.geckWeightTorusPoints ht A s) =
+      t.geckWeightTorusPoints ht A fun k => s (sigma⁻¹ k) := by
+  have htorus (r : Fin t.rank → Aˣ) :
+      (⟨t.geckTorusMatrix ht r, t.geckTorusMatrix_mem_geckPoints ht A r⟩ :
+          t.geckPoints ht A) = t.geckWeightTorusPoints ht A r :=
+    Subtype.ext (t.coe_geckWeightTorusPoints ht A r).symm
+  rw [← htorus s, geckPoints_mk_geckTorusMatrix, geckGraphAutPoints_geckTorusMatrix, htorus]
 
 /-- **The graph automorphism on points is natural in the value ring.** In particular it commutes
 with the Frobenius endomorphism of the points of the carrier. -/

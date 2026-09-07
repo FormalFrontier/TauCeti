@@ -12,7 +12,7 @@ public import TauCeti.LinearAlgebra.TensorSquare
 public import TauCeti.LinearAlgebra.ExteriorPower
 public import TauCeti.RepresentationTheory.ExteriorPower
 public import TauCeti.RepresentationTheory.SymmetricPower
-public import TauCeti.LinearAlgebra.Trace.Prod
+public import TauCeti.LinearAlgebra.Trace.Exact
 public import TauCeti.LinearAlgebra.Trace.Square
 public import TauCeti.RepresentationTheory.Tensor.Power
 
@@ -51,10 +51,10 @@ the sum and difference identities coincide, so neither character is determined b
 
 ## Implementation notes
 
-Both trace identities go through the same private helper, trace additivity along the exact
-sequence `⋀²M → M ⊗ M → Sym²M`, so its hypothesis on the alternating inclusion is named once
-(`TauCeti.TensorSquare.map_comp_toTensorPower`) and reused for both readings; the matching
-hypothesis on the symmetric quotient is `SymmetricPower.map_mk` read extensionally. The
+Both trace identities read the exact sequence `⋀²M → M ⊗ M → Sym²M` through the same trace
+additivity `LinearMap.trace_eq_add_of_exact`, so its hypothesis on the alternating inclusion is
+named once (`TauCeti.TensorSquare.map_comp_toTensorPower`) and reused for both readings; the
+matching hypothesis on the symmetric quotient is `SymmetricPower.map_mk` read extensionally. The
 linear-algebra steps stay private, as the file's public interface is the character identities.
 
 ## References
@@ -184,58 +184,6 @@ private theorem toTensorPower_injective {R : Type} {M : Type*}
   simp only [exteriorPower.ιMultiDual, exteriorPower.ιMulti_family,
     pairingDual_ιMulti_apply, h]
 
--- Along a splitting `e` identifying `A` with the first summand via `i`, conjugating by `e` sends
--- an endomorphism restricting to `fA` along `i` to one preserving that summand, acting as `fA`.
-private theorem conj_comp_inl_eq_inl_comp {R A B C : Type*} [Semiring R]
-    [AddCommMonoid A] [Module R A] [AddCommMonoid B] [Module R B] [AddCommMonoid C] [Module R C]
-    {i : A →ₗ[R] B} {fA : A →ₗ[R] A} {fB : B →ₗ[R] B} (e : B ≃ₗ[R] A × C)
-    (hi : ∀ x : A, e.symm ((LinearMap.inl R A C) x) = i x) (hfi : fB.comp i = i.comp fA) :
-    (((e : B →ₗ[R] A × C).comp fB).comp (e.symm : (A × C) →ₗ[R] B)).comp (LinearMap.inl R A C)
-      = (LinearMap.inl R A C).comp fA := by
-  have hi' : ∀ x : A, e (i x) = (LinearMap.inl R A C) x := fun x => by
-    rw [← hi x, LinearEquiv.apply_symm_apply]
-  refine LinearMap.ext fun a => ?_
-  simp only [LinearMap.comp_apply, LinearEquiv.coe_coe, hi]
-  rw [← LinearMap.comp_apply, hfi, LinearMap.comp_apply, hi']
-
--- Dually, along a splitting `e` identifying `C` with the second summand via `q`, conjugating by
--- `e` sends an endomorphism covering `fC` along `q` to one covering `fC` on that summand.
-private theorem snd_comp_conj_eq_comp_snd {R A B C : Type*} [Semiring R]
-    [AddCommMonoid A] [Module R A] [AddCommMonoid B] [Module R B] [AddCommMonoid C] [Module R C]
-    {q : B →ₗ[R] C} {fB : B →ₗ[R] B} {fC : C →ₗ[R] C} (e : B ≃ₗ[R] A × C)
-    (hq : ∀ b : B, (LinearMap.snd R A C) (e b) = q b) (hfq : q.comp fB = fC.comp q) :
-    (LinearMap.snd R A C).comp (((e : B →ₗ[R] A × C).comp fB).comp (e.symm : (A × C) →ₗ[R] B))
-      = fC.comp (LinearMap.snd R A C) := by
-  have hq' : ∀ x : A × C, q (e.symm x) = (LinearMap.snd R A C) x := fun x => by
-    rw [← hq (e.symm x), LinearEquiv.apply_symm_apply]
-  refine LinearMap.ext fun x => ?_
-  simp only [LinearMap.comp_apply, LinearEquiv.coe_coe, hq]
-  rw [← LinearMap.comp_apply, hfq, LinearMap.comp_apply, hq']
-
--- Split an exact sequence as vector spaces. In that splitting the middle action is block
--- triangular, so its trace is the sum of the traces on the subspace and the quotient.
-private theorem trace_eq_add_of_exact {K A B C : Type*} [Field K]
-    [AddCommGroup A] [Module K A] [FiniteDimensional K A] [AddCommGroup B] [Module K B]
-    [AddCommGroup C] [Module K C] [FiniteDimensional K C] (i : A →ₗ[K] B) (q : B →ₗ[K] C)
-    (fA : A →ₗ[K] A) (fB : B →ₗ[K] B) (fC : C →ₗ[K] C)
-    (hi : Function.Injective i) (hq : Function.Surjective q)
-    (hexact : LinearMap.range i = LinearMap.ker q)
-    (hfi : fB.comp i = i.comp fA) (hfq : q.comp fB = fC.comp q) :
-    LinearMap.trace K B fB =
-      LinearMap.trace K A fA + LinearMap.trace K C fC := by
-  classical
-  -- Split `B ≃ₗ A × C`, using Mathlib's correspondence between sections of `q` and splittings.
-  obtain ⟨s, hs⟩ := q.exists_rightInverse_of_surjective (LinearMap.range_eq_top.mpr hq)
-  obtain ⟨e, hie, hqe⟩ :=
-    (LinearMap.exact_iff.mpr hexact.symm).splitSurjectiveEquiv hi ⟨s, hs⟩
-  have hia : ∀ x : A, e.symm ((LinearMap.inl K A C) x) = i x := fun x => by rw [hie]; rfl
-  have hsnd : ∀ b : B, (LinearMap.snd K A C) (e b) = q b := fun b => by rw [hqe]; rfl
-  -- In that splitting `fB` becomes block upper triangular, so its trace splits.
-  rw [← LinearMap.trace_conj' fB e, LinearEquiv.conj_apply,
-    LinearMap.eq_prodMap_add_inl_comp_snd _ (conj_comp_inl_eq_inl_comp e hia hfi)
-      (snd_comp_conj_eq_comp_snd e hsnd hfq),
-    LinearMap.trace_prodMap_add_inl_comp_snd]
-
 /-- The alternating inclusion `⋀²M → M ⊗ M` is natural in the endomorphism: it intertwines the
 exterior square with the diagonal action. -/
 private theorem map_comp_toTensorPower {R : Type} {M : Type*}
@@ -318,15 +266,10 @@ private theorem trace_symmetricPower_sub_trace_exteriorPower {R : Type} {M : Typ
       LinearMap.comp_apply]
     exact congrArg (SymmetricPower.map (ι := Fin 2) f)
       (LinearMap.congr_fun mk_comp_swap x)
-  have h := trace_eq_add_of_exact
-    (exteriorPower.toTensorPower R M 2)
-    (SymmetricPower.mk R (Fin 2) M)
-    (-exteriorPower.map 2 f)
-    ((PiTensorProduct.map fun _ : Fin 2 ↦ f).comp (tensorSwap R M).toLinearMap)
-    (SymmetricPower.map (ι := Fin 2) f)
+  have h := LinearMap.trace_eq_add_of_exact
     toTensorPower_injective
     (LinearMap.range_eq_top.mp (SymmetricPower.range_mk R (Fin 2) M))
-    range_toTensorPower_eq_ker_mk hfi hfq
+    (LinearMap.exact_iff.mpr range_toTensorPower_eq_ker_mk.symm) hfi hfq
   have hneg : LinearMap.trace R (⋀[R]^2 M) (-exteriorPower.map 2 f)
       = -LinearMap.trace R (⋀[R]^2 M) (exteriorPower.map 2 f) :=
     map_neg (LinearMap.trace R (⋀[R]^2 M)) (exteriorPower.map 2 f)
@@ -390,17 +333,14 @@ theorem char_tensorSquare (ρ : Representation R G M) (g : G) : (ρ.character g)
   simp only [Representation.character, tensorPower_apply, symmetricPower_apply,
     exteriorPower_apply]
   -- Trace is additive along the exact sequence `⋀²M → M⊗M → Sym²M`.
-  have h := TauCeti.TensorSquare.trace_eq_add_of_exact
-    (exteriorPower.toTensorPower R M 2)
-    (SymmetricPower.mk R (Fin 2) M)
-    (exteriorPower.map 2 (ρ g))
-    (PiTensorProduct.map fun _ : Fin 2 ↦ ρ g)
-    (SymmetricPower.map (ρ g))
+  have hq : (SymmetricPower.mk R (Fin 2) M) ∘ₗ (PiTensorProduct.map fun _ : Fin 2 ↦ ρ g)
+      = (SymmetricPower.map (ι := Fin 2) (ρ g)) ∘ₗ (SymmetricPower.mk R (Fin 2) M) :=
+    LinearMap.ext fun x ↦ (SymmetricPower.map_mk (ρ g) x).symm
+  have h := LinearMap.trace_eq_add_of_exact
     TauCeti.TensorSquare.toTensorPower_injective
     (LinearMap.range_eq_top.mp (SymmetricPower.range_mk R (Fin 2) M))
-    TauCeti.TensorSquare.range_toTensorPower_eq_ker_mk
-    (TauCeti.TensorSquare.map_comp_toTensorPower (ρ g))
-    (LinearMap.ext fun x ↦ (SymmetricPower.map_mk (ρ g) x).symm)
+    (LinearMap.exact_iff.mpr TauCeti.TensorSquare.range_toTensorPower_eq_ker_mk.symm)
+    (TauCeti.TensorSquare.map_comp_toTensorPower (ρ g)) hq
   simpa only [add_comm] using h
 
 /-- **The difference of the two square characters is the character at the square.** Over any
