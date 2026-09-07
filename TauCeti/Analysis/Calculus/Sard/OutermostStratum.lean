@@ -345,8 +345,8 @@ private theorem addHaar_image_criticalPoints_eq_zero_aux (n : ℕ) :
       measure_prod_null_of_ae_null (hPcomp.image eF.continuous).isClosed.measurableSet
         (Filter.Eventually.of_forall hslicenull)
     have hnull : ν (f '' ({x | ¬ Surjective (fderiv ℝ f x)} ∩ K)) = 0 := by
-      have := (ContinuousLinearEquiv.quasiMeasurePreserving_addHaar ν
-        ((volume : Measure ℝ).prod (addHaar : Measure ↥Fk)) eF).preimage_null hprod
+      have := (ContinuousLinearEquiv.quasiMeasurePreserving_addHaar eF ν
+        ((volume : Measure ℝ).prod (addHaar : Measure ↥Fk))).preimage_null hprod
       rwa [Set.preimage_image_eq _ eF.injective] at this
     refine ⟨(U ∩ {x | ¬ Surjective (fderiv ℝ f x)} ∩ {x | fderiv ℝ f x ≠ 0}) ∩
       Metric.ball a (r / 2), inter_mem_nhdsWithin _

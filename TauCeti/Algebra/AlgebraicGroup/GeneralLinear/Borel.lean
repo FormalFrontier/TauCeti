@@ -263,7 +263,7 @@ private theorem isBorelOverField_definingHopfIdeal :
         (CommAlgCat.of k K)) := hIsolvable
   let _ : Group.IsSolvable P :=
     Group.isSolvable_of_isSolvable_injective (f := e.symm.toMonoidHom) e.symm.injective
-  have hPB : P ≤ GL2Borel K := GL2Borel.le_of_isSolvable K P hBP
+  have hPB : P ≤ GL2Borel K := GL2Borel.le_of_isSolvable_of_infinite K P hBP
   let _ : IsReduced (CommHopfAlgCat.quotient H I) :=
     ((smoothCommHopfAlgProperty_iff_geometricallyReduced k
       (CommHopfAlgCat.quotient H I)).mp hIsmooth).isReduced
