@@ -42,8 +42,8 @@ results over the rows multiplies the determinant by the total of the factors.
 * `Matrix.detRowAlternating_mulVec`: multiplication by a square matrix scales the
   standard-basis determinant form by the matrix determinant.
 * `Matrix.sum_det_updateRow_mul_row`: Jacobi's formula for a determinant, in row form.
-* `Matrix.det_mul_intCast`: multiplying the entry in position `(i, j)` of an integer
-  matrix by `d i` multiplies the determinant by `∏ i, d i`, over any commutative ring.
+* `Matrix.det_mul_column_intCast`: scaling every row `i` of an integer matrix by `d i`
+  multiplies the determinant by `∏ i, d i`, over any commutative ring.
 
 ## Implementation notes
 
@@ -239,13 +239,11 @@ theorem sum_det_updateRow_mul_row {ι : Type*} [DecidableEq ι] [Fintype ι] {R 
   rw [← Finset.mul_sum, ← Finset.sum_mul, Equiv.sum_comp (σ⁻¹ : Equiv.Perm ι) d]
   ring
 
-/-- **The determinant of a scaled integer matrix.** Multiplying the entry in position
-`(i, j)` by `d i` multiplies the determinant by `∏ i, d i`, in any commutative ring the
-entries are cast into. This is `Matrix.det_mul_column`, whose statement is that same
-`fun i j ↦ v i * A i j`, composed with `Int.cast_det`, which turns the determinant of
-the cast matrix into the cast of the integral determinant. -/
-theorem det_mul_intCast {n : Type*} [Fintype n] [DecidableEq n] {R : Type*} [CommRing R]
-    (d : n → R) (M : Matrix n n ℤ) :
+/-- **The determinant of a scaled integer matrix.** Scaling every row `i` of an integer
+matrix `M` by `d i`, with the entries cast into a commutative ring `R`, multiplies the
+determinant by `∏ i, d i`. -/
+theorem det_mul_column_intCast {n : Type*} [Fintype n] [DecidableEq n]
+    {R : Type*} [CommRing R] (d : n → R) (M : Matrix n n ℤ) :
     (Matrix.of fun i j ↦ d i * (M i j : R)).det = (∏ i, d i) * (M.det : R) := by
   have hmap : (Matrix.of fun i j ↦ d i * (M i j : R))
       = Matrix.of fun i j ↦ d i * M.map (fun x : ℤ ↦ (x : R)) i j := by

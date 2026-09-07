@@ -149,7 +149,7 @@ theorem isFiniteType_of_conjTranspose_mul_self_of_det_ne_zero [DecidableEq B] {m
     IsFiniteType A := by
   refine isFiniteType_of h2 hle hd ?_
   have hunit : IsUnit (Matrix.of fun i j ↦ d i * (A i j : ℚ)) := by
-    rw [Matrix.isUnit_iff_isUnit_det, isUnit_iff_ne_zero, Matrix.det_mul_intCast]
+    rw [Matrix.isUnit_iff_isUnit_det, isUnit_iff_ne_zero, Matrix.det_mul_column_intCast]
     exact mul_ne_zero (Finset.prod_ne_zero_iff.mpr fun i _ ↦ (hd i).ne')
       (Int.cast_ne_zero.mpr hdet)
   rw [hgram] at hunit ⊢
@@ -642,7 +642,7 @@ theorem det_ne_zero [DecidableEq B] (h : IsFiniteType A) : A.det ≠ 0 := by
   -- symmetrizer contributes only a nonzero diagonal factor.
   obtain ⟨d, -, hpd⟩ := h.exists_symmetrizer
   have hu := hpd.isUnit
-  rw [Matrix.isUnit_iff_isUnit_det, Matrix.det_mul_intCast] at hu
+  rw [Matrix.isUnit_iff_isUnit_det, Matrix.det_mul_column_intCast] at hu
   intro hdet
   rw [hdet] at hu
   simp at hu
