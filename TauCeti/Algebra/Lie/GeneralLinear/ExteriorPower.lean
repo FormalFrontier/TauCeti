@@ -290,7 +290,8 @@ private noncomputable def firstBasisEmbedding (d : ℕ) (h : d ≤ Fintype.card 
 private theorem firstBasisEmbedding_apply (d : ℕ) (h : d ≤ Fintype.card ι) (l : Fin d) :
     firstBasisEmbedding d h l = Fintype.orderIsoFinOfCardEq ι rfl (Fin.castLE h l) := by
   rw [firstBasisEmbedding, RelEmbedding.trans_apply]
-  rfl
+  change (Fintype.orderIsoFinOfCardEq ι rfl) ((Fin.castLEOrderEmb h) l) = _
+  rw [Fin.castLEOrderEmb_apply]
 
 private noncomputable def basisPath (d : ℕ) (h : d ≤ Fintype.card ι)
     (s : Set.powersetCard ι d) (k : ℕ) (l : Fin d) : ι :=
@@ -618,7 +619,17 @@ private theorem diagonalProjector_apply (d : ℕ)
   rw [diagonalProjector]
   rw [hprod]
   rw [Finset.prod_map_toList, Finset.prod_boole]
-  simp [Finset.ext_iff, Subtype.ext_iff]
+  by_cases hst : s = t
+  · subst t
+    simp
+  · have hmem : ¬ (∀ i, i ∈ s.1 ↔ i ∈ t.1) := by
+      intro hmem
+      apply hst
+      apply Subtype.ext
+      apply Finset.ext
+      intro i
+      exact hmem i
+    simp [hst, hmem]
 
 private theorem diagonalProjector_mem (d : ℕ)
     (N : LieSubmodule K (Matrix ι ι K) (⋀[K]^d (ι → K)))
