@@ -11,6 +11,7 @@ public import Mathlib.NumberTheory.NumberField.Ideal.KummerDedekind
 public import Mathlib.RingTheory.Discriminant
 public import TauCeti.NumberTheory.NumberField.SplitsCompletely
 import Mathlib.Algebra.CharP.Two
+import TauCeti.NumberTheory.NumberField.Ideal.KummerDedekind
 import Mathlib.Algebra.Polynomial.SpecificDegree
 public import TauCeti.NumberTheory.NumberField.Quadratic.RingOfIntegers
 
@@ -50,7 +51,9 @@ read off instead from the half-integer generator `ω = (1 + θ)/2`, which for sq
 * `NumberField.exists_isPrime_and_absNorm_eq_of_legendreSym_eq_one`: an odd prime `p` with
   `legendreSym p d = 1` is the absolute norm of a prime ideal of `𝓞 K`.
 * `NumberField.ncard_primesOver_two_of_mod_four_eq_one`: for squarefree `d ≡ 1 (mod 4)`, the
-  number of primes above `2` is `if d % 8 = 1 then 2 else 1`; with the corollaries
+  number of primes above `2` is `if d % 8 = 1 then 2 else 1`, and
+  `NumberField.ncard_primesOver_two_of_minpoly_eq_X_sq_sub_X_add` is the same count for the field
+  presented by the half-integer generator `(1 + √d)/2`; with the corollaries
   `NumberField.ncard_primesOver_two_eq_finrank_iff_of_mod_four_eq_one` (`2` splits iff
   `d ≡ 1 (mod 8)`) and `NumberField.ncard_primesOver_two_eq_one_iff_of_mod_four_eq_one` (`2` is
   inert iff `d ≡ 5 (mod 8)`).
@@ -58,11 +61,9 @@ read off instead from the half-integer generator `ω = (1 + θ)/2`, which for sq
 ## Provenance
 
 The conductor/discriminant and Kummer–Dedekind toolchain is from Mathlib; this assembly is new,
-prepared for the multiquadratic roadmap of the Tau Ceti library. The dyadic case follows the
-NumberFieldArithmetic roadmap (`TauCetiRoadmap/NumberFieldArithmetic/README.md`), whose worked
-dyadic quadratic target — "`2` splits if and only if `d ≡ 1 mod 8`", via the half-integer
-generator with minimal polynomial `X² − X + C ((1 − d)/4)` — is the acceptance test of its
-quadratic integral-basis milestone (Layer 7.2).
+prepared for the multiquadratic roadmap of the Tau Ceti library. The dyadic case, stated for the
+half-integer generator with minimal polynomial `X² − X + C ((1 − d)/4)`, follows the presentation
+in `TauCetiRoadmap/NumberFieldArithmetic/README.md`.
 -/
 
 public section
@@ -181,14 +182,6 @@ private theorem card_monicFactorsMod_quadratic_iff {θ : 𝓞 K} {d : ℤ}
         rw [Ne, sub_right_inj, C_inj]; exact hane))]
     simp
 
-/-- **The Kummer–Dedekind count.** When `p` does not divide the conductor exponent of `θ`, the
-primes of `𝓞 K` above `p` are counted by the monic irreducible factors of `minpoly ℤ θ` mod `p`. -/
-private theorem ncard_primesOver_eq_card_monicFactorsMod (θ : 𝓞 K) {p : ℕ} [Fact p.Prime]
-    (hp : ¬ p ∣ exponent θ) :
-    (primesOver (span {(p : ℤ)}) (𝓞 K)).ncard = (monicFactorsMod θ p).card := by
-  rw [← Nat.card_coe_set_eq, Nat.card_congr (primesOverSpanEquivMonicFactorsMod hp)]
-  exact Nat.card_eq_finsetCard _
-
 /-- **The quadratic splitting law.** For `K = ℚ(√d)` (`θ` a square root of the integer `d`
 generating `K`) and an odd prime `p ∤ d`, `p` splits completely in `K` iff `d` is a quadratic
 residue mod `p`. This is the `n = 1` case of the multiquadratic prime-splitting law. -/
@@ -266,17 +259,11 @@ private theorem card_monicFactorsMod_halfGen_two {θ : 𝓞 K} {d : ℤ}
     have hq : (X ^ 2 + X + 1 : (ZMod 2)[X]) = X ^ 2 + (X + C 1) := by rw [C_1]; ring
     have hlt : (X + C 1 : (ZMod 2)[X]).natDegree < (X ^ 2 : (ZMod 2)[X]).natDegree := by
       rw [natDegree_X_add_C, natDegree_X_pow]; norm_num
-    have hmonic : (X ^ 2 + X + 1 : (ZMod 2)[X]).Monic := by
-      rw [hq]
-      exact (monic_X_pow 2).add_of_left (degree_lt_degree hlt)
     have hdeg : (X ^ 2 + X + 1 : (ZMod 2)[X]).natDegree = 2 := by
       rw [hq, natDegree_add_eq_left_of_natDegree_lt hlt, natDegree_X_pow]
     have hirr : Irreducible (X ^ 2 + X + 1 : (ZMod 2)[X]) := by
-      rw [Polynomial.Monic.irreducible_iff_roots_eq_zero_of_degree_le_three hmonic (by omega)
-        (by omega), Multiset.eq_zero_iff_forall_notMem]
-      intro x hx
-      rw [mem_roots hmonic.ne_zero, IsRoot.def, eval_add, eval_add, eval_pow, eval_X, eval_one,
-        ZMod.pow_card] at hx
+      refine irreducible_of_degree_le_three_of_not_isRoot (by rw [hdeg]; decide) fun x hx => ?_
+      rw [IsRoot.def, eval_add, eval_add, eval_pow, eval_X, eval_one, ZMod.pow_card] at hx
       have h2 : (x + x + 1 : ZMod 2) = 1 := by
         have : (2 : ZMod 2) = 0 := by decide
         linear_combination x * this
@@ -298,6 +285,74 @@ theorem ncard_primesOver_two_of_mod_four_eq_one {θ : 𝓞 K} {d : ℤ}
   have h := ncard_primesOver_eq_card_monicFactorsMod (halfGen hmin hd4) hp
   rw [Nat.cast_ofNat] at h
   rw [h, card_monicFactorsMod_halfGen_two hmin hd4]
+
+/-- **The number of primes above `2`, in the half-integer presentation.** Let `K` be generated over
+`ℚ` by an algebraic integer `ω` with minimal polynomial `X² - X + (1 - d)/4` over `ℤ`, where `d` is
+squarefree with `d ≡ 1 (mod 4)` — the presentation of `ℚ(√d)` by `ω = (1 + √d)/2`. Then there are
+two primes of `𝓞 K` above `2` when `d ≡ 1 (mod 8)` and one when `d ≡ 5 (mod 8)`. -/
+theorem ncard_primesOver_two_of_minpoly_eq_X_sq_sub_X_add {ω : 𝓞 K} {d : ℤ}
+    (hmin : minpoly ℤ ω = X ^ 2 - X + C ((1 - d) / 4)) (hgen : Algebra.adjoin ℚ {(ω : K)} = ⊤)
+    (hsf : Squarefree d) (hd4 : d % 4 = 1) :
+    (primesOver (span {(2 : ℤ)}) (𝓞 K)).ncard = if d % 8 = 1 then 2 else 1 := by
+  set c : ℤ := (1 - d) / 4 with hc
+  have h4 : 4 * c = 1 - d := by omega
+  -- `θ = 2ω - 1` is a square root of `d` generating `K`, and `ω` is its half-integer generator.
+  set θ : 𝓞 K := ω + ω - 1 with hθ
+  have hθK : algebraMap (𝓞 K) K θ = algebraMap (𝓞 K) K ω + algebraMap (𝓞 K) K ω - 1 := by
+    rw [hθ, map_sub, map_add, map_one]
+  have hωroot : aeval ω (X ^ 2 - X + C c : ℤ[X]) = 0 := by rw [← hmin]; exact minpoly.aeval ℤ ω
+  have hωsq : ω ^ 2 - ω + (c : 𝓞 K) = 0 := by
+    rwa [map_add, map_sub, map_pow, aeval_X, aeval_C, algebraMap_int_eq, eq_intCast] at hωroot
+  have hθsq : θ ^ 2 = (d : 𝓞 K) := by
+    have h4' : (4 : 𝓞 K) * (c : 𝓞 K) = 1 - (d : 𝓞 K) := by exact_mod_cast h4
+    rw [hθ]
+    linear_combination 4 * hωsq - h4'
+  have hgenθ : Algebra.adjoin ℚ {(θ : K)} = ⊤ := by
+    rw [eq_top_iff, ← hgen, Algebra.adjoin_le_iff, Set.singleton_subset_iff]
+    have hmem : (θ : K) ∈ Algebra.adjoin ℚ {(θ : K)} := Algebra.subset_adjoin rfl
+    have hω : algebraMap (𝓞 K) K ω = (1 / 2 : ℚ) • (algebraMap (𝓞 K) K θ + 1) := by
+      rw [hθK, Algebra.smul_def, map_div₀, map_one, map_ofNat]; ring
+    rw [show (ω : K) = (1 / 2 : ℚ) • ((θ : K) + 1) from hω]
+    exact Subalgebra.smul_mem _ (add_mem hmem (one_mem _)) _
+  -- `ω` is not a rational integer, so neither is `θ`, and `X² - d` is its minimal polynomial.
+  have hωnot : ω ∉ (algebraMap ℤ (𝓞 K)).range := by
+    rw [← minpoly.two_le_natDegree_iff (Algebra.IsIntegral.isIntegral ω), hmin]
+    have hq : (X ^ 2 - X + C c : ℤ[X]) = X ^ 2 + (C (-1) * X + C c) := by
+      rw [map_neg, C_1]; ring
+    have hlt : (C (-1) * X + C c : ℤ[X]).natDegree < (X ^ 2 : ℤ[X]).natDegree := by
+      rw [natDegree_X_pow]
+      exact lt_of_le_of_lt natDegree_linear_le (by norm_num)
+    rw [hq, natDegree_add_eq_left_of_natDegree_lt hlt, natDegree_X_pow]
+  have hθnot : θ ∉ (algebraMap ℤ (𝓞 K)).range := by
+    rintro ⟨n, hn⟩
+    apply hωnot
+    -- `ω = (n + 1)/2` is a rational algebraic integer, hence a rational integer.
+    have hθn : algebraMap (𝓞 K) K θ = algebraMap ℤ K n := by
+      rw [← hn, IsScalarTower.algebraMap_apply ℤ (𝓞 K) K]
+    have hωq : algebraMap (𝓞 K) K ω = algebraMap ℚ K ((((n : ℤ) : ℚ) + 1) / 2) := by
+      rw [map_div₀, map_add, map_one, map_ofNat, ← eq_intCast (algebraMap ℤ ℚ) n,
+        ← IsScalarTower.algebraMap_apply ℤ ℚ K, ← hθn, hθK]
+      ring
+    have hint : IsIntegral ℤ ((((n : ℤ) : ℚ) + 1) / 2) := by
+      rw [← isIntegral_algebraMap_iff (A := ℚ) (B := K) (R := ℤ), ← hωq]
+      exact ω.isIntegral_coe
+    obtain ⟨m, hm⟩ := IsIntegrallyClosed.isIntegral_iff.mp hint
+    refine ⟨m, RingOfIntegers.coe_injective ?_⟩
+    rw [hωq, ← hm, ← IsScalarTower.algebraMap_apply ℤ ℚ K,
+      ← IsScalarTower.algebraMap_apply ℤ (𝓞 K) K]
+  have hminθ : minpoly ℤ θ = X ^ 2 - C d := by
+    have hintθ : IsIntegral ℤ θ := Algebra.IsIntegral.isIntegral θ
+    have hroot : aeval θ (X ^ 2 - C d : ℤ[X]) = 0 := by
+      rw [map_sub, map_pow, aeval_X, aeval_C, algebraMap_int_eq, eq_intCast, hθsq, sub_self]
+    obtain ⟨r, hr⟩ := minpoly.isIntegrallyClosed_dvd hintθ hroot
+    have hmonic : (X ^ 2 - C d : ℤ[X]).Monic := monic_X_pow_sub_C d two_ne_zero
+    have hrmonic : r.Monic := (minpoly.monic hintθ).of_mul_monic_left (hr ▸ hmonic)
+    have h2le : 2 ≤ (minpoly ℤ θ).natDegree := (minpoly.two_le_natDegree_iff hintθ).mpr hθnot
+    have hsum : (minpoly ℤ θ).natDegree + r.natDegree = 2 := by
+      rw [← (minpoly.monic hintθ).natDegree_mul hrmonic, ← hr, natDegree_X_pow_sub_C]
+    have hr1 : r = 1 := Polynomial.eq_one_of_monic_natDegree_zero hrmonic (by omega)
+    rw [hr, hr1, mul_one]
+  exact ncard_primesOver_two_of_mod_four_eq_one hminθ hgenθ hsf hd4
 
 /-- **The splitting law at `2` for `d ≡ 1 (mod 4)`.** For `K = ℚ(√d)` with `d` squarefree and
 `d ≡ 1 (mod 4)`, the prime `2` splits completely in `K` if and only if `d ≡ 1 (mod 8)`. -/
