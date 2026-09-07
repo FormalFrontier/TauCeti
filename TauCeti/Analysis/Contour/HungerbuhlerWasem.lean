@@ -110,7 +110,7 @@ theorem PolarPartDecomposition.hasCauchyPV_analyticRemainder_add_residue_sum_of_
     exact decomp.hasCauchyPV_analyticRemainder_add_residue_sum h_imm hcd hcl hcU h_interior
       (fun s k hk1 _ => hA'.flatOfOrder_of_crossing _ s s.2 h_imm hcd (h_interior s)
         (h_ord s) k hk1)
-      (fun s => hB'.pow_unit_tangent_eq_of_coeff_ne_zero _ hU hSU s (hmero ↑s s.2) h_imm hcd
+      (fun s => hB'.pow_unit_tangent_eq_of_coeff_ne_zero _ hU hSU s (hmero ↑s s.2) h_imm
         (h_interior s) (h_ord s))
   rcases le_total a b with hab | hba
   · exact core a b hab hγ_imm hclosed hγa hγU hA hB

@@ -63,8 +63,9 @@ theorem mem_Ioo_of_closed_of_ne {γ : ℝ → ℂ} {a b : ℝ} {z : ℂ}
   · rw [hclosed, ← h]; exact h_eq
 
 /-- Interior membership in the `min`/`max` form the condition clauses use. -/
-private theorem interior_mem_minmax {a b t : ℝ} (hab : a ≤ b) (ht : t ∈ Ioo a b) :
+private theorem interior_mem_minmax {a b t : ℝ} (ht : t ∈ Ioo a b) :
     t ∈ Ioo (min a b) (max a b) := by
+  have hab : a ≤ b := (ht.1.trans ht.2).le
   rwa [min_eq_left hab, max_eq_right hab]
 
 /-- At an interior parameter, a limit of `deriv γ` from the right is the immersion's one-sided
@@ -150,7 +151,7 @@ theorem ConditionAprime.flatOfOrder_of_crossing {γ : ℝ → ℂ} {a b : ℝ} {
   have ht_Ioo := h_interior t ht h_eq
   have h_pos : 0 < meromorphicPolarOrderAt f ↑s := by
     have := k.isLt; omega
-  have h_flat_full := hA.interior t (interior_mem_minmax hab ht_Ioo)
+  have h_flat_full := hA.interior t (interior_mem_minmax ht_Ioo)
     (by rw [h_eq]; exact hsS') (meromorphicPolarOrderAt f ↑s) (by omega)
     (by rw [h_eq]; exact meromorphicOrderAt_eq_neg_of_meromorphicPolarOrderAt_pos h_pos)
   refine h_flat_full.of_le (by have := k.isLt; omega)
@@ -166,7 +167,7 @@ tangent powers through the crossing-angle bridge. -/
 theorem ConditionB.pow_unit_tangent_eq_of_coeff_ne_zero {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ}
     (hB : ConditionB γ a b f) {S : Finset ℂ} {U : Set ℂ}
     (decomp : PolarPartDecomposition f S U) (hU : IsOpen U) (hSU : (S : Set ℂ) ⊆ U)
-    (s : S) (hMero : MeromorphicAt f ↑s) (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b)
+    (s : S) (hMero : MeromorphicAt f ↑s) (h_imm : IsPwC1ImmersionOn γ a b)
     (h_interior : ∀ t ∈ Icc a b, γ t = (s : ℂ) → t ∈ Ioo a b)
     (h_ord : decomp.order s = meromorphicPolarOrderAt f ↑s) :
     ∀ k : Fin (decomp.order s), 1 ≤ k.val → decomp.coeff s k ≠ 0 →
@@ -178,7 +179,7 @@ theorem ConditionB.pow_unit_tangent_eq_of_coeff_ne_zero {γ : ℝ → ℂ} {a b 
   have h_can := decomp.coeff_eq_meromorphicPolarCoeffAt hU hSU s hMero h_ord k
   have h_gt : 1 < meromorphicPolarOrderAt f ↑s := by
     have := k.isLt; omega
-  have h_sec := hB.interior t (interior_mem_minmax hab ht_Ioo)
+  have h_sec := hB.interior t (interior_mem_minmax ht_Ioo)
     (by rw [h_eq]; exact meromorphicOrderAt_lt_neg_one_of_one_lt_meromorphicPolarOrderAt h_gt)
   rw [h_eq] at h_sec
   obtain ⟨N', a', g', hg', h_exp, h_reso⟩ := h_sec.laurent_compatible
