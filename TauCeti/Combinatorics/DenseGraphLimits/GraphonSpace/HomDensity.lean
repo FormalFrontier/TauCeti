@@ -29,6 +29,8 @@ the equivalence between cut-distance convergence and convergence of all homomorp
 * `TauCeti.DenseGraphLimits.lipschitzWith_homDensity` is the edge-count Lipschitz bound on strict
   graphons, which makes the descent well defined;
 * `TauCeti.DenseGraphLimits.homDensityOnSpace_mk` computes it on a representative;
+* `TauCeti.DenseGraphLimits.homDensityOnSpace_nonneg` and
+  `TauCeti.DenseGraphLimits.homDensityOnSpace_le_one` bound it in `[0, 1]`;
 * `TauCeti.DenseGraphLimits.lipschitzWith_homDensityOnSpace` gives the edge-count Lipschitz bound;
 * `TauCeti.DenseGraphLimits.continuous_homDensityOnSpace` gives continuity on every fixed-carrier
   graphon space.
@@ -75,6 +77,22 @@ theorem homDensityOnSpace_mk (F : SimpleGraph V) [DecidableRel F.Adj] (W : Graph
     homDensityOnSpace (μ := μ) F (SeparationQuotient.mk W) = homDensity F W :=
   SeparationQuotient.lift_mk
     (fun _ _ h => (h.map (lipschitzWith_homDensity F).continuous).eq) W
+
+/-- Homomorphism density on graphon space is nonnegative. -/
+theorem homDensityOnSpace_nonneg (F : SimpleGraph V) [DecidableRel F.Adj] (W : GraphonSpace Ω μ) :
+    0 ≤ homDensityOnSpace F W := by
+  refine (SeparationQuotient.surjective_mk.forall
+    (p := fun W => 0 ≤ homDensityOnSpace (μ := μ) F W)).2 (fun U => ?_) W
+  rw [homDensityOnSpace_mk]
+  exact homDensity_nonneg F U
+
+/-- Homomorphism density on graphon space is at most `1`. -/
+theorem homDensityOnSpace_le_one (F : SimpleGraph V) [DecidableRel F.Adj] (W : GraphonSpace Ω μ) :
+    homDensityOnSpace F W ≤ 1 := by
+  refine (SeparationQuotient.surjective_mk.forall
+    (p := fun W => homDensityOnSpace (μ := μ) F W ≤ 1)).2 (fun U => ?_) W
+  rw [homDensityOnSpace_mk]
+  exact homDensity_le_one F U
 
 /-- Homomorphism density on graphon space is Lipschitz with constant the number of edges of the
 finite graph. -/
