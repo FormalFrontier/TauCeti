@@ -427,8 +427,9 @@ theorem IsIntegralLattice.range_eq_span_realBasis (i : N →+ V) (h : IsIntegral
         h.baseChange.equiv.toLinearMap.restrictScalars ℤ ∘ₗ
             TensorProduct.mk ℤ ℝ N 1 = i.toIntLinearMap := by
       ext n
-      -- Definitional reduction removes the `restrictScalars`/`LinearMap.comp` wrappers
-      -- so that `IsBaseChange.equiv_tmul` can rewrite the exposed pure tensor.
+      -- The goal is phrased using the `restrictScalars` and `LinearMap.comp` wrappers around
+      -- the tensor-product map. Definitional reduction via `change` exposes the pure tensor;
+      -- only then can `IsBaseChange.equiv_tmul` rewrite the scalar-extension equivalence.
       change h.baseChange.equiv (1 ⊗ₜ[ℤ] n) = i n
       rw [h.baseChange.equiv_tmul]
       simp only [one_smul, AddMonoidHom.coe_toIntLinearMap]
