@@ -61,9 +61,12 @@ namespace WeierstrassCurve
 
 variable (W : WeierstrassCurve O)
 
+/-- **A formal-group parameter gives a point of the curve**: the pair `(t / w(t), -1 / w(t))`
+satisfies the Weierstrass equation over `K`. The hypothesis is `w(t) ≠ 0` rather than `t ≠ 0`,
+because that is what the two denominators need; `algebraMap_formalWEval_ne_zero` supplies it
+from `t ≠ 0` in the adic setting. -/
 theorem formalPoint_equation {t : O} (ht : PowerSeries.HasEval t)
-    (hw : algebraMap O K (W.formalWEval t) ≠ 0) :
-    (W.baseChange K).toAffine.Equation
+    (hw : algebraMap O K (W.formalWEval t) ≠ 0) : (W.baseChange K).toAffine.Equation
       (algebraMap O K t / algebraMap O K (W.formalWEval t))
       (-(algebraMap O K (W.formalWEval t))⁻¹) := by
   have hkey := congrArg (algebraMap O K) (W.formalWEval_wEquation ht)
@@ -76,9 +79,11 @@ theorem formalPoint_equation {t : O} (ht : PowerSeries.HasEval t)
 
 variable [W.IsElliptic]
 
+/-- **The parametrized point is nonsingular** when `W` is elliptic: over a field every point of
+the curve is nonsingular once the discriminant is nonzero, so this adds nothing to
+`formalPoint_equation` beyond `[W.IsElliptic]`. -/
 theorem formalPoint_nonsingular {t : O} (ht : PowerSeries.HasEval t)
-    (hw : algebraMap O K (W.formalWEval t) ≠ 0) :
-    (W.baseChange K).toAffine.Nonsingular
+    (hw : algebraMap O K (W.formalWEval t) ≠ 0) : (W.baseChange K).toAffine.Nonsingular
       (algebraMap O K t / algebraMap O K (W.formalWEval t))
       (-(algebraMap O K (W.formalWEval t))⁻¹) := by
   have hΔ : (W.baseChange K).Δ ≠ 0 := by
@@ -137,13 +142,17 @@ theorem formalPoint_y_mul_eq_neg_one {I : Ideal O} (hI : IsAdic I) {t : O} (ht :
   push_cast [map_mul, map_pow]
   field_simp
 
+-- Deliberately not `@[simp]`: the hypothesis `t = 0` is not one `simp` can discharge for a
+-- generic parameter, so the rewrite would almost never fire and `simpNF` would object.
 open scoped Classical in
-@[simp]
+/-- The parameter `0` gives the point at infinity. -/
 theorem formalPoint_of_eq_zero {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I) (h0 : t = 0) :
     W.formalPoint (K := K) hI ht = 0 := by
   simp [formalPoint, h0]
 
 open scoped Classical in
+/-- A nonzero parameter gives the affine point, with its coordinates in the form
+`formalPoint_equation` states them. -/
 theorem formalPoint_of_ne_zero {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I) (h0 : t ≠ 0) :
     W.formalPoint (K := K) hI ht =
       .some _ _ (W.formalPoint_nonsingular (K := K) (hI.isTopologicallyNilpotent_of_mem ht)
