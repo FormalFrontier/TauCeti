@@ -119,8 +119,11 @@ theorem formalPoint_of_param_eq_zero {I : Ideal O} (hI : IsAdic I) {t : O} (ht :
 
 open scoped Classical in
 /-- A nonzero parameter gives the affine point, with its coordinates in the form
-`equation_formalPoint` states them. -/
-@[simp]
+`equation_formalPoint` states them.
+
+Deliberately not `@[simp]`: its right-hand side is `Affine.Point.mk` applied to a large proof
+term, which is not a simpler form, and making it a simp rule takes the coordinate lemmas below
+out of simp-normal form (`simpNF` rejects the pair). Rewrite with it explicitly. -/
 theorem formalPoint_of_param_ne_zero {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I)
     (h0 : t ≠ 0) :
     W.formalPoint (K := K) hI ht =
