@@ -91,6 +91,22 @@ theorem xCoord_some {x y : R} (h : W.Nonsingular x y) : xCoord (.some x y h) = x
 @[simp]
 theorem yCoord_some {x y : R} (h : W.Nonsingular x y) : yCoord (.some x y h) = y := (rfl)
 
+section IsElliptic
+
+variable [Nontrivial R] [W.IsElliptic]
+
+/-- The `x`-coordinate of a point built from an equation, so consumers of `Point.mk` need not
+unfold it. -/
+@[simp]
+theorem xCoord_mk {x y : R} (h : W.Equation x y) : xCoord (Point.mk h) = x := (rfl)
+
+/-- The `y`-coordinate of a point built from an equation, so consumers of `Point.mk` need not
+unfold it. -/
+@[simp]
+theorem yCoord_mk {x y : R} (h : W.Equation x y) : yCoord (Point.mk h) = y := (rfl)
+
+end IsElliptic
+
 /-- **The coordinates of a nonzero point are a nonsingular solution of the equation.** -/
 theorem nonsingular_coords {P : W.Point} (hP : P ≠ 0) : W.Nonsingular (xCoord P) (yCoord P) := by
   cases P with

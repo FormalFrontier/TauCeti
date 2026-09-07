@@ -142,7 +142,7 @@ theorem xCoord_formalPoint {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I) 
     (W.formalPoint (K := K) hI ht).xCoord =
       algebraMap O K t / algebraMap O K (W.formalWEval t) := by
   rw [W.formalPoint_of_param_ne_zero hI ht h0]
-  simp [_root_.WeierstrassCurve.Affine.Point.mk]
+  simp
 
 open scoped Classical in
 /-- **The `y`-coordinate of the parametrized point** is `-1 / w(t)`. -/
@@ -150,7 +150,7 @@ open scoped Classical in
 theorem yCoord_formalPoint {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I) (h0 : t ≠ 0) :
     (W.formalPoint (K := K) hI ht).yCoord = -(algebraMap O K (W.formalWEval t))⁻¹ := by
   rw [W.formalPoint_of_param_ne_zero hI ht h0]
-  simp [_root_.WeierstrassCurve.Affine.Point.mk]
+  simp
 
 /-- **The `x`-coordinate in closed form**: since `w(t) = t ^ 3 * u(t)` with `u(t)` a unit, the
 `x`-coordinate `t / w(t)` is the inverse of `t ^ 2 * u(t)`. Stated as a product so that it needs
@@ -169,6 +169,7 @@ theorem xCoord_formalPoint_mul_eq_one {I : Ideal O} (hI : IsAdic I) {t : O} (ht 
 
 /-- **The `y`-coordinate in closed form**: `-1 / w(t)` is minus the inverse of `t ^ 3 * u(t)`,
 with exponent `3` where the `x`-coordinate has `2`. -/
+@[simp]
 theorem yCoord_formalPoint_mul_eq_neg_one {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I)
     (ht0 : t ≠ 0) :
     (W.formalPoint (K := K) hI ht).yCoord * algebraMap O K (t ^ 3 * W.formalUEval t) = -1 := by
