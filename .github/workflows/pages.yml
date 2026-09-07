@@ -437,6 +437,14 @@ jobs:
           key: web-lake-${{ runner.os }}-${{ hashFiles('web/lake-manifest.json', 'web/lean-toolchain', 'web/examples/lake-manifest.json', 'web/examples/lean-toolchain') }}
           restore-keys: web-lake-${{ runner.os }}-
 
+      # web/examples has no committed Lake manifest and no committed toolchain: the manifest is
+      # derived from the root pins here, and elan finds the root lean-toolchain by walking up. So
+      # this project builds the library at exactly the root's Lean and Mathlib, and a bump has
+      # nothing extra to carry -- see scripts/sync_web_pins.py for why that matters.
+      - name: Derive the examples project's Lake manifest from the root pins
+        working-directory: ${{ github.workspace }}
+        run: python3 scripts/sync_web_pins.py
+
       - name: Fetch Mathlib oleans (examples project)
         working-directory: web/examples
         run: lake exe cache get
