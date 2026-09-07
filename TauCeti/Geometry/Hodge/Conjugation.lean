@@ -27,6 +27,8 @@ complexification models.
 * `TauCeti.Hodge.Conjugation`: a conjugate-linear involution of a complex vector space.
 * `TauCeti.Hodge.Conjugation.tensorProduct`: the tensor product of two conjugations.
 * `TauCeti.Hodge.Conjugation.tensorProduct_toEquiv_tmul`: its action on pure tensors.
+* `TauCeti.Hodge.Conjugation.internalHom`: conjugation on the space of complex-linear maps,
+  acting by conjugating the input and output.
 * `TauCeti.Hodge.Conjugation.conjFiltration`: the conjugate of a complex filtration.
 * `TauCeti.Hodge.concreteLatticeConj`: conjugation on the tensor model `ℂ ⊗[ℤ] V`.
 * `TauCeti.Hodge.latticeConj`: conjugation on an abstract complex base-change model.
@@ -128,6 +130,29 @@ theorem tensorProduct_toEquiv_tmul (ω₁ : Conjugation W₁) (ω₂ : Conjugati
     simp [tensorMap]
 
 end TensorProduct
+
+section InternalHom
+
+variable {W₁ : Type u} {W₂ : Type v} [AddCommGroup W₁] [Module ℂ W₁]
+  [AddCommGroup W₂] [Module ℂ W₂]
+
+/-- The conjugation on the internal hom of two complex vector spaces with conjugation. It sends
+`f : W₁ →ₗ[ℂ] W₂` to `x ↦ ω₂ (f (ω₁ x))`. -/
+def internalHom (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂) :
+    Conjugation (W₁ →ₗ[ℂ] W₂) where
+  toEquiv := ω₁.toEquiv.arrowCongr ω₂.toEquiv
+  involutive := fun f ↦ by
+    ext x
+    simp [ω₁.toEquiv_symm]
+
+/-- Conjugation on an internal hom conjugates the input and output. -/
+@[simp]
+theorem internalHom_toEquiv_apply_apply (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂)
+    (f : W₁ →ₗ[ℂ] W₂) (x : W₁) :
+    (ω₁.internalHom ω₂).toEquiv f x = ω₂.toEquiv (f (ω₁.toEquiv x)) :=
+  by simp [internalHom, ω₁.toEquiv_symm]
+
+end InternalHom
 
 /-- Mapping a complex subspace twice by a conjugation returns the original subspace. -/
 @[simp]
