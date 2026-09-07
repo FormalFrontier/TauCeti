@@ -71,9 +71,6 @@ public section
 open IsDedekindDomain IsDedekindDomain.HeightOneSpectrum NumberField
 open scoped nonZeroDivisors NumberField
 
--- Provenance: the declaration names and signatures formalized here follow the interface file
--- `GlobalNumberFields/Suggested.lean`, and its accompanying `README.md`, of the TauCetiRoadmap
--- repository, which specify this API.
 namespace TauCeti.GlobalNumberFields
 
 /-- A **modulus** of a number field `K`: a nonzero integral ideal of `𝓞 K` together with a finite
@@ -124,10 +121,6 @@ it. -/
 theorem mem_support_iff (𝔪 : Modulus K) (v : HeightOneSpectrum (𝓞 K)) :
     v ∈ 𝔪.support ↔ v.asIdeal ∣ 𝔪.finitePart :=
   Set.Finite.mem_toFinset _
-
-theorem dvd_finitePart_of_mem_support {𝔪 : Modulus K} {v : HeightOneSpectrum (𝓞 K)}
-    (hv : v ∈ 𝔪.support) : v.asIdeal ∣ 𝔪.finitePart :=
-  (mem_support_iff 𝔪 v).mp hv
 
 /-- The support grows with the modulus. -/
 theorem support_mono {𝔪 𝔫 : Modulus K} (h : 𝔪 ∣ 𝔫) : 𝔪.support ⊆ 𝔫.support := fun v hv ↦
@@ -377,7 +370,7 @@ theorem Modulus.isCoprimeTo_iff_sup_eq_top {𝔪 : Modulus K} {I : Ideal (𝓞 K
     · exact Ideal.dvd_iff_le.mpr (le_sup_left.trans h𝔭le)
   · refine v.isPrime.ne_top (top_le_iff.mp ?_)
     rw [← h]
-    exact sup_le (Ideal.le_of_dvd hdvd) (Ideal.le_of_dvd (dvd_finitePart_of_mem_support hv))
+    exact sup_le (Ideal.le_of_dvd hdvd) (Ideal.le_of_dvd ((mem_support_iff _ _).mp hv))
 
 /-- **The monoid of nonzero integral ideals prime to a modulus.**  There is one such monoid, the
 one built away from a finite set of primes; its membership predicate is `Modulus.IsCoprimeTo`. -/

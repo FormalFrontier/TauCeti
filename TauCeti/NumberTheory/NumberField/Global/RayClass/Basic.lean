@@ -64,9 +64,6 @@ public section
 open IsDedekindDomain IsDedekindDomain.HeightOneSpectrum NumberField
 open scoped nonZeroDivisors NumberField
 
--- Provenance: the declaration names and signatures formalized here follow the interface file
--- `GlobalNumberFields/Suggested.lean`, and its accompanying `README.md`, of the TauCetiRoadmap
--- repository, which specify this API.
 namespace TauCeti.GlobalNumberFields
 
 variable {K : Type*} [Field K] [NumberField K]
@@ -78,7 +75,7 @@ theorem IsCongrOne.toPrincipalIdeal_mem_idealsPrimeTo {𝔪 : Modulus K} {x : K�
     (hx : IsCongrOne 𝔪 x) : toPrincipalIdeal (𝓞 K) K x ∈ idealsPrimeTo 𝔪 := by
   refine NumberFieldArithmetic.mem_idealsAway_iff.mpr fun v hv ↦ ?_
   rw [FractionalIdeal.count_toPrincipalIdeal_eq_neg_log_valuation K v x,
-    hx.valuation_eq_one (Modulus.dvd_finitePart_of_mem_support hv), WithZero.log_one, neg_zero]
+    hx.valuation_eq_one ((Modulus.mem_support_iff _ _).mp hv), WithZero.log_one, neg_zero]
 
 /-- The homomorphism sending an element of `Kˣ` congruent to one modulo `𝔪` to its principal
 fractional ideal, viewed inside the ideals prime to `𝔪`. -/
@@ -215,13 +212,14 @@ noncomputable def idealsPrimeToOneEquiv :
 
 /-- The ray of the trivial modulus is the group of all principal fractional ideals. -/
 theorem map_ray_one :
-    Subgroup.map (idealsPrimeToOneEquiv (K := K)).toMonoidHom (ray (Modulus.one K)) =
-      (toPrincipalIdeal (𝓞 K) K).range := by
+    Subgroup.map (idealsPrimeToOneEquiv (K := K) :
+        idealsPrimeTo (Modulus.one K) →* (FractionalIdeal (𝓞 K)⁰ K)ˣ)
+      (ray (Modulus.one K)) = (toPrincipalIdeal (𝓞 K) K).range := by
   ext I
   rw [Subgroup.mem_map, MonoidHom.mem_range]
   refine ⟨fun ⟨J, hJ, hJI⟩ ↦ ?_, fun ⟨x, hx⟩ ↦ ?_⟩
   · obtain ⟨x, _, hxJ⟩ := mem_ray_iff.mp hJ
-    exact ⟨x, by rw [hxJ, ← hJI, MulEquiv.coe_toMonoidHom, idealsPrimeToOneEquiv_apply]⟩
+    exact ⟨x, by rw [hxJ, ← hJI, MonoidHom.coe_coe, idealsPrimeToOneEquiv_apply]⟩
   · refine ⟨⟨I, idealsPrimeTo_one (K := K) ▸ Subgroup.mem_top I⟩,
       mem_ray_iff.mpr ⟨x, isCongrOne_one x, hx⟩, rfl⟩
 
@@ -238,12 +236,17 @@ fractional ideal.** -/
 @[simp] theorem oneEquivClassGroup_rayClassMk (I : idealsPrimeTo (Modulus.one K)) :
     oneEquivClassGroup (rayClassMk (Modulus.one K) I) =
       ClassGroup.mk K (I : (FractionalIdeal (𝓞 K)⁰ K)ˣ) := by
-  have h : oneEquivClassGroup (rayClassMk (Modulus.one K) I) =
-      (ClassGroup.equiv (K := K)).symm (QuotientGroup.mk' (toPrincipalIdeal (𝓞 K) K).range
-        (I : (FractionalIdeal (𝓞 K)⁰ K)ˣ)) := (rfl)
-  rw [h, MulEquiv.symm_apply_eq, ClassGroup.equiv_mk]
+  have htrans : oneEquivClassGroup (rayClassMk (Modulus.one K) I) =
+      (ClassGroup.equiv (K := K)).symm
+        (QuotientGroup.congr (ray (Modulus.one K)) (toPrincipalIdeal (𝓞 K) K).range
+          idealsPrimeToOneEquiv map_ray_one (QuotientGroup.mk' (ray (Modulus.one K)) I)) :=
+    MulEquiv.trans_apply _ _ _
+  have hmap : Units.mapEquiv (MulEquiv.refl (FractionalIdeal (𝓞 K)⁰ K))
+      (I : (FractionalIdeal (𝓞 K)⁰ K)ˣ) = (I : (FractionalIdeal (𝓞 K)⁰ K)ˣ) :=
+    Units.ext (by rw [Units.coe_mapEquiv, MulEquiv.refl_apply])
+  rw [htrans, QuotientGroup.congr_mk', idealsPrimeToOneEquiv_apply, MulEquiv.symm_apply_eq,
+    ClassGroup.equiv_mk]
   simp only [QuotientGroup.mk'_apply, FractionalIdeal.canonicalEquiv_self,
-    RingEquiv.coe_mulEquiv_refl]
-  rfl
+    RingEquiv.coe_mulEquiv_refl, hmap]
 
 end TauCeti.GlobalNumberFields
