@@ -42,7 +42,7 @@ conjugation action.
 * `TauCeti.ConjClasses.ncard_carrier_mk_of_mem_center`: the class of a central element is a single
   point.
 * `ConjClasses.card_carrier_mul_orderOf_dvd`: the class size times the order of a member
-  divides the order of the group, so the fibre quotient below is an exact division.
+  divides the order of the group, so the quotient below is an exact ratio.
 * `ConjClasses.card_div_mul_card_carrier_orderOf_eq_card_centralizer_div_orderOf`: that
   quotient equals the order of the centralizer divided by the order of the member.
 * `TauCeti.ConjClasses.card_carrier_dvd_card`: the size of a conjugacy class divides the order of
@@ -78,11 +78,11 @@ rather than reusable conjugacy-class API. This operation is *not* adapted from t
 Birkbeck–Brasca `chebotarev-density` development, which works with `ConjClasses.mk` and
 `Subgroup.zpowers` directly and never forms `C ^ j`.
 
-The two counting statements are the group-theoretic half of a fibre count: for a finite group the
-quotient `#G / (#C * orderOf σ)` counts something, and it does so only because the division is
-exact — `#C` is the index of the centralizer of `σ`, and `orderOf σ` divides that centralizer's
-order, so their product divides `#G`. Dividing then leaves the centralizer's order over
-`orderOf σ`.
+The two arithmetic statements concern the quotient `#G / (#C * orderOf σ)`. The first says the
+division is exact — `#C` is the index of the centralizer of `σ`, and `orderOf σ` divides that
+centralizer's order, so their product divides `#G` — and the second evaluates the quotient as the
+centralizer's order over `orderOf σ`. Neither asserts that either side counts anything; a caller
+wanting a cardinality interpretation must supply it.
 -/
 
 public section
@@ -232,10 +232,9 @@ namespace ConjClasses
 /-- **The size of a conjugacy class times the order of a member divides the order of the group.**
 
 For a *finite* group this is what makes `Nat.card G / (Nat.card C.carrier * orderOf σ)` an exact
-division rather than a truncated one, which is why a fibre count needs it separately;
-`card_div_mul_card_carrier_orderOf_eq_card_centralizer_div_orderOf` evaluates that quotient. No
-finiteness is assumed here: for an infinite group `Nat.card G` is `0`, and every natural number
-divides `0`. -/
+ratio rather than a truncated division, which
+`card_div_mul_card_carrier_orderOf_eq_card_centralizer_div_orderOf` then evaluates. No finiteness
+is assumed here: for an infinite group `Nat.card G` is `0`, and every natural number divides `0`. -/
 theorem card_carrier_mul_orderOf_dvd {G : Type*} [Group G] (C : ConjClasses G) (σ : G)
     (hσ : σ ∈ C.carrier) :
     Nat.card C.carrier * orderOf σ ∣ Nat.card G := by
@@ -245,19 +244,21 @@ theorem card_carrier_mul_orderOf_dvd {G : Type*} [Group G] (C : ConjClasses G) (
     (Subgroup.mem_centralizer_singleton_iff.mpr rfl)
   exact ⟨k, by rw [TauCeti.ConjClasses.card_carrier_mk, mul_assoc, ← hk, Subgroup.index_mul_card]⟩
 
-/-- **That quotient in closed form.** For a finite group, dividing the order of the group by the
-class size times the order of a member leaves the order of the centralizer divided by that same
-order.
+/-- **That quotient in closed form.** Dividing the order of the group by the class size times the
+order of a member leaves the order of the centralizer divided by that same order.
 
-Both divisions are exact, so a caller may read either side as a count. -/
+Only the centralizer of `σ` need have nonzero index; `Subgroup.index_ne_zero_of_finite` discharges
+that for a finite group. Both divisions are exact, so the identity is an equality of ratios rather
+than of truncated quotients. -/
 theorem card_div_mul_card_carrier_orderOf_eq_card_centralizer_div_orderOf {G : Type*} [Group G]
-    [Finite G] (C : ConjClasses G) (σ : G) (hσ : σ ∈ C.carrier) :
+    (C : ConjClasses G) (σ : G) (hσ : σ ∈ C.carrier)
+    (hindex : (Subgroup.centralizer {σ}).index ≠ 0) :
     Nat.card G / (Nat.card C.carrier * orderOf σ)
       = Nat.card (Subgroup.centralizer {σ}) / orderOf σ := by
   rw [mem_carrier_iff_mk_eq] at hσ
   subst hσ
   rw [TauCeti.ConjClasses.card_carrier_mk, ← Subgroup.index_mul_card (Subgroup.centralizer {σ}),
-    Nat.mul_div_mul_left _ _ (Nat.pos_of_ne_zero Subgroup.index_ne_zero_of_finite)]
+    Nat.mul_div_mul_left _ _ (Nat.pos_of_ne_zero hindex)]
 
 end ConjClasses
 
