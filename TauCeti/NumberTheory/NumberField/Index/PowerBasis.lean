@@ -26,12 +26,17 @@ polynomial of `θ` over `ℤ`, cast to `ℚ`.
 
 ## Main results
 
-* `TauCeti.NumberField.IntegralPrimitiveElement.discr_powerBasis`: the discriminant of the power
-  basis of `θ` is the polynomial discriminant of `minpoly ℤ θ`, cast to `ℚ`.
+* `TauCeti.NumberField.IntegralPrimitiveElement.minpoly_rat_coe`: the minimal polynomial of `θ`
+  over `ℚ` is the minimal polynomial over `ℤ` with its coefficients cast to `ℚ`.
+* `TauCeti.NumberField.IntegralPrimitiveElement.discr_powerBasis_eq_minpoly_discr`: the
+  discriminant of the power basis of `θ` is the polynomial discriminant of `minpoly ℤ θ`, cast to
+  `ℚ`.
 
 ## References
 
 * J. Neukirch, *Algebraic Number Theory*, Chapter I, §2.
+* The NumberFieldArithmetic roadmap of the Tau Ceti project, Layer 3.2 (the discriminant of a
+  power basis), whose `Suggested.lean` states the declarations of this file.
 -/
 
 public section
@@ -49,8 +54,8 @@ noncomputable def powerBasis (θ : IntegralPrimitiveElement K) : PowerBasis ℚ 
 
 /-- The generator of the power basis of `θ` is `θ`. -/
 @[simp]
-theorem powerBasis_gen (θ : IntegralPrimitiveElement K) : θ.powerBasis.gen = (θ.1 : K) :=
-  (rfl)
+theorem powerBasis_gen (θ : IntegralPrimitiveElement K) : θ.powerBasis.gen = (θ.1 : K) := by
+  rw [powerBasis, PowerBasis.ofAdjoinEqTop_gen]
 
 /-- The power basis of an integral primitive element has dimension `[K : ℚ]`. -/
 @[simp]
@@ -58,13 +63,18 @@ theorem powerBasis_dim (θ : IntegralPrimitiveElement K) :
     θ.powerBasis.dim = Module.finrank ℚ K :=
   θ.powerBasis.finrank.symm
 
+/-- The minimal polynomial of an integral primitive element `θ` over `ℚ` is its minimal
+polynomial over `ℤ` with the coefficients cast to `ℚ`. -/
+theorem minpoly_rat_coe (θ : IntegralPrimitiveElement K) :
+    minpoly ℚ (θ.1 : K) = (minpoly ℤ θ.1).map (algebraMap ℤ ℚ) := by
+  rw [minpoly.isIntegrallyClosed_eq_field_fractions' ℚ θ.1.isIntegral_coe,
+    _root_.NumberField.RingOfIntegers.minpoly_coe]
+
 /-- **The discriminant of the power basis of an integral primitive element** is the polynomial
 discriminant of its minimal polynomial over `ℤ`, cast to `ℚ`. -/
-theorem discr_powerBasis (θ : IntegralPrimitiveElement K) :
+theorem discr_powerBasis_eq_minpoly_discr (θ : IntegralPrimitiveElement K) :
     Algebra.discr ℚ θ.powerBasis.basis = algebraMap ℤ ℚ (minpoly ℤ θ.1).discr := by
-  rw [Algebra.discr_powerBasis_eq_minpoly_discr, powerBasis_gen,
-    minpoly.isIntegrallyClosed_eq_field_fractions' ℚ θ.1.isIntegral_coe,
-    _root_.NumberField.RingOfIntegers.minpoly_coe,
+  rw [Algebra.discr_powerBasis_eq_minpoly_discr, powerBasis_gen, minpoly_rat_coe,
     Polynomial.Monic.discr_map (minpoly.monic θ.1.isIntegral)]
 
 end TauCeti.NumberField.IntegralPrimitiveElement
