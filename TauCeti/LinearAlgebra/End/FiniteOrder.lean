@@ -42,7 +42,9 @@ conjugation is such a `σ`, with `j = n - 1`, since it sends a root of unity `μ
 `μ⁻¹ = μ ^ (n - 1)`; that instance is the source of `conj (χ g) = χ g⁻¹` for characters of complex
 representations.
 
-All the results are stated of `Module.End`, so they sit in the `End` namespace under `open Module`.
+All the results are stated of `Module.End`, so they sit in the `End` namespace under
+`open Module`; the one whose consumers use it under its Mathlib receiver type,
+`Module.End.exists_eq_smul_of_norm_trace_eq_finrank`, is in that type's own namespace.
 
 ## Main results
 
@@ -60,7 +62,7 @@ All the results are stated of `Module.End`, so they sit in the `End` namespace u
   `j`-th power.
 * `TauCeti.End.conj_trace_eq_trace_pow_sub_one`: over `ℂ`, the conjugate of the trace of an
   endomorphism of finite order `n` is the trace of its inverse `f ^ (n - 1)`.
-* `TauCeti.End.exists_eq_smul_of_norm_trace_eq_finrank`: over `ℂ`, an endomorphism of finite order
+* `Module.End.exists_eq_smul_of_norm_trace_eq_finrank`: over `ℂ`, an endomorphism of finite order
   whose trace has absolute value the dimension **is a scalar**, the scalar being a root of unity.
   The trace is the sum of `finrank ℂ V` many roots of unity, so that absolute value is the largest
   it can take, and it is attained only when the eigenvalues all coincide.
@@ -221,7 +223,8 @@ eigenvalue equals the common phase `μ`; `f` is diagonalizable, so it is `μ` ti
 The bound itself, `‖tr f‖ ≤ finrank ℂ V`, is the triangle inequality;
 `TauCeti.End.eq_one_of_trace_eq_finrank` is the case `μ = 1`, where the trace attains the bound at
 the positive real value `finrank ℂ V`. -/
-theorem exists_eq_smul_of_norm_trace_eq_finrank {f : End ℂ V} {n : ℕ} (hn : n ≠ 0) (hf : f ^ n = 1)
+theorem _root_.Module.End.exists_eq_smul_of_norm_trace_eq_finrank {f : End ℂ V} {n : ℕ}
+    (hn : n ≠ 0) (hf : f ^ n = 1)
     (h : ‖LinearMap.trace ℂ V f‖ = (finrank ℂ V : ℝ)) : ∃ μ : ℂ, μ ^ n = 1 ∧ f = μ • 1 := by
   classical
   have hn' : (n : ℂ) ≠ 0 := Nat.cast_ne_zero.2 hn
@@ -316,7 +319,7 @@ theorem exists_eq_smul_of_norm_trace_eq_finrank {f : End ℂ V} {n : ℕ} (hn : 
 
 /-- **An endomorphism of finite order with trace the dimension is the identity.** The trace
 attains the largest absolute value it can, so `f` is a scalar
-(`TauCeti.End.exists_eq_smul_of_norm_trace_eq_finrank`), and the scalar is `1` because the trace of
+(`Module.End.exists_eq_smul_of_norm_trace_eq_finrank`), and the scalar is `1` because the trace of
 `μ • 1` is `μ` times the dimension.
 
 The restriction to `ℂ` is one of proof and of API, not of substance. The statement is true over any
@@ -327,7 +330,7 @@ the consumers of this file work. -/
 theorem eq_one_of_trace_eq_finrank {f : End ℂ V} {n : ℕ} (hn : n ≠ 0) (hf : f ^ n = 1)
     (h : LinearMap.trace ℂ V f = (finrank ℂ V : ℂ)) : f = 1 := by
   obtain ⟨μ, -, rfl⟩ :=
-    exists_eq_smul_of_norm_trace_eq_finrank hn hf (by rw [h, Complex.norm_natCast])
+    Module.End.exists_eq_smul_of_norm_trace_eq_finrank hn hf (by rw [h, Complex.norm_natCast])
   rcases Nat.eq_zero_or_pos (finrank ℂ V) with hV | hV
   · have : Subsingleton V := Module.finrank_zero_iff.1 hV
     exact LinearMap.ext fun _ => Subsingleton.elim _ _

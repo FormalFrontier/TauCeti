@@ -31,7 +31,7 @@ an algebraic integer, making `-1/p` an algebraic integer; it is rational and not
 irreducible character `χ ≠ 1` has `χ(g) ≠ 0` and degree prime to `p`.
 
 Its degree is then coprime to the class size, so Burnside's vanishing theorem
-(`TauCeti.Representation.char_eq_zero_or_norm_char_eq_finrank`) applies and gives `‖χ(g)‖ = χ(1)`.
+(`Representation.char_eq_zero_or_norm_char_eq_finrank`) applies and gives `‖χ(g)‖ = χ(1)`.
 That is the equality case of the bound on a character value, so the affording representation sends
 `g` to a scalar (`Representation.exists_apply_eq_smul_of_norm_char_eq_finrank`). Its kernel
 is normal, hence trivial or everything: if it is everything the character is constant and row

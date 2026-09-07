@@ -208,7 +208,7 @@ theorem _root_.Representation.exists_apply_eq_smul_of_norm_char_eq_finrank
     (ρ : Representation ℂ G V) {g : G} {n : ℕ}
     (hn : n ≠ 0) (hg : g ^ n = 1) (h : ‖ρ.character g‖ = (finrank ℂ V : ℝ)) :
     ∃ μ : ℂ, μ ^ n = 1 ∧ ρ g = μ • 1 :=
-  End.exists_eq_smul_of_norm_trace_eq_finrank hn (by rw [← map_pow, hg, map_one]) h
+  Module.End.exists_eq_smul_of_norm_trace_eq_finrank hn (by rw [← map_pow, hg, map_one]) h
 
 end Complex
 

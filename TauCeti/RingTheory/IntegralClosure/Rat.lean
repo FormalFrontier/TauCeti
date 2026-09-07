@@ -21,12 +21,6 @@ integrality descending along `algebraMap ℚ k`.
 
 * `TauCeti.dvd_of_isIntegral_of_natCast_mul_eq`: if `(n : k) * z = m` with `z` integral over `ℤ`
   in a field of characteristic zero and `n ≠ 0`, then `n ∣ m`.
-
-## Provenance
-
-Extracted from `TauCeti/RepresentationTheory/CharacterTable/Degree.lean`, where it was a private
-step of the proof that the degree of an irreducible character divides the group order. Burnside's
-`pᵃqᵇ` theorem is the second consumer, using it to rule out `-1/p` being an algebraic integer.
 -/
 
 public section
