@@ -36,7 +36,6 @@ Galois group of its fixed points, and that fixed-point subfield is the one under
 * `IntermediateField.fixingSubgroup_fixedField_of_finite`
 * `IntermediateField.finite_of_finiteDimensional_fixedField`
 * `IntermediateField.card_fixingSubgroup_le`
-* `FixedPoints.toAlgAutMulEquiv_apply`
 * `Subgroup.isCyclic_fixedField`
 * `Subgroup.zpowers_toAlgAutMulEquiv_eq_top`
 * `AlgEquiv.isCyclic_fixedField_zpowers`
@@ -136,25 +135,19 @@ theorem isCyclic_fixedField (H : Subgroup (M ≃ₐ[K] M)) [Finite H] [IsCyclic 
     IsCyclic (M ≃ₐ[IntermediateField.fixedField H] M) :=
   isCyclic_of_surjective _ (FixedPoints.toAlgAutMulEquiv H M).surjective
 
-/-- **Mathlib's identification acts as the automorphism it came from.** `toAlgAutMulEquiv` sends
-`h : H` to the automorphism of `M` over `M ^ H` that `h` already was as an automorphism over `K`;
-only the base field is forgotten. -/
-@[simp]
-theorem _root_.FixedPoints.toAlgAutMulEquiv_apply (H : Subgroup (M ≃ₐ[K] M)) [Finite H] (h : H)
-    (x : M) : FixedPoints.toAlgAutMulEquiv H M h x = (h : M ≃ₐ[K] M) x := rfl
-
 /-- **A generator of `H` maps to a generator of `Gal(M / M ^ H)`.**
 
 A fibre count needs the relative Frobenius exhibited as a specific power of a chosen generator,
 which `IsCyclic` alone does not give. -/
+@[simp]
 theorem zpowers_toAlgAutMulEquiv_eq_top (H : Subgroup (M ≃ₐ[K] M)) [Finite H] (h : H)
     (hh : zpowers h = ⊤) :
     zpowers (FixedPoints.toAlgAutMulEquiv H M h) = ⊤ := by
   -- `MonoidHom.map_zpowers` is about a `MonoidHom`, so the `MulEquiv` application is restated
-  -- through `MulEquiv.coe_toMonoidHom` rather than by unfolding the coercion.
-  rw [← MulEquiv.coe_toMonoidHom, ← MonoidHom.map_zpowers, hh,
-    map_top_of_surjective (FixedPoints.toAlgAutMulEquiv H M).toMonoidHom
-      (FixedPoints.toAlgAutMulEquiv H M).surjective]
+  -- through `MulEquiv.coe_toMonoidHom` rather than by unfolding the coercion. The image of `⊤`
+  -- is then `Subgroup.map_equiv_top`, which `simp` reaches through `MulEquiv.toMonoidHom_eq_coe`.
+  rw [← MulEquiv.coe_toMonoidHom, ← MonoidHom.map_zpowers, hh]
+  simp
 
 end Subgroup
 
