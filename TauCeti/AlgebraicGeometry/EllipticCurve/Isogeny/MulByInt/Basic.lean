@@ -93,6 +93,9 @@ is `WeierstrassCurve.Affine`'s, in `Affine/FunctionField/GenericPoint.lean`.
 * `TauCeti.Isogeny.tautologicalPoint_mulByIntPullback`: the tautological point of `[n]` is
   `n • ` the generic point. It lives here, next to the Jacobian-coordinate lemmas it is proved
   from, which stay private.
+* `WeierstrassCurve.Affine.zsmul_genericPoint_ne_zero` and
+  `WeierstrassCurve.Affine.zsmul_genericPoint_injective`: the generic point of an elliptic curve
+  is not torsion, and its multiples are pairwise distinct.
 
 ## References
 
@@ -404,3 +407,26 @@ end TautologicalPoint
 end Isogeny
 
 end TauCeti
+
+namespace WeierstrassCurve.Affine
+
+variable {F : Type*} [Field F] (W : WeierstrassCurve.Affine F)
+
+/-- **The generic point of an elliptic curve is not torsion.** Its `n`-th multiple is the
+tautological point of `[n]`, and a tautological point is an affine point, never the point at
+infinity. -/
+theorem zsmul_genericPoint_ne_zero [W.IsElliptic] {n : ℤ} (hn : n ≠ 0) :
+    n • W.genericPoint ≠ 0 := by
+  rw [← TauCeti.Isogeny.tautologicalPoint_mulByIntPullback W
+    (TauCeti.Isogeny.psiFunctionField_ne_zero_of_Δ_ne_zero W W.isUnit_Δ.ne_zero hn)]
+  exact TauCeti.CoordinatePullback.tautologicalPoint_ne_zero _
+
+/-- **The multiples of the generic point are pairwise distinct**, the generic point having
+infinite order. -/
+theorem zsmul_genericPoint_injective [W.IsElliptic] :
+    Function.Injective fun n : ℤ => n • W.genericPoint := by
+  intro m n h
+  by_contra hmn
+  exact zsmul_genericPoint_ne_zero W (sub_ne_zero.2 hmn) (by simp [sub_zsmul, h])
+
+end WeierstrassCurve.Affine

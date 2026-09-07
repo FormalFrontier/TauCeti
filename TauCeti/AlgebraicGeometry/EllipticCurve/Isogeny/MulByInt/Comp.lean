@@ -23,16 +23,11 @@ can use directly.
 `[0]` is not among the isogenies compared: `ψ₀ = 0`, so `mulByIntIsogeny` is undefined there,
 and the distinctness statements range only over the integers at which `[·]` is defined.
 
-Distinctness rests on the generic point of `W` having infinite order, which is proved here as
-well.
+Distinctness rests on the generic point of `W` having infinite order, as established in
+`MulByInt/Basic.lean`.
 
 ## Main results
 
-* `TauCeti.Isogeny.map_genericPoint_mulByIntIsogeny`: the function-field map of `[n]` carries the
-  generic point to `n • ` the generic point.
-* `WeierstrassCurve.Affine.zsmul_genericPoint_ne_zero` and
-  `WeierstrassCurve.Affine.zsmul_genericPoint_injective`: the generic point of an elliptic curve
-  is not torsion, and its multiples are pairwise distinct.
 * `TauCeti.Isogeny.mulByIntIsogeny_one` and `TauCeti.Isogeny.mulByIntIsogenyOfNeZero_one`: `[1]`
   is the identity isogeny.
 * `TauCeti.Isogeny.mulByIntIsogeny_comp_mulByIntIsogeny` and
@@ -59,29 +54,6 @@ well.
 
 public section
 
-namespace WeierstrassCurve.Affine
-
-variable {F : Type*} [Field F] (W : WeierstrassCurve.Affine F)
-
-/-- **The generic point of an elliptic curve is not torsion.** Its `n`-th multiple is the
-tautological point of `[n]`, and a tautological point is an affine point, never the point at
-infinity. -/
-theorem zsmul_genericPoint_ne_zero [W.IsElliptic] {n : ℤ} (hn : n ≠ 0) :
-    n • W.genericPoint ≠ 0 := by
-  rw [← TauCeti.Isogeny.tautologicalPoint_mulByIntPullback W
-    (TauCeti.Isogeny.psiFunctionField_ne_zero_of_Δ_ne_zero W W.isUnit_Δ.ne_zero hn)]
-  exact TauCeti.CoordinatePullback.tautologicalPoint_ne_zero _
-
-/-- **The multiples of the generic point are pairwise distinct**, the generic point having
-infinite order. -/
-theorem zsmul_genericPoint_injective [W.IsElliptic] :
-    Function.Injective fun n : ℤ => n • W.genericPoint := by
-  intro m n h
-  by_contra hmn
-  exact zsmul_genericPoint_ne_zero W (sub_ne_zero.2 hmn) (by simp [sub_zsmul, h])
-
-end WeierstrassCurve.Affine
-
 namespace TauCeti
 
 open _root_.WeierstrassCurve.Affine
@@ -91,14 +63,6 @@ variable {F : Type*} [Field F] (W : WeierstrassCurve.Affine F)
 namespace Isogeny
 
 variable [W.IsElliptic]
-
-/-- **The function-field map of `[n]` carries the generic point to `n • ` the generic point**,
-the generic point transported along a pullback being that pullback's tautological point. -/
-@[simp]
-theorem map_genericPoint_mulByIntIsogeny {n : ℤ} (hn : psiFunctionField W n ≠ 0) :
-    Point.map (mulByIntIsogeny W hn).fieldPullback W.genericPoint = n • W.genericPoint := by
-  rw [← tautologicalPoint_eq_map_genericPoint, mulByIntIsogeny_pullback,
-    tautologicalPoint_mulByIntPullback]
 
 /-- **`[1]` is the identity isogeny**, its tautological point being the generic point itself. -/
 @[simp]
