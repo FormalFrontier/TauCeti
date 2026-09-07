@@ -11,7 +11,10 @@ public import TauCeti.Analysis.Semigroups.Generator.Basic
 # Invariance of the generator domain
 
 This file proves that every operator of a strongly continuous semigroup preserves the domain
-of its infinitesimal generator and commutes with the generator there.
+of its infinitesimal generator and commutes with the generator there.  The mechanism is
+`StronglyContinuousSemigroup.tendsto_genQuot_map_of_commute`: a bounded operator commuting with
+the semigroup pushes the generator difference quotient through, so it maps the generator domain to
+itself and commutes with the generator.
 
 ## References
 
@@ -33,20 +36,30 @@ variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X] [CompleteSpace X
 namespace StronglyContinuousSemigroup
 
 omit [CompleteSpace X] in
+/-- A bounded operator commuting with the semigroup pushes the generator difference quotient
+through: the quotient based at `T x` is `T` applied to the quotient based at `x`. -/
+theorem tendsto_genQuot_map_of_commute (S : StronglyContinuousSemigroup X) (T : X →L[ℝ] X)
+    (hT : ∀ (s : ℝ≥0) (x : X), S s (T x) = T (S s x)) {x y : X}
+    (h : Filter.Tendsto (fun t => (1 / t) • (S.realOperator t x - x))
+      (nhdsWithin 0 (Set.Ioi 0)) (nhds y)) :
+    Filter.Tendsto (fun t => (1 / t) • (S.realOperator t (T x) - T x))
+      (nhdsWithin 0 (Set.Ioi 0)) (nhds (T y)) := by
+  refine (T.continuous.continuousAt.tendsto.comp h).congr'
+    (Filter.Eventually.of_forall fun t => ?_)
+  -- Beta-reduce the applied lambda.
+  dsimp only
+  rw [Function.comp_apply, S.realOperator_def, hT, map_smul, map_sub]
+
+omit [CompleteSpace X] in
 /-- The difference quotient based at `S s x` is `S s` applied to the difference quotient
 based at `x`. -/
 private theorem tendsto_genQuot_apply (S : StronglyContinuousSemigroup X) (s : ℝ≥0) {x y : X}
     (h : Filter.Tendsto (fun t => (1 / t) • (S.realOperator t x - x))
       (nhdsWithin 0 (Set.Ioi 0)) (nhds y)) :
     Filter.Tendsto (fun t => (1 / t) • (S.realOperator t (S s x) - S s x))
-      (nhdsWithin 0 (Set.Ioi 0)) (nhds (S s y)) := by
-  refine ((S s).continuous.continuousAt.tendsto.comp h).congr' ?_
-  filter_upwards [self_mem_nhdsWithin] with t ht
-  have ht0 : 0 ≤ t := ht.le
-  have hcomm : S.realOperator t (S s x) = S s (S.realOperator t x) := by
-    rw [← Real.coe_toNNReal t ht0, S.realOperator_coe]
-    rw [← S.map_add_apply, add_comm, S.map_add_apply]
-  simp only [Function.comp_apply, hcomm, map_smul, map_sub]
+      (nhdsWithin 0 (Set.Ioi 0)) (nhds (S s y)) :=
+  S.tendsto_genQuot_map_of_commute (S s)
+    (fun r x => by rw [← S.map_add_apply, add_comm, S.map_add_apply]) h
 
 omit [CompleteSpace X] in
 /-- Every semigroup operator preserves the domain of the infinitesimal generator. -/

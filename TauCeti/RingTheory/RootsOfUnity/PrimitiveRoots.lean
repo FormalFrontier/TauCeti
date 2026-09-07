@@ -20,7 +20,7 @@ because the character records nothing but the power the root is sent to.
 
 ## Main results
 
-* `TauCeti.IsPrimitiveRoot.map_eq_pow`: a ring endomorphism sending a primitive `n`-th root of
+* `IsPrimitiveRoot.map_eq_pow`: a ring endomorphism sending a primitive `n`-th root of
   unity `ζ` to `ζ ^ j` sends every `n`-th root of unity `μ` to `μ ^ j`.
 * `IsPrimitiveRoot.autToPow_eq_one_iff`: the cyclotomic character kills an automorphism exactly
   when it fixes the chosen primitive root.
@@ -43,7 +43,7 @@ variable {R : Type u} [CommRing R] [IsDomain R]
 /-- A ring homomorphism that raises one primitive `n`-th root of unity to the `j`-th power raises
 every `n`-th root of unity to the `j`-th power, since the `n`-th roots of unity are exactly the
 powers of a primitive one. -/
-theorem IsPrimitiveRoot.map_eq_pow {n j : ℕ} [NeZero n] {ζ : R} (hζ : IsPrimitiveRoot ζ n)
+theorem _root_.IsPrimitiveRoot.map_eq_pow {n j : ℕ} [NeZero n] {ζ : R} (hζ : IsPrimitiveRoot ζ n)
     (σ : R →+* R) (hσ : σ ζ = ζ ^ j) {μ : R} (hμ : μ ^ n = 1) : σ μ = μ ^ j := by
   obtain ⟨i, -, rfl⟩ := hζ.eq_pow_of_pow_eq_one hμ
   rw [map_pow, hσ, ← pow_mul, ← pow_mul, Nat.mul_comm]

@@ -9,6 +9,7 @@ public import TauCeti.Analysis.Semigroups.Generator.OrbitDerivative
 public import TauCeti.Analysis.Semigroups.GrowthBound
 import Mathlib.Analysis.Calculus.Deriv.Shift
 import Mathlib.Analysis.Calculus.MeanValue
+import TauCeti.LinearAlgebra.LinearPMap.Basic
 
 /-!
 # The generator determines the semigroup
@@ -126,7 +127,7 @@ private theorem hasDerivWithinAt_interpolate {S T : StronglyContinuousSemigroup 
   have hyT' : y ∈ T.generator.domain := by rw [T.generator_domain]; exact hyT
   have hyS' : y ∈ S.generator.domain := by rw [S.generator_domain, hdom]; exact hyT
   set a : X := T.generator ⟨y, hyT'⟩
-  have hSa : S.generator ⟨y, hyS'⟩ = a := @(LinearPMap.ext_iff.mp hgen).2 y hyS' hyT'
+  have hSa : S.generator ⟨y, hyS'⟩ = a := LinearPMap.congr_fun hgen hyS' hyT'
   -- The outer factor: the orbit of `y ∈ D(A)` read backwards from the fixed time `t`.
   have hrho : HasDerivAt (fun u : ℝ => S.realOperator (t - u) y)
       (-(S.realOperator (t - s) a)) s :=

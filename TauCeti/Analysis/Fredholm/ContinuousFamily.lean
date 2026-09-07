@@ -53,7 +53,7 @@ variable [TopologicalSpace X]
 
 /-- The Fredholm index of a continuous family of Fredholm operators is locally constant on the
 parameter space. -/
-theorem Continuous.isLocallyConstant_index {A : X → E →L[K] F}
+theorem _root_.Continuous.isLocallyConstant_index {A : X → E →L[K] F}
     (hA : Continuous A) (hFredholm : ∀ x, ContinuousLinearMap.IsFredholm (A x)) :
     IsLocallyConstant fun x ↦ ContinuousLinearMap.index (A x) := by
   rw [IsLocallyConstant.iff_eventually_eq]
@@ -63,7 +63,7 @@ theorem Continuous.isLocallyConstant_index {A : X → E →L[K] F}
 
 /-- Along a continuous family of Fredholm operators, parameters in the same preconnected set give
 operators with equal index. -/
-theorem ContinuousOn.index_eq_of_isPreconnected {A : X → E →L[K] F} {s : Set X}
+theorem _root_.ContinuousOn.index_eq_of_isPreconnected {A : X → E →L[K] F} {s : Set X}
     (hA : ContinuousOn A s) (hFredholm : ∀ x ∈ s, ContinuousLinearMap.IsFredholm (A x))
     (hs : IsPreconnected s) {x y : X} (hx : x ∈ s) (hy : y ∈ s) :
     ContinuousLinearMap.index (A x) = ContinuousLinearMap.index (A y) := by
@@ -73,14 +73,14 @@ theorem ContinuousOn.index_eq_of_isPreconnected {A : X → E →L[K] F} {s : Set
 
 /-- A continuous family of Fredholm operators over a preconnected parameter space has constant
 index. -/
-theorem Continuous.index_eq_of_preconnectedSpace [PreconnectedSpace X]
+theorem _root_.Continuous.index_eq_of_preconnectedSpace [PreconnectedSpace X]
     {A : X → E →L[K] F} (hA : Continuous A)
     (hFredholm : ∀ x, ContinuousLinearMap.IsFredholm (A x)) (x y : X) :
     ContinuousLinearMap.index (A x) = ContinuousLinearMap.index (A y) :=
   (Continuous.isLocallyConstant_index hA hFredholm).apply_eq_of_preconnectedSpace x y
 
 /-- The endpoints of a continuous path of Fredholm operators have the same index. -/
-theorem Path.index_eq {T S : E →L[K] F} (A : Path T S)
+theorem _root_.Path.index_eq {T S : E →L[K] F} (A : Path T S)
     (hFredholm : ∀ t, ContinuousLinearMap.IsFredholm (A t)) :
     ContinuousLinearMap.index T = ContinuousLinearMap.index S := by
   simpa only [A.source, A.target] using
