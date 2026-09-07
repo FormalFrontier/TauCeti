@@ -97,19 +97,6 @@ variable [(W.baseChange K).IsElliptic]
 
 variable [FaithfulSMul O K]
 
-omit [(W.baseChange K).IsElliptic] [FaithfulSMul O K] in
-/-- **`w(t)` has nonzero image** in any nontrivial domain over `O` once the image of `t` does:
-the expansion factors as `t ^ 3 * u(t)` with `u(t)` a unit, and both factors have nonzero image —
-the cube because there are no zero divisors, the unit because units map to units. Neither a field
-nor injectivity is needed. -/
-theorem algebraMap_formalWEval_ne_zero {S : Type*} [CommRing S] [Nontrivial S] [NoZeroDivisors S]
-    [Algebra O S] {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I)
-    (ht0 : algebraMap O S t ≠ 0) : algebraMap O S (W.formalWEval t) ≠ 0 := by
-  rw [W.formalWEval_eq_pow_mul_formalUEval (hI.isTopologicallyNilpotent_of_mem ht), map_mul,
-    map_pow]
-  exact mul_ne_zero (pow_ne_zero _ ht0)
-    ((W.isUnit_formalUEval hI ht).map (algebraMap O S)).ne_zero
-
 open scoped Classical in
 /-- **The point attached to a formal-group parameter**: a nonzero `t` in an adic ideal gives the
 affine point `(t / w(t), -1 / w(t))`, and `t = 0` gives the point at infinity. -/
