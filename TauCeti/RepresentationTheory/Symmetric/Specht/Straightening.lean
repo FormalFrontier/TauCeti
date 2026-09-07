@@ -76,7 +76,7 @@ heavily enough that a gain in it outweighs any loss of row moment combines the t
 measure.
 
 A tableau on which neither move applies increases down its columns and along its rows, so it is
-standard (`TauCeti.StandardYoungTableau.exists_toTableau_eq_iff`).
+standard (`TauCeti.exists_standardYoungTableau_toTableau_eq_iff`).
 
 ## Main results
 
@@ -499,7 +499,7 @@ theorem polytabloid_mem_span_polytabloid_standard (t : YoungTableau μ) :
     by_cases hstd : (∀ x y : Fin μ.card,
           colIndex t x = colIndex t y → rowIndex t x < rowIndex t y → x < y) ∧
         ∀ x y : Fin μ.card, rowIndex t x = rowIndex t y → colIndex t x < colIndex t y → x < y
-    · obtain ⟨T, rfl⟩ := (StandardYoungTableau.exists_toTableau_eq_iff t).mpr hstd
+    · obtain ⟨T, rfl⟩ := (exists_standardYoungTableau_toTableau_eq_iff t).mpr hstd
       exact Submodule.subset_span ⟨T, rfl⟩
     · refine (Submodule.span_le.mpr ?_) (polytabloid_mem_span_of_lt t hstd)
       rintro _ ⟨t', hlt, rfl⟩

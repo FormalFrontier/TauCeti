@@ -59,7 +59,8 @@ definition, so the standard ones already do.
 * `TauCeti.linearIndependent_polytabloid`: the standard polytabloids are linearly independent.
 * `TauCeti.spechtSubrepresentation_eq_span_standard`: the standard polytabloids span the Specht
   module.
-* `TauCeti.standardPolytabloidBasis`: **the standard basis** of the Specht module.
+* `TauCeti.standardPolytabloidBasis`: **the standard basis** of the Specht module, with
+  `TauCeti.spechtModuleStandardBasis` its partition-indexed form.
 * `TauCeti.finrank_spechtSubrepresentation` and `TauCeti.finrank_spechtModule`: **`dim S^μ = f^μ`.**
 
 ## References
@@ -343,6 +344,21 @@ theorem coe_standardPolytabloidBasis (μ : YoungDiagram) (T : StandardYoungTable
     (standardPolytabloidBasis μ T : (permutationModule (shapePartition μ)).V) =
       polytabloid T.toTableau := by
   simp [standardPolytabloidBasis]
+
+/-- **The standard basis of the Specht module `S^μ` of a partition `μ` of `n`**, the
+partition-indexed packaging `TauCeti.spechtModule` of
+`TauCeti.standardPolytabloidBasis`: `S^μ` has the polytabloids of the standard tableaux of shape
+`diagramOf μ` as a basis. -/
+noncomputable def spechtModuleStandardBasis {n : ℕ} (μ : n.Partition) :
+    Module.Basis (StandardYoungTableau (diagramOf μ)) ℚ (spechtModule μ) :=
+  standardPolytabloidBasis (diagramOf μ)
+
+@[simp]
+theorem coe_spechtModuleStandardBasis {n : ℕ} (μ : n.Partition)
+    (T : StandardYoungTableau (diagramOf μ)) :
+    (spechtModuleStandardBasis μ T : (permutationModule (shapePartition (diagramOf μ))).V) =
+      polytabloid T.toTableau :=
+  coe_standardPolytabloidBasis (diagramOf μ) T
 
 /-- **The dimension of the Specht module is the number of standard Young tableaux**, `dim S^μ =
 f^μ`. -/
