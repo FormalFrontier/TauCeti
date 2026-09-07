@@ -62,17 +62,22 @@ variable {K V : Type*} [Field K] [AddCommGroup V] [Module K V]
 /-- A regular isotropic quadratic form represents every scalar. -/
 theorem _root_.QuadraticMap.represents_of_nondegenerate_of_not_anisotropic
     (Q : QuadraticForm K V)
-    [Invertible (2 : K)] (hQ : Q.Nondegenerate) (hiso : ¬Q.Anisotropic) (a : K) :
+    (hQ : Q.Nondegenerate) (hiso : ¬Q.Anisotropic) (a : K) :
     Represents Q a := by
-  have hB : Q.polarBilin.Nondegenerate := QuadraticMap.nondegenerate_polar_iff.mpr hQ
   obtain ⟨v, hv, hvQ⟩ := (not_anisotropic_iff_exists Q).mp hiso
   obtain ⟨w, hw⟩ : ∃ w, Q.polarBilin v w ≠ 0 := by
     by_contra h
     apply hv
-    apply hB.1 v
-    intro w
-    by_contra hw
-    exact h ⟨w, hw⟩
+    have hv_rad : v ∈ Q.radical := by
+      change Q v = 0 ∧ Q.polarBilin v = 0
+      refine ⟨hvQ, ?_⟩
+      ext w
+      by_contra hw
+      exact h ⟨w, hw⟩
+    have hv_bot : v ∈ (⊥ : Submodule K V) := by
+      rw [← hQ.radical_eq_bot]
+      exact hv_rad
+    simpa only [Submodule.mem_bot] using hv_bot
   have hw' : polar Q v w ≠ 0 := by
     simpa only [polarBilin_apply_apply] using hw
   have hw'' : polar Q w v ≠ 0 := by
@@ -119,7 +124,7 @@ variable {K V : Type*} [Field K] [AddCommGroup V] [Module K V]
 The added line is the one-dimensional form `x ↦ -a * x²`, written as a scalar multiple of
 `QuadraticMap.sq`. -/
 theorem _root_.QuadraticMap.mem_unitValueSet_iff_not_anisotropic_prod
-    [Invertible (2 : K)] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) (a : Kˣ) :
+    (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) (a : Kˣ) :
     a ∈ unitValueSet Q ↔
       ¬(Q.prod ((-(a : K)) • (QuadraticMap.sq : QuadraticForm K K))).Anisotropic := by
   constructor
