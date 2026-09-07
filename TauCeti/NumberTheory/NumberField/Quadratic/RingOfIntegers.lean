@@ -10,6 +10,7 @@ public import TauCeti.NumberTheory.NumberField.Internal.QuadraticIntegralBasis
 public import TauCeti.NumberTheory.NumberField.Discriminant.OfIntegralBasis
 public import Mathlib.NumberTheory.NumberField.Norm
 import TauCeti.RingTheory.Norm.Quadratic
+import Mathlib.FieldTheory.Minpoly.IsIntegrallyClosed
 
 /-!
 # The ring of integers of a quadratic field
@@ -36,6 +37,7 @@ coordinate as `B`, the norm of `z` is `(A² - d·B²)/4`, and the factor `4` dis
 * `NumberField.adjoin_gen_eq_top_of_mod_four_ne_one`: `𝓞 K = ℤ[θ]` for `d % 4 ≠ 1`.
 * `NumberField.discr_eq_four_mul_of_mod_four_ne_one`: `discr K = 4d` for `d % 4 ≠ 1`.
 * `NumberField.adjoin_halfGen_eq_top_of_mod_four_eq_one`: `𝓞 K = ℤ[(1+θ)/2]` for `d ≡ 1`.
+* `NumberField.minpoly_halfGen`: the minimal polynomial of `(1+θ)/2` is `X² - X - (d-1)/4`.
 * `NumberField.discr_eq_of_squarefree_of_mod_four_eq_one`: `discr K = d` for `d ≡ 1`.
 * `NumberField.exists_sq_sub_mul_sq_eq_four_mul_norm`: the norm form `4·N(z) = A² - d·B²`, and
   `NumberField.exists_sq_sub_mul_sq_eq_norm_of_mod_four_ne_one`: `N(z) = A² - d·B²` for `d ≢ 1`.
@@ -242,6 +244,51 @@ noncomputable def halfGen (hmin : minpoly ℤ θ = X ^ 2 - C d) (hd4 : d % 4 = 1
 @[simp] theorem coe_halfGen (hmin : minpoly ℤ θ = X ^ 2 - C d) (hd4 : d % 4 = 1) :
     (halfGen hmin hd4 : K) = (1 + (θ : K)) / 2 := by
   unfold halfGen; rfl
+
+/-- **The minimal polynomial of the half-integer generator.** For `d ≡ 1 (mod 4)`, the algebraic
+integer `ω = (1 + θ)/2` has minimal polynomial `X² - X - (d - 1)/4` over `ℤ`. -/
+theorem minpoly_halfGen (hmin : minpoly ℤ θ = X ^ 2 - C d) (hd4 : d % 4 = 1) :
+    minpoly ℤ (halfGen hmin hd4) = X ^ 2 - X - C ((d - 1) / 4) := by
+  set ω := halfGen hmin hd4 with hω
+  set c : ℤ := (d - 1) / 4 with hc
+  have h4 : 4 * c = d - 1 := by omega
+  have hq : (X ^ 2 - X - C c : ℤ[X]) = X ^ 2 - (X + C c) := by ring
+  have hlt : (X + C c : ℤ[X]).natDegree < (X ^ 2 : ℤ[X]).natDegree := by
+    rw [natDegree_X_add_C, natDegree_X_pow]; norm_num
+  have hmonic : (X ^ 2 - X - C c : ℤ[X]).Monic := by
+    rw [hq]
+    exact (monic_X_pow 2).sub_of_left (degree_lt_degree hlt)
+  have hdeg : (X ^ 2 - X - C c : ℤ[X]).natDegree = 2 := by
+    rw [hq, natDegree_sub_eq_left_of_natDegree_lt hlt, natDegree_X_pow]
+  have hint : IsIntegral ℤ ω := Algebra.IsIntegral.isIntegral ω
+  -- `ω` is a root: `4(ω² - ω - c) = (1 + θ)² - 2(1 + θ) - 4c = θ² - 1 - 4c = 0` in `K`.
+  have hroot : aeval ω (X ^ 2 - X - C c : ℤ[X]) = 0 := by
+    apply FaithfulSMul.algebraMap_injective (𝓞 K) K
+    rw [map_zero, ← aeval_algebraMap_apply]
+    have hωK : algebraMap (𝓞 K) K ω = (1 + (θ : K)) / 2 := coe_halfGen hmin hd4
+    have hθ : ((θ : K)) ^ 2 = (d : K) := coe_gen_sq hmin
+    have h4K : (4 : K) * (c : K) = (d : K) - 1 := by exact_mod_cast h4
+    rw [map_sub, map_sub, map_pow, aeval_X, aeval_C, hωK, algebraMap_int_eq, eq_intCast]
+    linear_combination (1 / 4 : K) * hθ - (1 / 4 : K) * h4K
+  -- The minimal polynomial divides this monic quadratic, and has degree at least `2` because `ω`
+  -- is not a rational integer; so the two monic polynomials coincide.
+  obtain ⟨r, hr⟩ := minpoly.isIntegrallyClosed_dvd hint hroot
+  have hrmonic : r.Monic := (minpoly.monic hint).of_mul_monic_left (hr ▸ hmonic)
+  have hnotmem : ω ∉ (algebraMap ℤ (𝓞 K)).range := by
+    rintro ⟨n, hn⟩
+    apply gen_notMem_range hmin
+    refine ⟨2 * n - 1, ?_⟩
+    have hωK : (ω : K) = (1 + (θ : K)) / 2 := coe_halfGen hmin hd4
+    have hnK : (ω : K) = (n : K) := by
+      rw [← hn]; simp [algebraMap_int_eq, eq_intCast]
+    rw [hωK] at hnK
+    rw [map_sub, map_mul, map_one, map_ofNat, map_intCast]
+    linear_combination -2 * hnK
+  have h2le : 2 ≤ (minpoly ℤ ω).natDegree := (minpoly.two_le_natDegree_iff hint).mpr hnotmem
+  have hsum : (minpoly ℤ ω).natDegree + r.natDegree = 2 := by
+    rw [← (minpoly.monic hint).natDegree_mul hrmonic, ← hr, hdeg]
+  have hr1 : r = 1 := Polynomial.eq_one_of_monic_natDegree_zero hrmonic (by omega)
+  rw [hr, hr1, mul_one]
 
 /-- **`𝓞 K = ℤ[ω]` for `d ≡ 1 (mod 4)`: coordinates.** Every algebraic integer is a `ℤ`-combination
 `k + l·ω` with `ω = (1+θ)/2`. Since `θ = 2ω - 1`, the half-integer coordinates `A/2, B/2` give
