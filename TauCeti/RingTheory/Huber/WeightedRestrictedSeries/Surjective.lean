@@ -8,10 +8,11 @@ module
 public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Basic
 
 /-!
-# `A⟨X₁,…,Xₖ⟩ → B⟨X₁,…,Xₖ⟩` is surjective along an open surjection
+# Restricted series lift along an open surjection
 
 A continuous **open** surjection `φ : A → B` of nonarchimedean rings whose source has countably
-generated `𝓝 0` induces a surjection `A⟨X₁,…,Xₖ⟩ → B⟨X₁,…,Xₖ⟩` of restricted power-series rings.
+generated `𝓝 0` induces a surjection of restricted power-series *rings* — the trivial-weight
+`TauCeti.Huber.weightedRestrictedSubring`, before completion — coefficientwise.
 
 Openness is the hypothesis that matters. Surjectivity of `φ` alone lifts each coefficient of a
 restricted series separately, but the preimages so chosen need not tend to zero, and then the lift
@@ -55,20 +56,22 @@ variable {k : ℕ} {A B : Type*} [CommRing A] [TopologicalSpace A] [Nonarchimede
   [CommRing B] [TopologicalSpace B] [NonarchimedeanRing B]
 
 /-- **A continuous surjection carrying neighbourhoods of zero onto neighbourhoods of zero stays
-surjective on restricted series**, provided `𝓝 (0 : A)` is countably generated. Every element of
-`B⟨X₁,…,Xₖ⟩` is then the image of one of `A⟨X₁,…,Xₖ⟩`.
+surjective on restricted series**, provided `𝓝 (0 : A)` is countably generated. Every restricted
+series over `B` is then the image of one over `A`.
 
 The hypothesis is the filter inequality the proof consumes rather than `IsOpenMap φ`, which is
 strictly stronger; `IsOpenQuotientMap.weightedMap_one_weight_surjective` is the form for a caller
 holding the bundled open-quotient structure.
 
-This is the step Wedhorn's Proposition & Definition 6.36(ii) needs: a ring *strictly*
-topologically of finite type over `A` is an open quotient of some `A⟨X₁,…,Xₖ⟩`
-(`TauCeti.Huber.IsStrictlyTopologicallyFiniteType`), and adjoining further variables to that
-quotient has to stay a quotient for noetherianity to descend to it.
-`TauCeti.Huber.IsTopologicallyFiniteType` is the weaker notion, taking a quotient of the
-completion of a weighted `A⟨X⟩_T` for an arbitrary finite weight family; it is not what this
-serves. -/
+This is a step towards what Wedhorn's Proposition & Definition 6.36(ii) needs, not the whole of
+it. `TauCeti.Huber.IsStrictlyTopologicallyFiniteType` asks for an open quotient map whose domain
+is `TauCeti.Huber.restrictedMvPowerSeriesCompletion k A` — the *completion* `A⟨X₁,…,Xₖ⟩` at the
+trivial weight — whereas the surjection here is one level below, between the restricted subrings
+themselves. Passing from this to an open quotient out of the completion is a separate step.
+
+`TauCeti.Huber.IsTopologicallyFiniteType` is the weaker notion, and what weakens it is the
+*weight family*, not completion: it allows an arbitrary finite family `T` in place of the trivial
+one. Both notions take their quotient out of a completion. -/
 theorem weightedMap_one_weight_surjective [(𝓝 (0 : A)).IsCountablyGenerated] {φ : A →+* B}
     (hφ : Continuous φ) (hsurj : Function.Surjective φ)
     (hnhds : 𝓝 (0 : B) ≤ Filter.map φ (𝓝 (0 : A))) :
