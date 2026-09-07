@@ -73,7 +73,7 @@ theorem weightedMap_one_weight_surjective [(𝓝 (0 : A)).IsCountablyGenerated] 
     (hφ : Continuous φ) (hsurj : Function.Surjective φ)
     (hnhds : 𝓝 (0 : B) ≤ Filter.map φ (𝓝 (0 : A))) :
     Function.Surjective (weightedMap (k := k) hφ isWeightFamily_one_weight
-      isWeightFamily_one_weight fun _ ↦ (image_one_weight φ).le) := by
+      isWeightFamily_one_weight fun _ ↦ by simp) := by
   intro g
   obtain ⟨f, hf⟩ := restrictedMvPowerSeriesSubmoduleMap_surjective (k := k)
     φ.toAddMonoidHom.toIntLinearMap hφ.continuousAt hsurj hnhds
@@ -100,7 +100,7 @@ and it bundles exactly the continuity, surjectivity and openness the filter-leve
 theorem _root_.IsOpenQuotientMap.weightedMap_one_weight_surjective
     [(𝓝 (0 : A)).IsCountablyGenerated] {φ : A →+* B} (hq : IsOpenQuotientMap φ) :
     Function.Surjective (weightedMap (k := k) hq.continuous isWeightFamily_one_weight
-      isWeightFamily_one_weight fun _ ↦ (image_one_weight φ).le) :=
+      isWeightFamily_one_weight fun _ ↦ by simp) :=
   TauCeti.Huber.weightedMap_one_weight_surjective hq.continuous hq.surjective
     (map_zero φ ▸ hq.isOpenMap.nhds_le 0)
 
