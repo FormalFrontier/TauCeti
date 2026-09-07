@@ -51,21 +51,6 @@ jobs:
         with:
           preserve-lakefile: true
 
-      # The examples project under web/ compiles the TauCeti library, so it carries its own copies
-      # of the root toolchain and Mathlib pins; scripts/test_web_pins.py explains why they have to
-      # match. Nothing in Lake keeps the copies honest, and this workflow moved the root pins every
-      # day without ever touching them. By September 2026 the examples project was two Lean
-      # releases and several hundred Mathlib commits behind, the site build had been failing for a
-      # day on a file that compiled fine at the root pins, and every pull request was green
-      # throughout, because nothing outside pages.yml builds that project.
-      #
-      # Syncing here rather than afterwards puts the copies in the same commit as the pins they
-      # follow: open-bump-pr commits the whole working tree with `git add -A`, so this rides along
-      # with the bump and bump-guard validates them together.
-      - name: Carry the site's examples pins along with the bump
-        if: steps.fkb.outputs.commit == '' && steps.bump.outputs.updated == 'true'
-        run: python3 scripts/sync_web_pins.py
-
       - name: Open or update PR
         if: steps.fkb.outputs.commit == '' && steps.bump.outputs.updated == 'true'
         uses: leanprover-community/downstream-reports/.github/actions/open-bump-pr@62750c6a09e73013f9c23c7ee007c612793fe9a2
@@ -104,35 +89,6 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           git-user-name: tauceti-review-bot[bot]
           git-user-email: 290224625+tauceti-review-bot[bot]@users.noreply.github.com
-
-      # Same pin copies as on the bump path above, but track-incompatibility changes the manifest
-      # and pushes inside one action, so they cannot be synced before its commit. Push them as a
-      # follow-up instead. Without this every fix PR opens with test_web_pins.py already red for a
-      # reason unrelated to the incompatibility being fixed, and — worse — the examples project
-      # would go on compiling the library against a Mathlib the fix branch has deliberately moved
-      # away from. The push uses the App token rather than the checkout's GITHUB_TOKEN so that
-      # pr-build and the review pipeline actually fire on the new head.
-      - name: Carry the site's examples pins onto the fix branch
-        if: steps.track.outputs.pr-number != ''
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          TOKEN: ${{ steps.app-token.outputs.token }}
-          PR: ${{ steps.track.outputs.pr-number }}
-        run: |
-          set -euo pipefail
-          branch=$(gh pr view "$PR" --json headRefName --jq .headRefName)
-          git fetch origin "$branch"
-          git checkout "$branch"
-          python3 scripts/sync_web_pins.py
-          if git diff --quiet; then
-            echo "examples pins already match the fix manifest; nothing to push"
-            exit 0
-          fi
-          git config user.name "tauceti-review-bot[bot]"
-          git config user.email "290224625+tauceti-review-bot[bot]@users.noreply.github.com"
-          git commit -am "chore: point web/examples at the first-known-bad manifest"
-          git config --unset http.https://github.com/.extraheader || true
-          git push "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$branch"
 
       - name: Close the LKG bump PR while a fix PR is open
         if: steps.track.outputs.pr-action == 'created' || steps.track.outputs.pr-action == 'noop-existing'
