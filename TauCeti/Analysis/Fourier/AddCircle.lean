@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Analysis.Fourier.AddCircle
 public import Mathlib.Analysis.SpecialFunctions.Complex.CircleAddChar
+public import Mathlib.Topology.Algebra.PontryaginDual
 
 /-!
 # The continuous characters of the circle are the Fourier monomials
@@ -17,8 +18,8 @@ contributes to the Fourier basis. Read the other way, as a family of *characters
 `AddCircle T` indexed by `n`, the two facts a representation-theoretic consumer needs are that the
 family is **faithful** (distinct indices give distinct characters, so the corresponding
 one-dimensional representations are pairwise inequivalent) and that it is **exhaustive** (there are
-no other continuous characters). This file proves both, and packages them as an equivalence
-between `ℤ` and the continuous additive characters of the circle.
+no other continuous characters). This file proves both, and packages them as an isomorphism of
+groups between `Multiplicative ℤ` and the Pontryagin dual of the circle group.
 
 Faithfulness is elementary: two monomials already differ at the point `T / 2 / (m - n)`.
 Exhaustiveness is where analysis enters. A continuous character `χ` is in particular a nonzero
@@ -34,15 +35,18 @@ automatic, and here it comes out as a corollary, since a continuous character *i
 monomial.
 
 `TauCeti/RepresentationTheory/Compact/Circle.lean` reads this classification for the circle group
-`Multiplicative (AddCircle T)`, where it says that the one-dimensional continuous representations
-of the circle are exactly the Fourier ones.
+`Multiplicative (AddCircle T)`, where it says that the continuous representations of the circle on
+`ℂ` are exactly the Fourier ones.
 
 ## Main definitions
 
 * `TauCeti.fourierAddChar`: the `n`-th Fourier monomial as a bundled additive character
   `AddChar (AddCircle T) ℂ`.
-* `TauCeti.fourierAddCharEquiv`: the resulting equivalence between `ℤ` and the continuous additive
-  characters of `AddCircle T`.
+* `TauCeti.fourierPontryaginDual`: the `n`-th Fourier monomial as an element of the Pontryagin dual
+  `PontryaginDual (Multiplicative (AddCircle T))` of the circle group, i.e. as a continuous
+  homomorphism to the unit circle.
+* `TauCeti.fourierPontryaginDualEquiv`: the resulting isomorphism of groups between
+  `Multiplicative ℤ` and that Pontryagin dual.
 
 ## Main statements
 
@@ -107,6 +111,30 @@ theorem fourierAddChar_apply (n : ℤ) (x : AddCircle T) :
 theorem continuous_fourierAddChar (n : ℤ) : Continuous (fourierAddChar (T := T) n) :=
   (fourier n).continuous
 
+/-- **The `n`-th Fourier monomial as an element of the Pontryagin dual of the circle group.** The
+circle group is `Multiplicative (AddCircle T)`, and this character sends `x` to
+`AddCircle.toCircle (n • x)`, the value of `fourier n` read in the unit circle rather than in `ℂ`;
+`TauCeti.coe_fourierPontryaginDual` identifies its value with `fourier n`. -/
+noncomputable def fourierPontryaginDual (n : ℤ) :
+    PontryaginDual (Multiplicative (AddCircle T)) where
+  toFun x := toCircle (n • Multiplicative.toAdd x)
+  map_one' := by simp
+  map_mul' x y := by rw [toAdd_mul, smul_add, toCircle_add]
+  continuous_toFun := (continuous_toCircle.comp (continuous_zsmul n) :
+    Continuous fun x : AddCircle T => toCircle (n • x))
+
+@[simp]
+theorem coe_fourierPontryaginDual (n : ℤ) (x : Multiplicative (AddCircle T)) :
+    (fourierPontryaginDual n x : ℂ) = fourier n (Multiplicative.toAdd x) := (rfl)
+
+/-- Distinct indices give distinct elements of the Pontryagin dual: `TauCeti.fourier_injective`
+again. -/
+theorem fourierPontryaginDual_injective (hT : T ≠ 0) :
+    Function.Injective (fourierPontryaginDual (T := T)) := fun _ _ h =>
+  fourier_injective hT (ContinuousMap.ext fun x => by
+    simpa using congrArg
+      (fun ψ : PontryaginDual (Multiplicative (AddCircle T)) => (ψ (.ofAdd x) : ℂ)) h)
+
 /-- Distinct indices give distinct additive characters: `TauCeti.fourier_injective` again. -/
 theorem fourierAddChar_injective (hT : T ≠ 0) :
     Function.Injective (fourierAddChar (T := T)) := fun _ _ h =>
@@ -140,7 +168,7 @@ namespace AddChar
 /-- **Every continuous additive character of the circle is a Fourier monomial.** Continuity is the
 only hypothesis: no unitarity is assumed, and none is needed. Together with
 `TauCeti.fourierAddChar_injective` this identifies the continuous characters of `AddCircle T` with
-`ℤ`, which is the content of `TauCeti.fourierAddCharEquiv`. -/
+`ℤ`, which is the content of `TauCeti.fourierPontryaginDualEquiv`. -/
 theorem exists_fourierAddChar_eq (χ : AddChar (AddCircle T) ℂ) (hχ : Continuous χ) :
     ∃ n : ℤ, fourierAddChar n = χ := by
   have hcoeff : ∀ n : ℤ, fourierCoeff (⇑(⟨χ, hχ⟩ : C(AddCircle T, ℂ))) n
@@ -196,18 +224,50 @@ end AddChar
 
 namespace TauCeti
 
-/-- **The Fourier monomials index the continuous characters of the circle**: `n ↦ fourierAddChar n`
-is a bijection from `ℤ` onto the continuous additive characters of `AddCircle T`. This is a
-bijection of types only; it is not equipped here with the group structure of the Pontryagin
-dual. -/
-noncomputable def fourierAddCharEquiv :
-    ℤ ≃ {χ : AddChar (AddCircle T) ℂ // Continuous χ} :=
-  Equiv.ofBijective (fun n => ⟨fourierAddChar n, continuous_fourierAddChar n⟩)
-    ⟨fun _ _ h => fourierAddChar_injective (Fact.out (p := (0 < T))).ne' (congrArg Subtype.val h),
-      fun χ => (AddChar.exists_fourierAddChar_eq χ.1 χ.2).imp fun _ hn => Subtype.ext hn⟩
+/-- **The Fourier monomials are the Pontryagin dual of the circle.** The map
+`n ↦ fourierPontryaginDual n` is an isomorphism of groups from `Multiplicative ℤ` onto
+`PontryaginDual (Multiplicative (AddCircle T))`, the group of continuous characters of the circle
+group: it is a homomorphism because `fourier (m + n) = fourier m * fourier n`, injective by
+`TauCeti.fourierPontryaginDual_injective`, and surjective by `AddChar.exists_fourierAddChar_eq`.
+
+The multiplicative type tags are what make this a statement about groups: the dual multiplies
+characters pointwise, and that multiplication corresponds to addition of Fourier indices. -/
+noncomputable def fourierPontryaginDualEquiv :
+    Multiplicative ℤ ≃* PontryaginDual (Multiplicative (AddCircle T)) :=
+  MulEquiv.ofBijective
+    ({ toFun := fun n => fourierPontryaginDual (Multiplicative.toAdd n)
+       map_one' := PontryaginDual.ext fun _ => Circle.ext (by simp)
+       map_mul' := fun m n => PontryaginDual.ext fun x => Circle.ext <| by
+         -- the dual multiplies characters pointwise by definition, so this `change` only
+         -- spells the right-hand side out; `fourier_add` then closes the goal through `simp`
+         change ((fourierPontryaginDual (Multiplicative.toAdd (m * n)) x : Circle) : ℂ) =
+           (fourierPontryaginDual (Multiplicative.toAdd m) x : ℂ) *
+             (fourierPontryaginDual (Multiplicative.toAdd n) x : ℂ)
+         simp } :
+      Multiplicative ℤ →* PontryaginDual (Multiplicative (AddCircle T)))
+    ⟨fun _ _ h => Multiplicative.toAdd.injective
+        (fourierPontryaginDual_injective (Fact.out (p := (0 < T))).ne' h),
+      fun ψ => by
+        have hcoe : Continuous ((↑) : Circle → ℂ) := continuous_induced_dom
+        have hcont : Continuous fun x : AddCircle T => (ψ (Multiplicative.ofAdd x) : ℂ) :=
+          hcoe.comp (map_continuous ψ)
+        obtain ⟨n, hn⟩ := AddChar.exists_fourierAddChar_eq
+          { toFun := fun x : AddCircle T => (ψ (Multiplicative.ofAdd x) : ℂ)
+            map_zero_eq_one' := by simp
+            map_add_eq_mul' := fun x y => by rw [ofAdd_add, map_mul, Circle.coe_mul] } hcont
+        exact ⟨Multiplicative.ofAdd n, PontryaginDual.ext fun x => Circle.ext (by
+          simpa using DFunLike.congr_fun hn (Multiplicative.toAdd x))⟩⟩
 
 @[simp]
-theorem fourierAddCharEquiv_apply (n : ℤ) :
-    (fourierAddCharEquiv (T := T) n : AddChar (AddCircle T) ℂ) = fourierAddChar n := (rfl)
+theorem fourierPontryaginDualEquiv_apply (n : Multiplicative ℤ) :
+    fourierPontryaginDualEquiv (T := T) n = fourierPontryaginDual (Multiplicative.toAdd n) := (rfl)
+
+/-- The inverse of `TauCeti.fourierPontryaginDualEquiv` returns the Fourier index of a continuous
+character: the monomial at that index is the character one started from. -/
+@[simp]
+theorem fourierPontryaginDualEquiv_symm_apply
+    (ψ : PontryaginDual (Multiplicative (AddCircle T))) :
+    fourierPontryaginDual (Multiplicative.toAdd (fourierPontryaginDualEquiv.symm ψ)) = ψ :=
+  fourierPontryaginDualEquiv.apply_symm_apply ψ
 
 end TauCeti

@@ -9,10 +9,9 @@ public import TauCeti.Analysis.Fourier.AddCircle
 public import TauCeti.MeasureTheory.Group.TypeTags
 public import TauCeti.RepresentationTheory.Compact.Character.Basic
 public import TauCeti.RepresentationTheory.LinearCharacter
-public import Mathlib.Analysis.SpecialFunctions.Complex.CircleAddChar
 
 /-!
-# The circle group: Fourier monomials are its irreducible characters
+# The circle group: Fourier monomials are its continuous representations on `ℂ`
 
 The circle `AddCircle T` is a compact abelian group. This file builds its continuous
 representations on `ℂ` from Mathlib's Fourier monomials, shows that they exhaust the
@@ -32,10 +31,10 @@ Under those identifications:
   orthogonality relation `character_orthonormal_distinct` return the diagonal and off-diagonal
   halves of that same statement.
 
-The list `n ↦ fourierRep T n` is moreover complete among the one-dimensional representations: a
-continuous representation of the circle group on `ℂ` acts by the scalar `π x 1`, which is a
-continuous additive character of `AddCircle T` and therefore a Fourier monomial by
-`AddChar.exists_fourierAddChar_eq`.
+The list `n ↦ fourierRep T n` is moreover complete among the continuous representations carried by
+`ℂ`: such a representation acts by the scalar `π x 1`, which is a continuous additive character of
+`AddCircle T` and therefore a Fourier monomial by `AddChar.exists_fourierAddChar_eq`. Nothing here
+transports that statement to a representation on some other one-dimensional space.
 
 The last two are recorded as anonymous `example`s: they are consistency checks on the general
 theory's normalization, not new API, and naming them would duplicate
@@ -59,8 +58,8 @@ theory's normalization, not new API, and naming them would duplicate
   continuous intertwiner `fourierRep T n → fourierRep T m`, so the Fourier representations are
   pairwise inequivalent.
 * `MonoidHom.exists_fourierChar_eq`, `ContRepresentation.exists_fourierRep_eq`: every continuous
-  linear character, and every one-dimensional continuous representation, of the circle group is a
-  Fourier one.
+  linear character of the circle group, and every continuous representation of it carried by `ℂ`,
+  is a Fourier one.
 * `TauCeti.orthonormal_characterLp_fourierRep`: the characters of the `fourierRep T n` are an
   orthonormal family in `L²` of the circle group for normalized Haar measure; this is
   `AddCircle.orthonormal_fourier` read through the general compact-group packaging.
@@ -83,9 +82,9 @@ which is what lets `inner_characterLp_fourierRep` end in Mathlib's orthonormalit
 
 What is *not* done here is the full Peter-Weyl identification of `peterWeylBasis` with
 `AddCircle.fourierBasis` under the indexing equivalence `Σ π, Fin 1 × Fin 1 ≃ ℤ`. Exhaustion is
-available in dimension one (`ContRepresentation.exists_fourierRep_eq`), but the step from there to
-*every* finite-dimensional irreducible — that an irreducible representation of an abelian group
-over an algebraically closed field is one-dimensional — is not proved here.
+available for representations carried by `ℂ` (`ContRepresentation.exists_fourierRep_eq`), but the
+step from there to *every* finite-dimensional irreducible — that an irreducible representation of
+an abelian group over an algebraically closed field is one-dimensional — is not proved here.
 
 The general compact-group character theory that is specialized here is in
 `TauCeti/RepresentationTheory/Compact/Character/Basic.lean`. The mathematical development follows
@@ -289,12 +288,13 @@ end MonoidHom
 namespace ContRepresentation
 
 include hT in
-/-- **Every one-dimensional continuous representation of the circle group is a Fourier
+/-- **Every continuous representation of the circle group carried by `ℂ` is a Fourier
 representation.** With `TauCeti.contIntertwiningMap_fourierRep_eq_zero_of_ne` this says that
-`n ↦ fourierRep T n` lists the one-dimensional continuous representations of the circle group
-exactly once. Passing from here to *all* finite-dimensional irreducibles needs the separate fact
-that an irreducible representation of an abelian group over an algebraically closed field is
-one-dimensional, which is not proved here. -/
+`n ↦ fourierRep T n` lists the continuous representations of the circle group on `ℂ` exactly once.
+The quantifier is over representations whose carrier is literally `ℂ`; transporting the statement
+along an isomorphism to an arbitrary one-dimensional carrier, and passing from there to *all*
+finite-dimensional irreducibles — which needs that an irreducible representation of an abelian
+group over an algebraically closed field is one-dimensional — are not done here. -/
 theorem exists_fourierRep_eq (π : ContRepresentation ℂ (Multiplicative (AddCircle T)) ℂ)
     (hπ : Continuous π) : ∃ n : ℤ, fourierRep T n = π := by
   have hsmul (x : Multiplicative (AddCircle T)) (z : ℂ) : π x z = z * π x 1 := by
