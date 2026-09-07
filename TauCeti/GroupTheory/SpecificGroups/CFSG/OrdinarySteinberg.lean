@@ -72,8 +72,11 @@ yet the pinned simply connected Chevalley--Demazure group of
 any group here is finite, perfect or simple. In particular the fixed subgroups below are named as
 the fixed points of the maps built here; that they are the group of rational points of a family of
 the classification list needs that same identification, and no declaration below anticipates it.
-For the three untwisted unimodular families, where the carrier does have full character span, the
-group so obtained is `TauCeti.UnimodularExceptionalIndex.Group`.
+On the three untwisted unimodular families the map built here is the Steinberg map those branches
+already carry, by `TauCeti.UnimodularExceptionalIndex.steinberg_eq_geckSteinberg`, so its fixed
+subgroup is the group `H_d` from which the candidate group
+`TauCeti.UnimodularExceptionalIndex.Group` is formed as `[H_d, H_d] / Z([H_d, H_d])`; that candidate
+is not identified with any family of the classification list either.
 
 This file stands to `TauCeti/GroupTheory/SpecificGroups/CFSG/Datum/Steinberg.lean` as
 `TauCeti/GroupTheory/SpecificGroups/CFSG/GeckCarrier.lean` stands to
@@ -93,10 +96,11 @@ points instead of on the root datum.
 
 * `TauCeti.GraphTwistedIndex.geckGraphAut_geckRootSubgroup`: the graph automorphism renumbers the
   root subgroups by the diagram permutation and leaves their parameters alone.
-* `TauCeti.GraphTwistedIndex.geckGraphAut_pow_geckRootSubgroup`: its `m`-th power renumbers them by
-  `σ ^ m`.
 * `TauCeti.GraphTwistedIndex.geckGraphAut_geckWeightTorus`: it relabels the coordinates of a
   weight-torus point by the inverse of that permutation.
+* `TauCeti.GraphTwistedIndex.geckGraphAut_pow_geckRootSubgroup` and
+  `TauCeti.GraphTwistedIndex.geckGraphAut_pow_geckWeightTorus`: its `m`-th power renumbers the root
+  subgroups by `σ ^ m` and relabels the torus coordinates by the inverse of that power.
 * `TauCeti.GraphTwistedIndex.geckGraphAut_pow_twistOrder`: the twist order of the index annihilates
   the graph automorphism.
 * `TauCeti.GraphTwistedIndex.geckGraphAut_comp_geckFrobenius`: the graph automorphism commutes with
@@ -113,9 +117,11 @@ points instead of on the root datum.
   family it is the Frobenius.
 * `TauCeti.GraphTwistedIndex.geckSteinberg_pow_eq_geckGraphAut_pow_comp`,
   `TauCeti.GraphTwistedIndex.geckSteinberg_pow_eq_geckFrobenius_pow_comp` and
-  `TauCeti.GraphTwistedIndex.geckSteinberg_pow_geckRootSubgroup`: a power separates, in either
+  `TauCeti.GraphTwistedIndex.geckSteinberg_pow_geckRootSubgroup` and
+  `TauCeti.GraphTwistedIndex.geckSteinberg_pow_geckWeightTorus`: a power separates, in either
   order, into a power of the graph automorphism and an iterate of the Frobenius, and so renumbers a
-  root subgroup by `σ ^ m` and raises its parameter to the `q ^ m`-th power.
+  root subgroup by `σ ^ m` and raises its parameter, and every torus coordinate, to the `q ^ m`-th
+  power.
 * `TauCeti.GraphTwistedIndex.geckSteinberg_pow_twistOrder_eq_geckFrobenius_pow`: the order
   relation `F ^ e = Frob_(q ^ e)` on the Steinberg map itself.
 * `TauCeti.GraphTwistedIndex.mem_fixedSubgroup_geckSteinberg_iff`: a point is Steinberg-fixed
@@ -137,6 +143,23 @@ points instead of on the root datum.
   §11.
 * M. Geck, *On the construction of semisimple Lie algebras and Chevalley groups*,
   Proc. Amer. Math. Soc. **145** (2017), 3233--3247, for the matrix realization of the carrier.
+
+## Roadmap
+
+This is the carrier layer of milestone L1, "ordinary and graph Steinberg maps", of
+`TauCetiRoadmap/CFSGStatement/README.md`, whose completion condition is that "the simple-root-
+subgroup equations and the order relations are proved". Those equations are proved here for all
+thirteen ordinary indices at once, in the shape the milestone states them and against the diagram
+permutations that `TauCeti/GroupTheory/SpecificGroups/CFSG/GraphTwisted.lean` pins, and so is the
+order relation on the map itself, `geckSteinberg_pow_twistOrder_eq_geckFrobenius_pow`, together with
+the fixed-point containments it yields.
+
+It does not close L1, and it does not close milestone L0: the carrier is the Geck one, whose
+identification with the pinned simply connected Chevalley--Demazure group of
+`TauCeti.DynkinType.simplyConnectedRootDatum` is a Layer 9 target of
+`TauCetiRoadmap/ReductiveGroups/README.md` that this roadmap consumes rather than proves. Milestone
+L2 owes the same relations for the four Suzuki--Ree and Tits branches, whose Steinberg map is an odd
+power of a half-Frobenius and is not built here.
 -/
 
 public section
@@ -193,8 +216,8 @@ theorem geckGraphAut_geckRootSubgroup (i : Fin d.1.rank ⊕ Fin d.1.rank)
     d.geckGraphAut (d.1.geckRootSubgroup i u) =
       d.1.geckRootSubgroup (DynkinType.diagramRootGeneratorPerm d.diagramPerm i) u := by
   rw [geckGraphAut_def]
-  simp only [ValidLieTypeIndex.geckRootSubgroup_eq_mk]
-  exact d.1.dynkinType.geckGraphAutPoints_geckRootSubgroupMatrix d.1.dynkinType_valid
+  simp only [ValidLieTypeIndex.geckRootSubgroup_def]
+  exact d.1.dynkinType.geckGraphAutPoints_geckRootSubgroupPoints d.1.dynkinType_valid
     d.diagramPerm_mem_diagramSymmetry d.1.Closure i u
 
 /-- **The graph automorphism relabels the coordinates of a weight-torus point** by the inverse of
@@ -339,9 +362,21 @@ theorem geckGraphAut_pow_geckRootSubgroup (m : ℕ) (i : Fin d.1.rank ⊕ Fin d.
     (d.geckGraphAut ^ m) (d.1.geckRootSubgroup i u) =
       d.1.geckRootSubgroup ((DynkinType.diagramRootGeneratorPerm d.diagramPerm ^ m) i) u := by
   rw [geckGraphAut_def]
-  simp only [ValidLieTypeIndex.geckRootSubgroup_eq_mk]
-  exact d.1.dynkinType.geckGraphAutPoints_pow_geckRootSubgroupMatrix d.1.dynkinType_valid
+  simp only [ValidLieTypeIndex.geckRootSubgroup_def]
+  exact d.1.dynkinType.geckGraphAutPoints_pow_geckRootSubgroupPoints d.1.dynkinType_valid
     d.diagramPerm_mem_diagramSymmetry d.1.Closure m i u
+
+/-- **The `m`-th power of the graph automorphism relabels the coordinates of a weight-torus point**
+by the inverse of the `m`-th power of the diagram permutation. This is the torus half of the
+iterated pinning equation whose root-subgroup half is
+`TauCeti.GraphTwistedIndex.geckGraphAut_pow_geckRootSubgroup`. -/
+@[simp]
+theorem geckGraphAut_pow_geckWeightTorus (m : ℕ) (s : Fin d.1.rank → d.1.Closureˣ) :
+    (d.geckGraphAut ^ m) (d.1.geckWeightTorus s) =
+      d.1.geckWeightTorus fun k => s ((d.diagramPerm ^ m)⁻¹ k) := by
+  rw [geckGraphAut_def, ValidLieTypeIndex.geckWeightTorus_def]
+  exact d.1.dynkinType.geckGraphAutPoints_pow_geckWeightTorusPoints d.1.dynkinType_valid
+    d.diagramPerm_mem_diagramSymmetry d.1.Closure m s
 
 /-- **The powers of the ordinary Steinberg map separate into a power of the graph automorphism and
 an iterate of the Frobenius**: `(γ ∘ Frob_q) ^ m = γ ^ m ∘ Frob_(q ^ m)`. The separation is exactly
@@ -396,9 +431,22 @@ theorem geckSteinberg_pow_geckRootSubgroup (m : ℕ) (i : Fin d.1.rank ⊕ Fin d
       d.1.geckRootSubgroup ((DynkinType.diagramRootGeneratorPerm d.diagramPerm ^ m) i)
         (Multiplicative.ofAdd (Multiplicative.toAdd u ^ d.1.fieldOrder ^ m)) := by
   rw [geckSteinberg_def, d.1.fieldOrder_eq_characteristic_pow, ← pow_mul]
-  simp only [ValidLieTypeIndex.geckRootSubgroup_eq_mk]
-  exact DynkinType.geckTwistedFrobenius_pow_geckRootSubgroupMatrix d.1.dynkinType_valid
+  simp only [ValidLieTypeIndex.geckRootSubgroup_def]
+  exact DynkinType.geckTwistedFrobenius_pow_geckRootSubgroupPoints d.1.dynkinType_valid
     d.diagramPerm_mem_diagramSymmetry d.1.characteristic d.1.fieldExponent d.1.Closure m i u
+
+/-- **The `m`-th power of the Steinberg map raises every coordinate of a weight-torus point to the
+`q ^ m`-th power and relabels them by the inverse of the `m`-th power of the diagram
+permutation.** This is the torus half of the iterated pinning equation whose root-subgroup half is
+`TauCeti.GraphTwistedIndex.geckSteinberg_pow_geckRootSubgroup`. -/
+@[simp]
+theorem geckSteinberg_pow_geckWeightTorus (m : ℕ) (s : Fin d.1.rank → d.1.Closureˣ) :
+    ((show Monoid.End _ from d.geckSteinberg) ^ m) (d.1.geckWeightTorus s) =
+      d.1.geckWeightTorus fun k => s ((d.diagramPerm ^ m)⁻¹ k) ^ d.1.fieldOrder ^ m := by
+  rw [geckSteinberg_def, d.1.fieldOrder_eq_characteristic_pow, ← pow_mul,
+    ValidLieTypeIndex.geckWeightTorus_def]
+  exact DynkinType.geckTwistedFrobenius_pow_geckWeightTorusPoints d.1.dynkinType_valid
+    d.diagramPerm_mem_diagramSymmetry d.1.characteristic d.1.fieldExponent d.1.Closure m s
 
 /-! ## The fixed points of the Steinberg map -/
 

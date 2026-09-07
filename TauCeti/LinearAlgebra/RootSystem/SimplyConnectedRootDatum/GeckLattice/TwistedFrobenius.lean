@@ -93,8 +93,9 @@ reproved.
   `TauCeti.DynkinType.geckTwistedFrobenius_pow_apply`, and, by
   `TauCeti.DynkinType.geckTwistedFrobenius_pow_eq_geckFrobenius_comp`, into the same composite in
   the other order.
-* `TauCeti.DynkinType.geckTwistedFrobenius_pow_geckRootSubgroupMatrix`: the defining equation on
-  the pinned numbered root subgroups, iterated.
+* `TauCeti.DynkinType.geckTwistedFrobenius_pow_geckRootSubgroupPoints` and
+  `TauCeti.DynkinType.geckTwistedFrobenius_pow_geckWeightTorusPoints`: the two defining equations
+  on the pinned root subgroups and weight torus, iterated.
 * `TauCeti.DynkinType.geckTwistedFrobenius_pow_eq_geckFrobenius`: a symmetry of order dividing `m`
   makes the `m`-th power the plain Frobenius `Frob_(q ^ m)`, the order relation a graph-twisted
   Steinberg map is required to satisfy, read at the group layer.
@@ -198,15 +199,9 @@ theorem geckTwistedFrobenius_geckRootSubgroupMatrix (i : Fin t.rank ⊕ Fin t.ra
           ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm
             (Multiplicative.ofAdd (Multiplicative.toAdd u ^ p ^ k))),
         t.geckRootSubgroupMatrix_mem_geckPoints ht A _ _⟩ := by
-  have hroot (j : Fin t.rank ⊕ Fin t.rank) (v : Multiplicative A) :
-      (⟨t.geckRootSubgroupMatrix ht j
-          ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm v),
-        t.geckRootSubgroupMatrix_mem_geckPoints ht A j _⟩ : t.geckPoints ht A) =
-        t.geckRootSubgroupPoints ht j A v := by
-    apply Subtype.ext
-    exact (t.coe_geckRootSubgroupPoints ht j A v).symm
-  rw [geckTwistedFrobenius_apply, hroot, geckFrobenius_geckRootSubgroupPoints, ← hroot,
-    geckGraphAutPoints_geckRootSubgroupMatrix]
+  simp only [geckPoints_mk_geckRootSubgroupMatrix]
+  rw [geckTwistedFrobenius_apply, geckFrobenius_geckRootSubgroupPoints,
+    geckGraphAutPoints_geckRootSubgroupPoints]
 
 /-- **The twisted Frobenius raises a point of the represented Geck weight torus to its `p ^ k`-th
 power and relabels its coordinates** by the inverse of the diagram symmetry. -/
@@ -321,25 +316,28 @@ symmetry.** This is the defining equation of a graph-twisted Steinberg map on th
 root subgroups, iterated. -/
 -- As above, the `show` selects the composition monoid structure before the power is elaborated.
 @[simp]
-theorem geckTwistedFrobenius_pow_geckRootSubgroupMatrix (m : ℕ) (i : Fin t.rank ⊕ Fin t.rank)
+theorem geckTwistedFrobenius_pow_geckRootSubgroupPoints (m : ℕ) (i : Fin t.rank ⊕ Fin t.rank)
     (u : Multiplicative A) :
     ((show Monoid.End _ from t.geckTwistedFrobenius ht hsigma p k A) ^ m)
-        ⟨t.geckRootSubgroupMatrix ht i
-            ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u),
-          t.geckRootSubgroupMatrix_mem_geckPoints ht A i _⟩ =
-      ⟨t.geckRootSubgroupMatrix ht ((diagramRootGeneratorPerm sigma ^ m) i)
-          ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm
-            (Multiplicative.ofAdd (Multiplicative.toAdd u ^ p ^ (k * m)))),
-        t.geckRootSubgroupMatrix_mem_geckPoints ht A _ _⟩ := by
-  have hroot (j : Fin t.rank ⊕ Fin t.rank) (v : Multiplicative A) :
-      (⟨t.geckRootSubgroupMatrix ht j
-          ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm v),
-        t.geckRootSubgroupMatrix_mem_geckPoints ht A j _⟩ : t.geckPoints ht A) =
-        t.geckRootSubgroupPoints ht j A v := by
-    apply Subtype.ext
-    exact (t.coe_geckRootSubgroupPoints ht j A v).symm
-  rw [geckTwistedFrobenius_pow_apply, hroot, geckFrobenius_geckRootSubgroupPoints, ← hroot,
-    geckGraphAutPoints_pow_geckRootSubgroupMatrix]
+        (t.geckRootSubgroupPoints ht i A u) =
+      t.geckRootSubgroupPoints ht ((diagramRootGeneratorPerm sigma ^ m) i) A
+        (Multiplicative.ofAdd (Multiplicative.toAdd u ^ p ^ (k * m))) := by
+  rw [geckTwistedFrobenius_pow_apply, geckFrobenius_geckRootSubgroupPoints,
+    geckGraphAutPoints_pow_geckRootSubgroupPoints]
+
+/-- **The `m`-th power of the twisted Frobenius raises a point of the represented Geck weight torus
+to its `p ^ (k * m)`-th power and relabels its coordinates** by the inverse of the `m`-th power of
+the diagram symmetry. This is the torus half of the iterated pinning equation whose root-subgroup
+half is `TauCeti.DynkinType.geckTwistedFrobenius_pow_geckRootSubgroupPoints`. -/
+-- As above, the `show` selects the composition monoid structure before the power is elaborated.
+@[simp]
+theorem geckTwistedFrobenius_pow_geckWeightTorusPoints (m : ℕ) (s : Fin t.rank → Aˣ) :
+    ((show Monoid.End _ from t.geckTwistedFrobenius ht hsigma p k A) ^ m)
+        (t.geckWeightTorusPoints ht A s) =
+      t.geckWeightTorusPoints ht A fun j => s ((sigma ^ m)⁻¹ j) ^ p ^ (k * m) := by
+  rw [geckTwistedFrobenius_pow_apply, geckFrobenius_geckWeightTorusPoints,
+    geckGraphAutPoints_pow_geckWeightTorusPoints]
+  exact congrArg _ (funext fun j => Pi.pow_apply s (p ^ (k * m)) _)
 
 /-- **A diagram symmetry of order dividing `m` makes the `m`-th power of the twisted Frobenius the
 plain Frobenius `Frob_(q ^ m)`.** This is the order relation a graph-twisted Steinberg map is
