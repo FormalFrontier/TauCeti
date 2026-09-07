@@ -151,8 +151,10 @@ theorem yCoord_formalPoint {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I) 
 
 /-- **The `x`-coordinate in closed form**: since `w(t) = t ^ 3 * u(t)` with `u(t)` a unit, the
 `x`-coordinate `t / w(t)` is the inverse of `t ^ 2 * u(t)`. Stated as a product so that it needs
-no inverse; the exponent `2` is what a valuation would read as the pole order. -/
-@[simp]
+no inverse; the exponent `2` is what a valuation would read as the pole order.
+
+Deliberately not `@[simp]`: `xCoord_formalPoint` already rewrites the `xCoord` on the left, so
+this left-hand side is not in simp-normal form and `simpNF` rejects the pair. -/
 theorem xCoord_formalPoint_mul_eq_one {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I)
     (ht0 : t ≠ 0) :
     (W.formalPoint (K := K) hI ht).xCoord * algebraMap O K (t ^ 2 * W.formalUEval t) = 1 := by
@@ -166,8 +168,10 @@ theorem xCoord_formalPoint_mul_eq_one {I : Ideal O} (hI : IsAdic I) {t : O} (ht 
   field_simp
 
 /-- **The `y`-coordinate in closed form**: `-1 / w(t)` is minus the inverse of `t ^ 3 * u(t)`,
-with exponent `3` where the `x`-coordinate has `2`. -/
-@[simp]
+with exponent `3` where the `x`-coordinate has `2`.
+
+Deliberately not `@[simp]`, for the reason given on the `x`-side: `yCoord_formalPoint` rewrites
+the `yCoord` on the left, so this is not a simp-normal left-hand side. -/
 theorem yCoord_formalPoint_mul_eq_neg_one {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I)
     (ht0 : t ≠ 0) :
     (W.formalPoint (K := K) hI ht).yCoord * algebraMap O K (t ^ 3 * W.formalUEval t) = -1 := by
