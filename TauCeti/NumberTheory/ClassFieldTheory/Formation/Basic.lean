@@ -92,6 +92,9 @@ equal.
 * E. Artin and J. Tate, *Class Field Theory*, Chapter XIV.
 * J. Neukirch, *Class Field Theory*, Chapter III.
 * J.-P. Serre, *Local Fields*, Chapter XI.
+* `Suggested.lean` of the TauCeti `ClassFieldTheory` roadmap, the blueprint whose signatures for
+  the two structures below and for the level, layer representation and norm constructions this
+  file follows.
 -/
 
 public noncomputable section
@@ -318,6 +321,12 @@ def groundLevelEquiv : (L.rep F).ρ.invariants ≃ₗ[ℤ] F.level L.ground :=
 theorem groundLevelEquiv_apply_coe (x : (L.rep F).ρ.invariants) :
     ((L.groundLevelEquiv F x : F.level L.ground) : F.toRep.V) = ((x : F.level L.top) :
       F.toRep.V) :=
+  (rfl)
+
+@[simp]
+theorem groundLevelEquiv_symm_apply_coe (y : F.level L.ground) :
+    ((((L.groundLevelEquiv F).symm y : (L.rep F).ρ.invariants) : F.level L.top) : F.toRep.V) =
+      (y : F.toRep.V) :=
   (rfl)
 
 end Coefficients
