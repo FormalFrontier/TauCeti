@@ -39,7 +39,7 @@ The positivity half is stated over `ℂ` rather than over an `RCLike` field.  Th
 `LinearMap.IsPosSemidef` needs is the one `Complex.partialOrder` supplies in the `ComplexOrder`
 scope, and `RCLike` supplies a second, lower-priority partial order in the same scope; stating the
 positivity results over `RCLike` would fix the wrong one of the two for the `ℂ`-only consumer,
-`TauCeti/RepresentationTheory/InvariantForm/RealStructure.lean`.
+`TauCeti/RepresentationTheory/InvariantForm/StructureMap.lean`.
 
 ## Main definitions
 
@@ -60,6 +60,9 @@ positivity results over `RCLike` would fix the wrong one of the two for the `ℂ
   finite-dimensional complex representation of a finite group carries a positive definite invariant
   Hermitian form.**  This is the unitarian trick for a finite group, with the undivided sum in
   place of the average.
+* `Representation.IsInvariantSesqForm.surjective_of_apply_self_ne_zero`: **a definite invariant
+  sesquilinear form on a finite-dimensional space makes every action map surjective**, so a
+  representation carrying one needs no group inverses.
 
 ## References
 
@@ -157,6 +160,31 @@ theorem isSymm_sumOfConjugatesSesqForm (hH : H.IsSymm) : (sumOfConjugatesSesqFor
       Finset.sum_congr rfl fun g (_ : g ∈ Finset.univ) => hH.eq (ρ g x) (ρ g y)
 
 end Monoid
+
+/-! ### Surjectivity of the action -/
+
+section Surjective
+
+variable {R G V : Type*} [Field R] [StarRing R] [Monoid G] [AddCommGroup V] [Module R V]
+  [FiniteDimensional R V] {ρ : Representation R G V} {H : V →ₗ⋆[R] V →ₗ[R] R}
+
+/-- **A definite invariant sesquilinear form makes the action surjective.**  Invariance carries the
+self-pairing of `ρ g x` back to that of `x`, so definiteness makes `ρ g` injective, and on a
+finite-dimensional space an injective endomorphism is surjective.  A representation carrying such a
+form therefore needs no group inverses: an argument that would use `ρ g⁻¹` to move a vector into
+the image of `ρ g` can use this instead, and so applies to a representation of a mere monoid. -/
+theorem IsInvariantSesqForm.surjective_of_apply_self_ne_zero (hH : IsInvariantSesqForm ρ H)
+    (hdef : ∀ x : V, x ≠ 0 → H x x ≠ 0) (g : G) : Function.Surjective (ρ g) := by
+  refine LinearMap.injective_iff_surjective.mp ?_
+  rw [injective_iff_map_eq_zero]
+  intro x hx
+  by_contra hne
+  refine hdef x hne ?_
+  have h := hH.apply g x x
+  rw [hx] at h
+  simpa using h.symm
+
+end Surjective
 
 /-! ### Invariance of the conjugate sum -/
 
