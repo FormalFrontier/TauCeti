@@ -5,11 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.RepresentationTheory.Quiver.Zigzag.PathAlgebra
 public import TauCeti.RepresentationTheory.Quiver.Zigzag.Relations
-public import Mathlib.RingTheory.Ideal.Quotient.Operations
-public import Mathlib.RingTheory.TwoSidedIdeal.Kernel
-public import Mathlib.RingTheory.TwoSidedIdeal.Operations
 
 /-!
 # Scalar-labelled skew-zigzag relation quotients

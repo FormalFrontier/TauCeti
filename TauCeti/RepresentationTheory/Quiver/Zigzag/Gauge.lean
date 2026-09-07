@@ -213,12 +213,14 @@ theorem IsGaugeEquivalent.refl (c : SkewZigzagParameter k G) : IsGaugeEquivalent
   ⟨fun _ _ _ => 1, (gauge_one c).symm⟩
 
 /-- Gauge equivalence is symmetric: the pointwise inverse labelling gauges back. -/
+@[symm]
 theorem IsGaugeEquivalent.symm {c c' : SkewZigzagParameter k G} (h : IsGaugeEquivalent c c') :
     IsGaugeEquivalent c' c := by
   obtain ⟨u, rfl⟩ := h
   exact ⟨fun _ _ e => (u e)⁻¹, (gauge_gauge_inv c u).symm⟩
 
 /-- Gauge equivalence is transitive: the pointwise product labelling gauges across. -/
+@[trans]
 theorem IsGaugeEquivalent.trans {c c' c'' : SkewZigzagParameter k G}
     (h : IsGaugeEquivalent c c') (h' : IsGaugeEquivalent c' c'') : IsGaugeEquivalent c c'' := by
   obtain ⟨u, rfl⟩ := h
@@ -324,6 +326,18 @@ theorem skewZigzagQuotientGaugeEquiv_skewZigzagMk (c c' : SkewZigzagParameter k 
       = skewZigzagMk k G c' (rescale (fun _ _ e => ((u e : kˣ) : k)) x) := by
   rw [skewZigzagQuotientGaugeEquiv, ← AlgEquiv.coe_toAlgHom, AlgEquiv.toAlgHom_ofAlgHom,
     skewZigzagQuotientRescaleHom_skewZigzagMk]
+
+/-- The inverse gauge isomorphism is rescaling by the pointwise inverse units. -/
+@[simp]
+theorem skewZigzagQuotientGaugeEquiv_symm_skewZigzagMk
+    (c c' : SkewZigzagParameter k G)
+    (u : ∀ ⦃x y : DoubledQuiver G⦄, (x ⟶ y) → kˣ) (hc : c' = c.gauge u)
+    (x : pathAlgebra k (DoubledQuiver G)) :
+    (skewZigzagQuotientGaugeEquiv k G c c' u hc).symm (skewZigzagMk k G c' x)
+      = skewZigzagMk k G c
+          (rescale (fun _ _ e => (((u e)⁻¹ : kˣ) : k)) x) := by
+  rw [skewZigzagQuotientGaugeEquiv]
+  exact skewZigzagQuotientRescaleHom_skewZigzagMk k G c' c _ _ x
 
 /-- **Gauge equivalent parameters present isomorphic algebras.** -/
 theorem nonempty_algEquiv_skewZigzagQuotient_of_isGaugeEquivalent
