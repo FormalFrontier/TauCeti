@@ -60,7 +60,8 @@ theorem _root_.QuadraticMap.mem_unitValueSet {Q : QuadraticMap R M R} {a : Rˣ} 
 variable {K V : Type*} [Field K] [AddCommGroup V] [Module K V]
 
 /-- A regular isotropic quadratic form represents every scalar. -/
-theorem _root_.QuadraticMap.represents_of_nondegenerate_of_isotropic (Q : QuadraticForm K V)
+theorem _root_.QuadraticMap.represents_of_nondegenerate_of_not_anisotropic
+    (Q : QuadraticForm K V)
     [Invertible (2 : K)] (hQ : Q.Nondegenerate) (hiso : ¬Q.Anisotropic) (a : K) :
     Represents Q a := by
   have hB : Q.polarBilin.Nondegenerate := QuadraticMap.nondegenerate_polar_iff.mpr hQ
@@ -117,7 +118,7 @@ variable {K V : Type*} [Field K] [AddCommGroup V] [Module K V]
 
 The added line is the one-dimensional form `x ↦ -a * x²`, written as a scalar multiple of
 `QuadraticMap.sq`. -/
-theorem _root_.QuadraticMap.mem_unitValueSet_iff_isotropic_prod
+theorem _root_.QuadraticMap.mem_unitValueSet_iff_not_anisotropic_prod
     [Invertible (2 : K)] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) (a : Kˣ) :
     a ∈ unitValueSet Q ↔
       ¬(Q.prod ((-(a : K)) • (QuadraticMap.sq : QuadraticForm K K))).Anisotropic := by
@@ -136,7 +137,7 @@ theorem _root_.QuadraticMap.mem_unitValueSet_iff_isotropic_prod
         apply hvt
         simp [hv, ht]
       have hvQ : Q v = 0 := by simpa [ht] using hzero
-      exact represents_of_nondegenerate_of_isotropic Q
+      exact represents_of_nondegenerate_of_not_anisotropic Q
         hQ
         ((not_anisotropic_iff_exists Q).mpr ⟨v, hv, hvQ⟩) (a : K)
     · have hvQ : Q v = (a : K) * (t * t) := by
