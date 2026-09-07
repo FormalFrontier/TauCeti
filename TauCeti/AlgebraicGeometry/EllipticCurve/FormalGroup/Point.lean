@@ -129,35 +129,22 @@ theorem formalPoint_of_param_ne_zero {I : Ideal O} (hI : IsAdic I) {t : O} (ht :
           ((map_ne_zero_iff _ (FaithfulSMul.algebraMap_injective O K)).mpr h0))) := by
   simp [formalPoint, h0]
 
--- `Affine.Point.mk h` is by definition `.some _ _ (equation_iff_nonsingular.mp h)`, so the public
--- accessors `xCoord_some`/`yCoord_some` apply to it directly. These two `private` steps name that
--- once, so the coordinate lemmas below read off a lemma rather than a constructor definition.
-omit [UniformSpace O] [IsUniformAddGroup O] [CompleteSpace O] [T2Space O] [IsTopologicalRing O]
-  [IsLinearTopology O O] [FaithfulSMul O K] in
-private theorem xCoord_mk_baseChange {x y : K}
-    (h : (W.baseChange K).toAffine.Equation x y) :
-    (Affine.Point.mk h).xCoord = x := Affine.Point.xCoord_some _
-
-omit [UniformSpace O] [IsUniformAddGroup O] [CompleteSpace O] [T2Space O] [IsTopologicalRing O]
-  [IsLinearTopology O O] [FaithfulSMul O K] in
-private theorem yCoord_mk_baseChange {x y : K}
-    (h : (W.baseChange K).toAffine.Equation x y) :
-    (Affine.Point.mk h).yCoord = y := Affine.Point.yCoord_some _
-
 open scoped Classical in
 /-- **The `x`-coordinate of the parametrized point** is `t / w(t)`. -/
 @[simp]
 theorem xCoord_formalPoint {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I) (h0 : t ≠ 0) :
     (W.formalPoint (K := K) hI ht).xCoord =
       algebraMap O K t / algebraMap O K (W.formalWEval t) := by
-  rw [W.formalPoint_of_param_ne_zero hI ht h0, W.xCoord_mk_baseChange]
+  rw [W.formalPoint_of_param_ne_zero hI ht h0]
+  exact Affine.Point.xCoord_some _
 
 open scoped Classical in
 /-- **The `y`-coordinate of the parametrized point** is `-1 / w(t)`. -/
 @[simp]
 theorem yCoord_formalPoint {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I) (h0 : t ≠ 0) :
     (W.formalPoint (K := K) hI ht).yCoord = -(algebraMap O K (W.formalWEval t))⁻¹ := by
-  rw [W.formalPoint_of_param_ne_zero hI ht h0, W.yCoord_mk_baseChange]
+  rw [W.formalPoint_of_param_ne_zero hI ht h0]
+  exact Affine.Point.yCoord_some _
 
 /-- **The `x`-coordinate in closed form**: since `w(t) = t ^ 3 * u(t)` with `u(t)` a unit, the
 `x`-coordinate `t / w(t)` is the inverse of `t ^ 2 * u(t)`. Stated as a product so that it needs
