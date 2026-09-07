@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Order.BigOperators.Group.Finset
-public import Mathlib.Data.Fintype.EquivFin
+public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
+public import Mathlib.Algebra.Order.Monoid.Unbundled.Basic
 
 /-!
 # Comparing two sums when one index set dominates the other
@@ -22,16 +22,16 @@ of `A`; if `A` carries the larger weights, the image of the complementary part `
 weighs strictly more than `X \ A` itself. The two sums involved differ only on the points that
 `σ` moves in or out of `X \ A`, and those are compared by the previous lemma.
 
-The weights take values in an ordered cancellative additive commutative monoid, cancellation being
-what turns the comparison of the two differences into a comparison of the two sums.
+The weights take values in an additive commutative monoid preordered so that addition is strictly
+monotone, which is what compares two sums of the same length termwise, and what turns the
+comparison of the parts on which the two sums differ into a comparison of the sums themselves.
 -/
 
 public section
 
 namespace TauCeti
 
-variable {α M : Type*} [AddCommMonoid M] [Preorder M] [IsOrderedCancelAddMonoid M]
-  [AddLeftStrictMono M]
+variable {α M : Type*} [AddCommMonoid M] [Preorder M] [AddLeftStrictMono M]
 
 /-- **A set whose weights are all smaller than those of a second set of the same size has the
 smaller sum.** The two sets have the same size, so some bijection matches them up, and along it
@@ -40,15 +40,23 @@ theorem sum_lt_sum_of_forall_lt (f : α → M) {U V : Finset α}
     (hcard : V.card = U.card) (hU : U.Nonempty) (hlt : ∀ u ∈ U, ∀ v ∈ V, f v < f u) :
     ∑ v ∈ V, f v < ∑ u ∈ U, f u := by
   classical
-  have _ : Nonempty {x // x ∈ U} := hU.to_subtype
-  let e : {x // x ∈ U} ≃ {x // x ∈ V} := Finset.equivOfCardEq hcard.symm
-  calc ∑ v ∈ V, f v
-      = ∑ u : {x // x ∈ U}, f (e u) := by
-        rw [Equiv.sum_comp e fun v : {x // x ∈ V} => f v, Finset.sum_coe_sort V f]
-    _ < ∑ u : {x // x ∈ U}, f u :=
-        Finset.sum_lt_sum_of_nonempty Finset.univ_nonempty
-          fun u _ => hlt u u.2 (e u) (e u).2
-    _ = ∑ u ∈ U, f u := Finset.sum_coe_sort U f
+  induction hU using Finset.Nonempty.cons_induction generalizing V with
+  | singleton u =>
+    obtain ⟨v, rfl⟩ := Finset.card_eq_one.mp (by simpa using hcard)
+    simpa using hlt u (by simp) v (by simp)
+  | cons u U hu hU ih =>
+    -- pair `u` off against any label of `V`, and compare the two remaining sums
+    obtain ⟨v, hv⟩ : V.Nonempty := Finset.card_pos.mp (by simp [hcard])
+    have hcard' : (V.erase v).card = U.card := by
+      rw [Finset.card_erase_of_mem hv, hcard, Finset.card_cons]
+      simp
+    calc ∑ z ∈ V, f z
+        = f v + ∑ z ∈ V.erase v, f z := (Finset.add_sum_erase _ f hv).symm
+      _ < f u + ∑ z ∈ U, f z :=
+          add_lt_add (hlt u (Finset.mem_cons_self _ _) v hv)
+            (ih hcard' fun a ha b hb =>
+              hlt a (Finset.mem_cons_of_mem ha) b (Finset.mem_of_mem_erase hb))
+      _ = ∑ z ∈ Finset.cons u U hu, f z := (Finset.sum_cons _).symm
 
 /-- **A permutation of a set that does not preserve a prescribed part increases the sum over the
 other part.** If every weight of `A` exceeds every weight of `X \ A`, and `σ` permutes `X` without
