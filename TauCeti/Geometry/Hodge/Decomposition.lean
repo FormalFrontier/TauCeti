@@ -58,8 +58,6 @@ Hodge II*, §1.2.1, and Voisin, *Hodge Theory and Complex Algebraic Geometry I*,
   decomposition from it.
 * `TauCeti.Hodge.HodgeStructureOn.piece_injective`: a pure Hodge structure is determined by its
   Hodge components.
-* `TauCeti.Hodge.HodgeStructureOn.piece_eq_of_piece_le`: componentwise domination of Hodge
-  components is componentwise equality.
 * `TauCeti.Hodge.HodgeStructureOn.decompositionEquiv`: pure Hodge structures of weight `n` and
   Hodge decompositions of weight `n` are the same thing.
 -/
@@ -522,28 +520,6 @@ theorem piece_injective :
   intro hs hs' hpiece
   refine HodgeStructureOn.ext (funext fun p ↦ ?_)
   rw [hs.F_eq_iSup_piece p, hs'.F_eq_iSup_piece p, hpiece]
-
-/-- Componentwise domination of Hodge components is componentwise equality: if every component of
-one pure Hodge structure is contained in the component of the same degree of another, the two
-families agree. Both decompose the same space, so no room is left between them; neither the
-weights nor the conjugations need agree. -/
-theorem piece_eq_of_piece_le {ω' : Conjugation W} {n' : ℤ} {hs : HodgeStructureOn W ω n}
-    {hs' : HodgeStructureOn W ω' n'}
-    (h : ∀ p, hs.piece p ≤ hs'.piece p) (p : ℤ) : hs.piece p = hs'.piece p := by
-  refine le_antisymm (h p) fun x hx ↦ ?_
-  have hrest : x - hs.proj p x ∈ ⨆ q, ⨆ (_ : q ≠ p), hs.piece q := by
-    refine hs.mem_iSup_of_proj_mem (S := fun q ↦ ⨆ (_ : q ≠ p), hs.piece q) fun q ↦ ?_
-    rcases eq_or_ne q p with rfl | hqp
-    · rw [map_sub, hs.proj_apply_of_mem (hs.proj_mem q x), sub_self]
-      exact Submodule.zero_mem _
-    · rw [map_sub, hs.proj_apply_eq_zero_of_mem_of_ne (hs.proj_mem p x) (Ne.symm hqp), sub_zero]
-      exact le_iSup (fun _ : q ≠ p ↦ hs.piece q) hqp (hs.proj_mem q x)
-  have hpiece : x - hs.proj p x ∈ hs'.piece p := sub_mem hx (h p (hs.proj_mem p x))
-  have hzero : x - hs.proj p x = 0 :=
-    Submodule.disjoint_def.1 (hs'.piece_iSupIndep p) _ hpiece
-      (iSup₂_mono (fun q (_ : q ≠ p) ↦ h q) hrest)
-  rw [sub_eq_zero.1 hzero]
-  exact hs.proj_mem p x
 
 /-- **Deligne's equivalence.** A pure Hodge structure of weight `n` on a complex vector space with
 conjugation is the same thing as a Hodge decomposition of weight `n`: the filtration is generated

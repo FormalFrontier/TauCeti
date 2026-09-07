@@ -400,7 +400,10 @@ theorem internalHom_piece_eq_comap (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
     have hmem := hle hf
     rw [Submodule.mem_comap, LinearMap.comp_apply, LinearMap.applyₗ_apply_apply, he] at hmem
     exact hmem
-  rw [← piece_eq_of_piece_le hpiece p, comap_piece]
+  rw [← congrFun (((hs₁.internalHom hs₂).piece_iSupIndep.le_iff_eq_of_iSup_eq_top
+    (((hs₁.dual.tensorProduct hs₂).comap (dualTensorHomEquiv ℂ W₁ W₂).symm
+      (ω₁.dualTensorHomEquiv_symm_map_internalHom_conj ω₂)).iSup_piece_eq_top)).mp hpiece) p,
+    comap_piece]
 
 /-- In the tensor presentation, the internal-hom filtration is the pullback of the tensor-product
 filtration on `V^* ⊗ W`. -/
