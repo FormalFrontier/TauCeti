@@ -10,6 +10,43 @@ public import TauCeti.AlgebraicGeometry.EllipticCurve.FormalGroup.Eval
 
 /-!
 # Points of a Weierstrass curve from formal-group parameters
+
+Over a complete ring `O` carrying the `I`-adic topology, a parameter `t ∈ I` gives a point of
+`W` over the fraction field `K`: the `w`-expansion converges at `t`, and the pair
+`(t / w(t), -1 / w(t))` satisfies the Weierstrass equation because the `w`-equation *is* that
+equation read in the coordinates `x = t / w`, `y = -1 / w`. The parameter `t = 0` gives the point
+at infinity.
+
+The two coordinates are recorded in closed form as well. Since `w(t) = t ^ 3 * u(t)` with `u(t)`
+a unit, the `x`-coordinate is the inverse of `t ^ 2 * u(t)` and the `y`-coordinate is minus the
+inverse of `t ^ 3 * u(t)`; this is the source of the pole orders `2` and `3` in the order of `t`,
+and hence of the correspondence between the powers `I ^ k` and the pole order of `x`.
+
+## Main definitions
+
+* `WeierstrassCurve.formalPoint`: the point of `W⁄K` attached to a parameter of an adic ideal.
+
+## Main results
+
+* `WeierstrassCurve.formalPoint_equation` and `WeierstrassCurve.formalPoint_nonsingular`: the
+  parametrized pair lies on the curve, and is nonsingular when `W` is elliptic.
+* `WeierstrassCurve.formalPoint_x_mul_eq_one` and
+  `WeierstrassCurve.formalPoint_y_mul_eq_neg_one`: the coordinates in closed form.
+
+## References
+
+* [J. Silverman, *The Arithmetic of Elliptic Curves*][silverman2009], IV.1, VII.2.
+
+## Provenance
+
+The same parametrization is formalised in Michael Stoll's elliptic-curve development
+(`github.com/MichaelStollBayreuth/EllipticCurves`, Apache-2.0) at `66889eada51a`, file
+`EllipticCurves/WeierstrassFormalGroup/Filtration.lean`, declarations `formalPoint_nonsingular`,
+`formalPoint`, `formalPoint_of_param_eq_zero` and `formalPoint_of_param_ne_zero`. That
+development states them over `v.adicCompletion K` for a height-one prime of a Dedekind domain
+and builds nonsingularity from its own chord lemma; the declarations below are stated over an
+arbitrary complete adic ring with a fraction field, and take nonsingularity from Mathlib's
+`equation_iff_nonsingular_of_Δ_ne_zero` instead.
 -/
 
 public section
