@@ -5,9 +5,12 @@ Authors: Chris Birkbeck
 -/
 module
 
+public import TauCeti.RingTheory.Huber.Basic
 public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Complete
 public import TauCeti.Topology.UniformSpace.DiscreteUniformity
 public import Mathlib.RingTheory.Polynomial.Basic
+
+import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Iterate
 
 /-!
 # Strong noetherianness of a nonarchimedean ring
@@ -39,6 +42,12 @@ discrete case below is proved through it.
   discrete topology is strongly noetherian — over a discrete ring the restricted series are
   the polynomials, already complete, and the Hilbert basis theorem applies. In particular
   `ℤ`, every field, and every noetherian ring discretely topologised witness the predicate.
+* `TauCeti.Huber.IsStronglyNoetherian.restrictedMvPowerSeriesCompletion`: over a Huber base the
+  predicate passes to `A⟨X₁,…,Xₖ⟩`, so a strongly noetherian ring stays strongly noetherian under
+  the construction. This is the iteration isomorphism `A⟨X⟩⟨Y⟩ ≅ A⟨X,Y⟩` of
+  `TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Iterate` read as a statement about the
+  predicate; `[IsHuberRing A]` is what that isomorphism asks of the base, and the predicate itself
+  does not.
 * `TauCeti.Huber.isNoetherianRing_completion_of_isStronglyNoetherian`: the zero-variable
   *consequence* of the predicate — strong noetherianness quantifies over every `k`, and its
   `k = 0` component says the separated completion `Â` is noetherian. The identification behind it,
@@ -60,8 +69,9 @@ discrete case below is proved through it.
   `UniformSpace.Completion.mapRingHom`, which induces nothing on completions from a
   discontinuous map.
 
-Neither the iteration `A⟨X⟩⟨Y⟩ ≅ A⟨X,Y⟩` nor the stability of noetherianness under quotients is
-proved here; those belong to the later roadmap milestones of Layer 0.5.
+What is not here is the other half of that stability: that a ring topologically of finite type
+over a strongly noetherian `A` — an open quotient of some `A⟨X₁,…,Xₖ⟩` — is again strongly
+noetherian.
 
 ## Provenance
 
@@ -121,6 +131,19 @@ instance IsStronglyNoetherian.of_discreteTopology [DiscreteTopology A] [IsNoethe
     exact isNoetherianRing_of_ringEquiv _
       ((weightedPolynomialEquiv _ isWeightFamily_one_weight).trans
         (restrictedMvPowerSeriesCompletionEquiv k A).symm)
+
+/-! ### The completed polynomial algebra -/
+
+/-- **Strong noetherianity passes to `A⟨X₁,…,Xₖ⟩`.** Over a Huber base, a completed restricted
+power-series algebra over a strongly noetherian ring is again strongly noetherian, so the
+construction can be iterated without leaving the class.
+
+`[IsHuberRing A]` is asked here and not by the predicate: it is what the iteration isomorphism
+of `TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Iterate` requires of the base. -/
+instance IsStronglyNoetherian.restrictedMvPowerSeriesCompletion [IsHuberRing A]
+    [IsStronglyNoetherian A] (k : ℕ) :
+    IsStronglyNoetherian (restrictedMvPowerSeriesCompletion k A) where
+  isNoetherianRing m := isNoetherianRing_of_ringEquiv _ (iterateRingEquiv k m A)
 
 /-! ### Zero variables -/
 

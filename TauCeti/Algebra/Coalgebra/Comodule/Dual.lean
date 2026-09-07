@@ -127,7 +127,7 @@ private theorem dualTensorHom_assoc_dualCoact_rTensor (x : Module.Dual R M ⊗[R
         calc
           _ = (rTensorHomEquivHomRTensor R M H H
               (dualTensorHom R M H y ⊗ₜ[R] h)) m := by
-            simp [rTensorHomEquivHomRTensor]
+            simp [rTensorHomEquivHomRTensor, dualTensorHomEquiv]
           _ = _ := by
             rw [rTensorHomEquivHomRTensor_apply]
             exact TensorProduct.rTensorHomToHomRTensor_apply

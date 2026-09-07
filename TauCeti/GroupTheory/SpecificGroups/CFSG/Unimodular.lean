@@ -61,9 +61,11 @@ group is finite, perfect, or simple.
   form requires.
 * `TauCeti.UnimodularLieIndex.isClosedImmersion_geckWeightTorus`: consequently the pinned split
   torus is a closed subgroup scheme of the Geck carrier.
-* `TauCeti.UnimodularExceptionalIndex.steinberg_geckRootSubgroup`: the Steinberg map raises the
-  parameter of every numbered root subgroup to the `q`-th power, the shape of the equation
-  milestone L1 asks of the untwisted families, proved on this carrier.
+* `TauCeti.UnimodularExceptionalIndex.steinberg_geckRootSubgroup` and
+  `TauCeti.UnimodularExceptionalIndex.steinberg_geckWeightTorus`: the Steinberg map raises the
+  parameter of every numbered root subgroup, and every coordinate of a weight-torus point, to the
+  `q`-th power, which is how the Steinberg map of an untwisted index acts on both halves of the
+  pinned data of this carrier.
 * `TauCeti.UnimodularExceptionalIndex.mem_fixedSubgroup_steinberg_iff`: the fixed points of that
   map are the points of the carrier whose matrix entries lie in the field of definition `𝔽_q`
   recorded by `TauCeti.ValidLieTypeIndex.fixedField`.
@@ -192,6 +194,16 @@ theorem steinberg_geckRootSubgroup (i : Fin d.1.1.dynkinType.rank ⊕ Fin d.1.1.
         (Multiplicative.ofAdd (Multiplicative.toAdd u ^ d.1.1.fieldOrder)) := by
   rw [steinberg_eq_geckFrobenius]
   exact d.1.1.geckFrobenius_geckRootSubgroup i u
+
+/-- **The Steinberg map raises every coordinate of a weight-torus point to the `q`-th power.** It
+is the untwisted case of the equation a Steinberg endomorphism satisfies on the second half of the
+pinned data, the first half being `TauCeti.UnimodularExceptionalIndex.steinberg_geckRootSubgroup`
+on the root subgroups. -/
+@[simp]
+theorem steinberg_geckWeightTorus (s : Fin d.1.1.dynkinType.rank → d.1.1.Closureˣ) :
+    d.steinberg (d.1.1.geckWeightTorus s) = d.1.1.geckWeightTorus (s ^ d.1.1.fieldOrder) := by
+  rw [steinberg_eq_geckFrobenius]
+  exact d.1.1.geckFrobenius_geckWeightTorus s
 
 /-- **A point of the Geck point group is fixed by the Steinberg map exactly when all of its matrix
 entries lie in the field of definition.** Writing `𝔽_q` for

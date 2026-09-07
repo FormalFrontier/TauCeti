@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Semigroups.Generator.Uniqueness
+import TauCeti.LinearAlgebra.LinearPMap.Basic
 
 /-!
 # Semigroups whose generators are negatives of one another are mutually inverse
@@ -66,7 +67,7 @@ private theorem hasDerivWithinAt_productOrbit {S T : StronglyContinuousSemigroup
   have hyS' : y ∈ S.generator.domain := by rw [S.generator_domain]; exact hyS
   set a : X := S.generator ⟨y, hyS'⟩
   have hTa : T.generator ⟨y, hyT'⟩ = -a := by
-    have h := @(LinearPMap.ext_iff.mp hgen).2 y hyT'
+    have h := LinearPMap.congr_fun hgen hyT'
       ((LinearPMap.neg_domain S.generator).symm ▸ hyS')
     simpa only [LinearPMap.neg_apply, a] using h
   have hquot : Tendsto (fun u : ℝ => (u - s)⁻¹ • (T.realOperator (u - s) y - y))

@@ -7,10 +7,13 @@ module
 
 public import Mathlib.Analysis.InnerProductSpace.LinearPMap
 public import TauCeti.Analysis.Semigroups.Group.Generator
+public import TauCeti.Analysis.Semigroups.Group.InverseSemigroups
+public import TauCeti.Analysis.Semigroups.Generator.ComplexLinear
 -- Non-public: differentiation of the inner product turns preservation by the group into
 -- skew-symmetry of the generator.
 import Mathlib.Analysis.InnerProductSpace.Calculus
 import TauCeti.Analysis.Semigroups.Dissipative.Basic
+import TauCeti.LinearAlgebra.LinearPMap.Basic
 
 /-!
 # Unitary strongly continuous groups
@@ -21,7 +24,9 @@ group is **unitary** when every operator preserves the complex inner product. In
 preservation forces the real-linear operators to be complex-linear, and the same is true of the
 infinitesimal generator on its natural domain.
 
-This file packages that complex generator without replacing the real generator. Its domain has the
+This file packages that complex generator without replacing the real generator: it is the complex
+generator of the forward semigroup from `TauCeti.Analysis.Semigroups.Generator.ComplexLinear`, which
+applies because a unitary group is complex linear (`IsUnitary.isComplexLinear`). Its domain has the
 same carrier as `TauCeti.Semigroups.StronglyContinuousGroup.domain`, now regarded as a complex
 submodule, and its values are exactly those of the existing generator. Differentiating preservation
 of the inner product gives the infinitesimal unitary identity
@@ -30,19 +35,28 @@ of the inner product gives the infinitesimal unitary identity
 
 The resolvent-range theorems for the forward and reversed contraction semigroups then identify
 the adjoint domain and upgrade this identity to `A† = -A`: the generator is skew-adjoint. This
-completes the generator direction of Stone's theorem. Constructing the converse unitary group
-from a self-adjoint operator is not claimed here.
+completes the generator direction of Stone's theorem; the converse construction is in
+`TauCeti.Analysis.Semigroups.Group.Stone.Unbounded`.
 
 ## Main declarations
 
 * `TauCeti.Semigroups.StronglyContinuousGroup.IsUnitary`: every group operator preserves the
   complex inner product.
-* `TauCeti.Semigroups.StronglyContinuousGroup.IsUnitary.map_smul`: a unitary group represented
-  real-linearly is automatically complex-linear.
+* `TauCeti.Semigroups.StronglyContinuousGroup.IsUnitary.map_smul` and
+  `TauCeti.Semigroups.StronglyContinuousGroup.IsUnitary.isComplexLinear`: a unitary group
+  represented real-linearly is automatically complex-linear, and so is its forward semigroup.
 * `TauCeti.Semigroups.StronglyContinuousGroup.complexDomain`: the generator domain as a complex
   submodule.
 * `TauCeti.Semigroups.StronglyContinuousGroup.complexGenerator`: the generator as a complex
   `LinearPMap`.
+* `TauCeti.Semigroups.StronglyContinuousGroup.isUnitary_of_isComplexLinear_of_opNorm_le_one`:
+  a contractive C₀-group whose forward semigroup is complex linear is unitary;
+  `isUnitary_toGroupOfInverse`: a complex-linear contraction semigroup and an inverse
+  contraction semigroup glue into a unitary group.
+* `TauCeti.Semigroups.StronglyContinuousGroup.complexGenerator_restrictScalars`,
+  `complexGenerator_eq_of_generator_eq_restrictScalars` and `eq_of_complexGenerator_eq`: the
+  real generator is the real restriction of the complex one, which is therefore determined by
+  the real generator and determines the unitary group.
 * `TauCeti.Semigroups.StronglyContinuousGroup.IsUnitary.complexGenerator_isFormalAdjoint_neg`:
   the generator is skew-symmetric.
 * `TauCeti.Semigroups.StronglyContinuousGroup.IsUnitary.complexGenerator_adjoint_eq_neg`:
@@ -135,52 +149,76 @@ theorem map_smul (hU : U.IsUnitary) (t : ℝ) (z : ℂ) (x : H) :
     _ = ⟪z • U t x, y⟫_ℂ := by
       rw [U.map_apply_map_neg_apply, inner_smul_left]
 
-/-- Multiplying a generator-domain vector by a complex scalar keeps it in the generator domain,
-and its difference quotient converges to the correspondingly scaled generator value. -/
-private theorem tendsto_genQuot_smul (hU : U.IsUnitary) (x : U.domain) (z : ℂ) :
-    Tendsto (fun t : ℝ => (1 / t) • (U t (z • (x : H)) - z • (x : H)))
-      (𝓝[>] (0 : ℝ))
-      (𝓝 (z • U.generator ⟨(x : H), by rw [U.generator_domain]; exact x.property⟩)) := by
-  refine (U.generator_tendsto x).const_smul z |>.congr' ?_
-  filter_upwards with t
-  rw [hU.map_smul]
-  module
-
-/-- The real generator domain of a unitary strongly continuous group is closed under complex
-scalar multiplication. -/
-theorem smul_mem_domain (hU : U.IsUnitary) (x : U.domain) (z : ℂ) :
-    z • (x : H) ∈ U.domain :=
-  (U.mem_domain_iff_tendsto _).mpr
-    ⟨z • U.generator ⟨(x : H), by rw [U.generator_domain]; exact x.property⟩,
-      hU.tendsto_genQuot_smul x z⟩
-
-/-- The real generator of a unitary strongly continuous group commutes with complex scalar
-multiplication on its domain. -/
-theorem generator_smul (hU : U.IsUnitary) (x : U.domain) (z : ℂ) :
-    U.generator
-        ⟨z • (x : H), by rw [U.generator_domain]; exact hU.smul_mem_domain x z⟩ =
-      z • U.generator ⟨(x : H), by rw [U.generator_domain]; exact x.property⟩ :=
-  U.generator_eq_of_tendsto (hU.smul_mem_domain x z) (hU.tendsto_genQuot_smul x z)
+/-- The forward semigroup of a unitary strongly continuous group is complex linear. -/
+theorem isComplexLinear (hU : U.IsUnitary) : U.toSemigroup.IsComplexLinear :=
+  U.toSemigroup.isComplexLinear_iff.mpr fun t z x => by
+    rw [U.toSemigroup_apply]
+    exact hU.map_smul t z x
 
 end IsUnitary
 
-/-- The generator domain of a unitary strongly continuous group, regarded as a complex submodule.
-Its carrier is definitionally the real generator domain. -/
-def complexDomain (U : StronglyContinuousGroup H) (hU : U.IsUnitary) : Submodule ℂ H where
-  carrier := U.domain
-  zero_mem' := U.domain.zero_mem
-  add_mem' hx hy := U.domain.add_mem hx hy
-  smul_mem' z _ hx := hU.smul_mem_domain ⟨_, hx⟩ z
+/-- A contractive C₀-group whose forward semigroup is complex linear is unitary: complex linearity
+at negative times follows from that at nonnegative times through the group law. -/
+theorem isUnitary_of_isComplexLinear_of_opNorm_le_one (U : StronglyContinuousGroup H)
+    (hlin : U.toSemigroup.IsComplexLinear) (h : ∀ t : ℝ, ‖U t‖ ≤ 1) : U.IsUnitary := by
+  have hsmul : ∀ (t : ℝ) (z : ℂ) (x : H), U t (z • x) = z • U t x := by
+    intro t z x
+    rcases le_or_gt 0 t with ht | ht
+    · rw [← U.toSemigroup_realOperator_of_nonneg ht]
+      exact hlin.realOperator_map_smul t z x
+    · have hs : 0 ≤ -t := neg_nonneg.mpr ht.le
+      calc U t (z • x) = U t (z • U (-t) (U t x)) := by rw [U.map_neg_apply_map_apply]
+        _ = U t (U (-t) (z • U t x)) := by
+          rw [← U.toSemigroup_realOperator_of_nonneg hs, hlin.realOperator_map_smul]
+        _ = z • U t x := U.map_apply_map_neg_apply t _
+  refine IsUnitary.intro fun t x y => ?_
+  let L : H →ₗᵢ[ℂ] H :=
+    { toLinearMap :=
+        { toFun := U t
+          map_add' := (U t).map_add
+          map_smul' := hsmul t }
+      norm_map' := U.norm_map_apply_eq_of_norm_le_one t (h t) (h (-t)) }
+  exact L.inner_map_map x y
+
+/-- A complex-linear contraction semigroup and an inverse contraction semigroup glue into a
+unitary C₀-group (complex linearity of the inverse half follows from the group law). -/
+theorem isUnitary_toGroupOfInverse (S T : ContractionSemigroup H)
+    (hS : S.toStronglyContinuousSemigroup.IsComplexLinear)
+    (hST : ∀ t, (S.toStronglyContinuousSemigroup t).comp (T.toStronglyContinuousSemigroup t) =
+      ContinuousLinearMap.id ℝ H)
+    (hTS : ∀ t, (T.toStronglyContinuousSemigroup t).comp (S.toStronglyContinuousSemigroup t) =
+      ContinuousLinearMap.id ℝ H) :
+    (S.toStronglyContinuousSemigroup.toGroupOfInverse T.toStronglyContinuousSemigroup hST
+      hTS).IsUnitary := by
+  refine isUnitary_of_isComplexLinear_of_opNorm_le_one _ ?_ fun t => ?_
+  · rw [StronglyContinuousSemigroup.toGroupOfInverse_toSemigroup]
+    exact hS
+  · rcases le_or_gt 0 t with ht | ht
+    · rw [StronglyContinuousSemigroup.toGroupOfInverse_apply_of_nonneg _ _ _ _ ht]
+      exact S.contracting_real t ht
+    · rw [StronglyContinuousSemigroup.toGroupOfInverse_apply_of_nonpos _ _ _ _ ht.le]
+      exact T.contracting_real (-t) (neg_nonneg.mpr ht.le)
+
+/-- The generator domain of a unitary strongly continuous group, regarded as a complex submodule:
+the complex generator domain of its forward semigroup. Its carrier is the real generator domain. -/
+def complexDomain (U : StronglyContinuousGroup H) (hU : U.IsUnitary) : Submodule ℂ H :=
+  U.toSemigroup.complexDomain hU.isComplexLinear
+
+/-- The complex generator domain of a unitary group is that of its forward semigroup. -/
+theorem complexDomain_def (U : StronglyContinuousGroup H) (hU : U.IsUnitary) :
+    U.complexDomain hU = U.toSemigroup.complexDomain hU.isComplexLinear :=
+  (rfl)
 
 @[simp]
 theorem mem_complexDomain_iff (U : StronglyContinuousGroup H) (hU : U.IsUnitary) (x : H) :
-    x ∈ U.complexDomain hU ↔ x ∈ U.domain :=
-  Iff.rfl
+    x ∈ U.complexDomain hU ↔ x ∈ U.domain := by
+  rw [complexDomain, U.toSemigroup.mem_complexDomain_iff, U.domain_def]
 
 /-- The complex generator domain has the real generator domain as its underlying set. -/
 @[simp]
 theorem coe_complexDomain (U : StronglyContinuousGroup H) (hU : U.IsUnitary) :
-    (U.complexDomain hU : Set H) = (U.domain : Set H) := (rfl)
+    (U.complexDomain hU : Set H) = (U.domain : Set H) := by
+  rw [complexDomain, U.toSemigroup.coe_complexDomain, U.domain_def]
 
 /-- The generator domain of a unitary strongly continuous group is dense, also when regarded as a
 complex submodule. -/
@@ -190,24 +228,20 @@ theorem dense_complexDomain [CompleteSpace H] (U : StronglyContinuousGroup H) (h
   exact U.toSemigroup.dense_domain
 
 /-- The infinitesimal generator of a unitary strongly continuous group as a complex-linear
-partially defined map. It has the same domain and values as the existing real generator. -/
-def complexGenerator (U : StronglyContinuousGroup H) (hU : U.IsUnitary) : H →ₗ.[ℂ] H where
-  domain := U.complexDomain hU
-  toFun :=
-    { toFun := fun x =>
-        U.generator ⟨(x : H), by rw [U.generator_domain]; exact x.property⟩
-      map_add' := fun x y => by
-        convert U.generator.map_add
-          ⟨(x : H), by rw [U.generator_domain]; exact x.property⟩
-          ⟨(y : H), by rw [U.generator_domain]; exact y.property⟩ using 1
-        congr 1
-      map_smul' := fun z x => by
-        simpa only [Submodule.coe_smul_of_tower, RingHom.id_apply] using
-          hU.generator_smul ⟨(x : H), x.property⟩ z }
+partially defined map: the complex generator of its forward semigroup. It has the same domain and
+values as the existing real generator. -/
+def complexGenerator (U : StronglyContinuousGroup H) (hU : U.IsUnitary) : H →ₗ.[ℂ] H :=
+  U.toSemigroup.complexGenerator hU.isComplexLinear
+
+/-- The complex generator of a unitary group is that of its forward semigroup. -/
+theorem complexGenerator_def (U : StronglyContinuousGroup H) (hU : U.IsUnitary) :
+    U.complexGenerator hU = U.toSemigroup.complexGenerator hU.isComplexLinear :=
+  (rfl)
 
 @[simp]
 theorem complexGenerator_domain (U : StronglyContinuousGroup H) (hU : U.IsUnitary) :
-    (U.complexGenerator hU).domain = U.complexDomain hU := (rfl)
+    (U.complexGenerator hU).domain = U.complexDomain hU := by
+  rw [complexGenerator, complexDomain, U.toSemigroup.complexGenerator_domain]
 
 @[simp]
 theorem complexGenerator_apply (U : StronglyContinuousGroup H) (hU : U.IsUnitary)
@@ -215,8 +249,39 @@ theorem complexGenerator_apply (U : StronglyContinuousGroup H) (hU : U.IsUnitary
     U.complexGenerator hU x =
       U.generator ⟨(x : H), by
         rw [U.generator_domain, ← U.mem_complexDomain_iff hU, ← U.complexGenerator_domain hU]
-        exact x.property⟩ :=
-  (rfl)
+        exact x.property⟩ := by
+  obtain ⟨x, hx⟩ := x
+  have hx' : x ∈ (U.toSemigroup.complexGenerator hU.isComplexLinear).domain := by
+    rwa [U.complexGenerator_def hU] at hx
+  have hxr : x ∈ U.toSemigroup.generator.domain := by
+    rw [U.toSemigroup.generator_domain, ← U.toSemigroup.mem_complexDomain_iff hU.isComplexLinear,
+      ← U.toSemigroup.complexGenerator_domain hU.isComplexLinear]
+    exact hx'
+  rw [LinearPMap.congr_fun (U.complexGenerator_def hU) hx hx',
+    U.toSemigroup.complexGenerator_apply hU.isComplexLinear ⟨x, hx'⟩,
+    LinearPMap.congr_fun U.generator_def _ hxr]
+
+/-- The real generator of a unitary C₀-group is the real restriction of its complex generator. -/
+@[simp]
+theorem complexGenerator_restrictScalars (U : StronglyContinuousGroup H) (hU : U.IsUnitary) :
+    (U.complexGenerator hU).restrictScalars ℝ = U.generator := by
+  rw [U.complexGenerator_def hU, U.toSemigroup.complexGenerator_restrictScalars, U.generator_def]
+
+/-- The complex generator of a unitary C₀-group whose real generator is the real restriction of
+the complex-linear partial map `A` is `A` itself. -/
+theorem complexGenerator_eq_of_generator_eq_restrictScalars (U : StronglyContinuousGroup H)
+    (hU : U.IsUnitary) {A : H →ₗ.[ℂ] H} (hA : U.generator = A.restrictScalars ℝ) :
+    U.complexGenerator hU = A := by
+  rw [U.complexGenerator_def hU]
+  exact U.toSemigroup.complexGenerator_eq_of_generator_eq_restrictScalars hU.isComplexLinear
+    (by rw [← U.generator_def, hA])
+
+/-- A unitary C₀-group is determined by its complex generator. -/
+theorem eq_of_complexGenerator_eq [CompleteSpace H] {U V : StronglyContinuousGroup H}
+    (hU : U.IsUnitary) (hV : V.IsUnitary) (h : U.complexGenerator hU = V.complexGenerator hV) :
+    U = V :=
+  eq_of_generator_eq (by
+    rw [← U.complexGenerator_restrictScalars hU, ← V.complexGenerator_restrictScalars hV, h])
 
 /-- Membership in the complex generator domain implies membership in the original real generator
 domain; the two domains have the same carrier. -/
@@ -246,12 +311,9 @@ theorem inner_complexGenerator_eq_neg (hU : U.IsUnitary)
         U.toSemigroup.generator ⟨(z : H), by
           rw [U.toSemigroup.generator_domain, ← U.domain_def]
           exact z.property⟩ := by
-    simpa only using
-      ((LinearPMap.ext_iff.mp U.generator_def).2 (x := (z : H))
-        (hf := by rw [U.generator_domain]; exact z.property)
-        (hg := by
-          rw [U.toSemigroup.generator_domain, ← U.domain_def]
-          exact z.property))
+    simpa only using LinearPMap.congr_fun U.generator_def
+      (by rw [U.generator_domain]; exact z.property)
+      (by rw [U.toSemigroup.generator_domain, ← U.domain_def]; exact z.property)
   have hgenx := generator_eq_toSemigroup xr
   have hgeny := generator_eq_toSemigroup yr
   have hderiv :=
@@ -296,7 +358,7 @@ private theorem one_sub_complexGenerator_surjective (hU : U.IsUnitary) :
     rw [← U.generator_domain]
     exact x.property
   let xc : (U.complexGenerator hU).domain :=
-    ⟨x, by rw [U.complexGenerator_domain]; exact hxU⟩
+    ⟨x, by rw [U.complexGenerator_domain, U.mem_complexDomain_iff]; exact hxU⟩
   refine ⟨xc, ?_⟩
   simpa only [xc, one_smul, U.complexGenerator_apply hU] using hx
 
@@ -314,7 +376,7 @@ private theorem one_add_complexGenerator_surjective (hU : U.IsUnitary) :
     rw [← U.generator_domain]
     exact x.property
   let xc : (U.complexGenerator hU).domain :=
-    ⟨x, by rw [U.complexGenerator_domain]; exact hxU⟩
+    ⟨x, by rw [U.complexGenerator_domain, U.mem_complexDomain_iff]; exact hxU⟩
   refine ⟨xc, ?_⟩
   have hgen : U.complexGenerator hU xc = U.generator x := by
     rw [U.complexGenerator_apply]
@@ -367,9 +429,7 @@ theorem complexGenerator_adjoint_eq_neg (hU : U.IsUnitary) :
           rw [inner_sub_left]
     rw [LinearPMap.neg_domain]
     simpa only [hyx] using x.property
-  apply LinearPMap.ext (le_antisymm hdom_le hle.1)
-  intro y hy hy'
-  exact (hle.2 (x := ⟨y, hy'⟩) (y := ⟨y, hy⟩) rfl).symm
+  exact (LinearPMap.eq_of_le_of_domain_eq hle (le_antisymm hle.1 hdom_le)).symm
 
 end IsUnitary
 
