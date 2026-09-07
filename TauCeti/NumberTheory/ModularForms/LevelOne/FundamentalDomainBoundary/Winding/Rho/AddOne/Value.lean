@@ -407,9 +407,7 @@ theorem hasCauchyPVAt_fdBoundary_rho_add_one (hH : Real.sqrt 3 / 2 < H) :
     lt_min (lt_min (by norm_num) (by linarith)) hsin12
   have hIoo : Ioo (0 : ℝ)
       (min (min (1 : ℝ) (H - Real.sqrt 3 / 2)) (2 * Real.sin (Real.pi / 12))) ∈
-      𝓝[>] (0 : ℝ) := by
-    rw [← Ioi_inter_Iio]
-    exact inter_mem self_mem_nhdsWithin (nhdsWithin_le_nhds (Iio_mem_nhds hε₀))
+      𝓝[>] (0 : ℝ) := Ioo_mem_nhdsGT hε₀
   have hspec : ∀ ε ∈ Ioo (0 : ℝ)
       (min (min (1 : ℝ) (H - Real.sqrt 3 / 2)) (2 * Real.sin (Real.pi / 12))),
       IntervalIntegrable (fun t ↦

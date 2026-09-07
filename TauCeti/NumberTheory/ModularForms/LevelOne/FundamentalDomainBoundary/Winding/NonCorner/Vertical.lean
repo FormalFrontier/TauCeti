@@ -491,9 +491,7 @@ theorem hasCauchyPVAt_fdBoundary_vertical (hre : w.re = 2⁻¹ ∨ w.re = -(2⁻
       min (min 1 (‖w‖ - 1)) (min (H - w.im) (w.im - Real.sqrt 3 / 2)) :=
     lt_min (lt_min one_pos (by linarith)) (lt_min (by linarith) (by linarith))
   have hIoo : Ioo (0 : ℝ) (min (min 1 (‖w‖ - 1)) (min (H - w.im) (w.im - Real.sqrt 3 / 2)))
-      ∈ 𝓝[>] (0 : ℝ) := by
-    rw [← Ioi_inter_Iio]
-    exact inter_mem self_mem_nhdsWithin (nhdsWithin_le_nhds (Iio_mem_nhds hb))
+      ∈ 𝓝[>] (0 : ℝ) := Ioo_mem_nhdsGT hb
   have hspec : ∀ ε ∈ Ioo (0 : ℝ)
       (min (min 1 (‖w‖ - 1)) (min (H - w.im) (w.im - Real.sqrt 3 / 2))),
       IntervalIntegrable (fun t ↦ if ε < ‖fdBoundary H t - w‖
