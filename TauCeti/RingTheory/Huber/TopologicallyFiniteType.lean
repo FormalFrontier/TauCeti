@@ -7,9 +7,10 @@ module
 
 public import Mathlib.Topology.Algebra.Ring.Ideal
 public import TauCeti.RingTheory.Huber.StronglyNoetherian
-public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.FirstCountable
-public import TauCeti.Topology.Algebra.GroupCompletion
 public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Completion
+
+import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.FirstCountable
+import TauCeti.Topology.Algebra.GroupCompletion
 
 /-!
 # Homomorphisms topologically of finite type
@@ -223,7 +224,7 @@ known to be strictly topologically of finite type.
 
 section StronglyNoetherian
 
-variable {A B : Type*} [CommRing A] [UniformSpace A] [NonarchimedeanRing A] [IsHuberRing A]
+variable {A B : Type*} [CommRing A] [TopologicalSpace A] [NonarchimedeanRing A] [IsHuberRing A]
   [IsStronglyNoetherian A]
   [CommRing B] [UniformSpace B] [IsUniformAddGroup B] [NonarchimedeanRing B] [CompleteSpace B]
   [T0Space B]
