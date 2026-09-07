@@ -40,7 +40,7 @@ variable (H : Type v) [CommRing H] [HopfAlgebra R H]
 theorem isReduced_quotient_reduction
     [IsReduced ((H ⧸ nilradical H) ⊗[R] (H ⧸ nilradical H))] :
     IsReduced (CommHopfAlgCat.quotient (_root_.CommHopfAlgCat.of R H) (reduction R H)) := by
-  rw [CommHopfAlgCat.isReduced_quotient_iff, reduction_toIdeal]
+  rw [← Ideal.isRadical_iff_quotient_reduced, reduction_toIdeal]
   exact Ideal.radical_isRadical ⊥
 
 end TauCeti.HopfIdeal
