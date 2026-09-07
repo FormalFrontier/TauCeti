@@ -54,6 +54,7 @@ differentials are the work that consumes this file.
 * `TauCeti.adeleFiltration_le_repartitionSpace`, `TauCeti.adeleFiltration_mono` and
   `TauCeti.directed_adeleFiltration`: the filtration lands in `A_F`, and is monotone and
   directed.
+* `TauCeti.adeleFiltration_sup`: `A_F(D ⊔ E) = A_F(D) + A_F(E)`, the place-by-place splitting.
 * `TauCeti.repartitionSpace_eq_iSup` and `TauCeti.coe_repartitionSpace_eq_iUnion`:
   `A_F = ⋃_D A_F(D)`, the exhaustion.
 * `TauCeti.diagonalRepartitions_le_repartitionSpace`: the diagonal `F ↪ A_F`, which is where
@@ -211,6 +212,37 @@ theorem mem_adeleFiltration_zero_iff {a : Place k F → F} :
 theorem adeleFiltration_mono {D E : Divisor k F} (h : D ≤ E) :
     adeleFiltration D ≤ adeleFiltration E := fun _ ha P ↦
   (ha P).trans (WithZero.exp_le_exp.mpr (WeilDivisor.coeff_le_coeff h P))
+
+/-- **The filtration turns suprema of divisors into sums of subspaces.** The inclusion that has
+content is `≤`: a repartition bounded by `D ⊔ E` respects, at each place separately, one of the
+two bounds, so assigning each entry to a side splits it as a sum. -/
+@[simp]
+theorem adeleFiltration_sup (D E : Divisor k F) :
+    adeleFiltration (D ⊔ E) = adeleFiltration D ⊔ adeleFiltration E := by
+  refine le_antisymm (fun a ha ↦ ?_)
+    (sup_le (adeleFiltration_mono le_sup_left) (adeleFiltration_mono le_sup_right))
+  classical
+  set a₁ : Place k F → F :=
+    fun P => if P.valuation (a P) ≤ WithZero.exp (D.coeff P) then a P else 0 with ha₁
+  have h₁ : a₁ ∈ adeleFiltration D := by
+    refine mem_adeleFiltration_iff.mpr fun P ↦ ?_
+    by_cases h : P.valuation (a P) ≤ WithZero.exp (D.coeff P) <;> simp [ha₁, h]
+  have h₂ : a - a₁ ∈ adeleFiltration E := by
+    refine mem_adeleFiltration_iff.mpr fun P ↦ ?_
+    by_cases h : P.valuation (a P) ≤ WithZero.exp (D.coeff P)
+    · simp [ha₁, h]
+    · have hmax := mem_adeleFiltration_iff.mp ha P
+      rw [WeilDivisor.coeff_sup] at hmax
+      have hexp : WithZero.exp ((D.coeff P) ⊔ (E.coeff P)) =
+          WithZero.exp (D.coeff P) ⊔ WithZero.exp (E.coeff P) := by
+        rcases le_total (D.coeff P) (E.coeff P) with hle | hle
+        · rw [sup_eq_right.mpr hle, sup_eq_right.mpr (WithZero.exp_le_exp.mpr hle)]
+        · rw [sup_eq_left.mpr hle, sup_eq_left.mpr (WithZero.exp_le_exp.mpr hle)]
+      rw [hexp] at hmax
+      have : P.valuation (a P) ≤ WithZero.exp (E.coeff P) :=
+        (le_sup_iff.mp hmax).resolve_left h
+      simpa [ha₁, h] using this
+  exact Submodule.mem_sup.mpr ⟨a₁, h₁, a - a₁, h₂, by ring⟩
 
 /-- The filtration is directed: any two of its members are contained in a third, namely the one
 attached to the pointwise maximum of the two divisors. -/

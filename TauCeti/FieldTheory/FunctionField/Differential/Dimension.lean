@@ -218,9 +218,8 @@ theorem exists_repartitionDualMul_eq (hF : IsFunctionField k F)
       by_contra hx₂
       refine hcon (-(x₂⁻¹ * x₁)) ?_
       have h := congrArg (repartitionDualMul hF x₂⁻¹) hx
-      rw [map_add, map_zero, repartitionDualMul_repartitionDualMul,
-        repartitionDualMul_repartitionDualMul, inv_mul_cancel₀ hx₂, map_one,
-        Module.End.one_apply] at h
+      rw [map_add, map_zero, repartitionDualMul_inv_repartitionDualMul hF hx₂ ω₂,
+        repartitionDualMul_repartitionDualMul] at h
       rw [map_neg, LinearMap.neg_apply, eq_comm, eq_neg_iff_add_eq_zero, add_comm]
       exact h
     subst hx₂
@@ -229,8 +228,7 @@ theorem exists_repartitionDualMul_eq (hF : IsFunctionField k F)
     by_contra hx₁
     refine hω₁ ?_
     have h := congrArg (repartitionDualMul hF x₁⁻¹) hx
-    rwa [repartitionDualMul_repartitionDualMul, inv_mul_cancel₀ hx₁, map_one,
-      Module.End.one_apply, map_zero] at h
+    rwa [repartitionDualMul_inv_repartitionDualMul hF hx₁ ω₁, map_zero] at h
   -- a divisor `B` of large degree makes the estimate and Riemann's theorem incompatible
   obtain ⟨B, hBpos, hBdeg⟩ := exists_pos_le_degree hF
     (3 * genus k F - Divisor.degree D₁ - Divisor.degree D₂)

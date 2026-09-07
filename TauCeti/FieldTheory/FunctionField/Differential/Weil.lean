@@ -34,6 +34,8 @@ specialty, and are proved in `TauCeti/FieldTheory/FunctionField/Differential/Dim
   multiplication of repartitions by a function (Definition 1.5.8).
 * `TauCeti.weilDifferentialSpaceMul` and `TauCeti.weilDifferentialSpaceModule`: its restriction
   to `Ω_F`, and the resulting `F`-vector space structure.
+* `TauCeti.repartitionDualMulRight`: that action with the linear form frozen, as the `k`-linear
+  map `F → Ω_F`, `x ↦ x · ω`.
 
 ## Main results
 
@@ -47,6 +49,10 @@ specialty, and are proved in `TauCeti/FieldTheory/FunctionField/Differential/Dim
   some single divisor bounds it.
 * `TauCeti.weilDifferentialFiltration_eq_bot_iff`: `Ω_F(D) = 0` exactly when every repartition
   differs from a constant by one bounded by `D`.
+* `TauCeti.repartitionDualMul_inv_repartitionDualMul`: multiplying by a unit and then by its
+  inverse restores the form, so the action of a nonzero function is invertible.
+* `TauCeti.repartitionDualMulRight_injective`: multiplication by a nonzero linear form is an
+  injective map `F → Ω_F`.
 * `TauCeti.repartitionDualMul_mem_weilDifferentialFiltration_iff`: for `z ∈ Fˣ`, a linear form
   lies in `Ω_F(D)` exactly when `z · ω` lies in `Ω_F(D + div z)`, so `Ω_F` is stable under the
   action (`TauCeti.repartitionDualMul_mem_weilDifferentialSpace`).
@@ -211,6 +217,44 @@ theorem repartitionDualMul_repartitionDualMul (hF : IsFunctionField k F) (f g : 
     repartitionDualMul hF f (repartitionDualMul hF g ω) = repartitionDualMul hF (f * g) ω := by
   rw [← Module.End.mul_apply, ← map_mul]
 
+/-- **Multiplying by a nonzero function and then by its inverse restores the linear form.** The
+cancellation that makes multiplication by a nonzero function invertible on `Ω_F`. -/
+@[simp]
+theorem repartitionDualMul_inv_repartitionDualMul (hF : IsFunctionField k F) {x : F} (hx : x ≠ 0)
+    (ω : Module.Dual k ↥(repartitionSpace k F)) :
+    repartitionDualMul hF x⁻¹ (repartitionDualMul hF x ω) = ω := by
+  rw [← Module.End.mul_apply, ← map_mul, inv_mul_cancel₀ hx, map_one, Module.End.one_apply]
+
+/-- **Multiplication of a fixed linear form by a varying function**, as a `k`-linear map
+`F → Ω_F`: the map `x ↦ x · ω` obtained by freezing the second argument of
+`TauCeti.repartitionDualMul`.  For `ω ≠ 0` it is injective
+(`TauCeti.repartitionDualMulRight_injective`), and Riemann–Roch is the computation of its image
+on a Riemann–Roch space. -/
+noncomputable def repartitionDualMulRight (hF : IsFunctionField k F)
+    (ω : Module.Dual k ↥(repartitionSpace k F)) :
+    F →ₗ[k] Module.Dual k ↥(repartitionSpace k F) :=
+  (LinearMap.applyₗ ω).comp (repartitionDualMul hF).toLinearMap
+
+@[simp]
+theorem repartitionDualMulRight_apply (hF : IsFunctionField k F)
+    (ω : Module.Dual k ↥(repartitionSpace k F)) (x : F) :
+    repartitionDualMulRight hF ω x = repartitionDualMul hF x ω :=
+  (rfl)
+
+/-- **Multiplication by a nonzero Weil differential is injective.** A function in the kernel is
+either zero or a unit, and a unit can be cancelled by
+`TauCeti.repartitionDualMul_inv_repartitionDualMul`, forcing `ω = 0`. -/
+theorem repartitionDualMulRight_injective (hF : IsFunctionField k F)
+    {ω : Module.Dual k ↥(repartitionSpace k F)} (hω : ω ≠ 0) :
+    Function.Injective (repartitionDualMulRight hF ω) := by
+  rw [injective_iff_map_eq_zero]
+  intro x hx
+  by_contra hx0
+  obtain ⟨z, rfl⟩ : ∃ z : Fˣ, (z : F) = x := ⟨Units.mk0 x hx0, rfl⟩
+  refine hω ?_
+  rw [← repartitionDualMul_inv_repartitionDualMul hF (Units.ne_zero z) ω,
+    ← repartitionDualMulRight_apply hF ω (z : F), hx, map_zero]
+
 /-- **Multiplication translates the filtration by a principal divisor**: for a nonzero function
 `z`, a linear form is bounded by `D` exactly when `z · ω` is bounded by `D + div z`, exactly as
 multiplication by `z` carries `A_F(D + div z)` into `A_F(D)`. -/
@@ -234,8 +278,7 @@ theorem repartitionDualMul_mem_weilDifferentialFiltration_iff (hF : IsFunctionFi
       exact smul_mem_diagonalRepartitions (y : F) ha
   refine ⟨fun h ↦ ?_, key z D ω⟩
   have hzz : repartitionDualMul hF ((z⁻¹ : Fˣ) : F) (repartitionDualMul hF (z : F) ω) = ω := by
-    rw [← Module.End.mul_apply, ← map_mul, ← Units.val_mul, inv_mul_cancel, Units.val_one,
-      map_one, Module.End.one_apply]
+    simp
   have hD : D + Divisor.principal hF z + Divisor.principal hF z⁻¹ = D := by
     rw [Divisor.principal_inv, add_neg_cancel_right]
   have h' := key z⁻¹ _ _ h
