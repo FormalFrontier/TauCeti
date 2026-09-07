@@ -34,7 +34,7 @@ into pole orders, but no order or valuation hypothesis is assumed here.
 * `WeierstrassCurve.equation_formalPoint`: the parametrized pair lies on the curve.
 * `WeierstrassCurve.neg_xCoord_div_yCoord_formalPoint`: the parameter read back off the point as
   `-x / y`, and with it `WeierstrassCurve.formalPoint_eq_zero_iff` and
-  `WeierstrassCurve.formalPoint_inj`.
+  `WeierstrassCurve.formalPoint_injective`.
 * `WeierstrassCurve.formalPoint_of_param_eq_zero` and
   `WeierstrassCurve.formalPoint_of_param_ne_zero`: the two branches of the definition.
 * `WeierstrassCurve.xCoord_formalPoint` and `WeierstrassCurve.yCoord_formalPoint`: the point's
@@ -92,19 +92,16 @@ variable [W.IsElliptic]
 
 variable [FaithfulSMul O K]
 
-omit [W.IsElliptic] in
-/-- `w(t)` is nonzero in `K` at a nonzero parameter of an adic ideal: it factors as
-`t ^ 3 * u(t)` with `u(t)` a unit, so `formalWEval_ne_zero` applies once `t ^ 3 ≠ 0`; that cube
-is checked in `K` and pulled back, since there is no `IsDomain O` here. -/
+omit [W.IsElliptic] [FaithfulSMul O K] in
+/-- **`w(t)` is nonzero in `K`** once the image of `t` is: the expansion factors as
+`t ^ 3 * u(t)` with `u(t)` a unit, and both factors have nonzero image — the cube because `K` has
+no zero divisors, the unit because units map to units. No injectivity is needed. -/
 theorem algebraMap_formalWEval_ne_zero {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I)
-    (ht0 : t ≠ 0) : algebraMap O K (W.formalWEval t) ≠ 0 := by
-  have hinj := FaithfulSMul.algebraMap_injective O K
-  -- `t ^ 3 ≠ 0` has no `IsDomain O` to lean on, so it is read off in `K`, where the cube of a
-  -- nonzero element is nonzero, and pulled back along the injective structure map.
-  have h3 : t ^ 3 ≠ 0 := by
-    refine fun h ↦ (pow_ne_zero 3 ((map_ne_zero_iff _ hinj).mpr ht0)) ?_
-    rw [← map_pow, h, map_zero]
-  exact (map_ne_zero_iff _ hinj).mpr (W.formalWEval_ne_zero hI ht h3)
+    (ht0 : algebraMap O K t ≠ 0) : algebraMap O K (W.formalWEval t) ≠ 0 := by
+  rw [W.formalWEval_eq_pow_mul_formalUEval (hI.isTopologicallyNilpotent_of_mem ht), map_mul,
+    map_pow]
+  exact mul_ne_zero (pow_ne_zero _ ht0)
+    ((W.isUnit_formalUEval hI ht).map (algebraMap O K)).ne_zero
 
 open scoped Classical in
 /-- **The point attached to a formal-group parameter**: a nonzero `t` in an adic ideal gives the
@@ -112,8 +109,11 @@ affine point `(t / w(t), -1 / w(t))`, and `t = 0` gives the point at infinity. -
 noncomputable def formalPoint {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I) :
     (W.baseChange K).toAffine.Point :=
   if h0 : t = 0 then 0
-  else .mk (W.equation_formalPoint (K := K) (hI.isTopologicallyNilpotent_of_mem ht)
-    (W.algebraMap_formalWEval_ne_zero hI ht h0))
+  else
+    have hT : algebraMap O K t ≠ 0 :=
+      (map_ne_zero_iff _ (FaithfulSMul.algebraMap_injective O K)).mpr h0
+    .mk (W.equation_formalPoint (K := K) (hI.isTopologicallyNilpotent_of_mem ht)
+      (W.algebraMap_formalWEval_ne_zero hI ht hT))
 
 open scoped Classical in
 /-- The parameter `0` gives the point at infinity. -/
@@ -131,7 +131,8 @@ theorem formalPoint_of_param_ne_zero {I : Ideal O} (hI : IsAdic I) {t : O} (ht :
     (h0 : t ≠ 0) :
     W.formalPoint (K := K) hI ht =
       .mk (W.equation_formalPoint (K := K) (hI.isTopologicallyNilpotent_of_mem ht)
-        (W.algebraMap_formalWEval_ne_zero hI ht h0)) := by
+        (W.algebraMap_formalWEval_ne_zero hI ht
+          ((map_ne_zero_iff _ (FaithfulSMul.algebraMap_injective O K)).mpr h0))) := by
   simp [formalPoint, h0]
 
 open scoped Classical in
@@ -192,12 +193,14 @@ theorem neg_xCoord_div_yCoord_formalPoint {I : Ideal O} (hI : IsAdic I) {t : O} 
   rcases eq_or_ne t 0 with rfl | h0
   · simp
   · rw [W.xCoord_formalPoint hI ht h0, W.yCoord_formalPoint hI ht h0]
-    have hw := W.algebraMap_formalWEval_ne_zero (K := K) hI ht h0
+    have hw := W.algebraMap_formalWEval_ne_zero (K := K) hI ht
+      ((map_ne_zero_iff _ (FaithfulSMul.algebraMap_injective O K)).mpr h0)
     field_simp
 
 open scoped Classical in
 /-- **The parametrization vanishes exactly at the zero parameter**, so its kernel is as small as
 it can be. -/
+@[simp]
 theorem formalPoint_eq_zero_iff {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I) :
     W.formalPoint (K := K) hI ht = 0 ↔ t = 0 := by
   refine ⟨fun h ↦ ?_, W.formalPoint_of_param_eq_zero hI ht⟩
@@ -207,12 +210,15 @@ theorem formalPoint_eq_zero_iff {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t �
   exact (map_eq_zero_iff _ (FaithfulSMul.algebraMap_injective O K)).mp hrec.symm
 
 open scoped Classical in
-/-- **The parametrization is injective**: two parameters of `I` giving the same point are equal.
-Recovering the parameter as `-x / y` reduces this to injectivity of the structure map. -/
-theorem formalPoint_inj {I : Ideal O} (hI : IsAdic I) {t₁ t₂ : O} (ht₁ : t₁ ∈ I) (ht₂ : t₂ ∈ I)
-    (h : W.formalPoint (K := K) hI ht₁ = W.formalPoint (K := K) hI ht₂) : t₁ = t₂ := by
-  refine FaithfulSMul.algebraMap_injective O K ?_
-  rw [← W.neg_xCoord_div_yCoord_formalPoint (K := K) hI ht₁,
-    ← W.neg_xCoord_div_yCoord_formalPoint (K := K) hI ht₂, h]
+/-- **The parametrization is injective** on the parameters of `I`. Recovering the parameter as
+`-x / y` reduces this to injectivity of the structure map, and it is what would make the map the
+injective side of an identification with the kernel of reduction. -/
+theorem formalPoint_injective {I : Ideal O} (hI : IsAdic I) :
+    Function.Injective fun t : I ↦ W.formalPoint (K := K) hI t.property := by
+  intro t₁ t₂ h
+  refine Subtype.ext (FaithfulSMul.algebraMap_injective O K ?_)
+  rw [← W.neg_xCoord_div_yCoord_formalPoint (K := K) hI t₁.property,
+    ← W.neg_xCoord_div_yCoord_formalPoint (K := K) hI t₂.property]
+  exact congrArg (fun P ↦ -P.xCoord / P.yCoord) h
 
 end WeierstrassCurve
