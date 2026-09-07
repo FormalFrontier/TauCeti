@@ -9,30 +9,37 @@ public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.Relative.G
 public import TauCeti.NumberTheory.Multiquadratic.Quadratic.TwoRank
 import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.RamifiedPrimes
 import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.Relative.Quadratic
-import Mathlib.NumberTheory.NumberField.ClassNumber
+import TauCeti.NumberTheory.NumberField.Quadratic.InfinitePlace
 
 /-!
-# The relative candidate-genus-field Galois group has the same order as `Cl / Cl²`
+# The relative candidate-genus-field Galois group has the same order as `Cl⁺ / Cl⁺²`
 
-For an imaginary quadratic field `K = ℚ(√d)` (`d < 0` squarefree) let `K_gen` be its candidate
-genus field. This file records that the relative Galois group `Gal(K_gen/K)` has the same order as
-the maximal elementary-`2` quotient `Cl(K) / Cl(K)²` of the ideal class group: both equal
+For a quadratic field `K = ℚ(√d)` (`d` squarefree, not a rational square) let `K_gen` be its
+candidate genus field, the narrow genus field of `K` (`isNarrowGenusField_candidateGenusField`) and,
+for `d < 0`, its genus field (`isGenusField_candidateGenusField`). This file records that the
+relative Galois group `Gal(K_gen/K)` has the same order as the maximal elementary-`2` quotient
+`Cl⁺(K) / Cl⁺(K)²` of the narrow class group, and, for imaginary `K`, as `Cl(K) / Cl(K)²`: all equal
 `2 ^ (t - 1)`, where `t` is the number of rational primes ramifying in `K`.
 
-This is the numerical content of the genus-theoretic summit isomorphism
-`Gal(K_gen/K) ≅ Cl(K) / Cl(K)²` — the two sides have equal cardinality — established **without class
-field theory**, by combining the field-theoretic relative degree `[K_gen : K] = 2 ^ (t - 1)`
-(`card_aut_candidateGenusField_over_base`) with the class-group `2`-rank theorem
-`2-rank Cl(K) = t - 1` (`twoRank_eq_ncard_ramifiedPrimes_sub_one`). The isomorphism itself needs the
-Artin reciprocity map and is not proved here.
+This is the numerical content of the expected genus-field isomorphisms
+`Gal(K_gen/K) ≅ Cl⁺(K) / Cl⁺(K)²` and, for imaginary `K`, `Gal(K_gen/K) ≅ Cl(K) / Cl(K)²` — the two
+sides have equal cardinality — established **without class field theory**, by combining the
+field-theoretic relative degree `[K_gen : K] = 2 ^ (t - 1)`
+(`card_aut_candidateGenusField_over_base`) with the `2`-rank theorems `2-rank Cl⁺(K) = t - 1`
+(`narrowTwoRank_eq_ncard_ramifiedPrimes_sub_one`) and `2-rank Cl(K) = t - 1` for `d < 0`
+(`twoRank_eq_ncard_ramifiedPrimes_sub_one`). The isomorphisms themselves need the Artin
+reciprocity map and are not proved here.
 
 See D. A. Cox, *Primes of the Form x² + ny²*, §6.A, and F. Lemmermeyer, *Reciprocity Laws: From
 Euler to Eisenstein*, §2.2.
 
-## Main result
+## Main results
 
-* `TauCeti.Multiquadratic.card_aut_candidateGenusField_over_base_eq_card_elementaryTwoQuotient`: for
-  imaginary `K`, `|Gal(K_gen/K)| = |Cl(K)/Cl(K)²|`.
+* `card_aut_candidateGenusField_over_base_eq_card_narrowElementaryTwoQuotient` (in the namespace
+  `TauCeti.Multiquadratic`) gives `|Gal(K_gen/K)| = |Cl⁺(K)/Cl⁺(K)²|` for `K` of either signature.
+* `card_aut_candidateGenusField_over_base_eq_card_elementaryTwoQuotient` (same namespace) gives
+  `|Gal(K_gen/K)| = |Cl(K)/Cl(K)²|` for imaginary `K`, where the narrow and ordinary class groups
+  coincide.
 -/
 
 public section
@@ -44,11 +51,44 @@ namespace TauCeti.Multiquadratic
 
 variable {d : ℤ}
 
+/-- **The relative candidate-genus-field Galois group and `Cl⁺(K)/Cl⁺(K)²` have equal order.** For a
+quadratic field `K = ℚ(√d)` of either signature (`d` squarefree, not a rational square),
+`|Gal(K_gen/K)|`
+equals `|Cl⁺(K)/Cl⁺(K)²|` — both are `2 ^ (t - 1)`, where `t` is the number of rational primes
+ramifying in `K`. This is the cardinality shadow of the expected genus-field isomorphism
+`Gal(K_gen/K) ≅ Cl⁺(K)/Cl⁺(K)²`, established without class field theory. -/
+theorem card_aut_candidateGenusField_over_base_eq_card_narrowElementaryTwoQuotient
+    (hd : Squarefree d) (hnsq : ¬ IsSquare ((d : ℤ) : ℚ)) :
+    Nat.card (candidateGenusField hd ≃ₐ[candidateGenusFieldBase hd] candidateGenusField hd) =
+      Nat.card
+        (NumberField.NarrowClassGroup.ElementaryTwoQuotient (candidateGenusFieldBase hd)) := by
+  have : NumberField (candidateGenusFieldBase hd) :=
+    NumberField.of_intermediateField (candidateGenusFieldBase hd)
+  rw [card_aut_candidateGenusField_over_base hd hnsq,
+    NumberField.NarrowClassGroup.card_elementaryTwoQuotient_eq_two_pow_twoRank,
+    card_genusPrimeDiscriminants_eq_ncard_ramifiedPrimes
+      (minpoly_candidateGenusFieldBaseGen hd hnsq) (adjoin_candidateGenusFieldBaseGen_eq_top hd) hd]
+  by_cases hd1 : 1 < d.natAbs
+  · rw [narrowTwoRank_eq_ncard_ramifiedPrimes_sub_one (minpoly_candidateGenusFieldBaseGen hd hnsq)
+      (adjoin_candidateGenusFieldBaseGen_eq_top hd) hd hd1]
+  · -- The remaining field is `ℚ(√-1)`, which is totally complex: its narrow and ordinary
+    -- `2`-ranks agree, and the imaginary `2`-rank formula applies.
+    have hne1 : d ≠ 1 := fun h => hnsq ⟨1, by rw [h]; norm_num⟩
+    have hneg : d < 0 := by
+      have := hd.ne_zero
+      omega
+    have : NumberField.IsTotallyComplex (candidateGenusFieldBase hd) :=
+      NumberField.isTotallyComplex_of_minpoly_eq_X_sq_sub_C_of_neg
+        (minpoly_candidateGenusFieldBaseGen hd hnsq) hneg
+    rw [NumberField.NarrowClassGroup.twoRank_eq_classGroupTwoRank,
+      twoRank_eq_ncard_ramifiedPrimes_sub_one (minpoly_candidateGenusFieldBaseGen hd hnsq)
+        (adjoin_candidateGenusFieldBaseGen_eq_top hd) hd hneg]
+
 /-- **The relative candidate-genus-field Galois group and `Cl(K)/Cl(K)²` have equal order.** For an
 imaginary quadratic field `K = ℚ(√d)` (`d < 0` squarefree), `|Gal(K_gen/K)|` equals `|Cl(K)/Cl(K)²|`
 — both are `2 ^ (t - 1)`, where `t` is the number of rational primes ramifying in `K`. This is the
-cardinality shadow of the summit isomorphism `Gal(K_gen/K) ≅ Cl(K)/Cl(K)²`, established without
-class field theory. -/
+cardinality shadow of the expected genus-field isomorphism `Gal(K_gen/K) ≅ Cl(K)/Cl(K)²`,
+established without class field theory. -/
 theorem card_aut_candidateGenusField_over_base_eq_card_elementaryTwoQuotient
     (hd : Squarefree d) (hneg : d < 0) :
     Nat.card (candidateGenusField hd ≃ₐ[candidateGenusFieldBase hd] candidateGenusField hd) =
@@ -60,13 +100,11 @@ theorem card_aut_candidateGenusField_over_base_eq_card_elementaryTwoQuotient
     linarith
   have : NumberField (candidateGenusFieldBase hd) :=
     NumberField.of_intermediateField (candidateGenusFieldBase hd)
-  have : Finite (ClassGroup (𝓞 (candidateGenusFieldBase hd))) := inferInstance
-  rw [card_aut_candidateGenusField_over_base hd hnsq,
-    TauCeti.ClassGroup.card_elementaryTwoQuotient_eq_two_pow_twoRank,
-    twoRank_eq_ncard_ramifiedPrimes_sub_one (minpoly_candidateGenusFieldBaseGen hd hnsq)
-      (adjoin_candidateGenusFieldBaseGen_eq_top hd) hd hneg,
-    card_genusPrimeDiscriminants_eq_ncard_ramifiedPrimes
-      (minpoly_candidateGenusFieldBaseGen hd hnsq)
-      (adjoin_candidateGenusFieldBaseGen_eq_top hd) hd]
+  have : NumberField.IsTotallyComplex (candidateGenusFieldBase hd) :=
+    NumberField.isTotallyComplex_of_minpoly_eq_X_sq_sub_C_of_neg
+      (minpoly_candidateGenusFieldBaseGen hd hnsq) hneg
+  rw [card_aut_candidateGenusField_over_base_eq_card_narrowElementaryTwoQuotient hd hnsq]
+  exact Nat.card_congr (NumberField.NarrowClassGroup.toClassGroupElementaryTwoQuotientEquiv
+    (candidateGenusFieldBase hd)).toEquiv
 
 end TauCeti.Multiquadratic
