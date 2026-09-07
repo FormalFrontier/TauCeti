@@ -175,17 +175,7 @@ theorem sum_nebentypus_smul_slash_eq_nsmul_twistedHeckeSlashSum
         ⟨a i, IsHeckeTriple.mem_of_mem_doubleCoset D.out.2 (hmem i)⟩ : ℂ) • (f ∣[k] a i)]
   refine Finset.sum_congr rfl fun v _ ↦ ?_
   rw [Finset.sum_congr rfl fun i hi ↦ ?_, Finset.sum_const]
-  · have hfib : (Finset.univ.filter fun i ↦ g i = v) =
-        Finset.univ.filter fun i ↦ MulOpposite.op (a i) •
-          (((Gamma0 N).map (mapGL ℚ) : Subgroup (GL (Fin 2) ℚ)) : Set (GL (Fin 2) ℚ)) =
-            MulOpposite.op (rightCosetRep D v) •
-              (((Gamma0 N).map (mapGL ℚ) : Subgroup (GL (Fin 2) ℚ)) :
-                Set (GL (Fin 2) ℚ)) :=
-      Finset.filter_congr fun i _ ↦
-        ⟨fun h ↦ h ▸ hg i, fun h ↦ op_rightCosetRep_smul_injective D ((hg i).symm.trans h)⟩
-    have hm := hcard _ (rightCosetRep_mem_doubleCoset D v)
-    rw [Nat.card_eq_fintype_card, Fintype.card_subtype] at hm
-    rw [hfib, hm]
+  · rw [card_filter_eq_of_rightCosetRep_smul_eq D hcard hg v]
   · rw [nebentypusWeight_def]
     exact (smul_slash_eq_of_rightCoset_eq k χ f hf
       (IsHeckeTriple.mem_of_mem_doubleCoset D.out.2 (hmem i))
