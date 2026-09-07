@@ -19,8 +19,8 @@ import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 /-!
 # The `2`-rank of a quadratic class group
 
-For a squarefree integer `d` with `1 < |d|` let `K = ℚ(√d)` and let `t` be the number of rational
-primes that ramify in `K`. Genus theory computes the `2`-rank of the *narrow* class group `Cl⁺(K)`,
+For a squarefree integer `d` let `K = ℚ(√d)` and let `t` be the number of rational primes that
+ramify in `K`. Genus theory computes the `2`-rank of the *narrow* class group `Cl⁺(K)`,
 the dimension over `𝔽₂` of `Cl⁺(K)/Cl⁺(K)²`, to be exactly `t - 1`. This file proves that formula,
 
 `2-rank Cl⁺(K) = t - 1`,
@@ -250,14 +250,25 @@ theorem ncard_ramifiedPrimes_sub_one_le_narrowTwoRank
   exact card_sub_one_le_narrowTwoRank hs heven hprod hmin hgen hsf
 
 /-- **The `2`-rank formula for the narrow class group of a quadratic field.** For `K = ℚ(√d)` with
-`d` squarefree and `1 < |d|`, of either signature, the `2`-rank of `Cl⁺(K)` is exactly `t - 1`,
-where `t` is the number of rational primes ramifying in `K`. For an imaginary `K` the narrow and
-ordinary class groups coincide, and this recovers `twoRank_eq_ncard_ramifiedPrimes_sub_one`. -/
+`d` squarefree, of either signature, the `2`-rank of `Cl⁺(K)` is exactly `t - 1`, where `t` is the
+number of rational primes ramifying in `K`. For an imaginary `K` the narrow and ordinary class
+groups coincide, and this recovers `twoRank_eq_ncard_ramifiedPrimes_sub_one`; that identity is also
+how the Gaussian field `d = -1`, which the ambiguous class number bound excludes, is covered. -/
 theorem narrowTwoRank_eq_ncard_ramifiedPrimes_sub_one
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
-    (hsf : Squarefree d) (hd : 1 < d.natAbs) :
-    NumberField.NarrowClassGroup.twoRank K = (ramifiedPrimes K).ncard - 1 :=
-  le_antisymm (narrowTwoRank_le_ncard_ramifiedPrimes_sub_one hmin hgen hsf hd)
-    (ncard_ramifiedPrimes_sub_one_le_narrowTwoRank hmin hgen hsf)
+    (hsf : Squarefree d) :
+    NumberField.NarrowClassGroup.twoRank K = (ramifiedPrimes K).ncard - 1 := by
+  by_cases hd : 1 < d.natAbs
+  · exact le_antisymm (narrowTwoRank_le_ncard_ramifiedPrimes_sub_one hmin hgen hsf hd)
+      (ncard_ramifiedPrimes_sub_one_le_narrowTwoRank hmin hgen hsf)
+  · have hne1 : d ≠ 1 := fun h =>
+      NumberField.not_isSquare_radicand hmin ⟨1, by rw [h]; norm_num⟩
+    have hneg : d < 0 := by
+      have := hsf.ne_zero
+      omega
+    have : IsTotallyComplex K :=
+      NumberField.isTotallyComplex_of_minpoly_eq_X_sq_sub_C_of_neg hmin hneg
+    rw [NumberField.NarrowClassGroup.twoRank_eq_classGroupTwoRank,
+      twoRank_eq_ncard_ramifiedPrimes_sub_one hmin hgen hsf hneg]
 
 end TauCeti.Multiquadratic

@@ -109,18 +109,8 @@ theorem natCard_narrowClassGroup_sq_eq_one_eq_two_pow
     (hsf : Squarefree d) :
     Nat.card {C : NarrowClassGroup K // C ^ 2 = 1} = 2 ^ ((ramifiedPrimes K).ncard - 1) := by
   rw [← TauCeti.card_elementaryTwoQuotient_eq_card_twoTorsion,
-    NarrowClassGroup.card_elementaryTwoQuotient_eq_two_pow_twoRank]
-  by_cases hd1 : 1 < d.natAbs
-  · rw [narrowTwoRank_eq_ncard_ramifiedPrimes_sub_one hmin hgen hsf hd1]
-  · -- The remaining field is `ℚ(√-1)`, which is totally complex: its narrow and ordinary
-    -- `2`-ranks agree, and the imaginary `2`-rank formula applies.
-    have hne1 : d ≠ 1 := fun h => not_isSquare_radicand hmin ⟨1, by rw [h]; norm_num⟩
-    have hneg : d < 0 := by
-      have := hsf.ne_zero
-      omega
-    have : IsTotallyComplex K := isTotallyComplex_of_minpoly_eq_X_sq_sub_C_of_neg hmin hneg
-    rw [NarrowClassGroup.twoRank_eq_classGroupTwoRank,
-      twoRank_eq_ncard_ramifiedPrimes_sub_one hmin hgen hsf hneg]
+    NarrowClassGroup.card_elementaryTwoQuotient_eq_two_pow_twoRank,
+    narrowTwoRank_eq_ncard_ramifiedPrimes_sub_one hmin hgen hsf]
 
 /-- **The narrow ambiguous class number formula, counted by ambiguous ideals.** For `K = ℚ(√d)`
 with `d` squarefree, of either signature, exactly `2 ^ (t - 1)` narrow ideal classes are
