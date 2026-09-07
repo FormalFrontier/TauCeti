@@ -23,8 +23,8 @@ entry for each prime power.
 Nothing here mentions a group: these are selectors on the index datatype, matching the type-`E₆`
 index API of `TauCeti/GroupTheory/SpecificGroups/CFSG/Index.lean`. The carrier the family is built
 on is attached to such an index in
-`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeE7.lean`, and the diagram permutation its Steinberg
-map composes with in `TauCeti/GroupTheory/SpecificGroups/CFSG/GraphTwisted.lean`.
+`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeE7/Basic.lean`, and the diagram permutation its
+Steinberg map composes with in `TauCeti/GroupTheory/SpecificGroups/CFSG/GraphTwisted.lean`.
 
 ## Main declarations
 

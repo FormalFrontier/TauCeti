@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Algebra.Lie.E7.Minuscule.RootDatum
 public import TauCeti.GroupTheory.SpecificGroups.CFSG.Closure
-public import TauCeti.GroupTheory.SpecificGroups.CFSG.GraphTwisted
+public import TauCeti.GroupTheory.SpecificGroups.CFSG.TypeE7.Index
 
 /-!
 # The exceptional family `E₇(q)` on the minuscule carrier

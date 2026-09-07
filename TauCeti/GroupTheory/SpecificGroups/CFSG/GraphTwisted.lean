@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.GroupTheory.SpecificGroups.CFSG.Index
-public import TauCeti.GroupTheory.SpecificGroups.CFSG.TypeE7Index
+public import TauCeti.GroupTheory.SpecificGroups.CFSG.TypeE7.Index
 public import TauCeti.LinearAlgebra.RootSystem.DiagramPermutations
 
 /-!
