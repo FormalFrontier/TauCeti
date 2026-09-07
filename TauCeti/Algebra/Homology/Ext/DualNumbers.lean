@@ -13,7 +13,7 @@ public import Mathlib.RingTheory.DualNumber
 public import TauCeti.Algebra.Homology.Ext.ProjectiveResolution
 
 /-!
-# `Extⁿ` over the dual numbers is one-dimensional in every degree
+# `Extⁿ` over the dual numbers is free of rank one in every degree
 
 Let `k` be a commutative ring, let `A = k[ε]` be the dual numbers `k[ε]/(ε²)`, and let `S = A/(ε)`
 be the residue module of `A` -- its residue field when `k` is a field -- viewed as an `A`-module
@@ -109,18 +109,22 @@ theorem dualNumberProj_apply (x : DualNumber k) :
     dualNumberResidueEquiv k ((dualNumberProj k).hom x) = fst x :=
   (rfl)
 
+/-- Multiplication by `ε` is left multiplication by `ε` as a linear map. -/
+theorem dualNumberEpsSmul_hom :
+    (dualNumberEpsSmul k).hom = LinearMap.mulLeft (DualNumber k) (ε : DualNumber k) :=
+  (rfl)
+
 /-- `ε² = 0`, so multiplication by `ε` squares to zero. -/
-theorem dualNumberEpsSmul_comp_dualNumberEpsSmul :
+theorem dualNumberEpsSmul_comp_dualNumberEpsSmul_eq_zero :
     dualNumberEpsSmul k ≫ dualNumberEpsSmul k = 0 :=
-  ModuleCat.hom_ext (LinearMap.ext fun x => by
-    rw [ModuleCat.hom_comp, LinearMap.comp_apply, dualNumberEpsSmul_apply,
-      dualNumberEpsSmul_apply, ← mul_assoc, eps_mul_eps, zero_mul, ModuleCat.hom_zero,
-      LinearMap.zero_apply])
+  ModuleCat.hom_ext (by
+    rw [ModuleCat.hom_comp, dualNumberEpsSmul_hom, ← LinearMap.mulLeft_mul, eps_mul_eps,
+      LinearMap.mulLeft_zero_eq_zero, ModuleCat.hom_zero])
 
 /-- Every map from the free module to `k[ε]/(ε)` kills multiplication by `ε`: this is
 the statement that `Hom_A(-, S)` turns the periodic resolution into a complex with zero
 differentials. -/
-theorem dualNumberEpsSmul_comp (f : dualNumberFree k ⟶ dualNumberResidue k) :
+theorem dualNumberEpsSmul_comp_eq_zero (f : dualNumberFree k ⟶ dualNumberResidue k) :
     dualNumberEpsSmul k ≫ f = 0 :=
   ModuleCat.hom_ext (LinearMap.ext fun x => by
     rw [ModuleCat.hom_comp, LinearMap.comp_apply, dualNumberEpsSmul_apply, ← smul_eq_mul,
@@ -128,14 +132,14 @@ theorem dualNumberEpsSmul_comp (f : dualNumberFree k ⟶ dualNumberResidue k) :
 
 /-- The image of multiplication by `ε` is the set of dual numbers with vanishing constant term.
 This is `DualNumber.fst_eq_zero_iff_eps_dvd` read as a statement about a linear map. -/
-theorem mem_range_dualNumberEpsSmul_iff {x : DualNumber k} :
+private theorem mem_range_dualNumberEpsSmul_iff {x : DualNumber k} :
     x ∈ LinearMap.range (dualNumberEpsSmul k).hom ↔ fst x = 0 := by
   rw [fst_eq_zero_iff_eps_dvd]
   exact ⟨fun ⟨y, hy⟩ ↦ ⟨y, hy.symm⟩, fun ⟨y, hy⟩ ↦ ⟨y, hy.symm⟩⟩
 
 /-- Multiplication by `ε` is annihilated exactly by the dual numbers with vanishing constant
 term. -/
-theorem mem_ker_dualNumberEpsSmul_iff {x : DualNumber k} :
+private theorem mem_ker_dualNumberEpsSmul_iff {x : DualNumber k} :
     x ∈ LinearMap.ker (dualNumberEpsSmul k).hom ↔ fst x = 0 := by
   rw [LinearMap.mem_ker, dualNumberEpsSmul_apply]
   constructor
@@ -146,26 +150,26 @@ theorem mem_ker_dualNumberEpsSmul_iff {x : DualNumber k} :
     rw [← mul_assoc, eps_mul_eps, zero_mul]
 
 /-- The quotient map kills exactly the dual numbers with vanishing constant term. -/
-theorem mem_ker_dualNumberProj_iff {x : DualNumber k} :
+private theorem mem_ker_dualNumberProj_iff {x : DualNumber k} :
     x ∈ LinearMap.ker (dualNumberProj k).hom ↔ fst x = 0 := by
   rw [LinearMap.mem_ker, ← (dualNumberResidueEquiv k).map_eq_zero_iff, dualNumberProj_apply]
 
 /-- Exactness of the periodic complex away from degree zero. -/
-theorem range_dualNumberEpsSmul :
+private theorem range_dualNumberEpsSmul_eq_ker :
     LinearMap.range (dualNumberEpsSmul k).hom = LinearMap.ker (dualNumberEpsSmul k).hom :=
   SetLike.ext fun _ ↦
     (mem_range_dualNumberEpsSmul_iff k).trans (mem_ker_dualNumberEpsSmul_iff k).symm
 
 /-- Exactness of the augmented periodic complex in degree zero. -/
-theorem range_dualNumberEpsSmul_eq_ker_proj :
+private theorem range_dualNumberEpsSmul_eq_ker_proj :
     LinearMap.range (dualNumberEpsSmul k).hom = LinearMap.ker (dualNumberProj k).hom :=
   SetLike.ext fun _ ↦
     (mem_range_dualNumberEpsSmul_iff k).trans (mem_ker_dualNumberProj_iff k).symm
 
 /-- The quotient map `k[ε] ↠ k[ε]/(ε)` is surjective. -/
 theorem dualNumberProj_surjective : Function.Surjective (dualNumberProj k).hom := fun x => by
-  refine ⟨inl (dualNumberResidueEquiv k x), (dualNumberResidueEquiv k).injective ?_⟩
-  rw [dualNumberProj_apply, fst_inl]
+  obtain ⟨y, hy⟩ := TrivSqZeroExt.fst_surjective (R := k) (M := k) (dualNumberResidueEquiv k x)
+  exact ⟨y, (dualNumberResidueEquiv k).injective (by rw [dualNumberProj_apply]; exact hy)⟩
 
 /-- The quotient map `k[ε] ↠ k[ε]/(ε)` is an epimorphism; this is what makes precomposition
 with it injective on `End(k[ε]/(ε))`. -/
@@ -173,13 +177,15 @@ instance epi_dualNumberProj : Epi (dualNumberProj k) :=
   (ModuleCat.epi_iff_surjective _).2 (dualNumberProj_surjective k)
 
 /-- The `ε`-periodic complex `⋯ ⟶ A --ε--> A --ε--> A` of free modules over the dual numbers. -/
--- `@[expose]`: the terms and differentials of this complex have to reduce to the free module and
--- to multiplication by `ε` for `TauCeti.dualNumberProjectiveResolution_complex_X` and
--- `TauCeti.dualNumberProjectiveResolution_complex_d` to hold by `rfl`.
+-- `@[expose]`: the terms and the differentials of this complex have to reduce to the free module
+-- and to multiplication by `ε`, both for the two characteristic lemmas below and for the
+-- statements built on the resolution; a `HomologicalComplex` term is type-valued, so this is
+-- needed already to elaborate those statements.
 @[expose] noncomputable def dualNumberComplex : ChainComplex (ModuleCat.{u} (DualNumber k)) ℕ :=
   HomologicalComplex.alternatingConst (dualNumberFree k)
     (φ := dualNumberEpsSmul k) (ψ := dualNumberEpsSmul k)
-    (dualNumberEpsSmul_comp_dualNumberEpsSmul k) (dualNumberEpsSmul_comp_dualNumberEpsSmul k)
+    (dualNumberEpsSmul_comp_dualNumberEpsSmul_eq_zero k)
+    (dualNumberEpsSmul_comp_dualNumberEpsSmul_eq_zero k)
     fun _ _ => ComplexShape.down_nat_odd_add
 
 /-- Every differential of the periodic complex is multiplication by `ε`. -/
@@ -195,7 +201,7 @@ noncomputable def dualNumberComplexπ :
       (dualNumberResidue k) :=
   ((dualNumberComplex k).toSingle₀Equiv (dualNumberResidue k)).symm
     ⟨dualNumberProj k, by
-      rw [dualNumberComplex_d]; exact dualNumberEpsSmul_comp k (dualNumberProj k)⟩
+      rw [dualNumberComplex_d]; exact dualNumberEpsSmul_comp_eq_zero k (dualNumberProj k)⟩
 
 /-- The augmentation is the quotient map in degree zero. -/
 @[simp]
@@ -203,9 +209,10 @@ theorem dualNumberComplexπ_f_zero : (dualNumberComplexπ k).f 0 = dualNumberPro
   ChainComplex.toSingle₀Equiv_symm_apply_f_zero _ _
 
 /-- The `ε`-periodic projective resolution `⋯ ⟶ A --ε--> A --ε--> A ⟶ S ⟶ 0` of `k[ε]/(ε)`. -/
--- `@[expose]`: `CategoryTheory.ProjectiveResolution.complex` of this resolution must reduce to
--- `TauCeti.dualNumberComplex`, so that a map out of `R.complex.X n` is a map out of the free
--- module.
+-- `@[expose]`: consumers must compute with the terms of this resolution. Already the *statements*
+-- of `TauCeti.dualNumberProjectiveResolution_complex_d` and of
+-- `TauCeti.extDualNumberResidueSuccEquiv` need `R.complex.X n` to reduce to the free module, so
+-- they do not elaborate while the body is hidden.
 @[expose] noncomputable def dualNumberProjectiveResolution :
     ProjectiveResolution (dualNumberResidue k) where
   complex := dualNumberComplex k
@@ -221,19 +228,18 @@ theorem dualNumberComplexπ_f_zero : (dualNumberComplexπ k).f 0 = dualNumberPro
       · rw [ShortComplex.moduleCat_exact_iff_range_eq_ker]
         simpa using! range_dualNumberEpsSmul_eq_ker_proj k
       · rw [ModuleCat.epi_iff_surjective]
-        intro x
-        exact ⟨inl x, rfl⟩
+        exact dualNumberProj_surjective k
     | succ m _ =>
       rw [quasiIsoAt_iff_exactAt' (hL := ChainComplex.exactAt_succ_single_obj ..),
         HomologicalComplex.exactAt_iff' _ (m + 2) (m + 1) m (by simp) (by simp),
         ShortComplex.moduleCat_exact_iff_range_eq_ker]
-      simpa using! range_dualNumberEpsSmul k
+      simpa using! range_dualNumberEpsSmul_eq_ker k
 
 /-- Every term of the periodic resolution is the rank-one free module. -/
 @[simp]
 theorem dualNumberProjectiveResolution_complex_X (n : ℕ) :
     (dualNumberProjectiveResolution k).complex.X n = dualNumberFree k :=
-  rfl
+  (rfl)
 
 /-- Every differential of the periodic resolution is multiplication by `ε`. -/
 @[simp]
@@ -248,12 +254,12 @@ theorem dualNumberProjectiveResolution_comp_eq_zero (p q : ℕ)
   by_cases h : (ComplexShape.down ℕ).Rel p q
   · obtain rfl : p = q + 1 := (by simpa using h : q + 1 = p).symm
     rw [dualNumberProjectiveResolution_complex_d]
-    exact dualNumberEpsSmul_comp k f
+    exact dualNumberEpsSmul_comp_eq_zero k f
   · rw [(dualNumberProjectiveResolution k).complex.shape p q h, zero_comp]
 
 /-! ### The `Hom` spaces -/
 
-/-- `Hom_A(A, S)` is one-dimensional over `k`, by evaluation at `1`. -/
+/-- `Hom_A(A, S)` is isomorphic to `k` as a `k`-module, by evaluation at `1`. -/
 noncomputable def homDualNumberFreeEquiv :
     (dualNumberFree k ⟶ dualNumberResidue k) ≃ₗ[k] k :=
   ModuleCat.homLinearEquiv ≪≫ₗ LinearMap.ringLmapEquivSelf (DualNumber k) k _ ≪≫ₗ
@@ -272,7 +278,7 @@ theorem homDualNumberFreeEquiv_apply (f : dualNumberFree k ⟶ dualNumberResidue
 theorem homDualNumberFreeEquiv_proj : homDualNumberFreeEquiv k (dualNumberProj k) = 1 := by
   rw [homDualNumberFreeEquiv_apply, dualNumberProj_apply, fst_one]
 
-/-- `End_A(S)` is one-dimensional over `k`. -/
+/-- `End_A(S)` is isomorphic to `k` as a `k`-module. -/
 noncomputable def homDualNumberResidueEquiv :
     (dualNumberResidue k ⟶ dualNumberResidue k) ≃ₗ[k] k :=
   LinearEquiv.ofBijective ((homDualNumberFreeEquiv k).toLinearMap ∘ₗ
@@ -287,9 +293,7 @@ noncomputable def homDualNumberResidueEquiv :
 
 /-- In every positive degree the periodic resolution identifies `Extⁿ⁺¹_A(S, S)` with the
 `Hom`-space `Hom_A(A, S)`: no cocycle condition and no coboundary survives. -/
--- `@[expose]`: `TauCeti.extDualNumberResidueSuccEquiv_apply` reads this equivalence back off
--- `CategoryTheory.ProjectiveResolution.extLinearEquiv_apply`, which needs the body.
-@[expose] noncomputable def extDualNumberResidueSuccEquiv (n : ℕ) :
+noncomputable def extDualNumberResidueSuccEquiv (n : ℕ) :
     (dualNumberFree k ⟶ dualNumberResidue k) ≃ₗ[k]
       Ext.{u} (dualNumberResidue k) (dualNumberResidue k) (n + 1) :=
   (dualNumberProjectiveResolution k).extLinearEquiv n
