@@ -40,7 +40,7 @@ open scoped TensorProduct
 
 namespace TauCeti
 
-universe u
+universe u v
 
 noncomputable section
 
@@ -50,7 +50,7 @@ variable {R : Type u} [CommRing R]
 
 /-- The tensor product of two smooth coordinate Hopf algebras is smooth. Contravariantly, direct
 products of smooth affine groups are smooth. -/
-theorem tensorProduct (H K : CommHopfAlgCat.{u} R)
+theorem tensorProduct (H K : CommHopfAlgCat.{v} R)
     (hH : smoothCommHopfAlgProperty R H)
     (hK : smoothCommHopfAlgProperty R K) :
     smoothCommHopfAlgProperty R (CommHopfAlgCat.of R (H ⊗[R] K)) := by

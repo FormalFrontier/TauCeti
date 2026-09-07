@@ -41,7 +41,7 @@ open scoped TensorProduct
 
 namespace TauCeti
 
-universe u
+universe u v
 
 noncomputable section
 
@@ -52,7 +52,7 @@ variable {k : Type u} [Field k]
 /-- The tensor product of two finite-type geometrically reduced commutative Hopf algebras is
 geometrically reduced. Contravariantly, direct products of geometrically reduced affine groups of
 finite type are geometrically reduced. -/
-theorem tensorProduct (H K : CommHopfAlgCat.{u} k)
+theorem tensorProduct (H K : CommHopfAlgCat.{v} k)
     [Algebra.FiniteType k H] [Algebra.FiniteType k K]
     (hH : geometricallyReducedCommHopfAlgProperty k H)
     (hK : geometricallyReducedCommHopfAlgProperty k K) :
@@ -70,7 +70,7 @@ namespace CommHopfAlgCat
 /-- Over an algebraically closed field, the tensor product of two reduced finite-type coordinate
 Hopf algebras is reduced. -/
 theorem isReduced_tensorProduct_of_isAlgClosed
-    {k : Type u} [Field k] [IsAlgClosed k] (H K : CommHopfAlgCat.{u} k)
+    {k : Type u} [Field k] [IsAlgClosed k] (H K : CommHopfAlgCat.{v} k)
     [Algebra.FiniteType k H] [Algebra.FiniteType k K] [IsReduced H] [IsReduced K] :
     IsReduced (H ⊗[k] K) := by
   have hH : geometricallyReducedCommHopfAlgProperty k H :=
