@@ -40,6 +40,9 @@ system does not get that hypothesis for free; what it has to supply is the domin
 * `TauCeti.primePowerSummatory_indicator_sub_primeTheta` splits the exponent-one part off the
   standard weight restricted to any set of prime powers containing exactly the primes of `S`.
 * `TauCeti.primePsi_sub_primeTheta` identifies `ψ - ϑ` with the higher-prime-power sum.
+* `TauCeti.primePsi_le_ncard_mul_log`: for `x ≥ 1`, a finite set of primes contributes at most
+  `#S · log x` to `ψ`, with `TauCeti.primePsi_isBigO_log_of_finite` and
+  `TauCeti.primePsi_isLittleO_of_finite` its asymptotic forms.
 * `TauCeti.standardPrimePowerRemoval` proves `HasNegligibleHigherPrimePowers K S` for every `S`,
   from the Layer 5 estimate `ψ(x) - ϑ(x) = O(√x log² x)`.
 * `TauCeti.primeTheta_asymptotic_of_primePsi` and
@@ -228,6 +231,66 @@ theorem standardPrimePowerRemoval (K : Type*) [Field K] [NumberField K]
     (S : Set (HeightOneSpectrum (𝓞 K))) : HasNegligibleHigherPrimePowers K S := by
   rw [hasNegligibleHigherPrimePowers_iff]
   simpa only [primePsi_sub_primeTheta] using primePowerSummatory_indicator_isLittleO K S
+
+/-- **For `x ≥ 1`, a finite set of primes contributes at most `#S · log x` to `ψ`.** Fibring over
+the prime base, the exponents `k ≥ 1` with `N(𝔭) ^ k ≤ x` contribute at most `log x` in total for
+each of the finitely many `𝔭`.
+
+A counting argument can therefore discard a finite exceptional set of primes — those ramifying in
+an extension, say, or lying above such — at a cost of `O(log x)`.
+
+The fibre step is `TauCeti.card_mul_log_absNorm_le_of_pow_le_of_base_eq`, which bounds the total
+weight of the prime powers over a single base by `log x`. -/
+theorem primePsi_le_ncard_mul_log (hS : S.Finite) (hx : 1 ≤ x) :
+    primePsi K S x ≤ S.ncard * Real.log x := by
+  classical
+  set T := (primePowersLE K x).filter (fun A ↦ primePowerBase A ∈ S) with hTdef
+  have hmemT : ∀ A ∈ T, ((Ideal.absNorm (primePowerBase A).asIdeal : ℝ)) ^ primePowerExponent A
+      ≤ x ∧ primePowerBase A ∈ S := by
+    intro A hA
+    rw [hTdef, Finset.mem_filter, mem_normLE] at hA
+    refine ⟨?_, hA.2⟩
+    rw [← Nat.cast_pow, ← absNorm_eq_absNorm_primePowerBase_pow]
+    exact hA.1
+  have hsub : T ⊆ primePowersLE K x := Finset.filter_subset _ _
+  have hzero : ∀ A ∈ primePowersLE K x, A ∉ T →
+      {A : IdealPrimePower K | primePowerBase A ∈ S}.indicator primePowerWeight A = 0 := by
+    intro A hA hAT
+    refine Set.indicator_of_notMem ?_ _
+    intro hmem
+    exact hAT (Finset.mem_filter.mpr ⟨hA, hmem⟩)
+  have hsum : primePsi K S x = ∑ A ∈ T, Real.log (Ideal.absNorm (primePowerBase A).asIdeal) := by
+    rw [primePsi_apply, ← Finset.sum_subset hsub hzero]
+    exact Finset.sum_congr rfl fun A hA ↦
+      Set.indicator_of_mem (by simpa using (hmemT A hA).2) _
+  have hmaps : ∀ A ∈ T, primePowerBase A ∈ hS.toFinset := fun A hA ↦ by
+    simpa using (hmemT A hA).2
+  rw [hsum, ← Finset.sum_fiberwise_of_maps_to' hmaps
+    (fun v ↦ Real.log (Ideal.absNorm v.asIdeal))]
+  refine (Finset.sum_le_card_nsmul _ _ (Real.log x) ?_).trans ?_
+  · intro v _
+    rw [Finset.sum_const, nsmul_eq_mul]
+    exact card_mul_log_absNorm_le_of_pow_le_of_base_eq hx (fun A hA ↦ by
+      obtain ⟨hle, -⟩ := hmemT A (Finset.mem_of_mem_filter _ hA)
+      rwa [(Finset.mem_filter.mp hA).2] at hle)
+      (fun A hA ↦ (Finset.mem_filter.mp hA).2)
+  · rw [nsmul_eq_mul, Set.ncard_eq_toFinset_card S hS]
+
+open Asymptotics in
+/-- **A finite set of primes is `O(log x)` for `ψ`**, the asymptotic form of the bound above. -/
+theorem primePsi_isBigO_log_of_finite (hS : S.Finite) :
+    primePsi K S =O[atTop] Real.log := by
+  refine IsBigO.of_bound S.ncard ?_
+  filter_upwards [eventually_ge_atTop (1 : ℝ)] with x hx
+  rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (primePsi_nonneg _ _),
+    abs_of_nonneg (Real.log_nonneg hx)]
+  exact primePsi_le_ncard_mul_log hS hx
+
+open Asymptotics in
+/-- **A finite set of primes is negligible for `ψ`**, the form the total discard estimate sums. -/
+theorem primePsi_isLittleO_of_finite (hS : S.Finite) :
+    primePsi K S =o[atTop] fun x : ℝ ↦ x :=
+  (primePsi_isBigO_log_of_finite hS).trans_isLittleO Real.isLittleO_log_id_atTop
 
 /-- **Transfer of a linear asymptotic from `ψ` to `ϑ`.**  If the higher prime powers of `S` are
 negligible and `ψ(x) = δ x + o(x)`, then `ϑ(x) = δ x + o(x)`. -/

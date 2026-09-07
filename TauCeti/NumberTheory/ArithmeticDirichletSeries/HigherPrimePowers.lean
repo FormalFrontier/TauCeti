@@ -289,36 +289,12 @@ theorem higherPrimePowerTheta_le_card_primesLE_mul_log
     (fun v ↦ Real.log (Ideal.absNorm v.asIdeal))]
   refine (Finset.sum_le_card_nsmul _ _ (Real.log x) ?_).trans_eq (by rw [nsmul_eq_mul])
   intro v _
-  have hLpos : 0 < Real.log (Ideal.absNorm v.asIdeal) :=
-    Real.log_pos (by linarith [two_le_absNorm_asIdeal_real v])
   rw [Finset.sum_const, nsmul_eq_mul]
-  have hexpbound : ∀ A ∈ T.filter (fun A ↦ primePowerBase A = v),
-      primePowerExponent A ∈ Finset.Icc 2 ⌊Real.log x / Real.log (Ideal.absNorm v.asIdeal)⌋₊ := by
-    intro A hA
-    have hbase : primePowerBase A = v := (Finset.mem_filter.mp hA).2
-    obtain ⟨hle, hexp⟩ := hmemT A (Finset.mem_of_mem_filter _ hA)
-    rw [hbase] at hle
-    have hlog : (primePowerExponent A : ℝ) * Real.log (Ideal.absNorm v.asIdeal) ≤ Real.log x := by
-      have := Real.log_le_log
-        (pow_pos (by linarith [two_le_absNorm_asIdeal_real v]) _) hle
-      rwa [Real.log_pow] at this
-    exact Finset.mem_Icc.mpr ⟨hexp, Nat.le_floor ((le_div_iff₀ hLpos).mpr hlog)⟩
-  have hcard : (T.filter (fun A ↦ primePowerBase A = v)).card
-      ≤ ⌊Real.log x / Real.log (Ideal.absNorm v.asIdeal)⌋₊ := by
-    refine le_trans (Finset.card_le_card_of_injOn primePowerExponent hexpbound ?_) ?_
-    · intro A hA B hB h
-      exact idealPrimePower_eq_of_base_eq_of_exponent_eq
-        (((Finset.mem_filter.mp hA).2).trans ((Finset.mem_filter.mp hB).2).symm) h
-    · rw [Nat.card_Icc]
-      omega
-  calc ((T.filter (fun A ↦ primePowerBase A = v)).card : ℝ)
-        * Real.log (Ideal.absNorm v.asIdeal)
-      ≤ (⌊Real.log x / Real.log (Ideal.absNorm v.asIdeal)⌋₊ : ℝ)
-        * Real.log (Ideal.absNorm v.asIdeal) :=
-        mul_le_mul_of_nonneg_right (by exact_mod_cast hcard) hLpos.le
-    _ ≤ Real.log x := by
-        rw [← le_div_iff₀ hLpos]
-        exact Nat.floor_le (by positivity)
+  exact card_mul_log_absNorm_le_of_pow_le_of_base_eq hx
+    (fun A hA ↦ by
+      obtain ⟨hle, -⟩ := hmemT A (Finset.mem_of_mem_filter _ hA)
+      rwa [(Finset.mem_filter.mp hA).2] at hle)
+    (fun A hA ↦ (Finset.mem_filter.mp hA).2)
 
 /-- The **higher prime powers are negligible**, with an explicit constant:
 `ψ(x) - ϑ(x) ≤ [K:ℚ] / (2 log 2) · √x log² x` for `x ≥ 1`. -/

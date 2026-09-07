@@ -44,6 +44,7 @@ bound on the partial Dirichlet series that is *uniform* on `s ≥ 1`.
   `TauCeti.primeCount_higherDegreePrimes_isLittleO` its `O(√x)` and `o(x / log x)` forms.
 * `TauCeti.summable_absNorm_rpow_higherDegreePrimes`: `∑ N(𝔭) ^ (-s)` over the degree-above-one
   primes converges for every `s > 1/2`, in particular at `s = 1`.
+* `TauCeti.primeTheta_higherDegreePrimes_isLittleO`: those primes carry weight `o(x)` in `ϑ_K`.
 * `TauCeti.primeIdealZetaSum_higherDegreePrimes_le`: that sum, in Mathlib's
   `NumberField.Set.primeIdealZetaSum` vocabulary, is at most `2 [K : ℚ]` for every `s ≥ 1`.
 
@@ -164,6 +165,18 @@ is not available here, so this is not a statement of natural density zero. -/
 theorem primeCount_higherDegreePrimes_isLittleO :
     primeCount K (higherDegreePrimes K) =o[atTop] fun x ↦ x / Real.log x :=
   primeCount_higherDegreePrimes_isBigO.trans_isLittleO sqrt_isLittleO_div_log
+
+/-- **The primes of residue degree above one carry a negligible weight.** Their contribution to
+`ϑ_K` is `o(x)`.
+
+This is the count `o(x / log x)` above, weighted by Chebyshev's `log x` per prime. It is the
+estimate a contraction between two number fields discards: the norms satisfy
+`𝔑_{E/ℚ}𝔓 = (𝔑_{K/ℚ}𝔭)^{f(𝔓/𝔭)}`, so a term of `ϑ` moves to a different value of `n` unless the
+relative residue degree is one, and `f(𝔓/𝔭) ≥ 2` forces `f(𝔓/p) ≥ 2`, which is what this absolute
+statement covers. -/
+theorem primeTheta_higherDegreePrimes_isLittleO (K : Type*) [Field K] [NumberField K] :
+    primeTheta K (higherDegreePrimes K) =o[atTop] fun x : ℝ ↦ x :=
+  primeTheta_isLittleO_of_primeCount_isLittleO primeCount_higherDegreePrimes_isLittleO
 
 /-! ### Convergence of the prime Dirichlet series over the degree-above-one primes -/
 
