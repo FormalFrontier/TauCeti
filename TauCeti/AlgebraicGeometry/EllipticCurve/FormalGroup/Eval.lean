@@ -61,7 +61,8 @@ ideal at all: the series identity `mul_invOfUnit_formalInverseDenom` evaluates t
   `d(t)` and `ι(t)`, the last in the form `ι(t) * d(t) = -t` that avoids the series inverse.
 * `WeierstrassCurve.formalWEval_wEquation` : the `w`-equation at a parameter.
 * `WeierstrassCurve.formalWEval_ne_zero`, `WeierstrassCurve.formalInverseEval_ne_zero` : the two
-  non-vanishing statements.
+  non-vanishing statements, and `WeierstrassCurve.algebraMap_formalWEval_ne_zero` for the image of
+  `w(t)` in a nontrivial domain over `O`.
 * `WeierstrassCurve.formalInverseEval_formalInverseEval` : the involution `ι(ι(t)) = t`, and
   `WeierstrassCurve.formalWEval_formalInverseEval` : `w(ι(t)) = -(w(t) * d(t)⁻¹)`. Both ask only
   that `t` and `ι(t)` admit evaluation; `WeierstrassCurve.hasEval_formalInverseEval` supplies the
@@ -306,6 +307,19 @@ theorem formalWEval_ne_zero {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I)
     (ht0 : t ^ 3 ≠ 0) : W.formalWEval t ≠ 0 := by
   rw [W.formalWEval_eq_pow_mul_formalUEval (hI.isTopologicallyNilpotent_of_mem ht)]
   exact fun h ↦ ht0 ((W.isUnit_formalUEval hI ht).mul_left_eq_zero.mp h)
+
+/-- **`w(t)` has nonzero image** in any nontrivial domain over `O` once the image of `t` does:
+the expansion factors as `t ^ 3 * u(t)` with `u(t)` a unit, and both factors have nonzero image —
+the cube because there are no zero divisors, the unit because units map to units. Unlike
+`formalWEval_ne_zero` this needs no hypothesis on `t ^ 3`, because the cube is checked in the
+codomain. -/
+theorem algebraMap_formalWEval_ne_zero {S : Type*} [CommRing S] [Nontrivial S] [NoZeroDivisors S]
+    [Algebra O S] {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I)
+    (ht0 : algebraMap O S t ≠ 0) : algebraMap O S (W.formalWEval t) ≠ 0 := by
+  rw [W.formalWEval_eq_pow_mul_formalUEval (hI.isTopologicallyNilpotent_of_mem ht), map_mul,
+    map_pow]
+  exact mul_ne_zero (pow_ne_zero _ ht0)
+    ((W.isUnit_formalUEval hI ht).map (algebraMap O S)).ne_zero
 
 /-- The formal inverse does not vanish at a nonzero parameter: `ι(t)` is `-t` times a unit, and
 multiplying by a unit cannot create a zero. No hypothesis on `t ^ 3` is needed — unlike
