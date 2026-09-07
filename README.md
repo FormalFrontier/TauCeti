@@ -188,6 +188,103 @@ genus theory. When asked to work here, read the roadmap first (see `AGENTS.md`).
 Before starting a substantial piece of roadmap work, register and claim your intention so you
 don't collide with others; see [Coordinating work: intentions and claims](https://github.com/TauCetiProject/TauCetiRoadmap#coordinating-work-intentions-and-claims).
 
+## Contributing with the worker CLI
+
+The reviews above can be run one PR at a time, but most contribution here happens through a
+*worker*: a loop that picks one piece of work, does it, and stops. The exemplar is
+[`kim-em/TauCetiWorker`](https://github.com/kim-em/TauCetiWorker). With
+[uv](https://docs.astral.sh/uv/):
+
+```bash
+uv tool install git+https://github.com/kim-em/TauCetiWorker.git
+gh auth login     # the worker acts as this account, and tends its PRs
+tauceti doctor    # checklist of everything it needs
+```
+
+`tauceti doctor` is the place to start: it prints a row per prerequisite and tells you what is
+missing. You need `gh`, `git`, `uv/uvx`, `jq`, an authenticated `gh`, and `lake`, plus
+credentials for whichever agent you run (Codex or Claude). The `bubble`, `incus`, `pi` and
+`kiro` rows can stay missing unless you want the sandbox or an alternative agent.
+
+Then survey before you act:
+
+```bash
+tauceti status    # read-only: what work is available, and your quota
+tauceti work      # ONE unit of work, then exit
+tauceti work --loop
+```
+
+Run a bare `tauceti work` before ever using `--loop`, so you see one complete round end to end.
+
+**A round does exactly one thing.** It walks a fixed cascade and takes the first job that
+applies:
+
+```
+rebase → bump → progress → fix-ci → fix → review → roadmap
+```
+
+Maintenance deliberately outranks authoring, so if one of your PRs has a conflict or red CI, the
+worker fixes that *before* opening anything new. That is intended: PRs already in flight should
+not be starved by opening more of them. `tauceti work --dry-run` shows what a round would pick
+without acting.
+
+### Only review
+
+If you would rather review than author:
+
+```bash
+tauceti work --loop --only review
+```
+
+`--only` pins the round to a subset of the cascade and `--skip` drops one, and the two combine by
+subtraction. So `--skip roadmap` is "everything except opening new PRs" — a good setting if you
+want to help existing work land without adding to the queue.
+
+### Only one roadmap area
+
+Roadmap rounds pick a random area each time unless you say otherwise. To steer to one:
+
+```bash
+tauceti work --only roadmap --roadmap-only ReductiveGroups
+```
+
+The area is a subdirectory of the [TauCetiRoadmap](https://github.com/TauCetiProject/TauCetiRoadmap)
+repo. Conversely `--roadmap-skip AREA[,AREA...]` excludes areas, which is how concurrent workers
+divide the roadmap between them. Before starting substantial roadmap work, register your
+intention so you do not collide with others — the worker reads the intentions board and avoids
+claimed targets by default.
+
+### Pacing, so you don't burn your whole quota
+
+By default the worker paces itself against your subscription quota with the rule *used% must stay
+below elapsed%* — that is, it spreads usage evenly across the window rather than spending it all
+at once. You can shape that curve with `--pace`, given as `time%:budget%` control points:
+
+```bash
+# stay under 10% until the window is half gone, then allow up to 70%
+tauceti work --loop --pace 0:10,50:70,90:90
+```
+
+Points are linearly interpolated; an unspecified time 0 defaults to budget 0 and time 100 to
+budget 100. So a conservative curve keeps a reserve for your own interactive use, while a
+flatter one lets the worker work harder early. `$TAUCETI_PACE` sets a default, and the flag
+overrides it for one run.
+
+Two related notes. `--ignore-quota` skips the *pacer* but not the hard blocks — a window at 100%,
+or unreadable usage, still backs off. And if you want several workers on one machine, give each a
+distinct identity, which namespaces its state, checkout, review store and logs:
+
+```bash
+tauceti work --loop --worker-id alice --only review
+tauceti work --loop --worker-id bob   --only roadmap
+```
+
+With no `--worker-id`, each terminal auto-assigns the lowest free slot, so several can coexist
+without hand-numbering.
+
+Finally: merging, abandoning and de-duplicating PRs is the repo's CI, not the worker. Your job
+ends when a PR is green and reviewed.
+
 ---
 
 <p align="center">
