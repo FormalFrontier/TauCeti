@@ -7,6 +7,9 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Smooth.GeometricallyReduced
 public import TauCeti.AlgebraicGeometry.Group.Smooth
+import Mathlib.Algebra.Field.ULift
+import Mathlib.RingTheory.Etale.Descent
+import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.BaseChange
 
 /-!
 # Smooth affine groups over algebraically closed fields
@@ -47,40 +50,70 @@ schemes are compared after base change.
 public section
 
 open CategoryTheory
+open scoped TensorProduct
 
 namespace TauCeti
 
 open _root_.AlgebraicGeometry
 
-universe u
+universe u v
 
 noncomputable section
 
 /-- **A reduced finite-type commutative Hopf algebra over an algebraically closed field is
 smooth.** -/
 theorem smoothCommHopfAlgProperty_of_isAlgClosed_of_isReduced
-    (k : Type u) [Field k] [IsAlgClosed k] (H : CommHopfAlgCat.{u} k)
+    (k : Type u) [Field k] [IsAlgClosed k] (H : CommHopfAlgCat.{v} k)
     [Algebra.FiniteType k H] [IsReduced H] :
     smoothCommHopfAlgProperty k H := by
-  let _ : LocallyOfFiniteType
-      (((hopfSpec (CommRingCat.of k)).obj (Opposite.op H)).X.hom) :=
-    (algebraFiniteType_iff_locallyOfFiniteType_hopfSpec k H).mp inferInstance
-  let _ : IsReduced ((hopfSpec (CommRingCat.of k)).obj (Opposite.op H)).X.left :=
-    by
-      rw [hopfSpec_obj_X_left]
-      rw [affine_isReduced_iff]
-      infer_instance
-  let _ : GrpObj
-      (Over.mk (((hopfSpec (CommRingCat.of k)).obj (Opposite.op H)).X.hom)) :=
-    inferInstanceAs (GrpObj ((hopfSpec (CommRingCat.of k)).obj (Opposite.op H)).X)
-  apply (algebraSmooth_iff_smooth_hopfSpec k H).mpr
-  rw [smoothAffineGroupSchemeProperty_iff]
-  exact AlgebraicGeometry.smooth_of_grpObj_of_isAlgClosed_of_isReduced _
+  let K : Type (max u v) := AlgebraicClosure (ULift.{v} k)
+  let _ : Algebra k K := Algebra.compHom K (algebraMap k (ULift.{v} k))
+  let _ : IsScalarTower k (ULift.{v} k) K := IsScalarTower.of_algebraMap_eq' rfl
+  have hIntegralMap :
+      ((algebraMap (ULift.{v} k) K).comp
+        (algebraMap k (ULift.{v} k))).IsIntegral :=
+    RingHom.IsIntegral.trans _ _
+      (RingHom.isIntegral_of_surjective _
+        (ULift.algEquiv (R := k) (A := k)).symm.surjective)
+      (Algebra.IsIntegral.isIntegral (R := ULift.{v} k))
+  let _ : Algebra.IsIntegral k K := ⟨by
+    change ((algebraMap (ULift.{v} k) K).comp
+      (algebraMap k (ULift.{v} k))).IsIntegral
+    exact hIntegralMap⟩
+  have hMap : Function.Bijective (algebraMap k K) :=
+    IsAlgClosed.algebraMap_bijective_of_isIntegral
+  have hInclude : Function.Bijective
+      (Algebra.TensorProduct.includeRight : H →ₐ[k] (K ⊗[k] H)) :=
+    Algebra.TensorProduct.includeRight_bijective hMap
+  let e : H ≃ₐ[k] (K ⊗[k] H) :=
+    AlgEquiv.ofBijective Algebra.TensorProduct.includeRight hInclude
+  let _ : IsReduced (K ⊗[k] H) :=
+    isReduced_of_injective e.symm.toRingHom e.symm.injective
+  let HK := CommHopfAlgCat.baseChange (K := K) H
+  have hSmooth : smoothCommHopfAlgProperty K HK := by
+    let _ : Algebra.FiniteType K HK := inferInstance
+    let _ : LocallyOfFiniteType
+        (((hopfSpec (CommRingCat.of K)).obj (Opposite.op HK)).X.hom) :=
+      (algebraFiniteType_iff_locallyOfFiniteType_hopfSpec K HK).mp inferInstance
+    let _ : IsReduced ((hopfSpec (CommRingCat.of K)).obj (Opposite.op HK)).X.left :=
+      by
+        rw [hopfSpec_obj_X_left]
+        rw [affine_isReduced_iff]
+        infer_instance
+    let _ : GrpObj
+        (Over.mk (((hopfSpec (CommRingCat.of K)).obj (Opposite.op HK)).X.hom)) :=
+      inferInstanceAs (GrpObj ((hopfSpec (CommRingCat.of K)).obj (Opposite.op HK)).X)
+    apply (algebraSmooth_iff_smooth_hopfSpec K HK).mpr
+    rw [smoothAffineGroupSchemeProperty_iff]
+    exact AlgebraicGeometry.smooth_of_grpObj_of_isAlgClosed_of_isReduced _
+  rw [smoothCommHopfAlgProperty_iff] at hSmooth ⊢
+  let _ : Algebra.Smooth K (K ⊗[k] H) := hSmooth
+  exact Algebra.Smooth.of_smooth_tensorProduct_of_faithfullyFlat K
 
 /-- For a finite-type commutative Hopf algebra over an algebraically closed field, smoothness is
 equivalent to reducedness of its coordinate ring. -/
 theorem smoothCommHopfAlgProperty_iff_isReduced_of_isAlgClosed
-    (k : Type u) [Field k] [IsAlgClosed k] (H : CommHopfAlgCat.{u} k)
+    (k : Type u) [Field k] [IsAlgClosed k] (H : CommHopfAlgCat.{v} k)
     [Algebra.FiniteType k H] :
     smoothCommHopfAlgProperty k H ↔ IsReduced H := by
   constructor
@@ -94,7 +127,7 @@ theorem smoothCommHopfAlgProperty_iff_isReduced_of_isAlgClosed
 /-- Over an algebraically closed field, a finite-type commutative Hopf algebra is geometrically
 reduced exactly when its coordinate ring is reduced. -/
 theorem geometricallyReducedCommHopfAlgProperty_iff_isReduced_of_isAlgClosed
-    (k : Type u) [Field k] [IsAlgClosed k] (H : CommHopfAlgCat.{u} k)
+    (k : Type u) [Field k] [IsAlgClosed k] (H : CommHopfAlgCat.{v} k)
     [Algebra.FiniteType k H] :
     geometricallyReducedCommHopfAlgProperty k H ↔ IsReduced H := by
   rw [← smoothCommHopfAlgProperty_iff_geometricallyReduced,
