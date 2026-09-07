@@ -72,9 +72,16 @@ structure IsQuaternionicStructure (J : V →ₛₗ[starRingEnd ℂ] V) : Prop wh
   isIntertwining (g : G) (v : V) : J (ρ g v) = ρ g (J v)
 
 -- `grind` splits a witness in the context into its two fields, so both defining equations are
--- available to it without the projections being invoked by hand.  They cannot be registered as
--- rewrite rules individually: neither `G` nor `ρ` occurs in `sq_eq_neg`, so `grind =` rejects it.
+-- available to it without the projections being invoked by hand.  `sq_eq_neg` cannot be registered
+-- as a rewrite rule on its own: neither `G` nor `ρ` occurs in it, so `grind =` rejects it.
 attribute [grind cases] IsQuaternionicStructure
+
+-- The intertwining equation moves `J` past the action, which is the normal form the constructions
+-- downstream use; `ρ` occurs in its left-hand side, so `simp` can instantiate it.  `sq_eq_neg`
+-- cannot be tagged for the reason `grind =` rejects it: its left-hand side `J (J v)` mentions
+-- neither `G` nor `ρ`, so `simpNF` reports that the lemma "will never apply".  It is passed
+-- explicitly, `simp [h.sq_eq_neg]`, as `Representation.IsRealStructure.involutive` is.
+attribute [simp] IsQuaternionicStructure.isIntertwining
 
 namespace IsQuaternionicStructure
 
