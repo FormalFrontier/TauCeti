@@ -59,10 +59,10 @@ theorem _root_.QuadraticMap.mem_unitValueSet {Q : QuadraticMap R M R} {a : Rˣ} 
 
 variable {K V : Type*} [Field K] [AddCommGroup V] [Module K V]
 
-/-- A regular isotropic quadratic form represents every scalar. -/
-theorem _root_.QuadraticMap.represents_of_nondegenerate_of_not_anisotropic
+/-- A quadratic form with trivial radical and a nonzero isotropic vector represents every scalar. -/
+theorem _root_.QuadraticMap.represents_of_radical_eq_bot_of_not_anisotropic
     (Q : QuadraticForm K V)
-    (hQ : Q.Nondegenerate) (hiso : ¬Q.Anisotropic) (a : K) :
+    (hQ : Q.radical = ⊥) (hiso : ¬Q.Anisotropic) (a : K) :
     Represents Q a := by
   obtain ⟨v, hv, hvQ⟩ := (not_anisotropic_iff_exists Q).mp hiso
   obtain ⟨w, hw⟩ : ∃ w, Q.polarBilin v w ≠ 0 := by
@@ -75,7 +75,7 @@ theorem _root_.QuadraticMap.represents_of_nondegenerate_of_not_anisotropic
       by_contra hw
       exact h ⟨w, hw⟩
     have hv_bot : v ∈ (⊥ : Submodule K V) := by
-      rw [← hQ.radical_eq_bot]
+      rw [← hQ]
       exact hv_rad
     simpa only [Submodule.mem_bot] using hv_bot
   have hw' : polar Q v w ≠ 0 := by
@@ -88,6 +88,13 @@ theorem _root_.QuadraticMap.represents_of_nondegenerate_of_not_anisotropic
   rw [smul_eq_mul]
   field_simp [hw'']
   ring
+
+/-- A regular isotropic quadratic form represents every scalar. -/
+theorem _root_.QuadraticMap.represents_of_nondegenerate_of_not_anisotropic
+    (Q : QuadraticForm K V)
+    (hQ : Q.Nondegenerate) (hiso : ¬Q.Anisotropic) (a : K) :
+    Represents Q a :=
+  Q.represents_of_radical_eq_bot_of_not_anisotropic hQ.radical_eq_bot hiso a
 
 /-- Multiplying a represented scalar by a square preserves representation, in both directions. -/
 theorem _root_.QuadraticMap.represents_mul_square_iff (Q : QuadraticMap R M R) (a : R)
@@ -119,12 +126,13 @@ theorem _root_.QuadraticMap.mem_unitValueSet_mul_square_iff (Q : QuadraticMap R 
 
 variable {K V : Type*} [Field K] [AddCommGroup V] [Module K V]
 
-/-- A unit is represented exactly when adjoining its negative line makes the form isotropic.
+/-- A unit is represented exactly when adjoining its negative line makes the form isotropic, under
+triviality of the quadratic radical.
 
 The added line is the one-dimensional form `x ↦ -a * x²`, written as a scalar multiple of
 `QuadraticMap.sq`. -/
-theorem _root_.QuadraticMap.mem_unitValueSet_iff_not_anisotropic_prod
-    (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) (a : Kˣ) :
+theorem _root_.QuadraticMap.mem_unitValueSet_iff_not_anisotropic_prod_of_radical_eq_bot
+    (Q : QuadraticForm K V) (hQ : Q.radical = ⊥) (a : Kˣ) :
     a ∈ unitValueSet Q ↔
       ¬(Q.prod ((-(a : K)) • (QuadraticMap.sq : QuadraticForm K K))).Anisotropic := by
   constructor
@@ -142,7 +150,7 @@ theorem _root_.QuadraticMap.mem_unitValueSet_iff_not_anisotropic_prod
         apply hvt
         simp [hv, ht]
       have hvQ : Q v = 0 := by simpa [ht] using hzero
-      exact represents_of_nondegenerate_of_not_anisotropic Q
+      exact represents_of_radical_eq_bot_of_not_anisotropic Q
         hQ
         ((not_anisotropic_iff_exists Q).mpr ⟨v, hv, hvQ⟩) (a : K)
     · have hvQ : Q v = (a : K) * (t * t) := by
@@ -150,5 +158,15 @@ theorem _root_.QuadraticMap.mem_unitValueSet_iff_not_anisotropic_prod
       refine ⟨t⁻¹ • v, ?_⟩
       rw [Q.map_smul, smul_eq_mul, hvQ]
       field_simp
+
+/-- A unit is represented exactly when adjoining its negative line makes a regular form isotropic.
+
+The added line is the one-dimensional form `x ↦ -a * x²`, written as a scalar multiple of
+`QuadraticMap.sq`. -/
+theorem _root_.QuadraticMap.mem_unitValueSet_iff_not_anisotropic_prod
+    (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) (a : Kˣ) :
+    a ∈ unitValueSet Q ↔
+      ¬(Q.prod ((-(a : K)) • (QuadraticMap.sq : QuadraticForm K K))).Anisotropic :=
+  Q.mem_unitValueSet_iff_not_anisotropic_prod_of_radical_eq_bot hQ.radical_eq_bot a
 
 end TauCeti
