@@ -193,7 +193,7 @@ theorem measure_eq_zero_or_one_of_ergodicSMul {ρ : Measure (ℕ → α)} [IsPro
     [ErgodicSMul TimePerm (ℕ → α) ρ] {s : Set (ℕ → α)}
     (hs : MeasurableSet[exchangeableSigma α] s) :
     ρ s = 0 ∨ ρ s = 1 := by
-  have hs_meas : MeasurableSet s := MeasurableSet.ambient_of_exchangeableSigma hs
+  have hs_meas : MeasurableSet s := exchangeableSigma_le s hs
   have hconst : EventuallyConst s (ae ρ) :=
     MeasureTheory.aeconst_of_forall_preimage_smul_ae_eq TimePerm hs_meas.nullMeasurableSet
       fun g => by
