@@ -7,7 +7,7 @@ module
 
 public import TauCeti.RepresentationTheory.CharacterTable.CentralCharacter
 public import TauCeti.RepresentationTheory.CharacterTable.Values
-public import Mathlib.Algebra.GCDMonoid.IntegrallyClosed
+public import TauCeti.RingTheory.IntegralClosure.Rat
 
 /-!
 # The degree of an irreducible character divides the group order
@@ -55,24 +55,6 @@ namespace TauCeti
 
 open Module (finrank)
 open scoped MonoidAlgebra
-
-/-- A rational algebraic integer is an integer, in the form used below: if `n · z = m` for natural
-numbers `m` and `n` with `n ≠ 0`, and `z` is integral over `ℤ` in a field of characteristic zero,
-then `n` divides `m`. -/
-private theorem dvd_of_isIntegral_of_natCast_mul_eq {k : Type*} [Field k] [CharZero k] {m n : ℕ}
-    {z : k} (hz : IsIntegral ℤ z) (h : (n : k) * z = m) (hn : n ≠ 0) : n ∣ m := by
-  have hnk : (n : k) ≠ 0 := Nat.cast_ne_zero.mpr hn
-  have hz' : algebraMap ℚ k ((m : ℚ) / (n : ℚ)) = z := by
-    rw [map_div₀, map_natCast, map_natCast, eq_comm, eq_div_iff hnk, mul_comm]
-    exact h
-  have hq : IsIntegral ℤ ((m : ℚ) / (n : ℚ)) :=
-    isIntegral_algebraMap_iff.mp (hz' ▸ hz)
-  obtain ⟨y, hy⟩ := IsIntegrallyClosed.algebraMap_eq_of_integral hq
-  have hyq : (y : ℚ) * (n : ℚ) = (m : ℚ) := by
-    rw [← eq_intCast (algebraMap ℤ ℚ) y, hy, div_mul_cancel₀]
-    exact Nat.cast_ne_zero.mpr hn
-  refine Int.natCast_dvd_natCast.mp ⟨y, ?_⟩
-  exact_mod_cast (by linarith : (m : ℚ) = (n : ℚ) * (y : ℚ))
 
 namespace Representation
 

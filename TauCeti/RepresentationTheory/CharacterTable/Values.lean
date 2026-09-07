@@ -56,6 +56,9 @@ representation of a group, from the eigenvalues alone, with no invariant inner p
 * `TauCeti.FDRep.char_mem_adjoin_of_isPrimitiveRoot`: over `ℂ` they lie in `ℤ[ζ_e]`, for `ζ_e`
   a primitive root of unity of order the exponent of the group.
 * `TauCeti.FDRep.norm_char_le_finrank`: over `ℂ`, `‖χ(g)‖ ≤ χ(1)`.
+* `Representation.exists_apply_eq_smul_of_norm_char_eq_finrank` and its bundled form
+  `FDRep.exists_apply_eq_smul_of_norm_char_eq_finrank`: the equality case of that bound,
+  `‖χ(g)‖ = χ(1)`, which forces `ρ g` to be a root of unity times the identity.
 * `TauCeti.FDRep.conj_char`: over `ℂ`, **inversion conjugates character values**,
   `conj (χ g) = χ g⁻¹`. This is what makes the character pairing agree with the Hermitian inner
   product on complex class functions.
@@ -196,6 +199,17 @@ theorem norm_char_le_finrank (ρ : Representation ℂ G V) {g : G} {n : ℕ} (hn
     _ ≤ (s.map (fun μ => ‖μ‖)).sum := norm_multiset_sum_le s
     _ = finrank ℂ V := by rw [hmap]; simp [hcard]
 
+/-- **The equality case of the bound on a character value.** If the absolute value of
+`ρ.character g` attains the degree `finrank ℂ V`, then `ρ g` is a scalar, the scalar being an
+`n`-th root of unity: the character value is a sum of `finrank ℂ V` many roots of unity, so it can
+have that absolute value only if they all coincide, and then `ρ g` is diagonalizable with a single
+eigenvalue. The bound itself is `TauCeti.Representation.norm_char_le_finrank`. -/
+theorem _root_.Representation.exists_apply_eq_smul_of_norm_char_eq_finrank
+    (ρ : Representation ℂ G V) {g : G} {n : ℕ}
+    (hn : n ≠ 0) (hg : g ^ n = 1) (h : ‖ρ.character g‖ = (finrank ℂ V : ℝ)) :
+    ∃ μ : ℂ, μ ^ n = 1 ∧ ρ g = μ • 1 :=
+  Module.End.exists_eq_smul_of_norm_trace_eq_finrank hn (by rw [← map_pow, hg, map_one]) h
+
 end Complex
 
 section ComplexGroup
@@ -305,6 +319,15 @@ theorem char_mem_adjoin_of_isPrimitiveRoot (V : FDRep ℂ G) {ζ : ℂ}
 theorem norm_char_le_finrank (V : FDRep ℂ G) (g : G) : ‖V.character g‖ ≤ finrank ℂ V :=
   Representation.norm_char_le_finrank V.ρ (isOfFinOrder_of_finite g).orderOf_pos.ne'
     (pow_orderOf_eq_one g)
+
+/-- **The equality case of the bound on a character value**, for a finite group: if `‖χ(g)‖`
+attains the degree, then `V.ρ g` is a scalar, the scalar being a root of unity of order dividing
+that of `g`. The bound itself is `TauCeti.FDRep.norm_char_le_finrank`. -/
+theorem _root_.FDRep.exists_apply_eq_smul_of_norm_char_eq_finrank (V : FDRep ℂ G) {g : G}
+    (h : ‖V.character g‖ = (finrank ℂ V : ℝ)) :
+    ∃ μ : ℂ, μ ^ orderOf g = 1 ∧ V.ρ g = μ • 1 :=
+  Representation.exists_apply_eq_smul_of_norm_char_eq_finrank V.ρ
+    (isOfFinOrder_of_finite g).orderOf_pos.ne' (pow_orderOf_eq_one g) h
 
 /-- **Over `ℂ`, inversion conjugates the character values of a finite group**, so that a complex
 character is a "unitary" class function: `conj (χ g) = χ g⁻¹`. -/
