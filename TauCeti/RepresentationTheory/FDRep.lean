@@ -31,8 +31,9 @@ being a commutative ring throughout otherwise.
 
 Finally it records the structural properties of the character that Mathlib's
 `RepresentationTheory/Character.lean` leaves out beside `FDRep.char_iso` and `FDRep.char_tensor`:
-the character is **additive on biproducts**, the character of the **tensor unit** is the constant
-function `1`, and the character is **constant on the cosets of its kernel**. The first two are what
+the character is **additive on biproducts** (and, unbundled, on products of representations), the
+character of the **tensor unit** is the constant function `1`, and the character is **constant on
+the cosets of its kernel**. The first two are what
 is still missing before the character can be read as a ring homomorphism out of the representation
 ring, `TauCeti.repRingCharacter`; the last is the elementary half of the kernel API whose analytic
 half, over `ℂ`, is `TauCeti/RepresentationTheory/CharacterTable/Kernel.lean`. Beside it, and needing
@@ -48,6 +49,8 @@ subgroup.
 
 * `Representation.char_trivial`: the character of a trivial representation is the dimension of its
   carrier, whence `FDRep.character_of_trivial` for the trivial representation on `k` itself.
+* `Representation.char_prod`: the character is additive on products of representations, the
+  unbundled counterpart of `FDRep.char_biprod`.
 * `FDRep.moduleFinite_forget₂_obj`: the forgotten carrier is module-finite.
 * `FDRep.finrank_forget₂_obj`: forgetting does not change finrank.
 * `FDRep.character_forget₂_obj`: forgetting does not change the character.
@@ -75,6 +78,19 @@ theorem char_trivial {k : Type u} {G : Type v} {V : Type w} [Field k] [Monoid G]
   have hone : trivial k G V g = 1 :=
     LinearMap.ext fun v => by rw [trivial_apply, Module.End.one_apply]
   rw [character, hone, LinearMap.trace_one]
+
+/-- **The character is additive on products of representations.** This is the unbundled counterpart
+of `FDRep.char_biprod`, and it is what reads a splitting `ρ ≃ ρ₁ × ρ₂` -- the shape
+`TauCeti.Subrepresentation.equivProdOfIsCompl` produces -- off the two characters. -/
+@[simp]
+theorem char_prod {k : Type u} {G : Type v} {V W : Type*} [Field k] [Monoid G]
+    [AddCommGroup V] [Module k V] [FiniteDimensional k V]
+    [AddCommGroup W] [Module k W] [FiniteDimensional k W]
+    (ρ : Representation k G V) (σ : Representation k G W) (g : G) :
+    (ρ.prod σ).character g = ρ.character g + σ.character g := by
+  have hg : (ρ.prod σ) g = LinearMap.prodMap (ρ g) (σ g) := rfl
+  rw [character, character, character, hg]
+  exact LinearMap.trace_prodMap' (ρ g) (σ g)
 
 end Representation
 
