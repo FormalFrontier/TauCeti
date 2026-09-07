@@ -85,7 +85,8 @@ centralizer's order over `orderOf σ`. Neither asserts that either side counts a
 wanting a cardinality interpretation must supply it.
 
 `card_carrier_mul_orderOf_dvd` follows `TauCetiRoadmap/Chebotarev/Suggested.lean` lines 377-382 in
-name, argument structure and conclusion.
+name, argument structure and conclusion, and the closed form below is the identity
+`#G / (#C * f) = #Centralizer_G(σ) / f` specified in `TauCetiRoadmap/Chebotarev/README.md` §8.2.
 -/
 
 public section
@@ -251,8 +252,10 @@ theorem card_carrier_mul_orderOf_dvd {G : Type*} [Group G] (C : ConjClasses G) (
 order of a member leaves the order of the centralizer divided by that same order.
 
 `hindex` is what lets the centralizer's index cancel from both sides; it holds automatically when
-`G` is finite. Both divisions are exact, so the identity is an equality of ratios rather than of
-truncated quotients. -/
+`G` is finite. The statement is an equality of `Nat.div` values, and no more: for a finite `G` both
+divisions are exact and it reads as an equality of ratios, but `hindex` alone does not give that.
+An infinite abelian group with an element of infinite order satisfies `hindex` while `Nat.card G`,
+the centralizer's cardinality and `orderOf σ` are all `0`, and the identity is then `0 / 0`. -/
 theorem card_div_mul_card_carrier_orderOf_eq_card_centralizer_div_orderOf {G : Type*} [Group G]
     (C : ConjClasses G) (σ : G) (hσ : σ ∈ C.carrier)
     (hindex : (Subgroup.centralizer {σ}).index ≠ 0) :
