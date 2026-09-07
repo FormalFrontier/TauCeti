@@ -51,13 +51,14 @@ into pole orders, but no order or valuation hypothesis is assumed here.
 The same parametrization is formalised in Michael Stoll's elliptic-curve development
 (`github.com/MichaelStollBayreuth/EllipticCurves`, Apache-2.0) at `66889eada51a`, file
 `EllipticCurves/WeierstrassFormalGroup/Filtration.lean`, declarations `formalPoint_nonsingular`,
-`formalPoint`, `formalPoint_of_param_eq_zero` and `formalPoint_of_param_ne_zero`, whose names
-this module keeps. That
+`formalPoint`, `formalPoint_of_param_eq_zero` and `formalPoint_of_param_ne_zero`; of these the
+last three keep their source names here, while `formalPoint_nonsingular` is not restated at all.
+That
 development states them over `v.adicCompletion K` for a height-one prime of a Dedekind domain
 and builds nonsingularity from its own chord lemma; the declarations below are stated over an
-arbitrary complete adic ring mapping injectively to a field, and build the point through
-Mathlib's `Affine.equation_iff_nonsingular`, so no nonsingularity lemma is restated here and no
-constructor accessor has to be added.
+arbitrary complete adic ring mapping injectively to a field, and build the point with Mathlib's
+`Affine.Point.mk`, which carries the equation-to-nonsingularity step itself, so no nonsingularity
+lemma is restated here.
 -/
 
 public section
@@ -114,9 +115,8 @@ noncomputable def formalPoint {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ 
   else
     have hT : algebraMap O K t ≠ 0 :=
       (map_ne_zero_iff _ (FaithfulSMul.algebraMap_injective O K)).mpr h0
-    .some _ _ (Affine.equation_iff_nonsingular.mp
-      (W.equation_formalPoint (K := K) (hI.isTopologicallyNilpotent_of_mem ht)
-        (W.algebraMap_formalWEval_ne_zero hI ht hT)))
+    .mk (W.equation_formalPoint (K := K) (hI.isTopologicallyNilpotent_of_mem ht)
+      (W.algebraMap_formalWEval_ne_zero hI ht hT))
 
 open scoped Classical in
 /-- The parameter `0` gives the point at infinity. -/
@@ -133,10 +133,9 @@ open scoped Classical in
 theorem formalPoint_of_param_ne_zero {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I)
     (h0 : t ≠ 0) :
     W.formalPoint (K := K) hI ht =
-      .some _ _ (Affine.equation_iff_nonsingular.mp
-        (W.equation_formalPoint (K := K) (hI.isTopologicallyNilpotent_of_mem ht)
-          (W.algebraMap_formalWEval_ne_zero hI ht
-            ((map_ne_zero_iff _ (FaithfulSMul.algebraMap_injective O K)).mpr h0)))) := by
+      .mk (W.equation_formalPoint (K := K) (hI.isTopologicallyNilpotent_of_mem ht)
+        (W.algebraMap_formalWEval_ne_zero hI ht
+          ((map_ne_zero_iff _ (FaithfulSMul.algebraMap_injective O K)).mpr h0))) := by
   simp [formalPoint, h0]
 
 open scoped Classical in
@@ -146,7 +145,9 @@ theorem xCoord_formalPoint {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I) 
     (W.formalPoint (K := K) hI ht).xCoord =
       algebraMap O K t / algebraMap O K (W.formalWEval t) := by
   rw [W.formalPoint_of_param_ne_zero hI ht h0]
-  simp
+  -- `simp [Point.mk]` is the route the `reuse` rubric prescribes here (round 6): the constructor
+  -- is unfolded at the call site rather than given its own coordinate lemmas.
+  simp [_root_.WeierstrassCurve.Affine.Point.mk]
 
 open scoped Classical in
 /-- **The `y`-coordinate of the parametrized point** is `-1 / w(t)`. -/
@@ -154,7 +155,7 @@ open scoped Classical in
 theorem yCoord_formalPoint {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I) (h0 : t ≠ 0) :
     (W.formalPoint (K := K) hI ht).yCoord = -(algebraMap O K (W.formalWEval t))⁻¹ := by
   rw [W.formalPoint_of_param_ne_zero hI ht h0]
-  simp
+  simp [_root_.WeierstrassCurve.Affine.Point.mk]
 
 /-- **The `x`-coordinate in closed form**: since `w(t) = t ^ 3 * u(t)` with `u(t)` a unit, the
 `x`-coordinate `t / w(t)` is the inverse of `t ^ 2 * u(t)`. Stated as a product so that it needs
