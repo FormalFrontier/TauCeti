@@ -33,6 +33,8 @@ distinct tabloids, and that is how
 
 * `TauCeti.StandardYoungTableau.lt_iff_rowIndex_lt`: labels in one column are ordered by row.
 * `TauCeti.StandardYoungTableau.lt_iff_colIndex_lt`: labels in one row are ordered by column.
+* `TauCeti.exists_standardYoungTableau_toTableau_eq_iff`: conversely, a tableau whose labels
+  increase down each column and along each row is standard.
 * `TauCeti.StandardYoungTableau.rowIndex_injective`: a standard Young tableau is determined by the
   rows of its labels.
 
@@ -100,6 +102,26 @@ theorem lt_iff_colIndex_lt (T : StandardYoungTableau μ) {x y : Fin μ.card}
   · exact absurd (lt_of_colIndex_lt T hrow.symm hc) (asymm hxy)
 
 end StandardYoungTableau
+
+/-! ### Recognising a standard Young tableau -/
+
+/-- **A tableau is standard exactly when its labels increase down each column and along each
+row**, read on the row and the column of a label rather than on the cells.  This is the converse of
+`TauCeti.StandardYoungTableau.lt_of_rowIndex_lt` and
+`TauCeti.StandardYoungTableau.lt_of_colIndex_lt`, and it is how a tableau produced by the
+straightening algorithm is recognised as standard. -/
+theorem exists_standardYoungTableau_toTableau_eq_iff {μ : YoungDiagram} (t : YoungTableau μ) :
+    (∃ T : StandardYoungTableau μ, T.toTableau = t) ↔
+      ((∀ x y : Fin μ.card, colIndex t x = colIndex t y → rowIndex t x < rowIndex t y → x < y) ∧
+        ∀ x y : Fin μ.card, rowIndex t x = rowIndex t y → colIndex t x < colIndex t y → x < y) := by
+  constructor
+  · rintro ⟨T, rfl⟩
+    exact ⟨fun _ _ hcol hrow => T.lt_of_rowIndex_lt hcol hrow,
+      fun _ _ hrow hcol => T.lt_of_colIndex_lt hrow hcol⟩
+  · rintro ⟨hcol, hrow⟩
+    refine ⟨⟨t, fun {i j₁ j₂} h hcell => ?_, fun {i₁ i₂ j} h hcell => ?_⟩, rfl⟩
+    · exact hrow _ _ (by simp only [rowIndex_apply]) (by simp only [colIndex_apply]; exact h)
+    · exact hcol _ _ (by simp only [colIndex_apply]) (by simp only [rowIndex_apply]; exact h)
 
 /-! ### A standard Young tableau is determined by the rows of its labels -/
 

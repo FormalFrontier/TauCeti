@@ -5,26 +5,21 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Combinatorics.Young.StandardTableau.Order
-public import TauCeti.RepresentationTheory.Symmetric.Specht.Module
+public import Mathlib.LinearAlgebra.Dimension.StrongRankCondition
+public import TauCeti.RepresentationTheory.Symmetric.Specht.Straightening
 
 /-!
-# The standard polytabloids are linearly independent
+# The standard basis of the Specht module
 
 The polytabloid `e_t` of a `μ`-tableau `t` is the signed sum, over the column group of `t`, of the
 tabloids `{q t}`, and the Specht module `S^μ` is the span of all of them.  This file proves that
 the polytabloids of the **standard** tableaux -- those increasing along rows and down columns --
-are linearly independent (`TauCeti.linearIndependent_polytabloid`), so that
+are a basis of `S^μ`, so that its dimension is the number `f^μ` of standard Young tableaux of
+shape `μ`.
 
-`f^μ = standardCount μ ≤ finrank ℚ S^μ`
+## Linear independence
 
-(`TauCeti.standardCount_le_finrank_spechtModule`).  Together with the reverse inequality, which
-needs the straightening algorithm and is not proved here, this is the standard basis theorem of
-Layer 5 of the Schur--Weyl roadmap.
-
-## The dominance order on tabloids
-
-The argument is the triangularity of the standard polytabloids against the tabloid basis.  Order
+The first half is the triangularity of the standard polytabloids against the tabloid basis.  Order
 the tabloids by **dominance**: `{t}` dominates `{u}` when, for every `m` and every `i`, at least as
 many of the labels below `m` sit in the first `i + 1` rows of `t` as sit in the first `i + 1` rows
 of `u` (`TauCeti.YoungTableau.rowCount`, `TauCeti.YoungTableau.TabloidDominates`).  Two facts about
@@ -48,10 +43,13 @@ which pins the rows down.  Taking the standard tableau of largest weight among t
 coefficient, its tabloid can occur in no other standard polytabloid of the combination, and its
 coefficient is the coefficient of that tabloid in the combination, hence zero.
 
-## Main definitions
+## Spanning: the straightening algorithm
 
-* `TauCeti.YoungTableau.rowCount`: how many of the first `m` labels lie in the first `i + 1` rows.
-* `TauCeti.YoungTableau.TabloidDominates`: the dominance order on tabloids.
+The second half is the straightening algorithm
+`TauCeti.YoungTableau.polytabloid_mem_span_polytabloid_standard` of
+`TauCeti/RepresentationTheory/Symmetric/Specht/Straightening.lean`, which rewrites an arbitrary
+polytabloid as a rational combination of standard ones.  The polytabloids span `S^μ` by
+definition, so the standard ones already do.
 
 ## Main results
 
@@ -59,14 +57,16 @@ coefficient is the coefficient of that tabloid in the combination, hence zero.
 * `TauCeti.YoungTableau.tabloidDominates_relabel_of_mem_colSubgroup`: a column permutation of a
   standard tableau lowers its tabloid.
 * `TauCeti.linearIndependent_polytabloid`: the standard polytabloids are linearly independent.
-* `TauCeti.standardCount_le_finrank_spechtModule`: hence `f^μ ≤ dim S^μ`.
+* `TauCeti.spechtSubrepresentation_eq_span_standard`: the standard polytabloids span the Specht
+  module.
+* `TauCeti.standardPolytabloidBasis`: **the standard basis** of the Specht module, with
+  `TauCeti.spechtModuleStandardBasis` its partition-indexed form.
+* `TauCeti.finrank_spechtSubrepresentation` and `TauCeti.finrank_spechtModule`: **`dim S^μ = f^μ`.**
 
 ## References
 
-* [G. D. James, *The Representation Theory of the Symmetric Groups*][james1978], Section 8.
-* [B. E. Sagan, *The Symmetric Group*][sagan2001], Section 2.5.
-* [Schur--Weyl roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SchurWeyl/README.md),
-  Layer 5, the standard basis of the Specht module.
+* [G. D. James, *The Representation Theory of the Symmetric Groups*][james1978], Sections 7 and 8.
+* [B. E. Sagan, *The Symmetric Group*][sagan2001], Sections 2.5 and 2.6.
 -/
 
 public section
@@ -311,22 +311,68 @@ theorem linearIndependent_polytabloid (μ : YoungDiagram) :
     smul_eq_mul, mul_one] at hcoeff
   exact hg₀ hcoeff
 
-/-- **There are at least `f^μ` dimensions in the Specht module.**  Equality holds, but the reverse
-inequality is the straightening algorithm and is not proved here. -/
-theorem standardCount_le_finrank_spechtSubrepresentation (μ : YoungDiagram) :
-    standardCount μ ≤ Module.finrank ℚ (spechtSubrepresentation μ).toSubmodule := by
-  classical
-  have hli : LinearIndependent ℚ fun T : StandardYoungTableau μ =>
-      (⟨polytabloid T.toTableau, polytabloid_mem_spechtSubrepresentation T.toTableau⟩ :
-        (spechtSubrepresentation μ).toSubmodule) :=
-    LinearIndependent.of_comp (spechtSubrepresentation μ).toSubmodule.subtype
-      (linearIndependent_polytabloid μ)
-  simpa [standardCount_def] using hli.fintype_card_le_finrank
 
-/-- **The number of standard Young tableaux of shape `μ` is at most the dimension of the Specht
-module `S^μ`.** -/
-theorem standardCount_le_finrank_spechtModule {n : ℕ} (μ : n.Partition) :
-    standardCount (diagramOf μ) ≤ Module.finrank ℚ (spechtModule μ) :=
-  standardCount_le_finrank_spechtSubrepresentation (diagramOf μ)
+/-! ### The standard basis of the Specht module -/
+
+open YoungTableau
+
+/-- **The standard polytabloids span the Specht module.**  The polytabloids span `S^μ` by
+definition, and every one of them is a combination of the standard ones by
+`TauCeti.YoungTableau.polytabloid_mem_span_polytabloid_standard`. -/
+theorem spechtSubrepresentation_eq_span_standard (μ : YoungDiagram) :
+    (spechtSubrepresentation μ).toSubmodule =
+      Submodule.span ℚ (Set.range fun T : StandardYoungTableau μ => polytabloid T.toTableau) := by
+  refine le_antisymm ?_ (Submodule.span_le.mpr ?_)
+  · rw [spechtSubrepresentation_toSubmodule]
+    refine Submodule.span_le.mpr ?_
+    rintro _ ⟨t, rfl⟩
+    exact polytabloid_mem_span_polytabloid_standard t
+  · rintro _ ⟨T, rfl⟩
+    exact polytabloid_mem_spechtSubrepresentation _
+
+/-- **The standard basis theorem.**  The polytabloids of the standard `μ`-tableaux are a basis of
+the Specht module `S^μ`: they are linearly independent by
+`TauCeti.linearIndependent_polytabloid` and they span by
+`TauCeti.spechtSubrepresentation_eq_span_standard`. -/
+noncomputable def standardPolytabloidBasis (μ : YoungDiagram) :
+    Module.Basis (StandardYoungTableau μ) ℚ (spechtSubrepresentation μ).toSubmodule :=
+  (Module.Basis.span (linearIndependent_polytabloid μ)).map
+    (LinearEquiv.ofEq _ _ (spechtSubrepresentation_eq_span_standard μ).symm)
+
+@[simp]
+theorem coe_standardPolytabloidBasis (μ : YoungDiagram) (T : StandardYoungTableau μ) :
+    (standardPolytabloidBasis μ T : (permutationModule (shapePartition μ)).V) =
+      polytabloid T.toTableau := by
+  simp [standardPolytabloidBasis]
+
+/-- **The standard basis of the Specht module `S^μ` of a partition `μ` of `n`**, the
+partition-indexed packaging `TauCeti.spechtModule` of
+`TauCeti.standardPolytabloidBasis`: `S^μ` has the polytabloids of the standard tableaux of shape
+`diagramOf μ` as a basis. -/
+noncomputable def spechtModuleStandardBasis {n : ℕ} (μ : n.Partition) :
+    Module.Basis (StandardYoungTableau (diagramOf μ)) ℚ (spechtModule μ) :=
+  standardPolytabloidBasis (diagramOf μ)
+
+@[simp]
+theorem coe_spechtModuleStandardBasis {n : ℕ} (μ : n.Partition)
+    (T : StandardYoungTableau (diagramOf μ)) :
+    (spechtModuleStandardBasis μ T : (permutationModule (shapePartition (diagramOf μ))).V) =
+      polytabloid T.toTableau :=
+  coe_standardPolytabloidBasis (diagramOf μ) T
+
+/-- **The dimension of the Specht module is the number of standard Young tableaux**, `dim S^μ =
+f^μ`. -/
+@[simp]
+theorem finrank_spechtSubrepresentation (μ : YoungDiagram) :
+    Module.finrank ℚ (spechtSubrepresentation μ).toSubmodule = standardCount μ := by
+  rw [standardCount_def]
+  exact Module.finrank_eq_card_basis (standardPolytabloidBasis μ)
+
+/-- **The dimension of the Specht module `S^μ` of a partition `μ` of `n` is the number `f^μ` of
+standard Young tableaux of shape `μ`.** -/
+@[simp]
+theorem finrank_spechtModule {n : ℕ} (μ : n.Partition) :
+    Module.finrank ℚ (spechtModule μ) = standardCount (diagramOf μ) :=
+  finrank_spechtSubrepresentation (diagramOf μ)
 
 end TauCeti
