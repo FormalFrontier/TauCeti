@@ -38,7 +38,9 @@ variables, so `MvPowerSeries.hasEval_of_finite_of_isTopologicallyNilpotent` appl
   inverse of the cubic's leading coefficient.
 * `WeierstrassCurve.formalAddEval_eq` : `F(t₁, t₂) = ι(t₃(t₁, t₂))`.
 * `WeierstrassCurve.formalAddEval_sub_add_mem` : `F(t₁, t₂) - (t₁ + t₂) ∈ I ^ (2 * k)` for
-  parameters in `I ^ k`, so the group law is `t₁ + t₂` to first order.
+  parameters in `I ^ k`, so the group law is `t₁ + t₂` to first order, and
+  `WeierstrassCurve.formalAddEval_mem` : each level `I ^ k` is therefore closed under the
+  addition series.
 
 ## Implementation notes
 
