@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.RepresentationTheory.Quiver.PathAlgebra.Rescale
-public import TauCeti.RepresentationTheory.Quiver.Zigzag.Relations
 public import TauCeti.RepresentationTheory.Quiver.Zigzag.Skew
 
 /-!
@@ -33,11 +32,6 @@ equivalence is a genuine equivalence relation on parameters through which the pr
 factors. Specializing to the constant parameter `1`, which presents the ordinary zigzag relation
 quotient, a gauge-trivial parameter presents the ordinary zigzag algebra.
 
-Classifying the gauge classes themselves — Couture's identification of the vertex-fixing graded
-isomorphism classes with `H¹(G, kˣ)`, the triviality of every parameter on a tree, and the
-odd-cycle class — is not done here; those statements consume the equivalence relation defined
-below.
-
 ## Main definitions
 
 * `TauCeti.DoubledQuiver.backtrackScale`: the factor by which an arrow rescaling multiplies the
@@ -49,12 +43,10 @@ below.
 
 * `TauCeti.DoubledQuiver.backtrackScale_symm`: the backtrack scale depends only on the unoriented
   edge.
-* `TauCeti.SkewZigzagParameter.isGaugeEquivalent_equivalence`: gauge equivalence is an equivalence
+* `TauCeti.SkewZigzagParameter.IsGaugeEquivalent.equivalence`: gauge equivalence is an equivalence
   relation.
 * `TauCeti.skewZigzagQuotientGaugeEquiv`: **gauge independence**, a gauge transform of a parameter
   presents an isomorphic algebra.
-* `TauCeti.skewZigzagQuotientOneEquiv`: the constant parameter presents the ordinary zigzag
-  relation quotient.
 * `TauCeti.nonempty_algEquiv_nonisolatedZigzagQuotient_of_isGaugeEquivalent_one`: a gauge-trivial
   parameter presents the ordinary zigzag relation quotient.
 
@@ -62,6 +54,10 @@ below.
 
 C. Couture, *Skew-Zigzag Algebras*, Section 4, https://arxiv.org/abs/1509.08405, which sets up the
 gauge relation on skew parameters and its cohomological classification.
+
+The proof pattern for the gauge isomorphism of relation quotients — rescaling the arrows, checking
+that it carries the relators of one presentation into the relation ideal of the other, and matching
+the two lifts — follows `TauCeti.RepresentationTheory.Quiver.Preprojective.Gauge`.
 -/
 
 public section
@@ -230,7 +226,7 @@ theorem IsGaugeEquivalent.trans {c c' c'' : SkewZigzagParameter k G}
   exact ⟨fun _ _ e => u e * u' e, gauge_gauge c u u'⟩
 
 /-- **Gauge equivalence of skew-zigzag parameters is an equivalence relation.** -/
-theorem isGaugeEquivalent_equivalence :
+theorem IsGaugeEquivalent.equivalence :
     Equivalence (IsGaugeEquivalent (k := k) (G := G)) :=
   ⟨IsGaugeEquivalent.refl, IsGaugeEquivalent.symm, IsGaugeEquivalent.trans⟩
 
@@ -338,79 +334,11 @@ theorem nonempty_algEquiv_skewZigzagQuotient_of_isGaugeEquivalent
 
 end Independence
 
-/-! ### The constant parameter and the ordinary zigzag quotient -/
+/-! ### Gauge-trivial parameters -/
 
 section One
 
 variable (k : Type w) [CommRing k] {V : Type u} (G : SimpleGraph V) [Finite V]
-
-/-- The comparison of the constant skew quotient with the ordinary zigzag quotient. This is only one
-direction of `TauCeti.skewZigzagQuotientOneEquiv`, which is the public API; it is private so as not
-to duplicate it. -/
-private noncomputable def skewZigzagQuotientOneHom :
-    skewZigzagQuotient k G 1 →ₐ[k] nonisolatedZigzagQuotient k G :=
-  skewZigzagLift k G 1 (zigzagMk k G) fun x hx => by
-    cases hx with
-    | nonreturn p hlen hne => exact zigzagMk_ofPath_eq_zero_of_ne k G p hlen hne
-    | backtrack_ratio h h' =>
-      rw [SkewZigzagParameter.one_ratio, Units.val_one, one_smul, map_sub, sub_eq_zero]
-      exact zigzagMk_backtrackElem_eq k G h h'
-    | long_path y h3 => exact zigzagMk_ofPath_eq_zero_of_three_le k G y h3
-
-/-- The comparison sends the class of an element in the constant skew quotient to its ordinary
-class. -/
-private theorem skewZigzagQuotientOneHom_skewZigzagMk (x : pathAlgebra k (DoubledQuiver G)) :
-    skewZigzagQuotientOneHom k G (skewZigzagMk k G 1 x) = zigzagMk k G x :=
-  skewZigzagLift_skewZigzagMk k G 1 _ _ x
-
-/-- The comparison of the ordinary zigzag quotient with the constant skew quotient. This is only one
-direction of `TauCeti.skewZigzagQuotientOneEquiv`, which is the public API; it is private so as not
-to duplicate it. -/
-private noncomputable def zigzagQuotientToSkewOneHom :
-    nonisolatedZigzagQuotient k G →ₐ[k] skewZigzagQuotient k G 1 :=
-  zigzagLift k G (skewZigzagMk k G 1) fun x hx => by
-    cases hx with
-    | quadratic hq =>
-      cases hq with
-      | nonreturn p hlen hne => exact skewZigzagMk_ofPath_eq_zero_of_ne k G 1 p hlen hne
-      | equal_backtracks p q hp hq =>
-        rename_i i
-        obtain ⟨v, rfl⟩ : ∃ v, i = vertex G v :=
-          ⟨(vertexEquiv G).symm i, (vertexEquiv_symm_apply G i).symm⟩
-        obtain ⟨j, hj, rfl⟩ := exists_eq_backtrackPath G p hp
-        obtain ⟨j', hj', rfl⟩ := exists_eq_backtrackPath G q hq
-        rw [← backtrackElem_eq_ofPath, ← backtrackElem_eq_ofPath, map_sub, sub_eq_zero,
-          skewZigzagMk_backtrackElem_eq_smul k G 1 hj hj', SkewZigzagParameter.one_ratio,
-          Units.val_one, one_smul]
-    | long_path y h3 => exact skewZigzagMk_ofPath_eq_zero_of_three_le k G 1 y h3
-
-/-- The comparison sends the ordinary class of an element to its class in the constant skew
-quotient. -/
-private theorem zigzagQuotientToSkewOneHom_zigzagMk (x : pathAlgebra k (DoubledQuiver G)) :
-    zigzagQuotientToSkewOneHom k G (zigzagMk k G x) = skewZigzagMk k G 1 x :=
-  zigzagLift_zigzagMk k G _ _ x
-
-/-- **The constant parameter presents the ordinary zigzag algebra**: its skew relation is that all
-backtracks at a vertex are equal, which is the ordinary zigzag relation. -/
-noncomputable def skewZigzagQuotientOneEquiv :
-    skewZigzagQuotient k G 1 ≃ₐ[k] nonisolatedZigzagQuotient k G :=
-  AlgEquiv.ofAlgHom (skewZigzagQuotientOneHom k G) (zigzagQuotientToSkewOneHom k G)
-    (Ideal.Quotient.algHom_ext k (AlgHom.ext fun x => by
-      simp only [AlgHom.comp_apply, Ideal.Quotient.mkₐ_eq_mk, ← zigzagMk_apply,
-        zigzagQuotientToSkewOneHom_zigzagMk, skewZigzagQuotientOneHom_skewZigzagMk,
-        AlgHom.id_apply]))
-    (Ideal.Quotient.algHom_ext k (AlgHom.ext fun x => by
-      simp only [AlgHom.comp_apply, Ideal.Quotient.mkₐ_eq_mk, ← skewZigzagMk_apply,
-        skewZigzagQuotientOneHom_skewZigzagMk, zigzagQuotientToSkewOneHom_zigzagMk,
-        AlgHom.id_apply]))
-
-/-- The comparison with the ordinary zigzag quotient sends the class of an element to its ordinary
-class. -/
-@[simp]
-theorem skewZigzagQuotientOneEquiv_skewZigzagMk (x : pathAlgebra k (DoubledQuiver G)) :
-    skewZigzagQuotientOneEquiv k G (skewZigzagMk k G 1 x) = zigzagMk k G x := by
-  rw [skewZigzagQuotientOneEquiv, ← AlgEquiv.coe_toAlgHom, AlgEquiv.toAlgHom_ofAlgHom,
-    skewZigzagQuotientOneHom_skewZigzagMk]
 
 /-- **A gauge-trivial skew-zigzag parameter presents the ordinary zigzag algebra.** Gauge
 equivalence is symmetric, so this is the comparison for every parameter in the gauge class of the
