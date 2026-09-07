@@ -44,8 +44,6 @@ theorem subgroupSubtype_apply (S : Subgroup G) (s : S) : subgroupSubtype S s = (
 
 end ContinuousMonoidHom
 
-namespace Subgroup
-
 /-- The inverse conjugation homomorphism of a normal subgroup, with the subspace topology. -/
 def _root_.Subgroup.inverseConjugationHom [IsTopologicalGroup G] (N : Subgroup G) [N.Normal]
     (g : G) : N →ₜ* N where
@@ -98,8 +96,6 @@ theorem _root_.Subgroup.inverseConjugationHom_mul [IsTopologicalGroup G] (N : Su
         (_root_.Subgroup.inverseConjugationHom N g) := by
   ext n
   simp [_root_.Subgroup.inverseConjugationHom_apply, mul_assoc]
-
-end Subgroup
 
 namespace ContinuousMonoidHom
 

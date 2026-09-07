@@ -14,7 +14,8 @@ import Mathlib.Analysis.Normed.Algebra.Exponential
 
 This file begins the converse direction of Stone's theorem.  A bounded self-adjoint operator
 `A` on a complex Hilbert space gives the unitary group `exp (t i A)`; its real-linear generator is
-the expected operator `i A`.
+the expected operator `i A`.  The general self-adjoint case is
+`TauCeti.Analysis.Semigroups.Group.Stone.Unbounded`.
 -/
 
 public section

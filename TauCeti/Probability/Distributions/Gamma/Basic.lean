@@ -85,6 +85,18 @@ theorem ae_pos_gammaMeasure (a r : ℝ) :
   by_contra hxpos
   exact hpdf (gammaPDF_of_neg (lt_of_le_of_ne (le_of_not_gt hxpos) hx))
 
+/-- Almost every point of a product of two gamma laws with positive parameters lies in the
+open positive quadrant. -/
+theorem ae_mem_prod_Ioi_gammaMeasure {b s : ℝ} (ha : 0 < a) (hb : 0 < b) (hr : 0 < r)
+    (hs : 0 < s) :
+    ∀ᵐ z ∂(gammaMeasure a r).prod (gammaMeasure b s), z ∈ Ioi (0 : ℝ) ×ˢ Ioi (0 : ℝ) := by
+  let _ := isProbabilityMeasure_gammaMeasure ha hr
+  let _ := isProbabilityMeasure_gammaMeasure hb hs
+  rw [Measure.ae_prod_mem_iff_ae_ae_mem (measurableSet_Ioi.prod measurableSet_Ioi)]
+  filter_upwards [ae_pos_gammaMeasure a r] with x hx
+  filter_upwards [ae_pos_gammaMeasure b s] with y hy
+  exact ⟨hx, hy⟩
+
 /-- On the positive half-line the gamma density is given by its closed formula. -/
 private lemma gammaPDFReal_of_pos {x : ℝ} (hx : 0 < x) :
     gammaPDFReal a r x = r ^ a / Real.Gamma a * x ^ (a - 1) * exp (-(r * x)) := by
