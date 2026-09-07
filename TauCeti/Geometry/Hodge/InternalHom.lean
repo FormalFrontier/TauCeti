@@ -43,12 +43,13 @@ equivalence `V^* ⊗ W ≃ₗ[ℂ] Hom_ℂ(V, W)`; that comparison is
 * `TauCeti.Hodge.HodgeStructureOn.map_mem_F_of_mem_internalHom_F`: a map in filtration degree
   at least `r` sends `F^p V` into `F^{p+r} W`, and
   `TauCeti.Hodge.HodgeStructureOn.mem_internalHom_F_iff` says this characterizes the filtration.
+* `TauCeti.Hodge.HodgeStructureOn.id_mem_internalHom_piece` and
+  `TauCeti.Hodge.HodgeStructureOn.comp_mem_internalHom_piece`: the identity has internal-hom
+  degree `0`, and composing maps adds internal-hom degrees.
 * `TauCeti.Hodge.HodgeStructureOn.internalHom_piece_eq_comap` and
   `TauCeti.Hodge.HodgeStructureOn.internalHom_F_eq_comap`: over a finite-dimensional source, the
   internal-hom components and filtration are the pullbacks of those of `V^* ⊗ W` along the
-  contraction equivalence, with
-  `TauCeti.Hodge.HodgeStructureOn.internalHom_piece_eq_comap_iSup` the component of that
-  presentation in terms of products of components.
+  contraction equivalence.
 
 This is the internal-hom companion to duals and tensor products for pure Hodge structures;
 the convention follows Peters--Steenbrink, *Mixed Hodge Structures*, §2.1.
@@ -60,7 +61,7 @@ open scoped TensorProduct
 
 namespace TauCeti.Hodge
 
-universe u v
+universe u v w
 
 variable {W₁ : Type u} {W₂ : Type v}
 variable [AddCommGroup W₁] [Module ℂ W₁]
@@ -128,8 +129,8 @@ theorem conj_mem_internalHomPiece (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
     (ω₁.internalHom ω₂).toEquiv f ∈ hs₁.internalHomPiece hs₂ (n₂ - n₁ - r) := by
   simp only [mem_internalHomPiece_iff] at hf ⊢
   intro a x hx
-  rw [Conjugation.internalHom_toEquiv_apply_apply,
-    show a + (n₂ - n₁ - r) = n₂ - (n₁ - a + r) by ring]
+  have hidx : a + (n₂ - n₁ - r) = n₂ - (n₁ - a + r) := by ring
+  rw [Conjugation.internalHom_toEquiv_apply_apply, hidx]
   exact hs₂.conj_mem_piece (hf _ _ (hs₁.conj_mem_piece hx))
 
 /-- Maps shifting Hodge degree by different amounts are independent. -/
@@ -177,7 +178,8 @@ theorem iSup_internalHomPiece_eq_top (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
   intro c x hx
   by_cases hca : a = c
   · subst hca
-    rw [hs₁.proj_apply_of_mem hx, show a + (b - a) = b by ring]
+    have hidx : a + (b - a) = b := by ring
+    rw [hs₁.proj_apply_of_mem hx, hidx]
     exact hs₂.proj_mem b (f x)
   · rw [hs₁.proj_apply_eq_zero_of_mem_of_ne hx (Ne.symm hca), map_zero, map_zero]
     exact Submodule.zero_mem _
@@ -197,8 +199,9 @@ theorem isHodgeDecomposition_internalHomPiece (hs₁ : HodgeStructureOn W₁ ω�
     · rintro _ ⟨g, hg, rfl⟩
       exact hs₁.conj_mem_internalHomPiece hs₂ hg
     · refine ⟨(ω₁.internalHom ω₂).toEquiv f, ?_, (ω₁.internalHom ω₂).apply_apply f⟩
+      have hidx : n₂ - n₁ - (n₂ - n₁ - r) = r := by ring
       have h := hs₁.conj_mem_internalHomPiece hs₂ hf
-      rwa [show n₂ - n₁ - (n₂ - n₁ - r) = r by ring] at h
+      rwa [hidx] at h
   exists_forall_lt_eq_bot := by
     obtain ⟨a₂, ha₂⟩ := hs₂.F_top
     obtain ⟨b₁, hb₁⟩ := hs₁.F_bot
@@ -263,6 +266,28 @@ theorem mem_internalHom_piece_iff (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
     f ∈ (hs₁.internalHom hs₂).piece p ↔ ∀ a, ∀ x ∈ hs₁.piece a, f x ∈ hs₂.piece (a + p) := by
   rw [internalHom_piece, mem_internalHomPiece_iff]
 
+/-- The identity map has internal-hom degree `0`. -/
+theorem id_mem_internalHom_piece (hs : HodgeStructureOn W₁ ω₁ n₁) :
+    LinearMap.id ∈ (hs.internalHom hs).piece 0 := by
+  rw [mem_internalHom_piece_iff]
+  intro a x hx
+  simpa using hx
+
+/-- Composing a map of internal-hom degree `p` with one of internal-hom degree `q` gives a map of
+internal-hom degree `p + q`. -/
+theorem comp_mem_internalHom_piece {W₃ : Type w} [AddCommGroup W₃] [Module ℂ W₃]
+    {ω₃ : Conjugation W₃} {n₃ : ℤ} (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
+    (hs₂ : HodgeStructureOn W₂ ω₂ n₂) (hs₃ : HodgeStructureOn W₃ ω₃ n₃) {p q : ℤ}
+    {f : W₁ →ₗ[ℂ] W₂} {g : W₂ →ₗ[ℂ] W₃} (hf : f ∈ (hs₁.internalHom hs₂).piece p)
+    (hg : g ∈ (hs₂.internalHom hs₃).piece q) :
+    g ∘ₗ f ∈ (hs₁.internalHom hs₃).piece (p + q) := by
+  rw [mem_internalHom_piece_iff]
+  intro a x hx
+  have hidx : a + p + q = a + (p + q) := by ring
+  rw [LinearMap.comp_apply, ← hidx]
+  exact hs₂.map_mem_piece_of_mem_internalHom_piece hs₃ hg
+    (hs₁.map_mem_piece_of_mem_internalHom_piece hs₂ hf hx)
+
 /-- A rank-one map made from a dual vector of degree `p` and a target vector of degree `q` has
 internal-hom degree `p + q`. -/
 theorem dualTensorHom_mem_internalHom_piece (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
@@ -274,7 +299,8 @@ theorem dualTensorHom_mem_internalHom_piece (hs₁ : HodgeStructureOn W₁ ω₁
   rw [dualTensorHom_apply]
   by_cases hap : a = -p
   · subst hap
-    rw [show -p + (p + q) = q by ring]
+    have hidx : -p + (p + q) = q := by ring
+    rw [hidx]
     exact Submodule.smul_mem _ _ hy
   · rw [hs₁.apply_eq_zero_of_mem_piece_of_ne hx hφ hap, zero_smul]
     exact Submodule.zero_mem _
@@ -364,7 +390,8 @@ theorem internalHom_piece_eq_comap (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
       simp only [Submodule.mem_comap, LinearMap.comp_apply, LinearMap.applyₗ_apply_apply,
         dualTensorHom_apply, TensorProduct.mk_apply]
       by_cases har : a = -r
-      · rw [show a + q = q - r by omega]
+      · have hidx : a + q = q - r := by omega
+        rw [hidx]
         exact Submodule.smul_mem _ _ hy
       · rw [hs₁.apply_eq_zero_of_mem_piece_of_ne hx hφ har, zero_smul]
         exact Submodule.zero_mem _
@@ -389,16 +416,6 @@ theorem internalHom_F_eq_comap (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
   refine iSup_congr fun _ ↦ ?_
   rw [hs₁.internalHom_piece_eq_comap hs₂ q, Submodule.comap_equiv_eq_map_symm,
     LinearEquiv.symm_symm]
-
-/-- The degree-`p` internal-hom component, presented as the pullback of the sum of
-`(V^*)^r ⊗ W^{p-r}`. -/
-theorem internalHom_piece_eq_comap_iSup (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
-    (hs₂ : HodgeStructureOn W₂ ω₂ n₂) (p : ℤ) :
-    (hs₁.internalHom hs₂).piece p =
-      (⨆ r : ℤ, Submodule.map₂ (TensorProduct.mk ℂ (Module.Dual ℂ W₁) W₂)
-        ((hs₁.dual).piece r) (hs₂.piece (p - r))).comap
-          (dualTensorHomEquiv ℂ W₁ W₂).symm.toLinearMap := by
-  rw [internalHom_piece_eq_comap, tensorProduct_piece_eq_iSup]
 
 end Contraction
 

@@ -525,9 +525,10 @@ theorem piece_injective :
 
 /-- Componentwise domination of Hodge components is componentwise equality: if every component of
 one pure Hodge structure is contained in the component of the same degree of another, the two
-families agree. Both decompose the same space, so no room is left between them; the weights need
-not agree. -/
-theorem piece_eq_of_piece_le {n' : ℤ} {hs : HodgeStructureOn W ω n} {hs' : HodgeStructureOn W ω n'}
+families agree. Both decompose the same space, so no room is left between them; neither the
+weights nor the conjugations need agree. -/
+theorem piece_eq_of_piece_le {ω' : Conjugation W} {n' : ℤ} {hs : HodgeStructureOn W ω n}
+    {hs' : HodgeStructureOn W ω' n'}
     (h : ∀ p, hs.piece p ≤ hs'.piece p) (p : ℤ) : hs.piece p = hs'.piece p := by
   refine le_antisymm (h p) fun x hx ↦ ?_
   have hrest : x - hs.proj p x ∈ ⨆ q, ⨆ (_ : q ≠ p), hs.piece q := by
