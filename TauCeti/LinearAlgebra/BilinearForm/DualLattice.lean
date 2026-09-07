@@ -40,8 +40,6 @@ variable {R K V : Type*} [CommRing R] [IsDomain R]
 variable [Field K] [Algebra R K] [IsFractionRing R K] [Module.IsTorsionFree R K]
 variable [AddCommGroup V] [Module R V] [Module K V] [IsScalarTower R K V]
 
-namespace LinearMap.BilinForm
-
 /-- Surjectivity of Mathlib's canonical pairing `dualSubmoduleToDual` for a free full lattice
 and a nondegenerate bilinear form. -/
 theorem _root_.LinearMap.BilinForm.dualSubmoduleToDual_surjective
@@ -122,7 +120,5 @@ theorem _root_.LinearMap.BilinForm.dualSubmodule_flip_dualSubmodule
   have h := LinearMap.BilinForm.dualSubmodule_dualSubmodule_flip B.flip hB.flip N
   have hflip : B.flip.flip = B := by ext; rfl
   rwa [hflip] at h
-
-end LinearMap.BilinForm
 
 end TauCeti

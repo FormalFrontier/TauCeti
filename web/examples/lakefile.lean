@@ -33,7 +33,7 @@ require subverso from git
 -- Must equal the `mathlib` revision in the root `lake-manifest.json`. This top-level pin is what
 -- overrides the `master` revision the root package requests transitively.
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4" @ "5fcc6656691ed31965746c369f41fa75e567ac9d"
+  "https://github.com/leanprover-community/mathlib4" @ "e21ec05048292b3de86d4cf1987e2208171a5642"
 
 -- The real Tau Ceti library, from the repository root, so the showcased theorems are
 -- type-checked against exactly the library that proves them.

@@ -94,6 +94,24 @@ private lemma heckeT_prime_pow_one : heckeT ⟨p ^ 1, pow_pos hp.pos 1⟩ = heck
   congr 1
   exact Subtype.ext (pow_one p)
 
+/-- **The scalar operator is central**, in the form `T(1, p) · T(p,p) = T(p,p) · T(1, p)`.
+Every commutation below is this one transported: the `T(p)` form is it after
+`heckeT_prime`, and the `p • T(p,p)` form is that scaled. Primality plays no part. -/
+private lemma commute_heckeTDiag_one_heckeTScalar :
+    Commute (heckeTDiag 1 p) (heckeTScalar p) :=
+  -- transposition is an anti-involution fixing every Hecke coset, and a ring carrying one is
+  -- commutative on the cosets it fixes
+  HeckeCosetModule.mul_comm_of_antiInvolution ℤ (transposeAntiInvolution 2)
+    (transposeAntiInvolution_onHeckeCoset_eq_self 2) (heckeTDiag 1 p) (heckeTScalar p)
+
+include hp in
+/-- `T(p)` commutes with the scalar operator `T(p,p)`. The shape the recurrence steps meet,
+whose left factor is written `T(p)` rather than `T(1, p)`. -/
+private lemma commute_heckeT_prime_heckeTScalar :
+    Commute (heckeT ⟨p, hp.pos⟩) (heckeTScalar p) := by
+  rw [heckeT_prime p hp]
+  exact commute_heckeTDiag_one_heckeTScalar p
+
 include hp in
 /-- The inductive step of the recurrence for exponents `≥ 3`: substitute the recurrence at
 `k` into the key product identity, then rearrange. -/
@@ -121,11 +139,7 @@ private lemma heckeT_prime_pow_recurrence_step (k : ℕ) (hk_pos : 0 < k)
   -- and `T(p,p)` over the difference on the right
   conv at h5 => rhs; rw [mul_sub]
   -- the scalar operator is central, and the induction hypothesis rewrites `T(p) · T(pᵏ)`
-  have hcomm : heckeT ⟨p, hp.pos⟩ * heckeTScalar p =
-      heckeTScalar p * heckeT ⟨p, hp.pos⟩ := by
-    rw [heckeT_prime p hp]
-    exact HeckeCosetModule.mul_comm_of_antiInvolution ℤ (transposeAntiInvolution 2)
-      (transposeAntiInvolution_onHeckeCoset_eq_self 2) (heckeTDiag 1 p) (heckeTScalar p)
+  have hcomm := (commute_heckeT_prime_heckeTScalar p hp).eq
   have hih : heckeT ⟨p, hp.pos⟩ * heckeT ⟨p ^ k, pow_pos hp.pos k⟩ =
       heckeT ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ +
         (p : ℤ) • (heckeTScalar p * heckeT ⟨p ^ (k - 1), pow_pos hp.pos (k - 1)⟩) := by
@@ -186,8 +200,7 @@ private lemma heckeT_prime_pow_recurrence_two :
   rw [heckeT_prime_pow_zero p hp, mul_one, heckeTDiag_one_prime_pow_one, heckeT_prime p hp] at h5
   rw [heckeT_prime_pow_one p hp] at h5 ⊢
   rw [heckeT_prime p hp] at h5 ⊢
-  rw [HeckeCosetModule.mul_comm_of_antiInvolution ℤ (transposeAntiInvolution 2)
-    (transposeAntiInvolution_onHeckeCoset_eq_self 2) (heckeTDiag 1 p) (heckeTScalar p)] at h5
+  rw [(commute_heckeTDiag_one_heckeTScalar p).eq] at h5
   linear_combination (norm := module) -h5
 
 include hp in
@@ -221,16 +234,12 @@ sequence over any ring in which `D` and `S` commute — and here they do, the sc
 being central. -/
 
 include hp in
-/-- `T(p)` commutes with the scalar operator `p • T(p,p)`.
-
-The scalar operator is central by `mul_comm_of_antiInvolution`, and an integer multiple of a
-commuting element still commutes. -/
+/-- `T(p)` commutes with the scalar operator `p • T(p,p)`. This is the pair the product
+formula hands to `linearRec₂_mul_eq_sum_pow_mul`, whose hypothesis is exactly that the two
+recurrence coefficients commute. -/
 private lemma commute_heckeT_prime_smul_heckeTScalar :
-    Commute (heckeT ⟨p, hp.pos⟩) ((p : ℤ) • heckeTScalar p) := by
-  refine Commute.smul_right ?_ _
-  rw [heckeT_prime p hp]
-  exact HeckeCosetModule.mul_comm_of_antiInvolution ℤ (transposeAntiInvolution 2)
-    (transposeAntiInvolution_onHeckeCoset_eq_self 2) (heckeTDiag 1 p) (heckeTScalar p)
+    Commute (heckeT ⟨p, hp.pos⟩) ((p : ℤ) • heckeTScalar p) :=
+  (commute_heckeT_prime_heckeTScalar p hp).smul_right _
 
 include hp in
 /-- **Shimura, Theorem 3.24(4)** — the prime-power product formula:
