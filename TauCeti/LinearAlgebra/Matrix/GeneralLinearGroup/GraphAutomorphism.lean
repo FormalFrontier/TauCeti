@@ -43,6 +43,8 @@ carrier.
   simple-root subgroup.
 * `TauCeti.typeAGraphAutomorphism_transvectionUnit_lower`: the corresponding equation on every
   negative simple-root subgroup.
+* `TauCeti.typeAGraphAutomorphism_transvectionUnit_of_ne`: the equation on the root subgroup of an
+  arbitrary root `ε_i - ε_j`, where the parameter is rescaled by the sign `(-1) ^ (i + j + 1)`.
 * `TauCeti.typeAGraphAutomorphism_diagGL`: the automorphism reverses and inverts diagonal entries.
 * `TauCeti.typeAGraphAutomorphism_mul_self`: the automorphism has order dividing two.
 * `TauCeti.map_typeAGraphAutomorphism`: the construction is natural in the coefficient ring.
@@ -146,21 +148,6 @@ private theorem typeAGraphSign_mul_self (i : Fin (r + 1)) :
 private theorem typeAGraphSign_inv (i : Fin (r + 1)) :
     (typeAGraphSign (A := A) i)⁻¹ = typeAGraphSign (A := A) i :=
   inv_eq_iff_mul_eq_one.mpr (typeAGraphSign_mul_self (A := A) i)
-
-private theorem typeAGraphSign_succ (i : Fin r) :
-    typeAGraphSign (A := A) i.succ = -typeAGraphSign (A := A) i.castSucc := by
-  simp only [typeAGraphSign, Fin.val_succ, Fin.val_castSucc, pow_succ]
-  simp
-
-private theorem typeAGraphSign_mul_mul (i : Fin (r + 1)) (c : A) :
-    (typeAGraphSign (A := A) i : A) * c * (typeAGraphSign (A := A) i : A) = c := by
-  calc
-    _ = c * ((typeAGraphSign (A := A) i : A) *
-        (typeAGraphSign (A := A) i : A)) := by ac_rfl
-    _ = c := by
-      rw [show (typeAGraphSign (A := A) i : A) *
-          (typeAGraphSign (A := A) i : A) = 1 from
-        congrArg Units.val (typeAGraphSign_mul_self (A := A) i), mul_one]
 
 /-- The signed reversal matrix `Q` used in the pinned type-`A_r` graph automorphism. It first
 reverses the standard basis and then applies alternating signs. -/
@@ -369,18 +356,6 @@ theorem inverseTranspose_transvectionUnit {n : Type*} [Fintype n] [DecidableEq n
     coe_transvectionUnit, coe_transvectionUnit]
   simp [Matrix.transvection, Matrix.transpose_add, Matrix.transpose_single]
 
-private theorem typeAGraphSign_castSucc_mul_neg_mul_inv_succ (i : Fin r) (c : A) :
-    ((typeAGraphSign (A := A) i.castSucc : A) * (-c) *
-      ((typeAGraphSign (A := A) i.succ)⁻¹ : Aˣ)) = c := by
-  rw [typeAGraphSign_succ, inv_neg, typeAGraphSign_inv]
-  simp only [Units.val_neg]
-  have hneg : (typeAGraphSign (A := A) i.castSucc : A) * (-c) *
-      (-(typeAGraphSign (A := A) i.castSucc : A)) =
-        (typeAGraphSign (A := A) i.castSucc : A) * c *
-          (typeAGraphSign (A := A) i.castSucc : A) := by ring
-  rw [hneg]
-  exact typeAGraphSign_mul_mul (A := A) i.castSucc c
-
 private theorem typeAGraphAutomorphism_transvectionUnit_aux (r : ℕ)
     {i j : Fin (r + 1)} (hij : i ≠ j) (c : A) :
     typeAGraphAutomorphism r A (transvectionUnit hij c) =
@@ -399,41 +374,76 @@ private theorem typeAGraphAutomorphism_transvectionUnit_aux (r : ℕ)
       rw [permutationGL_conj_transvectionUnit]
     _ = _ := by rw [diagGL_mul_transvectionUnit_mul_inv]
 
-/-- **The pinned graph automorphism reverses the positive simple-root subgroups without changing
-their parameters.** In Bourbaki numbering, the node `i` is carried to `i.rev`. -/
+private theorem coe_typeAGraphSign (i : Fin (r + 1)) :
+    ((typeAGraphSign (A := A) i : Aˣ) : A) = (-1 : A) ^ (i : ℕ) := by
+  simp [typeAGraphSign]
+
+/-- **The pinned graph automorphism on an arbitrary root subgroup.** For every root `ε_i - ε_j` of
+the type-`A_r` system, that is every pair of distinct matrix indices, the automorphism carries the
+elementary transvection `x_{ij}(c)` to `x_{rev j, rev i}(ε c)` with the sign
+
+```text
+ε = (-1) ^ (i + j + 1).
+```
+
+The reversal of the two indices is the reversal of the Bourbaki numbering, and the sign is the one
+produced by the signed conjugator `TauCeti.typeAGraphConjugator` of this construction: it is what
+the alternating diagonal signs of `Q` contribute once the reversal has moved the transvection. The
+sign is `1` whenever the sum `i + j` is odd, which it is on every simple root, where
+`TauCeti.typeAGraphAutomorphism_transvectionUnit` records the sign-free equation; it is `-1` on the
+roots with even index sum, for instance on `ε_0 - ε_2` once the rank is at least two, and that value
+differs from `1` exactly when `(-1 : A) ≠ 1`. Whether some other parametrization of the root
+subgroups makes every sign trivial at once is not addressed here; for that question see
+R. W. Carter, *Simple Groups of Lie Type*, §12.2. -/
 @[simp]
+theorem typeAGraphAutomorphism_transvectionUnit_of_ne (r : ℕ) {i j : Fin (r + 1)}
+    (hij : i ≠ j) (c : A) :
+    typeAGraphAutomorphism r A (transvectionUnit hij c) =
+      transvectionUnit (Fin.rev_injective.ne hij.symm)
+        ((-1 : A) ^ ((i : ℕ) + (j : ℕ) + 1) * c) := by
+  rw [typeAGraphAutomorphism_transvectionUnit_aux, typeAGraphSign_inv]
+  congr 1
+  rw [coe_typeAGraphSign, coe_typeAGraphSign]
+  -- The two exponents `rev j + rev i + 1` and `i + j + 1` differ by `2 * r`, hence agree mod two.
+  have hmod : ((j.rev : ℕ) + (i.rev : ℕ) + 1) % 2 = ((i : ℕ) + (j : ℕ) + 1) % 2 := by
+    have hi := i.isLt
+    have hj := j.isLt
+    simp only [Fin.val_rev]
+    omega
+  calc ((-1 : A) ^ (j.rev : ℕ)) * (-c) * ((-1 : A) ^ (i.rev : ℕ))
+      = (-1 : A) ^ ((j.rev : ℕ) + (i.rev : ℕ) + 1) * c := by
+        rw [pow_add, pow_add, pow_one]
+        ring
+    _ = (-1 : A) ^ ((i : ℕ) + (j : ℕ) + 1) * c := by
+        rw [neg_one_pow_eq_pow_mod_two ((j.rev : ℕ) + (i.rev : ℕ) + 1),
+          neg_one_pow_eq_pow_mod_two ((i : ℕ) + (j : ℕ) + 1), hmod]
+
+/-- **The pinned graph automorphism reverses the positive simple-root subgroups without changing
+their parameters.** In Bourbaki numbering, the node `i` is carried to `i.rev`. The sign that
+`TauCeti.typeAGraphAutomorphism_transvectionUnit_of_ne` attaches to a general root is trivial here,
+the two matrix indices `i` and `i + 1` of a simple root having odd sum. That general equation is
+the `@[simp]` form, and `simp` reaches this one through it, so this lemma is not itself `simp`. -/
 theorem typeAGraphAutomorphism_transvectionUnit (r : ℕ) (i : Fin r) (c : A) :
     typeAGraphAutomorphism r A
         (transvectionUnit (Fin.castSucc_lt_succ (i := i)).ne c) =
       transvectionUnit (Fin.castSucc_lt_succ (i := i.rev)).ne c := by
-  simpa only [Fin.rev_succ, Fin.rev_castSucc,
-    typeAGraphSign_castSucc_mul_neg_mul_inv_succ] using
-      typeAGraphAutomorphism_transvectionUnit_aux r
-        (Fin.castSucc_lt_succ (i := i)).ne c
-
-private theorem typeAGraphSign_succ_mul_neg_mul_inv_castSucc (i : Fin r) (c : A) :
-    ((typeAGraphSign (A := A) i.succ : A) * (-c) *
-      ((typeAGraphSign (A := A) i.castSucc)⁻¹ : Aˣ)) = c := by
-  rw [typeAGraphSign_succ, typeAGraphSign_inv]
-  simp only [Units.val_neg]
-  have hneg : (-(typeAGraphSign (A := A) i.castSucc : A)) * (-c) *
-      (typeAGraphSign (A := A) i.castSucc : A) =
-        (typeAGraphSign (A := A) i.castSucc : A) * c *
-          (typeAGraphSign (A := A) i.castSucc : A) := by ring
-  rw [hneg]
-  exact typeAGraphSign_mul_mul (A := A) i.castSucc c
+  have hsign : (-1 : A) ^ ((i.castSucc : ℕ) + ((i.succ : Fin (r + 1)) : ℕ) + 1) = 1 :=
+    Even.neg_one_pow ⟨(i : ℕ) + 1, by simp only [Fin.val_castSucc, Fin.val_succ]; omega⟩
+  simpa only [Fin.rev_succ, Fin.rev_castSucc, hsign, one_mul] using
+    typeAGraphAutomorphism_transvectionUnit_of_ne r (Fin.castSucc_lt_succ (i := i)).ne c
 
 /-- The pinned graph automorphism reverses the negative simple-root subgroups without changing
-their parameters. -/
-@[simp]
+their parameters. As for the positive simple roots,
+`TauCeti.typeAGraphAutomorphism_transvectionUnit_of_ne` is the `@[simp]` form that `simp` uses to
+reach this one. -/
 theorem typeAGraphAutomorphism_transvectionUnit_lower (r : ℕ) (i : Fin r) (c : A) :
     typeAGraphAutomorphism r A
         (transvectionUnit (Fin.castSucc_lt_succ (i := i)).ne' c) =
       transvectionUnit (Fin.castSucc_lt_succ (i := i.rev)).ne' c := by
-  simpa only [Fin.rev_castSucc, Fin.rev_succ,
-    typeAGraphSign_succ_mul_neg_mul_inv_castSucc] using
-      typeAGraphAutomorphism_transvectionUnit_aux r
-        (Fin.castSucc_lt_succ (i := i)).ne' c
+  have hsign : (-1 : A) ^ (((i.succ : Fin (r + 1)) : ℕ) + (i.castSucc : ℕ) + 1) = 1 :=
+    Even.neg_one_pow ⟨(i : ℕ) + 1, by simp only [Fin.val_castSucc, Fin.val_succ]; omega⟩
+  simpa only [Fin.rev_castSucc, Fin.rev_succ, hsign, one_mul] using
+    typeAGraphAutomorphism_transvectionUnit_of_ne r (Fin.castSucc_lt_succ (i := i)).ne' c
 
 /-- On the diagonal torus, the pinned graph automorphism reverses and inverts the diagonal
 entries. -/
