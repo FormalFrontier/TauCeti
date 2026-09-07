@@ -41,6 +41,10 @@ conjugation action.
   `Nat.card` form.
 * `TauCeti.ConjClasses.ncard_carrier_mk_of_mem_center`: the class of a central element is a single
   point.
+* `ConjClasses.card_carrier_mul_orderOf_dvd`: the class size times the order of a member
+  divides the order of the group, so the quotient below is an exact ratio.
+* `ConjClasses.card_div_mul_card_carrier_orderOf_eq_card_centralizer_div_orderOf`: that
+  quotient equals the order of the centralizer divided by the order of the member.
 * `TauCeti.ConjClasses.card_carrier_dvd_card`: the size of a conjugacy class divides the order of
   the group, with `TauCeti.ConjClasses.card_carrier_cast_ne_zero` the consequence that the size of
   a class is nonzero in any semiring where the group order is.
@@ -73,6 +77,16 @@ from one that collapses to the identity. It is `private`, being a check on this 
 rather than reusable conjugacy-class API. This operation is *not* adapted from the
 Birkbeck–Brasca `chebotarev-density` development, which works with `ConjClasses.mk` and
 `Subgroup.zpowers` directly and never forms `C ^ j`.
+
+The two arithmetic statements concern the quotient `#G / (#C * orderOf σ)`. The first says the
+division is exact — `#C` is the index of the centralizer of `σ`, and `orderOf σ` divides that
+centralizer's order, so their product divides `#G` — and the second evaluates the quotient as the
+centralizer's order over `orderOf σ`. Neither asserts that either side counts anything; a caller
+wanting a cardinality interpretation must supply it.
+
+`card_carrier_mul_orderOf_dvd` follows `TauCetiRoadmap/Chebotarev/Suggested.lean` lines 377-382 in
+name, argument structure and conclusion, and the closed form below is the identity
+`#G / (#C * f) = #Centralizer_G(σ) / f` specified in `TauCetiRoadmap/Chebotarev/README.md` §8.2.
 -/
 
 public section
@@ -211,6 +225,48 @@ theorem isRealClass_mk_iff {g : G} : IsRealClass (ConjClasses.mk g) ↔ IsConj g
   exact ⟨IsConj.symm, IsConj.symm⟩
 
 end TauCeti
+
+/-! ### The size of a class against the order of a member
+
+These extend the centralizer-index description of the class size just above; they live in the root
+`ConjClasses` namespace so that `C.card_carrier_mul_orderOf_dvd` resolves. -/
+
+namespace ConjClasses
+
+/-- **The size of a conjugacy class times the order of a member divides the order of the group.**
+
+For a *finite* group this is what makes `Nat.card G / (Nat.card C.carrier * orderOf σ)` an exact
+ratio rather than a truncated division, which
+`card_div_mul_card_carrier_orderOf_eq_card_centralizer_div_orderOf` then evaluates. No finiteness
+is assumed here: for an infinite group `Nat.card G` is `0`, and every natural number divides `0`. -/
+theorem card_carrier_mul_orderOf_dvd {G : Type*} [Group G] (C : ConjClasses G) (σ : G)
+    (hσ : σ ∈ C.carrier) :
+    Nat.card C.carrier * orderOf σ ∣ Nat.card G := by
+  rw [mem_carrier_iff_mk_eq] at hσ
+  subst hσ
+  obtain ⟨k, hk⟩ := (Subgroup.centralizer {σ}).orderOf_dvd_natCard
+    (Subgroup.mem_centralizer_singleton_iff.mpr rfl)
+  exact ⟨k, by rw [TauCeti.ConjClasses.card_carrier_mk, mul_assoc, ← hk, Subgroup.index_mul_card]⟩
+
+/-- **That quotient in closed form.** Dividing the order of the group by the class size times the
+order of a member leaves the order of the centralizer divided by that same order.
+
+`hindex` is what lets the centralizer's index cancel from both sides; it holds automatically when
+`G` is finite. The statement is an equality of `Nat.div` values, and no more: for a finite `G` both
+divisions are exact and it reads as an equality of ratios, but `hindex` alone does not give that.
+An infinite abelian group with an element of infinite order satisfies `hindex` while `Nat.card G`,
+the centralizer's cardinality and `orderOf σ` are all `0`, and the identity is then `0 / 0`. -/
+theorem card_div_mul_card_carrier_orderOf_eq_card_centralizer_div_orderOf {G : Type*} [Group G]
+    (C : ConjClasses G) (σ : G) (hσ : σ ∈ C.carrier)
+    (hindex : (Subgroup.centralizer {σ}).index ≠ 0) :
+    Nat.card G / (Nat.card C.carrier * orderOf σ)
+      = Nat.card (Subgroup.centralizer {σ}) / orderOf σ := by
+  rw [mem_carrier_iff_mk_eq] at hσ
+  subst hσ
+  rw [TauCeti.ConjClasses.card_carrier_mk, ← Subgroup.index_mul_card (Subgroup.centralizer {σ}),
+    Nat.mul_div_mul_left _ _ (Nat.pos_of_ne_zero hindex)]
+
+end ConjClasses
 
 /-! ### Powers of a conjugacy class
 
