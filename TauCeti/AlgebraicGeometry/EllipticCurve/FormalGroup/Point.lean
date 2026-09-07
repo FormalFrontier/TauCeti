@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.BaseChange
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.Point.Basic
 public import TauCeti.AlgebraicGeometry.EllipticCurve.FormalGroup.Eval
 
@@ -18,6 +17,11 @@ Over a complete ring `O` carrying the `I`-adic topology, a parameter `t ∈ I` g
 `(t / w(t), -1 / w(t))` satisfies the Weierstrass equation because the `w`-equation *is* that
 equation read in the coordinates `x = t / w`, `y = -1 / w`. The parameter `t = 0` gives the point
 at infinity.
+
+`equation_formalPoint` needs nothing beyond that: the pair lies on the curve for any `W`. Turning
+it into a *point* does need the curve over `K` to be elliptic, so everything from `formalPoint`
+onwards assumes `[(W.baseChange K).IsElliptic]` — weaker than asking `W` itself to be elliptic
+over `O`, which would exclude an integral model whose discriminant is nonzero but not a unit.
 
 The two coordinates are recorded in closed form as well. Since `w(t) = t ^ 3 * u(t)` with `u(t)`
 a unit, the `x`-coordinate is inverse to `t ^ 2 * u(t)` and the `y`-coordinate to
@@ -89,11 +93,11 @@ theorem equation_formalPoint {t : O} (ht : PowerSeries.HasEval t)
   field_simp
   linear_combination hkey
 
-variable [W.IsElliptic]
+variable [(W.baseChange K).IsElliptic]
 
 variable [FaithfulSMul O K]
 
-omit [W.IsElliptic] [FaithfulSMul O K] in
+omit [(W.baseChange K).IsElliptic] [FaithfulSMul O K] in
 /-- **`w(t)` has nonzero image** in any nontrivial domain over `O` once the image of `t` does:
 the expansion factors as `t ^ 3 * u(t)` with `u(t)` a unit, and both factors have nonzero image —
 the cube because there are no zero divisors, the unit because units map to units. Neither a field
@@ -145,8 +149,6 @@ theorem xCoord_formalPoint {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I) 
     (W.formalPoint (K := K) hI ht).xCoord =
       algebraMap O K t / algebraMap O K (W.formalWEval t) := by
   rw [W.formalPoint_of_param_ne_zero hI ht h0]
-  -- `simp [Point.mk]` is the route the `reuse` rubric prescribes here (round 6): the constructor
-  -- is unfolded at the call site rather than given its own coordinate lemmas.
   simp [_root_.WeierstrassCurve.Affine.Point.mk]
 
 open scoped Classical in
