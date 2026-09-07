@@ -13,8 +13,8 @@ import TauCeti.NumberTheory.NumberField.Quadratic.InfinitePlace
 /-!
 # The ambiguous class number formula for a quadratic field
 
-Let `K = ℚ(√d)` with `d` squarefree and `1 < |d|`, and let `t` be the number of rational primes that
-ramify in `K`. An ideal class is *ambiguous* when it is fixed by the quadratic conjugation `σ`;
+Let `K = ℚ(√d)` with `d` squarefree, and let `t` be the number of rational primes that ramify in
+`K`. An ideal class is *ambiguous* when it is fixed by the quadratic conjugation `σ`;
 since `σ` acts on `Cl(K)` by inversion, the ambiguous classes are exactly the `2`-torsion classes
 (`NumberField.mulEquiv_ringOfIntegersQuadraticConj_apply_eq_self_iff`), and for an imaginary field
 each of them is the class of an *ambiguous ideal* `I = σI`
@@ -47,8 +47,7 @@ and the clean formula `2 ^ (t - 1)` is a statement about the narrow class group.
 * `TauCeti.Multiquadratic.natCard_exists_map_ringOfIntegersQuadraticConj_eq_self_eq_two_pow`: the
   same count for the classes of ambiguous ideals.
 * `TauCeti.Multiquadratic.natCard_narrowClassGroup_sq_eq_one_eq_two_pow`: a quadratic field of
-  either signature with `1 < |d|` has exactly `2 ^ (t - 1)` narrow ideal classes of order
-  dividing `2`.
+  either signature has exactly `2 ^ (t - 1)` narrow ideal classes of order dividing `2`.
 * `natCard_narrowClassGroup_exists_map_ringOfIntegersQuadraticConj_eq_self_eq_two_pow` (same
   namespace) counts the same narrow classes as narrow classes of ambiguous ideals.
 -/
@@ -102,28 +101,38 @@ theorem natCard_exists_map_ringOfIntegersQuadraticConj_eq_self_eq_two_pow
 
 /-! ### The narrow class group, for either signature -/
 
-/-- **The narrow ambiguous class number formula.** For `K = ℚ(√d)` with `d` squarefree and
-`1 < |d|`, of either signature, the number of narrow ideal classes `C` with `C ^ 2 = 1` is
-`2 ^ (t - 1)`, where `t` is the number of rational primes ramifying in `K`. -/
+/-- **The narrow ambiguous class number formula.** For `K = ℚ(√d)` with `d` squarefree, of either
+signature, the number of narrow ideal classes `C` with `C ^ 2 = 1` is `2 ^ (t - 1)`, where `t` is
+the number of rational primes ramifying in `K`. -/
 theorem natCard_narrowClassGroup_sq_eq_one_eq_two_pow
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
-    (hsf : Squarefree d) (hd : 1 < d.natAbs) :
+    (hsf : Squarefree d) :
     Nat.card {C : NarrowClassGroup K // C ^ 2 = 1} = 2 ^ ((ramifiedPrimes K).ncard - 1) := by
   rw [← TauCeti.card_elementaryTwoQuotient_eq_card_twoTorsion,
-    NarrowClassGroup.card_elementaryTwoQuotient_eq_two_pow_twoRank,
-    narrowTwoRank_eq_ncard_ramifiedPrimes_sub_one hmin hgen hsf hd]
+    NarrowClassGroup.card_elementaryTwoQuotient_eq_two_pow_twoRank]
+  by_cases hd1 : 1 < d.natAbs
+  · rw [narrowTwoRank_eq_ncard_ramifiedPrimes_sub_one hmin hgen hsf hd1]
+  · -- The remaining field is `ℚ(√-1)`, which is totally complex: its narrow and ordinary
+    -- `2`-ranks agree, and the imaginary `2`-rank formula applies.
+    have hne1 : d ≠ 1 := fun h => not_isSquare_radicand hmin ⟨1, by rw [h]; norm_num⟩
+    have hneg : d < 0 := by
+      have := hsf.ne_zero
+      omega
+    have : IsTotallyComplex K := isTotallyComplex_of_minpoly_eq_X_sq_sub_C_of_neg hmin hneg
+    rw [NarrowClassGroup.twoRank_eq_classGroupTwoRank,
+      twoRank_eq_ncard_ramifiedPrimes_sub_one hmin hgen hsf hneg]
 
 /-- **The narrow ambiguous class number formula, counted by ambiguous ideals.** For `K = ℚ(√d)`
-with `d` squarefree and `1 < |d|`, of either signature, exactly `2 ^ (t - 1)` narrow ideal classes
-are represented by an ideal fixed by the quadratic conjugation, where `t` is the number of rational
+with `d` squarefree, of either signature, exactly `2 ^ (t - 1)` narrow ideal classes are
+represented by an ideal fixed by the quadratic conjugation, where `t` is the number of rational
 primes ramifying in `K`. -/
 theorem natCard_narrowClassGroup_exists_map_ringOfIntegersQuadraticConj_eq_self_eq_two_pow
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
-    (hsf : Squarefree d) (hd : 1 < d.natAbs) :
+    (hsf : Squarefree d) :
     Nat.card {C : NarrowClassGroup K // ∃ I : (Ideal (𝓞 K))⁰,
       Ideal.map (ringOfIntegersQuadraticConj hmin hgen) (I : Ideal (𝓞 K)) = (I : Ideal (𝓞 K)) ∧
         NarrowClassGroup.mk0 I = C} = 2 ^ ((ramifiedPrimes K).ncard - 1) := by
-  rw [← natCard_narrowClassGroup_sq_eq_one_eq_two_pow hmin hgen hsf hd]
+  rw [← natCard_narrowClassGroup_sq_eq_one_eq_two_pow hmin hgen hsf]
   exact Nat.card_congr (Equiv.subtypeEquivRight fun C =>
     (NarrowClassGroup.sq_eq_one_iff_exists_map_ringOfIntegersQuadraticConj_eq_self hmin hgen
       C).symm)
