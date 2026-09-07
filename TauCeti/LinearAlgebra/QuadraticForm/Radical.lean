@@ -23,6 +23,7 @@ its polar form is `2 • B`, and nondegeneracy passes from `B` to it as soon as 
 
 * `QuadraticMap.radical_neg`: negating a quadratic map does not change its radical.
 * `QuadraticMap.radical_prod`: the radical of an orthogonal product is the product of the radicals.
+* `QuadraticMap.Nondegenerate.prod`: nondegeneracy passes to an orthogonal product.
 * `QuadraticMap.Nondegenerate.ne_zero`: a nondegenerate quadratic form on a nontrivial module is
   nonzero.
 * `QuadraticMap.Anisotropic.radical_eq_bot`: an anisotropic quadratic map has trivial radical.
@@ -70,7 +71,15 @@ end QuadraticMap
 
 namespace QuadraticMap.Nondegenerate
 
-variable {R M : Type*} [CommRing R] [AddCommGroup M] [Module R M]
+variable {R M M' P : Type*} [CommRing R] [AddCommGroup M] [Module R M]
+  [AddCommGroup M'] [Module R M'] [AddCommGroup P] [Module R P]
+
+/-- The orthogonal product of two nondegenerate quadratic maps is nondegenerate, when `2` is
+invertible in the coefficient ring. -/
+theorem prod [Invertible (2 : R)] {Q : QuadraticMap R M P} {Q' : QuadraticMap R M' P}
+    (hQ : Q.Nondegenerate) (hQ' : Q'.Nondegenerate) : (Q.prod Q').Nondegenerate := by
+  rw [QuadraticMap.nondegenerate_iff_radical_eq_bot, QuadraticMap.radical_prod,
+    hQ.radical_eq_bot, hQ'.radical_eq_bot, Submodule.prod_bot]
 
 /-- A nondegenerate quadratic form on a nontrivial module is nonzero. -/
 theorem ne_zero [Nontrivial M] {Q : QuadraticForm R M} (hQ : Q.Nondegenerate) : Q ≠ 0 := by
